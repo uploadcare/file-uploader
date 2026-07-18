@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import type { OutputCollectionState } from '../../types/index';
 import { delay } from '../../utils/delay';
 import { FormInput } from './FormInput';
@@ -23,7 +23,7 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -32,7 +32,7 @@ const mount = async (
   attrs: Record<string, string> = {},
 ): Promise<{ el: FormInput; config: ConfigController; collection: CollectionStateController }> => {
   ensureUploaderCtx(ctxName);
-  const container = PubSub.getContainer(ctxName);
+  const container = UploaderRegistry.get(ctxName);
   const config = container?.get(ConfigController);
   const collection = container?.get(CollectionStateController);
   if (!config || !collection) throw new Error('controllers not resolved');
@@ -73,7 +73,7 @@ describe('FormInput (M-god step 6b-4 migration)', () => {
   it('creates the validation input on ready, reflecting multipleMin via ConfigController', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
-    PubSub.getContainer(ctxName)!.get(ConfigController).set('multipleMin', 2);
+    UploaderRegistry.get(ctxName)!.get(ConfigController).set('multipleMin', 2);
     const { el } = await mount(ctxName);
     const input = validationInput(el);
     expect(input).not.toBeNull();

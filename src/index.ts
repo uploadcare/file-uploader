@@ -1,7 +1,6 @@
 /** biome-ignore-all assist/source/organizeImports: Order should be pretty */
 import './blocks/themes/uc-basic/index.css';
 
-export { PubSub as Data } from './lit/PubSubCompat';
 export { UID } from './utils/UID';
 
 // Utils:

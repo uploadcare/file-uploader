@@ -1,7 +1,6 @@
-import type { PubSub } from '../../../lit/PubSubCompat';
-import type { SharedState } from '../../../lit/SharedState';
 import type { ConfigType } from '../../../types/index';
 import type { ConfigController } from '../../controllers/ConfigController';
+import type { LazyPluginsController } from '../../controllers/LazyPluginsController';
 import type { UploaderPlugin } from './PluginTypes';
 
 export type ConfigGetter = <K extends keyof ConfigType>(key: K) => ConfigType[K];
@@ -49,15 +48,17 @@ export class LazyPluginLoader {
   private _abortController?: AbortController;
 
   public constructor(
-    private readonly _ctx: PubSub<SharedState>,
+    private readonly _lazyPlugins: LazyPluginsController,
     private readonly _config: ConfigController,
     private readonly _onCompute: (plugins: Promise<UploaderPlugin[] | undefined>) => void,
   ) {
-    // `*lazyPlugins` is not a config key — it stays on the ctx (routed to
-    // `LazyPluginsController`); only the config reads below moved off the facade.
-    this._unsubLazyPlugins = this._ctx.sub('*lazyPlugins', (entries) => {
-      this._setEntries(entries ?? []);
-    });
+    // Read the current entries now and re-run on every change — reproducing the
+    // v1 `ctx.sub('*lazyPlugins', …, init=true)` semantics (fire once + on
+    // change). `LazyPluginsController` (the owner of the entries, M-god step 4)
+    // dedups on `Object.is` before notifying, so no spurious re-runs.
+    const apply = () => this._setEntries(this._lazyPlugins.get() ?? []);
+    apply();
+    this._unsubLazyPlugins = this._lazyPlugins.subscribe(apply);
   }
 
   private _setEntries(entries: LazyPluginEntry[]): void {

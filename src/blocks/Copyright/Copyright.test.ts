@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
 import { Copyright } from './Copyright';
 
@@ -21,7 +21,7 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -58,7 +58,7 @@ describe('Copyright (M-god step 6a probe)', () => {
     // Force the ctx/container/controller into existence so we can drive config
     // through the SAME ConfigController instance the block resolves via use().
     ensureUploaderCtx(ctxName);
-    const config = PubSub.getContainer(ctxName)?.get(ConfigController);
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
     expect(config).toBeDefined();
 
     const el = await mount(ctxName);

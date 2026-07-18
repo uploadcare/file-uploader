@@ -6,8 +6,8 @@ import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import type { Uid } from '../../lit/Uid';
 import type { ConfigType, OutputCollectionState } from '../../types';
 import { delay } from '../../utils/delay';
@@ -33,11 +33,9 @@ const freshCtxName = (): string => {
 // `UploadCollectionController` are container-owned but in production carry a live
 // upload stack; in a bare unit ctx they'd construct real instances with no
 // backing state — so `container.bind` a minimal fake for each (M-god step 8d:
-// the block reads them via `use()`, so the fakes must live on the container, not
-// the `*publicApi`/`*uploadCollection` ctx keys). `*uploadCollection` is still
-// ctx-seeded too, for the `bag.when('uploadCollection')` observer. The migrated
-// reactive reads under test (uploadList / collectionErrors / filesViewMode)
-// don't touch these fakes.
+// the block reads them via `use()`, so the fakes must live on the container).
+// The migrated reactive reads under test (uploadList / collectionErrors /
+// filesViewMode) don't touch these fakes.
 type ApiSpies = {
   getOutputCollectionState: ReturnType<typeof vi.fn>;
   uploadAll: ReturnType<typeof vi.fn>;
@@ -95,14 +93,12 @@ const mount = async (
   clearAll: ReturnType<typeof vi.fn>;
 }> => {
   ensureUploaderCtx(ctxName);
-  const container = PubSub.getContainer(ctxName);
-  const ctx = PubSub.getCtx(ctxName);
+  const container = UploaderRegistry.get(ctxName);
   const config = container?.get(ConfigController);
   const collectionState = container?.get(CollectionStateController);
   const router = container?.get(RouterController);
   const telemetry = container?.get(TelemetryManager);
-  if (!container || !ctx || !config || !collectionState || !router || !telemetry)
-    throw new Error('controllers not resolved');
+  if (!container || !config || !collectionState || !router || !telemetry) throw new Error('controllers not resolved');
   // Config must be applied before the element adopts (the leading throttled tick
   // in `controllerReady` reads it), so set it up front.
   for (const [k, v] of Object.entries(opts.config ?? {})) {
@@ -110,11 +106,9 @@ const mount = async (
   }
   const { api, spies } = makeFakeApi(zeroCollectionState(opts.state));
   const { collection, clearAll } = makeFakeCollection();
-  // Bind the fakes on the container (the block reads them via `use()`), and seed
-  // `*uploadCollection` in the ctx store for the `bag.when` observer path.
+  // Bind the fakes on the container (the block reads them via `use()`).
   container.bind(UploaderPublicApi, () => api);
   container.bind(UploadCollectionController, () => collection);
-  ctx.add('*uploadCollection', collection, true);
   const el = document.createElement('uc-upload-list') as UploadList;
   el.setAttribute('ctx-name', ctxName);
   document.body.append(el);
@@ -128,7 +122,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 

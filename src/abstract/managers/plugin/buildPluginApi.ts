@@ -24,7 +24,7 @@ export function buildPluginApi(
   configSubscriptions: (() => void)[],
 ): PluginApi {
   // M-god step 9c-1: router/collection resolved off the container (was the
-  // shared-instances `bag`'s `router`/`uploadCollection` getters) — the same
+  // shared instances `bag`'s `router`/`uploadCollection` getters) — the same
   // per-ctx singletons those getters re-exposed.
   const router = container.get(RouterController);
   const registryApi: PluginRegistryApi = {
@@ -56,7 +56,7 @@ export function buildPluginApi(
       callback: (value: (ConfigType & CustomConfig)[TKey]) => void,
     ): (() => void) => {
       // Immediate fire + per-key `Object.is` dedup — the same semantics the
-      // `ctx.sub(sharedConfigKey(configName), …)` facade subscription gave.
+      // `ctx.sub('*cfg/<name>', …)` facade subscription gave.
       let last = config.getCustom<(ConfigType & CustomConfig)[TKey]>(configName);
       callback(last);
       const unsub = config.subscribe(() => {

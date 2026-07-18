@@ -39,7 +39,7 @@ export function buildOutputCollectionState<
   // M-god step 9c-1: derived collection keys read straight off the controllers
   // (was `ctx.read('*commonProgress')` etc. and `bag.uploadCollection.size`).
   // `CollectionStateController` owns `*commonProgress`/`*collectionErrors`/
-  // `*groupInfo` (the same instance `PubSubCompat` routes those keys through), so
+  // `*groupInfo` (the same instance the v1 ctx facade routes those keys through), so
   // these reads are byte-identical to the old `ctx.read`.
   const collectionState = container.get(CollectionStateController);
   const uploadCollection = container.get(UploadCollectionController);

@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { EventPayload, UploadCtxProvider } from '@/index.js';
-import { PubSub } from '@/lit/PubSubCompat';
 import { getCtxName } from '../utils/getCtxName';
+import { hasCtx } from '../utils/registry';
 import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
 
@@ -65,7 +65,7 @@ describe('uc-modal teardown', () => {
     // Unmount everything; the ctx destroys via a deferred task once the last
     // block disconnects. Wait for the destruction fact, not a fixed delay.
     cleanup();
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+    await expect.poll(() => hasCtx(ctxName)).toBe(false);
 
     // The native <dialog> "close" event is dispatched from a queued task and
     // can land exactly here in real teardowns. It must be a no-op, not an

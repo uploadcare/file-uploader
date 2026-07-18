@@ -1,15 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventEmitter, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
+import { destroyCtx } from '../lit/ctx-lifecycle';
 import { ensureUploaderCtx } from '../lit/ensureUploaderCtx';
 import { ensureUploaderScope } from '../lit/ensureUploaderScope';
 import { createL10n } from '../lit/l10n';
-import { PubSub } from '../lit/PubSubCompat';
-import type { SharedState } from '../lit/SharedState';
-import { createSharedInstancesBag, type SharedInstancesBag } from '../lit/shared-instances';
 import type { UploadcareFile } from '../types/index';
 import { BASIC_IMAGE_WILDCARD, BASIC_VIDEO_WILDCARD } from '../utils/fileTypes';
 import { UploadSource } from '../utils/UploadSource';
+import { CollectionStateController } from './controllers/CollectionStateController';
 import { ConfigController } from './controllers/ConfigController';
 import { LocaleController } from './controllers/LocaleController';
 import { RouterController } from './controllers/RouterController';
@@ -18,15 +17,13 @@ import { ControllerContainer } from './di/ControllerContainer';
 import { PluginController } from './managers/plugin';
 import type { UploaderPublicApi } from './UploaderPublicApi';
 import { UploaderPublicApi as UploaderPublicApiClass } from './UploaderPublicApi';
+import { UploaderRegistry } from './UploaderRegistry';
 
 /**
- * Behavior-preservation coverage for `UploaderPublicApi`, written BEFORE the
- * M-god step 8a rewrite (off the `bag`/`SharedInstance` proxy onto container
- * `@inject`). The harness builds the api through the REAL production seam
- * (`ensureUploaderCtx` + `ensureUploaderScope` → `bag.api`), so the setup is
- * identical before and after the rewrite — the exact same behavioral assertions
- * must pass on both implementations, which is the proof the public surface is
- * unchanged.
+ * Behavior-preservation coverage for `UploaderPublicApi`. The harness builds the
+ * api through the REAL production seam (`ensureUploaderCtx` +
+ * `ensureUploaderScope` → `container.get(UploaderPublicApi)`), so the behavioral
+ * assertions below prove the public surface is unchanged.
  */
 
 const flush = async (): Promise<void> => {
@@ -53,8 +50,7 @@ type Ctrl = {
 
 type Harness = {
   ctxName: string;
-  ctx: PubSub<SharedState>;
-  bag: SharedInstancesBag;
+  container: ControllerContainer;
   ctrl: Ctrl;
   api: UploaderPublicApi;
 };
@@ -64,12 +60,10 @@ const created: string[] = [];
 
 const setup = (): Harness => {
   const ctxName = `uploader-public-api-test-${seq++}`;
-  const ctx = ensureUploaderCtx(ctxName);
+  const container = ensureUploaderCtx(ctxName);
   created.push(ctxName);
-  const bag = createSharedInstancesBag(() => PubSub.getCtx<SharedState>(ctxName)!);
-  const container = ctx.container();
   const eventEmitter = container.get(EventEmitter);
-  ensureUploaderScope(ctx, container, undefined, (type, payload, options) => eventEmitter.emit(type, payload, options));
+  ensureUploaderScope(container, undefined, (type, payload, options) => eventEmitter.emit(type, payload, options));
   const ctrl: Ctrl = {
     get locale() {
       return container.get(LocaleController);
@@ -86,8 +80,8 @@ const setup = (): Harness => {
     eventEmitter,
     container,
   };
-  const api = bag.api;
-  return { ctxName, ctx, bag, ctrl, api };
+  const api = container.get(UploaderPublicApiClass);
+  return { ctxName, container, ctrl, api };
 };
 
 beforeEach(() => {
@@ -98,9 +92,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   while (created.length) {
     const name = created.pop()!;
-    if (PubSub.hasCtx(name)) {
-      PubSub.deleteCtx(name);
-    }
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -262,10 +254,20 @@ describe('UploaderPublicApi', () => {
 
   describe('uploadAll', () => {
     it('replaces the uploadTrigger Set and emits COMMON_UPLOAD_START for uploadable entries', () => {
-      const { api, ctx } = setup();
-      const before = ctx.read('*uploadTrigger');
+      const { api, container } = setup();
+      const collectionState = container.get(CollectionStateController);
+      const before = collectionState.get('uploadTrigger');
       const triggerValues: Array<Set<unknown>> = [];
-      const unsub = ctx.sub('*uploadTrigger', (v) => triggerValues.push(v as Set<unknown>), false);
+      // Reproduces the v1 `ctx.sub('*uploadTrigger', …, init=false)`: fire only
+      // on a real change (coarse `subscribe` + per-key `Object.is` dedup).
+      let lastTrigger = collectionState.get('uploadTrigger');
+      const unsub = collectionState.subscribe(() => {
+        const next = collectionState.get('uploadTrigger');
+        if (!Object.is(next, lastTrigger)) {
+          lastTrigger = next;
+          triggerValues.push(next as Set<unknown>);
+        }
+      });
       const startHandler = vi.fn();
       api.on(EventType.COMMON_UPLOAD_START, startHandler);
 
@@ -275,7 +277,7 @@ describe('UploaderPublicApi', () => {
       api.uploadAll();
 
       // REPLACE-semantics: a NEW Set instance (not the seeded one, not mutated).
-      const after = ctx.read('*uploadTrigger') as Set<string>;
+      const after = collectionState.get('uploadTrigger') as Set<string>;
       expect(after).not.toBe(before);
       expect([...after].sort()).toEqual([e1.internalId, e2.internalId].sort());
       // The replace fired the subscriber exactly once with the new Set.
@@ -286,19 +288,21 @@ describe('UploaderPublicApi', () => {
     });
 
     it('is a no-op (no emit, no trigger change) when nothing is uploadable', () => {
-      const { api, ctx } = setup();
-      const before = ctx.read('*uploadTrigger');
+      const { api, container } = setup();
+      const collectionState = container.get(CollectionStateController);
+      const before = collectionState.get('uploadTrigger');
       const startHandler = vi.fn();
       api.on(EventType.COMMON_UPLOAD_START, startHandler);
 
       api.uploadAll();
 
-      expect(ctx.read('*uploadTrigger')).toBe(before);
+      expect(collectionState.get('uploadTrigger')).toBe(before);
       expect(startHandler).not.toHaveBeenCalled();
     });
 
     it('skips entries already uploaded (fileInfo present)', () => {
-      const { api, ctx } = setup();
+      const { api, container } = setup();
+      const collectionState = container.get(CollectionStateController);
       const startHandler = vi.fn();
       api.on(EventType.COMMON_UPLOAD_START, startHandler);
       // A file added from an UploadcareFile has fileInfo → not uploadable.
@@ -314,8 +318,8 @@ describe('UploaderPublicApi', () => {
       api.uploadAll();
 
       expect(startHandler).not.toHaveBeenCalled();
-      expect(ctx.read('*uploadTrigger')).toBeInstanceOf(Set);
-      expect((ctx.read('*uploadTrigger') as Set<string>).size).toBe(0);
+      expect(collectionState.get('uploadTrigger')).toBeInstanceOf(Set);
+      expect((collectionState.get('uploadTrigger') as Set<string>).size).toBe(0);
     });
   });
 
@@ -471,10 +475,10 @@ describe('UploaderPublicApi', () => {
     });
 
     it('initFlow selects the single registered source directly', async () => {
-      const { api, ctrl, bag } = setup();
+      const { api, ctrl } = setup();
       ctrl.config.set('sourceList', 'local');
       const onSelect = vi.fn();
-      bag.pluginManager.registry.addSource('p', { id: 'local', label: 'Local', onSelect });
+      ctrl.container.get(PluginController).registry.addSource('p', { id: 'local', label: 'Local', onSelect });
 
       api.initFlow();
       await flush();
@@ -483,12 +487,12 @@ describe('UploaderPublicApi', () => {
     });
 
     it('initFlow selects the origin source when its single expansion is unknown', async () => {
-      const { api, ctrl, bag } = setup();
+      const { api, ctrl } = setup();
       ctrl.config.set('sourceList', 'local');
       const onSelect = vi.fn();
       // expand() returns a single id that is NOT itself a registered source,
       // so `find(expandedIds[0]) ?? registeredSource` falls back to the origin.
-      bag.pluginManager.registry.addSource('p', {
+      ctrl.container.get(PluginController).registry.addSource('p', {
         id: 'local',
         label: 'Local',
         onSelect,
@@ -502,10 +506,10 @@ describe('UploaderPublicApi', () => {
     });
 
     it('initFlow navigates to start-from when a single source expands to many', async () => {
-      const { api, ctrl, bag } = setup();
+      const { api, ctrl } = setup();
       ctrl.config.set('sourceList', 'group');
       const navigate = vi.spyOn(ctrl.router, 'navigate');
-      bag.pluginManager.registry.addSource('p', {
+      ctrl.container.get(PluginController).registry.addSource('p', {
         id: 'group',
         label: 'Group',
         onSelect: vi.fn(),
@@ -796,10 +800,8 @@ describe('UploaderPublicApi', () => {
   });
 
   describe('container wiring (M-god step 8a)', () => {
-    it('is reachable as bag.api / *publicApi / container.get(UploaderPublicApi) as the same instance', () => {
-      const { api, bag, ctx, ctrl } = setup();
-      expect(bag.api).toBe(api);
-      expect(ctx.read('*publicApi')).toBe(api);
+    it('is reachable as container.get(UploaderPublicApi) as the same instance', () => {
+      const { api, ctrl } = setup();
       // M-god step 8b removed `ctrl.api`/`setApi` (the clipboard now `@inject`s
       // the api directly); the single instance is reachable via the container.
       expect(ctrl.container.get(UploaderPublicApiClass)).toBe(api);
@@ -828,22 +830,21 @@ describe('UploaderPublicApi', () => {
   });
 
   describe('plugin manager @inject (M-god step 8c)', () => {
-    it('the api resolves its plugin manager from the container — the same instance as bag.pluginManager / *pluginManager', () => {
-      const { bag, ctx, ctrl } = setup();
+    it('the api resolves its plugin manager from the container — the same instance ensurePluginManager bound', () => {
+      const { ctrl } = setup();
       const fromContainer = ctrl.container.get(PluginController);
-      // `ensurePluginManager` bound + eagerly resolved it, and the `*pluginManager`
-      // shared instance is a re-exposer of that exact container instance.
-      expect(bag.pluginManager).toBe(fromContainer);
-      expect(ctx.read('*pluginManager')).toBe(fromContainer);
+      // `ensurePluginManager` bound + eagerly resolved it; the api's
+      // `@inject(() => PluginController)` resolves that exact container instance.
+      expect(ctrl.container.get(PluginController)).toBe(fromContainer);
     });
 
     it("initFlow's single-source path reads sources off the container-resolved PluginController the api @injects", async () => {
-      const { api, ctrl, bag } = setup();
+      const { api, ctrl } = setup();
       ctrl.config.set('sourceList', 'local');
       const onSelect = vi.fn();
-      // Register on the container instance (via the bag re-exposer). The api's
+      // Register on the container instance. The api's
       // `@inject(() => PluginController)` must see this exact registry.
-      bag.pluginManager.registry.addSource('p', { id: 'local', label: 'Local', onSelect });
+      ctrl.container.get(PluginController).registry.addSource('p', { id: 'local', label: 'Local', onSelect });
 
       api.initFlow();
       await flush();
@@ -856,11 +857,10 @@ describe('UploaderPublicApi', () => {
       const pluginManager = ctrl.container.get(PluginController);
       const destroySpy = vi.spyOn(pluginManager, 'destroy');
 
-      // `deleteCtx` → `destroyCtx` map-walk (skips `.destroy()` for
-      // `*pluginManager`, a controllerOwnedInstanceKey) → `container.dispose()`
-      // (which calls it once). If the key were NOT controller-owned, the map-walk
-      // would destroy it too → 2 calls.
-      PubSub.deleteCtx(ctxName);
+      // `destroyCtx` disposes the ctx's container, which calls `destroy()` once
+      // in reverse insertion order. The container is the sole owner of
+      // `PluginController` disposal — no separate teardown pass double-destroys it.
+      destroyCtx(ctxName);
 
       expect(destroySpy).toHaveBeenCalledTimes(1);
     });

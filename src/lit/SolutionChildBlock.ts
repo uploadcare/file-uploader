@@ -40,9 +40,9 @@ export abstract class SolutionChildBlock extends ChildBlock {
 
     const entries = (this.constructor as typeof SolutionChildBlock).lazyPlugins;
     if (entries) {
-      // `LazyPluginsController` owns the `*lazyPlugins` key (M-god step 4); this
-      // is the same instance `LazyPluginLoader` reads, so publishing here still
-      // triggers the loader (previously `bag.ctx.pub('*lazyPlugins', entries)`).
+      // `LazyPluginsController` owns the lazy-plugin entries (M-god step 4); this
+      // is the same instance `LazyPluginLoader` reads + subscribes to, so setting
+      // them here triggers the loader.
       container.get(LazyPluginsController).set(entries);
     }
   }

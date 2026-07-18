@@ -3,9 +3,9 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { TypedData } from '../../abstract/TypedData';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import type { Uid } from '../../lit/Uid';
 import { delay } from '../../utils/delay';
 import { CloudImageEditorActivity } from './CloudImageEditorActivity';
@@ -27,7 +27,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -60,11 +60,10 @@ const mount = async (
   } = {},
 ): Promise<{ el: CloudImageEditorActivity; config: ConfigController; router: RouterController }> => {
   ensureUploaderCtx(ctxName);
-  const container = PubSub.getContainer(ctxName);
-  const ctx = PubSub.getCtx(ctxName);
+  const container = UploaderRegistry.get(ctxName);
   const config = container?.get(ConfigController);
   const router = container?.get(RouterController);
-  if (!container || !ctx || !config || !router) throw new Error('controllers not resolved');
+  if (!container || !config || !router) throw new Error('controllers not resolved');
 
   // Router params carry the `internalId` `_mountEditor` reads on adoption, so set
   // them before the element adopts.
@@ -100,7 +99,7 @@ describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
   it('pre-warms its declared dependencies into the container on adoption', async () => {
     const ctxName = freshCtxName();
     await mount(ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     expect(container?.get(RouterController)).toBeInstanceOf(RouterController);
     expect(container?.get(ConfigController)).toBeInstanceOf(ConfigController);
   });

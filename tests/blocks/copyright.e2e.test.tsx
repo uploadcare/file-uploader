@@ -62,8 +62,8 @@ describe('uc-copyright', () => {
 
   it('bootstraps its own ctx and renders with NO v1 block present anywhere in the composition (M9o)', async () => {
     const ctxName = getCtxName();
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
-    expect(PubSub.hasCtx(ctxName)).toBe(false);
+    const { hasCtx } = await import('../utils/registry.js');
+    expect(hasCtx(ctxName)).toBe(false);
 
     // Deliberately no <uc-config> (or any v1 block) — a pure ChildBlock
     // composition. Before M9o Task 2, nothing would ever create this ctx and
@@ -71,6 +71,6 @@ describe('uc-copyright', () => {
     page.render(<uc-copyright ctx-name={ctxName}></uc-copyright>);
 
     await expect.element(page.getByText('Powered by Uploadcare', { exact: true })).toBeVisible();
-    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    expect(hasCtx(ctxName)).toBe(true);
   });
 });

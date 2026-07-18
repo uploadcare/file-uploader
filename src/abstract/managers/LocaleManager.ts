@@ -17,7 +17,7 @@ export const DEFAULT_LOCALE = 'en';
  *
  * Construction itself is side-effect-free — `UploaderController` constructs
  * this eagerly, and the controller is itself created lazily by *any* `*cfg/*`
- * or `*l10n/*` ctx touch (`PubSubCompat._uploader`), including from contexts
+ * or `*l10n/*` ctx touch (`the v1 ctx facade`), including from contexts
  * that never mount a block (e.g. a bare per-upload-entry ctx, or a unit test
  * exercising the config facade alone). Seeding the `en` dictionary and wiring
  * the config subscriptions as part of the constructor would leak locale state
@@ -112,7 +112,7 @@ export class LocaleManager {
   /**
    * Subscribe to a config key's derived value: fires once immediately with
    * the current value, then again only when it actually changes — the same
-   * per-key dedup semantics as `PubSubCompat`'s `*cfg/` facade (which this
+   * per-key dedup semantics as the v1 ctx facade's `*cfg/` facade (which this
    * replaces for `LocaleManager`'s two config reads).
    */
   private _subConfig<K extends keyof ConfigType>(key: K, cb: (value: ConfigType[K]) => void): () => void {

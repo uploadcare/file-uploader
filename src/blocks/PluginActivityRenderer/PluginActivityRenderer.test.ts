@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { PluginController } from '../../abstract/managers/plugin';
 import { PluginRegistry } from '../../abstract/managers/plugin/PluginRegistry';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
 import { PluginActivityRenderer } from './PluginActivityRenderer';
 
@@ -22,7 +22,7 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -56,7 +56,7 @@ describe('PluginActivityRenderer (M-god step 6b-2 migration)', () => {
   it('renders plugin activities once the PluginController resolves on the container (whenController)', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     if (!container) throw new Error('container not resolved');
 
     const registry = new PluginRegistry(() => {});

@@ -12,15 +12,10 @@ import { TelemetryManager } from './managers/TelemetryManager';
  * registry (the cross-DOM equivalent of `@lit/context`) and pull the
  * controllers they need off it.
  *
- * M-god step 9a consolidated the lifecycle here. Previously it was split:
- * `PubSubCompat` owned a second `ctx -> ControllerContainer` map plus the
- * container-creation (with eager Config -> Router -> Telemetry init) and
- * dispose logic, and merely mirrored registrations into this registry. Now the
- * container's existence no longer depends on `PubSubCompat` at all — this
- * registry creates it (via `ensure`), and `PubSubCompat.container()`/
- * `getContainer`/`deleteCtx` are thin shims that delegate here (kept until
- * `PubSubCompat` itself is deleted in step 9c). The registry does NOT import
- * `PubSubCompat`, so the two no longer form a cycle.
+ * M-god step 9c: this registry is the SOLE per-ctx state/instance mechanism —
+ * the v1 ctx/per-ctx store/`bag` layer is gone. `ensure` creates + caches the
+ * container (with eager Config -> Router -> Telemetry init), `dispose` tears it
+ * down, and `whenAvailable`/`get` are the reactive/plain lookups.
  *
  * The lookup is reactive — `whenAvailable(ctxName, cb)` fires synchronously
  * if a container is already registered, immediately when one registers, and
@@ -71,14 +66,11 @@ class UploaderRegistryImpl {
 
   /**
    * Get the ctx's `ControllerContainer`, creating (and caching + notifying
-   * consumers) it on first request. This is the sole container-creation path
-   * after M-god step 9a — folded here out of `PubSubCompat._resolveContainer`.
+   * consumers) it on first request. This is the sole container-creation path.
    *
    * The eager Config -> Router -> Telemetry init below fires at the exact moment
-   * the container is created, on EVERY creation path (a bare `*cfg/*` touch via
-   * `PubSub.container()`, `ensureUploaderCtx`, a direct `ensure` call), matching
-   * the timing `UploaderController`'s constructor — and then
-   * `PubSubCompat._resolveContainer` — used. Order matters:
+   * the container is created, on every creation path (`ensureUploaderCtx`, a
+   * direct `ensure` call). Order matters:
    *  - `config` first -> disposed LAST (telemetry's config unsubscribe runs
    *    during teardown; it is a safe no-op even after config is disposed);
    *  - `router` before `telemetry` (telemetry reads `router.currentActivity`);
@@ -94,15 +86,13 @@ class UploaderRegistryImpl {
     }
     const container = new ControllerContainer();
     // Cache BEFORE the eager init so a re-entrant `ensure`/`get` during that
-    // init resolves this same instance (mirrors the previous
-    // `PubSub._controllers.set` before the eager `get()`s).
+    // init resolves this same instance.
     this._map.set(ctxName, container);
     container.get(ConfigController);
     container.get(RouterController);
     container.get(TelemetryManager);
     // Notify `whenAvailable` subscribers AFTER the eager init — the same point
-    // `register()` used to notify from (which the previous
-    // `_resolveContainer` called last).
+    // `register()` notifies from.
     this._notifyConsumers(ctxName, container);
     return container;
   }
@@ -110,10 +100,8 @@ class UploaderRegistryImpl {
   /**
    * Tear down the ctx's container: null-notify consumers (so they release
    * BEFORE the controllers are destroyed — the v1 teardown order) then dispose.
-   * No-op if no container exists (a bare `registerCtx` never touched by a
-   * config/controller). Folded here out of `PubSubCompat.deleteCtx`; delegates
-   * to `unregister` for the delete + null-notify so that ordering stays
-   * identical.
+   * No-op if no container exists. Delegates to `unregister` for the delete +
+   * null-notify so that ordering stays identical.
    */
   public dispose(ctxName: string): void {
     const container = this._map.get(ctxName);
