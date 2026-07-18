@@ -5,10 +5,12 @@ import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
 import { ensurePluginManager } from './ensurePluginManager';
-import type { SharedInstancesBag } from './shared-instances';
+import type { PubSub } from './PubSubCompat';
+import type { SharedState } from './SharedState';
+import { createSharedInstancesBag } from './shared-instances';
 
 /**
- * Shared seam for attaching the uploader scope to a `bag`/`container` pair —
+ * Shared seam for attaching the uploader scope to a `ctx`/`container` pair —
  * lifted verbatim out of `UploadCtxProvider._attachUploaderScopeIfNeeded` (the
  * first host to need synchronous, idempotent attach) so the ported
  * `<uc-drop-area>` can call the exact same logic instead of re-deriving it.
@@ -17,14 +19,24 @@ import type { SharedInstancesBag } from './shared-instances';
  * own gate), so this is a no-op once a solution or a sibling host has already
  * attached. `debug`/`emit` are host-specific (see `buildUploaderScopeDeps`'s
  * doc) and stay caller-supplied.
+ *
+ * M-god step 9b-1: callers pass this ctx's `PubSub` + `ControllerContainer`
+ * directly instead of the `bag` — so the uploader blocks (`UploadCtxProvider` /
+ * `<uc-drop-area>`) no longer reference `this.bag`. Controllers resolve off the
+ * container; the ctx re-exposes them under their v1 `*`-keys. The one residual
+ * `bag` — still required by the deps not yet container-resolved
+ * (`UploaderPublicApi.setBagBridge`, `ensurePluginManager`/`buildPluginApi`, and
+ * `buildUploaderScopeDeps`'s host bridge, all retiring in 9b-3) — is now built
+ * HERE from the ctx (a stateless accessor over the same ctx, behavior-identical
+ * to the block's own `bag`), rather than threaded in from the caller.
  */
 export function ensureUploaderScope(
-  bag: SharedInstancesBag,
+  ctx: PubSub<SharedState>,
   container: ControllerContainer,
   debug: UploadHostDebug | undefined,
   emit: UploadHostEmit,
 ): void {
-  const ctx = bag.ctx;
+  const bag = createSharedInstancesBag(() => ctx);
 
   if (!ctx.has('*uploadCollection')) {
     ctx.add('*uploadCollection', container.get(UploadCollectionController), true);

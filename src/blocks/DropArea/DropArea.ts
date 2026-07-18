@@ -43,7 +43,7 @@ export class DropArea extends ChildBlock {
   };
 
   /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
-  private _debugPrint = createDebugPrinter(() => this.bag.ctx, this.constructor.name);
+  private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
 
   /**
    * CSS-only attribute
@@ -142,7 +142,7 @@ export class DropArea extends ChildBlock {
     // uploader scope itself — same contract as v1's `LitUploaderBlock.
     // initCallback`, and the identical seam `<uc-upload-ctx-provider>` uses.
     ensureUploaderScope(
-      this.bag,
+      this.requireCtx(),
       container,
       (...args) => this._debugPrint(...args),
       (type, payload, options) => this.emit(type, payload, options),

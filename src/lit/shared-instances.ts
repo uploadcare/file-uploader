@@ -26,7 +26,7 @@ export class SharedInstance {
 
   private _subscriptions: Set<() => void> = new Set();
   private _cfgProxy: ConfigType | null = null;
-  protected _debugPrint = createDebugPrinter(() => this._sharedInstancesBag.ctx, this.constructor.name);
+  protected _debugPrint = createDebugPrinter(() => this._sharedInstancesBag.ctx.container(), this.constructor.name);
 
   public constructor(sharedInstancesBag: SharedInstancesBag) {
     this._sharedInstancesBag = sharedInstancesBag;

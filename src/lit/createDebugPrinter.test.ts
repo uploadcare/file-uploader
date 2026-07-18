@@ -1,23 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../abstract/controllers/ConfigController';
+import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { createDebugPrinter } from './createDebugPrinter';
-import type { PubSub } from './PubSubCompat';
-import type { SharedState } from './SharedState';
 
-// M-god step 7: `createDebugPrinter` reads the `debug` flag directly off the
-// ctx's `ConfigController` (was `ctx.read(sharedConfigKey('debug'))`), while
-// still using the ctx for its `id` prefix — so callers keep passing `() => ctx`.
-describe('createDebugPrinter (debug flag from ConfigController)', () => {
+// M-god step 9b-1: `createDebugPrinter` reads the `debug` flag off the ctx's
+// `ControllerContainer` (`getContainer().get(ConfigController)`) via a container
+// accessor — no longer a `() => ctx`/PubSub facade. The accessor is null-safe
+// (pre-adoption → no-op), and the prefix is now just the caller-supplied `name`
+// (the `ctx.id` half retired with the ctx).
+describe('createDebugPrinter (debug flag from the container ConfigController)', () => {
   const setup = () => {
     const config = new ConfigController();
-    // M-god step 8e: `createDebugPrinter` resolves the ctx's `ConfigController`
-    // via `ctx.container().get(ConfigController)` (the facade `uploaderController()`
-    // is gone). Mock a minimal container that hands back this config.
-    const ctx = {
-      id: 'my-ctx',
-      container: () => ({ get: () => config }),
-    } as unknown as PubSub<SharedState>;
-    return { config, ctx };
+    // Minimal container stub that hands back this config for `get(ConfigController)`.
+    const container = { get: () => config } as unknown as ControllerContainer;
+    return { config, container };
   };
 
   afterEach(() => {
@@ -25,47 +21,56 @@ describe('createDebugPrinter (debug flag from ConfigController)', () => {
   });
 
   it('does not log while debug is falsy (default)', () => {
-    const { ctx } = setup();
+    const { container } = setup();
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const print = createDebugPrinter(() => ctx);
+    const print = createDebugPrinter(() => container);
     print('hello');
     expect(log).not.toHaveBeenCalled();
   });
 
-  it('logs with the ctx id prefix once debug is enabled', () => {
-    const { config, ctx } = setup();
+  it('logs once debug is enabled', () => {
+    const { config, container } = setup();
     config.set('debug', true);
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const print = createDebugPrinter(() => ctx);
+    const print = createDebugPrinter(() => container);
     print('hello', 42);
     expect(log).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalledWith('[my-ctx]', 'hello', 42);
+    // No ctx.id half anymore; with no `name` the prefix is the empty bracket.
+    expect(log).toHaveBeenCalledWith('[]', 'hello', 42);
   });
 
-  it('includes the scope in the prefix when provided', () => {
-    const { config, ctx } = setup();
+  it('uses the name as the prefix when provided', () => {
+    const { config, container } = setup();
     config.set('debug', true);
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const print = createDebugPrinter(() => ctx, 'PluginController');
+    const print = createDebugPrinter(() => container, 'PluginController');
     print('msg');
-    expect(log).toHaveBeenCalledWith('[my-ctx][PluginController]', 'msg');
+    expect(log).toHaveBeenCalledWith('[PluginController]', 'msg');
+  });
+
+  it('is a null-safe no-op before a container is adopted', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    // Accessor returns null (pre-adoption) — must not throw and must not log.
+    const print = createDebugPrinter(() => null, 'DropArea');
+    expect(() => print('early')).not.toThrow();
+    expect(log).not.toHaveBeenCalled();
   });
 
   it('resolves a thunk first argument lazily only when logging', () => {
-    const { config, ctx } = setup();
+    const { config, container } = setup();
     const resolver = vi.fn(() => ['resolved', 1]);
 
     // Disabled: the resolver must not run.
-    const printOff = createDebugPrinter(() => ctx);
+    const printOff = createDebugPrinter(() => container);
     printOff(resolver);
     expect(resolver).not.toHaveBeenCalled();
 
     // Enabled: the resolver runs and its result is spread into the log.
     config.set('debug', true);
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const printOn = createDebugPrinter(() => ctx);
+    const printOn = createDebugPrinter(() => container, 'Scoped');
     printOn(resolver);
     expect(resolver).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalledWith('[my-ctx]', 'resolved', 1);
+    expect(log).toHaveBeenCalledWith('[Scoped]', 'resolved', 1);
   });
 });

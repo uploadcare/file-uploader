@@ -66,7 +66,7 @@ export function ensurePluginManager(bag: SharedInstancesBag): void {
         },
         // Scope debug output to the controller (not a hosting block) so its
         // logs stay consistently prefixed, as v1's `SharedInstance` did.
-        debug: createDebugPrinter(() => ctx, 'PluginController'),
+        debug: createDebugPrinter(() => container, 'PluginController'),
       }),
   );
 

@@ -6,6 +6,7 @@ import { CollectionStateController } from '../../abstract/controllers/Collection
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
@@ -179,13 +180,13 @@ export class DynamicBtn extends ChildBlock {
     this._status = collectionState.status;
   }
 
-  protected override controllerReady(): void {
+  protected override controllerReady(container: ControllerContainer): void {
     // Re-adoption would otherwise stack a new SourceListController per
     // adoption without removing the previous one (same shape as SourceList).
     this._teardownSourceListController();
     this._sourceListController = new SourceListController(this, {
       config: this.use(ConfigController),
-      sharedInstancesBag: this.bag,
+      container,
       onSourcesChange: (sources) => {
         this._sources = sources;
       },
