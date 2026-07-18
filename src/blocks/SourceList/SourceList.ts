@@ -3,6 +3,7 @@ import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { SourceListController } from '../../abstract/controllers';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../SourceBtn/SourceBtn';
@@ -22,7 +23,7 @@ export class SourceList extends ChildBlock {
 
   private _sourceListController: SourceListController | null = null;
 
-  protected override controllerReady(): void {
+  protected override controllerReady(container: ControllerContainer): void {
     // Re-adoption (release-while-connected followed by re-adopt) would otherwise
     // stack a new SourceListController per adoption without ever removing the
     // previous one — tear down the old instance's subscriptions first.
@@ -30,7 +31,7 @@ export class SourceList extends ChildBlock {
 
     this._sourceListController = new SourceListController(this, {
       config: this.use(ConfigController),
-      sharedInstancesBag: this.bag,
+      container,
       onSourcesChange: (sources) => {
         this._sources = sources;
       },

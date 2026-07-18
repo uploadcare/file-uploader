@@ -1,14 +1,17 @@
 import type { ReactiveControllerHost } from 'lit';
 import { describe, expect, it, vi } from 'vitest';
 import type { SourceButtonConfig } from '../../blocks/SourceBtn/SourceBtn';
-import type { SharedInstancesBag } from '../../lit/shared-instances';
-import type { PluginSourceRegistration } from '../managers/plugin';
+import { ControllerContainer } from '../di/ControllerContainer';
+import { PluginController, type PluginSourceRegistration } from '../managers/plugin';
 import { ConfigController } from './ConfigController';
 import { SourceListController } from './SourceListController';
 
 // M-god step 7: `SourceListController` reads the `sourceList` config key directly
 // off an injected `ConfigController` (was `ctx.sub(sharedConfigKey('sourceList'))`).
-// These specs pin the immediate-then-deduped per-key subscription semantics.
+// M-god step 9b-1: the plugin manager is resolved off the ctx's
+// `ControllerContainer` (`whenController`/`getOrNull(PluginController)`) instead
+// of the `bag`. These specs pin the immediate-then-deduped per-key subscription
+// semantics.
 const makePluginSource = (id: string): PluginSourceRegistration => ({
   id,
   label: id,
@@ -21,26 +24,24 @@ const setup = (initialSources: PluginSourceRegistration[] = []) => {
   const config = new ConfigController();
   let onPluginsChange: (() => void) | undefined;
   const pluginManager = {
-    snapshot: () => ({ sources: initialSources }) as ReturnType<SharedInstancesBag['pluginManager']['snapshot']>,
+    snapshot: () => ({ sources: initialSources }),
     onPluginsChange: (cb: () => void) => {
       onPluginsChange = cb;
       return () => {
         onPluginsChange = undefined;
       };
     },
-  };
-  const bag = {
-    pluginManagerOrNull: pluginManager,
-    when: (_name: string, cb: (m: typeof pluginManager) => void) => {
-      cb(pluginManager);
-      return () => {};
-    },
-  } as unknown as SharedInstancesBag;
+  } as unknown as PluginController;
+  const container = new ControllerContainer();
+  container.bind(PluginController, () => pluginManager);
+  // Construct it now so `whenController` fires synchronously and `getOrNull`
+  // resolves — the shape a scope where `ensurePluginManager` has already run.
+  container.get(PluginController);
 
   const emitted: SourceButtonConfig[][] = [];
   const controller = new SourceListController(host, {
     config,
-    sharedInstancesBag: bag,
+    container,
     onSourcesChange: (sources) => emitted.push(sources),
   });
   return { controller, config, emitted, triggerPluginsChange: () => onPluginsChange?.() };

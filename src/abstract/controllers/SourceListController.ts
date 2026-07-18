@@ -1,13 +1,13 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import type { SourceButtonConfig } from '../../blocks/SourceBtn/SourceBtn';
-import type { SharedInstancesBag } from '../../lit/shared-instances';
 import { stringToArray } from '../../utils/stringToArray';
-import type { PluginSourceRegistration } from '../managers/plugin';
+import type { ControllerContainer } from '../di/ControllerContainer';
+import { PluginController, type PluginSourceRegistration } from '../managers/plugin';
 import type { ConfigController } from './ConfigController';
 
 export type SourceListControllerOptions = {
   config: ConfigController;
-  sharedInstancesBag: SharedInstancesBag;
+  container: ControllerContainer;
   onSourcesChange: (sources: SourceButtonConfig[]) => void;
 };
 
@@ -17,12 +17,12 @@ export class SourceListController implements ReactiveController {
   private _unsubscribeConfig?: () => void;
   private _unsubscribePluginManagerWhen?: () => void;
   private _config: ConfigController;
-  private _sharedInstancesBag: SharedInstancesBag;
+  private _container: ControllerContainer;
   private _onSourcesChange: (sources: SourceButtonConfig[]) => void;
 
   public constructor(host: ReactiveControllerHost, options: SourceListControllerOptions) {
     this._config = options.config;
-    this._sharedInstancesBag = options.sharedInstancesBag;
+    this._container = options.container;
     this._onSourcesChange = options.onSourcesChange;
     host.addController(this);
   }
@@ -47,14 +47,16 @@ export class SourceListController implements ReactiveController {
       }
     });
 
-    // `*pluginManager` is constructed by a v1 `LitBlock` (e.g. `<uc-drop-area>`)
-    // and isn't guaranteed to exist yet at hostConnected time — a `ChildBlock`-
-    // only composition (a ported solution root with no v1 block having
-    // connected yet) can adopt this controller before that registration lands.
-    // `bag.when` fires immediately if it's already there, else waits and fires
-    // once — re-run `_updateSources` either way so plugin-provided sources
-    // (e.g. camera) show up once the plugin manager becomes available.
-    this._unsubscribePluginManagerWhen = this._sharedInstancesBag.when('pluginManager', (pluginManager) => {
+    // `PluginController` is bound + resolved lazily by `ensureUploaderScope` /
+    // `ensurePluginManager` and isn't guaranteed to exist yet at hostConnected
+    // time — a `ChildBlock`-only composition (a ported solution root with no
+    // uploader block having attached yet) can adopt this controller before that
+    // registration lands. `container.whenController` fires immediately if it's
+    // already constructed, else waits and fires once on the first `get()` — the
+    // cross-token analogue of the former `bag.when('pluginManager', …)`. Re-run
+    // `_updateSources` either way so plugin-provided sources (e.g. camera) show
+    // up once the plugin manager becomes available.
+    this._unsubscribePluginManagerWhen = this._container.whenController(PluginController, (pluginManager) => {
       if (pluginManager.onPluginsChange) {
         this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._updateSources());
       }
@@ -76,7 +78,11 @@ export class SourceListController implements ReactiveController {
   }
 
   private _updateSources(): void {
-    const pluginManager = this._sharedInstancesBag.pluginManagerOrNull;
+    // `getOrNull` returns the `PluginController` only if already constructed on
+    // this container (never `new`-ing it), matching the former
+    // `bag.pluginManagerOrNull` null-tolerant read for a config-only/plugin-less
+    // scope.
+    const pluginManager = this._container.getOrNull(PluginController);
     const pluginSources = pluginManager?.snapshot().sources ?? [];
     const pluginSourceById = new Map(pluginSources.map((source) => [source.id, source]));
 

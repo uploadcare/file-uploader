@@ -75,7 +75,7 @@ export class Config extends ChildBlock {
   };
 
   /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
-  private _debugPrint = createDebugPrinter(() => this.bag.ctx, this.constructor.name);
+  private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
 
   private _computationControllers: ComputedPropertyControllers = new Map();
   private _pluginChangeUnsubscribe?: () => void;

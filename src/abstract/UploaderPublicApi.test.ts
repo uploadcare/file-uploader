@@ -69,7 +69,7 @@ const setup = (): Harness => {
   const bag = createSharedInstancesBag(() => PubSub.getCtx<SharedState>(ctxName)!);
   const container = ctx.container();
   const eventEmitter = container.get(EventEmitter);
-  ensureUploaderScope(bag, container, undefined, (type, payload, options) => eventEmitter.emit(type, payload, options));
+  ensureUploaderScope(ctx, container, undefined, (type, payload, options) => eventEmitter.emit(type, payload, options));
   const ctrl: Ctrl = {
     get locale() {
       return container.get(LocaleController);

@@ -35,7 +35,7 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
   private _cdnUrl: string | null = null;
 
   /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
-  private _debugPrint = createDebugPrinter(() => this.bag.ctx, this.constructor.name);
+  private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
 
   protected override controllerReady(container: ControllerContainer): void {
     super.controllerReady(container);
