@@ -45,6 +45,7 @@ export class ControllerContainer {
   #resolving = new Set<Ctor<unknown>>();
   #consumers = new Set<unknown>();
   #boundValues = new Map<Ctor<unknown>, (c: ControllerContainer) => unknown>();
+  #controllerWaiters = new Map<Ctor<unknown>, Set<(inst: unknown) => void>>();
 
   /** Register a factory for a host/boundary value. Only valid before resolution. */
   public bind<T>(token: Token<T>, factory: (c: ControllerContainer) => T): void {
@@ -74,6 +75,11 @@ export class ControllerContainer {
       this.#instances.set(Ctrl, inst); // cache BEFORE init so re-entrant get() is safe
       this.#order.push(Ctrl);
       (inst as Initializable).init?.();
+      // Flush any `whenController` waiters AFTER init, so they receive a fully
+      // initialized instance. Do this inside `get()` (the single resolution
+      // point) so it covers both the unbound `new Ctrl()` path and the
+      // `bind()`-ed factory path.
+      this.#flushControllerWaiters(Ctrl, inst);
       return inst;
     } finally {
       this.#resolving.delete(Ctrl);
@@ -82,6 +88,65 @@ export class ControllerContainer {
 
   public has<T>(token: Token<T>): boolean {
     return this.#instances.has(resolveToken(token));
+  }
+
+  /**
+   * Null-safe resolve: return the controller only if the token is already bound
+   * (constructed) on this container, else `null` — WITHOUT constructing it.
+   * Reserved for conditionally-bound tokens (e.g. `PluginController`, bound only
+   * in uploader scopes by `ensurePluginManager`): a plain `get()` on such an
+   * unbound token would `new` a zero-arg instance its real ctor can't satisfy,
+   * so callers that may run in a non-uploader scope reach for this instead.
+   */
+  public getOrNull<T>(token: Token<T>): T | null {
+    return this.has(token) ? this.get(token) : null;
+  }
+
+  /**
+   * Run `cb` with the controller as soon as it is resolved on this container:
+   * synchronously now if already constructed, otherwise on the first `get()`
+   * that constructs it (e.g. a conditionally-bound `PluginController` resolved
+   * later by `ensurePluginManager`). Returns an unsubscribe that cancels a
+   * still-pending waiter (no-op once fired). The cross-token analogue of the
+   * registry's `whenAvailable`, for tokens that appear after container creation.
+   */
+  public whenController<T>(token: Token<T>, cb: (inst: T) => void): () => void {
+    const Ctrl = resolveToken(token);
+    const existing = this.#instances.get(Ctrl);
+    if (existing !== undefined) {
+      cb(existing as T);
+      return () => {};
+    }
+    let set = this.#controllerWaiters.get(Ctrl);
+    if (!set) {
+      set = new Set();
+      this.#controllerWaiters.set(Ctrl, set);
+    }
+    const waiter = cb as (inst: unknown) => void;
+    set.add(waiter);
+    return () => {
+      set.delete(waiter);
+      if (set.size === 0) this.#controllerWaiters.delete(Ctrl);
+    };
+  }
+
+  #flushControllerWaiters(Ctrl: Ctor<unknown>, inst: unknown): void {
+    const set = this.#controllerWaiters.get(Ctrl);
+    if (!set) {
+      return;
+    }
+    // Drop the entry before firing so a waiter that (re-)subscribes for the same
+    // token isn't flushed twice, and snapshot so a waiter mutating the set
+    // mid-iteration is safe. Isolate-and-warn: one throwing waiter must not
+    // abort the rest or bubble out of `get()`.
+    this.#controllerWaiters.delete(Ctrl);
+    for (const waiter of [...set]) {
+      try {
+        waiter(inst);
+      } catch (err) {
+        console.warn(`[uc] a whenController waiter for ${Ctrl.name} threw`, err);
+      }
+    }
   }
 
   public addConsumer(c: unknown): void {
@@ -111,5 +176,6 @@ export class ControllerContainer {
     this.#order = [];
     this.#boundValues.clear();
     this.#consumers.clear();
+    this.#controllerWaiters.clear();
   }
 }
