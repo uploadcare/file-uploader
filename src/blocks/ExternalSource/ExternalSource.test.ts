@@ -40,8 +40,26 @@ const mount = async (ctxName: string): Promise<{ el: ExternalSource; router: Rou
 };
 
 describe('ExternalSource (M-god step 6b-2 migration)', () => {
-  it('declares its dependencies via static uses', () => {
-    expect(ExternalSource.uses).toEqual([ConfigController, RouterController, UploaderPublicApi]);
+  it('resolves its ConfigController + RouterController + UploaderPublicApi dependencies via @inject fields', async () => {
+    // The deferred mount in controllerReady reads router params for the (absent)
+    // externalSourceType and console.errors then bails — silence it here.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    const container = UploaderRegistry.get(ctxName);
+    expect(container).toBeDefined();
+
+    // The `@inject` fields resolve through the container the block adopted
+    // (tagged as `this[CONTAINER]`), yielding the very same instances the ctx
+    // owns — the mechanism that replaces `static uses` + `this.use()`.
+    const injected = el as unknown as {
+      _config: ConfigController;
+      _router: RouterController;
+      _api: UploaderPublicApi;
+    };
+    expect(injected._config).toBe(container?.get(ConfigController));
+    expect(injected._router).toBe(container?.get(RouterController));
+    expect(injected._api).toBe(container?.get(UploaderPublicApi));
   });
 
   it('routes the close button through the container-resolved RouterController (use())', async () => {

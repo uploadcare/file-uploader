@@ -2,8 +2,6 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
@@ -56,14 +54,26 @@ const mountWithConfig = async (ctxName: string): Promise<{ el: DynamicBtn; confi
 const hasPrimaryAction = (el: DynamicBtn): boolean => el.querySelector('uc-primary-action') !== null;
 
 describe('DynamicBtn (M-god step 6b-2 migration)', () => {
-  it('declares its dependencies via static uses', () => {
-    expect(DynamicBtn.uses).toEqual([
-      ConfigController,
-      RouterController,
-      CollectionStateController,
-      UploadCollectionController,
-      UploaderPublicApi,
-    ]);
+  it('resolves its always-bound dependencies via @inject fields on the element', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mountWithConfig(ctxName);
+    const container = UploaderRegistry.get(ctxName);
+    expect(container).toBeDefined();
+
+    // The always-bound controllers become `@inject` fields resolving through
+    // the container the block adopted (tagged as `this[CONTAINER]`). The
+    // uploader-scope-bound `UploadCollectionController` (read via
+    // `whenController`/`use()`) and the trailing-tick `UploaderPublicApi` (read
+    // via `useOrNull`) deliberately stay off `@inject` — an `@inject` field
+    // would throw in the pre-scope / post-release windows those reads tolerate.
+    const injected = el as unknown as {
+      _config: ConfigController;
+      _router: RouterController;
+      _collectionState: CollectionStateController;
+    };
+    expect(injected._config).toBe(container?.get(ConfigController));
+    expect(injected._router).toBe(container?.get(RouterController));
+    expect(injected._collectionState).toBe(container?.get(CollectionStateController));
   });
 
   it('re-renders reactively when config.dynamicButtonViewMode changes (getTracked, no subConfigValue)', async () => {
