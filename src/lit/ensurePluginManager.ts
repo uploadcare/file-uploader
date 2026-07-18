@@ -1,4 +1,5 @@
 import { ConfigController } from '../abstract/controllers/ConfigController';
+import { PluginManagerBridge } from '../abstract/di/PluginManagerBridge';
 import { LocaleManager } from '../abstract/managers/LocaleManager';
 import { PluginController } from '../abstract/managers/plugin';
 import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
@@ -84,6 +85,17 @@ export function ensurePluginManager(bag: SharedInstancesBag): void {
   // upload stack, M-god step 8b/5). A raw `ctx.add` would leave it out of that
   // teardown bookkeeping.
   addCtxSharedInstance(ctx, '*pluginManager', () => pluginManager);
+
+  // Bind + eagerly resolve the editor-safe `PluginManagerBridge` token so
+  // `<uc-config>` (which value-imports ONLY the declare-only token, keeping
+  // `PluginController` out of the editor bundle) can reach this same manager via
+  // `getOrNull`/`whenController` — WITHOUT dragging `PluginController` in. The
+  // eager `get` here constructs the bridge at the exact moment the manager
+  // becomes available, so any `whenController(PluginManagerBridge, cb)` waiter a
+  // sibling `<uc-config>` registered earlier fires now (the container-token
+  // analogue of the old `*pluginManager` pub firing `bag.when('pluginManager')`).
+  container.bind(PluginManagerBridge, (c) => ({ getPluginManager: () => c.get(PluginController) }));
+  container.get(PluginManagerBridge);
 
   container.get(LocaleManager).activate(pluginManager);
 }

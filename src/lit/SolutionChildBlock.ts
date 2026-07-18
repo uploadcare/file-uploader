@@ -2,6 +2,7 @@ import { html } from 'lit';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { AppInfo } from '../abstract/controllers/AppInfo';
 import { ClipboardController } from '../abstract/controllers/ClipboardController';
+import { LazyPluginsController } from '../abstract/controllers/LazyPluginsController';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { A11y } from '../abstract/managers/a11y';
 import type { LazyPluginEntry } from '../abstract/managers/plugin/LazyPluginLoader';
@@ -39,7 +40,10 @@ export abstract class SolutionChildBlock extends ChildBlock {
 
     const entries = (this.constructor as typeof SolutionChildBlock).lazyPlugins;
     if (entries) {
-      this.bag.ctx.pub('*lazyPlugins', entries);
+      // `LazyPluginsController` owns the `*lazyPlugins` key (M-god step 4); this
+      // is the same instance `LazyPluginLoader` reads, so publishing here still
+      // triggers the loader (previously `bag.ctx.pub('*lazyPlugins', entries)`).
+      container.get(LazyPluginsController).set(entries);
     }
   }
 
