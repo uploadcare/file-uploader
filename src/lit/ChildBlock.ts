@@ -6,12 +6,12 @@ import { ConfigController } from '../abstract/controllers/ConfigController';
 import { LocaleController } from '../abstract/controllers/LocaleController';
 import { RouterController } from '../abstract/controllers/RouterController';
 import type { ControllerContainer, Token } from '../abstract/di/ControllerContainer';
+import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import type { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType } from '../types';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
-import type { ActivityId } from './activity-constants';
 import { destroyCtx, isCtxUnreferenced } from './ctx-lifecycle';
 import { ctxNameContext } from './ctx-name-context';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
@@ -558,30 +558,6 @@ export abstract class ChildBlock extends ChildBlockBase {
   }
 
   /**
-   * Subscribe to the effective current activity (foreground modal, else
-   * background). Fires immediately with the current value, then on change
-   * (reference dedup). Auto-tracked.
-   *
-   * @deprecated Transitional v1 compat — a migrated block reads activity state
-   * reactively via signals under `SignalWatcher`. Removed once every block is
-   * migrated.
-   */
-  protected subActivity(callback: (activity: ActivityId | null) => void): () => void {
-    const router = this.bag.router;
-    let last: ActivityId | null = router.currentActivity;
-    callback(last);
-    const unsub = router.subscribe(() => {
-      const next: ActivityId | null = router.currentActivity;
-      if (next !== last) {
-        last = next;
-        callback(next);
-      }
-    });
-    this.trackSub(unsub);
-    return unsub;
-  }
-
-  /**
    * Controller-change subscriptions that should trigger a re-render — return
    * `subscribe` functions (e.g. `(l) => container.get(LocaleController).subscribe(l)`).
    * Wired on adoption, torn down on release.
@@ -600,7 +576,7 @@ export abstract class ChildBlock extends ChildBlockBase {
   protected async proxyUrl(url: string): Promise<string> {
     return resolveSecureDeliveryProxyUrl(
       this.use(ConfigController).values,
-      (error, context) => this.bag.telemetryManager.sendEventError(error, context),
+      (error, context) => this.use(TelemetryManager).sendEventError(error, context),
       url,
     );
   }
