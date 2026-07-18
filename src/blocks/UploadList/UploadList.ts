@@ -147,7 +147,8 @@ export class UploadList extends ActivityChildBlock {
 
     // The router guard (registered in controllerReady) decides whether the empty
     // list may stay open; ask it to re-check now that the collection changed.
-    this.bag.routerOrNull?.revalidate();
+    // Null-tolerant (`useOrNull`): this trailing tick can fire after release.
+    this.useOrNull(RouterController)?.revalidate();
 
     if (!config.get('confirmUpload')) {
       this.useOrNull(UploaderPublicApi)?.uploadAll();
@@ -256,10 +257,26 @@ export class UploadList extends ActivityChildBlock {
     this.subConfigValue('multiple', this._throttledHandleCollectionUpdate);
     this.subConfigValue('multipleMin', this._throttledHandleCollectionUpdate);
     this.subConfigValue('multipleMax', this._throttledHandleCollectionUpdate);
+    // `*groupInfo` is owned by `CollectionStateController` (M-god step 4).
+    // Subscribe over its coarse notify but fire only when `groupInfo` itself
+    // changes, replicating `PubSubCompat._subDerived`'s eager-init + per-key
+    // `Object.is` dedup so an unrelated collection-state write (e.g.
+    // `commonProgress`) never re-triggers this — behavior-identical to the v1
+    // `ctx.sub('*groupInfo')`.
+    const collectionState = this.use(CollectionStateController);
+    let lastGroupInfo = collectionState.get('groupInfo');
+    const onGroupInfo = (groupInfo: typeof lastGroupInfo): void => {
+      if (groupInfo) {
+        this._throttledHandleCollectionUpdate();
+      }
+    };
+    onGroupInfo(lastGroupInfo);
     this.trackSub(
-      this.bag.ctx.sub('*groupInfo', (groupInfo) => {
-        if (groupInfo) {
-          this._throttledHandleCollectionUpdate();
+      collectionState.subscribe(() => {
+        const next = collectionState.get('groupInfo');
+        if (!Object.is(next, lastGroupInfo)) {
+          lastGroupInfo = next;
+          onGroupInfo(next);
         }
       }),
     );
@@ -267,14 +284,15 @@ export class UploadList extends ActivityChildBlock {
     // TODO: could be performance issue on many files
     // there is no need to update buttons state on every progress tick
     //
-    // The uploader-scope `*uploadCollection` instance may not have registered
-    // yet when this block's controller adopts — go through `bag.when` rather
-    // than the throwing `bag.uploadCollection` getter (FileItem/DynamicBtn
-    // precedent), and track the observer unsubscribers so release/re-adoption
-    // can't stack duplicate observers. `uploadCollection` has no DI token
-    // (registration race) so this stays on the v1 `bag` path (step 8).
+    // The uploader-scope `UploadCollectionController` is resolved on the
+    // container only once the uploader/solution block attaches its scope
+    // (`ensureUploaderScope`) — go through `whenController` (fires now if
+    // resolved, else on first resolution) rather than the throwing
+    // `use(UploadCollectionController)`, and track the observer unsubscribers so
+    // release/re-adoption can't stack duplicate observers. Same
+    // now-or-when-available semantics as the v1 `bag.when('uploadCollection')`.
     this.trackSub(
-      this.bag.when('uploadCollection', (collection) => {
+      this.container.whenController(UploadCollectionController, (collection) => {
         this.trackSub(collection.observeProperties(this._throttledHandleCollectionUpdate));
         this.trackSub(collection.observeCollection(this._throttledHandleCollectionUpdate));
       }),

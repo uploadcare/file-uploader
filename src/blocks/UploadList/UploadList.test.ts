@@ -299,4 +299,29 @@ describe('UploadList (M-god step 6b-8 migration)', () => {
     await delay(0);
     expect(el.isConnected).toBe(true);
   });
+
+  it('the groupInfo subscription fires the collection-update tick only when groupInfo changes, not on unrelated collection-state writes (per-key dedup)', async () => {
+    const ctxName = freshCtxName();
+    const { el, collectionState } = await mount(ctxName);
+
+    // Replace the throttled tick with a spy; the groupInfo handler calls
+    // `this._throttledHandleCollectionUpdate()` (read at call time), so this
+    // observes exactly which collection-state changes reach it.
+    const tick = vi.fn();
+    (el as unknown as { _throttledHandleCollectionUpdate: () => void })._throttledHandleCollectionUpdate = tick;
+
+    // Unrelated collection-state write -> the groupInfo handler is deduped
+    // (`Object.is` over the coarse notify), so no collection-update tick fires.
+    collectionState.set('commonProgress', 25);
+    expect(tick).not.toHaveBeenCalled();
+
+    // A truthy groupInfo change fires the tick once.
+    collectionState.set('groupInfo', {} as unknown as UploadcareGroup);
+    expect(tick).toHaveBeenCalledTimes(1);
+
+    // Re-setting the SAME group reference is `Object.is`-equal -> no re-fire.
+    const sameGroup = collectionState.get('groupInfo');
+    collectionState.set('groupInfo', sameGroup);
+    expect(tick).toHaveBeenCalledTimes(1);
+  });
 });

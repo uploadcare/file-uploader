@@ -100,4 +100,14 @@ describe('Modal (M-god step 6b-3 migration)', () => {
     await delay(0);
     expect(el.hasAttribute('strokes')).toBe(false);
   });
+
+  it('closeDialog is a no-op after disconnect — null-tolerant useOrNull(RouterController) read', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName, 'camera');
+    // Disconnect releases the container (`_container` -> null). A native <dialog>
+    // "close" event can still land after teardown; `closeDialog` reads the router
+    // via `useOrNull` (was `bag.routerOrNull`) and must not throw when it's gone.
+    el.remove();
+    expect(() => (el as unknown as { closeDialog: () => void }).closeDialog()).not.toThrow();
+  });
 });

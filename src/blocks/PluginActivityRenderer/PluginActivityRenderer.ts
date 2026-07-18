@@ -4,12 +4,8 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
-import type {
-  Owned,
-  PluginActivityRegistration,
-  PluginController,
-  PluginRenderDispose,
-} from '../../abstract/managers/plugin';
+import type { Owned, PluginActivityRegistration, PluginRenderDispose } from '../../abstract/managers/plugin';
+import { PluginController } from '../../abstract/managers/plugin';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import type { ActivityType } from '../../lit/activity-constants';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -101,22 +97,22 @@ export class PluginActivityRenderer extends ChildBlock {
   @state()
   private _activities: Owned<PluginActivityRegistration>[] = [];
 
-  // Transiently null until the shared PluginController registers (bag.when) —
-  // render falls back to an empty activity list meanwhile (Icon/FileItem precedent).
-  // M-god step 8c: `PluginController` IS now container-owned (bound by
-  // `ensurePluginManager`), and `PluginActivityHost`'s router read moved onto
-  // `use(RouterController)`. But this plugin-manager read stays on the
-  // absence-tolerant `bag.when('pluginManager')`: the binding is CONDITIONAL —
-  // it exists only once an uploader scope attaches (`ensureUploaderScope`), which
-  // may be after this block's `controllerReady` fires (or never, in a bare
-  // ctx — see the "renders an empty activity list" spec). A synchronous
-  // `use(PluginController)` would throw on an unbound token; `bag.when` subscribes
-  // and fires when/if it appears, yielding the SAME container instance.
+  // Transiently null until the container resolves the `PluginController`
+  // (`whenController`) — render falls back to an empty activity list meanwhile
+  // (Icon/FileItem precedent). M-god step 8c: `PluginController` is
+  // container-owned (bound by `ensurePluginManager`), but its binding is
+  // CONDITIONAL — it exists only once an uploader scope attaches
+  // (`ensureUploaderScope`), which may be after this block's `controllerReady`
+  // fires (or never, in a bare ctx — see the "renders an empty activity list"
+  // spec). A synchronous `use(PluginController)` would throw on an unresolved
+  // token; `whenController` fires now if resolved, else on first resolution,
+  // yielding the SAME container instance — the now-or-when-available successor
+  // to `bag.when('pluginManager')`.
   private _pluginManager: PluginController | null = null;
 
   protected override controllerReady(): void {
     this.trackSub(
-      this.bag.when('pluginManager', (pluginManager) => {
+      this.container.whenController(PluginController, (pluginManager) => {
         this._pluginManager = pluginManager;
         this.trackSub(pluginManager.onPluginsChange(() => this._syncActivities()));
         this._syncActivities();
