@@ -1,6 +1,9 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
@@ -52,6 +55,8 @@ export type CameraMode = 'photo' | 'video';
 export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pause' | 'resume';
 
 export class CameraSource extends ChildBlock {
+  public static override readonly uses = [ConfigController, RouterController, TelemetryManager] as const;
+
   private _unsubPermissions: (() => void) | null = null;
 
   private _capturing = false;
@@ -92,8 +97,12 @@ export class CameraSource extends ChildBlock {
   private _startTime = 0;
   private _elapsedTime = 0;
 
-  @state()
-  private _videoTransformCss: string | null = null;
+  // Tracked read: `cameraMirror` auto-tracks under `SignalWatcher`, so a config
+  // change re-renders the video transform — replacing the v1
+  // `subConfigValue('cameraMirror')` mirror into a `_videoTransformCss` @state.
+  private get _videoTransformCss(): string | null {
+    return this.use(ConfigController).getTracked('cameraMirror') ? 'scaleX(-1)' : null;
+  }
 
   @state()
   private _videoHidden = true;
@@ -157,7 +166,7 @@ export class CameraSource extends ChildBlock {
   }
 
   private _chooseActionWithCamera = () => {
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -205,7 +214,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleStartCamera = (): void => {
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -227,7 +236,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleRetake = (): void => {
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -241,7 +250,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleAccept = (): void => {
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -264,7 +273,7 @@ export class CameraSource extends ChildBlock {
 
   private _updateTimer = (): void => {
     const currentTime = Math.floor((performance.now() - this._startTime + this._elapsedTime) / 1000);
-    const maxVideoRecordingDuration = this.uploader.config.get('maxVideoRecordingDuration');
+    const maxVideoRecordingDuration = this.use(ConfigController).get('maxVideoRecordingDuration');
 
     if (typeof maxVideoRecordingDuration === 'number' && maxVideoRecordingDuration > 0) {
       const remainingTime = maxVideoRecordingDuration - currentTime;
@@ -331,7 +340,7 @@ export class CameraSource extends ChildBlock {
   private _startRecording = (): void => {
     try {
       this._chunks = [];
-      const mediaRecorderOptions = this.uploader.config.get('mediaRecorderOptions');
+      const mediaRecorderOptions = this.use(ConfigController).get('mediaRecorderOptions');
       this._options = {
         ...mediaRecorderOptions,
       };
@@ -361,7 +370,7 @@ export class CameraSource extends ChildBlock {
       }
     } catch (error) {
       console.error('Failed to start recording', error);
-      this.bag.telemetryManager.sendEventError(error, 'camera recording. Failed to start recording');
+      this.use(TelemetryManager).sendEventError(error, 'camera recording. Failed to start recording');
     }
   };
 
@@ -377,7 +386,7 @@ export class CameraSource extends ChildBlock {
     this._mediaRecorder?.stop();
     this.classList.remove('uc-recording');
 
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -435,7 +444,7 @@ export class CameraSource extends ChildBlock {
       this._attachPreviewListeners(videoElement);
     } catch (error) {
       console.error('Failed to preview video', error);
-      this.bag.telemetryManager.sendEventError(error, 'camera previewing. Failed to preview video');
+      this.use(TelemetryManager).sendEventError(error, 'camera previewing. Failed to preview video');
     }
   };
 
@@ -532,7 +541,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleVideo = (status: CameraStatus): void => {
-    const enableAudioRecording = this.uploader.config.get('enableAudioRecording');
+    const enableAudioRecording = this.use(ConfigController).get('enableAudioRecording');
     if (status === CameraSourceEvents.PLAY) {
       this._timerHidden = false;
       this._tabCameraHidden = true;
@@ -601,7 +610,7 @@ export class CameraSource extends ChildBlock {
     this._canvas.height = videoEl.videoHeight;
     this._canvas.width = videoEl.videoWidth;
 
-    if (this.uploader.config.get('cameraMirror')) {
+    if (this.use(ConfigController).get('cameraMirror')) {
       this._ctx.translate(this._canvas.width, 0);
       this._ctx.scale(-1, 1);
     }
@@ -619,14 +628,14 @@ export class CameraSource extends ChildBlock {
     }
 
     if (tabId === CameraSourceTypes.VIDEO) {
-      const enableAudioRecording = this.uploader.config.get('enableAudioRecording');
+      const enableAudioRecording = this.use(ConfigController).get('enableAudioRecording');
       this._currentTimelineIcon = 'play';
       this._currentIcon = 'video-camera-full';
       this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
       this._audioToggleMicrophoneHidden = !enableAudioRecording;
     }
 
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -689,13 +698,15 @@ export class CameraSource extends ChildBlock {
    * The send file to the server
    */
   private _toSend = (file: File): void => {
+    // `api` (UploaderPublicApi) has no DI token (set via UploaderController.setApi),
+    // so it stays on the v1 `bag` (step 8).
     this.bag.api.addFileFromObject(file, { source: UploadSource.CAMERA });
 
-    this.bag.router.traverse('onFileAdd');
+    this.use(RouterController).traverse('onFileAdd');
   };
 
   private get _cameraModes(): CameraMode[] {
-    return stringToArray(this.uploader.config.get('cameraModes')).filter(
+    return stringToArray(this.use(ConfigController).get('cameraModes')).filter(
       (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
     );
   }
@@ -708,7 +719,7 @@ export class CameraSource extends ChildBlock {
     this.classList.toggle('uc-initialized', state === 'granted');
 
     const visibleAudio =
-      this._activeTab === CameraSourceTypes.VIDEO && this.uploader.config.get('enableAudioRecording');
+      this._activeTab === CameraSourceTypes.VIDEO && this.use(ConfigController).get('enableAudioRecording');
     const currentIcon = this._activeTab === CameraSourceTypes.PHOTO ? 'camera-full' : 'video-camera-full';
 
     if (state === 'granted') {
@@ -776,7 +787,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _capture = async (): Promise<void> => {
-    const enableAudioRecording = this.uploader.config.get('enableAudioRecording');
+    const enableAudioRecording = this.use(ConfigController).get('enableAudioRecording');
     const constraints: MediaStreamConstraints = {
       video: { ...DEFAULT_VIDEO_CONFIG },
       audio: enableAudioRecording ? ({} as MediaTrackConstraints) : false,
@@ -817,7 +828,7 @@ export class CameraSource extends ChildBlock {
     } catch (error) {
       this._setPermissionsState('denied');
       console.log('Failed to capture camera', error);
-      this.bag.telemetryManager.sendEventError(error, 'camera capturing. Failed to capture camera');
+      this.use(TelemetryManager).sendEventError(error, 'camera capturing. Failed to capture camera');
     }
   };
 
@@ -845,7 +856,7 @@ export class CameraSource extends ChildBlock {
     } catch (error) {
       this._teardownPermissionListeners();
       console.log('Failed to use permissions API. Fallback to manual request mode.', error);
-      this.bag.telemetryManager.sendEventError(error, 'camera permissions. Failed to use permissions API');
+      this.use(TelemetryManager).sendEventError(error, 'camera permissions. Failed to use permissions API');
       this._capture();
     }
   };
@@ -865,13 +876,13 @@ export class CameraSource extends ChildBlock {
     try {
       await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: this.uploader.config.get('enableAudioRecording'),
+        audio: this.use(ConfigController).get('enableAudioRecording'),
       });
       await this._getDevices();
 
       navigator.mediaDevices.addEventListener('devicechange', this._getDevices);
     } catch (error) {
-      this.bag.telemetryManager.sendEventError(error, 'camera devices. Failed to get user media');
+      this.use(TelemetryManager).sendEventError(error, 'camera devices. Failed to get user media');
       console.log('Failed to get user media', error);
     }
   };
@@ -879,7 +890,7 @@ export class CameraSource extends ChildBlock {
   private _getDevices = async (): Promise<void> => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const enableAudioRecording = this.uploader.config.get('enableAudioRecording');
+      const enableAudioRecording = this.use(ConfigController).get('enableAudioRecording');
 
       this._cameraDevices = devices
         .filter((device) => device.kind === 'videoinput')
@@ -905,7 +916,7 @@ export class CameraSource extends ChildBlock {
       this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
       this._selectedAudioId = this._audioDevices[0]?.value ?? null;
     } catch (error) {
-      this.bag.telemetryManager.sendEventError(error, 'camera devices. Failed to get devices');
+      this.use(TelemetryManager).sendEventError(error, 'camera devices. Failed to get devices');
       console.log('Failed to get devices', error);
     }
   };
@@ -943,10 +954,11 @@ export class CameraSource extends ChildBlock {
   };
 
   protected override controllerReady(): void {
-    this.subConfigValue('cameraMirror', (val) => {
-      this._videoTransformCss = val ? 'scaleX(-1)' : null;
-    });
-
+    // `cameraMirror` is now a tracked render read (see `_videoTransformCss`).
+    // These two stay `subConfigValue` (side-effecting, not pure render reads):
+    // `enableAudioRecording` and `cameraModes` mutate several imperative @state
+    // fields also written by the camera-stream handlers, so they can't collapse
+    // into a derived render getter.
     this.subConfigValue('enableAudioRecording', (val) => {
       this._audioToggleMicrophoneHidden = !val;
       this._audioSelectDisabled = !val;
@@ -995,7 +1007,7 @@ export class CameraSource extends ChildBlock {
         <button
           type="button"
           class="uc-mini-btn"
-          @click=${() => this.bag.router.traverse('onBack')}
+          @click=${() => this.use(RouterController).traverse('onBack')}
           title=${this.l10n('back')}
         >
           <uc-icon name="back"></uc-icon>
@@ -1014,7 +1026,7 @@ export class CameraSource extends ChildBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${() => this.bag.router.traverse('onClose')}
+          @click=${() => this.use(RouterController).traverse('onClose')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >
