@@ -1,10 +1,12 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import type { PluginController, PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { debounce } from '../../utils/debounce';
 import { throttle } from '../../utils/throttle';
@@ -31,7 +33,12 @@ const FileItemState = Object.freeze({
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
 
 export class FileItem extends FileItemConfig {
-  public static override readonly uses = [ConfigController, TelemetryManager] as const;
+  public static override readonly uses = [
+    ConfigController,
+    UploadCollectionController,
+    UploaderPublicApi,
+    TelemetryManager,
+  ] as const;
 
   @state()
   private _pauseRender = true;
@@ -94,10 +101,10 @@ export class FileItem extends FileItemConfig {
       },
     });
 
-    // `uploadCollection` is registered by the upload stack, not eagerly in the
-    // container — no clean DI token to `use()`, so this stays on the null-safe
-    // v1 `bag` path (step 8).
-    const collection = this.bag.uploadCollectionOrNull;
+    // `uploadCollection` is container-owned (M-god step 4). Read it
+    // null-tolerantly via `useOrNull`: this handler can run outside an adopted
+    // scope (teardown race), where the throwing `use()` would be unsafe.
+    const collection = this.useOrNull(UploadCollectionController);
     if (this.uid && collection?.hasItem(this.uid)) {
       this.entry?.getValue('abortController')?.abort();
       collection.remove(this.uid);
@@ -207,8 +214,8 @@ export class FileItem extends FileItemConfig {
   private _handleEntryId(id: Uid): void {
     this.reset();
 
-    // The uploader-scope shared instances exist only once an uploader block initializes this ctx.
-    const entry = this.bag.uploadCollectionOrNull?.read(id) ?? null;
+    // The uploader-scope controllers exist only once an uploader block initializes this ctx.
+    const entry = this.useOrNull(UploadCollectionController)?.read(id) ?? null;
     this.entry = entry;
 
     if (!entry) {
@@ -288,8 +295,8 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    // The uploader-scope shared instances exist only once an uploader block initializes this ctx.
-    const api = this.bag.apiOrNull;
+    // The uploader-scope controllers exist only once an uploader block initializes this ctx.
+    const api = this.useOrNull(UploaderPublicApi);
     if (!api) {
       this._pluginFileActions = [];
       return;
@@ -318,7 +325,7 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    const api = this.bag.apiOrNull;
+    const api = this.useOrNull(UploaderPublicApi);
     if (!api) {
       return;
     }

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
@@ -43,7 +44,7 @@ const videoEl = (el: CameraSource): HTMLVideoElement | null => el.querySelector(
 
 describe('CameraSource (M-god step 6b-3 migration)', () => {
   it('declares its dependencies via static uses', () => {
-    expect(CameraSource.uses).toEqual([ConfigController, RouterController, TelemetryManager]);
+    expect(CameraSource.uses).toEqual([ConfigController, RouterController, TelemetryManager, UploaderPublicApi]);
   });
 
   it('re-renders the video transform reactively when cameraMirror changes (getTracked, no subConfigValue)', async () => {

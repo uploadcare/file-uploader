@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
@@ -41,7 +42,7 @@ const buttonText = (el: SimpleBtn): string | null | undefined => el.querySelecto
 
 describe('SimpleBtn (M-god step 6b-1 migration)', () => {
   it('declares its dependency via static uses', () => {
-    expect(SimpleBtn.uses).toEqual([ConfigController]);
+    expect(SimpleBtn.uses).toEqual([ConfigController, UploaderPublicApi]);
   });
 
   it('re-renders the button text reactively when config.multiple changes (getTracked, no subConfigValue)', async () => {

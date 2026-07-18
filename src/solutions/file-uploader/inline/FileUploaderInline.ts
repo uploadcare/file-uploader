@@ -101,19 +101,47 @@ export class FileUploaderInline extends SolutionChildBlock {
     router.configure({ doneActivity: ACTIVITY_TYPES.START_FROM });
 
     // Side-effecting activity coordination (re-seeds start-from when everything
-    // closes) — stays imperative.
-    this.subActivity((val) => {
+    // closes) — stays imperative, now off `RouterController` directly (replaces
+    // `subActivity`). The current-activity dedup + eager fire reproduce
+    // `subActivity`'s exact contract.
+    let lastActivity = router.currentActivity;
+    const applyActivityCoordination = (val: typeof lastActivity) => {
       if (!val) {
         router.setActivity(initActivity);
       }
-    });
+    };
+    applyActivityCoordination(lastActivity);
+    this.trackSub(
+      router.subscribe(() => {
+        const next = router.currentActivity;
+        if (next !== lastActivity) {
+          lastActivity = next;
+          applyActivityCoordination(next);
+        }
+      }),
+    );
 
     // Imperative side-effecting sub (drives `router.setActivity`, not a render
-    // read), so it stays on the v1 `bag.ctx` subscription.
+    // read), now sourced from `CollectionStateController` directly instead of the
+    // `*uploadList` `bag.ctx` key. The per-key `Object.is` dedup + eager fire
+    // reproduce the exact `PubSub.sub('*uploadList', …)` semantics
+    // (`_subDerived`): fire once now, then only when the `uploadList` reference
+    // actually changes — NOT on every coarse collection-state notify. This does
+    // NOT drive `_couldCancel` (see its doc): that stays a router-only recompute.
+    const collectionState = this.use(CollectionStateController);
+    let lastUploadList = collectionState.get('uploadList');
+    const applyUploadListActivity = (list: typeof lastUploadList) => {
+      if (list.length > 0 && router.currentActivity === initActivity) {
+        router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
+      }
+    };
+    applyUploadListActivity(lastUploadList);
     this.trackSub(
-      this.bag.ctx.sub('*uploadList', (list) => {
-        if (list.length > 0 && router.currentActivity === initActivity) {
-          router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
+      collectionState.subscribe(() => {
+        const next = collectionState.get('uploadList');
+        if (!Object.is(next, lastUploadList)) {
+          lastUploadList = next;
+          applyUploadListActivity(next);
         }
       }),
     );

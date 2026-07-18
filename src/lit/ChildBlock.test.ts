@@ -24,6 +24,9 @@ class UseBlock extends ChildBlock {
   public callUse<T>(token: Token<T>): T {
     return this.use(token);
   }
+  public callUseOrNull<T>(token: Token<T>): T | null {
+    return this.useOrNull(token);
+  }
   public override render() {
     return html``;
   }
@@ -91,6 +94,33 @@ describe('ChildBlock.use()', () => {
     expect(config).toBeInstanceOf(ConfigController);
     // Same singleton the container owns for this ctx.
     expect(config).toBe(PubSub.getContainer(ctxName)?.get(ConfigController));
+  });
+});
+
+describe('ChildBlock.useOrNull()', () => {
+  it('returns null when the container is not adopted yet', () => {
+    const el = document.createElement('uc-test-use-block') as UseBlock;
+    mounted.push(el);
+    expect(el.callUseOrNull(ConfigController)).toBeNull();
+  });
+
+  it('resolves the same singleton as use() after adoption', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount<UseBlock>('uc-test-use-block', ctxName);
+
+    const viaOrNull = el.callUseOrNull(ConfigController);
+    expect(viaOrNull).toBeInstanceOf(ConfigController);
+    expect(viaOrNull).toBe(el.callUse(ConfigController));
+  });
+
+  it('returns null again after the block is released (teardown-race guard)', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount<UseBlock>('uc-test-use-block', ctxName);
+    expect(el.callUseOrNull(ConfigController)).not.toBeNull();
+
+    el.remove(); // synchronous _releaseController nulls the container
+
+    expect(el.callUseOrNull(ConfigController)).toBeNull();
   });
 });
 

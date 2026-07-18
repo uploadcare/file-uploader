@@ -2,6 +2,8 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { PubSub } from '../../lit/PubSubCompat';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
@@ -55,7 +57,13 @@ const hasPrimaryAction = (el: DynamicBtn): boolean => el.querySelector('uc-prima
 
 describe('DynamicBtn (M-god step 6b-2 migration)', () => {
   it('declares its dependencies via static uses', () => {
-    expect(DynamicBtn.uses).toEqual([ConfigController, RouterController, CollectionStateController]);
+    expect(DynamicBtn.uses).toEqual([
+      ConfigController,
+      RouterController,
+      CollectionStateController,
+      UploadCollectionController,
+      UploaderPublicApi,
+    ]);
   });
 
   it('re-renders reactively when config.dynamicButtonViewMode changes (getTracked, no subConfigValue)', async () => {

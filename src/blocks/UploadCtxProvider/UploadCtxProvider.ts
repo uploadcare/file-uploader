@@ -1,4 +1,4 @@
-import type { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import { EventBus } from '../../abstract/EventBus';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
@@ -12,6 +12,8 @@ import { type EventPayload, EventType } from './EventEmitter';
 export class UploadCtxProvider extends ChildBlock {
   public static override styleAttrs = ['uc-wgt-common'];
   public static EventType = EventType;
+
+  public static override readonly uses = [EventBus, UploaderPublicApi, UploadCollectionController] as const;
 
   /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
   private _debugPrint = createDebugPrinter(() => this.bag.ctx, this.constructor.name);
@@ -88,17 +90,18 @@ export class UploadCtxProvider extends ChildBlock {
   /**
    * Same contract as v1 `LitUploaderBlock.get uploadCollection()` — part of the
    * documented `<uc-upload-ctx-provider>` type surface (pinned by
-   * `types/test/uc-upload-ctx-provider.test-d.tsx`). Throws pre-adoption via
-   * `bag`, exactly as the v1 getter did before `initCallback` ran.
+   * `types/test/uc-upload-ctx-provider.test-d.tsx`). Resolved from the ctx's
+   * container (M-god step 8d); throws pre-adoption via `use()`, exactly as the
+   * v1 getter did before `initCallback` ran.
    */
   public get uploadCollection(): UploadCollectionController {
-    return this.bag.uploadCollection;
+    return this.use(UploadCollectionController);
   }
 
   /**
    * Same contract as v1 `LitUploaderBlock.getAPI()` — returns the ctx's public
    * API. Resolved from the ctx's container (M-god step 8a); the same single
-   * instance `bag.api`/`*publicApi` exposes.
+   * instance `*publicApi` exposes.
    */
   public getAPI(): UploaderPublicApi {
     return this.use(UploaderPublicApi);

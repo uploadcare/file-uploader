@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
@@ -54,7 +56,7 @@ const fileNameHidden = (el: FileItem): boolean =>
 
 describe('FileItem (M-god step 6b-6 migration)', () => {
   it('declares its dependencies via static uses', () => {
-    expect(FileItem.uses).toEqual([ConfigController, TelemetryManager]);
+    expect(FileItem.uses).toEqual([ConfigController, UploadCollectionController, UploaderPublicApi, TelemetryManager]);
   });
 
   it('pre-warms its declared dependencies into the container on adoption', async () => {

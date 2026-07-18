@@ -2,6 +2,7 @@ import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './simple-btn.css';
 
@@ -11,15 +12,15 @@ import '../Icon/Icon';
 export class SimpleBtn extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];
 
-  public static override readonly uses = [ConfigController] as const;
+  public static override readonly uses = [ConfigController, UploaderPublicApi] as const;
 
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;
 
-  // `api` (UploaderPublicApi) is not container-resolved (it's set via
-  // UploaderController.setApi, has no DI token), so it stays on the v1 `bag`.
+  // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI token —
+  // it is container-resolved (M-god step 8a), reached here via `use()`.
   private readonly _handleClick = () => {
-    this.bag.api.initFlow();
+    this.use(UploaderPublicApi).initFlow();
   };
 
   protected override subscriptionsFor(ctrl: UploaderController) {
