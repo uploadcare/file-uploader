@@ -80,13 +80,14 @@ describe('destroyCtx', () => {
     const ctxName = freshCtxName();
     const ctx = PubSub.registerCtx<SharedState>({} as SharedState, ctxName);
     const destroySpy = vi.fn();
-    // '*pluginManager' is not in `controllerOwnedInstanceKeys` (it's DOM-layer
-    // owned, per `shared-instances.ts`), so `destroyCtx` must call `.destroy()`
-    // on it directly, then pub-null the key.
+    // '*publicApi' is not in `controllerOwnedInstanceKeys`, so `destroyCtx` must
+    // call `.destroy()` on it directly, then pub-null the key. (This test used
+    // `*pluginManager` until M-god step 8c graduated it to controller-owned; see
+    // the dedicated skip-test below.)
     const instance = { destroy: destroySpy };
-    const instances = new Map<string, { destroy: () => void }>([['*pluginManager', instance]]);
+    const instances = new Map<string, { destroy: () => void }>([['*publicApi', instance]]);
     ctx.add('*sharedContextInstances', instances as unknown as SharedState['*sharedContextInstances'], true);
-    ctx.add('*pluginManager', instance as unknown as SharedState['*pluginManager'], true);
+    ctx.add('*publicApi', instance as unknown as SharedState['*publicApi'], true);
 
     destroyCtx(ctxName);
 
@@ -104,6 +105,24 @@ describe('destroyCtx', () => {
     const instances = new Map<string, { destroy: () => void }>([['*a11y', instance]]);
     ctx.add('*sharedContextInstances', instances as unknown as SharedState['*sharedContextInstances'], true);
     ctx.add('*a11y', instance as unknown as SharedState['*a11y'], true);
+
+    destroyCtx(ctxName);
+
+    expect(destroySpy).not.toHaveBeenCalled();
+  });
+
+  it('skips .destroy() on *pluginManager (controller-owned since M-god step 8c — the container disposes it)', () => {
+    const ctxName = freshCtxName();
+    const ctx = PubSub.registerCtx<SharedState>({} as SharedState, ctxName);
+    const destroySpy = vi.fn();
+    // '*pluginManager' joined `controllerOwnedInstanceKeys` in M-god step 8c:
+    // `ensurePluginManager` binds + resolves it on the per-ctx container, so
+    // `container.dispose()` owns its teardown. `destroyCtx` must skip its direct
+    // `.destroy()` (still pub-nulling the key) to avoid a double-destroy.
+    const instance = { destroy: destroySpy };
+    const instances = new Map<string, { destroy: () => void }>([['*pluginManager', instance]]);
+    ctx.add('*sharedContextInstances', instances as unknown as SharedState['*sharedContextInstances'], true);
+    ctx.add('*pluginManager', instance as unknown as SharedState['*pluginManager'], true);
 
     destroyCtx(ctxName);
 

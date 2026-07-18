@@ -36,6 +36,7 @@ import { LocaleController } from './controllers/LocaleController';
 import { RouterController } from './controllers/RouterController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import { inject } from './di/inject';
+import { PluginController } from './managers/plugin';
 import { TypedData } from './TypedData';
 import type { UploadEntryData } from './uploadEntrySchema';
 
@@ -57,13 +58,15 @@ export type ApiAddFileCommonOptions = {
  * so `@inject` resolves, and stays reachable as `bag.api` / `*publicApi` /
  * `UploaderController.api` (the same single instance) during the transition.
  *
- * Two dependencies are NOT container-resolvable yet and stay on a bag bridge
- * (`setBagBridge`, wired at registration in `ensureUploaderScope`):
- *  - the plugin manager (`*pluginManager` is still DOM-layer-constructed;
- *    step 8b will make it `@inject(() => PluginController)`);
- *  - `buildOutputCollectionState`, which still reads the derived collection keys
- *    off the `bag`/ctx (its own off-facade rewrite is out of step-8a scope).
- * Everything else is `@inject`.
+ * M-god step 8c: the plugin manager is now container-resolved too —
+ * `@inject(() => PluginController)` (a lazy thunk, resolved at plugin-read time;
+ * `PluginController` is bound on the container by `ensurePluginManager`, which
+ * runs in the same `ensureUploaderScope` that registers this api, so it is
+ * always available by the time any plugin read fires on user action). The ONLY
+ * dependency left on the bag bridge (`setBagBridge`, wired at registration in
+ * `ensureUploaderScope`) is `buildOutputCollectionState`, which still reads the
+ * derived collection keys off the `bag`/ctx (its own off-facade rewrite is a
+ * later concern). Everything else is `@inject`.
  */
 export class UploaderPublicApi {
   @inject(ConfigController) private readonly _config!: ConfigController;
@@ -72,9 +75,15 @@ export class UploaderPublicApi {
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
   @inject(RouterController) private readonly _router!: RouterController;
+  // Lazy thunk: resolved at plugin-read time (`_pluginsReady`/`initFlow`), so
+  // there is no construction cycle. Same instance as `bag.pluginManager` /
+  // `ctx.read('*pluginManager')` (the re-exposer registered by
+  // `ensurePluginManager` points at this container binding).
+  @inject(() => PluginController) private readonly _pluginManager!: PluginController;
 
-  // Bag bridge for the two still-not-injectable dependencies (see class doc).
-  // Set once at registration; step 8b/later dissolves it entirely.
+  // Bag bridge for the one still-not-injectable dependency
+  // (`buildOutputCollectionState`, see class doc). Set once at registration;
+  // a later step dissolves it entirely.
   private _getBag: (() => SharedInstancesBag) | null = null;
 
   // `createL10n` reads the injected `LocaleController` live on every lookup, so a
@@ -82,8 +91,10 @@ export class UploaderPublicApi {
   private _l10n = createL10n(() => this._locale);
 
   /**
-   * Wire the bag bridge. Called once by `ensureUploaderScope` right after the
-   * container resolves this instance — before any consumer can reach the api.
+   * Wire the bag bridge (used only by `getOutputCollectionState` →
+   * `buildOutputCollectionState`). Called once by `ensureUploaderScope` right
+   * after the container resolves this instance — before any consumer can reach
+   * the api.
    */
   public setBagBridge(getBag: () => SharedInstancesBag): void {
     this._getBag = getBag;
@@ -371,7 +382,7 @@ export class UploaderPublicApi {
         const srcKey = this._sourceList[0];
 
         void this._pluginsReady().then(() => {
-          const sources = this._bag.pluginManager.snapshot().sources;
+          const sources = this._pluginManager.snapshot().sources;
           const registeredSource = sources.find((s) => s.id === srcKey);
 
           if (registeredSource) {
@@ -407,11 +418,12 @@ export class UploaderPublicApi {
     }
   };
 
-  private async _pluginsReady(): Promise<void> {
-    // Plugin manager is still bag-bridged (see class doc); step 8b makes this
-    // `@inject(() => PluginController)`.
-    const pluginManager = await this._bag.wait('pluginManager');
-    return pluginManager.pluginsReady();
+  private _pluginsReady(): Promise<void> {
+    // M-god step 8c: the plugin manager is container-resolved (`@inject`). It is
+    // always bound by the time a plugin read fires (see class doc), so this
+    // resolves synchronously and returns its readiness promise directly — no
+    // `bag.wait` registration race to await.
+    return this._pluginManager.pluginsReady();
   }
 
   /**
