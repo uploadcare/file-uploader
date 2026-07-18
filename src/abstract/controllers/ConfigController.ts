@@ -43,6 +43,23 @@ export class ConfigController {
     return this.#state.get(key) as ConfigType[K];
   }
 
+  /**
+   * Reactive, auto-tracking read of a config key. Reading it inside a
+   * `SignalWatcher` update (a migrated `ChildBlock.render()`) subscribes that
+   * render to THIS key, so a later `set()` re-renders the block with no manual
+   * `subConfigValue` subscription.
+   *
+   * Distinct from `get()`, which reads the fast bag and is NOT tracked — kept
+   * for the still-imperative readers (every `api.cfg` lookup, v1
+   * `subConfigValue`, non-migrated blocks) whose hot-path per-read signal
+   * overhead measurably destabilized the parallel e2e suite (see `SignalMap`).
+   * Both coexist only during the strangler migration: once every reader is a
+   * tracked reader, `get()` can route through the signal and this splits away.
+   */
+  public getTracked<K extends keyof ConfigType>(key: K): ConfigType[K] {
+    return this.#state.signal(key).get() as ConfigType[K];
+  }
+
   /** Notifies only when the value actually changes (`Object.is` dedup). */
   public set<K extends keyof ConfigType>(key: K, value: ConfigType[K]): void {
     this.#state.set(key, value);

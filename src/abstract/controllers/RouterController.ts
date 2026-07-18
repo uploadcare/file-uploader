@@ -57,7 +57,14 @@ export class RouterController {
   private _listeners = new Listeners();
   private _table: RouteTable = {};
   private _activity: ActivityId | null = null;
-  private _modal: ActivityId | null = null;
+  // Backed by `@signalState` so a `SignalWatcher` consumer can track the
+  // foreground modal slot directly (M-god step 6b-3: `<uc-modal>` reads
+  // `router.modal` in `willUpdate` to drive its `<dialog>` open/close). This is
+  // distinct from `_currentActivity` (`_modal ?? _activity`): a modal opening on
+  // the id that's already the background activity leaves the effective activity
+  // unchanged, so only the modal-slot signal captures that transition. The
+  // coarse `_listeners.notify()` every existing reader relies on is unchanged.
+  @signalState() private _modal: ActivityId | null = null;
   // The single "effective" activity as a signal-backed field (M-god step 3c) —
   // kept in lockstep with the two slots by `_transition` (its sole writer, via
   // the two slots' sole writer). Backed by `@signalState` so a future
@@ -97,6 +104,11 @@ export class RouterController {
   public get activity(): ActivityId | null {
     return this._activity;
   }
+  /**
+   * The foreground modal slot, or `null` when no modal is open. Backed by a
+   * signal, so reading it inside a `SignalWatcher` update auto-tracks and a
+   * later open/close re-runs that consumer (see `_modal`).
+   */
   public get modal(): ActivityId | null {
     return this._modal;
   }

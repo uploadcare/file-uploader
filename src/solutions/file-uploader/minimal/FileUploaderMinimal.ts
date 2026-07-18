@@ -1,6 +1,8 @@
-import { html } from 'lit';
-import { state } from 'lit/decorators.js';
+import { html, type PropertyValues } from 'lit';
+import { ConfigController } from '../../../abstract/controllers/ConfigController';
+import { RouterController } from '../../../abstract/controllers/RouterController';
 import type { UploaderController } from '../../../abstract/controllers/UploaderController';
+import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
@@ -27,16 +29,28 @@ export class FileUploaderMinimal extends SolutionChildBlock {
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-minimal'];
 
-  @state()
-  private _singleUpload = false;
+  public static override readonly uses = [RouterController, ConfigController, TelemetryManager] as const;
 
-  @state()
-  private _buttonTextKey = 'choose-file';
+  /**
+   * Grid single-upload flag feeding `?single=` on the inline drop-area — true
+   * only in grid mode without `multiple`. A tracked `getTracked` getter (drops
+   * the v1 `@state` + nested `subConfigValue`): reading it in `render()`
+   * auto-tracks both keys under `SignalWatcher`, so a config change re-renders.
+   */
+  private get _singleUpload(): boolean {
+    const config = this.use(ConfigController);
+    return config.getTracked('filesViewMode') === 'grid' && !config.getTracked('multiple');
+  }
+
+  /** Trigger label key, derived reactively from `multiple` (drops the v1 `@state`). */
+  private get _buttonTextKey(): string {
+    return this.use(ConfigController).getTracked('multiple') ? 'choose-files' : 'choose-file';
+  }
 
   protected override controllerReady(ctrl: UploaderController): void {
     super.controllerReady(ctrl);
 
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
 
@@ -47,59 +61,67 @@ export class FileUploaderMinimal extends SolutionChildBlock {
     // and `<uc-upload-list>` light up via the background slot's `[active]`
     // attribute (no manual class toggling). A completed flow lands on the
     // upload list.
-    this.bag.router.navigationStrategy = (to) => (to === ACTIVITY_TYPES.UPLOAD_LIST ? 'background' : 'foreground');
-    this.bag.router.configure({ doneActivity: ACTIVITY_TYPES.UPLOAD_LIST });
+    const router = this.use(RouterController);
+    router.navigationStrategy = (to) => (to === ACTIVITY_TYPES.UPLOAD_LIST ? 'background' : 'foreground');
+    router.configure({ doneActivity: ACTIVITY_TYPES.UPLOAD_LIST });
 
     // Background slot follows file state: the upload list once files exist,
-    // otherwise the start-from trigger.
+    // otherwise the start-from trigger. Imperative side-effecting sub (drives
+    // `router.setActivity`, not a render read), so it stays on the v1 `bag.ctx`
+    // subscription — the `*uploadList` CollectionStateController token is only
+    // adopted for pure render reads (see FormInput/UploadList).
     this.trackSub(
       this.bag.ctx.sub('*uploadList', (list) => {
         const hasFiles = list.length > 0;
-        this.bag.router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
+        router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
       }),
     );
 
+    // Side-effecting activity coordination (closes the modal on upload-list,
+    // re-seeds start-from when everything closes) — stays imperative.
     this.subActivity((val) => {
       if (val === ACTIVITY_TYPES.UPLOAD_LIST) {
-        this.bag.router.closeModal();
+        router.closeModal();
       }
       if (!val) {
-        this.bag.router.setActivity(ACTIVITY_TYPES.START_FROM);
+        router.setActivity(ACTIVITY_TYPES.START_FROM);
       }
     });
 
+    // Side-effecting config write (minimal forces `confirmUpload` off) — stays
+    // an imperative `subConfigValue`, not a render read.
     this.subConfigValue('confirmUpload', (confirmUpload) => {
       if (confirmUpload !== false) {
-        this.uploader.config.set('confirmUpload', false);
+        this.use(ConfigController).set('confirmUpload', false);
       }
-    });
-
-    this.subConfigValue('filesViewMode', (mode) => {
-      this.setAttribute('mode', mode);
-
-      this.subConfigValue('multiple', (multiple) => {
-        if (mode === 'grid') {
-          if (multiple) {
-            this.style.removeProperty('--uc-grid-col');
-          } else {
-            this.style.setProperty('--uc-grid-col', '1');
-          }
-
-          this._singleUpload = !multiple;
-        } else {
-          this.style.removeProperty('--uc-grid-col');
-          this._singleUpload = false;
-        }
-      });
-    });
-
-    this.subConfigValue('multiple', (val) => {
-      this._buttonTextKey = val ? 'choose-files' : 'choose-file';
     });
   }
 
   protected override subscriptionsFor(ctrl: UploaderController) {
     return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  }
+
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+
+    // Host `[mode]` attribute + `--uc-grid-col` style side-effects: the CSS
+    // `[uc-file-uploader-minimal][mode="list"|"grid"]` selectors key off the
+    // host attribute, so drive it here from the tracked config signals (the
+    // Modal `willUpdate` + `getTracked` recipe, replacing the v1
+    // `subConfigValue('filesViewMode')` with a nested `subConfigValue('multiple')`).
+    // Reading both keys via `getTracked` auto-tracks them under `SignalWatcher`,
+    // so a config change re-runs this update and re-applies the attribute/style —
+    // matching the v1 subscription's reactivity. Neither is a reactive property,
+    // so toggling them schedules no further update.
+    const config = this.use(ConfigController);
+    const mode = config.getTracked('filesViewMode');
+    const multiple = config.getTracked('multiple');
+    this.setAttribute('mode', mode);
+    if (mode === 'grid' && !multiple) {
+      this.style.setProperty('--uc-grid-col', '1');
+    } else {
+      this.style.removeProperty('--uc-grid-col');
+    }
   }
 
   public override render() {
@@ -123,7 +145,7 @@ export class FileUploaderMinimal extends SolutionChildBlock {
           <button
             type="button"
             class="uc-secondary-btn"
-            @click=${() => this.bag.router.traverse('onCancel')}
+            @click=${() => this.use(RouterController).traverse('onCancel')}
           >${this.l10n('start-from-cancel')}</button>
         </uc-start-from>
       </uc-modal>

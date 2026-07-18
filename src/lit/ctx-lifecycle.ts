@@ -1,20 +1,30 @@
-import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { PubSub } from './PubSubCompat';
 import type { SharedState } from './SharedState';
 import { controllerOwnedInstanceKeys, type ISharedInstance } from './shared-instances';
 
 /**
  * Consumer-refcount teardown predicate: a ctx is dead — nothing left
- * referencing it — when no `ChildBlock` is still watching it via
- * `UploaderRegistry.whenAvailable` (`UploaderRegistry.hasConsumers`).
+ * referencing it — when its `ControllerContainer` has no consumers
+ * (`container.isUnreferenced()`). A ctx with no container at all (a bare
+ * `registerCtx` never touched by a controller/config) is likewise unreferenced.
+ *
+ * M-god step 6a retargeted this from `UploaderRegistry.hasConsumers` to the
+ * container: a `ChildBlock` now registers as a container consumer on controller
+ * adoption (`container.addConsumer`) and drops it on release, so the container
+ * is the single owner of both the controllers and the consumer set. Because
+ * `UploaderRegistry.whenAvailable` fires synchronously once `ensureUploaderCtx`
+ * has forced the controller into existence, adopt/release happen at the same
+ * instant the registry subscription used to be the refcount — teardown timing is
+ * preserved. (The v1 `*blocksRegistry` half was removed with the v1 element
+ * layer in M11 — no `LitBlock` populates it anymore.)
  *
  * `ChildBlock.disconnectedCallback` schedules a deferred (`setTimeout(0)`)
  * call to this predicate before running `destroyCtx`, so a still-connected
- * consumer keeps the ctx alive. (The v1 `*blocksRegistry` half was removed
- * with the v1 element layer in M11 — no `LitBlock` populates it anymore.)
+ * consumer keeps the ctx alive.
  */
 export function isCtxUnreferenced(ctxName: string): boolean {
-  return !UploaderRegistry.hasConsumers(ctxName);
+  const container = PubSub.getContainer(ctxName);
+  return container ? container.isUnreferenced() : true;
 }
 
 /**

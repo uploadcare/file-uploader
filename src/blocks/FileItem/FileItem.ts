@@ -1,8 +1,10 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import type { PluginController, PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
+import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { debounce } from '../../utils/debounce';
 import { throttle } from '../../utils/throttle';
@@ -29,6 +31,8 @@ const FileItemState = Object.freeze({
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
 
 export class FileItem extends FileItemConfig {
+  public static override readonly uses = [ConfigController, TelemetryManager] as const;
+
   @state()
   private _pauseRender = true;
 
@@ -71,9 +75,6 @@ export class FileItem extends FileItemConfig {
   private _isFocused = false;
 
   @state()
-  private _showFileNames = false;
-
-  @state()
   private _ariaLabelStatusFile = '';
 
   @state()
@@ -84,7 +85,7 @@ export class FileItem extends FileItemConfig {
   private _pluginManager: PluginController | null = null;
 
   private _handleRemove = (): void => {
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       payload: {
         metadata: {
           event: 'remove-file',
@@ -93,6 +94,9 @@ export class FileItem extends FileItemConfig {
       },
     });
 
+    // `uploadCollection` is registered by the upload stack, not eagerly in the
+    // container — no clean DI token to `use()`, so this stays on the null-safe
+    // v1 `bag` path (step 8).
     const collection = this.bag.uploadCollectionOrNull;
     if (this.uid && collection?.hasItem(this.uid)) {
       this.entry?.getValue('abortController')?.abort();
@@ -256,14 +260,17 @@ export class FileItem extends FileItemConfig {
     this._updatePluginFileActions();
   }
 
-  private _updateShowFileNames(value: boolean): void {
-    const isListMode = this.uploader.config.get('filesViewMode') === 'list';
-    if (isListMode) {
-      this._showFileNames = true;
-      return;
-    }
-
-    this._showFileNames = value;
+  /**
+   * Whether file names are shown: always in list mode, otherwise driven by
+   * `gridShowFileNames`. Tracked getter (drops the v1 `@state _showFileNames`,
+   * `_updateShowFileNames`, and the `subConfigValue('gridShowFileNames')` mirror):
+   * reading both keys via `getTracked` in `render()` auto-tracks them under
+   * `SignalWatcher`, so a config change re-renders — same reactivity as the v1
+   * subscription.
+   */
+  private get _showFileNames(): boolean {
+    const config = this.use(ConfigController);
+    return config.getTracked('filesViewMode') === 'list' ? true : config.getTracked('gridShowFileNames');
   }
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
@@ -321,7 +328,7 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       payload: {
         metadata: {
           event: action.id,
@@ -341,14 +348,17 @@ export class FileItem extends FileItemConfig {
   protected override controllerReady(): void {
     this._handleEntryId(this.uid);
 
+    // Host `[mode]` attribute: the `uc-file-item[mode="grid"]` CSS selectors key
+    // off the host attr, driving the grid/list box sizing. Kept as an imperative
+    // `subConfigValue` side-effect (repointed to a `filesViewMode`-only read)
+    // rather than the 6b-3 `willUpdate`+`getTracked` host-attr recipe: this block
+    // gates rendering behind `_pauseRender` (an IntersectionObserver lazy-render
+    // gate), so a `willUpdate` host-attr write would not run until the item
+    // scrolls into view — whereas v1 sets `mode` eagerly on adoption so the box
+    // sizing is correct before first paint. `_showFileNames` (a pure render read)
+    // moved to a tracked getter; only this host side-effect remains here.
     this.subConfigValue('filesViewMode', (mode) => {
-      this._updateShowFileNames(this.uploader.config.get('gridShowFileNames'));
-
       this.setAttribute('mode', mode);
-    });
-
-    this.subConfigValue('gridShowFileNames', (value) => {
-      this._updateShowFileNames(value);
     });
 
     this.onclick = () => {
@@ -361,6 +371,10 @@ export class FileItem extends FileItemConfig {
       });
     };
 
+    // Side-effecting subscription (fires `_upload`, not a render read): stays on
+    // the v1 `bag.ctx.sub` path even though `CollectionStateController` owns
+    // `*uploadTrigger` — that token is adopted only for pure render reads (see
+    // ProgressBarCommon/DynamicBtn), not for imperative triggers.
     this.trackSub(
       this.bag.ctx.sub('*uploadTrigger', (itemsToUpload) => {
         if (this.entry && !itemsToUpload.has(this.entry.uid)) {
@@ -370,6 +384,8 @@ export class FileItem extends FileItemConfig {
       }),
     );
 
+    // The plugin manager has no DI token — it stays on the v1 `bag.when` path
+    // (step 8); a plugin change re-derives file actions imperatively.
     this.trackSub(
       this.bag.when('pluginManager', (pm) => {
         this._pluginManager = pm;

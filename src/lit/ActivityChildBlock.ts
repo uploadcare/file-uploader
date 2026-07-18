@@ -1,5 +1,7 @@
 import type { PropertyValues } from 'lit';
+import { RouterController } from '../abstract/controllers/RouterController';
 import type { UploaderController } from '../abstract/controllers/UploaderController';
+import type { Token } from '../abstract/di/ControllerContainer';
 import { ACTIVITY_TYPES, type ActivityParamsMap, type ActivityType } from './activity-constants';
 import { ChildBlock } from './ChildBlock';
 
@@ -14,6 +16,14 @@ const ACTIVE_ATTR = 'active';
  * Subclasses overriding `controllerReady` MUST call `super.controllerReady(ctrl)`.
  */
 export class ActivityChildBlock extends ChildBlock {
+  // Widened to the same `readonly Token<unknown>[]` shape `ChildBlock` declares
+  // (not a narrow `as const` tuple) so a subclass can override `uses` with its
+  // own controller set — e.g. `UploadList` adds Config/CollectionState/Telemetry
+  // (M-god step 6b-8). The value still pre-warms `RouterController` for every
+  // activity block (the base's `[active]` toggle reads it); a non-overriding
+  // subclass inherits exactly that, unchanged.
+  public static override readonly uses: readonly Token<unknown>[] = [RouterController];
+
   public activityType: ActivityType = null;
 
   public static activities = ACTIVITY_TYPES;
@@ -22,14 +32,26 @@ export class ActivityChildBlock extends ChildBlock {
   private _unreportActivityMounted?: () => void;
 
   protected override controllerReady(_ctrl: UploaderController): void {
-    // Wire the router subscription unconditionally, even when `activityType`
+    // Re-render on every router transition so `updated()` re-evaluates the
+    // `[active]` host attribute. Wired unconditionally, even when `activityType`
     // is still null at adoption time (e.g. a `PluginActivityHost` whose
     // `.registration` arrives later, in `updated()`). Otherwise a host that
     // starts with a null activityType and only later syncs a real one ends up
     // with no router subscription, so subsequent navigation never re-renders
     // it and its mounted content is never torn down. Harmless extra
     // re-renders for a null-activity host in the meantime.
-    this.subRouter(() => this.requestUpdate());
+    //
+    // Kept as a coarse `router.subscribe` (M-god step 6b-7) rather than a
+    // tracked signal read in `updated()`: the background-slot branch of
+    // `isActivityActive` reads `router.activity`, which is NOT signal-backed
+    // (only `router.modal`/`router.currentActivity` are), so a background
+    // transition — e.g. the background slot changing underneath an open modal —
+    // would not re-track and the toggle would go stale. The coarse subscription
+    // fires on every transition (both slots), preserving the exact re-render
+    // timing of the v1 `subRouter(() => this.requestUpdate())` this replaces.
+    const router = this.use(RouterController);
+    this.requestUpdate();
+    this.trackSub(router.subscribe(() => this.requestUpdate()));
     if (!this.activityType) {
       return;
     }
@@ -54,7 +76,7 @@ export class ActivityChildBlock extends ChildBlock {
     if (!this.activityType) {
       return;
     }
-    this._unreportActivityMounted = this.bag.router.activityBlockMounted(this.activityType);
+    this._unreportActivityMounted = this.use(RouterController).activityBlockMounted(this.activityType);
   }
 
   protected override controllerReleased(ctrl: UploaderController): void {
@@ -74,8 +96,12 @@ export class ActivityChildBlock extends ChildBlock {
     if (!this.activityType) {
       return false;
     }
-    const router = this.bag.router;
+    const router = this.use(RouterController);
     const isInModal = this.closest('uc-modal') !== null;
+    // `router.modal` is a tracked signal (read here under `SignalWatcher` when
+    // `updated()` calls in); `router.activity` is a plain field — the coarse
+    // subscription wired in `controllerReady` is what re-runs the update for a
+    // background-slot change (see the note there).
     const slot = isInModal ? router.modal : router.activity;
     return slot === this.activityType;
   }
@@ -88,6 +114,6 @@ export class ActivityChildBlock extends ChildBlock {
   }
 
   public get activityParams(): ActivityParamsMap[keyof ActivityParamsMap] {
-    return this.bag.router.params as ActivityParamsMap[keyof ActivityParamsMap];
+    return this.use(RouterController).params as ActivityParamsMap[keyof ActivityParamsMap];
   }
 }

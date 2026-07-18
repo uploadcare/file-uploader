@@ -56,6 +56,23 @@ export class CollectionStateController {
     return this.#state.get(key) as CollectionState[K];
   }
 
+  /**
+   * Reactive, auto-tracking read of a collection-state key — the `SignalWatcher`
+   * counterpart to `get()`. Reading it inside a migrated `ChildBlock`'s update
+   * cycle (e.g. `ProgressBarCommon`/`DynamicBtn` reading `commonProgress` in
+   * `render()`) subscribes that render to THIS key, so a later `set()`
+   * re-renders the block with no `ctx.sub('*commonProgress', …)` subscription.
+   *
+   * Mirrors `ConfigController.getTracked`: `get()` stays the fast, non-tracking
+   * bag read (kept for the still-imperative `PubSubCompat` compat path, whose
+   * per-read signal overhead on this hot path measurably destabilizes the
+   * parallel e2e suite — see `SignalMap`/`CollectionState` docs); both coexist
+   * only during the strangler migration.
+   */
+  public getTracked<K extends keyof CollectionState>(key: K): CollectionState[K] {
+    return this.#state.signal(key).get() as CollectionState[K];
+  }
+
   /** `Object.is` dedup — replacing the `uploadTrigger` `Set` fires; mutating it in place does not (v1 parity). */
   public set<K extends keyof CollectionState>(key: K, value: CollectionState[K]): void {
     this.#state.set(key, value);

@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import type { FileUploaderInline } from '@/index';
+import type { Config, FileUploaderInline } from '@/index';
 import { ACTIVITY_TYPES } from '@/lit/activity-constants.js';
 import { PubSub } from '@/lit/PubSubCompat.js';
 import { getCtxName } from './utils/getCtxName';
@@ -125,6 +125,45 @@ describe('File uploader inline — M9r solution-block safety net', () => {
       // is visually active), never inside a `<uc-modal>`.
       expect(page.getByTestId('uc-upload-list').query()).not.toBeNull();
       expect(page.getByTestId('uc-modal').query()).toBeNull();
+    });
+  });
+
+  describe('removeCopyright inline layout (M-god step 6a review)', () => {
+    // The inline solution's layout CSS keys off the HOST attribute via
+    // `[uc-file-uploader-inline] uc-start-from:has(uc-copyright[hidden]) uc-drop-area`
+    // (index.css). If `[hidden]` lands on the inner `<a>` instead of the host,
+    // the `:has(uc-copyright[hidden])` selector never matches and the drop-area
+    // layout regresses. This pins the host attribute — the CSS precondition — on
+    // the real inline composition, in both directions, and guards that the inner
+    // `<a>` never carries `[hidden]` (which is what regressed the selector).
+    it('toggles [hidden] on the host uc-copyright inside the inline solution (not the inner <a>)', async () => {
+      cleanup();
+      const ctxName = getCtxName();
+      page.render(
+        <>
+          <uc-file-uploader-inline ctx-name={ctxName}></uc-file-uploader-inline>
+          <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        </>,
+      );
+      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.element(page.getByTestId('uc-start-from')).toBeVisible();
+
+      const config = page.getByTestId('uc-config').query()! as Config;
+      const copyright = () => document.querySelector<HTMLElement>('[uc-file-uploader-inline] uc-copyright');
+      const credits = () => copyright()?.querySelector<HTMLElement>('.uc-credits');
+
+      await expect.poll(() => copyright()).not.toBeNull();
+      expect(copyright()?.hasAttribute('hidden')).toBe(false);
+
+      config.removeCopyright = true;
+      // Host gains `[hidden]` so `:has(uc-copyright[hidden])` matches; the inner
+      // `<a>` must stay free of it.
+      await expect.poll(() => copyright()?.hasAttribute('hidden')).toBe(true);
+      expect(credits()?.hasAttribute('hidden')).toBe(false);
+
+      config.removeCopyright = false;
+      await expect.poll(() => copyright()?.hasAttribute('hidden')).toBe(false);
+      expect(credits()?.hasAttribute('hidden')).toBe(false);
     });
   });
 });

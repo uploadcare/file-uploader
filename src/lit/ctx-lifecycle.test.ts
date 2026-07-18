@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { destroyCtx, isCtxUnreferenced } from './ctx-lifecycle';
+import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { PubSub } from './PubSubCompat';
 import type { SharedState } from './SharedState';
 
@@ -27,17 +27,34 @@ describe('isCtxUnreferenced', () => {
     expect(isCtxUnreferenced(ctxName)).toBe(true);
   });
 
-  it('is true when the ctx exists but there are no whenAvailable consumers', () => {
+  it('is true when the ctx exists as a bare map with no container', () => {
     const ctxName = freshCtxName();
+    // A raw `registerCtx` (no config/controller touch) has no ControllerContainer,
+    // so the predicate reports it unreferenced.
     PubSub.registerCtx<SharedState>({} as SharedState, ctxName);
+    expect(PubSub.getContainer(ctxName)).toBeNull();
     expect(isCtxUnreferenced(ctxName)).toBe(true);
   });
 
-  it('is false while a UploaderRegistry whenAvailable consumer is watching', () => {
+  it('is true when the ctx has a container but no consumers', () => {
     const ctxName = freshCtxName();
-    const off = UploaderRegistry.whenAvailable(ctxName, vi.fn());
+    ensureUploaderCtx(ctxName); // creates the per-ctx ControllerContainer
+    expect(PubSub.getContainer(ctxName)).not.toBeNull();
+    expect(isCtxUnreferenced(ctxName)).toBe(true);
+  });
+
+  it('is false while a container consumer is registered, true after it is removed (M-god step 6a)', () => {
+    // The refcount moved from UploaderRegistry.whenAvailable to the per-ctx
+    // ControllerContainer: a ChildBlock is a container consumer for the span of
+    // its controller adoption, and this predicate reads container.isUnreferenced().
+    const ctxName = freshCtxName();
+    ensureUploaderCtx(ctxName);
+    const container = PubSub.getContainer(ctxName);
+    expect(container).not.toBeNull();
+    const consumer = {};
+    container?.addConsumer(consumer);
     expect(isCtxUnreferenced(ctxName)).toBe(false);
-    off();
+    container?.removeConsumer(consumer);
     expect(isCtxUnreferenced(ctxName)).toBe(true);
   });
 });
