@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import type { PluginController } from '../../abstract/managers/plugin';
+import { PluginRegistry } from '../../abstract/managers/plugin/PluginRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { PubSub } from '../../lit/PubSubCompat';
+import type { SharedState } from '../../lit/SharedState';
 import type { IconHrefResolver } from '../../types/index';
 import { delay } from '../../utils/delay';
 import { Icon } from './Icon';
@@ -70,5 +73,47 @@ describe('Icon (M-god step 6b-2 migration)', () => {
     await el.updateComplete;
     await delay(0);
     expect(useHref(el)).toBe('#uc-icon-upload');
+  });
+
+  it('renders the empty-name early return (no sprite href) when name is unset', async () => {
+    const { el } = await mountWithConfig(freshCtxName(), '');
+    // The early-return branch (`!this.name`) still calls `renderIconSvg('')` —
+    // an empty href, not the `#uc-icon-<name>` sprite reference — and never
+    // touches `_pluginManager` at all.
+    expect(useHref(el)).toBe('');
+  });
+
+  it('renders a plugin-registered icon when the plugin manager snapshot has one for this name', async () => {
+    const ctxName = freshCtxName();
+    const ctx = ensureUploaderCtx(ctxName);
+
+    // A real `PluginRegistry` (rather than hand-typing `PluginRegistrySnapshot`)
+    // so the snapshot shape stays correct by construction; only `snapshot`/
+    // `onPluginsChange` are read by `Icon`, matching how `_pluginManager` is
+    // obtained via `bag.when('pluginManager', …)` — pre-registering the shared
+    // instance before mount makes `when` resolve it synchronously.
+    const registry = new PluginRegistry(() => {});
+    registry.addIcon('test-plugin', {
+      name: 'custom-icon',
+      svg: '<svg data-plugin-icon="true"><circle r="1"></circle></svg>',
+    });
+    const fakePluginManager: Pick<PluginController, 'snapshot' | 'onPluginsChange'> = {
+      snapshot: () => registry.snapshot(),
+      onPluginsChange: () => () => {},
+    };
+    ctx.add('*pluginManager', fakePluginManager as unknown as SharedState['*pluginManager'], true);
+
+    const config = PubSub.getContainer(ctxName)?.get(ConfigController);
+    if (!config) throw new Error('config controller not resolved');
+    const el = document.createElement('uc-icon') as Icon;
+    el.setAttribute('ctx-name', ctxName);
+    el.name = 'custom-icon';
+    document.body.append(el);
+    mounted.push(el);
+    await el.updateComplete;
+
+    // Plugin icon takes precedence over the sprite href — no `<use>` element.
+    expect(el.querySelector('svg use')).toBeNull();
+    expect(el.querySelector('svg[data-plugin-icon]')).not.toBeNull();
   });
 });
