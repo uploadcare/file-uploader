@@ -7,7 +7,6 @@ import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
 import { ensurePluginManager } from './ensurePluginManager';
 import type { PubSub } from './PubSubCompat';
 import type { SharedState } from './SharedState';
-import { createSharedInstancesBag } from './shared-instances';
 
 /**
  * Shared seam for attaching the uploader scope to a `ctx`/`container` pair —
@@ -23,12 +22,12 @@ import { createSharedInstancesBag } from './shared-instances';
  * M-god step 9b-1: callers pass this ctx's `PubSub` + `ControllerContainer`
  * directly instead of the `bag` — so the uploader blocks (`UploadCtxProvider` /
  * `<uc-drop-area>`) no longer reference `this.bag`. Controllers resolve off the
- * container; the ctx re-exposes them under their v1 `*`-keys. The one residual
- * `bag` — still required by the deps not yet container-resolved
- * (`UploaderPublicApi.setBagBridge`, `ensurePluginManager`/`buildPluginApi`, and
- * `buildUploaderScopeDeps`'s host bridge, all retiring in 9b-3) — is now built
- * HERE from the ctx (a stateless accessor over the same ctx, behavior-identical
- * to the block's own `bag`), rather than threaded in from the caller.
+ * container; the ctx re-exposes them under their v1 `*`-keys.
+ *
+ * M-god step 9c-1: the residual internal shared-instances bag is gone —
+ * `buildUploaderScopeDeps`, `ensurePluginManager`, and the public api all take
+ * the container directly now, so `ensureUploaderScope` no longer touches the
+ * shared-instances bag at all.
  */
 export function ensureUploaderScope(
   ctx: PubSub<SharedState>,
@@ -36,8 +35,6 @@ export function ensureUploaderScope(
   debug: UploadHostDebug | undefined,
   emit: UploadHostEmit,
 ): void {
-  const bag = createSharedInstancesBag(() => ctx);
-
   if (!ctx.has('*uploadCollection')) {
     ctx.add('*uploadCollection', container.get(UploadCollectionController), true);
   }
@@ -46,22 +43,18 @@ export function ensureUploaderScope(
     // M-god step 8a: the public API is now container-resolved (zero-arg ctor +
     // `@inject` fields), so it must be built through the container — a bare
     // `new` would leave `@inject` unable to find its container. `container.get`
-    // constructs + tags it; `setBagBridge` then wires the two dependencies not
-    // yet container-resolvable (the plugin manager + `buildOutputCollectionState`)
-    // before any consumer can reach the api. It stays reachable as
-    // `bag.api`/`*publicApi` (the same single instance). M-god step 8b: the
-    // clipboard now `@inject`s this same container instance directly, so there
-    // is no longer a `ctrl.setApi(api)` hand-off here.
-    const api = container.get(UploaderPublicApi);
-    api.setBagBridge(() => bag);
-    ctx.add('*publicApi', api, true);
+    // constructs + tags it. It stays reachable as `bag.api`/`*publicApi` (the
+    // same single instance). M-god step 9c-1: `getOutputCollectionState` /
+    // `getOutputData` now resolve their controllers off the api's own container
+    // (`this[CONTAINER]`), so there is no longer a `setBagBridge` hand-off here.
+    ctx.add('*publicApi', container.get(UploaderPublicApi), true);
   }
 
   // Register the upload stack on the per-ctx container (M-god step 5). This is
   // the ONE place the four upload-stack constructors (and thus
   // `@uploadcare/upload-client`) enter — the element/upload layer, never the
   // editor. `registerUploadStack` is idempotent + binds the host-value bridge.
-  const { controllers, host } = buildUploaderScopeDeps(bag, debug, emit);
+  const { controllers, host } = buildUploaderScopeDeps(container, debug, emit);
   registerUploadStack(container, controllers, host);
 
   // Re-expose the container-owned upload-stack instances under their v1 shared-
@@ -90,5 +83,5 @@ export function ensureUploaderScope(
   // sources would never load. It lives here — the uploader-present seam —
   // because plugins are an uploader concern and `*publicApi` (the lazy
   // `getUploaderApi`) is now registered above.
-  ensurePluginManager(bag);
+  ensurePluginManager(ctx, container);
 }
