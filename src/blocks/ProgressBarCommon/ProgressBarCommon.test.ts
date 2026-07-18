@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
 import type { ProgressBar } from '../ProgressBar/ProgressBar';
 import { ProgressBarCommon } from './ProgressBarCommon';
@@ -23,7 +23,7 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -31,7 +31,7 @@ const mount = async (
   ctxName: string,
 ): Promise<{ el: ProgressBarCommon; collectionState: CollectionStateController }> => {
   ensureUploaderCtx(ctxName);
-  const collectionState = PubSub.getContainer(ctxName)?.get(CollectionStateController);
+  const collectionState = UploaderRegistry.get(ctxName)?.get(CollectionStateController);
   if (!collectionState) throw new Error('collection-state controller not resolved');
   const el = document.createElement('uc-progress-bar-common') as ProgressBarCommon;
   el.setAttribute('ctx-name', ctxName);
@@ -70,7 +70,7 @@ describe('ProgressBarCommon (M-god step 6b-2 migration)', () => {
   it('registers a collection property observer via whenController once the UploadCollectionController resolves, and tears it down on disconnect', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     if (!container) throw new Error('container not resolved');
 
     const unobserve = vi.fn();

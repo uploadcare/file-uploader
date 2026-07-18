@@ -2,8 +2,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { PluginController } from '../../abstract/managers/plugin';
 import { PluginRegistry } from '../../abstract/managers/plugin/PluginRegistry';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import type { IconHrefResolver } from '../../types/index';
 import { delay } from '../../utils/delay';
 import { Icon } from './Icon';
@@ -24,13 +24,13 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
 const mountWithConfig = async (ctxName: string, name: string): Promise<{ el: Icon; config: ConfigController }> => {
   ensureUploaderCtx(ctxName);
-  const config = PubSub.getContainer(ctxName)?.get(ConfigController);
+  const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
   if (!config) throw new Error('config controller not resolved');
   const el = document.createElement('uc-icon') as Icon;
   el.setAttribute('ctx-name', ctxName);
@@ -85,7 +85,7 @@ describe('Icon (M-god step 6b-2 migration)', () => {
   it('renders a plugin-registered icon when the plugin manager snapshot has one for this name', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     if (!container) throw new Error('container not resolved');
 
     // A real `PluginRegistry` (rather than hand-typing `PluginRegistrySnapshot`)
@@ -122,7 +122,7 @@ describe('Icon (M-god step 6b-2 migration)', () => {
   it('subscribes to plugin changes via whenController on resolution and unsubscribes on disconnect', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     if (!container) throw new Error('container not resolved');
 
     const unsub = vi.fn();

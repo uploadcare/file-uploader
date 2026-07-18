@@ -3,9 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../abstract/controllers/ConfigController';
 import { RouterController } from '../abstract/controllers/RouterController';
 import type { Token } from '../abstract/di/ControllerContainer';
+import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { ACTIVITY_TYPES } from './activity-constants';
 import { ChildBlock } from './ChildBlock';
-import { PubSub } from './PubSubCompat';
 
 // ─── Test-only controllers (zero-arg ctors, container-constructable) ──────────
 class ProbeController {
@@ -93,7 +93,7 @@ const flushTeardown = () => new Promise((r) => setTimeout(r, 10));
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -111,7 +111,7 @@ describe('ChildBlock.use()', () => {
     const config = el.callUse(ConfigController);
     expect(config).toBeInstanceOf(ConfigController);
     // Same singleton the container owns for this ctx.
-    expect(config).toBe(PubSub.getContainer(ctxName)?.get(ConfigController));
+    expect(config).toBe(UploaderRegistry.get(ctxName)?.get(ConfigController));
   });
 });
 
@@ -147,7 +147,7 @@ describe('ChildBlock consumer lifecycle (M-god step 6a)', () => {
     const ctxName = freshCtxName();
     await mount<UseBlock>('uc-test-use-block', ctxName);
 
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     expect(container).not.toBeNull();
     expect(container?.isUnreferenced()).toBe(false);
   });
@@ -155,7 +155,7 @@ describe('ChildBlock consumer lifecycle (M-god step 6a)', () => {
   it('drops the container consumer on disconnect', async () => {
     const ctxName = freshCtxName();
     const el = await mount<UseBlock>('uc-test-use-block', ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
 
     el.remove(); // synchronous _releaseController → removeConsumer
 
@@ -167,31 +167,31 @@ describe('ChildBlock consumer lifecycle (M-god step 6a)', () => {
   it('tears the ctx down after the last consumer disconnects', async () => {
     const ctxName = freshCtxName();
     const el = await mount<UseBlock>('uc-test-use-block', ctxName);
-    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    expect(UploaderRegistry.get(ctxName)).toBeDefined();
 
     el.remove();
     await flushTeardown();
 
-    expect(PubSub.hasCtx(ctxName)).toBe(false);
-    expect(PubSub.getContainer(ctxName)).toBeNull();
+    expect(UploaderRegistry.get(ctxName)).toBeUndefined();
+    expect(UploaderRegistry.get(ctxName)).toBeUndefined();
   });
 
   it('keeps the ctx alive while another consumer stays connected', async () => {
     const ctxName = freshCtxName();
     const a = await mount<UseBlock>('uc-test-use-block', ctxName);
     const b = await mount<UseBlock>('uc-test-use-block', ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
 
     a.remove();
     await flushTeardown();
 
-    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    expect(UploaderRegistry.get(ctxName)).toBeDefined();
     expect(container?.isUnreferenced()).toBe(false);
 
     b.remove();
     await flushTeardown();
 
-    expect(PubSub.hasCtx(ctxName)).toBe(false);
+    expect(UploaderRegistry.get(ctxName)).toBeUndefined();
   });
 });
 
@@ -199,7 +199,7 @@ describe('ChildBlock.subRouter() (off bag.router → use(RouterController), M-go
   it('subscribes to the same RouterController the container owns', async () => {
     const ctxName = freshCtxName();
     const el = await mount<SubRouterBlock>('uc-test-subrouter-block', ctxName);
-    const router = PubSub.getContainer(ctxName)?.get(RouterController);
+    const router = UploaderRegistry.get(ctxName)?.get(RouterController);
     expect(router).toBeInstanceOf(RouterController);
 
     // Immediate fire on subscribe, then again on a router notification.
@@ -216,7 +216,7 @@ describe('ChildBlock.subRouter() (off bag.router → use(RouterController), M-go
   it('stops firing after the block is released (tracked unsub)', async () => {
     const ctxName = freshCtxName();
     const el = await mount<SubRouterBlock>('uc-test-subrouter-block', ctxName);
-    const router = PubSub.getContainer(ctxName)!.get(RouterController);
+    const router = UploaderRegistry.get(ctxName)!.get(RouterController);
     el.callSubRouter();
     const afterSubscribe = el.fires;
 
@@ -234,7 +234,7 @@ describe('ChildBlock static uses pre-warm', () => {
 
     await mount('uc-test-prewarm-block', ctxName);
 
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     expect(container?.has(ProbeController)).toBe(true);
     expect(ProbeController.instances).toBe(before + 1);
   });

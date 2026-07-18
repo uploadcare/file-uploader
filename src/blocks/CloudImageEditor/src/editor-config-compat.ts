@@ -10,10 +10,10 @@ import { createL10n } from '../../../lit/l10n';
 // Deletion steps: delete this file + its single call site in
 // CloudImageEditorBlock; the editor's own props remain the config source.
 //
-// M-god step 9b-3: repointed off `PubSubCompat` onto the ctx's DI container. The
+// M-god step 9b-3: repointed off the v1 ctx facade onto the ctx's DI container. The
 // sibling `<uc-config>`'s `ConfigController`/`LocaleController`/`TelemetryManager`
 // are resolved through `UploaderRegistry.whenAvailable` and read directly, so
-// this no longer touches `PubSub`/`sharedConfigKey`/the `*`-keyed store. Those
+// this no longer touches `PubSub`/the `*cfg/` key helper/the `*`-keyed store. Those
 // three controllers are already in the editor bundle (safe — no `PluginController`
 // / `UploaderPublicApi` value import lands here).
 

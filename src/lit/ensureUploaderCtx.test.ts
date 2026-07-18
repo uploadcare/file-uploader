@@ -1,17 +1,20 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ClipboardController } from '../abstract/controllers/ClipboardController';
+import { ConfigController } from '../abstract/controllers/ConfigController';
+import { LocaleController } from '../abstract/controllers/LocaleController';
 import { RouterController } from '../abstract/controllers/RouterController';
+import { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { A11y } from '../abstract/managers/a11y';
-import { LocaleManager, localeStateKey } from '../abstract/managers/LocaleManager';
+import { LocaleManager } from '../abstract/managers/LocaleManager';
+import { PluginController } from '../abstract/managers/plugin';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
-import { PubSub } from './PubSubCompat';
 
-// Each test uses a unique ctx id and tears it down so the module-level
-// context/container maps and the global UploaderRegistry don't leak.
+// Each test uses a unique ctx id and tears it down so the global
+// UploaderRegistry doesn't leak.
 let seq = 0;
 const ids: string[] = [];
 const freshCtxName = () => {
@@ -21,123 +24,72 @@ const freshCtxName = () => {
 };
 
 afterEach(() => {
-  for (const id of ids.splice(0)) PubSub.deleteCtx(id);
+  for (const id of ids.splice(0)) UploaderRegistry.dispose(id);
 });
 
 describe('ensureUploaderCtx', () => {
-  it('creates the ctx map pre-any-element, with no DOM/Lit block ever having touched it', () => {
+  it("creates and returns the ctx's ControllerContainer pre-any-element", () => {
     const ctxName = freshCtxName();
-    expect(PubSub.hasCtx(ctxName)).toBe(false);
-
-    const ctx = ensureUploaderCtx(ctxName);
-
-    expect(PubSub.hasCtx(ctxName)).toBe(true);
-    expect(ctx.id).toBe(ctxName);
-  });
-
-  it('seeds the full plain uploader/solution state set (blockCtx + uploaderBlockCtx + solutionBlockCtx)', () => {
-    const ctxName = freshCtxName();
-    const ctx = ensureUploaderCtx(ctxName);
-
-    expect(ctx.read('*commonProgress')).toBe(0);
-    expect(ctx.read('*uploadList')).toEqual([]);
-    expect(ctx.read('*collectionErrors')).toEqual([]);
-    expect(ctx.read('*collectionState')).toBeNull();
-    expect(ctx.read('*groupInfo')).toBeNull();
-    expect(ctx.read('*uploadTrigger')).toEqual(new Set());
-    expect(ctx.read('*lazyPlugins')).toBeNull();
-  });
-
-  it('seeds the six container-owned re-exposer keys, but not the v1-element-gated ones (M9q Task 2)', () => {
-    const ctxName = freshCtxName();
-    const ctx = ensureUploaderCtx(ctxName);
-    const container = UploaderRegistry.get(ctxName)!;
-
-    // The six keys this seam now registers itself — identity-pinned against
-    // the container-owned instances, same recipe as `LitBlock`'s re-exposers.
-    expect(ctx.read('*eventEmitter')).toBe(container.get(EventEmitter));
-    expect(ctx.read('*localeManager')).toBe(container.get(LocaleManager));
-    expect(ctx.read('*a11y')).toBe(container.get(A11y));
-    expect(ctx.read('*router')).toBe(container.get(RouterController));
-    expect(ctx.read('*clipboard')).toBe(container.get(ClipboardController));
-    expect(ctx.read('*telemetryManager')).toBe(container.get(TelemetryManager));
-
-    // Still v1-element-gated — never registered by this v1-free seam.
-    expect(ctx.has('*pluginManager')).toBe(false);
-    expect(ctx.has('*uploadCollection')).toBe(false);
-  });
-
-  it('activates LocaleManager with a null plugin manager (no *pluginManager registered in this v1-free seam)', () => {
-    const ctxName = freshCtxName();
-    const ctx = ensureUploaderCtx(ctxName);
-
-    // `LocaleManager.activate` seeds the `en` dictionary unconditionally —
-    // proves `activate` actually ran, not just that the manager exists.
-    expect(ctx.read(localeStateKey('upload-file'))).toBe('Upload file');
-  });
-
-  it('forces the ctx container into existence immediately, not lazily on first *cfg/*l10n touch', () => {
-    const ctxName = freshCtxName();
-    ensureUploaderCtx(ctxName);
-
-    const container = UploaderRegistry.get(ctxName);
-    expect(container).toBeInstanceOf(ControllerContainer);
-  });
-
-  it('is idempotent: a second call against an existing ctx returns the same ctx/container, untouched', () => {
-    const ctxName = freshCtxName();
-    const first = ensureUploaderCtx(ctxName);
-    const firstContainer = UploaderRegistry.get(ctxName);
-
-    // Mutate a seeded value to prove idempotency doesn't re-seed over it.
-    first.pub('*commonProgress', 42);
-
-    const second = ensureUploaderCtx(ctxName);
-    const secondContainer = UploaderRegistry.get(ctxName);
-
-    expect(second.id).toBe(first.id);
-    expect(secondContainer).toBe(firstContainer);
-    // No re-seed clobber of the live value set above.
-    expect(second.read('*commonProgress')).toBe(42);
-  });
-
-  it('gives each ctx its own fresh mutable seed instances (no shared Set across ctxs)', () => {
-    const ctxNameA = freshCtxName();
-    const ctxNameB = freshCtxName();
-    const ctxA = ensureUploaderCtx(ctxNameA);
-    const ctxB = ensureUploaderCtx(ctxNameB);
-
-    expect(ctxA.read('*uploadTrigger')).not.toBe(ctxB.read('*uploadTrigger'));
-
-    ctxA.read('*uploadTrigger').add('abc' as never);
-    expect(ctxB.read('*uploadTrigger').size).toBe(0);
-  });
-
-  it('when a ctx already exists (e.g. registered by a plain nanostores caller), reuses it as-is without forcing a re-seed', () => {
-    const ctxName = freshCtxName();
-    const preexisting = PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, ctxName);
-
-    const ctx = ensureUploaderCtx(ctxName);
-
-    expect(ctx.id).toBe(preexisting.id);
-    expect(ctx.read('plain' as never)).toBe('seed');
-    // The full uploader/solution seed set was NOT retroactively injected —
-    // the seam only seeds on first creation, never on an existing map.
-    expect(ctx.has('*commonProgress')).toBe(false);
-  });
-
-  // Pin ahead of M9o Task 2 (ChildBlock._watchRegistry calling this function
-  // to self-bootstrap a ctx): a pre-existing map with no container yet (the
-  // exact shape a bare `PubSub.registerCtx` caller leaves behind) must still
-  // get a container forced into the registry — every path through this
-  // function, not just first-creation, is a container-existence guarantee.
-  it('forces a container into existence when the ctx map pre-exists WITHOUT one', () => {
-    const ctxName = freshCtxName();
-    PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, ctxName);
     expect(UploaderRegistry.get(ctxName)).toBeUndefined();
 
-    ensureUploaderCtx(ctxName);
+    const container = ensureUploaderCtx(ctxName);
 
-    expect(UploaderRegistry.get(ctxName)).toBeInstanceOf(ControllerContainer);
+    expect(container).toBeInstanceOf(ControllerContainer);
+    expect(UploaderRegistry.get(ctxName)).toBe(container);
+  });
+
+  it('eagerly constructs the ctx-scoped managers at ctx creation', () => {
+    const ctxName = freshCtxName();
+    const container = ensureUploaderCtx(ctxName);
+
+    // These were previously the six `*`-key re-exposers; now they are eagerly
+    // resolved container instances (constructed the moment the ctx exists).
+    expect(container.has(EventEmitter)).toBe(true);
+    expect(container.has(LocaleManager)).toBe(true);
+    expect(container.has(A11y)).toBe(true);
+    expect(container.has(RouterController)).toBe(true);
+    expect(container.has(ClipboardController)).toBe(true);
+    expect(container.has(TelemetryManager)).toBe(true);
+  });
+
+  it('does NOT eagerly construct the uploader-scope / plugin controllers (those are attached by ensureUploaderScope)', () => {
+    const ctxName = freshCtxName();
+    const container = ensureUploaderCtx(ctxName);
+
+    expect(container.has(PluginController)).toBe(false);
+    expect(container.has(UploadCollectionController)).toBe(false);
+  });
+
+  it('activates LocaleManager with a null plugin manager (no PluginController in this v1-free seam)', () => {
+    const ctxName = freshCtxName();
+    const container = ensureUploaderCtx(ctxName);
+
+    // `LocaleManager.activate` seeds the `en` dictionary unconditionally into the
+    // ctx's `LocaleController` — proves `activate` actually ran, not just that the
+    // manager exists — and tolerates the absent `PluginController`.
+    expect(container.get(LocaleController).get('upload-file')).toBe('Upload file');
+  });
+
+  it('is idempotent: a second call returns the same container, untouched', () => {
+    const ctxName = freshCtxName();
+    const first = ensureUploaderCtx(ctxName);
+
+    // Mutate a controller value to prove idempotency doesn't re-init over it.
+    first.get(ConfigController).set('multiple', true);
+
+    const second = ensureUploaderCtx(ctxName);
+
+    expect(second).toBe(first);
+    expect(second.get(ConfigController).get('multiple')).toBe(true);
+  });
+
+  it('gives each ctx its own container', () => {
+    const ctxNameA = freshCtxName();
+    const ctxNameB = freshCtxName();
+    const containerA = ensureUploaderCtx(ctxNameA);
+    const containerB = ensureUploaderCtx(ctxNameB);
+
+    expect(containerA).not.toBe(containerB);
+    expect(containerA.get(RouterController)).not.toBe(containerB.get(RouterController));
   });
 });

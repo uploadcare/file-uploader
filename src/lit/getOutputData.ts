@@ -7,7 +7,7 @@ import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
  * the upload-events host bridge.
  *
  * M-god step 9c-1: resolved off the per-ctx `ControllerContainer` (was the
- * shared-instances `bag`) — the collection's `items()` mapped through the public
+ * shared instances `bag`) — the collection's `items()` mapped through the public
  * api's `getOutputItem`, the exact same two instances `bag.uploadCollection` /
  * `bag.api` re-exposed, so the output shape is byte-identical.
  */

@@ -1,32 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import type { PubSub } from '../../../lit/PubSubCompat';
-import type { SharedState } from '../../../lit/SharedState';
 import { delay } from '../../../utils/delay';
 import { ConfigController } from '../../controllers/ConfigController';
+import { LazyPluginsController } from '../../controllers/LazyPluginsController';
 import { type LazyPluginEntry, LazyPluginLoader } from './LazyPluginLoader';
 import type { UploaderPlugin } from './PluginTypes';
 
 // M-god step 7: `LazyPluginLoader` reads config directly off a `ConfigController`
-// (`plugins` + each entry's `configDeps`) instead of the `*cfg/*` PubSub facade.
-// `*lazyPlugins` itself still comes off the ctx (routed to `LazyPluginsController`).
+// (`plugins` + each entry's `configDeps`). The lazy-plugin entries come from a
+// `LazyPluginsController` (M-god step 9c: its owner, read + subscribed directly —
+// no PubSub ctx facade).
 const makePlugin = (id: string): UploaderPlugin => ({ id, setup: async () => undefined });
 
 const setup = () => {
   const config = new ConfigController();
   config.set('plugins', []);
-  let lazyPluginsCb: ((entries: LazyPluginEntry[] | null) => void) | undefined;
-  const ctx = {
-    sub: (key: string, cb: (value: unknown) => void) => {
-      if (key === '*lazyPlugins') {
-        lazyPluginsCb = cb as (entries: LazyPluginEntry[] | null) => void;
-      }
-      return () => {};
-    },
-  } as unknown as PubSub<SharedState>;
+  const lazyPlugins = new LazyPluginsController();
 
   const computed: Promise<UploaderPlugin[] | undefined>[] = [];
-  const loader = new LazyPluginLoader(ctx, config, (p) => computed.push(p));
-  const setEntries = (entries: LazyPluginEntry[]) => lazyPluginsCb?.(entries);
+  const loader = new LazyPluginLoader(lazyPlugins, config, (p) => computed.push(p));
+  const setEntries = (entries: LazyPluginEntry[]) => lazyPlugins.set(entries);
   return { config, loader, computed, setEntries };
 };
 

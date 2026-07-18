@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
-import type { PluginController } from '@/abstract/managers/plugin';
+import { PluginController } from '@/abstract/managers/plugin';
+import { containerOf, hasCtx } from '../utils/registry';
 import { getCtxName } from '../utils/test-renderer';
 import '../../types/jsx';
 
@@ -19,7 +20,6 @@ beforeAll(async () => {
 // silently never load. This pins the ChildBlock-reachable construction path.
 describe('ensureUploaderScope — *pluginManager without a v1 LitBlock (provider, no solution)', () => {
   it('constructs a live *pluginManager in a config + provider composition (no v1 LitBlock)', async () => {
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
     const ctxName = getCtxName();
 
     page.render(
@@ -29,7 +29,7 @@ describe('ensureUploaderScope — *pluginManager without a v1 LitBlock (provider
       </>,
     );
 
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+    await expect.poll(() => hasCtx(ctxName)).toBe(true);
     // Sanity: genuinely no v1 `LitBlock`-bearing tag in this composition —
     // `<uc-upload-ctx-provider>` (a `ChildBlock`) is the only uploader block,
     // so nothing runs `LitBlock.initCallback` (the historical sole constructor
@@ -43,14 +43,14 @@ describe('ensureUploaderScope — *pluginManager without a v1 LitBlock (provider
     // The provider's `ensureUploaderScope` must have constructed the plugin
     // manager. Non-vacuous: `*pluginManager` is only present because
     // `ensurePluginManager` ran (nothing else constructs it here).
-    const ctx = PubSub.getCtx(ctxName)!;
-    await expect.poll(() => ctx.has('*pluginManager')).toBe(true);
+    const container = containerOf(ctxName);
+    await expect.poll(() => container.has(PluginController)).toBe(true);
 
     // ...and it is a live, wired `PluginController` (its `watchPlugins`/
     // `LazyPluginLoader` was hooked up in the ctor), not a stub: it exposes the
     // real API and its initial plugin-resolution settles. `pluginsReady()`
     // resolving proves the loader is subscribed and computed at least once.
-    const pluginManager = ctx.read('*pluginManager') as PluginController;
+    const pluginManager = container.get(PluginController);
     expect(pluginManager).toBeTruthy();
     expect(typeof pluginManager.onPluginsChange).toBe('function');
     await expect(pluginManager.pluginsReady()).resolves.toBeUndefined();

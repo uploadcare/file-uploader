@@ -1,12 +1,12 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import { sharedConfigKey } from '@/abstract/sharedConfigKey.js';
+import { ConfigController } from '@/abstract/controllers/ConfigController';
+import { RouterController } from '@/abstract/controllers/RouterController';
 import type { Config, DropArea, FileUploaderMinimal, UploadCtxProvider } from '@/index';
 import { ACTIVITY_TYPES } from '@/lit/activity-constants.js';
-import { PubSub } from '@/lit/PubSubCompat.js';
-import type { SharedState } from '@/lit/SharedState.js';
 import { TEST_IMAGE_URL } from './utils/constants';
 import { getCtxName } from './utils/getCtxName';
+import { containerOf, hasCtx } from './utils/registry';
 import { cleanup } from './utils/test-renderer';
 import '../types/jsx';
 
@@ -95,10 +95,10 @@ describe('File uploader minimal — M9r solution-block safety net', () => {
         </>,
       );
 
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
       cleanup();
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+      await expect.poll(() => hasCtx(ctxName)).toBe(false);
     });
   });
 
@@ -112,14 +112,14 @@ describe('File uploader minimal — M9r solution-block safety net', () => {
           <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
-      const el = page.getByTestId('uc-file-uploader-minimal').query()! as FileUploaderMinimal;
+      const router = containerOf(ctxName).get(RouterController);
 
-      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.UPLOAD_LIST)).toBe('background');
-      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.START_FROM)).toBe('foreground');
-      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.CAMERA)).toBe('foreground');
-      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.URL)).toBe('foreground');
+      expect(router.navigationStrategy(ACTIVITY_TYPES.UPLOAD_LIST)).toBe('background');
+      expect(router.navigationStrategy(ACTIVITY_TYPES.START_FROM)).toBe('foreground');
+      expect(router.navigationStrategy(ACTIVITY_TYPES.CAMERA)).toBe('foreground');
+      expect(router.navigationStrategy(ACTIVITY_TYPES.URL)).toBe('foreground');
     });
   });
 
@@ -134,7 +134,7 @@ describe('File uploader minimal — M9r solution-block safety net', () => {
           <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
       const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
       const api = ctxProvider.getAPI();
@@ -161,13 +161,12 @@ describe('File uploader minimal — M9r solution-block safety net', () => {
           <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
-      const ctx = PubSub.getCtx<SharedState>(ctxName)!;
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
       const config = page.getByTestId('uc-config').query()! as Config;
       config.confirmUpload = true;
 
-      await expect.poll(() => ctx.read(sharedConfigKey('confirmUpload'))).toBe(false);
+      await expect.poll(() => containerOf(ctxName).get(ConfigController).get('confirmUpload')).toBe(false);
     });
   });
 
@@ -182,7 +181,7 @@ describe('File uploader minimal — M9r solution-block safety net', () => {
           <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
       // Drive `multiple` through the JS property (deterministic) rather than a
       // boolean attribute, whose default already resolves truthy.
@@ -204,7 +203,7 @@ describe('File uploader minimal — M9r solution-block safety net', () => {
           <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
       const config = page.getByTestId('uc-config').query()! as Config;
       config.filesViewMode = 'grid';
@@ -231,7 +230,7 @@ describe('File uploader minimal — M9r solution-block safety net', () => {
           <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
       const config = page.getByTestId('uc-config').query()! as Config;
       config.filesViewMode = 'grid';

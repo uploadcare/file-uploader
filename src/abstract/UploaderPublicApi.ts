@@ -69,7 +69,7 @@ export type ApiAddFileCommonOptions = {
  * own per-ctx `ControllerContainer` through the `CONTAINER` tag every
  * container-built instance carries (the same tag `@inject` reads), so
  * `buildOutputCollectionState` resolves the derived-collection controllers
- * itself. The bag bridge is removed; the api has NO shared-instances dependency.
+ * itself. The bag bridge is removed; the api has NO shared instances dependency.
  */
 export class UploaderPublicApi {
   @inject(ConfigController) private readonly _config!: ConfigController;

@@ -7,7 +7,7 @@ import { SignalMap } from '../di/SignalMap';
  * Pure-logic config store. Knows nothing about DOM, attributes, or Lit.
  *
  * In the v1 → v2 strangler this is the source of truth for the `*cfg/*` state
- * that used to live in the per-ctx nanostores map; `PubSubCompat` routes those
+ * that used to live in the per-ctx per-ctx store map; the v1 ctx facade routes those
  * keys here (see its `*cfg/` facade). For now it is a raw typed container:
  * value coercion (`normalizeConfigValue`), the `cdnCname`/`cameraModes`
  * computed properties, and the attribute/property bridge all still live in the
@@ -22,7 +22,7 @@ import { SignalMap } from '../di/SignalMap';
  * under a `SignalWatcher`, `set()`/`setCustom()` dedup with `Object.is` and
  * fire the map's coarse notify, and `subscribe()` fans out on any change —
  * preserving the exact `get`/`set`/`subscribe`/`values`/`notify` semantics the
- * `PubSubCompat` `*cfg/` routing depends on. The map is typed over `ConfigType`
+ * the v1 ctx facade `*cfg/` routing depends on. The map is typed over `ConfigType`
  * intersected with a string index so runtime custom keys type cleanly.
  */
 export class ConfigController {
