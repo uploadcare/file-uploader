@@ -7,30 +7,13 @@ import {
   uploadFile,
 } from '@uploadcare/upload-client';
 import type { Uid } from '../../lit/Uid';
-import type { OutputFileEntry } from '../../types';
 import { fileIsImage } from '../../utils/fileTypes';
 import { customUserAgent } from '../../utils/userAgent';
-import type { Owned, PluginFileHookRegistration } from '../managers/plugin/PluginTypes';
-import type { ConfigController } from './ConfigController';
-import type { SecureUploadsController } from './SecureUploadsController';
-import type { UploadCollectionController } from './UploadCollectionController';
-
-type FileHook = Owned<PluginFileHookRegistration>;
-
-export type UploadControllerDeps = {
-  collection: UploadCollectionController;
-  config: ConfigController;
-  /** Secure-uploads engine — supplies the signature/expire for upload options. */
-  secureUploads: SecureUploadsController;
-  /** Snapshot of the registered plugin file hooks (filtered to `beforeUpload` here). */
-  getFileHooks: () => readonly FileHook[];
-  /** Resolves the public output entry — used when the `metadata` config is a callback. */
-  getOutputItem: (uid: Uid) => OutputFileEntry;
-  /** Telemetry sink for non-cancel upload failures. */
-  onUploadError?: (error: unknown, context: string) => void;
-  /** Debug logger — wired to the block's `debugPrint`. Defaults to a no-op. */
-  debug?: (...args: unknown[]) => void;
-};
+import { inject } from '../di/inject';
+import { ConfigController } from './ConfigController';
+import { SecureUploadsController } from './SecureUploadsController';
+import { UploadCollectionController } from './UploadCollectionController';
+import { UploadHostBridge } from './UploadHostBridge';
 
 /**
  * DOM-free upload engine — owns the upload-client queue and the per-entry
@@ -40,32 +23,32 @@ export type UploadControllerDeps = {
  * `isUploading`/`isQueuedForUploading` state writes, the per-entry
  * `AbortController`, the `beforeUpload` hook chain (with per-hook timeout +
  * isolation), upload-client option assembly, the queued `uploadFile` call,
- * progress, and the success/cancel/error write-back. Collaborators are injected
- * so it runs without a DOM and is unit-testable; the FileItem UI reacts to the
- * same entry mutations through its existing per-entry subscriptions.
+ * progress, and the success/cancel/error write-back. Container-resolved (M-god
+ * step 5): controller peers (config, collection, secure-uploads) and the
+ * `UploadHostBridge` (plugin hooks, output-item resolver, telemetry sink, debug)
+ * are `@inject`-ed, so it runs zero-arg without a DOM and is unit-testable; the
+ * FileItem UI reacts to the same entry mutations through its existing per-entry
+ * subscriptions.
  */
 export class UploadController {
-  private _collection: UploadCollectionController;
-  private _config: ConfigController;
-  private _secureUploads: SecureUploadsController;
-  private _getFileHooks: () => readonly FileHook[];
-  private _getOutputItem: (uid: Uid) => OutputFileEntry;
-  private _onUploadError?: (error: unknown, context: string) => void;
-  private _debug: (...args: unknown[]) => void;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
+  @inject(SecureUploadsController) private readonly _secureUploads!: SecureUploadsController;
+  @inject(UploadHostBridge) private readonly _host!: UploadHostBridge;
 
   // One queue per uploader scope → global concurrency across all entries (v1 parity).
   private _queue = new Queue(1);
-  private _unsubConfig: () => void;
+  // Assigned in `init()` (always run by the container before any method call).
+  private _unsubConfig!: () => void;
 
-  public constructor(deps: UploadControllerDeps) {
-    this._collection = deps.collection;
-    this._config = deps.config;
-    this._secureUploads = deps.secureUploads;
-    this._getFileHooks = deps.getFileHooks;
-    this._getOutputItem = deps.getOutputItem;
-    this._onUploadError = deps.onUploadError;
-    this._debug = deps.debug ?? (() => {});
-
+  /**
+   * Container lifecycle hook — runs after the container has tagged + cached this
+   * instance, so `@inject` fields resolve (they must NOT be read in the zero-arg
+   * constructor, which runs before the container tags the instance). Seeds the
+   * queue concurrency and subscribes to config changes, exactly as v1's
+   * construction-time wiring did.
+   */
+  public init(): void {
     this._queue.concurrency = this._concurrencyFromConfig();
     this._unsubConfig = this._config.subscribe(() => {
       this._queue.concurrency = this._concurrencyFromConfig();
@@ -117,7 +100,7 @@ export class UploadController {
   public async getMetadataFor(uid: Uid): Promise<FileFromOptions['metadata']> {
     const configValue = this._config.values.metadata || undefined;
     if (typeof configValue === 'function') {
-      return configValue(this._getOutputItem(uid));
+      return configValue(this._host.getOutputItem(uid));
     }
     return configValue;
   }
@@ -157,7 +140,7 @@ export class UploadController {
         let file: File | Blob | null = entry.getValue('file');
 
         if (file instanceof File || file instanceof Blob) {
-          const beforeUploadHooks = this._getFileHooks().filter((h) => h.type === 'beforeUpload');
+          const beforeUploadHooks = this._host.getFileHooks().filter((h) => h.type === 'beforeUpload');
           for (const hook of beforeUploadHooks) {
             try {
               const hookPromise = hook.handler({ file, signal: abortController.signal });
@@ -198,7 +181,7 @@ export class UploadController {
           signal: abortController.signal,
           metadata: await this.getMetadataFor(uid),
         };
-        this._debug('upload options', fileInput, uploadClientOptions);
+        this._host.debug('upload options', fileInput, uploadClientOptions);
         return uploadFile(fileInput, uploadClientOptions);
       };
 
@@ -243,7 +226,7 @@ export class UploadController {
       }
 
       if (!isCancelError) {
-        this._onUploadError?.(cause, 'file upload. Failed to upload file');
+        this._host.onUploadError(cause, 'file upload. Failed to upload file');
       }
     }
   }

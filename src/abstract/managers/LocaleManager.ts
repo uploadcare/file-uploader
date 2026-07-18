@@ -1,24 +1,19 @@
 import { default as en } from '../../locales/file-uploader/en';
 import type { ConfigType } from '../../types';
-import type { ConfigController } from '../controllers/ConfigController';
-import type { LocaleController } from '../controllers/LocaleController';
+import { ConfigController } from '../controllers/ConfigController';
+import { LocaleController } from '../controllers/LocaleController';
+import { inject } from '../di/inject';
 import { type LocaleDefinition, resolveLocaleDefinition } from '../localeRegistry';
 import type { PluginController } from './plugin';
 
 export const localeStateKey = <T extends keyof LocaleDefinition>(key: T): `*l10n/${T}` => `*l10n/${key}`;
 export const DEFAULT_LOCALE = 'en';
 
-export type LocaleManagerDeps = {
-  /** v2 config source of truth — `localeName`/`localeDefinitionOverride` reads + subscriptions. */
-  config: ConfigController;
-  /** v2 locale string store — where the resolved dictionary is written. */
-  locale: LocaleController;
-};
-
 /**
- * DOM-free locale orchestration (M9k port): deps-injected instead of
- * `SharedInstance`-based, reading/writing the v2 `ConfigController`/
- * `LocaleController` directly instead of the PubSub ctx.
+ * DOM-free locale orchestration (M9k port): reads/writes the v2
+ * `ConfigController`/`LocaleController` directly instead of the PubSub ctx.
+ * M-god step 3b: container-resolved with a zero-arg ctor, `@inject`-ing both
+ * controllers instead of taking them in a deps object.
  *
  * Construction itself is side-effect-free — `UploaderController` constructs
  * this eagerly, and the controller is itself created lazily by *any* `*cfg/*`
@@ -36,17 +31,16 @@ export type LocaleManagerDeps = {
  * `UploaderController`'s class doc / the M9k task report.
  */
 export class LocaleManager {
-  private readonly _deps: LocaleManagerDeps;
+  /** v2 config source of truth — `localeName`/`localeDefinitionOverride` reads + subscriptions. */
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  /** v2 locale string store — where the resolved dictionary is written. */
+  @inject(LocaleController) private readonly _locale!: LocaleController;
   private _localeName = '';
   private _activated = false;
   private _destroyed = false;
   private _unsubs = new Set<() => void>();
   private _pluginManager: Pick<PluginController, 'onPluginsChange' | 'snapshot'> | null = null;
   private _pluginManagerUnsub?: () => void;
-
-  public constructor(deps: LocaleManagerDeps) {
-    this._deps = deps;
-  }
 
   /**
    * Run the v1 construction-time work: seed the `en` defaults, wire the
@@ -74,7 +68,7 @@ export class LocaleManager {
     this._activated = true;
 
     for (const [key, value] of Object.entries(en) as [keyof LocaleDefinition, string][]) {
-      const noTranslation = this._deps.locale.has(key) ? !this._deps.locale.get(key) : true;
+      const noTranslation = this._locale.has(key) ? !this._locale.get(key) : true;
       this._setLocale(key, value, noTranslation);
     }
 
@@ -122,10 +116,10 @@ export class LocaleManager {
    * replaces for `LocaleManager`'s two config reads).
    */
   private _subConfig<K extends keyof ConfigType>(key: K, cb: (value: ConfigType[K]) => void): () => void {
-    let last = this._deps.config.get(key);
+    let last = this._config.get(key);
     cb(last);
-    return this._deps.config.subscribe(() => {
-      const next = this._deps.config.get(key);
+    return this._config.subscribe(() => {
+      const next = this._config.get(key);
       if (!Object.is(next, last)) {
         last = next;
         cb(next);
@@ -134,13 +128,13 @@ export class LocaleManager {
   }
 
   private _setLocale(key: string, value: string, rewrite: boolean): void {
-    if (!this._deps.locale.has(key) || rewrite) {
-      this._deps.locale.set(key, value);
+    if (!this._locale.has(key) || rewrite) {
+      this._locale.set(key, value);
     }
   }
 
   private _applyOverrides(localeName: string, definition: Partial<LocaleDefinition>): void {
-    const overrides = this._deps.config.get('localeDefinitionOverride')?.[localeName];
+    const overrides = this._config.get('localeDefinitionOverride')?.[localeName];
     for (const [key, value] of Object.entries(definition) as [keyof LocaleDefinition, string][]) {
       const overriddenValue = overrides?.[key];
       this._setLocale(key, overriddenValue ?? value, true);

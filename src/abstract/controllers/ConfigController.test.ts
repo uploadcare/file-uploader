@@ -121,6 +121,15 @@ describe('ConfigController', () => {
     expect(config.customDefinition('not-registered')).toBeUndefined();
   });
 
+  it('notify() fires subscribers without a state change', () => {
+    const config = new ConfigController();
+    const listener = vi.fn();
+    config.subscribe(listener);
+
+    config.notify();
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
   it('setCustom does not notify when the value is unchanged', () => {
     const config = new ConfigController();
     config.setCustom('unsplashApiKey', 'v');

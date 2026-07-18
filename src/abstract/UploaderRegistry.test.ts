@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { UploaderController } from './controllers/UploaderController';
+import { ControllerContainer } from './di/ControllerContainer';
 import { UploaderRegistry } from './UploaderRegistry';
 
 // The registry is a module-level singleton, so each test uses a unique
@@ -7,10 +8,14 @@ import { UploaderRegistry } from './UploaderRegistry';
 let seq = 0;
 const uniqueName = () => `test-ctx-${seq++}`;
 
+// The controller now takes its per-ctx DI container at construction; these
+// registry tests don't exercise it, so each gets a throwaway container.
+const newController = () => new UploaderController(new ControllerContainer());
+
 describe('UploaderRegistry', () => {
   it('register then get returns the controller', () => {
     const name = uniqueName();
-    const controller = new UploaderController();
+    const controller = newController();
 
     UploaderRegistry.register(name, controller);
     expect(UploaderRegistry.get(name)).toBe(controller);
@@ -21,7 +26,7 @@ describe('UploaderRegistry', () => {
 
   it('whenAvailable fires synchronously when already registered', () => {
     const name = uniqueName();
-    const controller = new UploaderController();
+    const controller = newController();
     UploaderRegistry.register(name, controller);
 
     const cb = vi.fn();
@@ -38,7 +43,7 @@ describe('UploaderRegistry', () => {
     const off = UploaderRegistry.whenAvailable(name, cb);
     expect(cb).not.toHaveBeenCalled();
 
-    const controller = new UploaderController();
+    const controller = newController();
     UploaderRegistry.register(name, controller);
 
     expect(cb).toHaveBeenCalledWith(controller);
@@ -48,7 +53,7 @@ describe('UploaderRegistry', () => {
 
   it('re-registering under the same name re-notifies consumers (remount)', () => {
     const name = uniqueName();
-    const first = new UploaderController();
+    const first = newController();
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     UploaderRegistry.register(name, first);
 
@@ -56,7 +61,7 @@ describe('UploaderRegistry', () => {
     const off = UploaderRegistry.whenAvailable(name, cb);
     cb.mockClear();
 
-    const second = new UploaderController();
+    const second = newController();
     UploaderRegistry.register(name, second);
 
     expect(cb).toHaveBeenCalledWith(second);
@@ -77,7 +82,7 @@ describe('UploaderRegistry', () => {
     UploaderRegistry.whenAvailable(name, bad);
     const off = UploaderRegistry.whenAvailable(name, good);
 
-    const controller = new UploaderController();
+    const controller = newController();
     expect(() => UploaderRegistry.register(name, controller)).not.toThrow();
     expect(good).toHaveBeenCalledWith(controller);
     expect(warn).toHaveBeenCalled();
@@ -89,8 +94,8 @@ describe('UploaderRegistry', () => {
 
   it('unregister only deletes when the controller identity matches', () => {
     const name = uniqueName();
-    const current = new UploaderController();
-    const stale = new UploaderController();
+    const current = newController();
+    const stale = newController();
     UploaderRegistry.register(name, current);
 
     // A stale element's deferred unregister must not evict the new owner.
@@ -103,7 +108,7 @@ describe('UploaderRegistry', () => {
 
   it('unregister notifies consumers with null', () => {
     const name = uniqueName();
-    const controller = new UploaderController();
+    const controller = newController();
     UploaderRegistry.register(name, controller);
 
     const cb = vi.fn();
@@ -118,8 +123,8 @@ describe('UploaderRegistry', () => {
 
   it('unregister of a stale controller does not notify consumers', () => {
     const name = uniqueName();
-    const current = new UploaderController();
-    const stale = new UploaderController();
+    const current = newController();
+    const stale = newController();
     UploaderRegistry.register(name, current);
 
     const cb = vi.fn();
@@ -136,7 +141,7 @@ describe('UploaderRegistry', () => {
 
   it('re-registering after an unregister fires the new controller', () => {
     const name = uniqueName();
-    const first = new UploaderController();
+    const first = newController();
     UploaderRegistry.register(name, first);
 
     const cb = vi.fn();
@@ -147,7 +152,7 @@ describe('UploaderRegistry', () => {
     expect(cb).toHaveBeenCalledWith(null);
     cb.mockClear();
 
-    const second = new UploaderController();
+    const second = newController();
     UploaderRegistry.register(name, second);
     expect(cb).toHaveBeenCalledWith(second);
 
@@ -158,7 +163,7 @@ describe('UploaderRegistry', () => {
   it('isolates a throwing consumer so other consumers are still notified on unregister', () => {
     const name = uniqueName();
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const controller = new UploaderController();
+    const controller = newController();
 
     const bad = vi.fn(() => {
       throw new Error('boom');
@@ -186,7 +191,7 @@ describe('UploaderRegistry', () => {
     const off = UploaderRegistry.whenAvailable(name, cb);
     off();
 
-    const controller = new UploaderController();
+    const controller = newController();
     UploaderRegistry.register(name, controller);
 
     expect(cb).not.toHaveBeenCalled();
@@ -208,7 +213,7 @@ describe('UploaderRegistry', () => {
     const offB = UploaderRegistry.whenAvailable(name, b);
     const offC = UploaderRegistry.whenAvailable(name, c);
 
-    const controller = new UploaderController();
+    const controller = newController();
     UploaderRegistry.register(name, controller);
     expect(a).toHaveBeenCalledWith(controller);
     expect(b).toHaveBeenCalledWith(controller);
@@ -220,7 +225,7 @@ describe('UploaderRegistry', () => {
     // Unsubscribing one of three removes exactly that one slot — the other
     // two remain live and keep receiving notifications.
     offB();
-    const second = new UploaderController();
+    const second = newController();
     UploaderRegistry.register(name, second);
     expect(a).toHaveBeenCalledWith(second);
     expect(c).toHaveBeenCalledWith(second);
@@ -232,7 +237,7 @@ describe('UploaderRegistry', () => {
     // register notifies nobody.
     offA();
     offC();
-    const third = new UploaderController();
+    const third = newController();
     expect(() => UploaderRegistry.register(name, third)).not.toThrow();
     expect(a).not.toHaveBeenCalled();
     expect(c).not.toHaveBeenCalled();
@@ -265,7 +270,7 @@ describe('UploaderRegistry', () => {
 
     it('is unaffected by whether a controller is registered under the name', () => {
       const name = uniqueName();
-      const controller = new UploaderController();
+      const controller = newController();
       UploaderRegistry.register(name, controller);
       expect(UploaderRegistry.hasConsumers(name)).toBe(false);
 
@@ -290,7 +295,7 @@ describe('UploaderRegistry', () => {
     const offFirst = UploaderRegistry.whenAvailable(name, cb);
     const offSecond = UploaderRegistry.whenAvailable(name, cb);
 
-    const controller = new UploaderController();
+    const controller = newController();
     UploaderRegistry.register(name, controller);
     // Both subscriptions notify independently, even though it's the same
     // function reference — one call per live subscription, not deduped.
@@ -302,7 +307,7 @@ describe('UploaderRegistry', () => {
     offFirst();
     expect(UploaderRegistry.hasConsumers(name)).toBe(true);
 
-    const second = new UploaderController();
+    const second = newController();
     UploaderRegistry.register(name, second);
     expect(cb).toHaveBeenCalledTimes(1);
     expect(cb).toHaveBeenCalledWith(second);

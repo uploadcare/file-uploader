@@ -1,7 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
+import { EventEmitter, EventType, InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
+import type { ActivityId } from '../../lit/activity-constants';
 import type { ConfigType } from '../../types/index';
+import { AppInfo } from '../controllers/AppInfo';
 import { ConfigController } from '../controllers/ConfigController';
+import { RouterController } from '../controllers/RouterController';
+import { ControllerContainer } from '../di/ControllerContainer';
 import { TelemetryManager } from './TelemetryManager';
 
 const sendEventMock = vi.hoisted(() => vi.fn(async (_payload: Record<string, unknown>) => {}));
@@ -14,6 +18,13 @@ vi.mock('@uploadcare/quality-insights', () => ({
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+// TelemetryManager is container-resolved now (M-god step 3c): a zero-arg ctor
+// that `@inject`s ConfigController/EventBus/AppInfo/RouterController and, in
+// `init()`, subscribes to the config store AND observes the bus (`onAny`). Build
+// all collaborators through one throwaway container so the manager injects the
+// same instances the specs read/spy on. `solution`/`activity` are seeded on
+// AppInfo/RouterController BEFORE the manager is built, so the seeding
+// navigation never reaches the not-yet-subscribed observer.
 const setup = ({
   solution,
   activity = null,
@@ -23,18 +34,26 @@ const setup = ({
   activity?: string | null;
   router?: boolean;
 } = {}) => {
-  const config = new ConfigController();
-  const manager = new TelemetryManager({
-    config,
-    getSolution: () => solution ?? null,
-    // Mirrors the wiring closure: null until the router instance exists.
-    getActivity: () => (router ? activity : null),
-  });
+  const container = new ControllerContainer();
+  const config = container.get(ConfigController);
+  const appInfo = container.get(AppInfo);
+  const routerCtrl = container.get(RouterController);
+  if (solution) {
+    appInfo.setSolutionName(solution);
+  }
+  if (router && activity) {
+    routerCtrl.setActivity(activity as ActivityId);
+  }
+  const manager = container.get(TelemetryManager); // init() → config + bus subscriptions
 
   const setConfig = <K extends keyof ConfigType>(key: K, value: ConfigType[K]) => config.set(key, value);
   const enable = () => setConfig('qualityInsights', true);
+  // Emit through the container's real EventEmitter → the bus the manager
+  // observes, exercising the observer path end-to-end.
+  const emitOnBus = (type: Parameters<EventEmitter['emit']>[0], payload?: Parameters<EventEmitter['emit']>[1]) =>
+    container.get(EventEmitter).emit(type, payload);
 
-  return { manager, setConfig, enable };
+  return { manager, setConfig, enable, emitOnBus, container, config, appInfo, router: routerCtrl };
 };
 
 describe('TelemetryManager', () => {
@@ -242,31 +261,23 @@ describe('TelemetryManager', () => {
     expect(payload.activity).toBeNull();
   });
 
-  it('resolves solution/activity from the live getters, not a construction-time snapshot — covers construction before the solution/router register (the pre-connect timing the controller-owned move introduces)', async () => {
-    // Mirrors the real wiring in LitBlock.initCallback: `getSolution`/`getActivity`
-    // are closures re-evaluated on every send, not values captured once at
-    // construction. Constructing the manager while both are still unset (as
-    // happens if construction moves earlier than the solution/router exist)
-    // must not freeze a null forever — later registration must be reflected.
-    let solution: string | null = null;
-    let activity: string | null = null;
-    const config = new ConfigController();
-    const manager = new TelemetryManager({
-      config,
-      getSolution: () => solution,
-      getActivity: () => activity,
-    });
-    config.set('qualityInsights', true);
-
+  it('resolves solution/activity live from AppInfo/RouterController, reflecting post-init registration', async () => {
+    // The solution/activity payload fields read the container-owned
+    // AppInfo/RouterController on every send, not a construction-time snapshot.
+    // Building the manager while both are still unset must not freeze null
+    // forever — a later `setSolutionName`/`setActivity` must be reflected.
+    const { manager, appInfo, router } = setup(); // enabled by default
     manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
     await flush();
     let payload = sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(payload.component).toBeNull();
     expect(payload.activity).toBeNull();
 
+    appInfo.setSolutionName('UC-FILE-UPLOADER-REGULAR');
+    router.setActivity('start-from' as ActivityId);
+    // setActivity emitted ACTIVITY_CHANGE → the observer already sent it; drop
+    // that so the assertion below inspects only our explicit MODAL_OPEN send.
     sendEventMock.mockClear();
-    solution = 'UC-FILE-UPLOADER-REGULAR'.toLowerCase();
-    activity = 'start-from';
     vi.setSystemTime(1_700_000_002_000); // distinct payload for the dedup check
     manager.sendEvent({ eventType: EventType.MODAL_OPEN });
     await flush();
@@ -275,6 +286,167 @@ describe('TelemetryManager', () => {
     payload = sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>;
     expect(payload.component).toBe('uc-file-uploader-regular');
     expect(payload.activity).toBe('start-from');
+  });
+
+  describe('bus observer (M-god step 3c)', () => {
+    it('an event emitted on the bus reaches telemetry (replaces the per-emit mirror)', async () => {
+      const { emitOnBus } = setup({ solution: 'uc-file-uploader-regular' }); // enabled by default
+
+      emitOnBus(EventType.UPLOAD_CLICK);
+      await flush();
+
+      expect(sendEventMock).toHaveBeenCalledTimes(1);
+      const payload = sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(payload.eventType).toBe(EventType.UPLOAD_CLICK);
+      expect(payload.component).toBe('uc-file-uploader-regular');
+    });
+
+    it('an observed excluded event (file-upload-progress) is still dropped by the internal filter', async () => {
+      const { emitOnBus } = setup();
+
+      emitOnBus(EventType.FILE_UPLOAD_PROGRESS, {} as never);
+      await flush();
+
+      expect(sendEventMock).not.toHaveBeenCalled();
+    });
+
+    it('newly telemeters common-upload-start observed off the bus (documented parity change: uploadAll)', async () => {
+      // uploadAll (and emitCommonUploadFailed) emit directly on the EventEmitter,
+      // bypassing the old per-emit mirror — telemetry never saw them before.
+      // As a bus observer it now does, an intended consistency improvement.
+      const { emitOnBus } = setup({ solution: 'uc-file-uploader-regular' });
+
+      emitOnBus(EventType.COMMON_UPLOAD_START, {} as never);
+      await flush();
+
+      expect(sendEventMock).toHaveBeenCalledTimes(1);
+      expect((sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>).eventType).toBe(
+        EventType.COMMON_UPLOAD_START,
+      );
+    });
+
+    it('sends nothing observed off the bus while disabled', async () => {
+      const { emitOnBus, setConfig } = setup();
+      setConfig('qualityInsights', false);
+
+      emitOnBus(EventType.UPLOAD_CLICK);
+      await flush();
+
+      expect(sendEventMock).not.toHaveBeenCalled();
+    });
+
+    it("a debounced modal emit (RouterController._emit's {debounce:true} path) is not seen synchronously, then reaches telemetry once the window elapses", async () => {
+      // RouterController._emit debounces MODAL_OPEN/MODAL_CLOSE via
+      // `EventEmitter.emit(type, payload, { debounce: true })` →
+      // `EventBus.emitDebounced` (~20ms). Telemetry, as a bus observer, sees
+      // that already-debounced delivery — this pins the accepted behavior
+      // change (modal telemetry is no longer synchronous with the transition).
+      vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+      vi.setSystemTime(1_700_000_000_000);
+      const { container, enable } = setup({ solution: 'uc-file-uploader-regular' });
+      enable();
+      const emitter = container.get(EventEmitter);
+
+      emitter.emit(EventType.MODAL_OPEN, { modalId: 'start-from' } as never, { debounce: true });
+
+      // Still inside the debounce window — must not have fired yet.
+      expect(sendEventMock).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(20);
+
+      expect(sendEventMock).toHaveBeenCalledTimes(1);
+      const payload = sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>;
+      expect(payload.eventType).toBe(EventType.MODAL_OPEN);
+    });
+
+    it('two rapid same-type debounced emits within the window collapse into a single telemetry delivery', async () => {
+      vi.useFakeTimers({ toFake: ['Date', 'setTimeout', 'clearTimeout'] });
+      vi.setSystemTime(1_700_000_000_000);
+      const { container, enable } = setup({ solution: 'uc-file-uploader-regular' });
+      enable();
+      const emitter = container.get(EventEmitter);
+
+      emitter.emit(EventType.MODAL_OPEN, { modalId: 'start-from' } as never, { debounce: true });
+      emitter.emit(EventType.MODAL_OPEN, { modalId: 'start-from' } as never, { debounce: true });
+
+      vi.advanceTimersByTime(20);
+
+      // Collapsed by EventBus.emitDebounced (later emit resets the pending
+      // timer) — telemetry sees one delivery, not two.
+      expect(sendEventMock).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("defaults a missing eventType to '' in the payload", async () => {
+    const { manager, enable } = setup();
+    enable();
+
+    manager.sendEvent({});
+    await flush();
+
+    const payload = sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>;
+    expect(payload.eventType).toBe('');
+  });
+
+  it('re-sends when only a deeply-nested payload value differs (deep _checkObj recursion miss)', async () => {
+    const { manager, enable } = setup();
+    enable();
+
+    // Same timestamp + same structure, differing only in a nested leaf — forces
+    // `_checkObj` past the top-level JSON compare into the recursive key walk.
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1 } } });
+    await flush();
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 2 } } });
+    await flush();
+
+    expect(sendEventMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('re-sends when a nested object gains/loses a key (deep _checkObj length miss)', async () => {
+    const { manager, enable } = setup();
+    enable();
+
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1, b: 2 } } });
+    await flush();
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1 } } });
+    await flush();
+
+    expect(sendEventMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('re-sends when a nested object swaps a key name for one of equal count (deep _checkObj key miss)', async () => {
+    const { manager, enable } = setup();
+    enable();
+
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1 } } });
+    await flush();
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { b: 1 } } });
+    await flush();
+
+    expect(sendEventMock).toHaveBeenCalledTimes(2);
+  });
+
+  describe('destroy', () => {
+    it('before init() (never container-resolved) is a no-op — the default unsubs are safe', () => {
+      // A manager built outside a container never ran `init()`, so its `_unsub*`
+      // fields are the default no-ops; `destroy()` must tolerate that.
+      expect(() => new TelemetryManager().destroy()).not.toThrow();
+    });
+
+    it('unsubscribes from the config store and the bus — no sends afterward', async () => {
+      const { manager, setConfig, emitOnBus } = setup();
+      manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
+      await flush();
+      sendEventMock.mockClear();
+
+      manager.destroy();
+
+      setConfig('multiple', false); // config change → CHANGE_CONFIG would fire if still subscribed
+      emitOnBus(EventType.UPLOAD_CLICK); // bus event → observer detached
+      await flush();
+
+      expect(sendEventMock).not.toHaveBeenCalled();
+    });
   });
 
   it('dedupes payloads that differ only in key order', async () => {

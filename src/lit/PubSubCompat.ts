@@ -1,7 +1,11 @@
 import { listenKeys, type MapStore, map, subscribeKeys } from 'nanostores';
+import type { CollectionState } from '../abstract/controllers/CollectionStateController';
+import { CollectionStateController } from '../abstract/controllers/CollectionStateController';
 import type { ConfigController } from '../abstract/controllers/ConfigController';
+import { LazyPluginsController } from '../abstract/controllers/LazyPluginsController';
 import type { LocaleController } from '../abstract/controllers/LocaleController';
 import { UploaderController } from '../abstract/controllers/UploaderController';
+import { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 
 export type Unsubscriber = () => void;
@@ -9,12 +13,30 @@ export type Unsubscriber = () => void;
 type PubSubStore<T extends Record<string, unknown>> = MapStore<T>;
 
 /**
- * Namespaces routed to the per-ctx `UploaderController` instead of the
- * nanostores map: config (`*cfg/<key>`) → `controller.config`, locale
- * (`*l10n/<key>`) → `controller.locale`. Everything else stays on nanostores.
+ * Namespaces routed to a per-ctx controller instead of the nanostores map:
+ * config (`*cfg/<key>`) → `controller.config`, locale (`*l10n/<key>`) →
+ * `controller.locale`. The orphan derived-state keys are routed too (M-god
+ * step 4): the six collection keys → `CollectionStateController`, `*lazyPlugins`
+ * → `LazyPluginsController`. Everything else stays on nanostores.
  */
 const CFG_PREFIX = '*cfg/';
 const L10N_PREFIX = '*l10n/';
+
+/**
+ * The six derived collection keys owned by `CollectionStateController`, mapped
+ * from their `*`-prefixed compat key to the controller's bare `SignalMap` key.
+ */
+const COLLECTION_STATE_KEYS = {
+  '*uploadList': 'uploadList',
+  '*commonProgress': 'commonProgress',
+  '*collectionState': 'collectionState',
+  '*collectionErrors': 'collectionErrors',
+  '*groupInfo': 'groupInfo',
+  '*uploadTrigger': 'uploadTrigger',
+} as const satisfies Record<string, keyof CollectionState>;
+
+/** The single key owned by `LazyPluginsController`. */
+const LAZY_PLUGINS_KEY = '*lazyPlugins';
 
 export class PubSub<T extends Record<string, unknown>> {
   private static _contexts = new Map<string, PubSubStore<Record<string, unknown>>>();
@@ -26,13 +48,18 @@ export class PubSub<T extends Record<string, unknown>> {
    */
   private static _ctxWaiters = new Map<string, Set<(ctx: PubSub<Record<string, unknown>>) => void>>();
   /**
-   * One `UploaderController` per ctx-name. Created lazily the first time a
-   * `*cfg/*` key is touched on a context (so per-upload-entry stores, which
-   * never carry config keys, never get a controller). This is the v1 → v2
+   * One per-ctx `ControllerContainer` per ctx-name. Created lazily by
+   * `_resolveContainer` the first time ANY container-routed key is touched on a
+   * context — a `*cfg/*` or `*l10n/*` key, one of the six collection-state keys,
+   * or `*lazyPlugins` (so per-upload-entry stores, which carry none of these,
+   * never get a controller). Each container owns exactly one (still-monolithic)
+   * `UploaderController` — it is the
+   * creation/ownership seam: the controller is `bind`+`get` through the
+   * container, and `container.dispose()` tears it down. This is the v1 → v2
    * strangler seam: config state lives in `controller.config`, not in the
    * nanostores map, while the rest of the shared state stays on nanostores.
    */
-  private static _controllers = new Map<string, UploaderController>();
+  private static _controllers = new Map<string, ControllerContainer>();
 
   private _store: PubSubStore<T>;
   private _ctxId: string;
@@ -56,42 +83,51 @@ export class PubSub<T extends Record<string, unknown>> {
     return typeof key === 'string' && key.startsWith(L10N_PREFIX) ? key.slice(L10N_PREFIX.length) : null;
   }
 
+  /** The `CollectionStateController` field for a collection key, or null. */
+  private _collectionName(key: PropertyKey): keyof CollectionState | null {
+    // Own-property check: `in` would also match inherited `Object.prototype`
+    // members (`constructor`, `toString`, …) and misroute those valid PubSub
+    // keys into `CollectionStateController`.
+    return typeof key === 'string' && Object.hasOwn(COLLECTION_STATE_KEYS, key)
+      ? COLLECTION_STATE_KEYS[key as keyof typeof COLLECTION_STATE_KEYS]
+      : null;
+  }
+
   /** Get (or lazily create + register) the controller for this ctx. */
   private _uploader(): UploaderController {
-    let controller = PubSub._controllers.get(this._ctxId);
-    if (!controller) {
-      // The 9 v1 shared-state (`*`-key) read/write bridges the upload stack
-      // needs (validation's `setCollectionErrors`, uploadEvents' 8) — built
-      // here, at controller-creation time, closing over THIS ctx via the
-      // same `pub`/`read` this class already routes cfg/locale/nanostores
-      // keys through. None of these 9 keys are `*cfg/`- or `*l10n/`-prefixed,
-      // so `pub`/`read` fall straight through to the nanostores map — same
-      // shape as the v1 closures moved here verbatim (see the M9n Task 3
-      // report). `pub`/`read` are generic over this instance's own `T`; these
-      // keys aren't statically known to be `keyof T` (they're only ever
-      // touched by the uploader stack, not declared per-ctx-shape), hence the
-      // casts — behaviorally identical to the untyped `ctx.pub`/`ctx.read`
-      // calls this replaces.
-      const pub = <V>(key: string, value: V): void => this.pub(key as keyof T, value as T[keyof T]);
-      const read = <V>(key: string): V => this.read(key as keyof T) as V;
+    return this._resolveContainer().get(UploaderController);
+  }
 
-      controller = new UploaderController({
-        stateBridges: {
-          setCollectionErrors: (errors) => pub('*collectionErrors', errors),
-          uploadTrigger: () => read('*uploadTrigger'),
-          setUploadList: (list) => pub('*uploadList', list),
-          getCollectionState: () => read('*collectionState'),
-          setCollectionState: (state) => pub('*collectionState', state),
-          getCommonProgress: () => read('*commonProgress'),
-          setCommonProgress: (progress) => pub('*commonProgress', progress),
-          setGroupInfo: (group) => pub('*groupInfo', group),
-          getCollectionErrors: () => read('*collectionErrors'),
-        },
-      });
-      PubSub._controllers.set(this._ctxId, controller);
-      UploaderRegistry.register(this._ctxId, controller);
+  /**
+   * Get (or lazily create + register) the per-ctx `ControllerContainer`. Shared
+   * by the `_uploader`/`_config`/`_locale` routing and the M-god step 4 orphan-
+   * state routing (`_collectionState`/`_lazyPlugins`) so any of them touching a
+   * ctx first creates + registers the one container that owns them all.
+   */
+  private _resolveContainer(): ControllerContainer {
+    const existing = PubSub._controllers.get(this._ctxId);
+    if (existing) {
+      // Idempotent: the container caches its single UploaderController, so this
+      // returns the same instance registered at creation time (no re-init).
+      return existing;
     }
-    return controller;
+
+    // The per-ctx container is the creation/owner of the (still-monolithic)
+    // UploaderController: bind its factory, then `get` the single instance.
+    // `container.dispose()` (in `deleteCtx`) is what tears it down. M-god step 5
+    // removed the 9 v1 shared-state (`*`-key) read/write bridges that used to be
+    // built here — the upload stack now writes the six derived collection keys
+    // directly to the container-owned `CollectionStateController` (the same
+    // instance `PubSubCompat`'s `*uploadList`…`*uploadTrigger` routing resolves),
+    // so no ctx-closure bridge is needed.
+    const container = new ControllerContainer();
+    container.bind(UploaderController, (c) => new UploaderController(c));
+    const controller = container.get(UploaderController);
+    PubSub._controllers.set(this._ctxId, container);
+    // Register the UploaderController itself (exactly as before), so
+    // `UploaderRegistry`/`ChildBlock`/`whenAvailable` consumers are untouched.
+    UploaderRegistry.register(this._ctxId, controller);
+    return container;
   }
 
   private _config(): ConfigController {
@@ -100,6 +136,16 @@ export class PubSub<T extends Record<string, unknown>> {
 
   private _locale(): LocaleController {
     return this._uploader().locale;
+  }
+
+  /** The container-owned owner of the six derived collection keys (M-god step 4). */
+  private _collectionState(): CollectionStateController {
+    return this._resolveContainer().get(CollectionStateController);
+  }
+
+  /** The container-owned owner of `*lazyPlugins` (M-god step 4). */
+  private _lazyPlugins(): LazyPluginsController {
+    return this._resolveContainer().get(LazyPluginsController);
   }
 
   /**
@@ -144,6 +190,15 @@ export class PubSub<T extends Record<string, unknown>> {
       this._locale().set(loc, value as unknown as string);
       return;
     }
+    const col = this._collectionName(key);
+    if (col !== null) {
+      this._collectionState().set(col, value as CollectionState[typeof col]);
+      return;
+    }
+    if (key === LAZY_PLUGINS_KEY) {
+      this._lazyPlugins().set(value as Parameters<LazyPluginsController['set']>[0]);
+      return;
+    }
     if (!(key in this._store.get())) {
       console.warn(`PubSub#pub: Key "${String(key)}" not found`);
     }
@@ -171,6 +226,25 @@ export class PubSub<T extends Record<string, unknown>> {
         init,
       );
     }
+    const col = this._collectionName(key);
+    if (col !== null) {
+      const collectionState = this._collectionState();
+      return this._subDerived<T[K]>(
+        () => collectionState.get(col) as T[K],
+        (l) => collectionState.subscribe(l),
+        callback,
+        init,
+      );
+    }
+    if (key === LAZY_PLUGINS_KEY) {
+      const lazyPlugins = this._lazyPlugins();
+      return this._subDerived<T[K]>(
+        () => lazyPlugins.get() as T[K],
+        (l) => lazyPlugins.subscribe(l),
+        callback,
+        init,
+      );
+    }
     const unsubscribe = (init ? subscribeKeys : listenKeys)(this._store, [key as any], (values: Partial<T>) => {
       callback(values[key] as T[K]);
     });
@@ -191,6 +265,14 @@ export class PubSub<T extends Record<string, unknown>> {
       const locale = this._locale();
       if (!locale.has(loc)) console.warn(`PubSub#read: Key "${String(key)}" not found`);
       return locale.get(loc) as T[K];
+    }
+    const col = this._collectionName(key);
+    if (col !== null) {
+      // Always seeded (the controller initializes all six) — no missing-key warning.
+      return this._collectionState().get(col) as T[K];
+    }
+    if (key === LAZY_PLUGINS_KEY) {
+      return this._lazyPlugins().get() as T[K];
     }
     if (!(key in this._store.get())) {
       console.warn(`PubSub#read: Key "${String(key)}" not found`);
@@ -222,6 +304,19 @@ export class PubSub<T extends Record<string, unknown>> {
       if (!locale.has(loc) || rewrite) locale.set(loc, value as unknown as string);
       return;
     }
+    const col = this._collectionName(key);
+    if (col !== null) {
+      // The controller seeds all six at construction, so `add` is first-write-
+      // wins: it only writes on an explicit `rewrite` (v1's `key in store`
+      // check was always true for these seeded keys).
+      if (rewrite) this._collectionState().set(col, value as CollectionState[typeof col]);
+      return;
+    }
+    if (key === LAZY_PLUGINS_KEY) {
+      // Seeded to `null` at construction — same first-write-wins as above.
+      if (rewrite) this._lazyPlugins().set(value as Parameters<LazyPluginsController['set']>[0]);
+      return;
+    }
     const exists = key in this._store.get();
 
     if (!exists || rewrite) {
@@ -235,6 +330,12 @@ export class PubSub<T extends Record<string, unknown>> {
     if (cfg !== null) return this._config().hasKey(cfg);
     const loc = this._l10nName(key);
     if (loc !== null) return this._locale().has(loc);
+    // The six collection keys and `*lazyPlugins` deliberately fall through to
+    // the store: their v1 seed still lives in the nanostores map (left there
+    // per step 9's cleanup note), so `has` reflects whether THIS ctx was
+    // created as an uploader/solution ctx (seeded) vs a bare/plain one — exactly
+    // v1's `key in store`. The controller (which seeds all of them
+    // unconditionally) is only the value source for read/pub/sub/add.
     return key in this._store.get();
   }
 
@@ -281,11 +382,17 @@ export class PubSub<T extends Record<string, unknown>> {
 
   public static deleteCtx(ctxId: string): void {
     PubSub._contexts.delete(ctxId);
-    const controller = PubSub._controllers.get(ctxId);
-    if (controller) {
+    const container = PubSub._controllers.get(ctxId);
+    if (container) {
       PubSub._controllers.delete(ctxId);
+      // The container caches the single UploaderController, so this returns the
+      // exact instance registered at creation (no re-init) — needed for the
+      // identity-checked unregister. Unregister (null-notify) BEFORE dispose,
+      // preserving the v1 teardown order. `dispose()` then runs the single
+      // cached `UploaderController.destroy()` exactly once.
+      const controller = container.get(UploaderController);
       UploaderRegistry.unregister(ctxId, controller);
-      controller.destroy();
+      container.dispose();
     }
   }
 
