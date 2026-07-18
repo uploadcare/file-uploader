@@ -3,6 +3,7 @@ import { state } from 'lit/decorators.js';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
@@ -12,7 +13,7 @@ import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
 
 export class UrlSource extends ChildBlock {
-  public static override readonly uses = [TelemetryManager, RouterController] as const;
+  public static override readonly uses = [TelemetryManager, RouterController, UploaderPublicApi] as const;
 
   @state()
   private _url = '';
@@ -40,9 +41,9 @@ export class UrlSource extends ChildBlock {
     if (!url) {
       return;
     }
-    // `api` (UploaderPublicApi) is not container-resolved (set via
-    // UploaderController.setApi, no DI token), so it stays on the v1 `bag`.
-    this.bag.api.addFileFromUrl(url, { source: UploadSource.URL });
+    // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
+    // token — it is container-resolved (M-god step 8a), reached via `use()`.
+    this.use(UploaderPublicApi).addFileFromUrl(url, { source: UploadSource.URL });
     this.use(RouterController).traverse('onFileAdd');
   };
 

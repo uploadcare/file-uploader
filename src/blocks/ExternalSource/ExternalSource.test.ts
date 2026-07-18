@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { PubSub } from '../../lit/PubSubCompat';
 import { ExternalSource } from './ExternalSource';
@@ -40,7 +41,7 @@ const mount = async (ctxName: string): Promise<{ el: ExternalSource; router: Rou
 
 describe('ExternalSource (M-god step 6b-2 migration)', () => {
   it('declares its dependencies via static uses', () => {
-    expect(ExternalSource.uses).toEqual([ConfigController, RouterController]);
+    expect(ExternalSource.uses).toEqual([ConfigController, RouterController, UploaderPublicApi]);
   });
 
   it('routes the close button through the container-resolved RouterController (use())', async () => {

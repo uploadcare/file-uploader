@@ -3,8 +3,10 @@ import { state } from 'lit/decorators.js';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { throttle } from '../../utils/throttle';
@@ -33,12 +35,15 @@ export class UploadList extends ActivityChildBlock {
   // `ConfigController` (tracked `filesViewMode` host attr + imperative
   // derived-state reads), `CollectionStateController` (tracked `uploadList` /
   // `collectionErrors` render reads), `TelemetryManager` (add-more / clear-all
-  // action events).
+  // action events), `UploaderPublicApi` (flow actions + output-state reads) and
+  // `UploadCollectionController` (clear-all + the guard's size read).
   public static override readonly uses = [
     ConfigController,
     CollectionStateController,
     RouterController,
     TelemetryManager,
+    UploaderPublicApi,
+    UploadCollectionController,
   ] as const;
 
   public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
@@ -95,22 +100,21 @@ export class UploadList extends ActivityChildBlock {
         },
       },
     });
-    // `api` (UploaderPublicApi) has no DI token (set via `UploaderController.setApi`),
-    // so it stays on the v1 `bag` path (step 8).
-    this.bag.api.initFlow(true);
+    // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
+    // token — it is container-resolved (M-god step 8a), reached via `use()`.
+    this.use(UploaderPublicApi).initFlow(true);
   };
 
   private _handleUpload = (): void => {
     this.emit(EventType.UPLOAD_CLICK);
-    // `api` has no DI token — stays on the v1 `bag` path (step 8).
-    this.bag.api.uploadAll();
+    this.use(UploaderPublicApi).uploadAll();
     this._throttledHandleCollectionUpdate();
   };
 
   private _handleDone = (): void => {
-    // `api` has no DI token — stays on the v1 `bag` path (step 8).
-    this.emit(EventType.DONE_CLICK, this.bag.api.getOutputCollectionState());
-    this.bag.api.doneFlow();
+    const api = this.use(UploaderPublicApi);
+    this.emit(EventType.DONE_CLICK, api.getOutputCollectionState());
+    api.doneFlow();
   };
 
   private _handleCancel = (): void => {
@@ -124,17 +128,18 @@ export class UploadList extends ActivityChildBlock {
       },
     });
 
-    // `uploadCollection` has no DI token (registration race) — stays on the v1
-    // `bag` path (step 8).
-    this.bag.uploadCollection.clearAll();
+    // `uploadCollection` is container-owned (M-god step 4); this handler runs
+    // post-adoption (user click), so `use()` is safe.
+    this.use(UploadCollectionController).clearAll();
   };
 
-  // A trailing tick can fire after the block is released while still connected
-  // (registry unregistration race) — read the controller null-tolerantly and
-  // bail rather than throwing uncaught in the timeout (DynamicBtn precedent).
   private _throttledHandleCollectionUpdate = throttle(() => {
-    const uploader = this.uploaderOrNull;
-    if (!this.isConnected || !uploader) {
+    // A trailing tick can fire after the block is released while still connected
+    // (registry unregistration race) — read the container null-tolerantly via
+    // `useOrNull` and bail rather than throwing uncaught in the timeout
+    // (DynamicBtn precedent).
+    const config = this.useOrNull(ConfigController);
+    if (!this.isConnected || !config) {
       return;
     }
     this._updateUploadsState();
@@ -143,20 +148,19 @@ export class UploadList extends ActivityChildBlock {
     // list may stay open; ask it to re-check now that the collection changed.
     this.bag.routerOrNull?.revalidate();
 
-    if (!uploader.config.get('confirmUpload')) {
-      this.bag.apiOrNull?.uploadAll();
+    if (!config.get('confirmUpload')) {
+      this.useOrNull(UploaderPublicApi)?.uploadAll();
     }
   }, 300);
 
   private _updateUploadsState(): void {
     // Imperative derived-state recompute (writes the toolbar/button `@state`
     // below), not a render read — runs only from the throttled tick after its
-    // `!uploader` guard, so the container is adopted and `use()` is safe. Config
+    // container guard, so the container is adopted and `use()` is safe. Config
     // reads use the untracked `get()` (a re-render is driven by the throttled
-    // tick's `subConfigValue`/collection observers, not by tracking here);
-    // `api` has no DI token so `getOutputCollectionState` stays on `bag` (step 8).
+    // tick's `subConfigValue`/collection observers, not by tracking here).
     const config = this.use(ConfigController);
-    const collectionState = this.bag.api.getOutputCollectionState();
+    const collectionState = this.use(UploaderPublicApi).getOutputCollectionState();
     const summary: Summary = {
       total: collectionState.totalCount,
       succeed: collectionState.successCount,
@@ -231,16 +235,15 @@ export class UploadList extends ActivityChildBlock {
     // not just disconnect) and the predicate itself reads the controller
     // non-throwingly so a teardown-time navigation can't warn spuriously.
     // The guard registration goes through `use(RouterController)` (container is
-    // adopted by `controllerReady`), but the predicate keeps its null-tolerant
-    // `uploaderOrNull`/`bag.uploadCollectionOrNull` reads — it can fire during a
-    // teardown-time navigation, after the container is released, where `use()`
-    // would throw.
+    // adopted by `controllerReady`), but the predicate keeps null-tolerant
+    // `useOrNull` reads — it can fire during a teardown-time navigation, after
+    // the container is released, where `use()` would throw.
     this.trackSub(
       this.use(RouterController).guard(
         this.activityType,
         () =>
-          (this.uploaderOrNull?.config.get('showEmptyList') ?? false) ||
-          (this.bag.uploadCollectionOrNull?.size ?? 0) > 0,
+          (this.useOrNull(ConfigController)?.get('showEmptyList') ?? false) ||
+          (this.useOrNull(UploadCollectionController)?.size ?? 0) > 0,
       ),
     );
 

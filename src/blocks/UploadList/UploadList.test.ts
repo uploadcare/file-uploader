@@ -3,9 +3,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import type { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
-import type { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { PubSub } from '../../lit/PubSubCompat';
 import type { Uid } from '../../lit/Uid';
@@ -28,12 +28,16 @@ const freshCtxName = (): string => {
 
 // `UploadList.controllerReady` fires `_updateUploadsState` (via the leading-edge
 // throttled collection-update tick that `subConfigValue('multiple')` triggers
-// immediately), which reads `bag.api.getOutputCollectionState()`, and wires
-// `bag.when('uploadCollection')` observers. Both `api` and `uploadCollection`
-// have no DI token and are registered by the upload stack, absent in a bare ctx —
-// so seed minimal fakes so adoption completes and the imperative derived-state
-// path runs. The migrated reactive reads under test (uploadList /
-// collectionErrors / filesViewMode) don't touch these fakes.
+// immediately), which reads `use(UploaderPublicApi).getOutputCollectionState()`,
+// and wires `bag.when('uploadCollection')` observers. `UploaderPublicApi` and
+// `UploadCollectionController` are container-owned but in production carry a live
+// upload stack; in a bare unit ctx they'd construct real instances with no
+// backing state — so `container.bind` a minimal fake for each (M-god step 8d:
+// the block reads them via `use()`, so the fakes must live on the container, not
+// the `*publicApi`/`*uploadCollection` ctx keys). `*uploadCollection` is still
+// ctx-seeded too, for the `bag.when('uploadCollection')` observer. The migrated
+// reactive reads under test (uploadList / collectionErrors / filesViewMode)
+// don't touch these fakes.
 type ApiSpies = {
   getOutputCollectionState: ReturnType<typeof vi.fn>;
   uploadAll: ReturnType<typeof vi.fn>;
@@ -106,7 +110,10 @@ const mount = async (
   }
   const { api, spies } = makeFakeApi(zeroCollectionState(opts.state));
   const { collection, clearAll } = makeFakeCollection();
-  ctx.add('*publicApi', api, true);
+  // Bind the fakes on the container (the block reads them via `use()`), and seed
+  // `*uploadCollection` in the ctx store for the `bag.when` observer path.
+  container.bind(UploaderPublicApi, () => api);
+  container.bind(UploadCollectionController, () => collection);
   ctx.add('*uploadCollection', collection, true);
   const el = document.createElement('uc-upload-list') as UploadList;
   el.setAttribute('ctx-name', ctxName);
@@ -127,7 +134,14 @@ afterEach(() => {
 
 describe('UploadList (M-god step 6b-8 migration)', () => {
   it('declares its dependencies via static uses (incl. the base RouterController)', () => {
-    expect(UploadList.uses).toEqual([ConfigController, CollectionStateController, RouterController, TelemetryManager]);
+    expect(UploadList.uses).toEqual([
+      ConfigController,
+      CollectionStateController,
+      RouterController,
+      TelemetryManager,
+      UploaderPublicApi,
+      UploadCollectionController,
+    ]);
   });
 
   it('re-renders the <uc-file-item> list reactively when uploadList changes (getTracked, no ctx.sub)', async () => {
