@@ -29,7 +29,7 @@ export class SourceList extends ChildBlock {
     this._teardownSourceListController();
 
     this._sourceListController = new SourceListController(this, {
-      ctx: this.bag.ctx,
+      config: this.use(ConfigController),
       sharedInstancesBag: this.bag,
       onSourcesChange: (sources) => {
         this._sources = sources;

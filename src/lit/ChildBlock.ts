@@ -2,6 +2,7 @@ import { ContextConsumer, ContextProvider } from '@lit/context';
 import { SignalWatcher } from '@lit-labs/signals';
 import { LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { LocaleController } from '../abstract/controllers/LocaleController';
 import type { UploaderController } from '../abstract/controllers/UploaderController';
 import type { ControllerContainer, Token } from '../abstract/di/ControllerContainer';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
@@ -164,13 +165,14 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   /**
    * Same contract as v1 `LitBlock.l10n` (`createL10n`): dictionary lookup with
-   * key fallback, template variables, pluralization. Reads route through the
-   * ctx's `*l10n/*` facade to `LocaleController`. Call at render time (the
-   * render gate guarantees the ctx exists); blocks that render l10n text
-   * should add `(l) => ctrl.locale.subscribe(l)` to `subscriptionsFor` so the
-   * text re-renders when the dictionary loads or the locale switches.
+   * key fallback, template variables, pluralization. Reads directly from this
+   * ctx's `LocaleController` (M-god step 7: off the `*l10n/*` PubSub facade).
+   * Call at render time (the render gate guarantees the container is adopted, so
+   * `use()` resolves); blocks that render l10n text should add
+   * `(l) => ctrl.locale.subscribe(l)` to `subscriptionsFor` so the text
+   * re-renders when the dictionary loads or the locale switches.
    */
-  public l10n = createL10n(() => this._requireCtx());
+  public l10n = createL10n(() => this.use(LocaleController));
 
   /**
    * Emit a documented uploader event — same contract as v1 `LitBlock.emit`.
