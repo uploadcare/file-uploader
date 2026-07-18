@@ -4,7 +4,6 @@ import { EventBus, type UploaderEventKey, type UploaderEventPayload } from '../E
 import { A11y } from '../managers/a11y';
 import { LocaleManager } from '../managers/LocaleManager';
 import { TelemetryManager } from '../managers/TelemetryManager';
-import type { UploaderPublicApi } from '../UploaderPublicApi';
 import { AppInfo } from './AppInfo';
 import { ClipboardController } from './ClipboardController';
 import { ConfigController } from './ConfigController';
@@ -58,9 +57,7 @@ import { UploadCollectionController } from './UploadCollectionController';
  * and the element layer registers them via `registerUploadStack`/
  * `ensureUploaderScope` — so this controller no longer references those classes
  * at all (keeping the upload stack out of the editor bundle) and no longer tears
- * them down (the container disposes them). The only still-constructor-injected
- * member is `clipboard` (a later cluster moves it); it defaults to a freshly-
- * constructed instance so tests can substitute a fake.
+ * them down (the container disposes them).
  *
  * `PluginController` stays constructed by the DOM layer (`LitBlock`) — it
  * genuinely needs the PubSub ctx (`*lazyPlugins`, arbitrary shared state) and
@@ -70,27 +67,20 @@ import { UploadCollectionController } from './UploadCollectionController';
  * "abstract/ touches no DOM" boundary in spirit. See the M9k task report for
  * the full audit.
  *
- * `clipboard`'s add-file callbacks need the uploader-scope public API
- * (`*publicApi`), which is itself DOM-layer-constructed (`LitUploaderBlock`,
- * since `UploaderPublicApi` needs the shared-instances bag) — the controller
- * does not, and must not, construct it. Instead the controller holds a
- * settable `api` reference (`setApi`, mirroring the existing `setSolutionName`
- * pattern): `LitUploaderBlock` calls it right after constructing `*publicApi`.
- * `clipboard`'s callbacks read `this.api` lazily, at paste time — which is
- * always after `setApi` has run, since a paste can only ever add a file
- * through an already-constructed uploader element.
+ * Step 8b moved `clipboard` onto the container too (a delegating getter). It is
+ * now `@inject`-based: config/router are injected controller peers, and its
+ * add-file path reaches the uploader-scope public API through the container-
+ * bound `UploadHostBridge` (`getApi()`) at paste time — which REPLACES the old
+ * settable `api`/`setApi()` two-phase dance this class used to carry. (It goes
+ * through the host bridge rather than `@inject`-ing `UploaderPublicApi` directly
+ * so a value edge from this editor-bundled graph doesn't drag the public API
+ * into the editor-alone bundle; see `ClipboardController`'s class doc.)
+ * `clipboard`'s window listener still arms lazily on the first `registerScope`
+ * (from `SolutionChildBlock.controllerReady`), unchanged; the container lazily
+ * constructs it on that first `clipboard` access and disposes it with
+ * everything else.
  */
-export type UploaderControllerDeps = {
-  clipboard?: ClipboardController;
-};
-
 export class UploaderController {
-  public readonly clipboard: ClipboardController;
-
-  // The uploader-scope public API — element-constructed (see class doc),
-  // handed to the controller once it exists. Only `clipboard`'s add-file
-  // callbacks read this, and only at paste time.
-  private _api: UploaderPublicApi | null = null;
   private _destroyed = false;
   // The per-ctx DI container that owns this controller (M-god step 3). It also
   // owns `config`/`locale`/the upload stack now — the delegating getters below
@@ -99,20 +89,10 @@ export class UploaderController {
   // can register the upload stack against it (M-god step 5).
   private readonly _container: ControllerContainer;
 
-  public constructor(container: ControllerContainer, deps: UploaderControllerDeps = {}) {
-    // Assigned FIRST — the eager resolutions and the clipboard closures below
-    // read `this.config`/`this.router`, delegating getters resolving here.
+  public constructor(container: ControllerContainer) {
+    // Assigned FIRST — the eager resolutions below read `this.config`/etc.,
+    // delegating getters resolving here.
     this._container = container;
-
-    this.clipboard =
-      deps.clipboard ??
-      new ClipboardController({
-        getPasteScope: () => this.config.get('pasteScope'),
-        getCurrentActivity: () => this.router.currentActivity,
-        addFileFromObject: (file, options) => this.api.addFileFromObject(file, options),
-        addFileFromUrl: (url, options) => this.api.addFileFromUrl(url, options),
-        onFileAdd: () => this.router.traverse('onFileAdd'),
-      });
 
     // Eagerly resolve the container-owned managers that must exist from birth
     // (M-god step 3c — parity with their former eager construction). The order
@@ -239,46 +219,33 @@ export class UploaderController {
   }
 
   /**
-   * The uploader-scope public API — see the class doc. Throws if read before
-   * `setApi()` has run (parity with v1's `getSharedInstance` default of
-   * `isRequired: true`: reaching a paste handler without an API is a bug, not
-   * a silent no-op).
+   * Window paste-to-upload handler — container-owned (M-god step 8b). A
+   * delegating getter resolving through the container (stable identity per ctx),
+   * constructed lazily on first access (typically `SolutionChildBlock.
+   * controllerReady`'s `registerScope`, which is also where its window listener
+   * arms — unchanged) and disposed by `container.dispose()`. Its add-file path
+   * resolves the public API through the container (`@inject`), so this class no
+   * longer needs the settable `api`/`setApi()` seam it used to carry.
    */
-  public get api(): UploaderPublicApi {
-    if (!this._api) {
-      throw new Error('Unexpected error: UploaderController.api accessed before setApi()');
-    }
-    return this._api;
-  }
-
-  /** Called once by `LitUploaderBlock` right after constructing `*publicApi`. */
-  public setApi(api: UploaderPublicApi): void {
-    this._api = api;
+  public get clipboard(): ClipboardController {
+    return this._container.get(ClipboardController);
   }
 
   public destroy(): void {
     this._destroyed = true;
 
-    // Nothing container-owned is torn down here — the container owns
+    // Nothing is torn down here — the container owns
     // `config`/`locale`/`events`/`eventEmitter`/`localeManager`/`a11y`/`router`/
-    // `telemetryManager`/`collection` AND (M-god step 5) the whole upload stack
-    // (`SecureUploadsController`/`UploadController`/`ValidationController`/
-    // `UploadEventsController`), disposing them all in reverse construction
-    // order. The upload stack is registered AFTER this controller (which is
-    // resolved first, in `_resolveContainer`), so it is disposed BEFORE this
-    // `destroy()` runs — `UploadEventsController.unobserve()` detaches its
-    // collection observers while the collection is still alive (the collection
-    // was registered even earlier, so it disposes last of the group). Teardown
-    // emissions are already suppressed (this `_destroyed` guard;
-    // `ChildBlock.emit`'s null-ctx guard once `deleteCtx` removes the ctx), so
-    // nothing reaches the still-live bus during disposal.
-
-    // `clipboard` stays controller-owned (a later cluster moves it).
-    this.clipboard.destroy();
-
-    // M9l follow-up: restore v1's throw-on-teardown-straddle parity — reading
-    // `api` after destroy() must throw again, not keep returning a torn-down
-    // instance.
-    this._api = null;
+    // `telemetryManager`/`collection`, the whole upload stack (M-god step 5:
+    // `SecureUploadsController`/`UploadController`/`ValidationController`/
+    // `UploadEventsController`), AND `clipboard` (M-god step 8b), disposing them
+    // all in reverse construction order. The upload stack is registered AFTER
+    // this controller (which is resolved first, in `_resolveContainer`), so it
+    // is disposed BEFORE this `destroy()` runs — `UploadEventsController.
+    // unobserve()` detaches its collection observers while the collection is
+    // still alive (the collection was registered even earlier, so it disposes
+    // last of the group). Teardown emissions are already suppressed (this
+    // `_destroyed` guard; `ChildBlock.emit`'s null-ctx guard once `deleteCtx`
+    // removes the ctx), so nothing reaches the still-live bus during disposal.
   }
 }
