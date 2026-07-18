@@ -1,6 +1,8 @@
 import { html, nothing } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import type { TypedData } from '../../abstract/TypedData';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
@@ -14,50 +16,29 @@ import '../../solutions/cloud-image-editor/CloudImageEditor';
 
 export type ActivityParams = { internalId: string };
 
-type EditorTemplateConfig = {
-  cdnUrl: string;
-  cropPreset: string;
-  tabs: string;
-};
-
 export class CloudImageEditorActivity extends ActivityChildBlock {
+  // `RouterController` is what the base `ActivityChildBlock` already declares (its
+  // `[active]` toggle reads it, and this block traverses on apply/cancel);
+  // `ConfigController` is added for the tracked `cropPreset` /
+  // `cloudImageEditorTabs` render reads that feed the editor's attributes.
+  // `uploadCollection` (the entry source) has no DI token yet (registration
+  // race), so it stays on the v1 `bag` (step 8).
+  public static override readonly uses = [RouterController, ConfigController] as const;
+
   private _entry?: TypedData<UploadEntryData>;
 
+  // Mount marker: the resolved cdn url of the entry being edited, set once the
+  // uploadCollection entry is available and cleared on unmount. Its presence
+  // gates whether the `<uc-cloud-image-editor>` renders; `cropPreset` / `tabs`
+  // are read reactively at render time (see `render`), not stored here.
   @state()
-  private _editorConfig: EditorTemplateConfig | null = null;
+  private _cdnUrl: string | null = null;
 
   /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
   private _debugPrint = createDebugPrinter(() => this.bag.ctx, this.constructor.name);
 
   protected override controllerReady(ctrl: UploaderController): void {
     super.controllerReady(ctrl);
-
-    this.subConfigValue('cropPreset', (cropPreset) => {
-      if (!this._editorConfig) {
-        return;
-      }
-      if (this._editorConfig.cropPreset === cropPreset) {
-        return;
-      }
-      this._editorConfig = {
-        ...this._editorConfig,
-        cropPreset,
-      };
-    });
-
-    this.subConfigValue('cloudImageEditorTabs', (tabs) => {
-      if (!this._editorConfig) {
-        return;
-      }
-      if (this._editorConfig.tabs === tabs) {
-        return;
-      }
-      this._editorConfig = {
-        ...this._editorConfig,
-        tabs,
-      };
-    });
-
     this._mountEditor();
   }
 
@@ -78,13 +59,13 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
     });
     // The back intent closes the cloud-editor activity and returns to the
     // previous one.
-    this.bag.router.traverse('onBack');
+    this.use(RouterController).traverse('onBack');
   }
 
   private _handleCancel(event?: Event): void {
     const detail = event instanceof CustomEvent ? event.detail : undefined;
     this._debugPrint(`editor event "cancel"`, detail);
-    this.bag.router.traverse('onBack');
+    this.use(RouterController).traverse('onBack');
   }
 
   public handleChange(event: CustomEvent<ChangeResult>): void {
@@ -95,11 +76,13 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
     // `internalId` comes from the router-params object, whose shape is a
     // per-activity contract (ExternalSource precedent) rather than a runtime
     // guard the router already enforces.
-    const { internalId } = this.bag.router.params as ActivityParams;
+    const { internalId } = this.use(RouterController).params as ActivityParams;
     // The uploader-scope `*uploadCollection` instance may not have registered
     // yet when this block's controller adopts (controllerReady is an
     // adoption path) — go through `bag.when` rather than the throwing
     // `bag.uploadCollection` getter (FileItem/UploadList precedent).
+    // `uploadCollection` has no DI token yet (registration race), so this
+    // observer stays on the v1 `bag` (step 8).
     this.trackSub(
       this.bag.when('uploadCollection', (collection) => {
         const entry = collection.read(internalId as Uid);
@@ -111,26 +94,35 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
         if (!cdnUrl) {
           throw new Error(`Entry with internalId "${internalId}" hasn't uploaded yet`);
         }
-        this._editorConfig = this._createEditorConfig(cdnUrl);
+        this._cdnUrl = cdnUrl;
       }),
     );
   }
 
   private _unmountEditor(): void {
     this._entry = undefined;
-    this._editorConfig = null;
+    this._cdnUrl = null;
   }
 
   public override render() {
-    if (!this._editorConfig) {
+    if (this._cdnUrl === null) {
       return nothing;
     }
 
-    const { cdnUrl, cropPreset, tabs } = this._editorConfig;
+    // Render-feeding config reads through the TRACKED accessor: `SignalWatcher`
+    // (on the `ChildBlock` base) auto-tracks these, so a `cropPreset` /
+    // `cloudImageEditorTabs` config change while the editor is mounted re-renders
+    // it with the new attributes — matching the v1
+    // `subConfigValue('cropPreset' | 'cloudImageEditorTabs')` subscriptions this
+    // replaces. While unmounted (`_cdnUrl === null`) nothing renders and nothing
+    // tracks, mirroring the v1 `if (!this._editorConfig) return` guard.
+    const config = this.use(ConfigController);
+    const cropPreset = config.getTracked('cropPreset');
+    const tabs = config.getTracked('cloudImageEditorTabs');
 
     return html`
       <uc-cloud-image-editor
-        cdn-url=${cdnUrl}
+        cdn-url=${this._cdnUrl}
         crop-preset=${ifDefined(cropPreset)}
         tabs=${ifDefined(tabs)}
         @apply=${this._handleApply}
@@ -138,15 +130,6 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
         @change=${this.handleChange}
       ></uc-cloud-image-editor>
     `;
-  }
-
-  private _createEditorConfig(cdnUrl: string): EditorTemplateConfig {
-    const config: EditorTemplateConfig = {
-      cdnUrl,
-      cropPreset: this.uploader.config.get('cropPreset'),
-      tabs: this.uploader.config.get('cloudImageEditorTabs'),
-    };
-    return config;
   }
 }
 
