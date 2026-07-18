@@ -4,7 +4,7 @@ import { SignalMap } from '../di/SignalMap';
  * Pure-logic locale string store. Knows nothing about DOM or Lit.
  *
  * In the v1 → v2 strangler this is the source of truth for the `*l10n/*` state
- * that used to live in the per-ctx nanostores map; `PubSubCompat` routes those
+ * that used to live in the per-ctx store map; the v1 ctx facade routes those
  * keys here. For now it is a raw string container: `LocaleManager` still owns
  * the orchestration (resolving the active dictionary from `localeName`,
  * `defineLocale` registry lookups, async resolvers, `localeDefinitionOverride`,
@@ -17,7 +17,7 @@ import { SignalMap } from '../di/SignalMap';
  * key under a `SignalWatcher`, `get()` is the fast non-tracking read the
  * compat path uses, `set()` dedups unchanged writes and fires the map's coarse
  * notify, and `subscribe()` fans out on any change — preserving the per-key
- * change semantics the `PubSubCompat` `*l10n/` routing depends on. A locale
+ * change semantics the v1 ctx facade `*l10n/` routing depends on. A locale
  * key named `__proto__` is an ordinary map key, never a prototype write.
  */
 export class LocaleController {

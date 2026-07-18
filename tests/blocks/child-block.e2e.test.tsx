@@ -1,10 +1,15 @@
 import { html } from 'lit';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import type { UploaderController } from '@/abstract/controllers/UploaderController';
+import { ConfigController } from '@/abstract/controllers/ConfigController';
+import { LocaleController } from '@/abstract/controllers/LocaleController';
+import { RouterController } from '@/abstract/controllers/RouterController';
+import { ControllerContainer } from '@/abstract/di/ControllerContainer';
+import { UploaderRegistry } from '@/abstract/UploaderRegistry';
 import type { Config, UploadCtxProvider } from '@/index.ts';
 import { ChildBlock } from '@/lit/ChildBlock';
 import { getCtxName } from '../utils/getCtxName';
+import { containerOf, hasCtx } from '../utils/registry';
 import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
 
@@ -21,13 +26,13 @@ class TestChildBlock extends ChildBlock {
   }
 
   public routerOrNull() {
-    return this.bag.routerOrNull;
+    return this.useOrNull(RouterController);
   }
 
-  protected override subscriptionsFor(ctrl: UploaderController) {
+  protected override subscriptionsFor(container: ControllerContainer) {
     return [
-      (listener: () => void) => ctrl.config.subscribe(listener),
-      (listener: () => void) => ctrl.locale.subscribe(listener),
+      (listener: () => void) => container.get(ConfigController).subscribe(listener),
+      (listener: () => void) => container.get(LocaleController).subscribe(listener),
     ];
   }
 
@@ -51,7 +56,7 @@ class TestChildBlock extends ChildBlock {
   }
 
   public override render() {
-    return html`<span class="pk">${this.uploaderOrNull?.config.get('pubkey') ?? ''}</span
+    return html`<span class="pk">${this.useOrNull(ConfigController)?.get('pubkey') ?? ''}</span
       ><span class="l10n">${this.l10n('upload-file')}</span
       ><span class="inner" data-testid="inner"></span>`;
   }
@@ -108,37 +113,35 @@ describe('ChildBlock', () => {
 
   it('self-bootstraps its own ctx and renders immediately with no v1 block ever present (M9o)', async () => {
     const ctxName = getCtxName();
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
-    expect(PubSub.hasCtx(ctxName)).toBe(false);
+    expect(hasCtx(ctxName)).toBe(false);
 
     const child = append('test-child-block', { 'ctx-name': ctxName });
 
     await expect.poll(() => child.readyCount).toBe(1);
-    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    expect(hasCtx(ctxName)).toBe(true);
     // Plain ConfigController defaults — nothing seeded them beyond
     // `ensureUploaderCtx`'s own bootstrap.
     expect(child.querySelector('.pk')?.textContent).toBe('');
   });
 
-  it('adopts when the ctx map pre-exists WITHOUT a controller (bare PubSub.registerCtx, review finding)', async () => {
-    // A ctx map can exist with no controller yet — e.g. a bare
-    // `PubSub.registerCtx` call, or a transient state before `ensureUploaderCtx`
-    // has forced a controller into existence. `UploaderRegistry.whenAvailable`
-    // only fires once a controller is registered, so a guard like
-    // `if (!PubSub.getCtx(ctxName)) ensureUploaderCtx(ctxName)` would see the
-    // map already exists, skip bootstrapping, and the block would wait forever
-    // for a controller nothing ever creates. The bootstrap call must be
-    // unconditional.
+  it('adopts a container already registered under its ctx-name (pre-existing registry entry)', async () => {
+    // A `ControllerContainer` can already be registered for a ctx-name before
+    // the block connects — e.g. registered directly via `UploaderRegistry`, or
+    // by a sibling that got there first. The block must adopt that existing
+    // container (its `whenAvailable` watch fires synchronously with it) rather
+    // than gating forever or clobbering it with a second one.
     const ctxName = getCtxName();
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
-    PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, ctxName);
-    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    const container = new ControllerContainer();
+    UploaderRegistry.register(ctxName, container);
+    expect(hasCtx(ctxName)).toBe(true);
 
     const child = append('test-child-block', { 'ctx-name': ctxName });
 
     await expect.poll(() => child.readyCount, { timeout: 2000 }).toBe(1);
     // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
-    expect((child as any).uploaderOrNull).not.toBeNull();
+    expect((child as any).useOrNull(ConfigController)).not.toBeNull();
+    // Adopted the exact container that was pre-registered, not a replacement.
+    expect(containerOf(ctxName)).toBe(container);
   });
 
   it('re-renders on controller change notifications (subscriptionsFor)', async () => {
@@ -236,17 +239,15 @@ describe('ChildBlock', () => {
     // freshly-bootstrapped one, seeded with plain config defaults (`pubkey`
     // is the ConfigController default `''`, not yet `demopublickey`/`otherkey`).
     // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
-    expect((child as any).uploaderOrNull).not.toBeNull();
+    expect((child as any).useOrNull(ConfigController)).not.toBeNull();
     expect(child.readyCount).toBe(2);
     expect(child.querySelector('.pk')?.textContent).toBe('');
-
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
-    expect(PubSub.hasCtx(ctxNameB)).toBe(true);
+    expect(hasCtx(ctxNameB)).toBe(true);
 
     // A v1 block arriving later for the same ctx-name must find the
-    // self-bootstrapped ctx (via `getCtx ?? registerCtx` inside
-    // `ensureUploaderCtx`) rather than clobbering it with a second one — its
-    // own config values apply on top, same seed either way.
+    // self-bootstrapped ctx (via `UploaderRegistry.ensure` returning the cached
+    // container inside `ensureUploaderCtx`) rather than clobbering it with a
+    // second one — its own config values apply on top, same seed either way.
     append('uc-config', { 'ctx-name': ctxNameB, pubkey: 'otherkey' });
     await expect.poll(() => child.querySelector('.pk')?.textContent).toBe('otherkey');
     // No extra release/adopt cycle: the v1 block joins the existing
@@ -258,9 +259,8 @@ describe('ChildBlock', () => {
   it('tears down an abandoned self-bootstrapped ctx once unreferenced when ctx-name switches while connected (M9o follow-up)', async () => {
     const ctxNameA = getCtxName();
     const ctxNameB = getCtxName();
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
     const { delay } = await import('@/utils/delay.js');
-    expect(PubSub.hasCtx(ctxNameA)).toBe(false);
+    expect(hasCtx(ctxNameA)).toBe(false);
 
     // No ctx-name yet: nothing to bootstrap.
     const child = append('test-child-block');
@@ -270,7 +270,7 @@ describe('ChildBlock', () => {
     // consumer) and adopts its controller.
     child.setAttribute('ctx-name', ctxNameA);
     await expect.poll(() => child.readyCount).toBe(1);
-    expect(PubSub.hasCtx(ctxNameA)).toBe(true);
+    expect(hasCtx(ctxNameA)).toBe(true);
 
     // Switch to ctx-name=B while still connected: the old watch on ctxA is
     // dropped and ctxB is self-bootstrapped and adopted. Nothing else was
@@ -278,20 +278,19 @@ describe('ChildBlock', () => {
     // torn down instead of leaking.
     child.setAttribute('ctx-name', ctxNameB);
     await expect.poll(() => child.releasedCount).toBe(1);
-    expect(PubSub.hasCtx(ctxNameB)).toBe(true);
+    expect(hasCtx(ctxNameB)).toBe(true);
 
     await delay(0);
 
-    expect(PubSub.hasCtx(ctxNameA)).toBe(false);
-    expect(PubSub.hasCtx(ctxNameB)).toBe(true);
+    expect(hasCtx(ctxNameA)).toBe(false);
+    expect(hasCtx(ctxNameB)).toBe(true);
     // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
-    expect((child as any).uploaderOrNull).not.toBeNull();
+    expect((child as any).useOrNull(ConfigController)).not.toBeNull();
   });
 
   it('does not tear down the abandoned ctx on switch when another consumer still references it', async () => {
     const ctxNameA = getCtxName();
     const ctxNameB = getCtxName();
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
     const { delay } = await import('@/utils/delay.js');
 
     // ctxA has a v1 block keeping it alive, plus a self-bootstrapping
@@ -299,17 +298,17 @@ describe('ChildBlock', () => {
     page.render(<uc-config ctx-name={ctxNameA} pubkey="demopublickey" testMode></uc-config>);
     const child = append('test-child-block', { 'ctx-name': ctxNameA });
     await expect.poll(() => child.readyCount).toBe(1);
-    expect(PubSub.hasCtx(ctxNameA)).toBe(true);
+    expect(hasCtx(ctxNameA)).toBe(true);
 
     child.setAttribute('ctx-name', ctxNameB);
     await expect.poll(() => child.releasedCount).toBe(1);
-    expect(PubSub.hasCtx(ctxNameB)).toBe(true);
+    expect(hasCtx(ctxNameB)).toBe(true);
 
     await delay(0);
 
     // The v1 block is still on ctxA: the deferred check must find it
     // referenced and leave it alone.
-    expect(PubSub.hasCtx(ctxNameA)).toBe(true);
+    expect(hasCtx(ctxNameA)).toBe(true);
   });
 
   it('isolates a throwing unsubscriber during release, warns, and finishes teardown', async () => {
@@ -333,10 +332,10 @@ describe('ChildBlock', () => {
     }
   });
 
-  it('throws a descriptive error when uploader is read before adoption', () => {
+  it('throws a descriptive error when a controller is resolved via use() before adoption', () => {
     const child = document.createElement('test-child-block');
-    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
-    expect(() => (child as any).uploader).toThrowError(/test-child-block/);
+    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected method
+    expect(() => (child as any).use(ConfigController)).toThrowError(/test-child-block/);
   });
 
   it('l10n resolves dictionary keys once the locale is loaded', async () => {
@@ -434,8 +433,7 @@ describe('ChildBlock', () => {
     // queued event callback holding a reference to an unmounted block.
     child.remove();
     cleanup();
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+    await expect.poll(() => hasCtx(ctxName)).toBe(false);
 
     const errors: string[] = [];
     const onError = (event: ErrorEvent) => {
@@ -464,23 +462,22 @@ describe('ChildBlock', () => {
     // refcount, the ChildBlock is still watching via `UploaderRegistry`, so
     // the ctx must stay alive and the controller must NOT be released yet.
     cleanup();
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
     const { delay } = await import('@/utils/delay.js');
     await delay(0);
 
-    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    expect(hasCtx(ctxName)).toBe(true);
     expect(child.isConnected).toBe(true);
     expect(child.releasedCount).toBe(0);
     // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
-    expect((child as any).uploaderOrNull).not.toBeNull();
+    expect((child as any).useOrNull(ConfigController)).not.toBeNull();
 
     // Now the ChildBlock itself disconnects too: nothing references the ctx
     // any more, so its own deferred check tears it down.
     child.remove();
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+    await expect.poll(() => hasCtx(ctxName)).toBe(false);
     await expect.poll(() => child.releasedCount).toBe(1);
     // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
-    expect((child as any).uploaderOrNull).toBeNull();
+    expect((child as any).useOrNull(ConfigController)).toBeNull();
 
     const errors: string[] = [];
     const onError = (event: ErrorEvent) => {
@@ -508,14 +505,13 @@ describe('ChildBlock', () => {
 describe('mixed lifecycle (v1 blocks + ChildBlock on one ctx)', () => {
   it('(b) v1 disconnects first: last v1 leaving keeps the ctx alive while a ChildBlock still watches it; the ChildBlock leaving then tears it down', async () => {
     const ctxName = getCtxName();
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
     const { delay } = await import('@/utils/delay.js');
 
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
     const config = page.getByTestId('uc-config').query()!;
     const child = append('test-child-block', { 'ctx-name': ctxName });
     await expect.poll(() => child.readyCount).toBe(1);
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+    await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
     // The only v1 block disconnects: `*blocksRegistry` empties, but the
     // ChildBlock is still watching via `UploaderRegistry` — the unified
@@ -524,39 +520,38 @@ describe('mixed lifecycle (v1 blocks + ChildBlock on one ctx)', () => {
     config.remove();
     await delay(0);
 
-    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    expect(hasCtx(ctxName)).toBe(true);
     expect(child.releasedCount).toBe(0);
     // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
-    expect((child as any).uploaderOrNull).not.toBeNull();
+    expect((child as any).useOrNull(ConfigController)).not.toBeNull();
 
     // The ChildBlock leaves too: nothing references the ctx any more, so its
     // own deferred check tears it down.
     child.remove();
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+    await expect.poll(() => hasCtx(ctxName)).toBe(false);
     expect(child.releasedCount).toBe(1);
   });
 
   it('(c) ChildBlock disconnects first: the ctx stays alive on the remaining v1 block; that block leaving then tears it down', async () => {
     const ctxName = getCtxName();
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
     const { delay } = await import('@/utils/delay.js');
 
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
     const config = page.getByTestId('uc-config').query()!;
     const child = append('test-child-block', { 'ctx-name': ctxName });
     await expect.poll(() => child.readyCount).toBe(1);
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+    await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
     // The ChildBlock disconnects while the v1 block is still around: its own
     // deferred check must see `*blocksRegistry` non-empty and bail out.
     child.remove();
     await delay(0);
 
-    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    expect(hasCtx(ctxName)).toBe(true);
 
     // The last v1 block disconnects: nothing left referencing the ctx.
     config.remove();
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+    await expect.poll(() => hasCtx(ctxName)).toBe(false);
   });
 });
 
@@ -568,35 +563,33 @@ describe('mixed lifecycle (v1 blocks + ChildBlock on one ctx)', () => {
 describe('v1-free lifecycle (ChildBlock-only composition, M9o Task 3d)', () => {
   it('one of two ChildBlocks leaving keeps the ctx alive; the last one leaving tears it down', async () => {
     const ctxName = getCtxName();
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
     const { delay } = await import('@/utils/delay.js');
-    expect(PubSub.hasCtx(ctxName)).toBe(false);
+    expect(hasCtx(ctxName)).toBe(false);
 
     const childA = append('test-child-block', { 'ctx-name': ctxName });
     await expect.poll(() => childA.readyCount).toBe(1);
     const childB = append('test-child-block', { 'ctx-name': ctxName });
     await expect.poll(() => childB.readyCount).toBe(1);
-    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    expect(hasCtx(ctxName)).toBe(true);
 
     childA.remove();
     await delay(0);
 
-    expect(PubSub.hasCtx(ctxName)).toBe(true);
+    expect(hasCtx(ctxName)).toBe(true);
     expect(childB.releasedCount).toBe(0);
 
     childB.remove();
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+    await expect.poll(() => hasCtx(ctxName)).toBe(false);
   });
 
   it('(e) a lone ChildBlock disconnecting then reconnecting within the same tick does not tear down its self-bootstrapped ctx', async () => {
     const ctxName = getCtxName();
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
     const { delay } = await import('@/utils/delay.js');
-    expect(PubSub.hasCtx(ctxName)).toBe(false);
+    expect(hasCtx(ctxName)).toBe(false);
 
     const child = append('test-child-block', { 'ctx-name': ctxName });
     await expect.poll(() => child.readyCount).toBe(1);
-    const firstController = PubSub.getCtx(ctxName)!.uploaderController();
+    const firstContainer = containerOf(ctxName);
 
     const parent = child.parentElement!;
     child.remove();
@@ -604,33 +597,34 @@ describe('v1-free lifecycle (ChildBlock-only composition, M9o Task 3d)', () => {
 
     await delay(0);
 
-    expect(PubSub.hasCtx(ctxName)).toBe(true);
-    expect(PubSub.getCtx(ctxName)!.uploaderController()).toBe(firstController);
+    expect(hasCtx(ctxName)).toBe(true);
+    expect(containerOf(ctxName)).toBe(firstContainer);
   });
 
   it('(f) a v1 block and its last ChildBlock disconnecting in the same tick destroy the ctx exactly once, not twice', async () => {
     const ctxName = getCtxName();
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
-    const { UploaderController } = await import('@/abstract/controllers/UploaderController.js');
 
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
     const config = page.getByTestId('uc-config').query()!;
     const child = append('test-child-block', { 'ctx-name': ctxName });
     await expect.poll(() => child.readyCount).toBe(1);
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+    await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
-    const destroySpy = vi.spyOn(UploaderController.prototype, 'destroy');
+    // M-god step 8e: the ctx's `ControllerContainer` is the teardown unit — its
+    // `dispose()` destroys the container-owned controllers. Spy on it to assert
+    // the ctx is disposed exactly once (not twice).
+    const destroySpy = vi.spyOn(ControllerContainer.prototype, 'dispose');
     destroySpy.mockClear();
 
     // Both the only v1 block and the only ChildBlock disconnect in the same
     // tick: both schedule a deferred unified-predicate check, and both will
-    // find the ctx unreferenced. `PubSub.deleteCtx`'s own idempotency (the
-    // controller is removed from its map on first delete) must make the
-    // second deferred check's `destroyCtx` a no-op.
+    // find the ctx unreferenced. `UploaderRegistry.dispose`'s own idempotency
+    // (the container is removed from the registry map on first dispose) must
+    // make the second deferred check's dispose a no-op.
     config.remove();
     child.remove();
 
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+    await expect.poll(() => hasCtx(ctxName)).toBe(false);
     // Give any second deferred check a chance to run too.
     await new Promise((resolve) => setTimeout(resolve, 10));
 

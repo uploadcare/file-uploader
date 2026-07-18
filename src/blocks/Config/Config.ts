@@ -1,7 +1,8 @@
 // @ts-check
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import type { CustomConfig } from '../../abstract/customConfigOptions';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { PluginManagerBridge } from '../../abstract/di/PluginManagerBridge';
 import type { PluginController } from '../../abstract/managers/plugin';
 import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types';
 import { toKebabCase } from '../../utils/toKebabCase';
@@ -9,7 +10,6 @@ import { runAssertions } from './assertions';
 import './config.css';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { createDebugPrinter } from '../../lit/createDebugPrinter';
-import { PubSub } from '../../lit/PubSubCompat';
 import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
 import { normalizeConfigValue } from './normalizeConfigValue';
@@ -58,9 +58,17 @@ export class Config extends ChildBlock {
   // (`set`/`setCustom`/`register`). This is the SAME instance the rest of the app
   // reads (v1's `this.uploader.config` resolved to `container.get(ConfigController)` too),
   // so writes land where every reader looks. The plugin manager (custom-config
-  // registry) has no DI token, so it stays on the v1 `bag.when('pluginManager')`/
-  // `bag.pluginManagerOrNull` path (see `_getCustomConfigDefinition` /
-  // `_setupCustomConfigs`), migrated once it grows a container-owned controller.
+  // registry) reads go through the editor-safe `PluginManagerBridge` DI token (see
+  // `_getCustomConfigDefinition` / `_setupCustomConfigs`) rather than a direct
+  // `use(PluginController)`, for two reasons, even though M-god step 8c made
+  // `PluginController` container-owned: (1) `<uc-config>` runs in config-only ctxs
+  // where no uploader scope ever binds `PluginController`, so the reads must stay
+  // null-/absence-tolerant (`getOrNull`/`whenController` on an unbound token stay
+  // inert, where a synchronous `use(PluginController)` would throw); and (2)
+  // `<uc-config>` is in the editor-alone bundle, so a value import of
+  // `PluginController` here would drag it (and `PluginRegistry`) into that bundle
+  // and blow its 50 KB size-limit — the `declare`-only `PluginManagerBridge` keeps
+  // it out while resolving to the SAME container instance (M-god step 9b-3).
   public static override readonly uses = [ConfigController] as const;
 
   public declare attributesMeta: Partial<ConfigPlainType> & {
@@ -68,7 +76,7 @@ export class Config extends ChildBlock {
   };
 
   /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
-  private _debugPrint = createDebugPrinter(() => this.bag.ctx, this.constructor.name);
+  private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
 
   private _computationControllers: ComputedPropertyControllers = new Map();
   private _pluginChangeUnsubscribe?: () => void;
@@ -101,13 +109,17 @@ export class Config extends ChildBlock {
    * Get the custom config definition for a key
    */
   private _getCustomConfigDefinition(key: string) {
-    // Read null-tolerantly: `bag.pluginManager` throws when `*pluginManager`
-    // is absent (config-only / plugin-less ctx), and this helper is reachable
-    // with a stale `_customConfigKeys`/`_customAttrKeyMapping` — e.g. the
-    // MutationObserver forwards a custom attribute during a live `ctx-name`
-    // switch, before `attributeChangedCallback` reaches its own guard, or after
-    // a re-adoption into a ctx that has no plugin manager.
-    const pluginManager = this.bag.pluginManagerOrNull;
+    // Read null-tolerantly via the `PluginManagerBridge` token: `getOrNull`
+    // yields `null` when no uploader scope has bound the bridge (config-only /
+    // plugin-less ctx) or when no container is adopted yet, instead of throwing.
+    // This helper is reachable with a stale `_customConfigKeys`/
+    // `_customAttrKeyMapping` — e.g. the MutationObserver forwards a custom
+    // attribute during a live `ctx-name` switch, before `attributeChangedCallback`
+    // reaches its own guard, or after a re-adoption into a ctx that has no plugin
+    // manager. (`getOrNull` — not `useOrNull` — because the bridge is a
+    // conditionally-bound token: a plain `get` on the unbound token would build a
+    // bogus zero-arg instance.)
+    const pluginManager = this.containerOrNull?.getOrNull(PluginManagerBridge)?.getPluginManager() ?? null;
     if (!pluginManager) return undefined;
     return pluginManager.configRegistry.get(key);
   }
@@ -351,15 +363,17 @@ export class Config extends ChildBlock {
   }
 
   private _setupCustomConfigs(): void {
-    // Use the `when` API to ensure pluginManager is available before setting up
-    // custom configs. When `*pluginManager` isn't present yet, `when` subscribes
-    // to the CURRENT ctx and returns a real unsubscriber — track it so a
-    // re-adoption (ctx-name switch) tears down the previous ctx's pending
-    // subscription instead of leaving it to fire against the wrong controller.
-    // (A `when` that resolves synchronously returns a no-op unsub; tracking it
-    // is harmless.)
+    // Wait for the plugin manager via the `PluginManagerBridge` token: fires
+    // synchronously if the bridge is already resolved (uploader scope attached),
+    // else on the `ensurePluginManager` `get` that constructs it. When it isn't
+    // resolved yet, `whenController` returns a real unsubscriber — track it so a
+    // re-adoption (ctx-name switch) tears down the previous ctx's pending waiter
+    // instead of leaving it to fire against the wrong controller. (A synchronous
+    // resolve returns a no-op unsub; tracking it is harmless.) In an editor-alone
+    // ctx the bridge is never bound, so this stays inert (no plugins standalone).
     this.trackSub(
-      this.bag.when('pluginManager', (pluginManager) => {
+      this.container.whenController(PluginManagerBridge, (bridge) => {
+        const pluginManager = bridge.getPluginManager();
         // Initial setup
         this._processCustomConfigs(pluginManager);
 
@@ -420,7 +434,7 @@ export class Config extends ChildBlock {
    * the teardown-before-resubscribe below and the idempotent guard,
    * respectively.
    */
-  protected override controllerReady(_ctrl: UploaderController): void {
+  protected override controllerReady(_container: ControllerContainer): void {
     const anyThis = this as any;
 
     // Setup custom configs first. Tear down the previous cycle's
@@ -547,21 +561,20 @@ export class Config extends ChildBlock {
     } else {
       // Handle custom config attributes (registered by plugins).
       //
-      // `attributeChangedCallback` can fire before the ctx `this.bag` resolves
-      // against exists — during custom-element upgrade (no ctx yet), OR on a
-      // live `ctx-name` switch (still adopted to the OLD controller, but `bag`
-      // now targets the NEW `effectiveCtxName` whose ctx isn't created yet).
-      // In either case touching `this.bag` throws synchronously (`bag.when` →
-      // `_requireCtx` → "shared context is not initialized yet") and aborts
-      // init. Guard on the EXACT condition `_requireCtx` checks —
-      // `PubSub.getCtx(effectiveCtxName)` — not adoption state, and defer: the
-      // value is on the DOM attribute and `controllerReady` →
-      // `_setupCustomConfigs` → `_processCustomConfigs` reads pre-existing
-      // attribute values on adoption (matching v1's deferral).
-      if (!this.effectiveCtxName || !PubSub.getCtx(this.effectiveCtxName)) {
+      // `attributeChangedCallback` can fire before this element has adopted a
+      // container — during custom-element upgrade (no ctx yet), OR on a live
+      // `ctx-name` switch (the previous container was released and the new one
+      // isn't adopted yet). Guard on `containerOrNull` (never throws) and defer
+      // when it's null: the value is on the DOM attribute and `controllerReady`
+      // → `_setupCustomConfigs` → `_processCustomConfigs` reads pre-existing
+      // attribute values on adoption (matching v1's deferral). The bridge waiter
+      // then resolves the plugin manager now-or-when-available.
+      const container = this.containerOrNull;
+      if (!container) {
         return;
       }
-      this.bag.when('pluginManager', (pluginManager) => {
+      container.whenController(PluginManagerBridge, (bridge) => {
+        const pluginManager = bridge.getPluginManager();
         const currentAttrValue = this.getAttribute(name);
         if (currentAttrValue && currentAttrValue !== newVal) {
           return;

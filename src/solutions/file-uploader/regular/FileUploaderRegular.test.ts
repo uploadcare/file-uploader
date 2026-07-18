@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RouterController } from '../../../abstract/controllers/RouterController';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
+import { UploaderRegistry } from '../../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../../lit/ensureUploaderCtx';
-import { PubSub } from '../../../lit/PubSubCompat';
 import { delay } from '../../../utils/delay';
 import { FileUploaderRegular } from './FileUploaderRegular';
 
@@ -22,7 +22,7 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -31,7 +31,7 @@ const mount = async (
   attrs: Record<string, string> = {},
 ): Promise<{ el: FileUploaderRegular; router: RouterController }> => {
   ensureUploaderCtx(ctxName);
-  const container = PubSub.getContainer(ctxName);
+  const container = UploaderRegistry.get(ctxName);
   const router = container?.get(RouterController);
   if (!router) throw new Error('router controller not resolved');
   const el = document.createElement('uc-file-uploader-regular') as FileUploaderRegular;

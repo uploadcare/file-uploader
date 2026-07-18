@@ -1,7 +1,8 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { LocaleController } from '../../abstract/controllers/LocaleController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { ChildBlock } from '../../lit/ChildBlock';
 
 import '../Icon/Icon';
@@ -36,8 +37,8 @@ export class FileActionButton extends ChildBlock {
     return Math.min(Math.max(this.progress || 0, 0), 100);
   }
 
-  protected override subscriptionsFor(ctrl: UploaderController) {
-    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  protected override subscriptionsFor(container: ControllerContainer) {
+    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   private _handleAction() {

@@ -7,8 +7,8 @@ import { SignalMap } from '../di/SignalMap';
  * The six derived UI-state keys the upload stack publishes and the blocks read
  * every render — `*uploadList`, `*commonProgress`, `*collectionState`,
  * `*collectionErrors`, `*groupInfo`, `*uploadTrigger`. In v1 these were orphan
- * `*`-keys in the per-ctx nanostores map with no controller owner; this is
- * their signal-backed owner, routed through `PubSubCompat` so the existing
+ * `*`-keys in the per-ctx store map with no controller owner; this is
+ * their signal-backed owner, routed through the v1 ctx facade so the existing
  * writers (the 9 `stateBridges`, `UploaderPublicApi.uploadAll`) and readers
  * (`UploadList`, `ProgressBarCommon`, `DynamicBtn`, `buildOutputCollectionState`)
  * keep working unchanged.
@@ -33,7 +33,7 @@ export type CollectionState = {
  * a hot path measurably destabilizes the parallel e2e suite. The per-key
  * signals stay write-maintained for the future `SignalWatcher` consumer (step 6).
  *
- * `subscribe()` is a COARSE notify (any-key granularity) — `PubSubCompat`'s
+ * `subscribe()` is a COARSE notify (any-key granularity) — the v1 ctx facade's
  * `_subDerived` restores per-key granularity with an `Object.is` guard, so a
  * `commonProgress` write never fires an `uploadList` subscriber.
  *
@@ -64,7 +64,7 @@ export class CollectionStateController {
    * re-renders the block with no `ctx.sub('*commonProgress', …)` subscription.
    *
    * Mirrors `ConfigController.getTracked`: `get()` stays the fast, non-tracking
-   * bag read (kept for the still-imperative `PubSubCompat` compat path, whose
+   * bag read (kept for the still-imperative the v1 ctx facade compat path, whose
    * per-read signal overhead on this hot path measurably destabilizes the
    * parallel e2e suite — see `SignalMap`/`CollectionState` docs); both coexist
    * only during the strangler migration.

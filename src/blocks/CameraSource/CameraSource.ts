@@ -1,9 +1,11 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
@@ -55,7 +57,12 @@ export type CameraMode = 'photo' | 'video';
 export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pause' | 'resume';
 
 export class CameraSource extends ChildBlock {
-  public static override readonly uses = [ConfigController, RouterController, TelemetryManager] as const;
+  public static override readonly uses = [
+    ConfigController,
+    RouterController,
+    TelemetryManager,
+    UploaderPublicApi,
+  ] as const;
 
   private _unsubPermissions: (() => void) | null = null;
 
@@ -161,8 +168,8 @@ export class CameraSource extends ChildBlock {
   @state()
   private _mutableClassButton = 'uc-shot-btn uc-camera-action';
 
-  protected override subscriptionsFor(ctrl: UploaderController) {
-    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  protected override subscriptionsFor(container: ControllerContainer) {
+    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   private _chooseActionWithCamera = () => {
@@ -698,9 +705,9 @@ export class CameraSource extends ChildBlock {
    * The send file to the server
    */
   private _toSend = (file: File): void => {
-    // `api` (UploaderPublicApi) has no DI token (set via UploaderController.setApi),
-    // so it stays on the v1 `bag` (step 8).
-    this.bag.api.addFileFromObject(file, { source: UploadSource.CAMERA });
+    // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
+    // token — it is container-resolved (M-god step 8a), reached via `use()`.
+    this.use(UploaderPublicApi).addFileFromObject(file, { source: UploadSource.CAMERA });
 
     this.use(RouterController).traverse('onFileAdd');
   };
@@ -712,9 +719,10 @@ export class CameraSource extends ChildBlock {
   }
 
   private _setPermissionsState = debounce((state: 'granted' | 'denied' | 'prompt') => {
-    // The 300ms debounce can fire after disconnect (controller already
-    // released) — bail rather than let `this.uploader` throw.
-    if (!this.uploaderOrNull) return;
+    // The 300ms debounce can fire after disconnect (container already
+    // released) — bail rather than let the throwing `use()` reads below run
+    // without an adopted container.
+    if (!this.useOrNull(ConfigController)) return;
 
     this.classList.toggle('uc-initialized', state === 'granted');
 

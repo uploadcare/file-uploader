@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import { SourceBtn } from './SourceBtn';
 
 // Idempotent (same path as defineComponents(UC)).
@@ -22,7 +22,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -45,7 +45,7 @@ describe('SourceBtn (M-god step 6b-1 migration)', () => {
   it('routes activate() telemetry through the container-resolved TelemetryManager (use())', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     expect(container).toBeDefined();
     const telemetry = container?.get(TelemetryManager);
     expect(telemetry).toBeDefined();
@@ -66,7 +66,7 @@ describe('SourceBtn (M-god step 6b-1 migration)', () => {
   it('activate() with no source set is a no-op (no telemetry, no crash)', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
-    const telemetry = PubSub.getContainer(ctxName)!.get(TelemetryManager);
+    const telemetry = UploaderRegistry.get(ctxName)!.get(TelemetryManager);
     const spy = vi.spyOn(telemetry, 'sendEvent').mockImplementation(() => {});
 
     const el = await mount(ctxName);

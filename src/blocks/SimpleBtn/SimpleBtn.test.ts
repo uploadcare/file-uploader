@@ -1,7 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
 import { SimpleBtn } from './SimpleBtn';
 
@@ -21,13 +22,13 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
 const mountWithConfig = async (ctxName: string): Promise<{ el: SimpleBtn; config: ConfigController }> => {
   ensureUploaderCtx(ctxName);
-  const config = PubSub.getContainer(ctxName)?.get(ConfigController);
+  const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
   if (!config) throw new Error('config controller not resolved');
   const el = document.createElement('uc-simple-btn') as SimpleBtn;
   el.setAttribute('ctx-name', ctxName);
@@ -41,7 +42,7 @@ const buttonText = (el: SimpleBtn): string | null | undefined => el.querySelecto
 
 describe('SimpleBtn (M-god step 6b-1 migration)', () => {
   it('declares its dependency via static uses', () => {
-    expect(SimpleBtn.uses).toEqual([ConfigController]);
+    expect(SimpleBtn.uses).toEqual([ConfigController, UploaderPublicApi]);
   });
 
   it('re-renders the button text reactively when config.multiple changes (getTracked, no subConfigValue)', async () => {

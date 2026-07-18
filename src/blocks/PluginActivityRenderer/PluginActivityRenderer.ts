@@ -2,14 +2,10 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
-import type { RouterController } from '../../abstract/controllers/RouterController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
-import type {
-  Owned,
-  PluginActivityRegistration,
-  PluginController,
-  PluginRenderDispose,
-} from '../../abstract/managers/plugin';
+import { RouterController } from '../../abstract/controllers/RouterController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import type { Owned, PluginActivityRegistration, PluginRenderDispose } from '../../abstract/managers/plugin';
+import { PluginController } from '../../abstract/managers/plugin';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import type { ActivityType } from '../../lit/activity-constants';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -26,12 +22,12 @@ export class PluginActivityHost extends ActivityChildBlock {
 
   /** Test-only public surface (`plugin-activity-host.e2e.test.tsx`) mirroring v1's `LitBlock.router` getter. */
   public get router(): RouterController {
-    return this.bag.router;
+    return this.use(RouterController);
   }
 
-  protected override controllerReady(ctrl: UploaderController): void {
+  protected override controllerReady(container: ControllerContainer): void {
     this.activityType = (this.registration?.id as ActivityType) ?? null;
-    super.controllerReady(ctrl);
+    super.controllerReady(container);
   }
 
   protected override updated(changed: PropertyValues<this>): void {
@@ -66,7 +62,7 @@ export class PluginActivityHost extends ActivityChildBlock {
       return;
     }
     try {
-      this._dispose = this.registration.render(container, this.bag.router.params) ?? undefined;
+      this._dispose = this.registration.render(container, this.use(RouterController).params) ?? undefined;
       this._isMounted = true;
     } catch (error) {
       console.error(`[Plugin "${this.registration.pluginId}"] Activity render() threw an error`, error);
@@ -101,16 +97,22 @@ export class PluginActivityRenderer extends ChildBlock {
   @state()
   private _activities: Owned<PluginActivityRegistration>[] = [];
 
-  // Transiently null until the shared PluginController registers (bag.when) —
-  // render falls back to an empty activity list meanwhile (Icon/FileItem precedent).
-  // This is the block's ONLY external read: the plugin manager is NOT
-  // container-resolved (no DI token), so it stays on the v1 `bag` path — there is
-  // no config/activity/collection-state read here to move onto `use()` (step 8).
+  // Transiently null until the container resolves the `PluginController`
+  // (`whenController`) — render falls back to an empty activity list meanwhile
+  // (Icon/FileItem precedent). M-god step 8c: `PluginController` is
+  // container-owned (bound by `ensurePluginManager`), but its binding is
+  // CONDITIONAL — it exists only once an uploader scope attaches
+  // (`ensureUploaderScope`), which may be after this block's `controllerReady`
+  // fires (or never, in a bare ctx — see the "renders an empty activity list"
+  // spec). A synchronous `use(PluginController)` would throw on an unresolved
+  // token; `whenController` fires now if resolved, else on first resolution,
+  // yielding the SAME container instance — the now-or-when-available successor
+  // to `bag.when('pluginManager')`.
   private _pluginManager: PluginController | null = null;
 
   protected override controllerReady(): void {
     this.trackSub(
-      this.bag.when('pluginManager', (pluginManager) => {
+      this.container.whenController(PluginController, (pluginManager) => {
         this._pluginManager = pluginManager;
         this.trackSub(pluginManager.onPluginsChange(() => this._syncActivities()));
         this._syncActivities();

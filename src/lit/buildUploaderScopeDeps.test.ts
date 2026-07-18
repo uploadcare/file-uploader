@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
-import { PubSub } from './PubSubCompat';
-import { createSharedInstancesBag } from './shared-instances';
 
 // Each test uses a unique ctx id and tears it down so the module-level
 // context/controller maps and the global UploaderRegistry don't leak (same
@@ -17,7 +16,7 @@ const freshCtxName = () => {
 };
 
 afterEach(() => {
-  for (const id of ids.splice(0)) PubSub.deleteCtx(id);
+  for (const id of ids.splice(0)) UploaderRegistry.dispose(id);
 });
 
 describe('buildUploaderScopeDeps', () => {
@@ -29,16 +28,15 @@ describe('buildUploaderScopeDeps', () => {
   // coverage that was lost when `attachUploaderScope` was deleted in step 5.
   it('never rethrows when telemetryManager.sendEventError throws, and logs via the host debug for all three sinks', () => {
     const ctxName = freshCtxName();
-    const ctx = ensureUploaderCtx(ctxName);
-    const controller = UploaderRegistry.get(ctxName)!;
-    const bag = createSharedInstancesBag(() => ctx);
+    ensureUploaderCtx(ctxName);
+    const container = UploaderRegistry.get(ctxName)!;
 
-    const sendEventError = vi.spyOn(controller.telemetryManager, 'sendEventError').mockImplementation(() => {
+    const sendEventError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {
       throw new Error('telemetry sink is down');
     });
     const debug = vi.fn();
 
-    const { host } = buildUploaderScopeDeps(bag, debug, vi.fn());
+    const { host } = buildUploaderScopeDeps(container, debug, vi.fn());
 
     expect(() => host.onResolverError(new Error('resolver failed'), 'resolver-context')).not.toThrow();
     expect(() => host.onUploadError(new Error('upload failed'), 'upload-context')).not.toThrow();
@@ -53,14 +51,13 @@ describe('buildUploaderScopeDeps', () => {
 
   it('reports through telemetryManager.sendEventError without touching debug when it does not throw', () => {
     const ctxName = freshCtxName();
-    const ctx = ensureUploaderCtx(ctxName);
-    const controller = UploaderRegistry.get(ctxName)!;
-    const bag = createSharedInstancesBag(() => ctx);
+    ensureUploaderCtx(ctxName);
+    const container = UploaderRegistry.get(ctxName)!;
 
-    const sendEventError = vi.spyOn(controller.telemetryManager, 'sendEventError').mockImplementation(() => {});
+    const sendEventError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {});
     const debug = vi.fn();
 
-    const { host } = buildUploaderScopeDeps(bag, debug, vi.fn());
+    const { host } = buildUploaderScopeDeps(container, debug, vi.fn());
     const error = new Error('resolver failed');
 
     host.onResolverError(error, 'resolver-context');

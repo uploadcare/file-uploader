@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
 import { Thumb } from './Thumb';
 
@@ -22,13 +23,13 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
 const mount = async (ctxName: string): Promise<{ el: Thumb; config: ConfigController }> => {
   ensureUploaderCtx(ctxName);
-  const config = PubSub.getContainer(ctxName)?.get(ConfigController);
+  const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
   if (!config) throw new Error('config controller not resolved');
   const el = document.createElement('uc-thumb') as Thumb;
   el.setAttribute('ctx-name', ctxName);
@@ -43,13 +44,13 @@ const badgeIconName = (el: Thumb): string | null => el.querySelector('.uc-badge 
 
 describe('Thumb (M-god step 6b-6 migration)', () => {
   it('declares its dependencies via static uses', () => {
-    expect(Thumb.uses).toEqual([ConfigController, TelemetryManager]);
+    expect(Thumb.uses).toEqual([ConfigController, UploadCollectionController, TelemetryManager]);
   });
 
   it('pre-warms its declared dependencies into the container on adoption', async () => {
     const ctxName = freshCtxName();
     await mount(ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     expect(container?.get(ConfigController)).toBeInstanceOf(ConfigController);
     expect(container?.get(TelemetryManager)).toBeInstanceOf(TelemetryManager);
   });
@@ -59,7 +60,7 @@ describe('Thumb (M-god step 6b-6 migration)', () => {
     ensureUploaderCtx(ctxName);
     // Seed grid mode before mount so controllerReady's `_firstViewMode` init reads
     // it through `use(ConfigController).get('filesViewMode')`.
-    PubSub.getContainer(ctxName)?.get(ConfigController).set('filesViewMode', 'grid');
+    UploaderRegistry.get(ctxName)?.get(ConfigController).set('filesViewMode', 'grid');
     const { el } = await mount(ctxName);
     expect(el.isConnected).toBe(true);
     expect(el.querySelector('.uc-thumb')).not.toBeNull();

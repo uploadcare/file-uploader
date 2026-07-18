@@ -1,46 +1,51 @@
-import { ACTIVITY_TYPES, type ActivityId } from '../../lit/activity-constants';
+import { ACTIVITY_TYPES } from '../../lit/activity-constants';
+import { inject } from '../di/inject';
+import { ConfigController } from './ConfigController';
+import { RouterController } from './RouterController';
+import { UploadHostBridge } from './UploadHostBridge';
 
 export type PasteScope = 'local' | 'global' | false;
 
 const ALLOWED_PASTE_ACTIVITIES = new Set<string>([ACTIVITY_TYPES.START_FROM, ACTIVITY_TYPES.UPLOAD_LIST]);
 
-export type ClipboardControllerDeps = {
-  /** Live `pasteScope` config read. */
-  getPasteScope: () => PasteScope;
-  /** Effective (modal-aware) current activity. */
-  getCurrentActivity: () => ActivityId | null;
-  addFileFromObject: (file: File, options: { source: 'clipboard' }) => void;
-  addFileFromUrl: (url: string, options: { source: 'clipboard' }) => void;
-  /** Post-add navigation intent (`router.traverse('onFileAdd')`). */
-  onFileAdd: () => void;
-  /** Paste-event source, injectable for tests. Defaults to `window`. */
-  eventTarget?: Pick<Window, 'addEventListener' | 'removeEventListener'>;
-};
-
 /**
- * Window paste handling (v2 port of the `ClipboardLayer` shared instance).
- * Owns the single `paste` listener and the set of registered scopes; all
- * uploader couplings (config, router, public API) are injected, so the
- * controller is constructible and testable without the `$` state or the
- * shared-instances bag. It is DOM-*event*-coupled by nature — it exists to
+ * Window paste handling. Owns the single `paste` listener and the set of
+ * registered scopes.
+ *
+ * Container-resolved via `@inject` — its uploader couplings (config, router,
+ * public API) are resolved lazily from the per-ctx DI container at paste
+ * time, not captured at construction: there is no throw-before-set window.
+ *
+ * The public API is reached through the container-bound {@link UploadHostBridge}
+ * (`getApi()`), NOT a direct `@inject(UploaderPublicApi)` — deliberately. This
+ * module is in the editor-alone bundle's static graph, so a value import of
+ * `UploaderPublicApi` here would drag the whole public API (camera modes,
+ * output-state builder, upload sources) into the editor bundle and blow its
+ * 50 KB size-limit. `UploadHostBridge` is a `declare`-only token (`import type`
+ * members, ~0 runtime bytes) already bound by `ensureUploaderScope` — so the
+ * api reaches the clipboard with the exact same availability/timing while the
+ * editor bundle stays lean. It is DOM-*event*-coupled by nature — it exists to
  * adapt the browser clipboard to the uploader — but imports nothing from lit.
  */
 export class ClipboardController {
-  private _deps: ClipboardControllerDeps;
-  private readonly _eventTarget: Pick<Window, 'addEventListener' | 'removeEventListener'> | undefined;
+  // Config is a leaf, imported directly; the router graph is circular-prone
+  // (event bus ↔ controllers), so it uses a token thunk. Resolution is lazy, so
+  // there is zero construction cycle. The api arrives via the host bridge (see
+  // the class doc) — bound by the element layer, editor-bundle-safe.
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(() => RouterController) private readonly _router!: RouterController;
+  @inject(UploadHostBridge) private readonly _host!: UploadHostBridge;
+
   private _armedEventTarget: Pick<Window, 'addEventListener' | 'removeEventListener'> | undefined;
   private _scopes: Set<Node> = new Set();
   private _listener: (event: ClipboardEvent) => void;
   private _armed = false;
   private _destroyed = false;
 
-  public constructor(deps: ClipboardControllerDeps) {
-    this._deps = deps;
-    // Stored as provided; the `window` default is resolved lazily in `_arm`
-    // so construction never touches `window` (safe in window-less contexts).
-    this._eventTarget = deps.eventTarget;
-    // Isolate-and-warn (AGENTS.md #3): a rejection from an injected add-file
-    // dep must stay contained here, not surface as an unhandled rejection.
+  public constructor() {
+    // Isolate-and-warn (AGENTS.md #3): a rejection from the injected api's
+    // add-file path must stay contained here, not surface as an unhandled
+    // rejection.
     this._listener = (event) => {
       this._handlePasteEvent(event).catch((err) => {
         console.warn('[uc] clipboard paste handling failed', err);
@@ -49,16 +54,22 @@ export class ClipboardController {
   }
 
   /**
-   * Attaches the window `paste` listener. Lazy: called on the first
+   * Attaches the `paste` listener on `window`. Lazy: called on the first
    * registered scope (0 → 1) rather than at construction, and re-callable
    * after a full disarm (scopes can cycle 0 → 1 → 0 → 1).
+   *
+   * The paste-event source is always `window` in production; v1 exposed it as
+   * an injectable ctor dep purely for tests, but the container needs a zero-arg
+   * ctor, so `window` is dereferenced lazily here (construction never touches
+   * `window` — safe in window-less contexts; tests exercise it via real
+   * `window.dispatchEvent`).
    */
   private _arm(): void {
     if (this._armed || this._destroyed) {
       return;
     }
     this._armed = true;
-    this._armedEventTarget = this._eventTarget ?? window;
+    this._armedEventTarget = window;
     this._armedEventTarget.addEventListener('paste', this._listener);
   }
 
@@ -148,11 +159,11 @@ export class ClipboardController {
       return;
     }
 
-    const currentActivity = this._deps.getCurrentActivity();
+    const currentActivity = this._router.currentActivity;
     const isInitialState = currentActivity === null;
     const isAllowedActivity = this._isAllowedPasteActivity(currentActivity);
 
-    switch (this._deps.getPasteScope()) {
+    switch (this._config.get('pasteScope')) {
       case 'global':
         if (!isAllowedActivity && !(isInitialState && this._hasRegularSolutionScope())) {
           return;
@@ -192,22 +203,26 @@ export class ClipboardController {
     let hasAddedFiles = false;
 
     if (files.length > 0) {
+      const api = this._host.getApi();
       files.forEach((file) => {
-        this._deps.addFileFromObject(file, { source: 'clipboard' });
+        api.addFileFromObject(file, { source: 'clipboard' });
       });
       hasAddedFiles = true;
     }
 
     if (urlItems.length > 0) {
       const resolvedUrls = (await Promise.all(urlItems)).filter((url): url is string => url !== null);
-      resolvedUrls.forEach((url) => {
-        this._deps.addFileFromUrl(url, { source: 'clipboard' });
-      });
+      if (resolvedUrls.length > 0) {
+        const api = this._host.getApi();
+        resolvedUrls.forEach((url) => {
+          api.addFileFromUrl(url, { source: 'clipboard' });
+        });
+      }
       hasAddedFiles ||= resolvedUrls.length > 0;
     }
 
     if (hasAddedFiles) {
-      this._deps.onFileAdd();
+      this._router.traverse('onFileAdd');
     }
   }
 

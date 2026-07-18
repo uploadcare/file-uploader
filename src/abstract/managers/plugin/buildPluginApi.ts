@@ -1,10 +1,10 @@
-import type { PubSub } from '../../../lit/PubSubCompat';
-import type { SharedState } from '../../../lit/SharedState';
-import type { SharedInstancesBag } from '../../../lit/shared-instances';
 import type { Uid } from '../../../lit/Uid';
 import type { ConfigType } from '../../../types';
+import type { ConfigController } from '../../controllers/ConfigController';
+import { RouterController } from '../../controllers/RouterController';
+import { UploadCollectionController } from '../../controllers/UploadCollectionController';
 import type { CustomConfig } from '../../customConfigOptions';
-import { sharedConfigKey } from '../../sharedConfigKey';
+import type { ControllerContainer } from '../../di/ControllerContainer';
 import type { PluginRegistry } from './PluginRegistry';
 import type {
   PluginActivityApi,
@@ -18,11 +18,13 @@ import type {
 
 export function buildPluginApi(
   registry: PluginRegistry,
-  ctx: PubSub<SharedState>,
-  sharedInstancesBag: SharedInstancesBag,
+  config: ConfigController,
+  container: ControllerContainer,
   pluginId: string,
   configSubscriptions: (() => void)[],
 ): PluginApi {
+  // Router/collection resolved off the per-ctx container.
+  const router = container.get(RouterController);
   const registryApi: PluginRegistryApi = {
     registerSource: (source) => registry.addSource(pluginId, source),
     registerActivity: (activity) => registry.addActivity(pluginId, activity),
@@ -32,26 +34,35 @@ export function buildPluginApi(
     registerL10n: (l10n) => registry.addL10n(pluginId, l10n),
     registerConfig: (definition) => {
       registry.addConfig(pluginId, definition);
-      const stateKey = sharedConfigKey(definition.name as keyof (ConfigType & CustomConfig));
-      if (!ctx.has(stateKey as keyof SharedState)) {
-        ctx.add(stateKey, definition.defaultValue as unknown as SharedState[typeof stateKey]);
+      // Seed the custom config key only on first sight (M-god step 7: direct
+      // `ConfigController`, off the `*cfg/*` facade). Matches the old
+      // `!ctx.has(stateKey)` guard + `ctx.add` first-write-wins: `register` is
+      // idempotent and keeps any value written before the plugin registered.
+      if (!config.hasKey(definition.name)) {
+        config.register(definition.name, definition.defaultValue);
       }
     },
   };
 
   const configApi: PluginConfigApi = {
     get: <TKey extends keyof (ConfigType & CustomConfig)>(configName: TKey): (ConfigType & CustomConfig)[TKey] => {
-      const stateKey = sharedConfigKey(configName);
-      return ctx.read(stateKey) as unknown as (ConfigType & CustomConfig)[TKey];
+      return config.getCustom(configName);
     },
 
     subscribe: <TKey extends keyof (ConfigType & CustomConfig)>(
       configName: TKey,
       callback: (value: (ConfigType & CustomConfig)[TKey]) => void,
     ): (() => void) => {
-      const stateKey = sharedConfigKey(configName);
-      const unsub = ctx.sub(stateKey, (value) => {
-        callback(value as unknown as (ConfigType & CustomConfig)[TKey]);
+      // Immediate fire + per-key `Object.is` dedup — the same semantics the
+      // `ctx.sub('*cfg/<name>', …)` facade subscription gave.
+      let last = config.getCustom<(ConfigType & CustomConfig)[TKey]>(configName);
+      callback(last);
+      const unsub = config.subscribe(() => {
+        const next = config.getCustom<(ConfigType & CustomConfig)[TKey]>(configName);
+        if (!Object.is(next, last)) {
+          last = next;
+          callback(next);
+        }
       });
       configSubscriptions.push(unsub);
       return unsub;
@@ -60,11 +71,10 @@ export function buildPluginApi(
 
   const activityApi: PluginActivityApi = {
     getParams: (): Record<string, unknown> => {
-      return sharedInstancesBag.router.params as Record<string, unknown>;
+      return router.params as Record<string, unknown>;
     },
 
     subscribeToParams: (callback: (params: Record<string, unknown>) => void): (() => void) => {
-      const router = sharedInstancesBag.router;
       let last = router.params;
       // Fire immediately with the current params (matches v1's `ctx.sub`).
       callback(last as Record<string, unknown>);
@@ -81,7 +91,7 @@ export function buildPluginApi(
 
   const filesApi: PluginFilesApi = {
     update: (internalId: string, changes: PluginFileEntryUpdate) => {
-      const entry = sharedInstancesBag.uploadCollection?.read(internalId as Uid);
+      const entry = container.getOrNull(UploadCollectionController)?.read(internalId as Uid);
       if (!entry) return;
       if (changes.file !== undefined) {
         entry.setValue('file', changes.file as File);
@@ -94,7 +104,7 @@ export function buildPluginApi(
   };
 
   const routerApi: PluginRouterApi = {
-    traverse: (edge) => sharedInstancesBag.router.traverse(edge),
+    traverse: (edge) => router.traverse(edge),
   };
 
   return { registry: registryApi, config: configApi, activity: activityApi, files: filesApi, router: routerApi };

@@ -1,7 +1,6 @@
 import type { PropertyValues } from 'lit';
 import { RouterController } from '../abstract/controllers/RouterController';
-import type { UploaderController } from '../abstract/controllers/UploaderController';
-import type { Token } from '../abstract/di/ControllerContainer';
+import type { ControllerContainer, Token } from '../abstract/di/ControllerContainer';
 import { ACTIVITY_TYPES, type ActivityParamsMap, type ActivityType } from './activity-constants';
 import { ChildBlock } from './ChildBlock';
 
@@ -31,7 +30,7 @@ export class ActivityChildBlock extends ChildBlock {
   /** Un-report callback for the current `reportActivityMounted()` report, if any. */
   private _unreportActivityMounted?: () => void;
 
-  protected override controllerReady(_ctrl: UploaderController): void {
+  protected override controllerReady(_container: ControllerContainer): void {
     // Re-render on every router transition so `updated()` re-evaluates the
     // `[active]` host attribute. Wired unconditionally, even when `activityType`
     // is still null at adoption time (e.g. a `PluginActivityHost` whose
@@ -79,8 +78,8 @@ export class ActivityChildBlock extends ChildBlock {
     this._unreportActivityMounted = this.use(RouterController).activityBlockMounted(this.activityType);
   }
 
-  protected override controllerReleased(ctrl: UploaderController): void {
-    super.controllerReleased(ctrl);
+  protected override controllerReleased(container: ControllerContainer): void {
+    super.controllerReleased(container);
     this._unreportActivityMounted?.();
     this._unreportActivityMounted = undefined;
   }

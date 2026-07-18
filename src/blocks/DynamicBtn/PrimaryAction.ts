@@ -1,8 +1,9 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
@@ -44,8 +45,8 @@ export class PrimaryAction extends ChildBlock {
     return this.use(ConfigController).getTracked('multiple');
   }
 
-  protected override subscriptionsFor(ctrl: UploaderController) {
-    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  protected override subscriptionsFor(container: ControllerContainer) {
+    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   private get hasEntries(): boolean {

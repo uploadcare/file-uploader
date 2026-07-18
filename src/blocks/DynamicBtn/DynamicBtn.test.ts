@@ -2,8 +2,10 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
 import { delay } from '../../utils/delay';
 import type { FileActionButton } from '../FileItem/FileActionButton';
@@ -35,13 +37,13 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
 const mountWithConfig = async (ctxName: string): Promise<{ el: DynamicBtn; config: ConfigController }> => {
   ensureUploaderCtx(ctxName);
-  const config = PubSub.getContainer(ctxName)?.get(ConfigController);
+  const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
   if (!config) throw new Error('config controller not resolved');
   const el = document.createElement('uc-dynamic-btn') as DynamicBtn;
   el.setAttribute('ctx-name', ctxName);
@@ -55,7 +57,13 @@ const hasPrimaryAction = (el: DynamicBtn): boolean => el.querySelector('uc-prima
 
 describe('DynamicBtn (M-god step 6b-2 migration)', () => {
   it('declares its dependencies via static uses', () => {
-    expect(DynamicBtn.uses).toEqual([ConfigController, RouterController, CollectionStateController]);
+    expect(DynamicBtn.uses).toEqual([
+      ConfigController,
+      RouterController,
+      CollectionStateController,
+      UploadCollectionController,
+      UploaderPublicApi,
+    ]);
   });
 
   it('re-renders reactively when config.dynamicButtonViewMode changes (getTracked, no subConfigValue)', async () => {
@@ -85,7 +93,7 @@ describe('DynamicBtn (M-god step 6b-2 migration)', () => {
   it('reactively updates the abort action progress via CollectionStateController.getTracked (no ctx.sub mirror)', async () => {
     const ctxName = freshCtxName();
     const { el } = await mountWithConfig(ctxName);
-    const collectionState = PubSub.getContainer(ctxName)?.get(CollectionStateController);
+    const collectionState = UploaderRegistry.get(ctxName)?.get(CollectionStateController);
     if (!collectionState) throw new Error('collection-state controller not resolved');
 
     // `_status`/`_collection` are normally populated from

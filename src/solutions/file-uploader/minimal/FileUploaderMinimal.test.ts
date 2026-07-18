@@ -1,10 +1,12 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { CollectionStateController } from '../../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../../abstract/controllers/ConfigController';
 import { RouterController } from '../../../abstract/controllers/RouterController';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
+import { UploaderRegistry } from '../../../abstract/UploaderRegistry';
 import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { ensureUploaderCtx } from '../../../lit/ensureUploaderCtx';
-import { PubSub } from '../../../lit/PubSubCompat';
+import type { Uid } from '../../../lit/Uid';
 import { delay } from '../../../utils/delay';
 import { FileUploaderMinimal } from './FileUploaderMinimal';
 
@@ -24,7 +26,7 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -32,7 +34,7 @@ const mount = async (
   ctxName: string,
 ): Promise<{ el: FileUploaderMinimal; config: ConfigController; router: RouterController }> => {
   ensureUploaderCtx(ctxName);
-  const container = PubSub.getContainer(ctxName);
+  const container = UploaderRegistry.get(ctxName);
   const config = container?.get(ConfigController);
   const router = container?.get(RouterController);
   if (!config || !router) throw new Error('controllers not resolved');
@@ -56,7 +58,44 @@ const inlineDropArea = (el: FileUploaderMinimal): Element | null => el.querySele
 
 describe('FileUploaderMinimal (M-god step 6b-4 migration)', () => {
   it('declares its dependencies via static uses', () => {
-    expect(FileUploaderMinimal.uses).toEqual([RouterController, ConfigController, TelemetryManager]);
+    expect(FileUploaderMinimal.uses).toEqual([
+      RouterController,
+      ConfigController,
+      CollectionStateController,
+      TelemetryManager,
+    ]);
+  });
+
+  it('drives the background slot off CollectionStateController.uploadList only when the list reference changes (per-key dedup)', async () => {
+    const ctxName = freshCtxName();
+    const { el, router } = await mount(ctxName);
+    const collectionState = UploaderRegistry.get(ctxName)?.get(CollectionStateController);
+    if (!collectionState) throw new Error('collection state not resolved');
+
+    // Spy AFTER mount (the eager init-fire already ran). The migrated sub
+    // sources `uploadList` from `CollectionStateController` with an `Object.is`
+    // per-key guard, reproducing the old `*uploadList` `bag.ctx` sub — so a
+    // coarse collection-state notify that leaves `uploadList` untouched must NOT
+    // re-invoke `setActivity`, while a real list-reference change must.
+    const setActivity = vi.spyOn(router, 'setActivity');
+
+    // Unrelated key change → uploadList reference identical → no re-drive.
+    collectionState.set('commonProgress', 0.5);
+    await settle(el);
+    expect(setActivity).not.toHaveBeenCalled();
+
+    // New uploadList reference with entries → drives to the upload list.
+    collectionState.set('uploadList', [{ uid: 'a' as Uid }]);
+    await settle(el);
+    expect(setActivity).toHaveBeenCalledWith(ACTIVITY_TYPES.UPLOAD_LIST);
+
+    // Emptying it (new reference) → drives back to start-from.
+    setActivity.mockClear();
+    collectionState.set('uploadList', []);
+    await settle(el);
+    expect(setActivity).toHaveBeenCalledWith(ACTIVITY_TYPES.START_FROM);
+
+    setActivity.mockRestore();
   });
 
   it('routes upload-list to the background and everything else to the foreground', async () => {

@@ -1,6 +1,7 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './progress-bar-common.css';
 
@@ -22,13 +23,14 @@ export class ProgressBarCommon extends ChildBlock {
   }
 
   protected override controllerReady(): void {
-    // The uploader-scope `*uploadCollection` instance may not have registered
-    // yet when this block's controller adopts — go through `bag.when` rather
-    // than the throwing `bag.uploadCollection` getter (DynamicBtn precedent).
-    // Kept on the v1 `bag` path: the registration race makes an eager
-    // `use(UploadCollectionController)` unsafe here (step 8).
+    // The uploader-scope `UploadCollectionController` is resolved on the
+    // container only once the uploader/solution block attaches its scope
+    // (`ensureUploaderScope`) — go through `whenController` (fires now if
+    // resolved, else on first resolution) rather than the throwing
+    // `use(UploadCollectionController)`. Same now-or-when-available semantics as
+    // the v1 `bag.when('uploadCollection')`.
     this.trackSub(
-      this.bag.when('uploadCollection', (collection) => {
+      this.container.whenController(UploadCollectionController, (collection) => {
         this.trackSub(
           collection.observeProperties(() => {
             const anyUploading = collection.items().some((id) => {

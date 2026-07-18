@@ -1,6 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ActivityId } from '../../lit/activity-constants';
+import { ControllerContainer } from '../di/ControllerContainer';
+import type { UploaderPublicApi } from '../UploaderPublicApi';
 import { ClipboardController, type PasteScope } from './ClipboardController';
+import { ConfigController } from './ConfigController';
+import { RouterController } from './RouterController';
+import { UploadHostBridge } from './UploadHostBridge';
 
 type FakeItem =
   | { kind: 'file'; type?: string; getAsFile: () => File | null }
@@ -23,20 +28,35 @@ const pasteEvent = (items: FakeItem[] | null): Event => {
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
+// M-god step 8b: `ClipboardController` is container-resolved — it `@inject`s
+// `ConfigController` (live `pasteScope`), `RouterController` (`currentActivity`
+// + post-add `traverse('onFileAdd')`), and `UploadHostBridge` (whose `getApi()`
+// is the add-file path — the editor-bundle-safe route to `UploaderPublicApi`).
+// The harness binds a fake for each on a real `ControllerContainer` and resolves
+// the controller through it, so `@inject` finds the container-tagged instance
+// exactly as production does. `onFileAdd` is the router's `traverse('onFileAdd')`
+// spy (the clipboard's only `traverse` caller), kept under the old name so the
+// behavioral assertions are unchanged.
 const setup = ({ pasteScope, currentActivity = null }: { pasteScope: PasteScope; currentActivity?: string | null }) => {
-  const api = {
-    addFileFromObject: vi.fn(),
-    addFileFromUrl: vi.fn(),
-  };
-  const onFileAdd = vi.fn();
-  const layer = new ClipboardController({
-    getPasteScope: () => pasteScope,
-    getCurrentActivity: () => currentActivity as ActivityId | null,
-    addFileFromObject: api.addFileFromObject,
-    addFileFromUrl: api.addFileFromUrl,
-    onFileAdd,
-  });
-  return { layer, api, onFileAdd };
+  const container = new ControllerContainer();
+  const addFileFromObject = vi.fn();
+  const addFileFromUrl = vi.fn();
+  const traverse = vi.fn();
+  container.bind(
+    ConfigController,
+    () => ({ get: (key: string) => (key === 'pasteScope' ? pasteScope : undefined) }) as unknown as ConfigController,
+  );
+  container.bind(
+    RouterController,
+    () => ({ currentActivity: currentActivity as ActivityId | null, traverse }) as unknown as RouterController,
+  );
+  container.bind(
+    UploadHostBridge,
+    () =>
+      ({ getApi: () => ({ addFileFromObject, addFileFromUrl }) as unknown as UploaderPublicApi }) as UploadHostBridge,
+  );
+  const layer = container.get(ClipboardController);
+  return { layer, api: { addFileFromObject, addFileFromUrl }, onFileAdd: traverse, container };
 };
 
 const connectedScope = (tag = 'div'): Element => {
@@ -421,7 +441,10 @@ describe('ClipboardController', () => {
     layer.destroy();
     addSpy.mockClear();
 
-    layer.registerScope(connectedScope());
+    // registerScope after destroy returns an inert no-op unregister — calling
+    // it must be safe (and it arms nothing).
+    const unregister = layer.registerScope(connectedScope());
+    expect(() => unregister()).not.toThrow();
     const pasteAdds = addSpy.mock.calls.filter((call) => call[0] === 'paste');
     expect(pasteAdds).toHaveLength(0);
 
@@ -430,23 +453,37 @@ describe('ClipboardController', () => {
     expect(api.addFileFromObject).not.toHaveBeenCalled();
   });
 
-  it('default eventTarget (window) is dereferenced lazily at arm time, not at construction', () => {
-    // Constructing with no injected eventTarget must not touch `window` at
-    // all until the first registerScope arms the listener.
+  it('the paste source (window) is dereferenced lazily at arm time, not at construction', () => {
+    // The paste source is always `window` (no ctor injection under the
+    // zero-arg container ctor); constructing must not touch `window` at all
+    // until the first registerScope arms the listener.
     const addSpy = vi.spyOn(window, 'addEventListener');
-    const layer = new ClipboardController({
-      getPasteScope: () => 'global',
-      getCurrentActivity: () => null,
-      addFileFromObject: vi.fn(),
-      addFileFromUrl: vi.fn(),
-      onFileAdd: vi.fn(),
-    });
+    const { layer } = setup({ pasteScope: 'global', currentActivity: null });
     track(layer);
 
     expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(0);
 
     layer.registerScope(connectedScope());
     expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(1);
+  });
+
+  // White-box: `_arm`'s idempotency/destroyed guard is unreachable through the
+  // public API (`registerScope` only calls `_arm` on the 0 → 1 transition, and
+  // returns early once destroyed), so it is exercised directly here to pin the
+  // defensive behavior — a redundant or post-destroy arm attaches no listener.
+  it('_arm short-circuits when already armed or destroyed (defensive guard)', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const { layer } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
+    const armable = layer as unknown as { _arm(): void };
+
+    armable._arm(); // first arm attaches the listener
+    armable._arm(); // already armed → early return, no second listener
+    expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(1);
+
+    layer.destroy(); // disarms (clears `_armed`) and sets `_destroyed`
+    addSpy.mockClear();
+    armable._arm(); // destroyed → early return
+    expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(0);
   });
 
   it('the window paste listener add/remove count returns to baseline across a full construct → registerScope → unregister → destroy() cycle', () => {

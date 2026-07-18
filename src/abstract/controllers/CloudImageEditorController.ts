@@ -102,8 +102,8 @@ function createDefaultServices(): EditorServices {
 }
 
 /**
- * DOM-free editor controller (the `UploaderController`/`ConfigController`
- * pattern — no `lit`, no DOM). Owns the cross-cutting editor state (see
+ * DOM-free editor controller (the same pattern as `ConfigController` and the
+ * other per-ctx controllers — no `lit`, no DOM). Owns the cross-cutting editor state (see
  * `CloudImageEditorControllerState`) and an injected `EditorServices` seam
  * (l10n/config/telemetry/proxy) so descendants never need to reach back into
  * `ChildBlock`/the uploader ctx directly. Action intents (apply/cancel) are NOT

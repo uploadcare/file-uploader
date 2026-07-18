@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
 import { DropArea } from './DropArea';
 
@@ -22,13 +24,13 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
 const mount = async (ctxName: string): Promise<{ el: DropArea; config: ConfigController }> => {
   ensureUploaderCtx(ctxName);
-  const config = PubSub.getContainer(ctxName)?.get(ConfigController);
+  const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
   if (!config) throw new Error('config controller not resolved');
   const el = document.createElement('uc-drop-area') as DropArea;
   el.setAttribute('ctx-name', ctxName);
@@ -40,7 +42,7 @@ const mount = async (ctxName: string): Promise<{ el: DropArea; config: ConfigCon
 
 describe('DropArea (M-god step 6b-3 migration)', () => {
   it('declares its dependencies via static uses', () => {
-    expect(DropArea.uses).toEqual([ConfigController, RouterController]);
+    expect(DropArea.uses).toEqual([ConfigController, RouterController, UploadCollectionController, UploaderPublicApi]);
   });
 
   it('attaches the uploader scope and renders into its own light DOM', async () => {

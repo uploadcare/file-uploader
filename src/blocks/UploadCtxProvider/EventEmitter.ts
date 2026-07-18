@@ -30,16 +30,11 @@ export type { UploaderEventKey as EventKey, UploaderEventPayload as EventPayload
  * public surface (event types, debounce, payload thunks, `api.on`) is
  * unchanged — only the storage/dispatch moved behind the bus.
  *
- * M9k reshape: reached the `EventBus` it wraps instead of a ctx-bound
- * `SharedInstancesBag` (it previously extended `SharedInstance` only to reach
- * `ctx.uploaderController().events` lazily — it never used any other
- * `SharedInstance` facility, so no behavior is lost by holding the bus
- * directly). M-god step 3b reshape: container-resolved with a zero-arg ctor,
- * `@inject`-ing the per-ctx `EventBus`; `container.get(EventEmitter)` yields
- * the single instance the `bag`/`*eventEmitter` surface exposes. This facade
- * stays PURE dispatch — no telemetry. `destroy()` is a no-op — the facade
- * itself holds no subscriptions to unwind; it exists so the container can treat
- * all its owned managers uniformly.
+ * Container-resolved with a zero-arg ctor, `@inject`-ing the per-ctx
+ * `EventBus`; `container.get(EventEmitter)` yields the single per-ctx
+ * instance. This facade stays PURE dispatch — no telemetry. `destroy()` is a
+ * no-op — the facade itself holds no subscriptions to unwind; it exists so
+ * the container can treat all its owned managers uniformly.
  */
 export class EventEmitter {
   @inject(EventBus) private readonly _bus!: EventBus;

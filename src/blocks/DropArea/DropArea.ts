@@ -2,8 +2,11 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, type Ref, ref } from 'lit/directives/ref.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { createDebugPrinter } from '../../lit/createDebugPrinter';
 import { ensureUploaderScope } from '../../lit/ensureUploaderScope';
@@ -20,7 +23,12 @@ const dropAreaRegistry = new Set<DropArea>();
 export class DropArea extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
 
-  public static override readonly uses = [ConfigController, RouterController] as const;
+  public static override readonly uses = [
+    ConfigController,
+    RouterController,
+    UploadCollectionController,
+    UploaderPublicApi,
+  ] as const;
 
   public declare attributesMeta: {
     single?: boolean;
@@ -35,7 +43,7 @@ export class DropArea extends ChildBlock {
   };
 
   /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
-  private _debugPrint = createDebugPrinter(() => this.bag.ctx, this.constructor.name);
+  private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
 
   /**
    * CSS-only attribute
@@ -97,14 +105,15 @@ export class DropArea extends ChildBlock {
       return;
     }
 
-    // `api` (UploaderPublicApi) has no DI token (set via UploaderController.setApi),
-    // so it stays on the v1 `bag` (step 8) — same for the `onItems` add-file calls.
+    // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
+    // token — it is container-resolved (M-god step 8a), reached via `use()`
+    // (same for the `onItems` add-file calls below).
     if (this.initflow) {
-      this.bag.api.initFlow();
+      this.use(UploaderPublicApi).initFlow();
       return;
     }
 
-    this.bag.api.openSystemDialog();
+    this.use(UploaderPublicApi).openSystemDialog();
   };
   private _sourceListAllowsLocal = true;
   private _clickableListenersAttached = false;
@@ -127,14 +136,13 @@ export class DropArea extends ChildBlock {
     return hasSize && visible && isInViewport;
   }
 
-  protected override controllerReady(ctrl: UploaderController): void {
+  protected override controllerReady(container: ControllerContainer): void {
     // `<uc-drop-area>` is the uploader block in the built-in solutions (they
     // never render `<uc-upload-ctx-provider>`), so it must attach the
     // uploader scope itself — same contract as v1's `LitUploaderBlock.
     // initCallback`, and the identical seam `<uc-upload-ctx-provider>` uses.
     ensureUploaderScope(
-      this.bag,
-      ctrl,
+      container,
       (...args) => this._debugPrint(...args),
       (type, payload, options) => this.emit(type, payload, options),
     );
@@ -167,21 +175,23 @@ export class DropArea extends ChildBlock {
         if (!items.length) {
           return;
         }
-        const prevSize = this.bag.uploadCollection.size;
+        const collection = this.use(UploadCollectionController);
+        const api = this.use(UploaderPublicApi);
+        const prevSize = collection.size;
 
         items.forEach((item) => {
           if (item.type === 'url') {
-            this.bag.api.addFileFromUrl(item.url, {
+            api.addFileFromUrl(item.url, {
               source: UploadSource.DROP_AREA,
             });
           } else if (item.type === 'file') {
-            this.bag.api.addFileFromObject(item.file, {
+            api.addFileFromObject(item.file, {
               source: UploadSource.DROP_AREA,
               fullPath: item.fullPath,
             });
           }
         });
-        if (this.bag.uploadCollection.size > prevSize) {
+        if (collection.size > prevSize) {
           this.use(RouterController).traverse('onFileAdd');
         }
       },
@@ -215,8 +225,8 @@ export class DropArea extends ChildBlock {
     this._destroyContentWrapperDropzone = null;
   }
 
-  protected override subscriptionsFor(ctrl: UploaderController): Array<(listener: () => void) => () => void> {
-    return [(l: () => void) => ctrl.locale.subscribe(l)];
+  protected override subscriptionsFor(container: ControllerContainer): Array<(listener: () => void) => () => void> {
+    return [(l: () => void) => container.get(LocaleController).subscribe(l)];
   }
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
@@ -262,11 +272,11 @@ export class DropArea extends ChildBlock {
 
   private _couldHandleFiles(): boolean {
     // Imperative reads (drop-handler path, not render) — `get()`, not the tracked
-    // `getTracked()`. `uploadCollection` has no DI token (registration race),
-    // so it stays on the v1 `bag` (step 8).
+    // `getTracked()`. `uploadCollection` is container-owned (M-god step 4),
+    // resolved here via `use()` (this path runs only after adoption).
     const isMultiple = this.use(ConfigController).get('multiple');
     const multipleMax = this.use(ConfigController).get('multipleMax');
-    const currentFilesCount = this.bag.uploadCollection.size;
+    const currentFilesCount = this.use(UploadCollectionController).size;
 
     if (isMultiple && multipleMax && currentFilesCount >= multipleMax) {
       return false;

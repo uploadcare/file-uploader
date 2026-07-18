@@ -299,3 +299,205 @@ describe('ControllerContainer', () => {
     expect(() => container.bind(A, () => new A())).not.toThrow();
   });
 });
+
+describe('ControllerContainer.getOrNull', () => {
+  it('returns null for a token that has not been constructed', () => {
+    class A {}
+    const container = new ControllerContainer();
+    expect(container.getOrNull(A)).toBeNull();
+    // A bare `bind` (no `get`) does NOT count as constructed — getOrNull must
+    // not construct it either.
+    class B {}
+    container.bind(B, () => new B());
+    expect(container.getOrNull(B)).toBeNull();
+    expect(container.has(B)).toBe(false);
+  });
+
+  it('returns the instance once constructed', () => {
+    class A {}
+    const container = new ControllerContainer();
+    const a = container.get(A);
+    expect(container.getOrNull(A)).toBe(a);
+  });
+
+  it('resolves a thunk token', () => {
+    class A {}
+    const thunk: Token<A> = () => A;
+    const container = new ControllerContainer();
+    expect(container.getOrNull(thunk)).toBeNull();
+    const a = container.get(thunk);
+    expect(container.getOrNull(thunk)).toBe(a);
+  });
+});
+
+describe('ControllerContainer.whenController', () => {
+  it('fires synchronously when the token is already constructed', () => {
+    class A {}
+    const container = new ControllerContainer();
+    const a = container.get(A);
+    const cb = vi.fn();
+    const off = container.whenController(A, cb);
+    expect(cb).toHaveBeenCalledWith(a);
+    expect(cb).toHaveBeenCalledTimes(1);
+    off(); // no-op unsubscribe
+  });
+
+  it('fires when the token is constructed later, with the initialized instance', () => {
+    const order: string[] = [];
+    class A {
+      public init(): void {
+        order.push('init');
+      }
+    }
+    const container = new ControllerContainer();
+    const cb = vi.fn(() => order.push('waiter'));
+    container.whenController(A, cb);
+    expect(cb).not.toHaveBeenCalled();
+
+    const a = container.get(A);
+    expect(cb).toHaveBeenCalledWith(a);
+    // The waiter runs AFTER init(), so it sees a fully constructed instance.
+    expect(order).toEqual(['init', 'waiter']);
+  });
+
+  it('fires each of several waiters exactly once, then not again on re-resolution', () => {
+    class A {}
+    const container = new ControllerContainer();
+    const a = vi.fn();
+    const b = vi.fn();
+    container.whenController(A, a);
+    container.whenController(A, b);
+
+    const inst = container.get(A);
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(b).toHaveBeenCalledTimes(1);
+
+    // A subsequent get() returns the cache and must NOT re-fire the (already
+    // flushed) waiters.
+    expect(container.get(A)).toBe(inst);
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(b).toHaveBeenCalledTimes(1);
+  });
+
+  it('unsubscribe cancels a still-pending waiter', () => {
+    class A {}
+    const container = new ControllerContainer();
+    const cb = vi.fn();
+    const off = container.whenController(A, cb);
+    off();
+    container.get(A);
+    expect(cb).not.toHaveBeenCalled();
+  });
+
+  it('unsubscribing one of two pending waiters leaves the other live', () => {
+    class A {}
+    const container = new ControllerContainer();
+    const cancelled = vi.fn();
+    const kept = vi.fn();
+    const offCancelled = container.whenController(A, cancelled);
+    container.whenController(A, kept);
+    offCancelled();
+
+    container.get(A);
+    expect(cancelled).not.toHaveBeenCalled();
+    expect(kept).toHaveBeenCalledTimes(1);
+  });
+
+  it('isolates a throwing waiter so the others still fire, and does not bubble out of get()', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    class A {}
+    const container = new ControllerContainer();
+    const bad = vi.fn(() => {
+      throw new Error('boom');
+    });
+    const good = vi.fn();
+    container.whenController(A, bad);
+    container.whenController(A, good);
+
+    expect(() => container.get(A)).not.toThrow();
+    expect(good).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('whenController waiter for A threw'), expect.any(Error));
+    warn.mockRestore();
+  });
+
+  it('resolves a bound factory token and fires its waiter', () => {
+    class A {
+      public constructor(public readonly tag: string) {}
+    }
+    const container = new ControllerContainer();
+    container.bind(A, () => new A('bound'));
+    const cb = vi.fn();
+    container.whenController(A, cb);
+    expect(cb).not.toHaveBeenCalled();
+
+    const a = container.get(A);
+    expect(a.tag).toBe('bound');
+    expect(cb).toHaveBeenCalledWith(a);
+  });
+
+  it('dispose() clears pending waiters so a rebuilt token does not fire a stale waiter', () => {
+    class A {}
+    const container = new ControllerContainer();
+    const cb = vi.fn();
+    container.whenController(A, cb);
+    container.dispose();
+    // After dispose the container is reusable; a fresh get() must not fire the
+    // waiter registered before dispose.
+    container.get(A);
+    expect(cb).not.toHaveBeenCalled();
+  });
+
+  it('isolates a throwing immediate callback so it does not bubble out of whenController', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    class A {}
+    const container = new ControllerContainer();
+    container.get(A);
+    const bad = vi.fn(() => {
+      throw new Error('boom');
+    });
+    expect(() => container.whenController(A, bad)).not.toThrow();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('whenController immediate callback for A threw'),
+      expect.any(Error),
+    );
+    warn.mockRestore();
+  });
+
+  it('defers the callback for a token still mid-init, flushing it only after init() completes', () => {
+    // A `whenController` called re-entrantly during a token's own `init()` sees
+    // the cached-before-init instance, but that instance is only partially
+    // wired — the callback must defer to the post-init flush, not fire against
+    // the half-built instance.
+    const order: string[] = [];
+    const cb = vi.fn(() => order.push('waiter'));
+    class A {
+      public init(): void {
+        order.push('init-start');
+        container.whenController(A, cb);
+        // Not fired yet: the token is still resolving.
+        expect(cb).not.toHaveBeenCalled();
+        order.push('init-end');
+      }
+    }
+    const container = new ControllerContainer();
+    const a = container.get(A);
+    expect(cb).toHaveBeenCalledWith(a);
+    expect(order).toEqual(['init-start', 'init-end', 'waiter']);
+  });
+
+  it('a double unsubscribe does not evict a fresh subscription for the same token', () => {
+    // Stale-unsubscribe guard: after the first unsub empties + drops its set,
+    // a new subscription creates a fresh set for the token. Calling the first
+    // unsub AGAIN must not delete that fresh set out from under the new waiter.
+    class A {}
+    const container = new ControllerContainer();
+    const off1 = container.whenController(A, vi.fn());
+    off1();
+    const kept = vi.fn();
+    container.whenController(A, kept);
+    off1(); // stale second call — must be a no-op against the current set
+
+    container.get(A);
+    expect(kept).toHaveBeenCalledTimes(1);
+  });
+});

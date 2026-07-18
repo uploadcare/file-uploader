@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
 import { Config } from './Config';
 
@@ -21,7 +21,7 @@ const freshCtxName = (): string => {
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -32,7 +32,7 @@ const track = (el: HTMLElement): void => {
 /** The SAME ConfigController the rest of the app reads (v1 `this.uploader.config`). */
 const controllerFor = (ctxName: string): ConfigController => {
   ensureUploaderCtx(ctxName);
-  const container = PubSub.getContainer(ctxName);
+  const container = UploaderRegistry.get(ctxName);
   if (!container) throw new Error('no container');
   return container.get(ConfigController);
 };
