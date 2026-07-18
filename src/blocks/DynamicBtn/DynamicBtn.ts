@@ -2,6 +2,9 @@ import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { cache } from 'lit/directives/cache.js';
 import { SourceListController } from '../../abstract/controllers';
+import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
@@ -54,11 +57,17 @@ const AUTO_MODE_INLINE_THRESHOLD = 3;
 export class DynamicBtn extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-dynamic-btn'];
 
+  public static override readonly uses = [ConfigController, RouterController, CollectionStateController] as const;
+
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;
 
-  @state()
-  private _mode: DynamicButtonMode = 'auto';
+  // Tracked read: `dynamicButtonViewMode` auto-tracks under `SignalWatcher`, so a
+  // config change re-renders — replacing the v1 `subConfigValue` mirror that fed
+  // a `_mode` @state and imperatively recomputed `_mainAndRemainSources`.
+  private get _mode(): DynamicButtonMode {
+    return this.use(ConfigController).getTracked('dynamicButtonViewMode');
+  }
 
   private _sourceListController: SourceListController | null = null;
 
@@ -68,14 +77,21 @@ export class DynamicBtn extends ChildBlock {
   @state()
   private _status: 'idle' | 'success' | 'uploading' | 'failed' = 'idle';
 
-  @state()
-  private _mainAndRemainSources!: SourceSplit;
+  // Derived from `_sources` + the tracked `_mode` (both re-render triggers), so a
+  // change in either re-splits with no imperative `_updateSourceSplit`.
+  private get _mainAndRemainSources(): SourceSplit {
+    return adjustSourceBasedOnMode(this._sources, this._mode);
+  }
 
   @state()
   private _collection!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
 
-  @state()
-  private _progress = 0;
+  // Tracked read: `commonProgress` (owned by `CollectionStateController`) auto-
+  // tracks under `SignalWatcher` — replacing the v1 `ctx.sub('*commonProgress')`
+  // subscription that mirrored it into `_progress` @state.
+  private get _progress(): number {
+    return this.use(CollectionStateController).getTracked('commonProgress');
+  }
 
   private get isIdle() {
     return this._status === 'idle';
@@ -140,6 +156,8 @@ export class DynamicBtn extends ChildBlock {
   }, 300);
 
   private _updateButtonBasedOnCollectionState() {
+    // `api` (UploaderPublicApi) is not container-resolved (set via
+    // UploaderController.setApi, no DI token), so it stays on the v1 `bag` (step 8).
     const collectionState = this.bag.apiOrNull?.getOutputCollectionState();
 
     if (!collectionState) {
@@ -151,24 +169,7 @@ export class DynamicBtn extends ChildBlock {
     this._status = collectionState.status;
   }
 
-  private _updateSourceSplit(): void {
-    this._mainAndRemainSources = adjustSourceBasedOnMode(this._sources, this._mode);
-  }
-
   protected override controllerReady(): void {
-    this.subConfigValue('dynamicButtonViewMode', (value) => {
-      if (this._mode === value) return;
-
-      this._mode = value;
-      this._updateSourceSplit();
-    });
-
-    this.trackSub(
-      this.bag.ctx.sub('*commonProgress', (progress: number) => {
-        this._progress = progress;
-      }),
-    );
-
     // Re-adoption would otherwise stack a new SourceListController per
     // adoption without removing the previous one (same shape as SourceList).
     this._teardownSourceListController();
@@ -177,7 +178,6 @@ export class DynamicBtn extends ChildBlock {
       sharedInstancesBag: this.bag,
       onSourcesChange: (sources) => {
         this._sources = sources;
-        this._updateSourceSplit();
       },
     });
 
@@ -186,6 +186,8 @@ export class DynamicBtn extends ChildBlock {
     // uploader/solution block finishes its own init, which can race this
     // block's adoption) — go through `bag.when` rather than the throwing
     // `bag.uploadCollection` getter (FileItem precedent for `pluginManager`).
+    // Kept on the v1 `bag` path: the registration race makes an eager
+    // `use(UploadCollectionController)` unsafe here (step 8).
     this.trackSub(
       this.bag.when('uploadCollection', (collection) => {
         // Deliberate post-parity improvement (v1 never unobserved these):
@@ -196,16 +198,17 @@ export class DynamicBtn extends ChildBlock {
       }),
     );
 
+    const router = this.use(RouterController);
     this.trackSub(
-      this.bag.router.hooks.onFileAdd(() => {
+      router.hooks.onFileAdd(() => {
         // With confirmUpload, always land on the upload list.
-        if (this.uploader.config.get('confirmUpload')) {
+        if (this.use(ConfigController).get('confirmUpload')) {
           return ACTIVITY_TYPES.UPLOAD_LIST;
         }
         // If the user navigated somewhere to add the file, fall through to the
         // default (upload list); otherwise close everything so the dynamic button
         // just shows inline status.
-        if (this.bag.router.canGoBack) {
+        if (router.canGoBack) {
           return undefined;
         }
         return null;

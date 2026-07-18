@@ -103,6 +103,9 @@ export class PluginActivityRenderer extends ChildBlock {
 
   // Transiently null until the shared PluginController registers (bag.when) —
   // render falls back to an empty activity list meanwhile (Icon/FileItem precedent).
+  // This is the block's ONLY external read: the plugin manager is NOT
+  // container-resolved (no DI token), so it stays on the v1 `bag` path — there is
+  // no config/activity/collection-state read here to move onto `use()` (step 8).
   private _pluginManager: PluginController | null = null;
 
   protected override controllerReady(): void {

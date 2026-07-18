@@ -1,25 +1,23 @@
-import { html, type PropertyValues } from 'lit';
-import { property, state } from 'lit/decorators.js';
+import { html } from 'lit';
+import { property } from 'lit/decorators.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
 import type { PluginController } from '../../abstract/managers/plugin';
 import { ChildBlock } from '../../lit/ChildBlock';
-import type { IconHrefResolver } from '../../types/index';
 import { renderIconSvg } from './renderIconSvg';
 import './icon.css';
 
 export class Icon extends ChildBlock {
+  public static override readonly uses = [ConfigController] as const;
+
   @property({ type: String })
   public name = '';
 
-  @state()
-  private _resolvedHref = '';
-
-  @state()
-  private _pluginSvg: string | null = null;
-
-  private _iconHrefResolver: IconHrefResolver | null = null;
   // Transiently null until the shared PluginController registers (bag.when) —
-  // render falls back to the sprite href meanwhile.
+  // render falls back to the sprite href meanwhile. The plugin manager is NOT
+  // container-resolved (no DI token), so it stays on the v1 `bag` path (step 8);
+  // a plugin change re-renders via `requestUpdate` since its snapshot is not a
+  // signal.
   private _pluginManager: PluginController | null = null;
 
   public override connectedCallback(): void {
@@ -28,16 +26,11 @@ export class Icon extends ChildBlock {
   }
 
   protected override controllerReady(): void {
-    this.subConfigValue('iconHrefResolver', (resolver: IconHrefResolver | null) => {
-      this._iconHrefResolver = resolver;
-      this._updateResolvedHref();
-    });
-
     this.trackSub(
       this.bag.when('pluginManager', (pluginManager) => {
         this._pluginManager = pluginManager;
-        this.trackSub(pluginManager.onPluginsChange(() => this._updateResolvedHref()));
-        this._updateResolvedHref();
+        this.trackSub(pluginManager.onPluginsChange(() => this.requestUpdate()));
+        this.requestUpdate();
       }),
     );
   }
@@ -46,46 +39,22 @@ export class Icon extends ChildBlock {
     this._pluginManager = null;
   }
 
-  // Pre-adoption safety: unlike `willUpdate`-gated derivations, a `name` set
-  // before adoption is not lost here — `controllerReady`'s `subConfigValue`/
-  // `bag.when` subscriptions above both call `_updateResolvedHref()` when
-  // they first fire on adoption. If this restructures, keep one of those
-  // subscriptions calling it (or add an explicit re-derive here) so a
-  // pre-adoption `name` write still resolves.
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
-    super.willUpdate(changedProperties);
-    if (changedProperties.has('name')) {
-      this._updateResolvedHref();
-    }
-  }
-
-  private _updateResolvedHref(): void {
+  public override render() {
     if (!this.name) {
-      this._resolvedHref = '';
-      this._pluginSvg = null;
-      return;
+      return html` ${this.yield('', renderIconSvg(''))} `;
     }
 
     const pluginIcon = this._pluginManager?.snapshot().icons.find((icon) => icon.name === this.name);
-
     if (pluginIcon) {
-      this._pluginSvg = pluginIcon.svg;
-      this._resolvedHref = '';
-      return;
+      return html`${this.yield('', html`${unsafeSVG(pluginIcon.svg)}`)}`;
     }
 
-    this._pluginSvg = null;
-    const defaultHref = `#uc-icon-${this.name}`;
-    const customHref = this._iconHrefResolver?.(this.name);
-    this._resolvedHref = customHref ?? defaultHref;
-  }
-
-  public override render() {
-    if (this._pluginSvg) {
-      return html`${this.yield('', html`${unsafeSVG(this._pluginSvg)}`)}`;
-    }
-
-    return html` ${this.yield('', renderIconSvg(this._resolvedHref))} `;
+    // Tracked read: reading `iconHrefResolver` here auto-tracks it under
+    // `SignalWatcher`, so a later config `set()` re-renders — replacing the v1
+    // `subConfigValue('iconHrefResolver', …)` mirror that fed `_resolvedHref`.
+    const iconHrefResolver = this.use(ConfigController).getTracked('iconHrefResolver');
+    const href = iconHrefResolver?.(this.name) ?? `#uc-icon-${this.name}`;
+    return html` ${this.yield('', renderIconSvg(href))} `;
   }
 }
 
