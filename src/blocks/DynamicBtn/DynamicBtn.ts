@@ -5,6 +5,8 @@ import { SourceListController } from '../../abstract/controllers';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
@@ -57,7 +59,13 @@ const AUTO_MODE_INLINE_THRESHOLD = 3;
 export class DynamicBtn extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-dynamic-btn'];
 
-  public static override readonly uses = [ConfigController, RouterController, CollectionStateController] as const;
+  public static override readonly uses = [
+    ConfigController,
+    RouterController,
+    CollectionStateController,
+    UploadCollectionController,
+    UploaderPublicApi,
+  ] as const;
 
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;
@@ -156,9 +164,11 @@ export class DynamicBtn extends ChildBlock {
   }, 300);
 
   private _updateButtonBasedOnCollectionState() {
-    // `api` (UploaderPublicApi) is not container-resolved (set via
-    // UploaderController.setApi, no DI token), so it stays on the v1 `bag` (step 8).
-    const collectionState = this.bag.apiOrNull?.getOutputCollectionState();
+    // `api` (UploaderPublicApi) is container-resolved (M-god step 8a). This runs
+    // from the throttled tick, which can fire after the block is released while
+    // still connected — read it null-tolerantly via `useOrNull` (the trailing-tick
+    // guard the v1 `bag.apiOrNull` read provided).
+    const collectionState = this.useOrNull(UploaderPublicApi)?.getOutputCollectionState();
 
     if (!collectionState) {
       console.warn('Collection state is undefined');
@@ -238,18 +248,19 @@ export class DynamicBtn extends ChildBlock {
   }
 
   private _clearAllEntries() {
-    this.bag.uploadCollection.clearAll();
+    this.use(UploadCollectionController).clearAll();
   }
 
   private _clearAllFailedEntries() {
+    const collection = this.use(UploadCollectionController);
     this._collection.failedEntries.forEach((it) => {
-      if (it && this.bag.uploadCollection.hasItem(it.internalId as Uid)) {
-        this.bag.uploadCollection.remove(it.internalId as Uid);
+      if (it && collection.hasItem(it.internalId as Uid)) {
+        collection.remove(it.internalId as Uid);
       }
     });
   }
   private _abortAllEntries() {
-    this.bag.uploadCollection.abortAll();
+    this.use(UploadCollectionController).abortAll();
   }
 
   private _handleRemove() {

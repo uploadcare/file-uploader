@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
@@ -40,7 +42,7 @@ const mount = async (ctxName: string): Promise<{ el: DropArea; config: ConfigCon
 
 describe('DropArea (M-god step 6b-3 migration)', () => {
   it('declares its dependencies via static uses', () => {
-    expect(DropArea.uses).toEqual([ConfigController, RouterController]);
+    expect(DropArea.uses).toEqual([ConfigController, RouterController, UploadCollectionController, UploaderPublicApi]);
   });
 
   it('attaches the uploader scope and renders into its own light DOM', async () => {

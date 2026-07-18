@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { PubSub } from '../../lit/PubSubCompat';
@@ -43,7 +44,7 @@ const badgeIconName = (el: Thumb): string | null => el.querySelector('.uc-badge 
 
 describe('Thumb (M-god step 6b-6 migration)', () => {
   it('declares its dependencies via static uses', () => {
-    expect(Thumb.uses).toEqual([ConfigController, TelemetryManager]);
+    expect(Thumb.uses).toEqual([ConfigController, UploadCollectionController, TelemetryManager]);
   });
 
   it('pre-warms its declared dependencies into the container on adoption', async () => {

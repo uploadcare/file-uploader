@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { PubSub } from '../../lit/PubSubCompat';
 import { UrlSource } from './UrlSource';
@@ -37,7 +38,7 @@ const mount = async (ctxName: string): Promise<UrlSource> => {
 
 describe('UrlSource (M-god step 6b-1 migration)', () => {
   it('declares its dependencies via static uses', () => {
-    expect(UrlSource.uses).toEqual([TelemetryManager, RouterController]);
+    expect(UrlSource.uses).toEqual([TelemetryManager, RouterController, UploaderPublicApi]);
   });
 
   it('routes header back/close navigation through the container-resolved RouterController (use())', async () => {

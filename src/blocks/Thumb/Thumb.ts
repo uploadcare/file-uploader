@@ -1,6 +1,7 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils';
 import { debounce } from '../../utils/debounce';
@@ -29,8 +30,10 @@ export class Thumb extends FileItemConfig {
   // generation (not render reads), so they use the untracked `use(...).get()` /
   // `use(TelemetryManager)` path. The thumb image itself renders from the
   // per-entry `thumbUrl` observer, which has no DI token and stays on the v1
-  // `bag`/`subEntry` path (step 8).
-  public static override readonly uses = [ConfigController, TelemetryManager] as const;
+  // `subEntry` path (step 8). `UploadCollectionController` is the entry source
+  // for `_bindToEntry`, read null-tolerantly via `useOrNull` (a thumb can render
+  // outside an uploader scope).
+  public static override readonly uses = [ConfigController, UploadCollectionController, TelemetryManager] as const;
 
   @property({ type: String })
   public badgeIcon = '';
@@ -314,10 +317,11 @@ export class Thumb extends FileItemConfig {
       return;
     }
 
-    // The uploader-scope shared instances exist only once an uploader block
+    // The uploader-scope controllers exist only once an uploader block
     // initializes this ctx — a thumb rendered outside that scope (e.g. an
-    // isolated composition) has no collection and therefore no entry.
-    const entry = this.bag.uploadCollectionOrNull?.read(id);
+    // isolated composition, or a teardown-time tick after release) has no
+    // collection and therefore no entry; `useOrNull` returns null there.
+    const entry = this.useOrNull(UploadCollectionController)?.read(id);
     if (!entry) {
       // The uid no longer resolves (entry removed, scope lost, or uid swapped
       // to an unknown id) — drop the previous entry's subscriptions and image

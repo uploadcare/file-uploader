@@ -10,6 +10,7 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { MessageBridge } from './MessageBridge';
 import { queryString } from './query-string';
@@ -26,7 +27,7 @@ const SOCIAL_SOURCE_MAPPING: Record<string, string> = {
 export type ActivityParams = { externalSourceType: string };
 
 export class ExternalSource extends ChildBlock {
-  public static override readonly uses = [ConfigController, RouterController] as const;
+  public static override readonly uses = [ConfigController, RouterController, UploaderPublicApi] as const;
 
   private _messageBridge?: MessageBridge;
 
@@ -240,9 +241,9 @@ export class ExternalSource extends ChildBlock {
       if (!externalSourceType) {
         throw new Error(`Param "externalSourceType" is required for external source activity`);
       }
-      // `api` (UploaderPublicApi) is not container-resolved (set via
-      // UploaderController.setApi, no DI token), so it stays on the v1 `bag` (step 8).
-      this.bag.api.addFileFromUrl(url, {
+      // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
+      // token — it is container-resolved (M-god step 8a), reached via `use()`.
+      this.use(UploaderPublicApi).addFileFromUrl(url, {
         fileName: filename,
         source: externalSourceType,
       });

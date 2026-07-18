@@ -143,6 +143,27 @@ export abstract class ChildBlock extends ChildBlockBase {
     return this._container.get(token);
   }
 
+  /**
+   * Null-tolerant `use()` — the container counterpart to `uploaderOrNull`.
+   * Returns `null` when no container is adopted (pre-adoption, or after
+   * `_releaseController` cleared it during a teardown / not-yet-adopted race),
+   * instead of throwing. Use it from callbacks that can outlive adoption — a
+   * trailing throttle/debounce tick, or a router guard predicate invoked during
+   * a teardown-time navigation — where `use()` would throw.
+   *
+   * For the always-bound uploader-scope tokens read through it (`ConfigController`,
+   * `UploaderPublicApi`, `UploadCollectionController`) a non-null container always
+   * resolves the instance; a conditionally-bound token (e.g. an unbound
+   * `PluginController`) would still throw from `get()` — that is the caller's
+   * concern, matching `use()`. A block only ever holds a live (never disposed)
+   * container in `_container`: `_releaseController` nulls it out under the same
+   * `removeConsumer` that precedes disposal, so `get()` here never resurrects a
+   * controller on a dead container.
+   */
+  protected useOrNull<T>(token: Token<T>): T | null {
+    return this._container ? this._container.get(token) : null;
+  }
+
   private _requireCtx(): PubSub<SharedState> {
     const ctxName = this.effectiveCtxName;
     const ctx = ctxName ? PubSub.getCtx<SharedState>(ctxName) : null;
