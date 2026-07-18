@@ -3,7 +3,7 @@ import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { TypedData } from '../../abstract/TypedData';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { createDebugPrinter } from '../../lit/createDebugPrinter';
@@ -37,8 +37,8 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
   /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
   private _debugPrint = createDebugPrinter(() => this.bag.ctx, this.constructor.name);
 
-  protected override controllerReady(ctrl: UploaderController): void {
-    super.controllerReady(ctrl);
+  protected override controllerReady(container: ControllerContainer): void {
+    super.controllerReady(container);
     this._mountEditor();
   }
 

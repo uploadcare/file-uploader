@@ -1,33 +1,33 @@
 import { registerUploadStack } from '../abstract/controllers/registerUploadStack';
-import type { UploaderController } from '../abstract/controllers/UploaderController';
+import { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import type { UploadHostDebug, UploadHostEmit } from '../abstract/controllers/UploadHostBridge';
+import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
 import { ensurePluginManager } from './ensurePluginManager';
 import type { SharedInstancesBag } from './shared-instances';
 
 /**
- * Shared seam for attaching the uploader scope to a `bag`/`ctrl` pair — lifted
- * verbatim out of `UploadCtxProvider._attachUploaderScopeIfNeeded` (the first
- * host to need synchronous, idempotent attach) so the ported `<uc-drop-area>`
- * can call the exact same logic instead of re-deriving it.
+ * Shared seam for attaching the uploader scope to a `bag`/`container` pair —
+ * lifted verbatim out of `UploadCtxProvider._attachUploaderScopeIfNeeded` (the
+ * first host to need synchronous, idempotent attach) so the ported
+ * `<uc-drop-area>` can call the exact same logic instead of re-deriving it.
  *
- * All writes are guarded/idempotent (first-write-wins + `attachUploaderScope`'s
+ * All writes are guarded/idempotent (first-write-wins + `registerUploadStack`'s
  * own gate), so this is a no-op once a solution or a sibling host has already
  * attached. `debug`/`emit` are host-specific (see `buildUploaderScopeDeps`'s
  * doc) and stay caller-supplied.
  */
 export function ensureUploaderScope(
   bag: SharedInstancesBag,
-  ctrl: UploaderController,
+  container: ControllerContainer,
   debug: UploadHostDebug | undefined,
   emit: UploadHostEmit,
 ): void {
   const ctx = bag.ctx;
-  const container = ctrl.container;
 
   if (!ctx.has('*uploadCollection')) {
-    ctx.add('*uploadCollection', ctrl.collection, true);
+    ctx.add('*uploadCollection', container.get(UploadCollectionController), true);
   }
 
   if (!ctx.has('*publicApi')) {

@@ -1,5 +1,5 @@
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { EventBus } from '../../abstract/EventBus';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -20,14 +20,14 @@ export class UploadCtxProvider extends ChildBlock {
 
   private _eventBridge: EventBridgeController | null = null;
 
-  protected override controllerReady(ctrl: UploaderController): void {
+  protected override controllerReady(container: ControllerContainer): void {
     // Re-adoption (release-while-connected followed by re-adopt) would otherwise
     // stack a new EventBridgeController per adoption without ever removing the
     // previous one's subscription — tear down the old instance first (mirrors
     // the SourceListController pattern in SourceList.ts).
     this._teardownEventBridge();
 
-    this._attachUploaderScopeIfNeeded(ctrl);
+    this._attachUploaderScopeIfNeeded(container);
 
     // Bridge the per-ctx EventBus to documented DOM CustomEvents on this
     // element. Recreated on every adoption (matching the teardown above) so
@@ -75,10 +75,10 @@ export class UploadCtxProvider extends ChildBlock {
    * seam shared with the ported `<uc-drop-area>`, which needs the identical
    * synchronous-attach guarantee.
    */
-  private _attachUploaderScopeIfNeeded(ctrl: UploaderController): void {
+  private _attachUploaderScopeIfNeeded(container: ControllerContainer): void {
     ensureUploaderScope(
       this.bag,
-      ctrl,
+      container,
       (...args) => this._debugPrint(...args),
       // Same contract as `ChildBlock.emit`: pure EventEmitter dispatch (no
       // telemetry mirror — telemetry observes the bus independently via

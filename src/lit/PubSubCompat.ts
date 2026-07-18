@@ -1,11 +1,12 @@
 import { listenKeys, type MapStore, map, subscribeKeys } from 'nanostores';
 import type { CollectionState } from '../abstract/controllers/CollectionStateController';
 import { CollectionStateController } from '../abstract/controllers/CollectionStateController';
-import type { ConfigController } from '../abstract/controllers/ConfigController';
+import { ConfigController } from '../abstract/controllers/ConfigController';
 import { LazyPluginsController } from '../abstract/controllers/LazyPluginsController';
-import type { LocaleController } from '../abstract/controllers/LocaleController';
-import { UploaderController } from '../abstract/controllers/UploaderController';
+import { LocaleController } from '../abstract/controllers/LocaleController';
+import { RouterController } from '../abstract/controllers/RouterController';
 import { ControllerContainer } from '../abstract/di/ControllerContainer';
+import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 
 export type Unsubscriber = () => void;
@@ -50,12 +51,13 @@ export class PubSub<T extends Record<string, unknown>> {
   /**
    * One per-ctx `ControllerContainer` per ctx-name. Created lazily the first
    * time a `*cfg/*` key is touched on a context (so per-upload-entry stores,
-   * which never carry config keys, never get a controller). Each container
-   * owns exactly one (still-monolithic) `UploaderController` — it is the
-   * creation/ownership seam: the controller is `bind`+`get` through the
-   * container, and `container.dispose()` tears it down. This is the v1 → v2
-   * strangler seam: config state lives in `controller.config`, not in the
-   * nanostores map, while the rest of the shared state stays on nanostores.
+   * which never carry config keys, never get a container). Each container owns
+   * the ctx's controllers directly (M-god step 8e dissolved the monolithic
+   * `UploaderController` facade): the container is registered in
+   * `UploaderRegistry` and `container.dispose()` tears its controllers down.
+   * This is the v1 → v2 strangler seam: config state lives in
+   * `container.get(ConfigController)`, not in the nanostores map, while the rest
+   * of the shared state stays on nanostores.
    */
   private static _controllers = new Map<string, ControllerContainer>();
 
@@ -88,49 +90,52 @@ export class PubSub<T extends Record<string, unknown>> {
       : null;
   }
 
-  /** Get (or lazily create + register) the controller for this ctx. */
-  private _uploader(): UploaderController {
-    return this._resolveContainer().get(UploaderController);
-  }
-
   /**
    * Get (or lazily create + register) the per-ctx `ControllerContainer`. Shared
-   * by the `_uploader`/`_config`/`_locale` routing and the M-god step 4 orphan-
-   * state routing (`_collectionState`/`_lazyPlugins`) so any of them touching a
-   * ctx first creates + registers the one container that owns them all.
+   * by the `_config`/`_locale` routing and the M-god step 4 orphan-state routing
+   * (`_collectionState`/`_lazyPlugins`) so any of them touching a ctx first
+   * creates + registers the one container that owns them all.
    */
   private _resolveContainer(): ControllerContainer {
     const existing = PubSub._controllers.get(this._ctxId);
     if (existing) {
-      // Idempotent: the container caches its single UploaderController, so this
-      // returns the same instance registered at creation time (no re-init).
+      // Idempotent: the container caches its controllers, so this returns the
+      // same instances registered at creation time (no re-init).
       return existing;
     }
 
-    // The per-ctx container is the creation/owner of the (still-monolithic)
-    // UploaderController: bind its factory, then `get` the single instance.
-    // `container.dispose()` (in `deleteCtx`) is what tears it down. M-god step 5
-    // removed the 9 v1 shared-state (`*`-key) read/write bridges that used to be
-    // built here — the upload stack now writes the six derived collection keys
-    // directly to the container-owned `CollectionStateController` (the same
-    // instance `PubSubCompat`'s `*uploadList`…`*uploadTrigger` routing resolves),
-    // so no ctx-closure bridge is needed.
+    // The per-ctx container owns the ctx's controllers directly (M-god step 8e
+    // dissolved the `UploaderController` facade). `container.dispose()` (in
+    // `deleteCtx`) tears them down in reverse construction order.
     const container = new ControllerContainer();
-    container.bind(UploaderController, (c) => new UploaderController(c));
-    const controller = container.get(UploaderController);
     PubSub._controllers.set(this._ctxId, container);
-    // Register the UploaderController itself (exactly as before), so
-    // `UploaderRegistry`/`ChildBlock`/`whenAvailable` consumers are untouched.
-    UploaderRegistry.register(this._ctxId, controller);
+    // Eagerly resolve the managers that must exist from birth — exactly the set
+    // `UploaderController`'s constructor used to eager-resolve (M-god step 8e
+    // moved this here so the side effects fire at the same instant the container
+    // is created, on EVERY creation path — a bare `*cfg/*` touch, not only
+    // `ensureUploaderCtx`). The order fixes reverse-insertion disposal and the
+    // observer's subscribe timing:
+    //  - `config` first → disposed LAST (telemetry's `_unsubConfig` runs during
+    //    teardown; the returned unsubscribe is a safe no-op even after config is
+    //    disposed);
+    //  - `router` before `telemetry` (telemetry reads `router.currentActivity`);
+    //  - `telemetry` last, so its `init()` subscribes to the bus BEFORE any
+    //    event can fire — the observer then sees every emitted event.
+    container.get(ConfigController);
+    container.get(RouterController);
+    container.get(TelemetryManager);
+    // Register the container so `UploaderRegistry`/`ChildBlock`/`whenAvailable`
+    // consumers resolve it (and pull their controllers off it via `use()`).
+    UploaderRegistry.register(this._ctxId, container);
     return container;
   }
 
   private _config(): ConfigController {
-    return this._uploader().config;
+    return this._resolveContainer().get(ConfigController);
   }
 
   private _locale(): LocaleController {
-    return this._uploader().locale;
+    return this._resolveContainer().get(LocaleController);
   }
 
   /** The container-owned owner of the six derived collection keys (M-god step 4). */
@@ -144,12 +149,14 @@ export class PubSub<T extends Record<string, unknown>> {
   }
 
   /**
-   * Get (or lazily create + register) the `UploaderController` for this ctx.
-   * Public so the v1 element layer can resolve the controller that owns the
-   * shared upload collection (the `*uploadCollection` instance).
+   * Get (or lazily create + register) the per-ctx `ControllerContainer`. Public
+   * so the element layer (`ensureUploaderCtx`/`ensureUploaderScope`/
+   * `ensurePluginManager`/`createDebugPrinter`) and the editor compat bridge can
+   * resolve the container and pull controllers off it. Idempotent — forces the
+   * container (and its eager managers) into existence, then returns it.
    */
-  public uploaderController(): UploaderController {
-    return this._uploader();
+  public container(): ControllerContainer {
+    return this._resolveContainer();
   }
 
   /**
@@ -380,13 +387,11 @@ export class PubSub<T extends Record<string, unknown>> {
     const container = PubSub._controllers.get(ctxId);
     if (container) {
       PubSub._controllers.delete(ctxId);
-      // The container caches the single UploaderController, so this returns the
-      // exact instance registered at creation (no re-init) — needed for the
-      // identity-checked unregister. Unregister (null-notify) BEFORE dispose,
-      // preserving the v1 teardown order. `dispose()` then runs the single
-      // cached `UploaderController.destroy()` exactly once.
-      const controller = container.get(UploaderController);
-      UploaderRegistry.unregister(ctxId, controller);
+      // Unregister (null-notify) the container BEFORE dispose, preserving the v1
+      // teardown order (consumers release before the controllers are destroyed).
+      // `dispose()` then destroys the container-owned controllers exactly once,
+      // in reverse construction order.
+      UploaderRegistry.unregister(ctxId, container);
       container.dispose();
     }
   }

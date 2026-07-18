@@ -1,5 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
+import { ConfigController } from '@/abstract/controllers/ConfigController';
 import '../types/jsx';
 import { cleanup, getCtxName } from './utils/test-renderer';
 
@@ -141,7 +142,7 @@ describe('Config', () => {
 
       // The value did move to the new ctx's `ConfigController` — not just the
       // element's local cache — confirming reads/writes now go through ctxB.
-      const configApi = PubSub.getCtx(ctxNameB)!.uploaderController().config;
+      const configApi = PubSub.getCtx(ctxNameB)!.container().get(ConfigController);
       expect(configApi.get('pubkey')).toBe('demopublickey');
     });
   });

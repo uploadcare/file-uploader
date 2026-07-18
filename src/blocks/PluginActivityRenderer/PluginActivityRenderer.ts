@@ -3,7 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type {
   Owned,
   PluginActivityRegistration,
@@ -29,9 +29,9 @@ export class PluginActivityHost extends ActivityChildBlock {
     return this.use(RouterController);
   }
 
-  protected override controllerReady(ctrl: UploaderController): void {
+  protected override controllerReady(container: ControllerContainer): void {
     this.activityType = (this.registration?.id as ActivityType) ?? null;
-    super.controllerReady(ctrl);
+    super.controllerReady(container);
   }
 
   protected override updated(changed: PropertyValues<this>): void {

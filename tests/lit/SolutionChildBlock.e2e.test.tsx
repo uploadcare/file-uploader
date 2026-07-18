@@ -1,6 +1,9 @@
 import { html } from 'lit';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
+import { AppInfo } from '@/abstract/controllers/AppInfo';
+import { ClipboardController } from '@/abstract/controllers/ClipboardController';
+import { A11y } from '@/abstract/managers/a11y';
 import type { LazyPluginEntry } from '@/abstract/managers/plugin/LazyPluginLoader';
 import { SolutionChildBlock } from '@/lit/SolutionChildBlock';
 import { getCtxName } from '../utils/getCtxName';
@@ -62,14 +65,14 @@ describe('SolutionChildBlock', () => {
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
     const { PubSub } = await import('@/lit/PubSubCompat.js');
 
-    const ctrl = PubSub.getCtx(ctxName)!.uploaderController();
-    const registerBlockSpy = vi.spyOn(ctrl.a11y, 'registerBlock');
-    const registerScopeSpy = vi.spyOn(ctrl.clipboard, 'registerScope');
+    const container = PubSub.getCtx(ctxName)!.container();
+    const registerBlockSpy = vi.spyOn(container.get(A11y), 'registerBlock');
+    const registerScopeSpy = vi.spyOn(container.get(ClipboardController), 'registerScope');
 
     const child = append('uc-test-solution-child', { 'ctx-name': ctxName });
 
     await expect.poll(() => child.readyCount).toBe(1);
-    expect(ctrl.solutionName).toBe('uc-test-solution-child');
+    expect(container.get(AppInfo).solutionName).toBe('uc-test-solution-child');
     expect(registerBlockSpy).toHaveBeenCalledWith(child);
     expect(registerScopeSpy).toHaveBeenCalledWith(child);
     expect(PubSub.getCtx(ctxName)!.read('*lazyPlugins')).toBe(testLazyPlugins);
@@ -81,10 +84,10 @@ describe('SolutionChildBlock', () => {
     const ctxName = getCtxName();
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
     const { PubSub } = await import('@/lit/PubSubCompat.js');
-    const ctrl = PubSub.getCtx(ctxName)!.uploaderController();
+    const container = PubSub.getCtx(ctxName)!.container();
 
     const unregister = vi.fn();
-    const registerScopeSpy = vi.spyOn(ctrl.clipboard, 'registerScope').mockReturnValue(unregister);
+    const registerScopeSpy = vi.spyOn(container.get(ClipboardController), 'registerScope').mockReturnValue(unregister);
 
     const child = append('uc-test-solution-child', { 'ctx-name': ctxName });
     await expect.poll(() => child.readyCount).toBe(1);

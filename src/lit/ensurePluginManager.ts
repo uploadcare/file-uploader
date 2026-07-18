@@ -1,3 +1,5 @@
+import { ConfigController } from '../abstract/controllers/ConfigController';
+import { LocaleManager } from '../abstract/managers/LocaleManager';
 import { PluginController } from '../abstract/managers/plugin';
 import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
 import { LazyPluginLoader } from '../abstract/managers/plugin/LazyPluginLoader';
@@ -42,11 +44,10 @@ export function ensurePluginManager(bag: SharedInstancesBag): void {
   if (ctx.has('*pluginManager')) {
     return;
   }
-  const controller = ctx.uploaderController();
-  const container = controller.container;
+  const container = ctx.container();
   // Resolve the ctx's `ConfigController` once — the plugin API and lazy loader
   // read config directly off it (M-god step 7), not through the `*cfg/*` facade.
-  const config = controller.config;
+  const config = container.get(ConfigController);
 
   // Bind `PluginController` as a host-value factory on the per-ctx container.
   // `getUploaderApi` is a LAZY thunk (`c.get(UploaderPublicApi)`, resolved at
@@ -84,5 +85,5 @@ export function ensurePluginManager(bag: SharedInstancesBag): void {
   // teardown bookkeeping.
   addCtxSharedInstance(ctx, '*pluginManager', () => pluginManager);
 
-  controller.localeManager.activate(pluginManager);
+  container.get(LocaleManager).activate(pluginManager);
 }

@@ -10,7 +10,7 @@ import { generateThumb } from '../../utils/resizeImage';
 import { FileItemConfig } from '../FileItem/FileItemConfig';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds';
 import './thumb.css';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { Uid } from '../../lit/Uid';
 import type { ConfigType } from '../../types';
 import { TRANSPARENT_PIXEL_SRC } from '../../utils/transparentPixelSrc';
@@ -357,7 +357,7 @@ export class Thumb extends FileItemConfig {
     this._requestThumbGeneration(true);
   }
 
-  protected override controllerReady(_ctrl: UploaderController): void {
+  protected override controllerReady(_container: ControllerContainer): void {
     this._firstViewMode ??= this.use(ConfigController).get('filesViewMode');
 
     // Side-effecting subscription (forces a one-time thumb regeneration on the

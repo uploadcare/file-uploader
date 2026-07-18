@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
+import { EventEmitter, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { ensureUploaderCtx } from '../lit/ensureUploaderCtx';
 import { ensureUploaderScope } from '../lit/ensureUploaderScope';
@@ -10,7 +10,10 @@ import { createSharedInstancesBag, type SharedInstancesBag } from '../lit/shared
 import type { UploadcareFile } from '../types/index';
 import { BASIC_IMAGE_WILDCARD, BASIC_VIDEO_WILDCARD } from '../utils/fileTypes';
 import { UploadSource } from '../utils/UploadSource';
-import type { UploaderController } from './controllers/UploaderController';
+import { ConfigController } from './controllers/ConfigController';
+import { LocaleController } from './controllers/LocaleController';
+import { RouterController } from './controllers/RouterController';
+import { UploadCollectionController } from './controllers/UploadCollectionController';
 import { ControllerContainer } from './di/ControllerContainer';
 import { PluginController } from './managers/plugin';
 import type { UploaderPublicApi } from './UploaderPublicApi';
@@ -35,11 +38,24 @@ const flush = async (): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 0));
 };
 
+// M-god step 8e dissolved the `UploaderController` facade; the harness exposes
+// the same `locale`/`collection`/`router` handles the tests read, resolved
+// straight off the ctx's `ControllerContainer` (stable per-ctx identity), so
+// every behavioral assertion below is unchanged.
+type Ctrl = {
+  readonly locale: LocaleController;
+  readonly collection: UploadCollectionController;
+  readonly router: RouterController;
+  readonly config: ConfigController;
+  readonly eventEmitter: EventEmitter;
+  readonly container: ControllerContainer;
+};
+
 type Harness = {
   ctxName: string;
   ctx: PubSub<SharedState>;
   bag: SharedInstancesBag;
-  ctrl: UploaderController;
+  ctrl: Ctrl;
   api: UploaderPublicApi;
 };
 
@@ -51,8 +67,25 @@ const setup = (): Harness => {
   const ctx = ensureUploaderCtx(ctxName);
   created.push(ctxName);
   const bag = createSharedInstancesBag(() => PubSub.getCtx<SharedState>(ctxName)!);
-  const ctrl = ctx.uploaderController();
-  ensureUploaderScope(bag, ctrl, undefined, (type, payload, options) => ctrl.emit(type, payload, options));
+  const container = ctx.container();
+  const eventEmitter = container.get(EventEmitter);
+  ensureUploaderScope(bag, container, undefined, (type, payload, options) => eventEmitter.emit(type, payload, options));
+  const ctrl: Ctrl = {
+    get locale() {
+      return container.get(LocaleController);
+    },
+    get collection() {
+      return container.get(UploadCollectionController);
+    },
+    get router() {
+      return container.get(RouterController);
+    },
+    get config() {
+      return container.get(ConfigController);
+    },
+    eventEmitter,
+    container,
+  };
   const api = bag.api;
   return { ctxName, ctx, bag, ctrl, api };
 };

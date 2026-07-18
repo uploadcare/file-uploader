@@ -1,12 +1,18 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
+import { ClipboardController } from '@/abstract/controllers/ClipboardController';
+import { RouterController } from '@/abstract/controllers/RouterController';
 import { SecureUploadsController } from '@/abstract/controllers/SecureUploadsController';
+import { UploadCollectionController } from '@/abstract/controllers/UploadCollectionController';
 import { UploadController } from '@/abstract/controllers/UploadController';
 import { UploadEventsController } from '@/abstract/controllers/UploadEventsController';
 import { ValidationController } from '@/abstract/controllers/ValidationController';
-import { localeStateKey } from '@/abstract/managers/LocaleManager';
+import type { ControllerContainer } from '@/abstract/di/ControllerContainer';
+import { A11y } from '@/abstract/managers/a11y';
+import { LocaleManager, localeStateKey } from '@/abstract/managers/LocaleManager';
 import { PluginController } from '@/abstract/managers/plugin';
 import { TelemetryManager } from '@/abstract/managers/TelemetryManager';
+import { EventEmitter } from '@/blocks/UploadCtxProvider/EventEmitter';
 import type { Config, UploadCtxProvider } from '@/index.js';
 import { PubSub } from '@/lit/PubSubCompat';
 import type { SharedState } from '@/lit/SharedState';
@@ -15,6 +21,35 @@ import { delay } from '@/utils/delay';
 import { getCtxName } from '../utils/getCtxName';
 import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
+
+// M-god step 8e dissolved the `UploaderController` facade; the registry/ctx now
+// resolve the ctx's `ControllerContainer`. This view reproduces the facade's
+// read surface off the container, so the existing `controller.X` assertions
+// below stay identical (each `.X` resolves the same container-owned instance).
+const ctrlView = (container: ControllerContainer) => ({
+  get eventEmitter() {
+    return container.get(EventEmitter);
+  },
+  get localeManager() {
+    return container.get(LocaleManager);
+  },
+  get a11y() {
+    return container.get(A11y);
+  },
+  get router() {
+    return container.get(RouterController);
+  },
+  get clipboard() {
+    return container.get(ClipboardController);
+  },
+  get telemetryManager() {
+    return container.get(TelemetryManager);
+  },
+  get collection() {
+    return container.get(UploadCollectionController);
+  },
+  container,
+});
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
@@ -54,7 +89,7 @@ describe('instance lifecycle (config-only ctx)', () => {
 
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
     const ctx = PubSub.getCtx<SharedState>(ctxName)!;
-    const controller = ctx.uploaderController();
+    const controller = ctrlView(ctx.container());
 
     // The controller and its own six always-constructed members exist —
     // `ensureUploaderCtx` forces the controller into existence the moment the
@@ -134,7 +169,7 @@ describe('instance lifecycle (v1 teardown deferral guard)', () => {
     const ctxName = getCtxName();
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
-    const firstController = PubSub.getCtx<SharedState>(ctxName)!.uploaderController();
+    const firstContainer = PubSub.getCtx<SharedState>(ctxName)!.container();
 
     const el = page.getByTestId('uc-config').query()!;
     const parent = el.parentElement!;
@@ -152,8 +187,8 @@ describe('instance lifecycle (v1 teardown deferral guard)', () => {
     await delay(0);
 
     expect(PubSub.hasCtx(ctxName)).toBe(true);
-    // Same ctx/controller instance — not destroyed and recreated.
-    expect(PubSub.getCtx<SharedState>(ctxName)!.uploaderController()).toBe(firstController);
+    // Same ctx/container instance — not destroyed and recreated.
+    expect(PubSub.getCtx<SharedState>(ctxName)!.container()).toBe(firstContainer);
   });
 });
 
@@ -402,7 +437,7 @@ describe('instance lifecycle (M9q ChildBlock-only ctx-scope keys)', () => {
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
 
     const ctx = PubSub.getCtx<SharedState>(ctxName)!;
-    const controller = ctx.uploaderController();
+    const controller = ctrlView(ctx.container());
 
     // RED today: none of these keys were ever registered by anything in a
     // v1-free composition — `ensureUploaderCtx` only forces the controller,
@@ -464,7 +499,7 @@ describe('instance lifecycle (M9q ChildBlock-only ctx-scope keys)', () => {
     );
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
     const ctx = PubSub.getCtx<SharedState>(ctxName)!;
-    const controller = ctx.uploaderController();
+    const controller = ctrlView(ctx.container());
 
     expect(ctx.read('*router')).toBe(controller.router);
     expect(ctx.read(localeStateKey('upload-file'))).toBe('Upload file');
@@ -486,7 +521,7 @@ describe('instance lifecycle (controller-owned identity pins, M9l final-review f
     );
     await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
     const ctx = PubSub.getCtx<SharedState>(ctxName)!;
-    const controller = ctx.uploaderController();
+    const controller = ctrlView(ctx.container());
 
     // Explicit key -> controller-member map: self-documenting, and the two
     // assertions below make it exhaustive against `controllerOwnedInstanceKeys`

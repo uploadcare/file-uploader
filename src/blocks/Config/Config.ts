@@ -1,7 +1,7 @@
 // @ts-check
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import type { CustomConfig } from '../../abstract/customConfigOptions';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { PluginController } from '../../abstract/managers/plugin';
 import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types';
 import { toKebabCase } from '../../utils/toKebabCase';
@@ -427,7 +427,7 @@ export class Config extends ChildBlock {
    * the teardown-before-resubscribe below and the idempotent guard,
    * respectively.
    */
-  protected override controllerReady(_ctrl: UploaderController): void {
+  protected override controllerReady(_container: ControllerContainer): void {
     const anyThis = this as any;
 
     // Setup custom configs first. Tear down the previous cycle's

@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { UploaderController } from './controllers/UploaderController';
 import { ControllerContainer } from './di/ControllerContainer';
 import { UploaderRegistry } from './UploaderRegistry';
 
@@ -8,9 +7,11 @@ import { UploaderRegistry } from './UploaderRegistry';
 let seq = 0;
 const uniqueName = () => `test-ctx-${seq++}`;
 
-// The controller now takes its per-ctx DI container at construction; these
-// registry tests don't exercise it, so each gets a throwaway container.
-const newController = () => new UploaderController(new ControllerContainer());
+// M-god step 8e: the registry now stores the ctx's `ControllerContainer`
+// directly (the `UploaderController` facade it once held is gone). These tests
+// only exercise the registry's identity semantics, so each gets a throwaway
+// container as the registered value.
+const newController = () => new ControllerContainer();
 
 describe('UploaderRegistry', () => {
   it('register then get returns the controller', () => {
