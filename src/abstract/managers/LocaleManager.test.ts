@@ -99,6 +99,31 @@ describe('LocaleManager.activate', () => {
     expect(unsub1).toHaveBeenCalledTimes(1);
   });
 
+  it('destroy() isolate-and-warns: a throwing plugin-coupling teardown does not stop the config-subscription teardowns', () => {
+    const { config, locale, manager } = setup();
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    const pm: FakePluginManager = {
+      onPluginsChange: vi.fn(() => () => {
+        throw new Error('boom');
+      }),
+      snapshot: vi.fn(() => ({ l10n: [] }) as never),
+    };
+    manager.activate(pm);
+
+    // A throwing teardown is contained; destroy() still completes and warns.
+    expect(() => manager.destroy()).not.toThrow();
+    expect(warnSpy).toHaveBeenCalled();
+
+    // ...and the config subscriptions were still released despite the throw.
+    const setSpy = vi.spyOn(locale, 'set');
+    config.set('localeName', 'fr');
+    config.set('localeDefinitionOverride', { fr: { upload: 'Envoyer' } });
+    expect(setSpy).not.toHaveBeenCalled();
+
+    warnSpy.mockRestore();
+  });
+
   it('destroy() releases the config subscriptions and the plugin coupling: subsequent changes produce no callbacks', () => {
     const { config, locale, manager } = setup();
 

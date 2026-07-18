@@ -2,6 +2,7 @@ import { default as en } from '../../locales/file-uploader/en';
 import type { ConfigType } from '../../types';
 import { ConfigController } from '../controllers/ConfigController';
 import { LocaleController } from '../controllers/LocaleController';
+import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { type LocaleDefinition, resolveLocaleDefinition } from '../localeRegistry';
 import type { PluginController } from './plugin';
@@ -37,9 +38,12 @@ export class LocaleManager {
   private _localeName = '';
   private _activated = false;
   private _destroyed = false;
-  private _unsubs = new Set<() => void>();
+  readonly #disposables = new Disposables();
   private _pluginManager: Pick<PluginController, 'onPluginsChange' | 'snapshot'> | null = null;
+  /** The live plugin-manager unsubscribe, run on re-wire; also registered in `#disposables`. */
   private _pluginManagerUnsub?: () => void;
+  /** Unregisters {@link _pluginManagerUnsub} from `#disposables` (without running it) on re-wire. */
+  private _cancelPluginManagerReg?: () => void;
 
   /**
    * Run the v1 construction-time work: seed the `en` defaults, wire the
@@ -50,8 +54,13 @@ export class LocaleManager {
    * sharing the ctx) is safe.
    */
   public activate(pluginManager: Pick<PluginController, 'onPluginsChange' | 'snapshot'> | null): void {
+    // Re-wire the plugin-manager coupling: run the previous unsubscribe (detach
+    // the old manager's `onPluginsChange`) and un-register it from `#disposables`
+    // so `destroy()`'s `run()` won't double-invoke a stale unsub.
     this._pluginManagerUnsub?.();
+    this._cancelPluginManagerReg?.();
     this._pluginManagerUnsub = undefined;
+    this._cancelPluginManagerReg = undefined;
     this._pluginManager = pluginManager;
     if (pluginManager?.onPluginsChange) {
       this._pluginManagerUnsub = pluginManager.onPluginsChange(() => {
@@ -59,6 +68,7 @@ export class LocaleManager {
           this._applyPluginLocales(this._localeName);
         }
       });
+      this._cancelPluginManagerReg = this.#disposables.add(this._pluginManagerUnsub);
     }
 
     if (this._activated) {
@@ -71,7 +81,7 @@ export class LocaleManager {
       this._setLocale(key, value, noTranslation);
     }
 
-    this._unsubs.add(
+    this.#disposables.add(
       this._subConfig('localeName', async (localeName) => {
         if (!localeName) {
           return;
@@ -94,7 +104,7 @@ export class LocaleManager {
       }),
     );
 
-    this._unsubs.add(
+    this.#disposables.add(
       this._subConfig('localeDefinitionOverride', (localeDefinitionOverride) => {
         if (!localeDefinitionOverride) {
           return;
@@ -168,15 +178,10 @@ export class LocaleManager {
 
   public destroy(): void {
     this._destroyed = true;
-    this._pluginManagerUnsub?.();
+    // `#disposables` holds the plugin-manager unsub (if wired) alongside the two
+    // config subscriptions, so `run()` tears down all three (isolate-and-warn).
     this._pluginManagerUnsub = undefined;
-    for (const unsub of this._unsubs) {
-      try {
-        unsub();
-      } catch {
-        // Ignore cleanup errors
-      }
-    }
-    this._unsubs.clear();
+    this._cancelPluginManagerReg = undefined;
+    this.#disposables.run();
   }
 }
