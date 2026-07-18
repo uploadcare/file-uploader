@@ -82,50 +82,81 @@ describe('FileUploaderInline (M-god step 6b-4 migration)', () => {
     expect(cancelBtn(el)?.hidden).toBe(true);
   });
 
-  it('reveals the cancel button reactively when showEmptyList flips on (config getTracked)', async () => {
+  it('recomputes cancel-button visibility for showEmptyList only on a router notify (v1 stale-by-design)', async () => {
     const ctxName = freshCtxName();
-    const { el, config } = await mount(ctxName);
+    const { el, config, router } = await mount(ctxName);
     expect(cancelBtn(el)?.hidden).toBe(true);
 
+    // v1 read `showEmptyList` imperatively INSIDE the `subRouter` recompute, not
+    // reactively in `render()`. So flipping the config alone does NOT re-show the
+    // button — `_couldCancel` (`@state`) is rewritten only on a router notify.
+    // Asserting the config flip is a no-op here locks in that stale-by-design v1
+    // semantics; do NOT "fix" this into a reactive tracked config read (that was
+    // the M-god step 6b-4 regression this test now guards against).
     config.set('showEmptyList', true);
+    await settle(el);
+    expect(cancelBtn(el)?.hidden).toBe(true);
+
+    // A router notify (a same-activity `setActivity`, which still notifies) runs
+    // the recompute, which now reads the true `showEmptyList` → button revealed.
+    router.setActivity('start-from');
     await settle(el);
     expect(cancelBtn(el)?.hidden).toBe(false);
 
+    // Same asymmetry the other way: config flip is stale until the next notify.
     config.set('showEmptyList', false);
+    await settle(el);
+    expect(cancelBtn(el)?.hidden).toBe(false);
+    router.setActivity('start-from');
     await settle(el);
     expect(cancelBtn(el)?.hidden).toBe(true);
   });
 
-  it('reveals the cancel button reactively when the upload list becomes non-empty (collectionState getTracked)', async () => {
+  it('reveals the cancel button when the upload list becomes non-empty, and keeps it visible when it empties (router-notify driven, v1 parity)', async () => {
     const ctxName = freshCtxName();
     const { el, collection } = await mount(ctxName);
     expect(cancelBtn(el)?.hidden).toBe(true);
 
+    // A non-empty list drives a navigation to `upload-list` (the `*uploadList`
+    // sub), and THAT router notify runs the recompute (history-back is now
+    // available) → button visible. Visibility is router-notify driven, not a
+    // reactive read of the list.
     collection.set('uploadList', [{ uid: 'file-1' as Uid }]);
     await settle(el);
     expect(cancelBtn(el)?.hidden).toBe(false);
 
-    // Emptying the list again keeps the button visible: the non-empty list drove
-    // a navigation to `upload-list`, so history-back is now available (v1 parity —
-    // the v1 `*uploadList` sub was a no-op on the empty transition and retained
-    // the previously-computed visible state; the tracked read recomputes to the
-    // same result via `_couldHistoryBack`).
+    // Emptying the list again keeps the button visible (v1 parity): the empty
+    // transition is a no-op in the `*uploadList` sub (no `setActivity`), so no
+    // router notify fires and `_couldCancel` retains its previously-computed
+    // visible value — stale-by-design, exactly as v1's `subRouter`-only recompute.
     collection.set('uploadList', []);
     await settle(el);
     expect(cancelBtn(el)?.hidden).toBe(false);
   });
 
-  it('hides the cancel button when the list empties with no back-history (guarded revalidate path)', async () => {
+  it('keeps the cancel button visible when the list empties after a forced start-from (v1 stale-by-design)', async () => {
     const ctxName = freshCtxName();
     const { el, collection, router } = await mount(ctxName);
-    // Stay on start-from (no navigation), so there is no back-history; a list
-    // that grows then empties leaves the cancel button hidden.
+    // A non-empty list navigates to `upload-list` (router notify → visible).
     collection.set('uploadList', [{ uid: 'file-1' as Uid }]);
     await settle(el);
-    // Force back to start-from so history has nothing below the top.
+    expect(cancelBtn(el)?.hidden).toBe(false);
+    // Force back to start-from: this is the LAST router notify, and the list is
+    // still non-empty here, so the recompute leaves `_couldCancel` visible.
     router.setActivity('start-from');
+    await settle(el);
+    expect(cancelBtn(el)?.hidden).toBe(false);
+    // Now empty the list. The `*uploadList` sub is a no-op on the empty
+    // transition (no `setActivity`), so NO router notify fires and `_couldCancel`
+    // is NOT recomputed — it retains the previously-computed VISIBLE value.
+    //
+    // This is the exact v1 behavior the M-god step 6b-4 migration accidentally
+    // changed: it had made `_couldCancel` a reactive tracked read that re-hid the
+    // button here (flipping the inline `:has(.uc-cancel-btn[hidden])` layout).
+    // The migration contract is behavior-preservation — v1 keeps it visible, so
+    // we assert visible. A later, separate change may fix this genuine v1 quirk.
     collection.set('uploadList', []);
     await settle(el);
-    expect(cancelBtn(el)?.hidden).toBe(true);
+    expect(cancelBtn(el)?.hidden).toBe(false);
   });
 });

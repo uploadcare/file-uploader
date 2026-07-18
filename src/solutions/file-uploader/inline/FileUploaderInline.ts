@@ -1,4 +1,5 @@
 import { html } from 'lit';
+import { state } from 'lit/decorators.js';
 import { CollectionStateController } from '../../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../../abstract/controllers/ConfigController';
 import { RouterController } from '../../../abstract/controllers/RouterController';
@@ -37,6 +38,24 @@ export class FileUploaderInline extends SolutionChildBlock {
     TelemetryManager,
   ] as const;
 
+  /**
+   * Whether the cancel button shows — drives `.uc-cancel-btn[hidden]`, which the
+   * inline `:has(.uc-cancel-btn[hidden])` CSS keys off.
+   *
+   * Behavior-preservation (M-god step 6b-4 review): this is recomputed ONLY on a
+   * router notify (see the subscription in `controllerReady`), stored in `@state`
+   * — exactly as v1 did via `subRouter`. It is deliberately NOT a tracked render
+   * read of `uploadList`/`showEmptyList`: v1 read those imperatively inside the
+   * router-notify callback, so an upload-list change that does NOT coincide with
+   * a router transition (e.g. the list emptying without a `setActivity`) never
+   * refires the recompute and the previously-computed value is retained
+   * (stale-by-design). A tracked getter would re-hide the button on such a
+   * change and diverge from v1 (flipping the inline `:has(.uc-cancel-btn[hidden])`
+   * layout). Do not "re-fix" this into a reactive read.
+   */
+  @state()
+  private _couldCancel = false;
+
   private _handleCancel = (): void => {
     if (this._couldHistoryBack) {
       this.use(RouterController).traverse('onBack');
@@ -57,27 +76,13 @@ export class FileUploaderInline extends SolutionChildBlock {
   }
 
   private get _couldShowList(): boolean {
-    // Tracked reads: `uploadList` (CollectionStateController) + `showEmptyList`
-    // (ConfigController) auto-track under `SignalWatcher`, so the cancel button's
-    // `?hidden=` re-renders when either changes — replacing the v1 `subRouter`
-    // recompute (which only caught these via a coincident router change).
-    const uploadList = this.use(CollectionStateController).getTracked('uploadList');
-    return this.use(ConfigController).getTracked('showEmptyList') || uploadList.length > 0;
-  }
-
-  /**
-   * Whether the cancel button shows — drives `.uc-cancel-btn[hidden]`, which the
-   * inline `:has(.uc-cancel-btn[hidden])` CSS keys off. A tracked getter read in
-   * `render()` (drops the v1 `@state` + `subRouter`): `_couldShowList` tracks
-   * `uploadList`/`showEmptyList`; the explicit `router.currentActivity` read
-   * tracks history changes (history only mutates alongside an effective-activity
-   * transition, and `currentActivity` is the `@signalState` that captures it),
-   * so a navigation re-renders the button exactly as the v1 `subRouter` did.
-   */
-  private get _couldCancel(): boolean {
-    // Track the router's effective activity so history-driven changes re-render.
-    void this.use(RouterController).currentActivity;
-    return this._couldHistoryBack || this._couldShowList;
+    // Imperative (non-tracking) reads — v1 read `*uploadList`/`showEmptyList` off
+    // the store inside the router-notify callback, NOT reactively. `get()` (not
+    // `getTracked()`) preserves that: this getter feeds the router-driven
+    // `_couldCancel` recompute, so it must not itself subscribe the render to
+    // these keys.
+    const uploadList = this.use(CollectionStateController).get('uploadList');
+    return this.use(ConfigController).get('showEmptyList') || uploadList.length > 0;
   }
 
   protected override controllerReady(ctrl: UploaderController): void {
@@ -112,6 +117,18 @@ export class FileUploaderInline extends SolutionChildBlock {
         }
       }),
     );
+
+    // v1-exact cancel-button recompute: fires immediately, then on every router
+    // notify (the v1 `subRouter` contract). `_couldCancel` is written ONLY here —
+    // never from an `uploadList`/`showEmptyList` change — so it is stale-by-design
+    // between router transitions (see the `_couldCancel` doc comment). The read
+    // is imperative (`_couldShowList`/`_couldHistoryBack` use `get()`), so this
+    // subscription is the sole re-render trigger for the button's `?hidden`.
+    const recomputeCouldCancel = () => {
+      this._couldCancel = this._couldHistoryBack || this._couldShowList;
+    };
+    recomputeCouldCancel();
+    this.trackSub(router.subscribe(recomputeCouldCancel));
   }
 
   protected override subscriptionsFor(ctrl: UploaderController) {
