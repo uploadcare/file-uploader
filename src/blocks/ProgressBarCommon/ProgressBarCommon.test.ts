@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { PubSub } from '../../lit/PubSubCompat';
 import { delay } from '../../utils/delay';
@@ -64,5 +65,39 @@ describe('ProgressBarCommon (M-god step 6b-2 migration)', () => {
     await el.updateComplete;
     await delay(0);
     expect(innerValue(el)).toBe(100);
+  });
+
+  it('registers a collection property observer via whenController once the UploadCollectionController resolves, and tears it down on disconnect', async () => {
+    const ctxName = freshCtxName();
+    ensureUploaderCtx(ctxName);
+    const container = PubSub.getContainer(ctxName);
+    if (!container) throw new Error('container not resolved');
+
+    const unobserve = vi.fn();
+    const observeProperties = vi.fn(() => unobserve);
+    const collection = {
+      observeProperties,
+      items: () => [],
+      read: () => null,
+    } as unknown as UploadCollectionController;
+    container.bind(UploadCollectionController, () => collection);
+
+    const el = document.createElement('uc-progress-bar-common') as ProgressBarCommon;
+    el.setAttribute('ctx-name', ctxName);
+    document.body.append(el);
+    mounted.push(el);
+    await el.updateComplete;
+
+    // whenController is pending — UploadCollectionController is bound but not resolved.
+    expect(observeProperties).not.toHaveBeenCalled();
+
+    // Resolving it (mirrors `ensureUploaderScope`) flushes the waiter, registering
+    // the property observer.
+    container.get(UploadCollectionController);
+    expect(observeProperties).toHaveBeenCalledOnce();
+
+    // Disconnect tears the tracked observer subscription down.
+    el.remove();
+    expect(unobserve).toHaveBeenCalledOnce();
   });
 });

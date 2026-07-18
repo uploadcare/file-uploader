@@ -1,10 +1,12 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploadController } from '../../abstract/controllers/UploadController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
-import type { PluginController, PluginFileActionRegistration } from '../../abstract/managers/plugin';
+import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
@@ -379,23 +381,41 @@ export class FileItem extends FileItemConfig {
       });
     };
 
-    // Side-effecting subscription (fires `_upload`, not a render read): stays on
-    // the v1 `bag.ctx.sub` path even though `CollectionStateController` owns
-    // `*uploadTrigger` — that token is adopted only for pure render reads (see
-    // ProgressBarCommon/DynamicBtn), not for imperative triggers.
+    // Side-effecting subscription (fires `_upload`, not a render read):
+    // `*uploadTrigger` is owned by `CollectionStateController` (M-god step 4).
+    // Subscribe over its coarse notify but fire only when `uploadTrigger` itself
+    // changes, replicating `PubSubCompat._subDerived`'s eager-init + per-key
+    // `Object.is` dedup. `uploadTrigger` is a `Set` the writer REPLACES (never
+    // mutates in place — see `CollectionStateController.set`), so the `Object.is`
+    // guard fires on a new Set and skips unrelated collection-state writes —
+    // behavior-identical to the v1 `ctx.sub('*uploadTrigger')`.
+    const collectionState = this.use(CollectionStateController);
+    let lastTrigger = collectionState.get('uploadTrigger');
+    const onTrigger = (itemsToUpload: typeof lastTrigger): void => {
+      if (this.entry && !itemsToUpload.has(this.entry.uid)) {
+        return;
+      }
+      setTimeout(() => this.isConnected && this._upload());
+    };
+    onTrigger(lastTrigger);
     this.trackSub(
-      this.bag.ctx.sub('*uploadTrigger', (itemsToUpload) => {
-        if (this.entry && !itemsToUpload.has(this.entry.uid)) {
-          return;
+      collectionState.subscribe(() => {
+        const next = collectionState.get('uploadTrigger');
+        if (!Object.is(next, lastTrigger)) {
+          lastTrigger = next;
+          onTrigger(next);
         }
-        setTimeout(() => this.isConnected && this._upload());
       }),
     );
 
-    // The plugin manager has no DI token — it stays on the v1 `bag.when` path
-    // (step 8); a plugin change re-derives file actions imperatively.
+    // The uploader-scope `PluginController` is bound + resolved on the container
+    // only once an uploader scope attaches (`ensurePluginManager`, conditional),
+    // which may be after this block's `controllerReady` — or never in a bare ctx
+    // — so go through `whenController` (fires now if resolved, else on first
+    // resolution) rather than the throwing `use(PluginController)`. Same
+    // now-or-when-available semantics as the v1 `bag.when('pluginManager')`.
     this.trackSub(
-      this.bag.when('pluginManager', (pm) => {
+      this.container.whenController(PluginController, (pm) => {
         this._pluginManager = pm;
         this.trackSub(pm.onPluginsChange(() => this._updatePluginFileActions()));
         this._updatePluginFileActions();
@@ -437,7 +457,7 @@ export class FileItem extends FileItemConfig {
   // trigger; it reacts to the resulting entry mutations through its existing
   // per-entry subscriptions (`isUploading`/`errors`/… → `_debouncedCalculateState`).
   private _upload = this.withEntry(async (entry) => {
-    await this.bag.uploadController.uploadEntry(entry.uid);
+    await this.use(UploadController).uploadEntry(entry.uid);
   });
 
   public static activeInstances: Set<FileItem> = new Set<FileItem>();

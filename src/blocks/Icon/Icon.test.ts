@@ -1,10 +1,9 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import type { PluginController } from '../../abstract/managers/plugin';
+import { PluginController } from '../../abstract/managers/plugin';
 import { PluginRegistry } from '../../abstract/managers/plugin/PluginRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { PubSub } from '../../lit/PubSubCompat';
-import type { SharedState } from '../../lit/SharedState';
 import type { IconHrefResolver } from '../../types/index';
 import { delay } from '../../utils/delay';
 import { Icon } from './Icon';
@@ -85,13 +84,17 @@ describe('Icon (M-god step 6b-2 migration)', () => {
 
   it('renders a plugin-registered icon when the plugin manager snapshot has one for this name', async () => {
     const ctxName = freshCtxName();
-    const ctx = ensureUploaderCtx(ctxName);
+    ensureUploaderCtx(ctxName);
+    const container = PubSub.getContainer(ctxName);
+    if (!container) throw new Error('container not resolved');
 
     // A real `PluginRegistry` (rather than hand-typing `PluginRegistrySnapshot`)
     // so the snapshot shape stays correct by construction; only `snapshot`/
-    // `onPluginsChange` are read by `Icon`, matching how `_pluginManager` is
-    // obtained via `bag.when('pluginManager', …)` — pre-registering the shared
-    // instance before mount makes `when` resolve it synchronously.
+    // `onPluginsChange` are read by `Icon`. M-god step 9b-2: `Icon` obtains the
+    // plugin manager via `whenController(PluginController)` off the container (was
+    // `bag.when('pluginManager', …)`), so bind + resolve it on the container
+    // (mirrors `ensurePluginManager`) — pre-resolving before mount makes the
+    // waiter fire synchronously on adoption.
     const registry = new PluginRegistry(() => {});
     registry.addIcon('test-plugin', {
       name: 'custom-icon',
@@ -101,10 +104,9 @@ describe('Icon (M-god step 6b-2 migration)', () => {
       snapshot: () => registry.snapshot(),
       onPluginsChange: () => () => {},
     };
-    ctx.add('*pluginManager', fakePluginManager as unknown as SharedState['*pluginManager'], true);
+    container.bind(PluginController, () => fakePluginManager as unknown as PluginController);
+    container.get(PluginController);
 
-    const config = PubSub.getContainer(ctxName)?.get(ConfigController);
-    if (!config) throw new Error('config controller not resolved');
     const el = document.createElement('uc-icon') as Icon;
     el.setAttribute('ctx-name', ctxName);
     el.name = 'custom-icon';
@@ -115,5 +117,39 @@ describe('Icon (M-god step 6b-2 migration)', () => {
     // Plugin icon takes precedence over the sprite href — no `<use>` element.
     expect(el.querySelector('svg use')).toBeNull();
     expect(el.querySelector('svg[data-plugin-icon]')).not.toBeNull();
+  });
+
+  it('subscribes to plugin changes via whenController on resolution and unsubscribes on disconnect', async () => {
+    const ctxName = freshCtxName();
+    ensureUploaderCtx(ctxName);
+    const container = PubSub.getContainer(ctxName);
+    if (!container) throw new Error('container not resolved');
+
+    const unsub = vi.fn();
+    const onPluginsChange = vi.fn(() => unsub);
+    const fakePluginManager = {
+      snapshot: () => new PluginRegistry(() => {}).snapshot(),
+      onPluginsChange,
+    } as unknown as PluginController;
+    container.bind(PluginController, () => fakePluginManager);
+
+    const el = document.createElement('uc-icon') as Icon;
+    el.setAttribute('ctx-name', ctxName);
+    el.name = 'upload';
+    document.body.append(el);
+    mounted.push(el);
+    await el.updateComplete;
+
+    // whenController is pending — the PluginController is bound but not resolved.
+    expect(onPluginsChange).not.toHaveBeenCalled();
+
+    // Resolving it (mirrors `ensurePluginManager`) flushes the waiter, which
+    // subscribes to plugin changes.
+    container.get(PluginController);
+    expect(onPluginsChange).toHaveBeenCalledOnce();
+
+    // Disconnect tears the tracked subscription down.
+    el.remove();
+    expect(unsub).toHaveBeenCalledOnce();
   });
 });

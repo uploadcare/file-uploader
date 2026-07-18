@@ -151,6 +151,25 @@ export abstract class ChildBlock extends ChildBlockBase {
   }
 
   /**
+   * This ctx's DI container once adopted. Throws if not adopted yet
+   * (pre-adoption access is a bug — same contract as `use()`). The non-null
+   * counterpart to `containerOrNull`, for the observer-registration reads that
+   * run from `controllerReady` (where adoption is guaranteed) — e.g.
+   * `this.container.whenController(UploadCollectionController, cb)`, the direct
+   * successor to the `bag.when('uploadCollection', cb)` now-or-when-available
+   * registration.
+   */
+  protected get container(): ControllerContainer {
+    if (!this._container) {
+      throw new Error(
+        `${this.tagName.toLowerCase()}: controller container is not available yet. ` +
+          'Read container in render() or controllerReady(), not connectedCallback().',
+      );
+    }
+    return this._container;
+  }
+
+  /**
    * This ctx's DI container once adopted, else `null` (pre-adoption, or after
    * `_releaseController` cleared it during a teardown / not-yet-adopted race).
    * The null-safe counterpart to the `use()`/`useOrNull()` render-gate anchor,

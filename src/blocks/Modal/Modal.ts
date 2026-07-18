@@ -38,10 +38,11 @@ export class Modal extends ChildBlock {
     // The native <dialog> "close" event is dispatched from a queued task and
     // can land after this block's ctx was torn down (deferred destroyCtx once
     // the last block disconnects) — there is no router to notify then, and
-    // nothing left to close. Deliberately kept on the null-safe `bag.routerOrNull`
-    // rather than `use(RouterController)`: the latter throws once the container
-    // is released, exactly the post-teardown race this guard exists to absorb.
-    const router = this.bag.routerOrNull;
+    // nothing left to close. Deliberately kept on the null-safe
+    // `useOrNull(RouterController)` rather than `use(RouterController)`: the
+    // latter throws once the container is released, exactly the post-teardown
+    // race this guard exists to absorb.
+    const router = this.useOrNull(RouterController);
     if (!router) {
       return;
     }

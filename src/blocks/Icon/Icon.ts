@@ -2,7 +2,7 @@ import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import type { PluginController } from '../../abstract/managers/plugin';
+import { PluginController } from '../../abstract/managers/plugin';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { renderIconSvg } from './renderIconSvg';
 import './icon.css';
@@ -13,10 +13,12 @@ export class Icon extends ChildBlock {
   @property({ type: String })
   public name = '';
 
-  // Transiently null until the shared PluginController registers (bag.when) —
-  // render falls back to the sprite href meanwhile. The plugin manager is NOT
-  // container-resolved (no DI token), so it stays on the v1 `bag` path (step 8);
-  // a plugin change re-renders via `requestUpdate` since its snapshot is not a
+  // Transiently null until the container resolves the `PluginController`
+  // (`whenController`) — render falls back to the sprite href meanwhile. The
+  // plugin manager is CONDITIONALLY bound (only once an uploader scope attaches,
+  // or never in a bare ctx), so a synchronous `use(PluginController)` could
+  // throw; `whenController` fires now if resolved, else on first resolution. A
+  // plugin change re-renders via `requestUpdate` since its snapshot is not a
   // signal.
   private _pluginManager: PluginController | null = null;
 
@@ -27,7 +29,7 @@ export class Icon extends ChildBlock {
 
   protected override controllerReady(): void {
     this.trackSub(
-      this.bag.when('pluginManager', (pluginManager) => {
+      this.container.whenController(PluginController, (pluginManager) => {
         this._pluginManager = pluginManager;
         this.trackSub(pluginManager.onPluginsChange(() => this.requestUpdate()));
         this.requestUpdate();
