@@ -18,8 +18,10 @@ import { ensurePluginManager } from './ensurePluginManager';
  * doc) and stay caller-supplied.
  *
  * Resolving the controllers here (in this order) fixes the container's
- * insertion — and therefore reverse-dispose — order: UploadCollection →
- * PublicApi → SecureUploads → Upload → Validation → UploadEvents.
+ * insertion order: UploadCollection → PublicApi → SecureUploads → Upload →
+ * Validation → UploadEvents. Disposal runs in reverse (LIFO), so the teardown
+ * order is UploadEvents → Validation → Upload → SecureUploads → PublicApi →
+ * UploadCollection.
  */
 export function ensureUploaderScope(
   container: ControllerContainer,
@@ -41,9 +43,10 @@ export function ensureUploaderScope(
   const { controllers, host } = buildUploaderScopeDeps(container, debug, emit);
   registerUploadStack(container, controllers, host);
 
-  // Force the upload-stack instances into existence in dependency order so the
-  // container's reverse-dispose order is SecureUploads → Upload → Validation →
-  // UploadEvents.
+  // Force the upload-stack instances into existence in dependency order
+  // (SecureUploads → Upload → Validation → UploadEvents) so the container
+  // disposes them in reverse: UploadEvents → Validation → Upload →
+  // SecureUploads.
   container.get(controllers.SecureUploadsController);
   container.get(controllers.UploadController);
   container.get(controllers.ValidationController);

@@ -7,7 +7,7 @@ import { SignalMap } from '../di/SignalMap';
  * The six derived UI-state keys the upload stack publishes and the blocks read
  * every render — `*uploadList`, `*commonProgress`, `*collectionState`,
  * `*collectionErrors`, `*groupInfo`, `*uploadTrigger`. In v1 these were orphan
- * `*`-keys in the per-ctx per-ctx store map with no controller owner; this is
+ * `*`-keys in the per-ctx store map with no controller owner; this is
  * their signal-backed owner, routed through the v1 ctx facade so the existing
  * writers (the 9 `stateBridges`, `UploaderPublicApi.uploadAll`) and readers
  * (`UploadList`, `ProgressBarCommon`, `DynamicBtn`, `buildOutputCollectionState`)

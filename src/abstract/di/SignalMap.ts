@@ -13,7 +13,7 @@ import { Listeners } from '../host-subscription';
  * the `StateController._state` reference this replaces, so a consumer that
  * captured `config.values` once still observes later writes). Writes dedup with
  * `Object.is` and, on a real change, fire a COARSE `Listeners` notify (any-key
- * granularity) — the exact contract `the v1 per-key derived subscription` and
+ * granularity) — the exact contract the v1 per-key derived subscriptions and
  * `ChildBlock.subConfigValue` lean on. No `lit`, no DOM.
  *
  * Reactive layer: `signal(key)` lazily materializes a per-key

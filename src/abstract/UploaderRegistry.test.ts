@@ -437,5 +437,33 @@ describe('UploaderRegistry', () => {
       expect(second).not.toBe(first);
       UploaderRegistry.dispose(name);
     });
+
+    it('rolls the container back out of the map (and disposes it) when the eager init throws', () => {
+      const name = uniqueName();
+      const initSpy = vi.spyOn(TelemetryManager.prototype, 'init').mockImplementationOnce(() => {
+        throw new Error('eager boom');
+      });
+      const disposeSpy = vi.spyOn(ControllerContainer.prototype, 'dispose');
+      const consumer = vi.fn();
+      const off = UploaderRegistry.whenAvailable(name, consumer);
+
+      expect(() => UploaderRegistry.ensure(name)).toThrow('eager boom');
+      // Rolled back: no partial container is left cached, the failed container is
+      // disposed, and no consumer is ever notified of it.
+      expect(UploaderRegistry.get(name)).toBeUndefined();
+      expect(disposeSpy).toHaveBeenCalledTimes(1);
+      expect(consumer).not.toHaveBeenCalled();
+
+      initSpy.mockRestore();
+      // A later `ensure()` retries a clean creation instead of returning the
+      // skipped-init partial — the eager set is fully built and consumers fire.
+      const container = UploaderRegistry.ensure(name);
+      expect(container.has(TelemetryManager)).toBe(true);
+      expect(consumer).toHaveBeenCalledWith(container);
+
+      off();
+      disposeSpy.mockRestore();
+      UploaderRegistry.dispose(name);
+    });
   });
 });

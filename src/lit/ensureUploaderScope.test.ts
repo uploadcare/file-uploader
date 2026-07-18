@@ -19,6 +19,7 @@ import { ensureUploaderScope } from './ensureUploaderScope';
 
 let seq = 0;
 const created: string[] = [];
+let warnSpy: ReturnType<typeof vi.spyOn>;
 
 const setup = () => {
   const ctxName = `ensure-scope-test-${seq++}`;
@@ -31,14 +32,20 @@ const setup = () => {
 };
 
 beforeEach(() => {
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
+  // Keep console output clean, but don't blanket-swallow: these specs expect NO
+  // warning, so the afterEach asserts the spy stayed silent — a real
+  // isolate-and-warn (e.g. a controller `init()`/`destroy()` throwing) surfaces
+  // as a test failure instead of being hidden.
+  warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 afterEach(() => {
+  const warnings = warnSpy.mock.calls;
   vi.restoreAllMocks();
   for (const name of created.splice(0)) {
     UploaderRegistry.dispose(name);
   }
+  expect(warnings).toEqual([]);
 });
 
 describe('ensureUploaderScope (container signature)', () => {
