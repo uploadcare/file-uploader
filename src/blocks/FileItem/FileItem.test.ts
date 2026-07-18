@@ -1,11 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { UploadController } from '../../abstract/controllers/UploadController';
 import { PluginController } from '../../abstract/managers/plugin';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
-import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import type { Uid } from '../../lit/Uid';
@@ -59,18 +57,23 @@ const fileNameHidden = (el: FileItem): boolean =>
   (el.querySelector('.uc-file-name') as HTMLElement | null)?.hasAttribute('hidden') ?? true;
 
 describe('FileItem (M-god step 6b-6 migration)', () => {
-  it('declares its dependencies via static uses', () => {
-    expect(FileItem.uses).toEqual([ConfigController, UploadCollectionController, UploaderPublicApi, TelemetryManager]);
-  });
-
-  it('pre-warms its declared dependencies into the container on adoption', async () => {
+  it('resolves its always-bound dependencies via @inject fields on the element', async () => {
     const ctxName = freshCtxName();
-    await mount(ctxName);
+    const { el, config } = await mount(ctxName);
     const container = UploaderRegistry.get(ctxName);
-    // `static uses` pre-warm resolves both deps eagerly on adoption, so they
-    // exist (as the container's own singletons) before first render.
-    expect(container?.get(ConfigController)).toBeInstanceOf(ConfigController);
-    expect(container?.get(TelemetryManager)).toBeInstanceOf(TelemetryManager);
+    // Always-bound controllers become `@inject` fields resolving through the
+    // container the block adopted (tagged as `this[CONTAINER]`); the
+    // uploader-scope-bound `UploadCollectionController` / `UploaderPublicApi`
+    // (read via `useOrNull`) and the conditionally-bound `PluginController`
+    // (read via `whenController`) deliberately stay off `@inject`.
+    const injected = el as unknown as {
+      _config: ConfigController;
+      _collectionState: CollectionStateController;
+      _telemetry: TelemetryManager;
+    };
+    expect(injected._config).toBe(config);
+    expect(injected._collectionState).toBe(container?.get(CollectionStateController));
+    expect(injected._telemetry).toBe(container?.get(TelemetryManager));
   });
 
   it('reflects the config filesViewMode onto the host [mode] attribute and reacts to changes', async () => {

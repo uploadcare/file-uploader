@@ -1,25 +1,11 @@
 import { html } from 'lit';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../abstract/controllers/ConfigController';
 import { RouterController } from '../abstract/controllers/RouterController';
 import type { Token } from '../abstract/di/ControllerContainer';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { ACTIVITY_TYPES } from './activity-constants';
 import { ChildBlock } from './ChildBlock';
-
-// ─── Test-only controllers (zero-arg ctors, container-constructable) ──────────
-class ProbeController {
-  public static instances = 0;
-  public constructor() {
-    ProbeController.instances++;
-  }
-}
-
-class ThrowingController {
-  public constructor() {
-    throw new Error('boom in ctor');
-  }
-}
 
 // ─── Test-only ChildBlock subclasses ──────────────────────────────────────────
 class UseBlock extends ChildBlock {
@@ -34,22 +20,6 @@ class UseBlock extends ChildBlock {
   }
 }
 UseBlock.reg('uc-test-use-block');
-
-class PrewarmBlock extends ChildBlock {
-  public static override readonly uses = [ProbeController] as const;
-  public override render() {
-    return html``;
-  }
-}
-PrewarmBlock.reg('uc-test-prewarm-block');
-
-class ThrowingPrewarmBlock extends ChildBlock {
-  public static override readonly uses = [ThrowingController] as const;
-  public override render() {
-    return html``;
-  }
-}
-ThrowingPrewarmBlock.reg('uc-test-throwing-prewarm-block');
 
 // Exposes `subRouter` (protected) so a spec can assert its immediate-fire /
 // fire-on-router-change / tear-down-on-release contract after M-god step 9b-1
@@ -224,30 +194,5 @@ describe('ChildBlock.subRouter() (off bag.router → use(RouterController), M-go
 
     router.activityBlockMounted(ACTIVITY_TYPES.UPLOAD_LIST);
     expect(el.fires).toBe(afterSubscribe);
-  });
-});
-
-describe('ChildBlock static uses pre-warm', () => {
-  it('resolves declared dependencies from the container on adoption', async () => {
-    const ctxName = freshCtxName();
-    const before = ProbeController.instances;
-
-    await mount('uc-test-prewarm-block', ctxName);
-
-    const container = UploaderRegistry.get(ctxName);
-    expect(container?.has(ProbeController)).toBe(true);
-    expect(ProbeController.instances).toBe(before + 1);
-  });
-
-  it('isolates a throwing pre-warm: adoption still completes and the block renders', async () => {
-    const ctxName = freshCtxName();
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    const el = await mount('uc-test-throwing-prewarm-block', ctxName);
-
-    expect(el.isConnected).toBe(true);
-    expect(warn.mock.calls.some((c) => String(c[0]).includes('pre-warming a declared dependency'))).toBe(true);
-
-    warn.mockRestore();
   });
 });

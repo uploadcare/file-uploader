@@ -1,8 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { delay } from '../../utils/delay';
@@ -41,8 +39,17 @@ const mount = async (ctxName: string): Promise<{ el: DropArea; config: ConfigCon
 };
 
 describe('DropArea (M-god step 6b-3 migration)', () => {
-  it('declares its dependencies via static uses', () => {
-    expect(DropArea.uses).toEqual([ConfigController, RouterController, UploadCollectionController, UploaderPublicApi]);
+  it('resolves its always-bound dependencies via @inject fields on the element', async () => {
+    const ctxName = freshCtxName();
+    const { el, config } = await mount(ctxName);
+    const container = UploaderRegistry.get(ctxName);
+    // Always-bound controllers become `@inject` fields resolving through the
+    // container the block adopted (tagged as `this[CONTAINER]`); the
+    // uploader-scope-bound `UploadCollectionController` / `UploaderPublicApi`
+    // (read via `use()` after this block attaches the scope) stay off `@inject`.
+    const injected = el as unknown as { _config: ConfigController; _router: RouterController };
+    expect(injected._config).toBe(config);
+    expect(injected._router).toBe(container?.get(RouterController));
   });
 
   it('attaches the uploader scope and renders into its own light DOM', async () => {

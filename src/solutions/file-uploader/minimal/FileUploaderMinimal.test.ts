@@ -57,13 +57,23 @@ const settle = async (el: FileUploaderMinimal): Promise<void> => {
 const inlineDropArea = (el: FileUploaderMinimal): Element | null => el.querySelector('uc-start-from uc-drop-area');
 
 describe('FileUploaderMinimal (M-god step 6b-4 migration)', () => {
-  it('declares its dependencies via static uses', () => {
-    expect(FileUploaderMinimal.uses).toEqual([
-      RouterController,
-      ConfigController,
-      CollectionStateController,
-      TelemetryManager,
-    ]);
+  it('resolves its dependencies via @inject fields on the element', async () => {
+    const ctxName = freshCtxName();
+    const { el, config, router } = await mount(ctxName);
+    const container = UploaderRegistry.get(ctxName);
+    // Always-bound controllers become `@inject` fields resolving through the
+    // container the block adopted (tagged as `this[CONTAINER]`) — the mechanism
+    // that replaces `static uses` + `this.use()`.
+    const injected = el as unknown as {
+      _router: RouterController;
+      _config: ConfigController;
+      _collectionState: CollectionStateController;
+      _telemetry: TelemetryManager;
+    };
+    expect(injected._router).toBe(router);
+    expect(injected._config).toBe(config);
+    expect(injected._collectionState).toBe(container?.get(CollectionStateController));
+    expect(injected._telemetry).toBe(container?.get(TelemetryManager));
   });
 
   it('drives the background slot off CollectionStateController.uploadList only when the list reference changes (per-key dedup)', async () => {

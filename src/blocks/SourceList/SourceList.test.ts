@@ -38,8 +38,14 @@ const mount = async (ctxName: string): Promise<{ el: SourceList; config: ConfigC
 };
 
 describe('SourceList (M-god step 6b-3 migration)', () => {
-  it('declares its dependency via static uses', () => {
-    expect(SourceList.uses).toEqual([ConfigController]);
+  it('resolves its ConfigController dependency via the @inject field on the element', async () => {
+    const ctxName = freshCtxName();
+    const { el, config } = await mount(ctxName);
+    // The `@inject(ConfigController)` field resolves through the container the
+    // block adopted (tagged as `this[CONTAINER]`), yielding the very same
+    // controller instance the ctx owns — the mechanism that replaces
+    // `static uses` + `this.use()`.
+    expect((el as unknown as { _config: ConfigController })._config).toBe(config);
   });
 
   it('drives the host display style from the sourceListWrap config resolved via use(ConfigController)', async () => {

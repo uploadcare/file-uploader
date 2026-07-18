@@ -2,13 +2,14 @@ import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { inject } from '../../abstract/di/inject';
 import { PluginController } from '../../abstract/managers/plugin';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { renderIconSvg } from './renderIconSvg';
 import './icon.css';
 
 export class Icon extends ChildBlock {
-  public static override readonly uses = [ConfigController] as const;
+  @inject(ConfigController) private readonly _config!: ConfigController;
 
   @property({ type: String })
   public name = '';
@@ -54,7 +55,7 @@ export class Icon extends ChildBlock {
     // Tracked read: reading `iconHrefResolver` here auto-tracks it under
     // `SignalWatcher`, so a later config `set()` re-renders — replacing the v1
     // `subConfigValue('iconHrefResolver', …)` mirror that fed `_resolvedHref`.
-    const iconHrefResolver = this.use(ConfigController).getTracked('iconHrefResolver');
+    const iconHrefResolver = this._config.getTracked('iconHrefResolver');
     const href = iconHrefResolver?.(this.name) ?? `#uc-icon-${this.name}`;
     return html` ${this.yield('', renderIconSvg(href))} `;
   }

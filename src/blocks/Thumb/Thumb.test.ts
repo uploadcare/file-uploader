@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
@@ -43,16 +42,17 @@ const mount = async (ctxName: string): Promise<{ el: Thumb; config: ConfigContro
 const badgeIconName = (el: Thumb): string | null => el.querySelector('.uc-badge uc-icon')?.getAttribute('name') ?? null;
 
 describe('Thumb (M-god step 6b-6 migration)', () => {
-  it('declares its dependencies via static uses', () => {
-    expect(Thumb.uses).toEqual([ConfigController, UploadCollectionController, TelemetryManager]);
-  });
-
-  it('pre-warms its declared dependencies into the container on adoption', async () => {
+  it('resolves its always-bound dependencies via @inject fields on the element', async () => {
     const ctxName = freshCtxName();
-    await mount(ctxName);
+    const { el, config } = await mount(ctxName);
     const container = UploaderRegistry.get(ctxName);
-    expect(container?.get(ConfigController)).toBeInstanceOf(ConfigController);
-    expect(container?.get(TelemetryManager)).toBeInstanceOf(TelemetryManager);
+    // `ConfigController` / `TelemetryManager` become `@inject` fields resolving
+    // through the container the block adopted (tagged as `this[CONTAINER]`); the
+    // uploader-scope-bound `UploadCollectionController` (read via `useOrNull`)
+    // stays off `@inject`.
+    const injected = el as unknown as { _config: ConfigController; _telemetry: TelemetryManager };
+    expect(injected._config).toBe(config);
+    expect(injected._telemetry).toBe(container?.get(TelemetryManager));
   });
 
   it('adopts the controller (reading filesViewMode via use(ConfigController)) without throwing in grid mode', async () => {

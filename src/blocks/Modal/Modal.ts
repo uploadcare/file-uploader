@@ -1,6 +1,7 @@
 import { html, type PropertyValues } from 'lit';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
+import { inject } from '../../abstract/di/inject';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './modal.css';
 import { property } from 'lit/decorators.js';
@@ -11,7 +12,8 @@ import { getScrollLock } from '../../utils/scroll-lock';
 export class Modal extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
 
-  public static override readonly uses = [ConfigController, RouterController] as const;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(RouterController) private readonly _router!: RouterController;
 
   private _mouseDownTarget: EventTarget | null | undefined;
 
@@ -114,7 +116,7 @@ export class Modal extends ChildBlock {
     // matching the reactivity of the v1 `subConfigValue('modalBackdropStrokes')`
     // it replaces. `strokes` is not a signal, so toggling it schedules no
     // further update.
-    this.toggleAttribute('strokes', !!this.use(ConfigController).getTracked('modalBackdropStrokes'));
+    this.toggleAttribute('strokes', !!this._config.getTracked('modalBackdropStrokes'));
 
     // Show when the router's foreground modal slot is this modal's id; hide
     // otherwise. `router.modal` is a tracked signal (M-god step 6b-3), so a
@@ -130,8 +132,8 @@ export class Modal extends ChildBlock {
     // other uploader instances on the same page. `modalScrollLock` is read
     // untracked (v1 read it fresh inside the router callback, not as its own
     // reactive trigger) — the router-slot signal is what re-runs this.
-    const isForeground = this.use(RouterController).modal === (this.id as RegisteredActivityType);
-    if (isForeground && this.use(ConfigController).get('modalScrollLock')) {
+    const isForeground = this._router.modal === (this.id as RegisteredActivityType);
+    if (isForeground && this._config.get('modalScrollLock')) {
       this._releaseScrollLock ??= getScrollLock(document).acquire();
     } else {
       this._releaseScrollLock?.();

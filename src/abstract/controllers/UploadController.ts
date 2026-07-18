@@ -9,6 +9,7 @@ import {
 import type { Uid } from '../../lit/Uid';
 import { fileIsImage } from '../../utils/fileTypes';
 import { customUserAgent } from '../../utils/userAgent';
+import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
@@ -38,8 +39,7 @@ export class UploadController {
 
   // One queue per uploader scope → global concurrency across all entries (v1 parity).
   private _queue = new Queue(1);
-  // Assigned in `init()` (always run by the container before any method call).
-  private _unsubConfig!: () => void;
+  readonly #disposables = new Disposables();
 
   /**
    * Container lifecycle hook — runs after the container has tagged + cached this
@@ -50,9 +50,11 @@ export class UploadController {
    */
   public init(): void {
     this._queue.concurrency = this._concurrencyFromConfig();
-    this._unsubConfig = this._config.subscribe(() => {
-      this._queue.concurrency = this._concurrencyFromConfig();
-    });
+    this.#disposables.add(
+      this._config.subscribe(() => {
+        this._queue.concurrency = this._concurrencyFromConfig();
+      }),
+    );
   }
 
   private _concurrencyFromConfig(): number {
@@ -236,6 +238,6 @@ export class UploadController {
   }
 
   public destroy(): void {
-    this._unsubConfig();
+    this.#disposables.run();
   }
 }

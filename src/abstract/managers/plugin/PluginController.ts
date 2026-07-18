@@ -1,4 +1,5 @@
 import { fileIsImage } from '../../../utils/fileTypes';
+import { Disposables } from '../../di/Disposables';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
 import type { PluginApi, PluginRegistrySnapshot, PluginUploaderApi, UploaderPlugin } from './PluginTypes';
@@ -41,7 +42,7 @@ export class PluginController {
   private _plugins: Map<string, RegisteredPlugin> = new Map();
   private _subscribers: Set<Unsubscribe> = new Set();
   private _pluginsUpdate: Promise<void> = Promise.resolve();
-  private _unwatchPlugins: Unsubscribe;
+  readonly #disposables = new Disposables();
   public readonly registry = new PluginRegistry(() => this._notifySubscribers());
 
   public get configRegistry() {
@@ -52,20 +53,22 @@ export class PluginController {
     this._deps = deps;
     this._debug = deps.debug ?? (() => {});
 
-    this._unwatchPlugins = deps.watchPlugins((pluginsPromise) => {
-      this._pluginsUpdate = this._pluginsUpdate
-        .then(() => pluginsPromise)
-        .then((plugins) => {
-          // Skip once destroyed so a queued emission can't re-register on a dead controller.
-          if (this._isDestroyed || !plugins) return;
-          return this._syncPlugins(plugins);
-        })
-        // Recover the queue: a rejected emission must not permanently poison the
-        // chain so later emissions never run. (`_pluginsUpdate` always resolves.)
-        .catch((error) => {
-          console.error('[PluginManager] Failed to sync plugins', error);
-        });
-    });
+    this.#disposables.add(
+      deps.watchPlugins((pluginsPromise) => {
+        this._pluginsUpdate = this._pluginsUpdate
+          .then(() => pluginsPromise)
+          .then((plugins) => {
+            // Skip once destroyed so a queued emission can't re-register on a dead controller.
+            if (this._isDestroyed || !plugins) return;
+            return this._syncPlugins(plugins);
+          })
+          // Recover the queue: a rejected emission must not permanently poison the
+          // chain so later emissions never run. (`_pluginsUpdate` always resolves.)
+          .catch((error) => {
+            console.error('[PluginManager] Failed to sync plugins', error);
+          });
+      }),
+    );
   }
 
   public pluginsReady(): Promise<void> {
@@ -201,8 +204,9 @@ export class PluginController {
 
   public destroy(): void {
     this._isDestroyed = true;
-    // Stop new emissions first so a queued sync can't re-register on a dead controller.
-    this._unwatchPlugins();
+    // Stop new emissions first so a queued sync can't re-register on a dead
+    // controller (`#disposables` holds only the `watchPlugins` teardown).
+    this.#disposables.run();
     for (const pluginId of Array.from(this._plugins.keys())) {
       this._unregisterPlugin(pluginId);
     }

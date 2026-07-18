@@ -2,7 +2,7 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
-import { RouterController } from '../../abstract/controllers/RouterController';
+import type { RouterController } from '../../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { Owned, PluginActivityRegistration, PluginRenderDispose } from '../../abstract/managers/plugin';
 import { PluginController } from '../../abstract/managers/plugin';
@@ -22,7 +22,7 @@ export class PluginActivityHost extends ActivityChildBlock {
 
   /** Test-only public surface (`plugin-activity-host.e2e.test.tsx`) mirroring v1's `LitBlock.router` getter. */
   public get router(): RouterController {
-    return this.use(RouterController);
+    return this._router;
   }
 
   protected override controllerReady(container: ControllerContainer): void {
@@ -62,7 +62,7 @@ export class PluginActivityHost extends ActivityChildBlock {
       return;
     }
     try {
-      this._dispose = this.registration.render(container, this.use(RouterController).params) ?? undefined;
+      this._dispose = this.registration.render(container, this._router.params) ?? undefined;
       this._isMounted = true;
     } catch (error) {
       console.error(`[Plugin "${this.registration.pluginId}"] Activity render() threw an error`, error);
