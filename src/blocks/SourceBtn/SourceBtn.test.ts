@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
@@ -36,10 +35,18 @@ const mount = async (ctxName: string): Promise<SourceBtn> => {
 };
 
 describe('SourceBtn (M-god step 6b-1 migration)', () => {
-  it('declares its dependency via static uses (TelemetryManager only — not ConfigController)', () => {
-    expect(SourceBtn.uses).toEqual([TelemetryManager]);
-    // Guard against accidentally over-declaring: SourceBtn reads no config.
-    expect(SourceBtn.uses).not.toContain(ConfigController);
+  it('resolves its TelemetryManager dependency via the @inject field on the element', async () => {
+    const ctxName = freshCtxName();
+    ensureUploaderCtx(ctxName);
+    const telemetry = UploaderRegistry.get(ctxName)?.get(TelemetryManager);
+    expect(telemetry).toBeDefined();
+
+    const el = await mount(ctxName);
+    // The `@inject(TelemetryManager)` field resolves through the container the
+    // block adopted (tagged as `this[CONTAINER]`), yielding the very same
+    // manager instance the ctx owns — the mechanism that replaces `static uses`
+    // + `this.use()`.
+    expect((el as unknown as { _telemetry: TelemetryManager })._telemetry).toBe(telemetry);
   });
 
   it('routes activate() telemetry through the container-resolved TelemetryManager (use())', async () => {

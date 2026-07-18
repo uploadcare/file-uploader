@@ -2,6 +2,7 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { LocaleController } from '../../abstract/controllers/LocaleController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './source-btn.css';
@@ -17,7 +18,7 @@ export type SourceButtonConfig = {
 };
 
 export class SourceBtn extends ChildBlock {
-  public static override readonly uses = [TelemetryManager] as const;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
 
   @property({ attribute: false })
   public source?: SourceButtonConfig;
@@ -68,7 +69,7 @@ export class SourceBtn extends ChildBlock {
   public activate(): void {
     if (!this.source) return;
 
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         sourceId: this.source.id,

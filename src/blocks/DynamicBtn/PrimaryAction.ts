@@ -4,6 +4,7 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
@@ -17,7 +18,8 @@ import '../Thumb/Thumb';
 export class PrimaryAction extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-primary-action'];
 
-  public static override readonly uses = [ConfigController, RouterController] as const;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(RouterController) private readonly _router!: RouterController;
 
   private static readonly SOURCE_TEXT_CONFIG: Record<string, { action: string }> = {
     [UploadSource.LOCAL]: { action: 'upload-from' },
@@ -38,11 +40,11 @@ export class PrimaryAction extends ChildBlock {
   // `SignalWatcher`, so a later `set()` re-renders — replacing the v1
   // `subConfigValue` subscriptions that mirrored these into `@state`.
   private get showIcon(): boolean {
-    return this.use(ConfigController).getTracked('dynamicButtonShowFirstIcon');
+    return this._config.getTracked('dynamicButtonShowFirstIcon');
   }
 
   private get _isMultiple(): boolean {
-    return this.use(ConfigController).getTracked('multiple');
+    return this._config.getTracked('multiple');
   }
 
   protected override subscriptionsFor(container: ControllerContainer) {
@@ -126,7 +128,7 @@ export class PrimaryAction extends ChildBlock {
 
   private _handleClick() {
     if (this.hasEntries) {
-      this.use(RouterController).navigate('upload-list');
+      this._router.navigate('upload-list');
       return;
     }
 

@@ -53,8 +53,18 @@ const mountWithConfig = async (ctxName: string): Promise<{ el: PrimaryAction; co
 const iconEl = (el: PrimaryAction): Element | null => el.querySelector('uc-icon');
 
 describe('PrimaryAction (M-god step 6b-1 migration)', () => {
-  it('declares its dependencies via static uses', () => {
-    expect(PrimaryAction.uses).toEqual([ConfigController, RouterController]);
+  it('resolves its ConfigController + RouterController dependencies via @inject fields on the element', async () => {
+    const ctxName = freshCtxName();
+    const { el, config } = await mountWithConfig(ctxName);
+    const router = UploaderRegistry.get(ctxName)?.get(RouterController);
+    expect(router).toBeDefined();
+
+    // The `@inject` fields resolve through the container the block adopted
+    // (tagged as `this[CONTAINER]`), yielding the very same instances the ctx
+    // owns — the mechanism that replaces `static uses` + `this.use()`.
+    const injected = el as unknown as { _config: ConfigController; _router: RouterController };
+    expect(injected._config).toBe(config);
+    expect(injected._router).toBe(router);
   });
 
   it('renders/hides the source icon reactively when dynamicButtonShowFirstIcon toggles (getTracked)', async () => {

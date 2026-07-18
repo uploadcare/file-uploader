@@ -44,8 +44,14 @@ const mountWithConfig = async (ctxName: string, name: string): Promise<{ el: Ico
 const useHref = (el: Icon): string | null | undefined => el.querySelector('svg use')?.getAttribute('href');
 
 describe('Icon (M-god step 6b-2 migration)', () => {
-  it('declares its dependency via static uses', () => {
-    expect(Icon.uses).toEqual([ConfigController]);
+  it('resolves its ConfigController dependency via the @inject field on the element', async () => {
+    const { el, config } = await mountWithConfig(freshCtxName(), 'upload');
+    // The `@inject(ConfigController)` field resolves through the container the
+    // block adopted (tagged as `this[CONTAINER]`), yielding the very same
+    // controller instance the ctx owns — the mechanism that replaces
+    // `static uses` + `this.use()`. (The conditionally-bound `PluginController`
+    // deliberately stays on `whenController`.)
+    expect((el as unknown as { _config: ConfigController })._config).toBe(config);
   });
 
   it('renders the default sprite href for a name with no custom resolver', async () => {
