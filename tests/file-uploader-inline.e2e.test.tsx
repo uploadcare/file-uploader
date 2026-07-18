@@ -1,9 +1,10 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import type { Config, FileUploaderInline } from '@/index';
+import { RouterController } from '@/abstract/controllers/RouterController';
+import type { Config } from '@/index';
 import { ACTIVITY_TYPES } from '@/lit/activity-constants.js';
-import { PubSub } from '@/lit/PubSubCompat.js';
 import { getCtxName } from './utils/getCtxName';
+import { containerOf, hasCtx } from './utils/registry';
 import { cleanup } from './utils/test-renderer';
 import '../types/jsx';
 
@@ -75,10 +76,10 @@ describe('File uploader inline — M9r solution-block safety net', () => {
         </>,
       );
 
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
       cleanup();
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+      await expect.poll(() => hasCtx(ctxName)).toBe(false);
     });
   });
 
@@ -92,14 +93,14 @@ describe('File uploader inline — M9r solution-block safety net', () => {
           <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
-      const el = page.getByTestId('uc-file-uploader-inline').query()! as FileUploaderInline;
+      const router = containerOf(ctxName).get(RouterController);
 
-      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.UPLOAD_LIST)).toBe('background');
-      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.START_FROM)).toBe('background');
-      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.CAMERA)).toBe('background');
-      expect((el as any).bag.router.navigationStrategy(ACTIVITY_TYPES.URL)).toBe('background');
+      expect(router.navigationStrategy(ACTIVITY_TYPES.UPLOAD_LIST)).toBe('background');
+      expect(router.navigationStrategy(ACTIVITY_TYPES.START_FROM)).toBe('background');
+      expect(router.navigationStrategy(ACTIVITY_TYPES.CAMERA)).toBe('background');
+      expect(router.navigationStrategy(ACTIVITY_TYPES.URL)).toBe('background');
     });
   });
 
@@ -114,7 +115,7 @@ describe('File uploader inline — M9r solution-block safety net', () => {
           <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
       // Inline renders a drop-area both in the start-from view and as the
       // upload-list ghost, so scope to the first (in-place) one.
@@ -145,7 +146,7 @@ describe('File uploader inline — M9r solution-block safety net', () => {
           <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
       await expect.element(page.getByTestId('uc-start-from')).toBeVisible();
 
       const config = page.getByTestId('uc-config').query()! as Config;

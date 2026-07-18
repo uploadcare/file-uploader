@@ -11,9 +11,10 @@
  */
 
 // A token constructor. Unbound tokens are built by the container with a
-// zero-arg `new Ctrl()`; a token whose constructor needs arguments (e.g.
-// `UploaderController`, which receives its container) MUST be `bind()`-ed with
-// a factory, so its args never reach the container's `new`. The `never[]` rest
+// zero-arg `new Ctrl()`; a token whose value isn't a zero-arg-constructible
+// class (e.g. `UploadHostBridge`, a plain value built by `buildUploaderScopeDeps`)
+// MUST be `bind()`-ed with a factory, so its args never reach the container's
+// `new`. The `never[]` rest
 // keeps such constructors assignable as tokens while still permitting the
 // zero-arg `new Ctrl()` on the unbound path (`never` is assignable to any arg).
 export type Ctor<T> = new (...args: never[]) => T;
@@ -45,6 +46,7 @@ export class ControllerContainer {
   #resolving = new Set<Ctor<unknown>>();
   #consumers = new Set<unknown>();
   #boundValues = new Map<Ctor<unknown>, (c: ControllerContainer) => unknown>();
+  #controllerWaiters = new Map<Ctor<unknown>, Set<(inst: unknown) => void>>();
 
   /** Register a factory for a host/boundary value. Only valid before resolution. */
   public bind<T>(token: Token<T>, factory: (c: ControllerContainer) => T): void {
@@ -97,6 +99,12 @@ export class ControllerContainer {
         }
         throw err;
       }
+      // Flush any `whenController` waiters AFTER a successful init, so they
+      // receive a fully initialized instance (and never fire for an instance
+      // that was rolled back above). Do this inside `get()` (the single
+      // resolution point) so it covers both the unbound `new Ctrl()` path and
+      // the `bind()`-ed factory path.
+      this.#flushControllerWaiters(Ctrl, inst);
       return inst;
     } finally {
       this.#resolving.delete(Ctrl);
@@ -105,6 +113,83 @@ export class ControllerContainer {
 
   public has<T>(token: Token<T>): boolean {
     return this.#instances.has(resolveToken(token));
+  }
+
+  /**
+   * Null-safe resolve: return the controller only if the token is already bound
+   * (constructed) on this container, else `null` — WITHOUT constructing it.
+   * Reserved for conditionally-bound tokens (e.g. `PluginController`, bound only
+   * in uploader scopes by `ensurePluginManager`): a plain `get()` on such an
+   * unbound token would `new` a zero-arg instance its real ctor can't satisfy,
+   * so callers that may run in a non-uploader scope reach for this instead.
+   */
+  public getOrNull<T>(token: Token<T>): T | null {
+    return this.has(token) ? this.get(token) : null;
+  }
+
+  /**
+   * Run `cb` with the controller as soon as it is resolved on this container:
+   * synchronously now if already constructed, otherwise on the first `get()`
+   * that constructs it (e.g. a conditionally-bound `PluginController` resolved
+   * later by `ensurePluginManager`). Returns an unsubscribe that cancels a
+   * still-pending waiter (no-op once fired). The cross-token analogue of the
+   * registry's `whenAvailable`, for tokens that appear after container creation.
+   */
+  public whenController<T>(token: Token<T>, cb: (inst: T) => void): () => void {
+    const Ctrl = resolveToken(token);
+    // Fire immediately only if the instance is FULLY resolved: present
+    // (`has()`, not `get() !== undefined` — a bound factory may legitimately
+    // yield `undefined`, and treating that as "not resolved" would register a
+    // waiter that never fires) AND not still mid-init. A token in `#resolving`
+    // is cached-before-init (line in `get()`), so its instance is only
+    // partially wired — defer to the post-init flush rather than hand a waiter a
+    // half-built instance. Isolate-and-warn on the immediate callback, matching
+    // `#flushControllerWaiters`.
+    if (this.#instances.has(Ctrl) && !this.#resolving.has(Ctrl)) {
+      try {
+        cb(this.#instances.get(Ctrl) as T);
+      } catch (err) {
+        console.warn(`[uc] a whenController immediate callback for ${Ctrl.name} threw`, err);
+      }
+      return () => {};
+    }
+    let set = this.#controllerWaiters.get(Ctrl);
+    if (!set) {
+      set = new Set();
+      this.#controllerWaiters.set(Ctrl, set);
+    }
+    const waiter = cb as (inst: unknown) => void;
+    set.add(waiter);
+    return () => {
+      // Stale-unsubscribe guard: only mutate the set STILL registered for this
+      // token. Once flushed/cleared, `#controllerWaiters` may hold a fresh set
+      // for the same token; a captured-set `delete` (and especially the empty
+      // cleanup below) must not touch it.
+      if (this.#controllerWaiters.get(Ctrl) !== set) {
+        return;
+      }
+      set.delete(waiter);
+      if (set.size === 0) this.#controllerWaiters.delete(Ctrl);
+    };
+  }
+
+  #flushControllerWaiters(Ctrl: Ctor<unknown>, inst: unknown): void {
+    const set = this.#controllerWaiters.get(Ctrl);
+    if (!set) {
+      return;
+    }
+    // Drop the entry before firing so a waiter that (re-)subscribes for the same
+    // token isn't flushed twice, and snapshot so a waiter mutating the set
+    // mid-iteration is safe. Isolate-and-warn: one throwing waiter must not
+    // abort the rest or bubble out of `get()`.
+    this.#controllerWaiters.delete(Ctrl);
+    for (const waiter of [...set]) {
+      try {
+        waiter(inst);
+      } catch (err) {
+        console.warn(`[uc] a whenController waiter for ${Ctrl.name} threw`, err);
+      }
+    }
   }
 
   public addConsumer(c: unknown): void {
@@ -120,6 +205,10 @@ export class ControllerContainer {
   }
 
   public dispose(): void {
+    // Clear pending `whenController` waiters BEFORE running destroys: a
+    // `destroy()` may resolve a not-yet-built `@inject` peer via `get()`, which
+    // flushes waiters — those must not fire against a container mid-teardown.
+    this.#controllerWaiters.clear();
     // Drain the live LIFO list rather than iterating fixed indexes: a
     // `destroy()` can touch a not-yet-resolved `@inject` peer, which appends a
     // fresh instance to `#order` mid-loop. Popping until empty guarantees every
@@ -140,5 +229,6 @@ export class ControllerContainer {
     this.#order = [];
     this.#boundValues.clear();
     this.#consumers.clear();
+    this.#controllerWaiters.clear();
   }
 }

@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import type { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { TypedData } from '../../abstract/TypedData';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import type { Uid } from '../../lit/Uid';
 import { delay } from '../../utils/delay';
 import { CloudImageEditorActivity } from './CloudImageEditorActivity';
@@ -27,7 +27,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
@@ -35,10 +35,11 @@ type FakeEntry = {
   setMultipleValues: ReturnType<typeof vi.fn>;
 };
 
-// Minimal `*uploadCollection` fake: `read(uid)` returns an entry whose
+// Minimal `UploadCollectionController` fake: `read(uid)` returns an entry whose
 // `getValue('cdnUrl')` resolves so `_mountEditor` sets `_cdnUrl`. Absent a
-// `cdnUrl` (or absent the whole collection) the block's `bag.when` observer
-// leaves `_cdnUrl` null and nothing renders — matching the v1 mount gate.
+// `cdnUrl` (or absent the whole collection) the block's
+// `whenController(UploadCollectionController)` observer leaves `_cdnUrl` null and
+// nothing renders — matching the v1 mount gate.
 const makeFakeCollection = (entriesById: Record<string, { cdnUrl?: string } & FakeEntry>): UploadCollectionController =>
   ({
     read: (uid: Uid) => {
@@ -59,11 +60,10 @@ const mount = async (
   } = {},
 ): Promise<{ el: CloudImageEditorActivity; config: ConfigController; router: RouterController }> => {
   ensureUploaderCtx(ctxName);
-  const container = PubSub.getContainer(ctxName);
-  const ctx = PubSub.getCtx(ctxName);
+  const container = UploaderRegistry.get(ctxName);
   const config = container?.get(ConfigController);
   const router = container?.get(RouterController);
-  if (!container || !ctx || !config || !router) throw new Error('controllers not resolved');
+  if (!container || !config || !router) throw new Error('controllers not resolved');
 
   // Router params carry the `internalId` `_mountEditor` reads on adoption, so set
   // them before the element adopts.
@@ -71,7 +71,13 @@ const mount = async (
     router.setActivity('cloud-image-edit', { internalId: opts.internalId });
   }
   if (opts.entries) {
-    ctx.add('*uploadCollection', makeFakeCollection(opts.entries), true);
+    // M-god step 9b-2: the block reads the collection via
+    // `whenController(UploadCollectionController)` off the container (was
+    // `bag.when('uploadCollection')`). Bind + resolve it on the container
+    // (mirrors `ensureUploaderScope`) so the `whenController` waiter fires.
+    const collection = makeFakeCollection(opts.entries);
+    container.bind(UploadCollectionController, () => collection);
+    container.get(UploadCollectionController);
   }
 
   const el = document.createElement('uc-cloud-image-editor-activity') as CloudImageEditorActivity;
@@ -93,15 +99,15 @@ describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
   it('pre-warms its declared dependencies into the container on adoption', async () => {
     const ctxName = freshCtxName();
     await mount(ctxName);
-    const container = PubSub.getContainer(ctxName);
+    const container = UploaderRegistry.get(ctxName);
     expect(container?.get(RouterController)).toBeInstanceOf(RouterController);
     expect(container?.get(ConfigController)).toBeInstanceOf(ConfigController);
   });
 
   it('renders nothing until the uploadCollection entry (with a cdnUrl) resolves', async () => {
     const ctxName = freshCtxName();
-    // Router params present, but no uploadCollection registered -> `bag.when`
-    // never fires, `_cdnUrl` stays null, nothing renders.
+    // Router params present, but no uploadCollection resolved on the container ->
+    // `whenController` never fires, `_cdnUrl` stays null, nothing renders.
     const { el } = await mount(ctxName, { internalId: 'file-1' });
     expect(editorEl(el)).toBeNull();
   });

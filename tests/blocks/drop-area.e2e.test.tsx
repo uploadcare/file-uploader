@@ -1,7 +1,15 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
+import { SecureUploadsController } from '@/abstract/controllers/SecureUploadsController';
+import { UploadCollectionController } from '@/abstract/controllers/UploadCollectionController';
+import { UploadController } from '@/abstract/controllers/UploadController';
+import { UploadEventsController } from '@/abstract/controllers/UploadEventsController';
+import { ValidationController } from '@/abstract/controllers/ValidationController';
+import type { ControllerContainer } from '@/abstract/di/ControllerContainer';
+import { UploaderPublicApi } from '@/abstract/UploaderPublicApi';
 import type { Config, DropArea, UploadCtxProvider } from '@/index.ts';
 import { TEST_IMAGE_URL } from '../utils/constants';
+import { containerOf, hasCtx } from '../utils/registry';
 import { getCtxName } from '../utils/test-renderer';
 import '../../types/jsx';
 
@@ -21,7 +29,6 @@ beforeAll(async () => {
 
 describe('uc-drop-area — uploader-scope-attach (solution-only composition, no provider)', () => {
   it('attaches the full uploader scope from a bare solution + config composition (no <uc-upload-ctx-provider>)', async () => {
-    const { PubSub } = await import('@/lit/PubSubCompat.js');
     const ctxName = getCtxName();
 
     page.render(
@@ -35,24 +42,23 @@ describe('uc-drop-area — uploader-scope-attach (solution-only composition, no 
     // start-from) must be the thing attaching the scope.
     expect(document.querySelector('uc-upload-ctx-provider')).toBeNull();
 
-    await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
-    const ctx = PubSub.getCtx(ctxName)!;
+    await expect.poll(() => hasCtx(ctxName)).toBe(true);
+    const container = containerOf(ctxName);
 
-    await expect.poll(() => ctx.has('*publicApi')).toBe(true);
-    expect(ctx.has('*uploadController')).toBe(true);
-    expect(ctx.has('*validationManager')).toBe(true);
-    expect(ctx.has('*secureUploadsManager')).toBe(true);
-    expect(ctx.has('*uploadEvents')).toBe(true);
-    expect(ctx.has('*uploadCollection')).toBe(true);
+    await expect.poll(() => container.has(UploaderPublicApi)).toBe(true);
+    expect(container.has(UploadController)).toBe(true);
+    expect(container.has(ValidationController)).toBe(true);
+    expect(container.has(SecureUploadsController)).toBe(true);
+    expect(container.has(UploadEventsController)).toBe(true);
+    expect(container.has(UploadCollectionController)).toBe(true);
 
-    // Provider-less API works: grab a drop-area and use its own bag/api
+    // Provider-less API works: grab a drop-area and resolve its own container
     // surface directly, exactly as the solution does internally.
     const dropArea = page.getByTestId('uc-drop-area').first().query()! as DropArea;
     expect(dropArea).toBeTruthy();
-    expect(
-      typeof (dropArea as unknown as { bag: { api: { openSystemDialog: () => void } } }).bag.api.openSystemDialog,
-    ).toBe('function');
-    expect((dropArea as unknown as { bag: { uploadController: unknown } }).bag.uploadController).toBeTruthy();
+    const dropAreaContainer = (dropArea as unknown as { container: ControllerContainer }).container;
+    expect(typeof dropAreaContainer.get(UploaderPublicApi).openSystemDialog).toBe('function');
+    expect(dropAreaContainer.get(UploadController)).toBeTruthy();
   });
 });
 
@@ -297,11 +303,9 @@ describe('uc-drop-area — enable / visibility / _shouldIgnore proxies', () => {
     // on the (now un-handleable) drop-area is ignored: `shouldIgnore()`
     // (private) gates `addDropzone`'s `setState`, so the observable proxy is
     // that `drag-state` never leaves "inactive".
-    const dropAreaWithApi = dropArea as unknown as { bag: { api: { addFileFromUrl: (url: string) => void } } };
-    dropAreaWithApi.bag.api.addFileFromUrl(TEST_IMAGE_URL);
-    await expect
-      .poll(() => (dropArea as unknown as { bag: { uploadCollection: { size: number } } }).bag.uploadCollection.size)
-      .toBe(1);
+    const dropAreaContainer = (dropArea as unknown as { container: ControllerContainer }).container;
+    dropAreaContainer.get(UploaderPublicApi).addFileFromUrl(TEST_IMAGE_URL);
+    await expect.poll(() => dropAreaContainer.get(UploadCollectionController).size).toBe(1);
 
     dropArea.dispatchEvent(new Event('dragenter', { bubbles: true }));
     dropArea.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));

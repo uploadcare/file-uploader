@@ -1,11 +1,11 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
+import { CollectionStateController } from '@/abstract/controllers/CollectionStateController';
 import type { Config, FuncFileValidator, OutputErrorCollection, OutputErrorFile, UploadCtxProvider } from '@/index';
-import { PubSub } from '@/lit/PubSubCompat';
-import type { SharedState } from '@/lit/SharedState';
 import { delay } from '@/utils/delay.js';
 import '../types/jsx';
 import { IMAGE } from './fixtures/files';
+import { containerOf, hasCtx } from './utils/registry';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
@@ -133,13 +133,11 @@ describe('Common upload collection validation', () => {
           <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
-      const ctx = PubSub.getCtx<SharedState>(ctxName)!;
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
+      const collectionState = containerOf(ctxName).get(CollectionStateController);
 
-      await expect
-        .poll(() => (ctx.read('*collectionErrors') as OutputErrorCollection[] | undefined)?.length ?? 0)
-        .toBeGreaterThan(0);
-      const errors = ctx.read('*collectionErrors') as OutputErrorCollection[];
+      await expect.poll(() => collectionState.get('collectionErrors').length).toBeGreaterThan(0);
+      const errors = collectionState.get('collectionErrors');
       expect(errors).toContainEqual(expect.objectContaining({ type: 'TOO_FEW_FILES' }));
     });
   });

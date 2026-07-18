@@ -1,10 +1,15 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
-import type { PluginController, PluginFileActionRegistration } from '../../abstract/managers/plugin';
+import { LocaleController } from '../../abstract/controllers/LocaleController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploadController } from '../../abstract/controllers/UploadController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { debounce } from '../../utils/debounce';
 import { throttle } from '../../utils/throttle';
@@ -31,7 +36,12 @@ const FileItemState = Object.freeze({
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
 
 export class FileItem extends FileItemConfig {
-  public static override readonly uses = [ConfigController, TelemetryManager] as const;
+  public static override readonly uses = [
+    ConfigController,
+    UploadCollectionController,
+    UploaderPublicApi,
+    TelemetryManager,
+  ] as const;
 
   @state()
   private _pauseRender = true;
@@ -52,9 +62,6 @@ export class FileItem extends FileItemConfig {
 
   @state()
   private _progressValue = 0;
-
-  @state()
-  private _progressVisible = false;
 
   @state()
   private _badgeIcon = '';
@@ -94,18 +101,14 @@ export class FileItem extends FileItemConfig {
       },
     });
 
-    // `uploadCollection` is registered by the upload stack, not eagerly in the
-    // container — no clean DI token to `use()`, so this stays on the null-safe
-    // v1 `bag` path (step 8).
-    const collection = this.bag.uploadCollectionOrNull;
+    // `uploadCollection` is container-owned (M-god step 4). Read it
+    // null-tolerantly via `useOrNull`: this handler can run outside an adopted
+    // scope (teardown race), where the throwing `use()` would be unsafe.
+    const collection = this.useOrNull(UploadCollectionController);
     if (this.uid && collection?.hasItem(this.uid)) {
       this.entry?.getValue('abortController')?.abort();
       collection.remove(this.uid);
     }
-  };
-
-  private _handleUploadClick = (): void => {
-    this._upload();
   };
 
   private _calculateState(): void {
@@ -141,8 +144,6 @@ export class FileItem extends FileItemConfig {
       const source = entry.getValue('source');
       const externalUrl = entry.getValue('externalUrl');
       const isFinished = state === FileItemState.FINISHED;
-      const isUploading = state === FileItemState.UPLOADING;
-      const isQueuedForUploading = state === FileItemState.QUEUED_UPLOADING;
       const isQueuedForValidation = state === FileItemState.QUEUED_VALIDATION;
       const isValidationPending = state === FileItemState.VALIDATION;
       const fileName = entry.getValue('fileName');
@@ -156,7 +157,6 @@ export class FileItem extends FileItemConfig {
 
       this._hint = hint;
       this._errorText = errorText;
-      this._progressVisible = isUploading || isQueuedForUploading || isQueuedForValidation || isValidationPending;
       this._progressValue = isQueuedForValidation || isValidationPending ? 0 : entry.getValue('uploadProgress');
       this._ariaLabelStatusFile = fileName
         ? this.l10n('a11y-file-item-status', {
@@ -207,8 +207,8 @@ export class FileItem extends FileItemConfig {
   private _handleEntryId(id: Uid): void {
     this.reset();
 
-    // The uploader-scope shared instances exist only once an uploader block initializes this ctx.
-    const entry = this.bag.uploadCollectionOrNull?.read(id) ?? null;
+    // The uploader-scope controllers exist only once an uploader block initializes this ctx.
+    const entry = this.useOrNull(UploadCollectionController)?.read(id) ?? null;
     this.entry = entry;
 
     if (!entry) {
@@ -288,8 +288,8 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    // The uploader-scope shared instances exist only once an uploader block initializes this ctx.
-    const api = this.bag.apiOrNull;
+    // The uploader-scope controllers exist only once an uploader block initializes this ctx.
+    const api = this.useOrNull(UploaderPublicApi);
     if (!api) {
       this._pluginFileActions = [];
       return;
@@ -318,7 +318,7 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    const api = this.bag.apiOrNull;
+    const api = this.useOrNull(UploaderPublicApi);
     if (!api) {
       return;
     }
@@ -371,23 +371,41 @@ export class FileItem extends FileItemConfig {
       });
     };
 
-    // Side-effecting subscription (fires `_upload`, not a render read): stays on
-    // the v1 `bag.ctx.sub` path even though `CollectionStateController` owns
-    // `*uploadTrigger` — that token is adopted only for pure render reads (see
-    // ProgressBarCommon/DynamicBtn), not for imperative triggers.
+    // Side-effecting subscription (fires `_upload`, not a render read):
+    // `*uploadTrigger` is owned by `CollectionStateController` (M-god step 4).
+    // Subscribe over its coarse notify but fire only when `uploadTrigger` itself
+    // changes, replicating `the v1 per-key derived subscription`'s eager-init + per-key
+    // `Object.is` dedup. `uploadTrigger` is a `Set` the writer REPLACES (never
+    // mutates in place — see `CollectionStateController.set`), so the `Object.is`
+    // guard fires on a new Set and skips unrelated collection-state writes —
+    // behavior-identical to the v1 `ctx.sub('*uploadTrigger')`.
+    const collectionState = this.use(CollectionStateController);
+    let lastTrigger = collectionState.get('uploadTrigger');
+    const onTrigger = (itemsToUpload: typeof lastTrigger): void => {
+      if (this.entry && !itemsToUpload.has(this.entry.uid)) {
+        return;
+      }
+      setTimeout(() => this.isConnected && this._upload());
+    };
+    onTrigger(lastTrigger);
     this.trackSub(
-      this.bag.ctx.sub('*uploadTrigger', (itemsToUpload) => {
-        if (this.entry && !itemsToUpload.has(this.entry.uid)) {
-          return;
+      collectionState.subscribe(() => {
+        const next = collectionState.get('uploadTrigger');
+        if (!Object.is(next, lastTrigger)) {
+          lastTrigger = next;
+          onTrigger(next);
         }
-        setTimeout(() => this.isConnected && this._upload());
       }),
     );
 
-    // The plugin manager has no DI token — it stays on the v1 `bag.when` path
-    // (step 8); a plugin change re-derives file actions imperatively.
+    // The uploader-scope `PluginController` is bound + resolved on the container
+    // only once an uploader scope attaches (`ensurePluginManager`, conditional),
+    // which may be after this block's `controllerReady` — or never in a bare ctx
+    // — so go through `whenController` (fires now if resolved, else on first
+    // resolution) rather than the throwing `use(PluginController)`. Same
+    // now-or-when-available semantics as the v1 `bag.when('pluginManager')`.
     this.trackSub(
-      this.bag.when('pluginManager', (pm) => {
+      this.container.whenController(PluginController, (pm) => {
         this._pluginManager = pm;
         this.trackSub(pm.onPluginsChange(() => this._updatePluginFileActions()));
         this._updatePluginFileActions();
@@ -401,8 +419,8 @@ export class FileItem extends FileItemConfig {
     this._pluginManager = null;
   }
 
-  protected override subscriptionsFor(ctrl: UploaderController) {
-    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  protected override subscriptionsFor(container: ControllerContainer) {
+    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   public override connectedCallback(): void {
@@ -429,7 +447,7 @@ export class FileItem extends FileItemConfig {
   // trigger; it reacts to the resulting entry mutations through its existing
   // per-entry subscriptions (`isUploading`/`errors`/… → `_debouncedCalculateState`).
   private _upload = this.withEntry(async (entry) => {
-    await this.bag.uploadController.uploadEntry(entry.uid);
+    await this.use(UploadController).uploadEntry(entry.uid);
   });
 
   public static activeInstances: Set<FileItem> = new Set<FileItem>();

@@ -1,8 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
 import { delay } from '../../utils/delay';
 import { PrimaryAction } from './PrimaryAction';
@@ -34,13 +34,13 @@ afterEach(() => {
   vi.restoreAllMocks();
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
 const mountWithConfig = async (ctxName: string): Promise<{ el: PrimaryAction; config: ConfigController }> => {
   ensureUploaderCtx(ctxName);
-  const config = PubSub.getContainer(ctxName)?.get(ConfigController);
+  const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
   if (!config) throw new Error('config controller not resolved');
   const el = document.createElement('uc-primary-action') as PrimaryAction;
   el.setAttribute('ctx-name', ctxName);
@@ -82,7 +82,7 @@ describe('PrimaryAction (M-god step 6b-1 migration)', () => {
   it('navigates via the container-resolved RouterController (use()) when entries are present', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
-    const router = PubSub.getContainer(ctxName)!.get(RouterController);
+    const router = UploaderRegistry.get(ctxName)!.get(RouterController);
     const spy = vi.spyOn(router, 'navigate').mockImplementation(() => {});
 
     const { el } = await mountWithConfig(ctxName);

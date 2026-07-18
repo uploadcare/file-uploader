@@ -26,14 +26,13 @@ type RegisteredPlugin = {
 };
 
 /**
- * DOM-free plugin engine — a faithful port of v1's `PluginManager` (which was a
- * `SharedInstance`). Owns the {@link PluginRegistry}, runs the install/uninstall
- * lifecycle (dedup, error isolation, dispose + config-subscription cleanup), and
- * the `onAdd` hook chain. Its ctx/bag couplings are injected: `buildApi`
- * (wraps `buildPluginApi`), `getUploaderApi`, and `watchPlugins` (wraps the
- * ctx-watching `LazyPluginLoader`) — so it constructs without a DOM and is unit
- * testable. Consumers still reach it through the unchanged `pluginManager`
- * getter / `*pluginManager` shared instance.
+ * DOM-free plugin engine. Owns the {@link PluginRegistry}, runs the
+ * install/uninstall lifecycle (dedup, error isolation, dispose +
+ * config-subscription cleanup), and the `onAdd` hook chain. Its DOM/uploader
+ * couplings are injected: `buildApi` (wraps `buildPluginApi`), `getUploaderApi`,
+ * and `watchPlugins` (wraps `LazyPluginLoader`) — so it constructs without a
+ * DOM and is unit testable. Consumers reach it via `container.get(PluginController)`
+ * / the `@inject(() => PluginController)` thunk.
  */
 export class PluginController {
   private _deps: PluginControllerDeps;

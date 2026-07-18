@@ -1,5 +1,4 @@
 import { getOutputData } from '../lit/getOutputData';
-import type { SharedInstancesBag } from '../lit/shared-instances';
 import type {
   GroupFlag,
   OutputCollectionState,
@@ -10,6 +9,9 @@ import type {
 } from '../types/index';
 import { memoize } from '../utils/memoize';
 import { warnOnce } from '../utils/warnOnce';
+import { CollectionStateController } from './controllers/CollectionStateController';
+import { UploadCollectionController } from './controllers/UploadCollectionController';
+import type { ControllerContainer } from './di/ControllerContainer';
 
 function createAsyncAssertWrapper(warning: string) {
   let isAsync = false;
@@ -32,24 +34,28 @@ function createAsyncAssertWrapper(warning: string) {
 export function buildOutputCollectionState<
   TCollectionStatus extends OutputCollectionStatus,
   TGroupFlag extends GroupFlag = 'maybe-has-group',
->(bag: SharedInstancesBag): OutputCollectionState<TCollectionStatus, TGroupFlag> {
+>(container: ControllerContainer): OutputCollectionState<TCollectionStatus, TGroupFlag> {
   const state = {} as OutputCollectionState<TCollectionStatus, TGroupFlag>;
-  const ctx = bag.ctx;
+  // Derived collection keys read straight off the controllers.
+  // `CollectionStateController` owns `*commonProgress`/`*collectionErrors`/
+  // `*groupInfo` (the same instance the v1 ctx facade routes those keys through).
+  const collectionState = container.get(CollectionStateController);
+  const uploadCollection = container.get(UploadCollectionController);
 
   const getters = {
     progress: (): number => {
-      return ctx.read('*commonProgress');
+      return collectionState.get('commonProgress');
     },
     errors: (): OutputErrorCollection[] => {
-      return ctx.read('*collectionErrors');
+      return collectionState.get('collectionErrors');
     },
 
     group: (): UploadcareGroup | null => {
-      return ctx.read('*groupInfo');
+      return collectionState.get('groupInfo');
     },
 
     totalCount: (): number => {
-      return bag.uploadCollection.size;
+      return uploadCollection.size;
     },
 
     failedCount: (): number => {
@@ -86,7 +92,7 @@ export function buildOutputCollectionState<
     },
 
     allEntries: (): OutputFileEntry[] => {
-      return getOutputData(bag);
+      return getOutputData(container);
     },
 
     successEntries: (): OutputFileEntry<'success'>[] => {

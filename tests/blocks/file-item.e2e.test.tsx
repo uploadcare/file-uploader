@@ -148,14 +148,12 @@ describe('uc-file-item (parity, real upload flow)', () => {
     });
   }, 30_000);
 
-  // M9e regression — `*pluginManager` is registered by any LitBlock, so
-  // `bag.when('pluginManager', ...)` fires synchronously during
-  // `controllerReady`, driving `_updatePluginFileActions()` →
-  // `this.bag.api.getOutputItem(this.uid)`. `*publicApi` is uploader-scope-only
-  // (registered by an uploader block), so a `<uc-file-item>` rendered outside
-  // that scope (e.g. alongside a bare `<uc-config>`, no uploader block) must
-  // fall back gracefully instead of throwing an unhandled error from the
-  // required-getter read.
+  // M9e regression — `_updatePluginFileActions()` reaches for the ctx's
+  // `UploaderPublicApi` (`container.get(UploaderPublicApi).getOutputItem(this.uid)`),
+  // which is only attached by an uploader block. A `<uc-file-item>` rendered
+  // outside an uploader scope (e.g. alongside a bare `<uc-config>`, no uploader
+  // block) must fall back gracefully instead of throwing an unhandled error
+  // from a required-controller read.
   it('renders without unhandled errors when given a uid outside an uploader scope', async () => {
     const errors: string[] = [];
     const onError = (event: ErrorEvent) => {

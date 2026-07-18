@@ -1,7 +1,9 @@
 import { html, type PropertyValues } from 'lit';
+import { CollectionStateController } from '../../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../../abstract/controllers/ConfigController';
+import { LocaleController } from '../../../abstract/controllers/LocaleController';
 import { RouterController } from '../../../abstract/controllers/RouterController';
-import type { UploaderController } from '../../../abstract/controllers/UploaderController';
+import type { ControllerContainer } from '../../../abstract/di/ControllerContainer';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
@@ -29,7 +31,12 @@ export class FileUploaderMinimal extends SolutionChildBlock {
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-minimal'];
 
-  public static override readonly uses = [RouterController, ConfigController, TelemetryManager] as const;
+  public static override readonly uses = [
+    RouterController,
+    ConfigController,
+    CollectionStateController,
+    TelemetryManager,
+  ] as const;
 
   /**
    * Grid single-upload flag feeding `?single=` on the inline drop-area — true
@@ -47,8 +54,8 @@ export class FileUploaderMinimal extends SolutionChildBlock {
     return this.use(ConfigController).getTracked('multiple') ? 'choose-files' : 'choose-file';
   }
 
-  protected override controllerReady(ctrl: UploaderController): void {
-    super.controllerReady(ctrl);
+  protected override controllerReady(container: ControllerContainer): void {
+    super.controllerReady(container);
 
     this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
@@ -67,38 +74,77 @@ export class FileUploaderMinimal extends SolutionChildBlock {
 
     // Background slot follows file state: the upload list once files exist,
     // otherwise the start-from trigger. Imperative side-effecting sub (drives
-    // `router.setActivity`, not a render read), so it stays on the v1 `bag.ctx`
-    // subscription — the `*uploadList` CollectionStateController token is only
-    // adopted for pure render reads (see FormInput/UploadList).
+    // `router.setActivity`, not a render read), now sourced from
+    // `CollectionStateController` directly instead of the `*uploadList` `bag.ctx`
+    // key. The per-key `Object.is` dedup + eager fire below reproduce the exact
+    // `PubSub.sub('*uploadList', …)` semantics (`_subDerived`): fire once now,
+    // then only when the `uploadList` reference actually changes — NOT on every
+    // coarse collection-state notify (e.g. a `commonProgress` tick).
+    const collectionState = this.use(CollectionStateController);
+    let lastUploadList = collectionState.get('uploadList');
+    const applyUploadListActivity = (list: typeof lastUploadList) => {
+      const hasFiles = list.length > 0;
+      router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
+    };
+    applyUploadListActivity(lastUploadList);
     this.trackSub(
-      this.bag.ctx.sub('*uploadList', (list) => {
-        const hasFiles = list.length > 0;
-        router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
+      collectionState.subscribe(() => {
+        const next = collectionState.get('uploadList');
+        if (!Object.is(next, lastUploadList)) {
+          lastUploadList = next;
+          applyUploadListActivity(next);
+        }
       }),
     );
 
     // Side-effecting activity coordination (closes the modal on upload-list,
-    // re-seeds start-from when everything closes) — stays imperative.
-    this.subActivity((val) => {
+    // re-seeds start-from when everything closes) — stays imperative, now off
+    // `RouterController` directly (replaces `subActivity`). The current-activity
+    // dedup + eager fire reproduce `subActivity`'s exact contract.
+    let lastActivity = router.currentActivity;
+    const applyActivityCoordination = (val: typeof lastActivity) => {
       if (val === ACTIVITY_TYPES.UPLOAD_LIST) {
         router.closeModal();
       }
       if (!val) {
         router.setActivity(ACTIVITY_TYPES.START_FROM);
       }
-    });
+    };
+    applyActivityCoordination(lastActivity);
+    this.trackSub(
+      router.subscribe(() => {
+        const next = router.currentActivity;
+        if (next !== lastActivity) {
+          lastActivity = next;
+          applyActivityCoordination(next);
+        }
+      }),
+    );
 
     // Side-effecting config write (minimal forces `confirmUpload` off) — stays
-    // an imperative `subConfigValue`, not a render read.
-    this.subConfigValue('confirmUpload', (confirmUpload) => {
+    // imperative, now off `ConfigController` directly (replaces `subConfigValue`).
+    // Per-key `Object.is` dedup + eager fire reproduce `subConfigValue`'s contract.
+    const config = this.use(ConfigController);
+    let lastConfirmUpload = config.get('confirmUpload');
+    const applyConfirmUpload = (confirmUpload: typeof lastConfirmUpload) => {
       if (confirmUpload !== false) {
-        this.use(ConfigController).set('confirmUpload', false);
+        config.set('confirmUpload', false);
       }
-    });
+    };
+    applyConfirmUpload(lastConfirmUpload);
+    this.trackSub(
+      config.subscribe(() => {
+        const next = config.get('confirmUpload');
+        if (!Object.is(next, lastConfirmUpload)) {
+          lastConfirmUpload = next;
+          applyConfirmUpload(next);
+        }
+      }),
+    );
   }
 
-  protected override subscriptionsFor(ctrl: UploaderController) {
-    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+  protected override subscriptionsFor(container: ControllerContainer) {
+    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {

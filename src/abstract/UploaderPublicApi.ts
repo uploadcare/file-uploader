@@ -2,14 +2,14 @@
 
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
-import { type EventKey, type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
+import { EventEmitter, type EventKey, type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityParamsMap, ActivityType } from '../lit/activity-constants';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { waitForActivityBlock } from '../lit/hasBlockInCtx';
 import { createL10n } from '../lit/l10n';
-import { SharedInstance } from '../lit/shared-instances';
 import type { Uid } from '../lit/Uid';
 import type {
+  ConfigType,
   OutputCollectionState,
   OutputCollectionStatus,
   OutputFileEntry,
@@ -29,23 +29,85 @@ import { parseCdnUrl } from '../utils/parseCdnUrl';
 import { stringToArray } from '../utils/stringToArray';
 import { UploadSource } from '../utils/UploadSource';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
+import { CollectionStateController } from './controllers/CollectionStateController';
+import { ConfigController } from './controllers/ConfigController';
+import { LocaleController } from './controllers/LocaleController';
+import { RouterController } from './controllers/RouterController';
+import { UploadCollectionController } from './controllers/UploadCollectionController';
+import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
+import { inject } from './di/inject';
+import { PluginController } from './managers/plugin';
 import { TypedData } from './TypedData';
 import type { UploadEntryData } from './uploadEntrySchema';
+
 export type ApiAddFileCommonOptions = {
   silent?: boolean;
   fileName?: string;
   source?: string;
 };
 
-export class UploaderPublicApi extends SharedInstance {
-  private _l10n = createL10n(() => this._ctx);
+/**
+ * The documented public JS API (`element.getAPI()`).
+ *
+ * A thin facade over single-responsibility controllers resolved from the
+ * per-ctx DI container — config/locale/collection/collection-state/events/
+ * router are injected fields. It is created through the container
+ * (`ensureUploaderScope` → `container.get`) so `@inject` resolves, and is the
+ * single per-ctx instance every caller reaches.
+ *
+ * The plugin manager is container-resolved via `@inject(() => PluginController)`
+ * (a lazy thunk, resolved at plugin-read time; `PluginController` is bound on
+ * the container by `ensurePluginManager`, which runs in the same
+ * `ensureUploaderScope` that registers this api, so it is always available by
+ * the time any plugin read fires on user action).
+ *
+ * `getOutputCollectionState` calls `buildOutputCollectionState(this._container)`
+ * — the api reaches its own per-ctx `ControllerContainer` through the
+ * `CONTAINER` tag every container-built instance carries (the same tag
+ * `@inject` reads), so `buildOutputCollectionState` resolves the
+ * derived-collection controllers itself.
+ */
+export class UploaderPublicApi {
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(LocaleController) private readonly _locale!: LocaleController;
+  @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
+  @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
+  @inject(RouterController) private readonly _router!: RouterController;
+  // Lazy thunk: resolved at plugin-read time (`_pluginsReady`/`initFlow`), so
+  // there is no construction cycle. `ensurePluginManager` binds the same
+  // per-ctx `PluginController` instance on the container this thunk reads.
+  @inject(() => PluginController) private readonly _pluginManager!: PluginController;
 
-  public get _uploadCollection() {
-    return this._sharedInstancesBag.uploadCollection;
+  // `createL10n` reads the injected `LocaleController` live on every lookup, so a
+  // dictionary load / locale switch is reflected without recreating the fn.
+  private _l10n = createL10n(() => this._locale);
+
+  /**
+   * The per-ctx `ControllerContainer` that built this instance, reached through
+   * the `CONTAINER` tag every container-built instance carries (the same tag
+   * `@inject` resolves through). Used by `getOutputCollectionState` to hand the
+   * container to `buildOutputCollectionState`.
+   */
+  private get _container(): ControllerContainer {
+    const container = (this as { [CONTAINER]?: ControllerContainer })[CONTAINER];
+    if (!container) {
+      throw new Error('Unexpected error: UploaderPublicApi was not created by a container');
+    }
+    return container;
   }
 
-  public get cfg() {
-    return this._cfg;
+  public get _uploadCollection(): UploadCollectionController {
+    return this._collection;
+  }
+
+  /**
+   * Read-only view of the live config (part of the documented api surface —
+   * consumed by the built-in validators). Backed by the injected
+   * `ConfigController`'s live values object.
+   */
+  public get cfg(): Readonly<ConfigType> {
+    return this._config.values;
   }
 
   public get l10n() {
@@ -175,8 +237,11 @@ export class UploaderPublicApi extends SharedInstance {
       return;
     }
 
-    this._ctx.pub('*uploadTrigger', new Set(itemsToUpload));
-    this._sharedInstancesBag.eventEmitter.emit(
+    // Replace (not mutate) the `uploadTrigger` Set — the `Object.is` dedup on
+    // `CollectionStateController.set` fires subscribers only on a new reference,
+    // preserving the v1 `ctx.pub('*uploadTrigger', new Set(...))` semantics.
+    this._collectionState.set('uploadTrigger', new Set(itemsToUpload));
+    this._eventEmitter.emit(
       EventType.COMMON_UPLOAD_START,
       this.getOutputCollectionState() as OutputCollectionState<'uploading'>,
     );
@@ -228,7 +293,7 @@ export class UploaderPublicApi extends SharedInstance {
           });
         });
         // To call uploadTrigger UploadList should draw file items first.
-        this._sharedInstancesBag.router.traverse('onFileAdd');
+        this._router.traverse('onFileAdd');
         fileInput.remove();
       },
       {
@@ -295,13 +360,11 @@ export class UploaderPublicApi extends SharedInstance {
   }
 
   public getOutputCollectionState<TStatus extends OutputCollectionStatus>() {
-    return buildOutputCollectionState(this._sharedInstancesBag) as ReturnType<
-      typeof buildOutputCollectionState<TStatus>
-    >;
+    return buildOutputCollectionState(this._container) as ReturnType<typeof buildOutputCollectionState<TStatus>>;
   }
 
   public initFlow = (force = false): void => {
-    const router = this._sharedInstancesBag.router;
+    const router = this._router;
     if (this._uploadCollection.size > 0 && !force) {
       router.navigate(ACTIVITY_TYPES.UPLOAD_LIST);
     } else {
@@ -309,7 +372,7 @@ export class UploaderPublicApi extends SharedInstance {
         const srcKey = this._sourceList[0];
 
         void this._pluginsReady().then(() => {
-          const sources = this._sharedInstancesBag.pluginManager.snapshot().sources;
+          const sources = this._pluginManager.snapshot().sources;
           const registeredSource = sources.find((s) => s.id === srcKey);
 
           if (registeredSource) {
@@ -338,16 +401,18 @@ export class UploaderPublicApi extends SharedInstance {
   public doneFlow = (): void => {
     // Reset the router: clear everything (also wipes history), then land on the
     // preset's configured done activity (set via `router.configure`).
-    const router = this._sharedInstancesBag.router;
+    const router = this._router;
     router.navigate(null);
     if (router.doneActivity) {
       router.navigate(router.doneActivity);
     }
   };
 
-  private async _pluginsReady(): Promise<void> {
-    const pluginManager = await this._sharedInstancesBag.wait('pluginManager');
-    return pluginManager.pluginsReady();
+  private _pluginsReady(): Promise<void> {
+    // The plugin manager is container-resolved (`@inject`) and always bound by
+    // the time a plugin read fires (see class doc), so this resolves
+    // synchronously and returns its readiness promise directly.
+    return this._pluginManager.pluginsReady();
   }
 
   /**
@@ -367,9 +432,9 @@ export class UploaderPublicApi extends SharedInstance {
       : []
   ) => {
     void this._pluginsReady().then(() => {
-      this._sharedInstancesBag.router.navigate(activityType, params[0] ?? {});
+      this._router.navigate(activityType, params[0] ?? {});
       if (activityType !== null) {
-        waitForActivityBlock(this._sharedInstancesBag.router, activityType, {
+        waitForActivityBlock(this._router, activityType, {
           onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
           timeout: 100,
         });
@@ -396,11 +461,11 @@ export class UploaderPublicApi extends SharedInstance {
       // slot (background + modal). Otherwise set the background activity (no
       // modal); a paired `setModalState(true)` opens it in the modal slot.
       if (activityType === null) {
-        this._sharedInstancesBag.router.navigate(null);
+        this._router.navigate(null);
         return;
       }
-      this._sharedInstancesBag.router.setActivity(activityType, params[0]);
-      waitForActivityBlock(this._sharedInstancesBag.router, activityType, {
+      this._router.setActivity(activityType, params[0]);
+      waitForActivityBlock(this._router, activityType, {
         onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
         timeout: 100,
       });
@@ -408,15 +473,15 @@ export class UploaderPublicApi extends SharedInstance {
   };
 
   public on = <T extends EventKey>(type: T, handler: (payload: EventPayload[T]) => void): (() => void) => {
-    return this._sharedInstancesBag.eventEmitter.on(type, handler);
+    return this._eventEmitter.on(type, handler);
   };
 
   public getCurrentActivity = (): ActivityType => {
-    return this._sharedInstancesBag.router.currentActivity;
+    return this._router.currentActivity;
   };
 
   public historyBack = (): void => {
-    this._sharedInstancesBag.router.back();
+    this._router.back();
   };
 
   /**
@@ -426,7 +491,7 @@ export class UploaderPublicApi extends SharedInstance {
    */
   public setModalState = (opened: boolean): void => {
     void this._pluginsReady().then(() => {
-      const router = this._sharedInstancesBag.router;
+      const router = this._router;
       if (!opened) {
         // Close everything (matches v1: close the modal + null the activity,
         // which also cleared history).
@@ -443,7 +508,7 @@ export class UploaderPublicApi extends SharedInstance {
         return;
       }
 
-      return waitForActivityBlock(this._sharedInstancesBag.router, activityType, {
+      return waitForActivityBlock(router, activityType, {
         onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
       }).then((found) => {
         if (!found) {
@@ -462,5 +527,11 @@ export class UploaderPublicApi extends SharedInstance {
       list = stringToArray(this.cfg.sourceList);
     }
     return list;
+  }
+
+  public destroy(): void {
+    // No subscriptions of its own to unwind (config/locale/router/… are
+    // container-owned and disposed by the container). Present so the container
+    // can treat every owned instance uniformly.
   }
 }

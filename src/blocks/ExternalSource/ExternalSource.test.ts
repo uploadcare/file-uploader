@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import { ExternalSource } from './ExternalSource';
 
 // Idempotent (same path as defineComponents(UC)).
@@ -22,13 +23,13 @@ afterEach(() => {
   vi.restoreAllMocks();
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
 const mount = async (ctxName: string): Promise<{ el: ExternalSource; router: RouterController }> => {
   ensureUploaderCtx(ctxName);
-  const router = PubSub.getContainer(ctxName)?.get(RouterController);
+  const router = UploaderRegistry.get(ctxName)?.get(RouterController);
   if (!router) throw new Error('router controller not resolved');
   const el = document.createElement('uc-external-source') as ExternalSource;
   el.setAttribute('ctx-name', ctxName);
@@ -40,7 +41,7 @@ const mount = async (ctxName: string): Promise<{ el: ExternalSource; router: Rou
 
 describe('ExternalSource (M-god step 6b-2 migration)', () => {
   it('declares its dependencies via static uses', () => {
-    expect(ExternalSource.uses).toEqual([ConfigController, RouterController]);
+    expect(ExternalSource.uses).toEqual([ConfigController, RouterController, UploaderPublicApi]);
   });
 
   it('routes the close button through the container-resolved RouterController (use())', async () => {

@@ -1,60 +1,81 @@
+import { ConfigController } from '../abstract/controllers/ConfigController';
+import { LazyPluginsController } from '../abstract/controllers/LazyPluginsController';
+import type { ControllerContainer } from '../abstract/di/ControllerContainer';
+import { PluginManagerBridge } from '../abstract/di/PluginManagerBridge';
+import { LocaleManager } from '../abstract/managers/LocaleManager';
 import { PluginController } from '../abstract/managers/plugin';
 import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
 import { LazyPluginLoader } from '../abstract/managers/plugin/LazyPluginLoader';
+import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { createDebugPrinter } from './createDebugPrinter';
-import { addCtxSharedInstance, type SharedInstancesBag } from './shared-instances';
 
 /**
- * ChildBlock-reachable construction of the ctx's `*pluginManager`, lifted from
- * `LitBlock.initCallback` (`src/lit/LitBlock.ts`), which constructs it for any
- * v1 block. Everything `PluginController` needs is `bag`-derived (`bag.ctx`,
- * `bag`, and the lazy `bag.api`) — no element/DOM dependency — so it can be
+ * ChildBlock-reachable construction of the ctx's `PluginController`, lifted from
+ * `LitBlock.initCallback` (v1), which constructed it for any v1 block.
+ * Everything `PluginController` needs is container-derived (config, the lazy
+ * public API, the lazy-plugin owner) — no element/DOM dependency — so it can be
  * built from a pure-`ChildBlock` composition (e.g. `<uc-config>` +
- * `<uc-upload-ctx-provider>` with no solution/`<uc-drop-area>`, i.e. no
- * `LitBlock` at all).
+ * `<uc-upload-ctx-provider>` with no solution/`<uc-drop-area>`).
  *
- * First-write-wins: if a v1 `LitBlock` sharing this ctx already registered a
- * `*pluginManager`, this is a no-op — inert-under-v1, and the two recipes
- * produce a functionally identical `PluginController` either way (same as the
- * M9q re-exposer dual-registration).
+ * First-write-wins: if a sibling host sharing this ctx already resolved
+ * `PluginController`, this is a no-op.
  *
- * Call from an uploader-present seam (`ensureUploaderScope`), AFTER the scope
- * is attached so `*publicApi` exists for the lazy `getUploaderApi`. It also
- * (re-)activates the ctx locale's plugin coupling with the now-present manager
- * — idempotent via `LocaleManager`'s `_activated` guard — matching how
- * `LitBlock.initCallback` calls `localeManager.activate(pluginManager)` right
- * after constructing it.
+ * Call from an uploader-present seam (`ensureUploaderScope`), AFTER the scope is
+ * attached so the public API is registered for the lazy `getUploaderApi`. It
+ * also (re-)activates the ctx locale's plugin coupling with the now-present
+ * manager — idempotent via `LocaleManager`'s `_activated` guard.
+ *
+ * M-god step 8c: `PluginController` is container-owned. It has host/closure deps
+ * (`buildApi` wraps `buildPluginApi` + the container, `watchPlugins` wraps the
+ * `LazyPluginLoader` over the ctx's `LazyPluginsController`, `getUploaderApi`
+ * resolves the public API, `debug`), so it can't be a zero-arg container token —
+ * it is `bind`-ed here with a host-value factory, then the container owns its
+ * disposal (`container.dispose()` in reverse order). `UploaderPublicApi` reaches
+ * it via `@inject(() => PluginController)`.
  */
-export function ensurePluginManager(bag: SharedInstancesBag): void {
-  const ctx = bag.ctx;
-  if (ctx.has('*pluginManager')) {
+export function ensurePluginManager(container: ControllerContainer): void {
+  if (container.has(PluginController)) {
     return;
   }
-  // Register through `addCtxSharedInstance` (NOT a raw `ctx.add`) so the manager
-  // is recorded in the `*sharedContextInstances` bookkeeping map — exactly what
-  // v1's `LitBlock._addSharedContextInstance` did. `destroyCtx` walks that map
-  // and calls `.destroy()` on non-controller-owned instances, so this is what
-  // makes the plugin manager (its `LazyPluginLoader` subscriptions, registry)
-  // actually tear down on ctx destroy. A raw `ctx.add` would leak it.
-  addCtxSharedInstance(
-    ctx,
-    '*pluginManager',
-    () =>
+  // Resolve the ctx's `ConfigController` once — the plugin API and lazy loader
+  // read config directly off it (M-god step 7).
+  const config = container.get(ConfigController);
+
+  // Bind `PluginController` as a host-value factory on the per-ctx container.
+  // `getUploaderApi` is a LAZY thunk (`c.get(UploaderPublicApi)`, resolved at
+  // plugin-`setup()` time), so there is no construction cycle with the api. The
+  // first-write-wins guard above means this `bind` runs at most once per ctx.
+  container.bind(
+    PluginController,
+    (c) =>
       new PluginController({
         buildApi: (registry, pluginId, configSubscriptions) =>
-          buildPluginApi(registry, ctx, bag, pluginId, configSubscriptions),
-        getUploaderApi: () => bag.api,
+          buildPluginApi(registry, config, container, pluginId, configSubscriptions),
+        getUploaderApi: () => c.get(UploaderPublicApi),
         watchPlugins: (onCompute) => {
-          const loader = new LazyPluginLoader(ctx, onCompute);
+          const loader = new LazyPluginLoader(c.get(LazyPluginsController), config, onCompute);
           return () => loader.destroy();
         },
         // Scope debug output to the controller (not a hosting block) so its
-        // logs stay consistently prefixed, as v1's `SharedInstance` did.
-        debug: createDebugPrinter(() => ctx, 'PluginController'),
+        // logs stay consistently prefixed.
+        debug: createDebugPrinter(() => container, 'PluginController'),
       }),
   );
-  const pluginManager = ctx.has('*pluginManager') ? ctx.read('*pluginManager') : null;
-  if (pluginManager) {
-    ctx.uploaderController().localeManager.activate(pluginManager);
-  }
+
+  // Eagerly construct so lazy plugins / plugin sources start loading immediately
+  // (v1 parity: `LitBlock.initCallback` constructed the manager eagerly) and so
+  // the container records it for reverse-order disposal.
+  const pluginManager = container.get(PluginController);
+
+  // Bind + eagerly resolve the editor-safe `PluginManagerBridge` token so
+  // `<uc-config>` (which value-imports ONLY the declare-only token, keeping
+  // `PluginController` out of the editor bundle) can reach this same manager via
+  // `getOrNull`/`whenController` — WITHOUT dragging `PluginController` in. The
+  // eager `get` here constructs the bridge at the exact moment the manager
+  // becomes available, so any `whenController(PluginManagerBridge, cb)` waiter a
+  // sibling `<uc-config>` registered earlier fires now.
+  container.bind(PluginManagerBridge, (c) => ({ getPluginManager: () => c.get(PluginController) }));
+  container.get(PluginManagerBridge);
+
+  container.get(LocaleManager).activate(pluginManager);
 }

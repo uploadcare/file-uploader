@@ -1,14 +1,17 @@
 import { beforeAll, beforeEach, describe, expect, it, test, vi } from 'vitest';
 import { commands, page, userEvent } from 'vitest/browser';
+import { AppInfo } from '@/abstract/controllers/AppInfo.js';
+import { ClipboardController } from '@/abstract/controllers/ClipboardController.js';
+import { LazyPluginsController } from '@/abstract/controllers/LazyPluginsController.js';
+import { RouterController } from '@/abstract/controllers/RouterController.js';
 import { A11y } from '@/abstract/managers/a11y.js';
 import type { FileUploaderRegular } from '@/index.js';
 import { ACTIVITY_TYPES } from '@/lit/activity-constants.js';
-import { PubSub } from '@/lit/PubSubCompat.js';
-import type { SharedState } from '@/lit/SharedState.js';
 import { fileUploaderLazyPlugins } from '@/solutions/file-uploader/lazyPlugins.js';
 import { delay } from '@/utils/delay.js';
 import { TEST_IMAGE_URL } from './utils/constants';
 import { getCtxName } from './utils/getCtxName';
+import { containerOf, hasCtx } from './utils/registry';
 import { cleanup } from './utils/test-renderer';
 import '../types/jsx';
 
@@ -172,10 +175,10 @@ describe('File uploader regular — M9r solution-block safety net', () => {
         </>,
       );
 
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
       cleanup();
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(false);
+      await expect.poll(() => hasCtx(ctxName)).toBe(false);
     });
   });
 
@@ -189,14 +192,9 @@ describe('File uploader regular — M9r solution-block safety net', () => {
           <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
-      const el = page.getByTestId('uc-file-uploader-regular').query()! as FileUploaderRegular;
-      // Post-ChildBlock-port accessor: `router` is no longer a public instance
-      // getter (v1 `LitBlock` surface) — reach it via the protected `bag`,
-      // same pattern as `tests/blocks/activity-child-block.e2e.test.tsx`'s
-      // `routerOf`.
-      const router = (el as any).bag.router;
+      const router = containerOf(ctxName).get(RouterController);
 
       expect(router.navigationStrategy(ACTIVITY_TYPES.UPLOAD_LIST)).toBe('foreground');
       expect(router.navigationStrategy(ACTIVITY_TYPES.START_FROM)).toBe('foreground');
@@ -215,7 +213,7 @@ describe('File uploader regular — M9r solution-block safety net', () => {
           <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
       expect(page.getByTestId('uc-simple-btn').query()).toBeNull();
       expect(page.getByTestId('uc-dynamic-btn').query()).toBeNull();
@@ -230,7 +228,7 @@ describe('File uploader regular — M9r solution-block safety net', () => {
           <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
       const el = page.getByTestId('uc-file-uploader-regular').query()! as FileUploaderRegular;
       expect(el.isDynamicButtonActive).toBe(false);
@@ -256,13 +254,12 @@ describe('File uploader regular — M9r solution-block safety net', () => {
           <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
-      const ctx = PubSub.getCtx<SharedState>(ctxName)!;
-      const controller = ctx.uploaderController();
+      const container = containerOf(ctxName);
 
-      expect(controller.solutionName).toBe('uc-file-uploader-regular');
-      expect(ctx.read('*lazyPlugins')).toBe(fileUploaderLazyPlugins);
+      expect(container.get(AppInfo).solutionName).toBe('uc-file-uploader-regular');
+      expect(container.get(LazyPluginsController).get()).toBe(fileUploaderLazyPlugins);
     });
 
     it('registers the a11y block while connected', async () => {
@@ -276,7 +273,7 @@ describe('File uploader regular — M9r solution-block safety net', () => {
             <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
           </>,
         );
-        await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+        await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
         const el = page.getByTestId('uc-file-uploader-regular').query()!;
         expect(registerBlockSpy).toHaveBeenCalledWith(el);
@@ -299,11 +296,10 @@ describe('File uploader regular — M9r solution-block safety net', () => {
           <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
         </>,
       );
-      await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
+      await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
-      const ctx = PubSub.getCtx<SharedState>(ctxName)!;
-      const controller = ctx.uploaderController();
-      const clipboard = controller.clipboard as unknown as { _scopes: Set<Node> };
+      const container = containerOf(ctxName);
+      const clipboard = container.get(ClipboardController) as unknown as { _scopes: Set<Node> };
       const el = page.getByTestId('uc-file-uploader-regular').query()!;
 
       expect(clipboard._scopes.has(el)).toBe(true);
@@ -314,7 +310,7 @@ describe('File uploader regular — M9r solution-block safety net', () => {
       // The ctx is still alive (config + ctx-provider remain), so this proves
       // the scope was released on disconnect specifically, not via full
       // ctx/clipboard-controller teardown.
-      expect(PubSub.hasCtx(ctxName)).toBe(true);
+      expect(hasCtx(ctxName)).toBe(true);
       expect(clipboard._scopes.has(el)).toBe(false);
     });
   });

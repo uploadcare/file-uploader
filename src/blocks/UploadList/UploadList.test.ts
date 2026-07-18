@@ -3,11 +3,11 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import type { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
-import type { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import { PubSub } from '../../lit/PubSubCompat';
 import type { Uid } from '../../lit/Uid';
 import type { ConfigType, OutputCollectionState } from '../../types';
 import { delay } from '../../utils/delay';
@@ -28,12 +28,14 @@ const freshCtxName = (): string => {
 
 // `UploadList.controllerReady` fires `_updateUploadsState` (via the leading-edge
 // throttled collection-update tick that `subConfigValue('multiple')` triggers
-// immediately), which reads `bag.api.getOutputCollectionState()`, and wires
-// `bag.when('uploadCollection')` observers. Both `api` and `uploadCollection`
-// have no DI token and are registered by the upload stack, absent in a bare ctx —
-// so seed minimal fakes so adoption completes and the imperative derived-state
-// path runs. The migrated reactive reads under test (uploadList /
-// collectionErrors / filesViewMode) don't touch these fakes.
+// immediately), which reads `use(UploaderPublicApi).getOutputCollectionState()`,
+// and wires `bag.when('uploadCollection')` observers. `UploaderPublicApi` and
+// `UploadCollectionController` are container-owned but in production carry a live
+// upload stack; in a bare unit ctx they'd construct real instances with no
+// backing state — so `container.bind` a minimal fake for each (M-god step 8d:
+// the block reads them via `use()`, so the fakes must live on the container).
+// The migrated reactive reads under test (uploadList / collectionErrors /
+// filesViewMode) don't touch these fakes.
 type ApiSpies = {
   getOutputCollectionState: ReturnType<typeof vi.fn>;
   uploadAll: ReturnType<typeof vi.fn>;
@@ -91,14 +93,12 @@ const mount = async (
   clearAll: ReturnType<typeof vi.fn>;
 }> => {
   ensureUploaderCtx(ctxName);
-  const container = PubSub.getContainer(ctxName);
-  const ctx = PubSub.getCtx(ctxName);
+  const container = UploaderRegistry.get(ctxName);
   const config = container?.get(ConfigController);
   const collectionState = container?.get(CollectionStateController);
   const router = container?.get(RouterController);
   const telemetry = container?.get(TelemetryManager);
-  if (!container || !ctx || !config || !collectionState || !router || !telemetry)
-    throw new Error('controllers not resolved');
+  if (!container || !config || !collectionState || !router || !telemetry) throw new Error('controllers not resolved');
   // Config must be applied before the element adopts (the leading throttled tick
   // in `controllerReady` reads it), so set it up front.
   for (const [k, v] of Object.entries(opts.config ?? {})) {
@@ -106,8 +106,9 @@ const mount = async (
   }
   const { api, spies } = makeFakeApi(zeroCollectionState(opts.state));
   const { collection, clearAll } = makeFakeCollection();
-  ctx.add('*publicApi', api, true);
-  ctx.add('*uploadCollection', collection, true);
+  // Bind the fakes on the container (the block reads them via `use()`).
+  container.bind(UploaderPublicApi, () => api);
+  container.bind(UploadCollectionController, () => collection);
   const el = document.createElement('uc-upload-list') as UploadList;
   el.setAttribute('ctx-name', ctxName);
   document.body.append(el);
@@ -121,13 +122,20 @@ afterEach(() => {
   vi.restoreAllMocks();
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
-    if (PubSub.hasCtx(name)) PubSub.deleteCtx(name);
+    UploaderRegistry.dispose(name);
   }
 });
 
 describe('UploadList (M-god step 6b-8 migration)', () => {
   it('declares its dependencies via static uses (incl. the base RouterController)', () => {
-    expect(UploadList.uses).toEqual([ConfigController, CollectionStateController, RouterController, TelemetryManager]);
+    expect(UploadList.uses).toEqual([
+      ConfigController,
+      CollectionStateController,
+      RouterController,
+      TelemetryManager,
+      UploaderPublicApi,
+      UploadCollectionController,
+    ]);
   });
 
   it('re-renders the <uc-file-item> list reactively when uploadList changes (getTracked, no ctx.sub)', async () => {
@@ -284,5 +292,30 @@ describe('UploadList (M-god step 6b-8 migration)', () => {
     await el.updateComplete;
     await delay(0);
     expect(el.isConnected).toBe(true);
+  });
+
+  it('the groupInfo subscription fires the collection-update tick only when groupInfo changes, not on unrelated collection-state writes (per-key dedup)', async () => {
+    const ctxName = freshCtxName();
+    const { el, collectionState } = await mount(ctxName);
+
+    // Replace the throttled tick with a spy; the groupInfo handler calls
+    // `this._throttledHandleCollectionUpdate()` (read at call time), so this
+    // observes exactly which collection-state changes reach it.
+    const tick = vi.fn();
+    (el as unknown as { _throttledHandleCollectionUpdate: () => void })._throttledHandleCollectionUpdate = tick;
+
+    // Unrelated collection-state write -> the groupInfo handler is deduped
+    // (`Object.is` over the coarse notify), so no collection-update tick fires.
+    collectionState.set('commonProgress', 25);
+    expect(tick).not.toHaveBeenCalled();
+
+    // A truthy groupInfo change fires the tick once.
+    collectionState.set('groupInfo', {} as unknown as UploadcareGroup);
+    expect(tick).toHaveBeenCalledTimes(1);
+
+    // Re-setting the SAME group reference is `Object.is`-equal -> no re-fire.
+    const sameGroup = collectionState.get('groupInfo');
+    collectionState.set('groupInfo', sameGroup);
+    expect(tick).toHaveBeenCalledTimes(1);
   });
 });

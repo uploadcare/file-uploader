@@ -1,15 +1,13 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import type { SourceButtonConfig } from '../../blocks/SourceBtn/SourceBtn';
-import type { PubSub } from '../../lit/PubSubCompat';
-import type { SharedState } from '../../lit/SharedState';
-import type { SharedInstancesBag } from '../../lit/shared-instances';
 import { stringToArray } from '../../utils/stringToArray';
-import type { PluginSourceRegistration } from '../managers/plugin';
-import { sharedConfigKey } from '../sharedConfigKey';
+import type { ControllerContainer } from '../di/ControllerContainer';
+import { PluginController, type PluginSourceRegistration } from '../managers/plugin';
+import type { ConfigController } from './ConfigController';
 
 export type SourceListControllerOptions = {
-  ctx: PubSub<SharedState>;
-  sharedInstancesBag: SharedInstancesBag;
+  config: ConfigController;
+  container: ControllerContainer;
   onSourcesChange: (sources: SourceButtonConfig[]) => void;
 };
 
@@ -18,31 +16,47 @@ export class SourceListController implements ReactiveController {
   private _unsubscribePlugins?: () => void;
   private _unsubscribeConfig?: () => void;
   private _unsubscribePluginManagerWhen?: () => void;
-  private _ctx: PubSub<SharedState>;
-  private _sharedInstancesBag: SharedInstancesBag;
+  private _config: ConfigController;
+  private _container: ControllerContainer;
   private _onSourcesChange: (sources: SourceButtonConfig[]) => void;
 
   public constructor(host: ReactiveControllerHost, options: SourceListControllerOptions) {
-    this._ctx = options.ctx;
-    this._sharedInstancesBag = options.sharedInstancesBag;
+    this._config = options.config;
+    this._container = options.container;
     this._onSourcesChange = options.onSourcesChange;
     host.addController(this);
   }
 
   public hostConnected(): void {
-    this._unsubscribeConfig = this._ctx.sub(sharedConfigKey('sourceList'), (val: string) => {
+    // Read the `sourceList` config key directly off the `ConfigController`
+    // (M-god step 7: off the `*cfg/*` facade). Fire once with the current value,
+    // then on every actual change of this key — the same immediate-then-deduped
+    // per-key semantics the `ctx.sub('*cfg/sourceList', …)` facade
+    // subscription provided.
+    let lastSourceList = this._config.get('sourceList');
+    const applySourceList = (val: string): void => {
       this._rawSourceList = stringToArray(val);
       this._updateSources();
+    };
+    applySourceList(lastSourceList);
+    this._unsubscribeConfig = this._config.subscribe(() => {
+      const next = this._config.get('sourceList');
+      if (!Object.is(next, lastSourceList)) {
+        lastSourceList = next;
+        applySourceList(next);
+      }
     });
 
-    // `*pluginManager` is constructed by a v1 `LitBlock` (e.g. `<uc-drop-area>`)
-    // and isn't guaranteed to exist yet at hostConnected time — a `ChildBlock`-
-    // only composition (a ported solution root with no v1 block having
-    // connected yet) can adopt this controller before that registration lands.
-    // `bag.when` fires immediately if it's already there, else waits and fires
-    // once — re-run `_updateSources` either way so plugin-provided sources
-    // (e.g. camera) show up once the plugin manager becomes available.
-    this._unsubscribePluginManagerWhen = this._sharedInstancesBag.when('pluginManager', (pluginManager) => {
+    // `PluginController` is bound + resolved lazily by `ensureUploaderScope` /
+    // `ensurePluginManager` and isn't guaranteed to exist yet at hostConnected
+    // time — a `ChildBlock`-only composition (a ported solution root with no
+    // uploader block having attached yet) can adopt this controller before that
+    // registration lands. `container.whenController` fires immediately if it's
+    // already constructed, else waits and fires once on the first `get()` — the
+    // cross-token analogue of the former `bag.when('pluginManager', …)`. Re-run
+    // `_updateSources` either way so plugin-provided sources (e.g. camera) show
+    // up once the plugin manager becomes available.
+    this._unsubscribePluginManagerWhen = this._container.whenController(PluginController, (pluginManager) => {
       if (pluginManager.onPluginsChange) {
         this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._updateSources());
       }
@@ -64,7 +78,11 @@ export class SourceListController implements ReactiveController {
   }
 
   private _updateSources(): void {
-    const pluginManager = this._sharedInstancesBag.pluginManagerOrNull;
+    // `getOrNull` returns the `PluginController` only if already constructed on
+    // this container (never `new`-ing it), matching the former
+    // `bag.pluginManagerOrNull` null-tolerant read for a config-only/plugin-less
+    // scope.
+    const pluginManager = this._container.getOrNull(PluginController);
     const pluginSources = pluginManager?.snapshot().sources ?? [];
     const pluginSourceById = new Map(pluginSources.map((source) => [source.id, source]));
 

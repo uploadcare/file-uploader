@@ -3,7 +3,8 @@ import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { TypedData } from '../../abstract/TypedData';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { createDebugPrinter } from '../../lit/createDebugPrinter';
@@ -35,10 +36,10 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
   private _cdnUrl: string | null = null;
 
   /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
-  private _debugPrint = createDebugPrinter(() => this.bag.ctx, this.constructor.name);
+  private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
 
-  protected override controllerReady(ctrl: UploaderController): void {
-    super.controllerReady(ctrl);
+  protected override controllerReady(container: ControllerContainer): void {
+    super.controllerReady(container);
     this._mountEditor();
   }
 
@@ -77,14 +78,14 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
     // per-activity contract (ExternalSource precedent) rather than a runtime
     // guard the router already enforces.
     const { internalId } = this.use(RouterController).params as ActivityParams;
-    // The uploader-scope `*uploadCollection` instance may not have registered
-    // yet when this block's controller adopts (controllerReady is an
-    // adoption path) — go through `bag.when` rather than the throwing
-    // `bag.uploadCollection` getter (FileItem/UploadList precedent).
-    // `uploadCollection` has no DI token yet (registration race), so this
-    // observer stays on the v1 `bag` (step 8).
+    // The uploader-scope `UploadCollectionController` is resolved on the
+    // container only once the uploader/solution block attaches its scope
+    // (`ensureUploaderScope`), which can race this adoption path — go through
+    // `whenController` (fires now if resolved, else on first resolution) rather
+    // than the throwing `use(UploadCollectionController)`. Same
+    // now-or-when-available semantics as the v1 `bag.when('uploadCollection')`.
     this.trackSub(
-      this.bag.when('uploadCollection', (collection) => {
+      this.container.whenController(UploadCollectionController, (collection) => {
         const entry = collection.read(internalId as Uid);
         if (!entry) {
           throw new Error(`Entry with internalId "${internalId}" not found`);
