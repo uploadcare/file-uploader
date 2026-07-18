@@ -77,9 +77,13 @@ export class SignalMap<T extends object> {
 
   /** `Object.is` dedup; on a real change, updates the bag (+ any live signal) then coarse-notifies. */
   public set<K extends keyof T>(key: K, value: T[K]): void {
-    // Compares against the bag (undefined for an absent key) — byte-for-byte
-    // with the v1 `StateController.set` / `LocaleController.set` dedup.
-    if (Object.is(this.#bag[key], value)) {
+    // Dedup only when the key already EXISTS with an equal value. An absent key
+    // must never be treated as a present `undefined`: otherwise `set(key,
+    // undefined)` would no-op and never materialize the key, so a caller like
+    // `ConfigController.register` could not replace an explicit pre-registration
+    // `undefined` write. `Object.is` dedup is byte-for-byte with the v1
+    // `StateController.set` / `LocaleController.set` semantics.
+    if (Object.hasOwn(this.#bag, key) && Object.is(this.#bag[key], value)) {
       return;
     }
     this.#bag[key] = value;

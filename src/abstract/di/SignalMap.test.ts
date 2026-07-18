@@ -55,6 +55,24 @@ describe('SignalMap', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
+  it('set(key, undefined) creates a present key (distinct from absent)', () => {
+    const map = new SignalMap<{ a?: number }>();
+    const listener = vi.fn();
+    map.subscribe(listener);
+
+    // Absent → present-`undefined` is a real change: the key must materialize
+    // (otherwise a later default-seed could not tell it apart from never-set).
+    map.set('a', undefined);
+    expect(map.has('a')).toBe(true);
+    expect(map.get('a')).toBeUndefined();
+    expect(Object.hasOwn(map.values, 'a')).toBe(true);
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    // A second identical write on the now-present key dedups via Object.is.
+    map.set('a', undefined);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
+
   it('signal() materializes a per-key signal seeded from the bag', () => {
     const map = new SignalMap<Shape>({ a: 1 });
     expect(map.signal('a').get()).toBe(1);

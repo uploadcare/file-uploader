@@ -48,10 +48,12 @@ export class PubSub<T extends Record<string, unknown>> {
    */
   private static _ctxWaiters = new Map<string, Set<(ctx: PubSub<Record<string, unknown>>) => void>>();
   /**
-   * One per-ctx `ControllerContainer` per ctx-name. Created lazily the first
-   * time a `*cfg/*` key is touched on a context (so per-upload-entry stores,
-   * which never carry config keys, never get a controller). Each container
-   * owns exactly one (still-monolithic) `UploaderController` — it is the
+   * One per-ctx `ControllerContainer` per ctx-name. Created lazily by
+   * `_resolveContainer` the first time ANY container-routed key is touched on a
+   * context — a `*cfg/*` or `*l10n/*` key, one of the six collection-state keys,
+   * or `*lazyPlugins` (so per-upload-entry stores, which carry none of these,
+   * never get a controller). Each container owns exactly one (still-monolithic)
+   * `UploaderController` — it is the
    * creation/ownership seam: the controller is `bind`+`get` through the
    * container, and `container.dispose()` tears it down. This is the v1 → v2
    * strangler seam: config state lives in `controller.config`, not in the
@@ -83,7 +85,10 @@ export class PubSub<T extends Record<string, unknown>> {
 
   /** The `CollectionStateController` field for a collection key, or null. */
   private _collectionName(key: PropertyKey): keyof CollectionState | null {
-    return typeof key === 'string' && key in COLLECTION_STATE_KEYS
+    // Own-property check: `in` would also match inherited `Object.prototype`
+    // members (`constructor`, `toString`, …) and misroute those valid PubSub
+    // keys into `CollectionStateController`.
+    return typeof key === 'string' && Object.hasOwn(COLLECTION_STATE_KEYS, key)
       ? COLLECTION_STATE_KEYS[key as keyof typeof COLLECTION_STATE_KEYS]
       : null;
   }
