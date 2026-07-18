@@ -1,4 +1,6 @@
-import { html } from 'lit';
+import { html, type PropertyValues } from 'lit';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './modal.css';
 import { property } from 'lit/decorators.js';
@@ -8,6 +10,8 @@ import { getScrollLock } from '../../utils/scroll-lock';
 
 export class Modal extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
+
+  public static override readonly uses = [ConfigController, RouterController] as const;
 
   private _mouseDownTarget: EventTarget | null | undefined;
 
@@ -34,7 +38,9 @@ export class Modal extends ChildBlock {
     // The native <dialog> "close" event is dispatched from a queued task and
     // can land after this block's ctx was torn down (deferred destroyCtx once
     // the last block disconnects) — there is no router to notify then, and
-    // nothing left to close.
+    // nothing left to close. Deliberately kept on the null-safe `bag.routerOrNull`
+    // rather than `use(RouterController)`: the latter throws once the container
+    // is released, exactly the post-teardown race this guard exists to absorb.
     const router = this.bag.routerOrNull;
     if (!router) {
       return;
@@ -96,39 +102,45 @@ export class Modal extends ChildBlock {
     }
   }
 
-  protected override controllerReady(): void {
-    this.subConfigValue('modalBackdropStrokes', (val: boolean) => {
-      if (val) {
-        this.setAttribute('strokes', '');
-      } else {
-        this.removeAttribute('strokes');
-      }
-    });
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+
+    // Host CSS attribute: `:where([uc-modal])[strokes] > dialog::backdrop` keys
+    // off `strokes` ON THE HOST, so drive it there from the tracked config
+    // signal (the Copyright `willUpdate` + `getTracked` recipe). Reading
+    // `modalBackdropStrokes` via `getTracked` auto-tracks under `SignalWatcher`,
+    // so a config change re-runs this update and re-toggles the attribute —
+    // matching the reactivity of the v1 `subConfigValue('modalBackdropStrokes')`
+    // it replaces. `strokes` is not a signal, so toggling it schedules no
+    // further update.
+    this.toggleAttribute('strokes', !!this.use(ConfigController).getTracked('modalBackdropStrokes'));
 
     // Show when the router's foreground modal slot is this modal's id; hide
-    // otherwise. The router emits `modal-open`/`modal-close` centrally. Uses
-    // `subRouter` (no effective-activity dedup) so a modal opening on the id
-    // that's already the background activity still shows.
+    // otherwise. `router.modal` is a tracked signal (M-god step 6b-3), so a
+    // modal-open/close transition re-runs this update and drives the imperative
+    // `<dialog>` side-effects below — replacing the v1 `subRouter` subscription
+    // with no effective-activity dedup (a modal opening on the id that's already
+    // the background activity still transitions the modal slot, so it still shows).
     //
     // The scroll lock follows *router* state, not dialog state — a native
     // Esc-close reaches here with the <dialog> already closed (so `hide()`
     // early-returns), and the lock must release regardless. The shared
     // refcount keeps the body locked across modal-to-modal swaps and across
-    // other uploader instances on the same page.
-    this.subRouter(() => {
-      const isForeground = this.bag.router.modal === (this.id as RegisteredActivityType);
-      if (isForeground && this.uploader.config.get('modalScrollLock')) {
-        this._releaseScrollLock ??= getScrollLock(document).acquire();
-      } else {
-        this._releaseScrollLock?.();
-        this._releaseScrollLock = null;
-      }
-      if (isForeground) {
-        this.show();
-      } else {
-        this.hide();
-      }
-    });
+    // other uploader instances on the same page. `modalScrollLock` is read
+    // untracked (v1 read it fresh inside the router callback, not as its own
+    // reactive trigger) — the router-slot signal is what re-runs this.
+    const isForeground = this.use(RouterController).modal === (this.id as RegisteredActivityType);
+    if (isForeground && this.use(ConfigController).get('modalScrollLock')) {
+      this._releaseScrollLock ??= getScrollLock(document).acquire();
+    } else {
+      this._releaseScrollLock?.();
+      this._releaseScrollLock = null;
+    }
+    if (isForeground) {
+      this.show();
+    } else {
+      this.hide();
+    }
   }
 
   public override disconnectedCallback(): void {

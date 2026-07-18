@@ -2,12 +2,15 @@ import type { PropertyValues } from 'lit';
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { SourceListController } from '../../abstract/controllers';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../SourceBtn/SourceBtn';
 import { ChildBlock } from '../../lit/ChildBlock';
 
 export class SourceList extends ChildBlock {
+  public static override readonly uses = [ConfigController] as const;
+
   @state()
   private _sources: SourceButtonConfig[] = [];
 
@@ -50,7 +53,11 @@ export class SourceList extends ChildBlock {
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
-    if (this.uploader.config.get('sourceListWrap')) {
+    // Imperative `updated()` read (host inline-style side-effect) — `get()`, not
+    // the tracked `getTracked()`: v1 re-evaluated this only on re-render (driven
+    // by `_sources`), not as its own reactive trigger, so keep it untracked to
+    // preserve behavior exactly.
+    if (this.use(ConfigController).get('sourceListWrap')) {
       this.style.removeProperty('display');
     } else {
       this.style.display = 'contents';
