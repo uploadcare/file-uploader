@@ -7,6 +7,7 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
@@ -60,13 +61,15 @@ const AUTO_MODE_INLINE_THRESHOLD = 3;
 export class DynamicBtn extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-dynamic-btn'];
 
-  public static override readonly uses = [
-    ConfigController,
-    RouterController,
-    CollectionStateController,
-    UploadCollectionController,
-    UploaderPublicApi,
-  ] as const;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(RouterController) private readonly _router!: RouterController;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
+  // `UploadCollectionController` and `UploaderPublicApi` are NOT `@inject` fields:
+  // the former is uploader-scope-bound and can race this block's adoption (read
+  // via `whenController` in `controllerReady`, and via `use()` from click handlers
+  // that only fire once entries exist, i.e. after the scope attaches); the latter
+  // is read via `useOrNull` from a trailing throttle tick that can outlive
+  // release. An `@inject` field would throw in those windows.
 
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;
@@ -75,7 +78,7 @@ export class DynamicBtn extends ChildBlock {
   // config change re-renders — replacing the v1 `subConfigValue` mirror that fed
   // a `_mode` @state and imperatively recomputed `_mainAndRemainSources`.
   private get _mode(): DynamicButtonMode {
-    return this.use(ConfigController).getTracked('dynamicButtonViewMode');
+    return this._config.getTracked('dynamicButtonViewMode');
   }
 
   private _sourceListController: SourceListController | null = null;
@@ -99,7 +102,7 @@ export class DynamicBtn extends ChildBlock {
   // tracks under `SignalWatcher` — replacing the v1 `ctx.sub('*commonProgress')`
   // subscription that mirrored it into `_progress` @state.
   private get _progress(): number {
-    return this.use(CollectionStateController).getTracked('commonProgress');
+    return this._collectionState.getTracked('commonProgress');
   }
 
   private get isIdle() {
@@ -185,7 +188,7 @@ export class DynamicBtn extends ChildBlock {
     // adoption without removing the previous one (same shape as SourceList).
     this._teardownSourceListController();
     this._sourceListController = new SourceListController(this, {
-      config: this.use(ConfigController),
+      config: this._config,
       container,
       onSourcesChange: (sources) => {
         this._sources = sources;
@@ -208,11 +211,11 @@ export class DynamicBtn extends ChildBlock {
       }),
     );
 
-    const router = this.use(RouterController);
+    const router = this._router;
     this.trackSub(
       router.hooks.onFileAdd(() => {
         // With confirmUpload, always land on the upload list.
-        if (this.use(ConfigController).get('confirmUpload')) {
+        if (this._config.get('confirmUpload')) {
           return ACTIVITY_TYPES.UPLOAD_LIST;
         }
         // If the user navigated somewhere to add the file, fall through to the

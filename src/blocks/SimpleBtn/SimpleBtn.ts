@@ -3,6 +3,7 @@ import { property } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { LocaleController } from '../../abstract/controllers/LocaleController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './simple-btn.css';
@@ -13,15 +14,16 @@ import '../Icon/Icon';
 export class SimpleBtn extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];
 
-  public static override readonly uses = [ConfigController, UploaderPublicApi] as const;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI token —
+  // it is container-resolved (M-god step 8a), injected here via `@inject`.
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;
 
-  // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI token —
-  // it is container-resolved (M-god step 8a), reached here via `use()`.
   private readonly _handleClick = () => {
-    this.use(UploaderPublicApi).initFlow();
+    this._api.initFlow();
   };
 
   protected override subscriptionsFor(container: ControllerContainer) {
@@ -29,7 +31,7 @@ export class SimpleBtn extends ChildBlock {
   }
 
   public override render() {
-    const buttonTextKey = this.use(ConfigController).getTracked('multiple') ? 'upload-files' : 'upload-file';
+    const buttonTextKey = this._config.getTracked('multiple') ? 'upload-files' : 'upload-file';
     return html`
     <uc-drop-area .disabled=${!this.dropzone}>
     <button type="button" @click=${this._handleClick}>

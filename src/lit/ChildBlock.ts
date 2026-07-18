@@ -5,7 +5,7 @@ import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../abstract/controllers/ConfigController';
 import { LocaleController } from '../abstract/controllers/LocaleController';
 import { RouterController } from '../abstract/controllers/RouterController';
-import type { ControllerContainer, Token } from '../abstract/di/ControllerContainer';
+import { CONTAINER, type ControllerContainer, type Token } from '../abstract/di/ControllerContainer';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
@@ -373,6 +373,15 @@ export abstract class ChildBlock extends ChildBlockBase {
     // same instant the registry subscription used to be the refcount, preserving
     // exact teardown timing (`isCtxUnreferenced` reads `container.isUnreferenced()`).
     this._container = container;
+    // Tag this element with the container so `@inject(Token)` fields on migrated
+    // blocks resolve through the shared `inject.ts` getter (which reads
+    // `this[CONTAINER]`) — the same mechanism controllers use. Only the adoption
+    // path sets this (the container tags instances IT constructs, but a block is
+    // created by the browser and merely adopts its container here). Cleared in
+    // `_releaseController`, so pre-adoption / post-release `@inject` reads throw
+    // exactly as `use()` does; `render()` is gated on adoption, so reads there
+    // are safe.
+    (this as { [CONTAINER]?: ControllerContainer })[CONTAINER] = container;
     container.addConsumer(this);
     // Pre-warm declared dependencies so they exist before first render. Isolate-
     // and-warn: one dep's construction failure must not abort adoption (mirrors
@@ -423,6 +432,10 @@ export abstract class ChildBlock extends ChildBlockBase {
     // here (e.g. a null-notify after teardown) is a harmless no-op.
     container?.removeConsumer(this);
     this._container = null;
+    // Untag so a post-release `@inject` read throws (matching the `use()`
+    // contract) rather than resolving through a container this block no longer
+    // holds a consumer refcount on.
+    (this as { [CONTAINER]?: ControllerContainer })[CONTAINER] = undefined;
     if (container) this.controllerReleased(container);
   }
 
