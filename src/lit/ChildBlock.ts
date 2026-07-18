@@ -4,6 +4,7 @@ import { LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../abstract/controllers/ConfigController';
 import { LocaleController } from '../abstract/controllers/LocaleController';
+import { RouterController } from '../abstract/controllers/RouterController';
 import type { ControllerContainer, Token } from '../abstract/di/ControllerContainer';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
@@ -147,6 +148,32 @@ export abstract class ChildBlock extends ChildBlockBase {
    */
   protected useOrNull<T>(token: Token<T>): T | null {
     return this._container ? this._container.get(token) : null;
+  }
+
+  /**
+   * This ctx's DI container once adopted, else `null` (pre-adoption, or after
+   * `_releaseController` cleared it during a teardown / not-yet-adopted race).
+   * The null-safe counterpart to the `use()`/`useOrNull()` render-gate anchor,
+   * for plumbing wired at construction time — before adoption — such as
+   * `createDebugPrinter`, whose accessor must not throw when read early.
+   */
+  protected get containerOrNull(): ControllerContainer | null {
+    return this._container;
+  }
+
+  /**
+   * This ctx's `PubSub` store, resolved by name (NOT via `bag`). Transitional
+   * element-layer seam: `ensureUploaderScope` still needs a ctx to re-expose the
+   * `*`-keyed shared instances and to build the residual bag its api/plugin deps
+   * consume until those retire (9b-3). Exposed here so the uploader blocks can
+   * hand it over without touching `this.bag` (which step 9c deletes). Throws if
+   * the ctx isn't initialized — same contract as the former `this.bag.ctx` read.
+   *
+   * @deprecated Transitional v1 compat. Removed with `bag`/PubSub once the
+   * api/plugin bag deps are container-resolved.
+   */
+  protected requireCtx(): PubSub<SharedState> {
+    return this._requireCtx();
   }
 
   private _requireCtx(): PubSub<SharedState> {
@@ -492,7 +519,13 @@ export abstract class ChildBlock extends ChildBlockBase {
   /**
    * Subscribe to *any* router change. Fires immediately, then on every
    * notification — no value dedup. Auto-tracked. Call from `controllerReady`
-   * or later (`bag.router` requires the ctx).
+   * or later (the render gate guarantees the container is adopted, so `use()`
+   * resolves).
+   *
+   * M-god step 9b-1: reads the `RouterController` off the container
+   * (`use(RouterController)`) instead of `bag.router`. The `*router` shared
+   * instance re-exposes this very container singleton, so this is the same
+   * instance the `bag` getter returned — behavior-identical.
    *
    * @deprecated Transitional v1 compat — a migrated block reads router state
    * reactively via signals under `SignalWatcher`. Removed once every block is
@@ -500,7 +533,7 @@ export abstract class ChildBlock extends ChildBlockBase {
    */
   protected subRouter(callback: () => void): () => void {
     callback();
-    const unsub = this.bag.router.subscribe(callback);
+    const unsub = this.use(RouterController).subscribe(callback);
     this.trackSub(unsub);
     return unsub;
   }

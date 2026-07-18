@@ -16,7 +16,7 @@ export class UploadCtxProvider extends ChildBlock {
   public static override readonly uses = [EventBus, UploaderPublicApi, UploadCollectionController] as const;
 
   /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
-  private _debugPrint = createDebugPrinter(() => this.bag.ctx, this.constructor.name);
+  private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
 
   private _eventBridge: EventBridgeController | null = null;
 
@@ -77,7 +77,7 @@ export class UploadCtxProvider extends ChildBlock {
    */
   private _attachUploaderScopeIfNeeded(container: ControllerContainer): void {
     ensureUploaderScope(
-      this.bag,
+      this.requireCtx(),
       container,
       (...args) => this._debugPrint(...args),
       // Same contract as `ChildBlock.emit`: pure EventEmitter dispatch (no
