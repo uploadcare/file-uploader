@@ -4,6 +4,7 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -57,12 +58,11 @@ export type CameraMode = 'photo' | 'video';
 export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pause' | 'resume';
 
 export class CameraSource extends ChildBlock {
-  public static override readonly uses = [
-    ConfigController,
-    RouterController,
-    TelemetryManager,
-    UploaderPublicApi,
-  ] as const;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(RouterController) private readonly _router!: RouterController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  // `UploaderPublicApi` is uploader-scope-bound host-boundary state read via
+  // `use()` from `_toSend` (post-adoption), so it stays off `@inject`.
 
   private _unsubPermissions: (() => void) | null = null;
 
@@ -108,7 +108,7 @@ export class CameraSource extends ChildBlock {
   // change re-renders the video transform — replacing the v1
   // `subConfigValue('cameraMirror')` mirror into a `_videoTransformCss` @state.
   private get _videoTransformCss(): string | null {
-    return this.use(ConfigController).getTracked('cameraMirror') ? 'scaleX(-1)' : null;
+    return this._config.getTracked('cameraMirror') ? 'scaleX(-1)' : null;
   }
 
   @state()
@@ -173,7 +173,7 @@ export class CameraSource extends ChildBlock {
   }
 
   private _chooseActionWithCamera = () => {
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -221,7 +221,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleStartCamera = (): void => {
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -243,7 +243,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleRetake = (): void => {
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -257,7 +257,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleAccept = (): void => {
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -280,7 +280,7 @@ export class CameraSource extends ChildBlock {
 
   private _updateTimer = (): void => {
     const currentTime = Math.floor((performance.now() - this._startTime + this._elapsedTime) / 1000);
-    const maxVideoRecordingDuration = this.use(ConfigController).get('maxVideoRecordingDuration');
+    const maxVideoRecordingDuration = this._config.get('maxVideoRecordingDuration');
 
     if (typeof maxVideoRecordingDuration === 'number' && maxVideoRecordingDuration > 0) {
       const remainingTime = maxVideoRecordingDuration - currentTime;
@@ -347,7 +347,7 @@ export class CameraSource extends ChildBlock {
   private _startRecording = (): void => {
     try {
       this._chunks = [];
-      const mediaRecorderOptions = this.use(ConfigController).get('mediaRecorderOptions');
+      const mediaRecorderOptions = this._config.get('mediaRecorderOptions');
       this._options = {
         ...mediaRecorderOptions,
       };
@@ -377,7 +377,7 @@ export class CameraSource extends ChildBlock {
       }
     } catch (error) {
       console.error('Failed to start recording', error);
-      this.use(TelemetryManager).sendEventError(error, 'camera recording. Failed to start recording');
+      this._telemetry.sendEventError(error, 'camera recording. Failed to start recording');
     }
   };
 
@@ -393,7 +393,7 @@ export class CameraSource extends ChildBlock {
     this._mediaRecorder?.stop();
     this.classList.remove('uc-recording');
 
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -451,7 +451,7 @@ export class CameraSource extends ChildBlock {
       this._attachPreviewListeners(videoElement);
     } catch (error) {
       console.error('Failed to preview video', error);
-      this.use(TelemetryManager).sendEventError(error, 'camera previewing. Failed to preview video');
+      this._telemetry.sendEventError(error, 'camera previewing. Failed to preview video');
     }
   };
 
@@ -548,7 +548,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleVideo = (status: CameraStatus): void => {
-    const enableAudioRecording = this.use(ConfigController).get('enableAudioRecording');
+    const enableAudioRecording = this._config.get('enableAudioRecording');
     if (status === CameraSourceEvents.PLAY) {
       this._timerHidden = false;
       this._tabCameraHidden = true;
@@ -617,7 +617,7 @@ export class CameraSource extends ChildBlock {
     this._canvas.height = videoEl.videoHeight;
     this._canvas.width = videoEl.videoWidth;
 
-    if (this.use(ConfigController).get('cameraMirror')) {
+    if (this._config.get('cameraMirror')) {
       this._ctx.translate(this._canvas.width, 0);
       this._ctx.scale(-1, 1);
     }
@@ -635,14 +635,14 @@ export class CameraSource extends ChildBlock {
     }
 
     if (tabId === CameraSourceTypes.VIDEO) {
-      const enableAudioRecording = this.use(ConfigController).get('enableAudioRecording');
+      const enableAudioRecording = this._config.get('enableAudioRecording');
       this._currentTimelineIcon = 'play';
       this._currentIcon = 'video-camera-full';
       this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
       this._audioToggleMicrophoneHidden = !enableAudioRecording;
     }
 
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -709,11 +709,11 @@ export class CameraSource extends ChildBlock {
     // token — it is container-resolved (M-god step 8a), reached via `use()`.
     this.use(UploaderPublicApi).addFileFromObject(file, { source: UploadSource.CAMERA });
 
-    this.use(RouterController).traverse('onFileAdd');
+    this._router.traverse('onFileAdd');
   };
 
   private get _cameraModes(): CameraMode[] {
-    return stringToArray(this.use(ConfigController).get('cameraModes')).filter(
+    return stringToArray(this._config.get('cameraModes')).filter(
       (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
     );
   }
@@ -726,8 +726,7 @@ export class CameraSource extends ChildBlock {
 
     this.classList.toggle('uc-initialized', state === 'granted');
 
-    const visibleAudio =
-      this._activeTab === CameraSourceTypes.VIDEO && this.use(ConfigController).get('enableAudioRecording');
+    const visibleAudio = this._activeTab === CameraSourceTypes.VIDEO && this._config.get('enableAudioRecording');
     const currentIcon = this._activeTab === CameraSourceTypes.PHOTO ? 'camera-full' : 'video-camera-full';
 
     if (state === 'granted') {
@@ -795,7 +794,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _capture = async (): Promise<void> => {
-    const enableAudioRecording = this.use(ConfigController).get('enableAudioRecording');
+    const enableAudioRecording = this._config.get('enableAudioRecording');
     const constraints: MediaStreamConstraints = {
       video: { ...DEFAULT_VIDEO_CONFIG },
       audio: enableAudioRecording ? ({} as MediaTrackConstraints) : false,
@@ -836,7 +835,7 @@ export class CameraSource extends ChildBlock {
     } catch (error) {
       this._setPermissionsState('denied');
       console.log('Failed to capture camera', error);
-      this.use(TelemetryManager).sendEventError(error, 'camera capturing. Failed to capture camera');
+      this._telemetry.sendEventError(error, 'camera capturing. Failed to capture camera');
     }
   };
 
@@ -864,7 +863,7 @@ export class CameraSource extends ChildBlock {
     } catch (error) {
       this._teardownPermissionListeners();
       console.log('Failed to use permissions API. Fallback to manual request mode.', error);
-      this.use(TelemetryManager).sendEventError(error, 'camera permissions. Failed to use permissions API');
+      this._telemetry.sendEventError(error, 'camera permissions. Failed to use permissions API');
       this._capture();
     }
   };
@@ -884,13 +883,13 @@ export class CameraSource extends ChildBlock {
     try {
       await navigator.mediaDevices.getUserMedia({
         video: true,
-        audio: this.use(ConfigController).get('enableAudioRecording'),
+        audio: this._config.get('enableAudioRecording'),
       });
       await this._getDevices();
 
       navigator.mediaDevices.addEventListener('devicechange', this._getDevices);
     } catch (error) {
-      this.use(TelemetryManager).sendEventError(error, 'camera devices. Failed to get user media');
+      this._telemetry.sendEventError(error, 'camera devices. Failed to get user media');
       console.log('Failed to get user media', error);
     }
   };
@@ -898,7 +897,7 @@ export class CameraSource extends ChildBlock {
   private _getDevices = async (): Promise<void> => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
-      const enableAudioRecording = this.use(ConfigController).get('enableAudioRecording');
+      const enableAudioRecording = this._config.get('enableAudioRecording');
 
       this._cameraDevices = devices
         .filter((device) => device.kind === 'videoinput')
@@ -924,7 +923,7 @@ export class CameraSource extends ChildBlock {
       this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
       this._selectedAudioId = this._audioDevices[0]?.value ?? null;
     } catch (error) {
-      this.use(TelemetryManager).sendEventError(error, 'camera devices. Failed to get devices');
+      this._telemetry.sendEventError(error, 'camera devices. Failed to get devices');
       console.log('Failed to get devices', error);
     }
   };
@@ -1015,7 +1014,7 @@ export class CameraSource extends ChildBlock {
         <button
           type="button"
           class="uc-mini-btn"
-          @click=${() => this.use(RouterController).traverse('onBack')}
+          @click=${() => this._router.traverse('onBack')}
           title=${this.l10n('back')}
         >
           <uc-icon name="back"></uc-icon>
@@ -1034,7 +1033,7 @@ export class CameraSource extends ChildBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${() => this.use(RouterController).traverse('onClose')}
+          @click=${() => this._router.traverse('onClose')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >

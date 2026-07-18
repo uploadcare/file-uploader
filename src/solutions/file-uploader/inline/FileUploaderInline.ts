@@ -5,6 +5,7 @@ import { ConfigController } from '../../../abstract/controllers/ConfigController
 import { LocaleController } from '../../../abstract/controllers/LocaleController';
 import { RouterController } from '../../../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../../../abstract/di/ControllerContainer';
+import { inject } from '../../../abstract/di/inject';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
@@ -32,12 +33,10 @@ export class FileUploaderInline extends SolutionChildBlock {
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-inline'];
 
-  public static override readonly uses = [
-    RouterController,
-    ConfigController,
-    CollectionStateController,
-    TelemetryManager,
-  ] as const;
+  @inject(RouterController) private readonly _router!: RouterController;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
 
   /**
    * Whether the cancel button shows — drives `.uc-cancel-btn[hidden]`, which the
@@ -59,17 +58,17 @@ export class FileUploaderInline extends SolutionChildBlock {
 
   private _handleCancel = (): void => {
     if (this._couldHistoryBack) {
-      this.use(RouterController).traverse('onBack');
+      this._router.traverse('onBack');
       return;
     }
 
     if (this._couldShowList) {
-      this.use(RouterController).setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
+      this._router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
     }
   };
 
   private get _couldHistoryBack(): boolean {
-    const history = this.use(RouterController).history;
+    const history = this._router.history;
     if (history.length <= 1) {
       return false;
     }
@@ -82,14 +81,14 @@ export class FileUploaderInline extends SolutionChildBlock {
     // `getTracked()`) preserves that: this getter feeds the router-driven
     // `_couldCancel` recompute, so it must not itself subscribe the render to
     // these keys.
-    const uploadList = this.use(CollectionStateController).get('uploadList');
-    return this.use(ConfigController).get('showEmptyList') || uploadList.length > 0;
+    const uploadList = this._collectionState.get('uploadList');
+    return this._config.get('showEmptyList') || uploadList.length > 0;
   }
 
   protected override controllerReady(container: ControllerContainer): void {
     super.controllerReady(container);
 
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
 
@@ -97,7 +96,7 @@ export class FileUploaderInline extends SolutionChildBlock {
 
     // Inline renders every activity in place (no modal), so all navigation
     // targets the background slot; a completed flow returns to start-from.
-    const router = this.use(RouterController);
+    const router = this._router;
     router.navigationStrategy = () => 'background';
     router.configure({ doneActivity: ACTIVITY_TYPES.START_FROM });
 
@@ -129,7 +128,7 @@ export class FileUploaderInline extends SolutionChildBlock {
     // (`_subDerived`): fire once now, then only when the `uploadList` reference
     // actually changes — NOT on every coarse collection-state notify. This does
     // NOT drive `_couldCancel` (see its doc): that stays a router-only recompute.
-    const collectionState = this.use(CollectionStateController);
+    const collectionState = this._collectionState;
     let lastUploadList = collectionState.get('uploadList');
     const applyUploadListActivity = (list: typeof lastUploadList) => {
       if (list.length > 0 && router.currentActivity === initActivity) {

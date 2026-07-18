@@ -53,18 +53,6 @@ const ChildBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitE
 export abstract class ChildBlock extends ChildBlockBase {
   public static styleAttrs: string[] = [];
 
-  /**
-   * The container-owned controllers this block depends on. A migrated block
-   * declares them here (`static override readonly uses = [ConfigController] as
-   * const`) and reads them at render time via `this.use(Token)`. `uses` is
-   * documentation + pre-warm + drives nothing type-wise (`use()` is generically
-   * typed off its token argument, not off this list): on adoption every entry is
-   * eagerly resolved from this ctx's container so the dep exists before first
-   * render. Empty by default — blocks may also read config imperatively via
-   * `subConfigValue`.
-   */
-  public static readonly uses: readonly Token<unknown>[] = [];
-
   @property({ attribute: 'ctx-name' })
   public ctxName: string | undefined = undefined;
 
@@ -383,16 +371,10 @@ export abstract class ChildBlock extends ChildBlockBase {
     // are safe.
     (this as { [CONTAINER]?: ControllerContainer })[CONTAINER] = container;
     container.addConsumer(this);
-    // Pre-warm declared dependencies so they exist before first render. Isolate-
-    // and-warn: one dep's construction failure must not abort adoption (mirrors
-    // controllerReady / teardown / EventBus fan-out).
-    for (const token of (this.constructor as typeof ChildBlock).uses) {
-      try {
-        container.get(token);
-      } catch (err) {
-        console.warn(`[uc] ${this.tagName.toLowerCase()}: pre-warming a declared dependency threw`, err);
-      }
-    }
+    // Container-owned controllers are resolved lazily on first access through
+    // each block's `@inject` fields (and via `use()`/`whenController` for the
+    // scope-bound ones), so there is no eager pre-warm here — adoption only tags
+    // the container and wires the subscriptions below.
     const rerender = () => this.requestUpdate();
     for (const subscribe of this.subscriptionsFor(container)) {
       this._subs.push(subscribe(rerender));
