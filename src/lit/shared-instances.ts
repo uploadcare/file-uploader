@@ -121,6 +121,13 @@ const instanceKeyMap = {
  * `LitUploaderBlock`'s `_addSharedContextInstance` calls for these four keys
  * are re-exposers only (`() => this.sharedCtx.uploaderController().X`) — the
  * same recipe as the others above.
+ *
+ * `*pluginManager` joins the set in M-god step 8c: `ensurePluginManager` now
+ * `bind`s + resolves `PluginController` on the per-ctx container (its
+ * `*pluginManager` registration is a re-exposer of that container instance), so
+ * the container owns its disposal (`container.dispose()` in reverse order). It
+ * is skipped here for the same reason as the others — otherwise it would be
+ * torn down twice.
  */
 export const controllerOwnedInstanceKeys: ReadonlySet<keyof SharedState> = new Set([
   instanceKeyMap.eventEmitter,
@@ -130,6 +137,7 @@ export const controllerOwnedInstanceKeys: ReadonlySet<keyof SharedState> = new S
   instanceKeyMap.uploadCollection,
   instanceKeyMap.a11y,
   instanceKeyMap.clipboard,
+  instanceKeyMap.pluginManager,
   instanceKeyMap.secureUploadsManager,
   instanceKeyMap.uploadController,
   instanceKeyMap.validationManager,

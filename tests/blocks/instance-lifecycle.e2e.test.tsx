@@ -5,6 +5,7 @@ import { UploadController } from '@/abstract/controllers/UploadController';
 import { UploadEventsController } from '@/abstract/controllers/UploadEventsController';
 import { ValidationController } from '@/abstract/controllers/ValidationController';
 import { localeStateKey } from '@/abstract/managers/LocaleManager';
+import { PluginController } from '@/abstract/managers/plugin';
 import { TelemetryManager } from '@/abstract/managers/TelemetryManager';
 import type { Config, UploadCtxProvider } from '@/index.js';
 import { PubSub } from '@/lit/PubSubCompat';
@@ -501,6 +502,11 @@ describe('instance lifecycle (controller-owned identity pins, M9l final-review f
       '*uploadCollection': () => controller.collection,
       '*a11y': () => controller.a11y,
       '*clipboard': () => controller.clipboard,
+      // Container-owned (M-god step 8c), resolved via the container like the
+      // upload stack below — no dedicated `UploaderController.pluginManager`
+      // getter (a value import of `PluginController` there would drag it +
+      // `PluginRegistry` into the editor-alone bundle and blow its 50 KB limit).
+      '*pluginManager': () => controller.container.get(PluginController),
       '*secureUploadsManager': () => controller.container.get(SecureUploadsController),
       '*uploadController': () => controller.container.get(UploadController),
       '*validationManager': () => controller.container.get(ValidationController),

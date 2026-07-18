@@ -2,7 +2,7 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
-import type { RouterController } from '../../abstract/controllers/RouterController';
+import { RouterController } from '../../abstract/controllers/RouterController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
 import type {
   Owned,
@@ -26,7 +26,7 @@ export class PluginActivityHost extends ActivityChildBlock {
 
   /** Test-only public surface (`plugin-activity-host.e2e.test.tsx`) mirroring v1's `LitBlock.router` getter. */
   public get router(): RouterController {
-    return this.bag.router;
+    return this.use(RouterController);
   }
 
   protected override controllerReady(ctrl: UploaderController): void {
@@ -66,7 +66,7 @@ export class PluginActivityHost extends ActivityChildBlock {
       return;
     }
     try {
-      this._dispose = this.registration.render(container, this.bag.router.params) ?? undefined;
+      this._dispose = this.registration.render(container, this.use(RouterController).params) ?? undefined;
       this._isMounted = true;
     } catch (error) {
       console.error(`[Plugin "${this.registration.pluginId}"] Activity render() threw an error`, error);
@@ -103,9 +103,15 @@ export class PluginActivityRenderer extends ChildBlock {
 
   // Transiently null until the shared PluginController registers (bag.when) —
   // render falls back to an empty activity list meanwhile (Icon/FileItem precedent).
-  // This is the block's ONLY external read: the plugin manager is NOT
-  // container-resolved (no DI token), so it stays on the v1 `bag` path — there is
-  // no config/activity/collection-state read here to move onto `use()` (step 8).
+  // M-god step 8c: `PluginController` IS now container-owned (bound by
+  // `ensurePluginManager`), and `PluginActivityHost`'s router read moved onto
+  // `use(RouterController)`. But this plugin-manager read stays on the
+  // absence-tolerant `bag.when('pluginManager')`: the binding is CONDITIONAL —
+  // it exists only once an uploader scope attaches (`ensureUploaderScope`), which
+  // may be after this block's `controllerReady` fires (or never, in a bare
+  // ctx — see the "renders an empty activity list" spec). A synchronous
+  // `use(PluginController)` would throw on an unbound token; `bag.when` subscribes
+  // and fires when/if it appears, yielding the SAME container instance.
   private _pluginManager: PluginController | null = null;
 
   protected override controllerReady(): void {

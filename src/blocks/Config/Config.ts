@@ -58,9 +58,16 @@ export class Config extends ChildBlock {
   // (`set`/`setCustom`/`register`). This is the SAME instance the rest of the app
   // reads (v1's `this.uploader.config` resolved to `container.get(ConfigController)` too),
   // so writes land where every reader looks. The plugin manager (custom-config
-  // registry) has no DI token, so it stays on the v1 `bag.when('pluginManager')`/
+  // registry) reads stay on the v1 `bag.when('pluginManager')`/
   // `bag.pluginManagerOrNull` path (see `_getCustomConfigDefinition` /
-  // `_setupCustomConfigs`), migrated once it grows a container-owned controller.
+  // `_setupCustomConfigs`) for two reasons, even though M-god step 8c made
+  // `PluginController` container-owned: (1) `<uc-config>` runs in config-only ctxs
+  // where no uploader scope ever binds `PluginController`, so the reads must stay
+  // null-/absence-tolerant (a synchronous `use(PluginController)` would throw on
+  // the unbound token); and (2) `<uc-config>` is in the editor-alone bundle, so a
+  // value import of `PluginController` here would drag it (and `PluginRegistry`)
+  // into that bundle and blow its 50 KB size-limit — `bag`/`import type` keep it
+  // out. `bag.when('pluginManager')` yields the SAME container instance.
   public static override readonly uses = [ConfigController] as const;
 
   public declare attributesMeta: Partial<ConfigPlainType> & {

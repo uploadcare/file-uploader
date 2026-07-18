@@ -12,6 +12,7 @@ import { BASIC_IMAGE_WILDCARD, BASIC_VIDEO_WILDCARD } from '../utils/fileTypes';
 import { UploadSource } from '../utils/UploadSource';
 import type { UploaderController } from './controllers/UploaderController';
 import { ControllerContainer } from './di/ControllerContainer';
+import { PluginController } from './managers/plugin';
 import type { UploaderPublicApi } from './UploaderPublicApi';
 import { UploaderPublicApi as UploaderPublicApiClass } from './UploaderPublicApi';
 
@@ -741,6 +742,45 @@ describe('UploaderPublicApi', () => {
       const container = new ControllerContainer();
       const api = container.get(UploaderPublicApiClass);
       expect(() => api.getOutputCollectionState()).toThrow(/bag bridge/);
+    });
+  });
+
+  describe('plugin manager @inject (M-god step 8c)', () => {
+    it('the api resolves its plugin manager from the container — the same instance as bag.pluginManager / *pluginManager', () => {
+      const { bag, ctx, ctrl } = setup();
+      const fromContainer = ctrl.container.get(PluginController);
+      // `ensurePluginManager` bound + eagerly resolved it, and the `*pluginManager`
+      // shared instance is a re-exposer of that exact container instance.
+      expect(bag.pluginManager).toBe(fromContainer);
+      expect(ctx.read('*pluginManager')).toBe(fromContainer);
+    });
+
+    it("initFlow's single-source path reads sources off the container-resolved PluginController the api @injects", async () => {
+      const { api, ctrl, bag } = setup();
+      ctrl.config.set('sourceList', 'local');
+      const onSelect = vi.fn();
+      // Register on the container instance (via the bag re-exposer). The api's
+      // `@inject(() => PluginController)` must see this exact registry.
+      bag.pluginManager.registry.addSource('p', { id: 'local', label: 'Local', onSelect });
+
+      api.initFlow();
+      await flush();
+
+      expect(onSelect).toHaveBeenCalledTimes(1);
+    });
+
+    it('the container owns PluginController disposal — destroy() runs exactly once on ctx teardown (no double-destroy)', () => {
+      const { ctrl, ctxName } = setup();
+      const pluginManager = ctrl.container.get(PluginController);
+      const destroySpy = vi.spyOn(pluginManager, 'destroy');
+
+      // `deleteCtx` → `destroyCtx` map-walk (skips `.destroy()` for
+      // `*pluginManager`, a controllerOwnedInstanceKey) → `container.dispose()`
+      // (which calls it once). If the key were NOT controller-owned, the map-walk
+      // would destroy it too → 2 calls.
+      PubSub.deleteCtx(ctxName);
+
+      expect(destroySpy).toHaveBeenCalledTimes(1);
     });
   });
 });
