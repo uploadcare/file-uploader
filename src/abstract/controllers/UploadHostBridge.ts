@@ -17,8 +17,8 @@ export type UploadHostDebug = (...args: unknown[]) => void;
 
 /**
  * The element/DOM-layer values the upload stack needs — everything that can
- * only be resolved from the shared instances `bag` (the public API, plugin
- * hooks, output-state readers, the host `emit`, and the telemetry error sinks).
+ * only be resolved at the DOM boundary (the public API, plugin hooks,
+ * output-state readers, the host `emit`, and the telemetry error sinks).
  *
  * It is a DI token first and foremost: `ensureUploaderScope` (element layer)
  * `bind`s a concrete instance built by `buildUploaderScopeDeps`, and the four

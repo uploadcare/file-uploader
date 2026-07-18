@@ -25,8 +25,8 @@ export type UploaderScopeDeps = {
 
 /**
  * Single source of truth for the upload-stack registration deps that live on
- * the DOM/PubSub side (resolved from the per-ctx `ControllerContainer`) — the
- * four upload-stack constructors and the `UploadHostBridge` value the
+ * the DOM side (resolved from the per-ctx `ControllerContainer`) — the four
+ * upload-stack constructors and the `UploadHostBridge` value the
  * abstract-layer controllers `@inject`. Both the ported `UploadCtxProvider` and
  * `<uc-drop-area>` build the identical container-derived bridge; only `debug`
  * and `emit` differ per host and stay caller-supplied — `emit` in particular
@@ -34,19 +34,16 @@ export type UploaderScopeDeps = {
  * `UploadHostBridge.emit`), so it is never derived here.
  *
  * The three telemetry error sinks (`onResolverError`/`onUploadError`/
- * `onValidatorError`) are built here too — the v1 closures moved verbatim from
- * `UploaderController.attachUploaderScope`, still wrapping
+ * `onValidatorError`) are built here too, wrapping
  * `TelemetryManager.sendEventError` in a never-throw try/catch (an upload's
  * async error handler can fire after the scope is torn down) and logging via the
  * host `debug`.
  *
- * M-god step 9c-1: resolves every instance off the `ControllerContainer` (was
- * the shared instances `bag`) — the same per-ctx singletons the bag re-exposed:
+ * Resolves every instance off the `ControllerContainer`:
  * `container.get(TelemetryManager)` for the sinks, `container.get(EventEmitter)`
  * / `container.get(UploaderPublicApi)` for dispatch/output, and
  * `container.getOrNull` / `container.whenController` for the conditionally-bound
- * `PluginController` (the container-native equivalents of `bag.pluginManager?`
- * and `bag.wait('pluginManager')`).
+ * `PluginController`.
  */
 export function buildUploaderScopeDeps(
   container: ControllerContainer,

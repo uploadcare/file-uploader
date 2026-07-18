@@ -8,7 +8,7 @@ type EventBridgeHost = ReactiveControllerHost & EventTarget;
  * host element (`<uc-upload-ctx-provider>`).
  *
  * A reactive Lit controller — the UI-coupled half of the event system. The
- * DOM-free controllers emit on the per-ctx `UploaderController.events` bus; this
+ * DOM-free controllers emit on the per-ctx {@link EventBus}; this
  * controller subscribes (`onAny`) while the host is connected and re-dispatches
  * each event as `new CustomEvent(type, { detail })`, exactly as v1's
  * `EventEmitter._dispatch` did. It subscribes immediately (so events flow

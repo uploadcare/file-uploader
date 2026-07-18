@@ -23,9 +23,7 @@ export function buildPluginApi(
   pluginId: string,
   configSubscriptions: (() => void)[],
 ): PluginApi {
-  // M-god step 9c-1: router/collection resolved off the container (was the
-  // shared instances `bag`'s `router`/`uploadCollection` getters) — the same
-  // per-ctx singletons those getters re-exposed.
+  // Router/collection resolved off the per-ctx container.
   const router = container.get(RouterController);
   const registryApi: PluginRegistryApi = {
     registerSource: (source) => registry.addSource(pluginId, source),

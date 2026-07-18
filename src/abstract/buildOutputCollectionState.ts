@@ -36,11 +36,9 @@ export function buildOutputCollectionState<
   TGroupFlag extends GroupFlag = 'maybe-has-group',
 >(container: ControllerContainer): OutputCollectionState<TCollectionStatus, TGroupFlag> {
   const state = {} as OutputCollectionState<TCollectionStatus, TGroupFlag>;
-  // M-god step 9c-1: derived collection keys read straight off the controllers
-  // (was `ctx.read('*commonProgress')` etc. and `bag.uploadCollection.size`).
+  // Derived collection keys read straight off the controllers.
   // `CollectionStateController` owns `*commonProgress`/`*collectionErrors`/
-  // `*groupInfo` (the same instance the v1 ctx facade routes those keys through), so
-  // these reads are byte-identical to the old `ctx.read`.
+  // `*groupInfo` (the same instance the v1 ctx facade routes those keys through).
   const collectionState = container.get(CollectionStateController);
   const uploadCollection = container.get(UploadCollectionController);
 

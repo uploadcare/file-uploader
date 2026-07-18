@@ -6,10 +6,8 @@ import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
  * The flat output-entry list feeding `getOutputCollectionState().allEntries` and
  * the upload-events host bridge.
  *
- * M-god step 9c-1: resolved off the per-ctx `ControllerContainer` (was the
- * shared instances `bag`) — the collection's `items()` mapped through the public
- * api's `getOutputItem`, the exact same two instances `bag.uploadCollection` /
- * `bag.api` re-exposed, so the output shape is byte-identical.
+ * Resolved off the per-ctx `ControllerContainer`: the collection's `items()`
+ * mapped through the public api's `getOutputItem`.
  */
 export const getOutputData = (container: ControllerContainer) => {
   const entriesIds = container.get(UploadCollectionController).items();

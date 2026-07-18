@@ -49,27 +49,23 @@ export type ApiAddFileCommonOptions = {
 /**
  * The documented public JS API (`element.getAPI()`).
  *
- * M-god step 8a: rewritten off the `bag`/`SharedInstance` proxy onto container
- * `@inject`. It is now a thin facade over single-responsibility controllers
- * resolved from the per-ctx DI container — config/locale/collection/collection-
- * state/events/router are injected fields, so this class no longer extends
- * `SharedInstance`, holds no ctx, and reads no `*cfg/*`/`*l10n/*` facade keys.
- * It is created through the container (`ensureUploaderScope` → `container.get`)
- * so `@inject` resolves, and stays reachable as `bag.api` / `*publicApi` /
- * `UploaderController.api` (the same single instance) during the transition.
+ * A thin facade over single-responsibility controllers resolved from the
+ * per-ctx DI container — config/locale/collection/collection-state/events/
+ * router are injected fields. It is created through the container
+ * (`ensureUploaderScope` → `container.get`) so `@inject` resolves, and is the
+ * single per-ctx instance every caller reaches.
  *
- * M-god step 8c: the plugin manager is now container-resolved too —
- * `@inject(() => PluginController)` (a lazy thunk, resolved at plugin-read time;
- * `PluginController` is bound on the container by `ensurePluginManager`, which
- * runs in the same `ensureUploaderScope` that registers this api, so it is
- * always available by the time any plugin read fires on user action).
+ * The plugin manager is container-resolved via `@inject(() => PluginController)`
+ * (a lazy thunk, resolved at plugin-read time; `PluginController` is bound on
+ * the container by `ensurePluginManager`, which runs in the same
+ * `ensureUploaderScope` that registers this api, so it is always available by
+ * the time any plugin read fires on user action).
  *
- * M-god step 9c-1: the last bag dependency is gone. `getOutputCollectionState`
- * now calls `buildOutputCollectionState(this._container)` — the api reaches its
- * own per-ctx `ControllerContainer` through the `CONTAINER` tag every
- * container-built instance carries (the same tag `@inject` reads), so
- * `buildOutputCollectionState` resolves the derived-collection controllers
- * itself. The bag bridge is removed; the api has NO shared instances dependency.
+ * `getOutputCollectionState` calls `buildOutputCollectionState(this._container)`
+ * — the api reaches its own per-ctx `ControllerContainer` through the
+ * `CONTAINER` tag every container-built instance carries (the same tag
+ * `@inject` reads), so `buildOutputCollectionState` resolves the
+ * derived-collection controllers itself.
  */
 export class UploaderPublicApi {
   @inject(ConfigController) private readonly _config!: ConfigController;
@@ -79,9 +75,8 @@ export class UploaderPublicApi {
   @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
   @inject(RouterController) private readonly _router!: RouterController;
   // Lazy thunk: resolved at plugin-read time (`_pluginsReady`/`initFlow`), so
-  // there is no construction cycle. Same instance as `bag.pluginManager` /
-  // `ctx.read('*pluginManager')` (the re-exposer registered by
-  // `ensurePluginManager` points at this container binding).
+  // there is no construction cycle. `ensurePluginManager` binds the same
+  // per-ctx `PluginController` instance on the container this thunk reads.
   @inject(() => PluginController) private readonly _pluginManager!: PluginController;
 
   // `createL10n` reads the injected `LocaleController` live on every lookup, so a
@@ -414,10 +409,9 @@ export class UploaderPublicApi {
   };
 
   private _pluginsReady(): Promise<void> {
-    // M-god step 8c: the plugin manager is container-resolved (`@inject`). It is
-    // always bound by the time a plugin read fires (see class doc), so this
-    // resolves synchronously and returns its readiness promise directly — no
-    // `bag.wait` registration race to await.
+    // The plugin manager is container-resolved (`@inject`) and always bound by
+    // the time a plugin read fires (see class doc), so this resolves
+    // synchronously and returns its readiness promise directly.
     return this._pluginManager.pluginsReady();
   }
 
