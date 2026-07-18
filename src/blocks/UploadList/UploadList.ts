@@ -1,9 +1,12 @@
-import { html } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
+import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
 import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
-import type { OutputCollectionErrorType, OutputError } from '../../types';
 import { throttle } from '../../utils/throttle';
 import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './upload-list.css';
@@ -25,6 +28,19 @@ export type Summary = {
 };
 
 export class UploadList extends ActivityChildBlock {
+  // Includes `RouterController` (the base `ActivityChildBlock` declares it for
+  // its `[active]` toggle) alongside the controllers this block reads directly:
+  // `ConfigController` (tracked `filesViewMode` host attr + imperative
+  // derived-state reads), `CollectionStateController` (tracked `uploadList` /
+  // `collectionErrors` render reads), `TelemetryManager` (add-more / clear-all
+  // action events).
+  public static override readonly uses = [
+    ConfigController,
+    CollectionStateController,
+    RouterController,
+    TelemetryManager,
+  ] as const;
+
   public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
 
   @state()
@@ -43,9 +59,6 @@ export class UploadList extends ActivityChildBlock {
   private _addMoreBtnEnabled = false;
 
   @state()
-  private _commonErrorMessage: string | null = null;
-
-  @state()
   private _hasFiles = false;
 
   @state()
@@ -58,8 +71,22 @@ export class UploadList extends ActivityChildBlock {
     return this._getHeaderText(this._latestSummary);
   }
 
+  /**
+   * Tracked getter: the common (collection-level) error message, derived from
+   * `collectionErrors` (owned by `CollectionStateController`). Reading it via
+   * `getTracked` in `render()` auto-tracks under `SignalWatcher`, so a
+   * collection-error change re-renders — replacing the v1
+   * `ctx.sub('*collectionErrors')` subscription that mirrored the first
+   * non-`SOME_FILES_HAS_ERRORS` error into a `_commonErrorMessage` @state.
+   */
+  private get _commonErrorMessage(): string | null {
+    const errors = this.use(CollectionStateController).getTracked('collectionErrors');
+    const firstError = errors.filter((err) => err.type !== 'SOME_FILES_HAS_ERRORS')[0];
+    return firstError?.message ?? null;
+  }
+
   private _handleAdd = (): void => {
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -68,22 +95,26 @@ export class UploadList extends ActivityChildBlock {
         },
       },
     });
+    // `api` (UploaderPublicApi) has no DI token (set via `UploaderController.setApi`),
+    // so it stays on the v1 `bag` path (step 8).
     this.bag.api.initFlow(true);
   };
 
   private _handleUpload = (): void => {
     this.emit(EventType.UPLOAD_CLICK);
+    // `api` has no DI token — stays on the v1 `bag` path (step 8).
     this.bag.api.uploadAll();
     this._throttledHandleCollectionUpdate();
   };
 
   private _handleDone = (): void => {
+    // `api` has no DI token — stays on the v1 `bag` path (step 8).
     this.emit(EventType.DONE_CLICK, this.bag.api.getOutputCollectionState());
     this.bag.api.doneFlow();
   };
 
   private _handleCancel = (): void => {
-    this.bag.telemetryManager.sendEvent({
+    this.use(TelemetryManager).sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -93,6 +124,8 @@ export class UploadList extends ActivityChildBlock {
       },
     });
 
+    // `uploadCollection` has no DI token (registration race) — stays on the v1
+    // `bag` path (step 8).
     this.bag.uploadCollection.clearAll();
   };
 
@@ -116,6 +149,13 @@ export class UploadList extends ActivityChildBlock {
   }, 300);
 
   private _updateUploadsState(): void {
+    // Imperative derived-state recompute (writes the toolbar/button `@state`
+    // below), not a render read — runs only from the throttled tick after its
+    // `!uploader` guard, so the container is adopted and `use()` is safe. Config
+    // reads use the untracked `get()` (a re-render is driven by the throttled
+    // tick's `subConfigValue`/collection observers, not by tracking here);
+    // `api` has no DI token so `getOutputCollectionState` stays on `bag` (step 8).
+    const config = this.use(ConfigController);
     const collectionState = this.bag.api.getOutputCollectionState();
     const summary: Summary = {
       total: collectionState.totalCount,
@@ -128,8 +168,8 @@ export class UploadList extends ActivityChildBlock {
       (err) => err.type === 'TOO_MANY_FILES' || err.type === 'TOO_FEW_FILES',
     );
     const tooMany = collectionState.errors.some((err) => err.type === 'TOO_MANY_FILES');
-    const multiple = this.uploader.config.get('multiple');
-    const exact = collectionState.totalCount === (multiple ? this.uploader.config.get('multipleMax') : 1);
+    const multiple = config.get('multiple');
+    const exact = collectionState.totalCount === (multiple ? config.get('multipleMax') : 1);
     const isValidationPending = collectionState.allEntries.some((entry) => entry.isValidationPending);
     const validationOk = summary.failed === 0 && collectionState.errors.length === 0 && !isValidationPending;
     let uploadBtnVisible = false;
@@ -137,11 +177,11 @@ export class UploadList extends ActivityChildBlock {
     let doneBtnEnabled = false;
 
     const readyToUpload = summary.total - summary.succeed - summary.uploading - summary.failed;
-    if (readyToUpload > 0 && fitCountRestrictions && validationOk && this.uploader.config.get('confirmUpload')) {
+    if (readyToUpload > 0 && fitCountRestrictions && validationOk && config.get('confirmUpload')) {
       uploadBtnVisible = true;
     } else {
       allDone = true;
-      const groupOk = this.uploader.config.get('groupOutput') ? !!collectionState.group : true;
+      const groupOk = config.get('groupOutput') ? !!collectionState.group : true;
       doneBtnEnabled = summary.total === summary.succeed && fitCountRestrictions && validationOk && groupOk;
     }
 
@@ -190,8 +230,13 @@ export class UploadList extends ActivityChildBlock {
     // like the other subscriptions below so teardown is uniform (release-time,
     // not just disconnect) and the predicate itself reads the controller
     // non-throwingly so a teardown-time navigation can't warn spuriously.
+    // The guard registration goes through `use(RouterController)` (container is
+    // adopted by `controllerReady`), but the predicate keeps its null-tolerant
+    // `uploaderOrNull`/`bag.uploadCollectionOrNull` reads — it can fire during a
+    // teardown-time navigation, after the container is released, where `use()`
+    // would throw.
     this.trackSub(
-      this.bag.router.guard(
+      this.use(RouterController).guard(
         this.activityType,
         () =>
           (this.uploaderOrNull?.config.get('showEmptyList') ?? false) ||
@@ -199,6 +244,11 @@ export class UploadList extends ActivityChildBlock {
       ),
     );
 
+    // Imperative derived-state triggers (kept on the v1 `subConfigValue`/`ctx.sub`
+    // path, step 8): these don't feed `render()` directly — they re-run
+    // `_updateUploadsState` (which writes the toolbar/button `@state`) on a config
+    // or group change. A tracked read can't replace them because that recompute
+    // runs outside the `SignalWatcher` update cycle, so it wouldn't auto-track.
     this.subConfigValue('multiple', this._throttledHandleCollectionUpdate);
     this.subConfigValue('multipleMin', this._throttledHandleCollectionUpdate);
     this.subConfigValue('multipleMax', this._throttledHandleCollectionUpdate);
@@ -210,14 +260,6 @@ export class UploadList extends ActivityChildBlock {
       }),
     );
 
-    // Restores v1's next-tick item appearance: re-render as soon as the list
-    // changes instead of waiting for the throttled derived-state tick below.
-    this.trackSub(this.bag.ctx.sub('*uploadList', () => this.requestUpdate()));
-
-    this.subConfigValue('filesViewMode', (mode: FilesViewMode) => {
-      this.setAttribute('mode', mode);
-    });
-
     // TODO: could be performance issue on many files
     // there is no need to update buttons state on every progress tick
     //
@@ -225,24 +267,30 @@ export class UploadList extends ActivityChildBlock {
     // yet when this block's controller adopts — go through `bag.when` rather
     // than the throwing `bag.uploadCollection` getter (FileItem/DynamicBtn
     // precedent), and track the observer unsubscribers so release/re-adoption
-    // can't stack duplicate observers.
+    // can't stack duplicate observers. `uploadCollection` has no DI token
+    // (registration race) so this stays on the v1 `bag` path (step 8).
     this.trackSub(
       this.bag.when('uploadCollection', (collection) => {
         this.trackSub(collection.observeProperties(this._throttledHandleCollectionUpdate));
         this.trackSub(collection.observeCollection(this._throttledHandleCollectionUpdate));
       }),
     );
+  }
 
-    this.trackSub(
-      this.bag.ctx.sub('*collectionErrors', (errors: OutputError<OutputCollectionErrorType>[]) => {
-        const firstError = errors.filter((err) => err.type !== 'SOME_FILES_HAS_ERRORS')[0];
-        if (!firstError) {
-          this._commonErrorMessage = null;
-          return;
-        }
-        this._commonErrorMessage = firstError.message;
-      }),
-    );
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+    // Host CSS attribute: `uc-upload-list[mode="grid"]` keys off `mode` ON THE
+    // HOST (grid/list box sizing), so drive it there from the tracked config
+    // signal (the Modal/Copyright `willUpdate` + `getTracked` host-attr recipe).
+    // Reading `filesViewMode` via `getTracked` auto-tracks under `SignalWatcher`,
+    // so a config change re-runs this update and re-sets the attribute — matching
+    // the reactivity of the v1 `subConfigValue('filesViewMode')` it replaces.
+    // This block has no lazy-render gate (unlike FileItem's `_pauseRender`, which
+    // is why FileItem keeps its `mode` host attr imperative), so `willUpdate`
+    // runs on the first post-adoption render — before first paint, matching v1's
+    // eager `subConfigValue` fire. `mode` is not a reactive property, so setting
+    // it schedules no further update.
+    this.setAttribute('mode', this.use(ConfigController).getTracked('filesViewMode'));
   }
 
   protected override subscriptionsFor(ctrl: UploaderController) {
@@ -250,13 +298,19 @@ export class UploadList extends ActivityChildBlock {
   }
 
   public override render() {
+    // Tracked render reads: `uploadList` drives the `<uc-file-item>` list and
+    // `collectionErrors` (via `_commonErrorMessage`) drives the common-error row —
+    // both `getTracked` off `CollectionStateController`, auto-tracked under
+    // `SignalWatcher`, so a collection change re-renders with no `ctx.sub`.
+    const uploadList = this.use(CollectionStateController).getTracked('uploadList');
+    const commonErrorMessage = this._commonErrorMessage;
     return html`
   <uc-activity-header>
     <span aria-live="polite" class="uc-header-text">${this._headerText}</span>
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
-      @click=${() => this.bag.router.traverse('onClose')}
+      @click=${() => this.use(RouterController).traverse('onClose')}
       title=${this.l10n('a11y-activity-header-button-close')}
       aria-label=${this.l10n('a11y-activity-header-button-close')}
     >
@@ -271,7 +325,7 @@ export class UploadList extends ActivityChildBlock {
   <div class="uc-files">
     <div class="uc-files-wrapper">
     ${repeat(
-      this.bag.ctx.read('*uploadList') ?? [],
+      uploadList,
       ({ uid }) => uid,
       ({ uid }) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
     )}
@@ -288,9 +342,9 @@ export class UploadList extends ActivityChildBlock {
   </div>
 
   <div class="uc-common-error"
-  ?hidden=${!this._commonErrorMessage}
+  ?hidden=${!commonErrorMessage}
   >
-  ${this._commonErrorMessage ?? ''}
+  ${commonErrorMessage ?? ''}
   </div>
 
   <div class="uc-toolbar">

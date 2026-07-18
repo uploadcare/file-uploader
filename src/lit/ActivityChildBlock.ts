@@ -1,6 +1,7 @@
 import type { PropertyValues } from 'lit';
 import { RouterController } from '../abstract/controllers/RouterController';
 import type { UploaderController } from '../abstract/controllers/UploaderController';
+import type { Token } from '../abstract/di/ControllerContainer';
 import { ACTIVITY_TYPES, type ActivityParamsMap, type ActivityType } from './activity-constants';
 import { ChildBlock } from './ChildBlock';
 
@@ -15,7 +16,13 @@ const ACTIVE_ATTR = 'active';
  * Subclasses overriding `controllerReady` MUST call `super.controllerReady(ctrl)`.
  */
 export class ActivityChildBlock extends ChildBlock {
-  public static override readonly uses = [RouterController] as const;
+  // Widened to the same `readonly Token<unknown>[]` shape `ChildBlock` declares
+  // (not a narrow `as const` tuple) so a subclass can override `uses` with its
+  // own controller set — e.g. `UploadList` adds Config/CollectionState/Telemetry
+  // (M-god step 6b-8). The value still pre-warms `RouterController` for every
+  // activity block (the base's `[active]` toggle reads it); a non-overriding
+  // subclass inherits exactly that, unchanged.
+  public static override readonly uses: readonly Token<unknown>[] = [RouterController];
 
   public activityType: ActivityType = null;
 
