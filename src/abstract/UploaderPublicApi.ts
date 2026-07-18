@@ -38,7 +38,10 @@ export type ApiAddFileCommonOptions = {
 };
 
 export class UploaderPublicApi extends SharedInstance {
-  private _l10n = createL10n(() => this._ctx);
+  // `createL10n` reads the `LocaleController` directly (M-god step 7). This file
+  // still lives on the `*cfg/*` facade otherwise — its full off-facade rewrite is
+  // step 8; this is the minimal getter repoint forced by `createL10n`'s new signature.
+  private _l10n = createL10n(() => this._ctx.uploaderController().locale);
 
   public get _uploadCollection() {
     return this._sharedInstancesBag.uploadCollection;

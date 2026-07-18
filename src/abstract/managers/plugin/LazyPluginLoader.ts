@@ -1,7 +1,7 @@
 import type { PubSub } from '../../../lit/PubSubCompat';
 import type { SharedState } from '../../../lit/SharedState';
 import type { ConfigType } from '../../../types/index';
-import { sharedConfigKey } from '../../sharedConfigKey';
+import type { ConfigController } from '../../controllers/ConfigController';
 import type { UploaderPlugin } from './PluginTypes';
 
 export type ConfigGetter = <K extends keyof ConfigType>(key: K) => ConfigType[K];
@@ -50,8 +50,11 @@ export class LazyPluginLoader {
 
   public constructor(
     private readonly _ctx: PubSub<SharedState>,
+    private readonly _config: ConfigController,
     private readonly _onCompute: (plugins: Promise<UploaderPlugin[] | undefined>) => void,
   ) {
+    // `*lazyPlugins` is not a config key — it stays on the ctx (routed to
+    // `LazyPluginsController`); only the config reads below moved off the facade.
     this._unsubLazyPlugins = this._ctx.sub('*lazyPlugins', (entries) => {
       this._setEntries(entries ?? []);
     });
@@ -63,17 +66,32 @@ export class LazyPluginLoader {
 
     if (entries.length === 0) return;
 
-    const deps = new Set<keyof SharedState>([sharedConfigKey('plugins')]);
+    // The config keys whose changes must recompute the resolved plugin list:
+    // `plugins` plus every entry's declared `configDeps`. Read directly off the
+    // `ConfigController` (M-god step 7: off the `*cfg/*` facade).
+    const deps = new Set<keyof ConfigType>(['plugins']);
     for (const entry of entries) {
       for (const dep of entry.configDeps) {
-        deps.add(sharedConfigKey(dep));
+        deps.add(dep);
       }
     }
 
-    const recompute = () => this._compute(entries);
-    for (const dep of deps) {
-      this._subs.add(this._ctx.sub(dep, recompute, false));
-    }
+    // `ConfigController.subscribe` is coarse (fires on any config change), so
+    // snapshot the dep values and recompute only when one of them actually
+    // changes — preserving the per-key subscription granularity the previous
+    // `ctx.sub(dep, recompute, false)` facade subscriptions gave.
+    const depKeys = [...deps];
+    let lastValues = depKeys.map((key) => this._config.get(key));
+    this._subs.add(
+      this._config.subscribe(() => {
+        const nextValues = depKeys.map((key) => this._config.get(key));
+        const changed = nextValues.some((value, i) => !Object.is(value, lastValues[i]));
+        if (changed) {
+          lastValues = nextValues;
+          this._compute(entries);
+        }
+      }),
+    );
 
     this._compute(entries);
   }
@@ -83,8 +101,7 @@ export class LazyPluginLoader {
     const controller = new AbortController();
     this._abortController = controller;
 
-    const get: ConfigGetter = <K extends keyof ConfigType>(key: K) =>
-      this._ctx.read(sharedConfigKey(key)) as unknown as ConfigType[K];
+    const get: ConfigGetter = <K extends keyof ConfigType>(key: K) => this._config.get(key);
 
     const userPlugins = get('plugins');
 

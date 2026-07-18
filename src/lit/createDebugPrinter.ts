@@ -1,11 +1,16 @@
-import { sharedConfigKey } from '../abstract/sharedConfigKey';
 import type { PubSub } from './PubSubCompat';
 import type { SharedState } from './SharedState';
 
+/**
+ * Debug logger scoped to a ctx. Reads the `debug` flag directly from the ctx's
+ * `ConfigController` (M-god step 7: off the `*cfg/*` PubSub facade) while still
+ * using the ctx for its `id` prefix — so callers keep passing `() => ctx`
+ * unchanged.
+ */
 export const createDebugPrinter = (getCtx: () => PubSub<SharedState>, scope?: string) => {
   return (...args: unknown[]) => {
     const ctx = getCtx();
-    if (!ctx.read(sharedConfigKey('debug'))) {
+    if (!ctx.uploaderController().config.get('debug')) {
       return;
     }
     let consoleArgs = args;

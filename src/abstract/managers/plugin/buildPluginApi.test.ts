@@ -1,7 +1,6 @@
-import { describe, expect, it } from 'vitest';
-import type { PubSub } from '../../../lit/PubSubCompat';
-import type { SharedState } from '../../../lit/SharedState';
+import { describe, expect, it, vi } from 'vitest';
 import type { SharedInstancesBag } from '../../../lit/shared-instances';
+import { ConfigController } from '../../controllers/ConfigController';
 import { RouterController } from '../../controllers/RouterController';
 import { ControllerContainer } from '../../di/ControllerContainer';
 import { buildPluginApi } from './buildPluginApi';
@@ -14,14 +13,12 @@ const setup = () => {
   const router = new ControllerContainer().get(RouterController);
   const bag = { router } as unknown as SharedInstancesBag;
   const registry = new PluginRegistry(() => {});
-  const ctx = {
-    has: () => true,
-    add: () => {},
-    read: () => undefined,
-    sub: () => () => {},
-  } as unknown as PubSub<SharedState>;
-  const api = buildPluginApi(registry, ctx, bag, 'test-plugin', []);
-  return { api, router };
+  // M-god step 7: the plugin API reads config directly off a `ConfigController`
+  // (was the `*cfg/*` PubSub facade).
+  const config = new ConfigController();
+  const configSubscriptions: (() => void)[] = [];
+  const api = buildPluginApi(registry, config, bag, 'test-plugin', configSubscriptions);
+  return { api, router, config, registry, configSubscriptions };
 };
 
 describe('buildPluginApi', () => {
@@ -45,6 +42,68 @@ describe('buildPluginApi', () => {
       router.navigate('camera');
       api.router.traverse('onBack');
       expect(router.currentActivity).toBe('start-from');
+    });
+  });
+
+  describe('config api (direct ConfigController, off the *cfg/* facade)', () => {
+    it('registerConfig seeds a custom key on first sight, idempotent afterwards', () => {
+      const { api, config } = setup();
+      api.registry.registerConfig({ name: 'myPluginOption', defaultValue: 'a' });
+      expect(config.getCustom('myPluginOption')).toBe('a');
+
+      // Re-register keeps the current value (does not reset to the default).
+      config.setCustom('myPluginOption', 'b');
+      api.registry.registerConfig({ name: 'myPluginOption', defaultValue: 'a' });
+      expect(config.getCustom('myPluginOption')).toBe('b');
+    });
+
+    it('registerConfig preserves a value written before the plugin registered', () => {
+      const { api, config } = setup();
+      config.setCustom('preSeeded', 'early');
+      api.registry.registerConfig({ name: 'preSeeded', defaultValue: 'default' });
+      expect(config.getCustom('preSeeded')).toBe('early');
+    });
+
+    it('get reads the live value from the ConfigController', () => {
+      const { api, config } = setup();
+      config.set('sourceList', 'local');
+      expect(api.config.get('sourceList')).toBe('local');
+      config.set('sourceList', 'local, camera');
+      expect(api.config.get('sourceList')).toBe('local, camera');
+    });
+
+    it('subscribe fires immediately, then only on an actual change (Object.is dedup)', () => {
+      const { api, config } = setup();
+      config.set('sourceList', 'v0');
+      const cb = vi.fn();
+      api.config.subscribe('sourceList', cb);
+      expect(cb).toHaveBeenCalledTimes(1);
+      expect(cb).toHaveBeenLastCalledWith('v0');
+
+      config.set('sourceList', 'v1');
+      expect(cb).toHaveBeenCalledTimes(2);
+      expect(cb).toHaveBeenLastCalledWith('v1');
+
+      // Same value: deduped, no extra call.
+      config.set('sourceList', 'v1');
+      expect(cb).toHaveBeenCalledTimes(2);
+
+      // A change to an unrelated key must not fire this key's subscriber.
+      config.set('multiple', !config.get('multiple'));
+      expect(cb).toHaveBeenCalledTimes(2);
+    });
+
+    it('subscribe registers its teardown in the configSubscriptions sink and unsub stops callbacks', () => {
+      const { api, config, configSubscriptions } = setup();
+      config.set('sourceList', 'a');
+      const cb = vi.fn();
+      const unsub = api.config.subscribe('sourceList', cb);
+      expect(configSubscriptions).toHaveLength(1);
+      cb.mockClear();
+
+      unsub();
+      config.set('sourceList', 'b');
+      expect(cb).not.toHaveBeenCalled();
     });
   });
 });
