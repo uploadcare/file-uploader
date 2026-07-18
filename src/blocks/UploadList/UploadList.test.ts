@@ -127,15 +127,23 @@ afterEach(() => {
 });
 
 describe('UploadList (M-god step 6b-8 migration)', () => {
-  it('declares its dependencies via static uses (incl. the base RouterController)', () => {
-    expect(UploadList.uses).toEqual([
-      ConfigController,
-      CollectionStateController,
-      RouterController,
-      TelemetryManager,
-      UploaderPublicApi,
-      UploadCollectionController,
-    ]);
+  it('resolves its always-bound dependencies via @inject fields (incl. the inherited RouterController)', async () => {
+    const ctxName = freshCtxName();
+    const { el, config, collectionState, router, telemetry } = await mount(ctxName);
+    // Always-bound controllers become `@inject` fields; `RouterController` is the
+    // inherited `ActivityChildBlock._router` field. The uploader-scope-bound
+    // `UploaderPublicApi` / `UploadCollectionController` (read via
+    // `use()`/`useOrNull`/`whenController`) deliberately stay off `@inject`.
+    const injected = el as unknown as {
+      _config: ConfigController;
+      _collectionState: CollectionStateController;
+      _router: RouterController;
+      _telemetry: TelemetryManager;
+    };
+    expect(injected._config).toBe(config);
+    expect(injected._collectionState).toBe(collectionState);
+    expect(injected._router).toBe(router);
+    expect(injected._telemetry).toBe(telemetry);
   });
 
   it('re-renders the <uc-file-item> list reactively when uploadList changes (getTracked, no ctx.sub)', async () => {

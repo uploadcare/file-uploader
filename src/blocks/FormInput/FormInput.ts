@@ -2,12 +2,14 @@ import type { PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { inject } from '../../abstract/di/inject';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { OutputCollectionState } from '../../types/index';
 import { applyStyles } from '../../utils/applyStyles';
 
 export class FormInput extends ChildBlock {
-  public static override readonly uses = [ConfigController, CollectionStateController] as const;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
 
   public declare attributesMeta: {
     'ctx-name': string;
@@ -32,7 +34,7 @@ export class FormInput extends ChildBlock {
     const validationInput = document.createElement('input');
     validationInput.type = 'text';
     validationInput.name = this._inputName;
-    validationInput.required = this.use(ConfigController).get('multipleMin') > 0;
+    validationInput.required = this._config.get('multipleMin') > 0;
     validationInput.tabIndex = -1;
     applyStyles(validationInput, {
       opacity: 0,
@@ -59,7 +61,7 @@ export class FormInput extends ChildBlock {
     // update and rebuilds the hidden `<input>`(s). The `false` (no immediate
     // fire) of the v1 sub is preserved by the initial `null` state falling
     // through the early-return in `_syncFormInputs`.
-    this._syncFormInputs(this.use(CollectionStateController).getTracked('collectionState'));
+    this._syncFormInputs(this._collectionState.getTracked('collectionState'));
   }
 
   private _syncFormInputs(collectionState: OutputCollectionState | null): void {
@@ -108,7 +110,7 @@ export class FormInput extends ChildBlock {
       .map((entry) => entry.cdnUrl)
       .filter((url): url is string => typeof url === 'string');
 
-    if (!this.use(ConfigController).get('multiple') && cdnUrls.length === 1 && cdnUrls[0]) {
+    if (!this._config.get('multiple') && cdnUrls.length === 1 && cdnUrls[0]) {
       this._validationInputElement.value = cdnUrls[0];
       this._validationInputElement.setCustomValidity('');
       return;

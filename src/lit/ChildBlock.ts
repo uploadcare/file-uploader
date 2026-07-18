@@ -5,7 +5,7 @@ import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../abstract/controllers/ConfigController';
 import { LocaleController } from '../abstract/controllers/LocaleController';
 import { RouterController } from '../abstract/controllers/RouterController';
-import type { ControllerContainer, Token } from '../abstract/di/ControllerContainer';
+import { CONTAINER, type ControllerContainer, type Token } from '../abstract/di/ControllerContainer';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
@@ -52,18 +52,6 @@ const ChildBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitE
  */
 export abstract class ChildBlock extends ChildBlockBase {
   public static styleAttrs: string[] = [];
-
-  /**
-   * The container-owned controllers this block depends on. A migrated block
-   * declares them here (`static override readonly uses = [ConfigController] as
-   * const`) and reads them at render time via `this.use(Token)`. `uses` is
-   * documentation + pre-warm + drives nothing type-wise (`use()` is generically
-   * typed off its token argument, not off this list): on adoption every entry is
-   * eagerly resolved from this ctx's container so the dep exists before first
-   * render. Empty by default — blocks may also read config imperatively via
-   * `subConfigValue`.
-   */
-  public static readonly uses: readonly Token<unknown>[] = [];
 
   @property({ attribute: 'ctx-name' })
   public ctxName: string | undefined = undefined;
@@ -373,17 +361,20 @@ export abstract class ChildBlock extends ChildBlockBase {
     // same instant the registry subscription used to be the refcount, preserving
     // exact teardown timing (`isCtxUnreferenced` reads `container.isUnreferenced()`).
     this._container = container;
+    // Tag this element with the container so `@inject(Token)` fields on migrated
+    // blocks resolve through the shared `inject.ts` getter (which reads
+    // `this[CONTAINER]`) — the same mechanism controllers use. Only the adoption
+    // path sets this (the container tags instances IT constructs, but a block is
+    // created by the browser and merely adopts its container here). Cleared in
+    // `_releaseController`, so pre-adoption / post-release `@inject` reads throw
+    // (the same "no container" contract as `use()`, though the thrown message
+    // differs); `render()` is gated on adoption, so reads there are safe.
+    (this as { [CONTAINER]?: ControllerContainer })[CONTAINER] = container;
     container.addConsumer(this);
-    // Pre-warm declared dependencies so they exist before first render. Isolate-
-    // and-warn: one dep's construction failure must not abort adoption (mirrors
-    // controllerReady / teardown / EventBus fan-out).
-    for (const token of (this.constructor as typeof ChildBlock).uses) {
-      try {
-        container.get(token);
-      } catch (err) {
-        console.warn(`[uc] ${this.tagName.toLowerCase()}: pre-warming a declared dependency threw`, err);
-      }
-    }
+    // Container-owned controllers are resolved lazily on first access through
+    // each block's `@inject` fields (and via `use()`/`whenController` for the
+    // scope-bound ones), so there is no eager pre-warm here — adoption only tags
+    // the container and wires the subscriptions below.
     const rerender = () => this.requestUpdate();
     for (const subscribe of this.subscriptionsFor(container)) {
       this._subs.push(subscribe(rerender));
@@ -423,6 +414,10 @@ export abstract class ChildBlock extends ChildBlockBase {
     // here (e.g. a null-notify after teardown) is a harmless no-op.
     container?.removeConsumer(this);
     this._container = null;
+    // Untag so a post-release `@inject` read throws (matching the `use()`
+    // contract) rather than resolving through a container this block no longer
+    // holds a consumer refcount on.
+    (this as { [CONTAINER]?: ControllerContainer })[CONTAINER] = undefined;
     if (container) this.controllerReleased(container);
   }
 

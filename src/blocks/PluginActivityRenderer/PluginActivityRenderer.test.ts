@@ -37,15 +37,11 @@ const mount = async (ctxName: string): Promise<PluginActivityRenderer> => {
 };
 
 describe('PluginActivityRenderer (M-god step 6b-2 migration)', () => {
-  it('declares no pre-warmed container dependencies — its only read is the conditional PluginController', () => {
-    // Documents the migration outcome: there is no config/activity/collection
-    // read to move onto `use()`; the plugin manager is read via the
-    // now-or-when-available `whenController(PluginController)` (M-god step 9b-2),
-    // not pre-warmed, since the token is only bound once an uploader scope
-    // attaches (or never, in a bare ctx).
-    expect(PluginActivityRenderer.uses).toEqual([]);
-  });
-
+  // `PluginActivityRenderer` has no always-bound `@inject` field: its only
+  // controller read is the conditionally-bound `PluginController`, resolved via
+  // the now-or-when-available `whenController(PluginController)` (M-god step
+  // 9b-2), since that token is only bound once an uploader scope attaches (or
+  // never, in a bare ctx). That behavior is covered by the two specs below.
   it('renders an empty activity list when no plugin manager has registered', async () => {
     const el = await mount(freshCtxName());
     await delay(0);

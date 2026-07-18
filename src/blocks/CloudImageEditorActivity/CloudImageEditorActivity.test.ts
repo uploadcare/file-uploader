@@ -92,16 +92,16 @@ const mount = async (
 const editorEl = (el: CloudImageEditorActivity): HTMLElement | null => el.querySelector('uc-cloud-image-editor');
 
 describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
-  it('declares its dependencies via static uses (incl. the base RouterController)', () => {
-    expect(CloudImageEditorActivity.uses).toEqual([RouterController, ConfigController]);
-  });
-
-  it('pre-warms its declared dependencies into the container on adoption', async () => {
+  it('resolves its dependencies via @inject fields (ConfigController here, RouterController inherited from ActivityChildBlock)', async () => {
     const ctxName = freshCtxName();
-    await mount(ctxName);
-    const container = UploaderRegistry.get(ctxName);
-    expect(container?.get(RouterController)).toBeInstanceOf(RouterController);
-    expect(container?.get(ConfigController)).toBeInstanceOf(ConfigController);
+    const { el, config, router } = await mount(ctxName);
+    // `ConfigController` is this block's own `@inject` field; `RouterController`
+    // is the inherited `ActivityChildBlock._router` field. Both resolve through
+    // the container the block adopted (tagged as `this[CONTAINER]`).
+    // `UploadCollectionController` stays on `whenController` (registration race).
+    const injected = el as unknown as { _config: ConfigController; _router: RouterController };
+    expect(injected._config).toBe(config);
+    expect(injected._router).toBe(router);
   });
 
   it('renders nothing until the uploadCollection entry (with a cdnUrl) resolves', async () => {

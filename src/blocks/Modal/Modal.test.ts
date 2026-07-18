@@ -47,8 +47,15 @@ const mount = async (
 const dialogOf = (el: Modal): HTMLDialogElement | null => el.querySelector('dialog');
 
 describe('Modal (M-god step 6b-3 migration)', () => {
-  it('declares its dependencies via static uses', () => {
-    expect(Modal.uses).toEqual([ConfigController, RouterController]);
+  it('resolves its dependencies via @inject fields on the element', async () => {
+    const ctxName = freshCtxName();
+    const { el, router, config } = await mount(ctxName, 'camera');
+    // The always-bound controllers become `@inject` fields resolving through the
+    // container the block adopted (tagged as `this[CONTAINER]`) — the mechanism
+    // that replaces `static uses` + `this.use()`.
+    const injected = el as unknown as { _config: ConfigController; _router: RouterController };
+    expect(injected._config).toBe(config);
+    expect(injected._router).toBe(router);
   });
 
   it('opens/closes the <dialog> reactively when the router modal slot changes (no subRouter)', async () => {

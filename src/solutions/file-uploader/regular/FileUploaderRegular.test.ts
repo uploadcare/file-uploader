@@ -45,8 +45,16 @@ const mount = async (
 };
 
 describe('FileUploaderRegular (M-god step 6b-4 migration)', () => {
-  it('declares its dependencies via static uses', () => {
-    expect(FileUploaderRegular.uses).toEqual([RouterController, TelemetryManager]);
+  it('resolves its dependencies via @inject fields on the element', async () => {
+    const ctxName = freshCtxName();
+    const { el, router } = await mount(ctxName);
+    const container = UploaderRegistry.get(ctxName);
+    // Always-bound controllers become `@inject` fields resolving through the
+    // container the block adopted (tagged as `this[CONTAINER]`) — the mechanism
+    // that replaces `static uses` + `this.use()`.
+    const injected = el as unknown as { _router: RouterController; _telemetry: TelemetryManager };
+    expect(injected._router).toBe(router);
+    expect(injected._telemetry).toBe(container?.get(TelemetryManager));
   });
 
   it('routes every activity to the foreground (modal) slot', async () => {

@@ -3,6 +3,7 @@ import { state } from 'lit/decorators.js';
 import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -14,7 +15,11 @@ import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
 
 export class UrlSource extends ChildBlock {
-  public static override readonly uses = [TelemetryManager, RouterController, UploaderPublicApi] as const;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  @inject(RouterController) private readonly _router!: RouterController;
+  // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
+  // token — it is container-resolved (M-god step 8a), injected via `@inject`.
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   @state()
   private _url = '';
@@ -29,7 +34,7 @@ export class UrlSource extends ChildBlock {
 
   private _handleUpload = (event: Event) => {
     event.preventDefault();
-    this.use(TelemetryManager).sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -42,10 +47,8 @@ export class UrlSource extends ChildBlock {
     if (!url) {
       return;
     }
-    // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
-    // token — it is container-resolved (M-god step 8a), reached via `use()`.
-    this.use(UploaderPublicApi).addFileFromUrl(url, { source: UploadSource.URL });
-    this.use(RouterController).traverse('onFileAdd');
+    this._api.addFileFromUrl(url, { source: UploadSource.URL });
+    this._router.traverse('onFileAdd');
   };
 
   public override render() {
@@ -54,7 +57,7 @@ export class UrlSource extends ChildBlock {
         <button
           type="button"
           class="uc-mini-btn"
-          @click=${() => this.use(RouterController).traverse('onBack')}
+          @click=${() => this._router.traverse('onBack')}
           title=${this.l10n('back')}
           aria-label=${this.l10n('back')}
         >
@@ -67,7 +70,7 @@ export class UrlSource extends ChildBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${() => this.use(RouterController).traverse('onClose')}
+          @click=${() => this._router.traverse('onClose')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >

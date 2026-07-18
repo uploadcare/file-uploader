@@ -10,6 +10,7 @@ import { UID } from '../../utils/UID';
 import { AppInfo } from '../controllers/AppInfo';
 import { ConfigController } from '../controllers/ConfigController';
 import { RouterController } from '../controllers/RouterController';
+import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { EventBus } from '../EventBus';
 
@@ -75,8 +76,7 @@ export class TelemetryManager {
   private _initialized = false;
   private _lastPayload: TelemetryState | null = null;
   private readonly _queue: Queue = new Queue(10);
-  private _unsubConfig: () => void = () => {};
-  private _unsubBus: () => void = () => {};
+  readonly #disposables = new Disposables();
 
   /**
    * Container lifecycle hook — runs after the container has tagged + cached this
@@ -84,7 +84,7 @@ export class TelemetryManager {
    * `CHANGE_CONFIG` tracking) and, as a bus observer, to every emitted event.
    */
   public init(): void {
-    this._unsubConfig = this._configController.subscribe(() => this._trackConfigChange());
+    this.#disposables.add(this._configController.subscribe(() => this._trackConfigChange()));
     // Seed the snapshot with the current values (nothing is sent before
     // `_initialized`, matching the v1 immediate-subscription pass).
     this._trackConfigChange();
@@ -92,11 +92,13 @@ export class TelemetryManager {
     // telemetry sees every event without any per-emit mirror. The bus fan-out
     // is isolate-and-warn (see `EventBus.emit`), so a throw here can't break the
     // fan-out — no extra try/catch needed around this observer.
-    this._unsubBus = this._bus.onAny((type, payload) =>
-      this.sendEvent({
-        eventType: type as CommonEventType,
-        payload: (payload ?? undefined) as Record<string, unknown> | undefined,
-      }),
+    this.#disposables.add(
+      this._bus.onAny((type, payload) =>
+        this.sendEvent({
+          eventType: type as CommonEventType,
+          payload: (payload ?? undefined) as Record<string, unknown> | undefined,
+        }),
+      ),
     );
   }
 
@@ -290,10 +292,10 @@ export class TelemetryManager {
   }
 
   public destroy(): void {
-    this._unsubConfig();
-    // Detach the bus observer. Safe even if the container already disposed the
-    // EventBus (its `destroy()` cleared listeners): the returned unsubscribe is
-    // an idempotent `Set.delete`.
-    this._unsubBus();
+    // Runs the config-subscription and bus-observer teardowns. Detaching the bus
+    // observer is safe even if the container already disposed the EventBus (its
+    // `destroy()` cleared listeners): the returned unsubscribe is an idempotent
+    // `Set.delete`.
+    this.#disposables.run();
   }
 }
