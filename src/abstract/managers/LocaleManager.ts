@@ -10,25 +10,24 @@ export const localeStateKey = <T extends keyof LocaleDefinition>(key: T): `*l10n
 export const DEFAULT_LOCALE = 'en';
 
 /**
- * DOM-free locale orchestration (M9k port): reads/writes the v2
- * `ConfigController`/`LocaleController` directly instead of the PubSub ctx.
- * M-god step 3b: container-resolved with a zero-arg ctor, `@inject`-ing both
- * controllers instead of taking them in a deps object.
+ * DOM-free locale orchestration: reads/writes the `ConfigController`/
+ * `LocaleController` directly. Container-resolved with a zero-arg ctor,
+ * `@inject`-ing both controllers instead of taking them in a deps object.
  *
- * Construction itself is side-effect-free — `UploaderController` constructs
- * this eagerly, and the controller is itself created lazily by *any* `*cfg/*`
- * or `*l10n/*` ctx touch (`the v1 ctx facade`), including from contexts
- * that never mount a block (e.g. a bare per-upload-entry ctx, or a unit test
- * exercising the config facade alone). Seeding the `en` dictionary and wiring
- * the config subscriptions as part of the constructor would leak locale state
- * into every such scope. Instead {@link activate} — v1's actual construction-
- * time work — runs once the DOM layer (`LitBlock`) is really initializing an
- * uploader scope, the same point v1 constructed `LocaleManager` itself. It
- * also takes the plugin-manager coupling (`onPluginsChange`/`snapshot`, for
- * plugin-supplied `registerL10n` dictionaries): `PluginController` still
- * requires the PubSub ctx (arbitrary shared state + the public API) and so
- * stays constructed by the DOM layer, not the controller — see
- * `UploaderController`'s class doc / the M9k task report.
+ * Construction itself is side-effect-free — `ensureUploaderCtx` resolves this
+ * eagerly (`container.get(LocaleManager)`) the moment a ctx's container is
+ * created, including from contexts that never mount a block (e.g. a bare
+ * per-upload-entry ctx, or a unit test exercising the config controller
+ * alone). Seeding the `en` dictionary and wiring the config subscriptions as
+ * part of the constructor would leak locale state into every such scope.
+ * Instead {@link activate} — the real construction-time work — is called
+ * explicitly by `ensureUploaderCtx`/`ensurePluginManager` once the DOM layer
+ * (`LitBlock`) is really initializing an uploader scope. It also takes the
+ * plugin-manager coupling (`onPluginsChange`/`snapshot`, for plugin-supplied
+ * `registerL10n` dictionaries): `PluginController` isn't resolved by
+ * `ensureUploaderCtx` (it's bound later by `ensurePluginManager`), so
+ * `activate` accepts a nullable plugin manager and re-couples idempotently
+ * when `ensurePluginManager` later activates it with the real one.
  */
 export class LocaleManager {
   /** v2 config source of truth — `localeName`/`localeDefinitionOverride` reads + subscriptions. */

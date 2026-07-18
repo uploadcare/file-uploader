@@ -9,27 +9,23 @@ export type PasteScope = 'local' | 'global' | false;
 const ALLOWED_PASTE_ACTIVITIES = new Set<string>([ACTIVITY_TYPES.START_FROM, ACTIVITY_TYPES.UPLOAD_LIST]);
 
 /**
- * Window paste handling (v2 port of the `ClipboardLayer` shared instance).
- * Owns the single `paste` listener and the set of registered scopes.
+ * Window paste handling. Owns the single `paste` listener and the set of
+ * registered scopes.
  *
- * M-god step 8b: container-resolved via `@inject` — its uploader couplings
- * (config, router, public API) are resolved lazily from the per-ctx DI
- * container at paste time, not captured at construction. This REPLACES the old
- * `UploaderController.setApi()` two-phase dance: there is no throw-before-set
- * window and no settable `api` reference on `UploaderController` anymore.
+ * Container-resolved via `@inject` — its uploader couplings (config, router,
+ * public API) are resolved lazily from the per-ctx DI container at paste
+ * time, not captured at construction: there is no throw-before-set window.
  *
  * The public API is reached through the container-bound {@link UploadHostBridge}
- * (`getApi()`), NOT a direct `@inject(UploaderPublicApi)` — deliberately.
- * `UploaderController` (in the editor-alone bundle via the v1 ctx facade) exposes
- * `clipboard`, so this module is in that bundle's static graph; a value import
- * of `UploaderPublicApi` here would drag the whole public API (camera modes,
+ * (`getApi()`), NOT a direct `@inject(UploaderPublicApi)` — deliberately. This
+ * module is in the editor-alone bundle's static graph, so a value import of
+ * `UploaderPublicApi` here would drag the whole public API (camera modes,
  * output-state builder, upload sources) into the editor bundle and blow its
  * 50 KB size-limit. `UploadHostBridge` is a `declare`-only token (`import type`
- * members, ~0 runtime bytes) already bound by `ensureUploaderScope` — the same
- * uploader-only seam the old `setApi()` ran in — so the api reaches the
- * clipboard with the exact same availability/timing while the editor bundle
- * stays lean. It is DOM-*event*-coupled by nature — it exists to adapt the
- * browser clipboard to the uploader — but imports nothing from lit.
+ * members, ~0 runtime bytes) already bound by `ensureUploaderScope` — so the
+ * api reaches the clipboard with the exact same availability/timing while the
+ * editor bundle stays lean. It is DOM-*event*-coupled by nature — it exists to
+ * adapt the browser clipboard to the uploader — but imports nothing from lit.
  */
 export class ClipboardController {
   // Config is a leaf, imported directly; the router graph is circular-prone

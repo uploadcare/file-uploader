@@ -64,9 +64,6 @@ export class FileItem extends FileItemConfig {
   private _progressValue = 0;
 
   @state()
-  private _progressVisible = false;
-
-  @state()
   private _badgeIcon = '';
 
   @state()
@@ -114,10 +111,6 @@ export class FileItem extends FileItemConfig {
     }
   };
 
-  private _handleUploadClick = (): void => {
-    this._upload();
-  };
-
   private _calculateState(): void {
     const entry = this.entry;
     if (!entry) {
@@ -151,8 +144,6 @@ export class FileItem extends FileItemConfig {
       const source = entry.getValue('source');
       const externalUrl = entry.getValue('externalUrl');
       const isFinished = state === FileItemState.FINISHED;
-      const isUploading = state === FileItemState.UPLOADING;
-      const isQueuedForUploading = state === FileItemState.QUEUED_UPLOADING;
       const isQueuedForValidation = state === FileItemState.QUEUED_VALIDATION;
       const isValidationPending = state === FileItemState.VALIDATION;
       const fileName = entry.getValue('fileName');
@@ -166,7 +157,6 @@ export class FileItem extends FileItemConfig {
 
       this._hint = hint;
       this._errorText = errorText;
-      this._progressVisible = isUploading || isQueuedForUploading || isQueuedForValidation || isValidationPending;
       this._progressValue = isQueuedForValidation || isValidationPending ? 0 : entry.getValue('uploadProgress');
       this._ariaLabelStatusFile = fileName
         ? this.l10n('a11y-file-item-status', {
