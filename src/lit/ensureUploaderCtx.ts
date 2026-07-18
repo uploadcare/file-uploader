@@ -1,4 +1,10 @@
 import { solutionBlockCtx } from '../abstract/CTX';
+import { ClipboardController } from '../abstract/controllers/ClipboardController';
+import { RouterController } from '../abstract/controllers/RouterController';
+import { A11y } from '../abstract/managers/a11y';
+import { LocaleManager } from '../abstract/managers/LocaleManager';
+import { TelemetryManager } from '../abstract/managers/TelemetryManager';
+import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { PubSub } from './PubSubCompat';
 import type { SharedState } from './SharedState';
 import { addCtxSharedInstance } from './shared-instances';
@@ -18,11 +24,12 @@ import { addCtxSharedInstance } from './shared-instances';
  * below: `*pluginManager`/`*blocksRegistry`/the uploader-scope keys
  * (`*uploadCollection`, …) stay element-gated, registered by
  * `LitBlock`/`LitUploaderBlock` `initCallback` re-exposers, same as before
- * this seam existed. It then forces the ctx's `UploaderController` into
+ * this seam existed. It then forces the ctx's `ControllerContainer` into
  * existence immediately, instead
  * of lazily on first `*cfg/*`/`*l10n/*` touch (`PubSubCompat`'s previous
- * sole creation path) — this is the whole point of the seam: the controller
- * now exists the moment the ctx does, even pre-any-element.
+ * sole creation path) — this is the whole point of the seam: the container
+ * (and its eager managers) now exists the moment the ctx does, even
+ * pre-any-element.
  *
  * A fresh seed object is built per call (not hoisted to a module constant):
  * `uploaderBlockCtx`'s `*uploadTrigger` is a `Set` instance, so a shared seed
@@ -55,37 +62,36 @@ export function ensureUploaderCtx(ctxName: string): PubSub<SharedState> {
   const existing = PubSub.getCtx<SharedState>(ctxName);
   const ctx = existing ?? PubSub.registerCtx<SharedState>(solutionBlockCtx() as unknown as SharedState, ctxName);
 
-  // Force the controller into existence on EVERY path, not just first
-  // creation. A map can pre-exist without a controller — created by a v1
-  // element's raw `PubSub.registerCtx`, a test harness, or a future ported
-  // ctx-creator — and this function's contract is that the controller exists
-  // the moment the ctx does (so `ChildBlock`s never wait forever on
-  // `UploaderRegistry`). `uploaderController()` is idempotent: it returns the
-  // registered controller or creates+registers one.
-  const controller = ctx.uploaderController();
+  // Force the ctx's container into existence on EVERY path, not just first
+  // creation. A map can pre-exist without a container — created by a raw
+  // `PubSub.registerCtx`, a test harness, or a future ported ctx-creator — and
+  // this function's contract is that the container exists the moment the ctx
+  // does (so `ChildBlock`s never wait forever on `UploaderRegistry`).
+  // `container()` is idempotent: it returns the registered container or
+  // creates+registers one (eagerly resolving config/router/telemetry, M-god
+  // step 8e).
+  const container = ctx.container();
 
-  // Re-expose the six controller-owned managers under their v1 shared-
+  // Re-expose the six container-owned managers under their v1 shared-
   // instance keys — first-write-wins (see `addCtxSharedInstance`'s doc), so
-  // this is a no-op on every subsequent call, and inert once/if a `LitBlock`
-  // sharing this ctx runs its own (identical) `initCallback` registrations.
-  addCtxSharedInstance(ctx, '*eventEmitter', () => controller.eventEmitter);
-  addCtxSharedInstance(ctx, '*localeManager', () => controller.localeManager);
-  addCtxSharedInstance(ctx, '*a11y', () => controller.a11y);
-  addCtxSharedInstance(ctx, '*router', () => controller.router);
-  addCtxSharedInstance(ctx, '*clipboard', () => controller.clipboard);
-  addCtxSharedInstance(ctx, '*telemetryManager', () => controller.telemetryManager);
+  // this is a no-op on every subsequent call. Each resolver runs `container.get`
+  // so the manager is constructed (and its side effects fire) at seam time.
+  addCtxSharedInstance(ctx, '*eventEmitter', () => container.get(EventEmitter));
+  addCtxSharedInstance(ctx, '*localeManager', () => container.get(LocaleManager));
+  addCtxSharedInstance(ctx, '*a11y', () => container.get(A11y));
+  addCtxSharedInstance(ctx, '*router', () => container.get(RouterController));
+  addCtxSharedInstance(ctx, '*clipboard', () => container.get(ClipboardController));
+  addCtxSharedInstance(ctx, '*telemetryManager', () => container.get(TelemetryManager));
 
   // Run `LocaleManager`'s deferred construction-time work (seed the `en`
-  // dictionary, subscribe to `localeName`/`localeDefinitionOverride`) here,
-  // same as `LitBlock.initCallback` does for the v1 path. No `*pluginManager`
-  // is registered by this v1-free seam, so pass `null` — `LocaleManager.
-  // activate` tolerates a null plugin manager (seeds the dictionary + core
-  // subscriptions unconditionally, just skips the plugin-locale coupling).
-  // If a v1 `LitBlock` later joins this ctx and constructs a real
-  // `*pluginManager`, its own `initCallback` calls `activate` again with it —
-  // idempotent re-coupling, same recipe `LocaleManager.activate` already
-  // guarantees for a second v1 block sharing a ctx.
-  controller.localeManager.activate(ctx.has('*pluginManager') ? ctx.read('*pluginManager') : null);
+  // dictionary, subscribe to `localeName`/`localeDefinitionOverride`) here.
+  // No `*pluginManager` is registered by this v1-free seam, so pass `null` —
+  // `LocaleManager.activate` tolerates a null plugin manager (seeds the
+  // dictionary + core subscriptions unconditionally, just skips the
+  // plugin-locale coupling). If an uploader scope later constructs a real
+  // `*pluginManager` (`ensurePluginManager`), it calls `activate` again with it
+  // — idempotent re-coupling, same recipe `LocaleManager.activate` guarantees.
+  container.get(LocaleManager).activate(ctx.has('*pluginManager') ? ctx.read('*pluginManager') : null);
 
   return ctx;
 }

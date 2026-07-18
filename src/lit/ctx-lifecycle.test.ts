@@ -94,7 +94,7 @@ describe('destroyCtx', () => {
     expect(destroySpy).toHaveBeenCalledTimes(1);
   });
 
-  it('does NOT call .destroy() directly on a controller-owned instance key (UploaderController.destroy owns that, via PubSub.deleteCtx)', () => {
+  it('does NOT call .destroy() directly on a controller-owned instance key (the container disposes it, via PubSub.deleteCtx)', () => {
     const ctxName = freshCtxName();
     const ctx = PubSub.registerCtx<SharedState>({} as SharedState, ctxName);
     const destroySpy = vi.fn();

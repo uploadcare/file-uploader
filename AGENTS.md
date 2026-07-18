@@ -142,14 +142,20 @@ shim, not a dependency on `@symbiotejs/symbiote`.
 ## v2 migration (in progress)
 
 A **strangler migration** is underway, incrementally adopting a v2 architecture
-(DOM-free `UploaderController` + sub-controllers, `EventBus`, the `Listeners`
-primitive, a central router) under the existing v1 public tags — one testable
-milestone per PR. **Full plan: [`MIGRATION-PLAN.md`](./MIGRATION-PLAN.md).**
+(DOM-free single-responsibility controllers resolved through a per-ctx DI
+`ControllerContainer`, `EventBus`, the `Listeners` primitive, a central router)
+under the existing v1 public tags — one testable milestone per PR. The
+monolithic `UploaderController` god object that once fronted these controllers
+has been dissolved (M-god step 8e): blocks resolve the controllers they need via
+`ChildBlock.use(Token)`, and the ctx's `ControllerContainer` (registered in
+`UploaderRegistry`) is the ownership/teardown unit. **Full plan:
+[`MIGRATION-PLAN.md`](./MIGRATION-PLAN.md).**
 
 - Integration branch: **`feat/v2-migration`**; each milestone branches off it
   and PRs back into it (`feat/v2-m<N>-<name>` → `feat/v2-migration`).
 - The DOM-free controller layer lives in `src/abstract/` (e.g.
-  `controllers/UploaderController.ts`, `EventBus.ts`, `host-subscription.ts`,
+  `controllers/ConfigController.ts`, `controllers/RouterController.ts`,
+  `di/ControllerContainer.ts`, `EventBus.ts`, `host-subscription.ts`,
   `UploaderRegistry.ts`). Controllers must **not** import `lit` or touch the
   DOM — UI bridging belongs in the element/adapter layer.
 - Every milestone must pass the **full green gate including e2e** before merge.

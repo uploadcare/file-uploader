@@ -1,5 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it, test, vi } from 'vitest';
 import { commands, page, userEvent } from 'vitest/browser';
+import { AppInfo } from '@/abstract/controllers/AppInfo.js';
+import { ClipboardController } from '@/abstract/controllers/ClipboardController.js';
 import { A11y } from '@/abstract/managers/a11y.js';
 import type { FileUploaderRegular } from '@/index.js';
 import { ACTIVITY_TYPES } from '@/lit/activity-constants.js';
@@ -259,9 +261,9 @@ describe('File uploader regular — M9r solution-block safety net', () => {
       await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
 
       const ctx = PubSub.getCtx<SharedState>(ctxName)!;
-      const controller = ctx.uploaderController();
+      const container = ctx.container();
 
-      expect(controller.solutionName).toBe('uc-file-uploader-regular');
+      expect(container.get(AppInfo).solutionName).toBe('uc-file-uploader-regular');
       expect(ctx.read('*lazyPlugins')).toBe(fileUploaderLazyPlugins);
     });
 
@@ -302,8 +304,8 @@ describe('File uploader regular — M9r solution-block safety net', () => {
       await expect.poll(() => PubSub.hasCtx(ctxName)).toBe(true);
 
       const ctx = PubSub.getCtx<SharedState>(ctxName)!;
-      const controller = ctx.uploaderController();
-      const clipboard = controller.clipboard as unknown as { _scopes: Set<Node> };
+      const container = ctx.container();
+      const clipboard = container.get(ClipboardController) as unknown as { _scopes: Set<Node> };
       const el = page.getByTestId('uc-file-uploader-regular').query()!;
 
       expect(clipboard._scopes.has(el)).toBe(true);

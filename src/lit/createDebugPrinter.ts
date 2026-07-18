@@ -1,3 +1,4 @@
+import { ConfigController } from '../abstract/controllers/ConfigController';
 import type { PubSub } from './PubSubCompat';
 import type { SharedState } from './SharedState';
 
@@ -10,7 +11,7 @@ import type { SharedState } from './SharedState';
 export const createDebugPrinter = (getCtx: () => PubSub<SharedState>, scope?: string) => {
   return (...args: unknown[]) => {
     const ctx = getCtx();
-    if (!ctx.uploaderController().config.get('debug')) {
+    if (!ctx.container().get(ConfigController).get('debug')) {
       return;
     }
     let consoleArgs = args;

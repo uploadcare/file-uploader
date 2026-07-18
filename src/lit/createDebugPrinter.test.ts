@@ -10,9 +10,12 @@ import type { SharedState } from './SharedState';
 describe('createDebugPrinter (debug flag from ConfigController)', () => {
   const setup = () => {
     const config = new ConfigController();
+    // M-god step 8e: `createDebugPrinter` resolves the ctx's `ConfigController`
+    // via `ctx.container().get(ConfigController)` (the facade `uploaderController()`
+    // is gone). Mock a minimal container that hands back this config.
     const ctx = {
       id: 'my-ctx',
-      uploaderController: () => ({ config }),
+      container: () => ({ get: () => config }),
     } as unknown as PubSub<SharedState>;
     return { config, ctx };
   };

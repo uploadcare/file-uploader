@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ClipboardController } from '../abstract/controllers/ClipboardController';
+import { ConfigController } from '../abstract/controllers/ConfigController';
+import { LocaleController } from '../abstract/controllers/LocaleController';
 import { RouterController } from '../abstract/controllers/RouterController';
-import { UploaderController } from '../abstract/controllers/UploaderController';
+import { ControllerContainer } from '../abstract/di/ControllerContainer';
+import { UploaderEventType } from '../abstract/EventBus';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager } from '../abstract/managers/LocaleManager';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
@@ -94,13 +97,13 @@ describe('PubSub config (*cfg/*) facade', () => {
     const id = ctx.id;
     ctx.read('*cfg/multiple'); // triggers lazy controller creation
 
-    const controller = UploaderRegistry.get(id);
-    expect(controller).toBeDefined();
+    const container = UploaderRegistry.get(id);
+    expect(container).toBeDefined();
 
     // A second wrapper for the same ctx sees the same config state.
     const ctx2 = PubSub.getCtx<Record<string, unknown>>(id)!;
     ctx2.pub('*cfg/multiple', false);
-    expect(controller?.config.get('multiple')).toBe(false);
+    expect(container?.get(ConfigController).get('multiple')).toBe(false);
     expect(ctx.read('*cfg/multiple')).toBe(false);
   });
 
@@ -169,8 +172,8 @@ describe('PubSub locale (*l10n/*) facade', () => {
     ctx.read('*cfg/multiple');
     ctx.add('*l10n/upload', 'Upload', true);
 
-    const controller = UploaderRegistry.get(id);
-    expect(controller?.locale.get('upload')).toBe('Upload');
+    const container = UploaderRegistry.get(id);
+    expect(container?.get(LocaleController).get('upload')).toBe('Upload');
   });
 
   it('warns when reading a missing locale key but not a present one (typo surfacing)', () => {
@@ -267,97 +270,96 @@ describe('PubSub (additional coverage)', () => {
     expect(PubSub.hasCtx('does-not-exist')).toBe(false);
   });
 
-  it('deleteCtx is a no-op for the controller when none was created', () => {
+  it('deleteCtx is a no-op for the container when none was created', () => {
     const ctx = freshCtx();
-    // Never touched a *cfg/ or *l10n/ key, so no UploaderController exists.
+    // Never touched a *cfg/ or *l10n/ key, so no container exists.
     expect(() => PubSub.deleteCtx(ctx.id)).not.toThrow();
     expect(PubSub.hasCtx(ctx.id)).toBe(false);
   });
 
-  it('reusing the same ctx id after a full teardown rebuilds a brand-new controller, not the destroyed one', () => {
+  it('reusing the same ctx id after a full teardown rebuilds a brand-new container, not the destroyed one', () => {
     const id = freshCtx().id;
     const firstCtx = PubSub.getCtx<Record<string, unknown>>(id)!;
     firstCtx.pub('*cfg/multiple', false); // mutate away from the default
-    const firstController = UploaderRegistry.get(id);
-    expect(firstController).toBeDefined();
+    const firstContainer = UploaderRegistry.get(id);
+    expect(firstContainer).toBeDefined();
 
     PubSub.deleteCtx(id);
     expect(PubSub.hasCtx(id)).toBe(false);
     expect(UploaderRegistry.get(id)).toBeUndefined();
 
-    // Same id, re-registered — the controller-owned managers this milestone
-    // moves onto UploaderController must not survive under a stale reference
-    // keyed by ctx id; a fresh registration must get a fresh controller.
+    // Same id, re-registered — the container-owned managers must not survive
+    // under a stale reference keyed by ctx id; a fresh registration must get a
+    // fresh container.
     const secondCtx = PubSub.registerCtx<Record<string, unknown>>({ plain: 'seed' }, id);
-    secondCtx.read('*cfg/multiple'); // triggers lazy controller (re-)creation
-    const secondController = UploaderRegistry.get(id);
+    secondCtx.read('*cfg/multiple'); // triggers lazy container (re-)creation
+    const secondContainer = UploaderRegistry.get(id);
 
-    expect(secondController).toBeDefined();
-    expect(secondController).not.toBe(firstController);
+    expect(secondContainer).toBeDefined();
+    expect(secondContainer).not.toBe(firstContainer);
     // Fresh defaults — no leakage of the mutated value from the destroyed ctx.
     expect(secondCtx.read('*cfg/multiple')).toBe(initialConfig.multiple);
   });
 
-  it('deleteCtx orders: ctx removal, then UploaderRegistry unregister (null-notify), then controller.destroy()', () => {
+  it('deleteCtx orders: ctx removal, then UploaderRegistry unregister (null-notify), then container.dispose()', () => {
     const ctx = freshCtx();
     const id = ctx.id;
-    ctx.read('*cfg/multiple'); // triggers lazy controller creation
-    const controller = UploaderRegistry.get(id)!;
+    ctx.read('*cfg/multiple'); // triggers lazy container creation
+    const container = UploaderRegistry.get(id)!;
 
     const callOrder: string[] = [];
-    const destroySpy = vi.spyOn(controller, 'destroy');
+    const disposeSpy = vi.spyOn(container, 'dispose');
 
     // `whenAvailable` fires synchronously with `null` from inside
-    // `UploaderRegistry.unregister` — record what the ctx/controller state
+    // `UploaderRegistry.unregister` — record what the ctx/container state
     // looks like at that exact moment.
     const unsub = UploaderRegistry.whenAvailable(id, (c) => {
       if (c === null) {
         callOrder.push('unregister-null-notify');
         expect(PubSub.hasCtx(id)).toBe(false); // ctx already gone by this point
-        expect(destroySpy).not.toHaveBeenCalled(); // controller not yet destroyed
+        expect(disposeSpy).not.toHaveBeenCalled(); // container not yet disposed
       }
     });
 
-    destroySpy.mockImplementation(() => {
-      callOrder.push('controller.destroy');
+    disposeSpy.mockImplementation(() => {
+      callOrder.push('container.dispose');
     });
 
     PubSub.deleteCtx(id);
     unsub();
 
-    expect(callOrder).toEqual(['unregister-null-notify', 'controller.destroy']);
+    expect(callOrder).toEqual(['unregister-null-notify', 'container.dispose']);
   });
 });
 
 describe('PubSub (M9k/M9l Task 3: pre-connect construction timing)', () => {
-  it('touching a *cfg/* key before any element connects builds all six controller-owned managers, with no global side effects', () => {
+  it('touching a *cfg/* key before any element connects builds all six container-owned managers, with no global side effects', () => {
     const addEventListenerSpy = vi.spyOn(window, 'addEventListener');
 
     // Bare ctx + a config read — no `<uc-config>`/`LitBlock` ever touches this
-    // ctx, matching the M9k Task 2 shift: the controller (and its owned
-    // managers) now come into being the moment *any* `*cfg/*`/`*l10n/*` key is
-    // touched, not when a DOM element's `initCallback` runs. M9l Task 2's
-    // lazy-arm split (a11y/clipboard attach zero window listeners at
-    // construction, only on first registration) is what makes constructing
-    // them this early safe.
+    // ctx, matching the M9k Task 2 shift: the container (and its owned managers)
+    // now come into being the moment *any* `*cfg/*`/`*l10n/*` key is touched,
+    // not when a DOM element's `initCallback` runs. M9l Task 2's lazy-arm split
+    // (a11y/clipboard attach zero window listeners at construction, only on
+    // first registration) is what makes constructing them this early safe.
     try {
       const ctx = freshCtx();
       expect(() => ctx.read('*cfg/multiple')).not.toThrow();
 
-      const controller = UploaderRegistry.get(ctx.id);
-      expect(controller).toBeDefined();
-      expect(controller!.localeManager).toBeInstanceOf(LocaleManager);
-      expect(controller!.eventEmitter).toBeInstanceOf(EventEmitter);
-      expect(controller!.telemetryManager).toBeInstanceOf(TelemetryManager);
-      expect(controller!.router).toBeInstanceOf(RouterController);
-      expect(controller!.a11y).toBeInstanceOf(A11y);
-      expect(controller!.clipboard).toBeInstanceOf(ClipboardController);
+      const container = UploaderRegistry.get(ctx.id);
+      expect(container).toBeDefined();
+      expect(container!.get(LocaleManager)).toBeInstanceOf(LocaleManager);
+      expect(container!.get(EventEmitter)).toBeInstanceOf(EventEmitter);
+      expect(container!.get(TelemetryManager)).toBeInstanceOf(TelemetryManager);
+      expect(container!.get(RouterController)).toBeInstanceOf(RouterController);
+      expect(container!.get(A11y)).toBeInstanceOf(A11y);
+      expect(container!.get(ClipboardController)).toBeInstanceOf(ClipboardController);
 
       // Nothing on this path reaches into the DOM/global scope. The ctx
       // itself never sees `*a11y`/`*clipboard` — those v1 shared-instance
-      // keys are only registered by `LitBlock.initCallback` (element-
-      // triggered), and this ctx never had a block connect — even though the
-      // controller now constructs both instances eagerly alongside the rest.
+      // keys are only registered by `ensureUploaderCtx` (element-triggered),
+      // and this ctx never had a block connect — even though the container now
+      // constructs both instances eagerly alongside the rest.
       expect(ctx.has('*a11y')).toBe(false);
       expect(ctx.has('*clipboard')).toBe(false);
 
@@ -368,46 +370,78 @@ describe('PubSub (M9k/M9l Task 3: pre-connect construction timing)', () => {
   });
 });
 
-describe('PubSub (M-god step 2: per-ctx ControllerContainer ownership)', () => {
-  it('the per-ctx container owns the controller — ctx teardown disposes it, calling UploaderController.destroy() exactly once', () => {
+describe('PubSub (M-god step 2/8e: per-ctx ControllerContainer ownership)', () => {
+  it('the per-ctx container is disposed exactly once on ctx teardown', () => {
     const ctx = freshCtx();
     const id = ctx.id;
-    const controller = ctx.uploaderController(); // lazily creates the container + controller
+    const container = ctx.container(); // lazily creates + registers the container
 
-    const destroySpy = vi.spyOn(controller, 'destroy');
+    const disposeSpy = vi.spyOn(container, 'dispose');
 
     PubSub.deleteCtx(id);
-    // dispose() runs the single cached UploaderController.destroy() once.
-    expect(destroySpy).toHaveBeenCalledTimes(1);
+    // deleteCtx disposes the container once (which destroys its controllers).
+    expect(disposeSpy).toHaveBeenCalledTimes(1);
 
-    // A second teardown of the same (already-removed) ctx must NOT destroy again.
+    // A second teardown of the same (already-removed) ctx must NOT dispose again.
     PubSub.deleteCtx(id);
-    expect(destroySpy).toHaveBeenCalledTimes(1);
+    expect(disposeSpy).toHaveBeenCalledTimes(1);
   });
 
-  it('per-ctx identity: the same ctx yields one controller across repeated resolution; a different ctx yields a different one', () => {
+  it('per-ctx identity: the same ctx yields one container across repeated resolution; a different ctx yields a different one', () => {
     const ctxA = freshCtx();
     const ctxB = freshCtx();
 
-    const a1 = ctxA.uploaderController();
-    const a2 = ctxA.uploaderController();
-    // A fresh wrapper for the same ctx id resolves the same container/controller.
-    const a3 = PubSub.getCtx<Record<string, unknown>>(ctxA.id)!.uploaderController();
-    const b1 = ctxB.uploaderController();
+    const a1 = ctxA.container();
+    const a2 = ctxA.container();
+    // A fresh wrapper for the same ctx id resolves the same container.
+    const a3 = PubSub.getCtx<Record<string, unknown>>(ctxA.id)!.container();
+    const b1 = ctxB.container();
 
     expect(a1).toBe(a2);
     expect(a1).toBe(a3);
     expect(b1).not.toBe(a1);
   });
 
-  it('the instance registered in UploaderRegistry is still the UploaderController (consumers see no change)', () => {
+  it('the instance registered in UploaderRegistry is the ctx ControllerContainer (M-god step 8e)', () => {
     const ctx = freshCtx();
-    ctx.uploaderController(); // triggers container + controller creation + registration
+    ctx.container(); // triggers container creation + registration
 
     const registered = UploaderRegistry.get(ctx.id);
-    expect(registered).toBeInstanceOf(UploaderController);
-    // It is the exact instance the container owns and hands out.
-    expect(registered).toBe(ctx.uploaderController());
+    expect(registered).toBeInstanceOf(ControllerContainer);
+    // It is the exact container instance the ctx resolves.
+    expect(registered).toBe(ctx.container());
+  });
+
+  // M-god step 8e moved the eager-construction set off the deleted
+  // `UploaderController` ctor onto `_resolveContainer`. It must still fire on
+  // EVERY container-creation path (here: a bare `*cfg/*` touch), so the managers
+  // with construction/init side effects exist from birth — telemetry in
+  // particular must subscribe to the bus before any event can fire.
+  it('eagerly constructs the config/router/telemetry set on container creation (no consumer get needed)', () => {
+    const ctx = freshCtx();
+    ctx.read('*cfg/multiple'); // first *cfg/* touch → creates + registers the container
+    const container = UploaderRegistry.get(ctx.id)!;
+
+    // `has()` is true only for already-constructed tokens — these three are
+    // resolved by `_resolveContainer` itself, without any consumer `get()`.
+    expect(container.has(ConfigController)).toBe(true);
+    expect(container.has(RouterController)).toBe(true);
+    expect(container.has(TelemetryManager)).toBe(true);
+  });
+
+  it('the eagerly-constructed telemetry observes the ctx bus (init() ran at container creation)', () => {
+    const ctx = freshCtx();
+    ctx.read('*cfg/multiple'); // build the container; telemetry is constructed eagerly
+    const container = UploaderRegistry.get(ctx.id)!;
+    // Resolve the ALREADY-constructed instances (identity is stable; no re-init).
+    const telemetry = container.get(TelemetryManager);
+    const sendEvent = vi.spyOn(telemetry, 'sendEvent');
+
+    // Emitting on the ctx bus reaches telemetry only if its `init()` subscribed
+    // at construction — proving the eager set wired the bus observer.
+    container.get(EventEmitter).emit(UploaderEventType.UPLOAD_CLICK);
+
+    expect(sendEvent).toHaveBeenCalled();
   });
 });
 
@@ -476,9 +510,9 @@ describe('PubSub collection-state (M-god step 4) facade', () => {
 
   it('the 9-stateBridges path shares the same CollectionStateController instance the reads see', () => {
     const ctx = freshCtx();
-    // Force the container + UploaderController (which wires the stateBridges over
-    // this ctx's pub/read) into existence.
-    ctx.uploaderController();
+    // Force the container (which owns the CollectionStateController the
+    // stateBridges read/write over this ctx's pub/read) into existence.
+    ctx.container();
     // A read through the facade and a write through the facade hit one instance.
     ctx.pub('*collectionState', { totalCount: 3 } as never);
     expect(ctx.read('*collectionState')).toEqual({ totalCount: 3 });

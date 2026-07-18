@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
@@ -30,10 +31,10 @@ describe('buildUploaderScopeDeps', () => {
   it('never rethrows when telemetryManager.sendEventError throws, and logs via the host debug for all three sinks', () => {
     const ctxName = freshCtxName();
     const ctx = ensureUploaderCtx(ctxName);
-    const controller = UploaderRegistry.get(ctxName)!;
+    const container = UploaderRegistry.get(ctxName)!;
     const bag = createSharedInstancesBag(() => ctx);
 
-    const sendEventError = vi.spyOn(controller.telemetryManager, 'sendEventError').mockImplementation(() => {
+    const sendEventError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {
       throw new Error('telemetry sink is down');
     });
     const debug = vi.fn();
@@ -54,10 +55,10 @@ describe('buildUploaderScopeDeps', () => {
   it('reports through telemetryManager.sendEventError without touching debug when it does not throw', () => {
     const ctxName = freshCtxName();
     const ctx = ensureUploaderCtx(ctxName);
-    const controller = UploaderRegistry.get(ctxName)!;
+    const container = UploaderRegistry.get(ctxName)!;
     const bag = createSharedInstancesBag(() => ctx);
 
-    const sendEventError = vi.spyOn(controller.telemetryManager, 'sendEventError').mockImplementation(() => {});
+    const sendEventError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {});
     const debug = vi.fn();
 
     const { host } = buildUploaderScopeDeps(bag, debug, vi.fn());

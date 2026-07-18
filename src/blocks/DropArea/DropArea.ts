@@ -2,9 +2,10 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, type Ref, ref } from 'lit/directives/ref.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import type { UploaderController } from '../../abstract/controllers/UploaderController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { createDebugPrinter } from '../../lit/createDebugPrinter';
@@ -135,14 +136,14 @@ export class DropArea extends ChildBlock {
     return hasSize && visible && isInViewport;
   }
 
-  protected override controllerReady(ctrl: UploaderController): void {
+  protected override controllerReady(container: ControllerContainer): void {
     // `<uc-drop-area>` is the uploader block in the built-in solutions (they
     // never render `<uc-upload-ctx-provider>`), so it must attach the
     // uploader scope itself — same contract as v1's `LitUploaderBlock.
     // initCallback`, and the identical seam `<uc-upload-ctx-provider>` uses.
     ensureUploaderScope(
       this.bag,
-      ctrl,
+      container,
       (...args) => this._debugPrint(...args),
       (type, payload, options) => this.emit(type, payload, options),
     );
@@ -225,8 +226,8 @@ export class DropArea extends ChildBlock {
     this._destroyContentWrapperDropzone = null;
   }
 
-  protected override subscriptionsFor(ctrl: UploaderController): Array<(listener: () => void) => () => void> {
-    return [(l: () => void) => ctrl.locale.subscribe(l)];
+  protected override subscriptionsFor(container: ControllerContainer): Array<(listener: () => void) => () => void> {
+    return [(l: () => void) => container.get(LocaleController).subscribe(l)];
   }
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {

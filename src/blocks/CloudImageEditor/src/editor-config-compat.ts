@@ -1,4 +1,5 @@
 import type { EditorConfig } from '../../../abstract/controllers/CloudImageEditorController';
+import { LocaleController } from '../../../abstract/controllers/LocaleController';
 import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { sharedConfigKey } from '../../../abstract/sharedConfigKey';
 import { createL10n } from '../../../lit/l10n';
@@ -65,7 +66,7 @@ function attach(
   // is reflected. The `*cfg/*` config reads below stay on the facade until the
   // step-9 editor repoint; this is the minimal getter change forced by
   // `createL10n`'s new signature.
-  onLocale?.(createL10n(() => ctx.uploaderController().locale));
+  onLocale?.(createL10n(() => ctx.container().get(LocaleController)));
 
   const telemetryManager = ctx.store['*telemetryManager'];
   if (telemetryManager) {

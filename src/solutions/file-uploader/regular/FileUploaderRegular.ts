@@ -1,7 +1,8 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
+import { LocaleController } from '../../../abstract/controllers/LocaleController';
 import { RouterController } from '../../../abstract/controllers/RouterController';
-import type { UploaderController } from '../../../abstract/controllers/UploaderController';
+import type { ControllerContainer } from '../../../abstract/di/ControllerContainer';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
@@ -40,8 +41,8 @@ export class FileUploaderRegular extends SolutionChildBlock {
   @property({ attribute: 'dynamic-button', type: Boolean })
   public dynamicButton = false;
 
-  protected override controllerReady(ctrl: UploaderController): void {
-    super.controllerReady(ctrl);
+  protected override controllerReady(container: ControllerContainer): void {
+    super.controllerReady(container);
 
     // Regular renders every activity inside a `<uc-modal>`, so all navigation
     // targets the foreground (modal) slot.
@@ -52,11 +53,11 @@ export class FileUploaderRegular extends SolutionChildBlock {
     });
   }
 
-  protected override subscriptionsFor(ctrl: UploaderController) {
+  protected override subscriptionsFor(container: ControllerContainer) {
     // The cancel button's label is rendered through `this.l10n(...)` — re-render
     // when the dictionary loads or the locale switches (same convention as every
     // other l10n-rendering ChildBlock, e.g. SimpleBtn/UploadList).
-    return [(listener: () => void) => ctrl.locale.subscribe(listener)];
+    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   /**
