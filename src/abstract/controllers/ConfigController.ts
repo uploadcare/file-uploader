@@ -7,7 +7,7 @@ import { SignalMap } from '../di/SignalMap';
  * Pure-logic config store. Knows nothing about DOM, attributes, or Lit.
  *
  * In the v1 → v2 strangler this is the source of truth for the `*cfg/*` state
- * that used to live in the per-ctx per-ctx store map; the v1 ctx facade routes those
+ * that used to live in the per-ctx store map; the v1 ctx facade routes those
  * keys here (see its `*cfg/` facade). For now it is a raw typed container:
  * value coercion (`normalizeConfigValue`), the `cdnCname`/`cameraModes`
  * computed properties, and the attribute/property bridge all still live in the

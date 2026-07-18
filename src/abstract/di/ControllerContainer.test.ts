@@ -446,4 +446,58 @@ describe('ControllerContainer.whenController', () => {
     container.get(A);
     expect(cb).not.toHaveBeenCalled();
   });
+
+  it('isolates a throwing immediate callback so it does not bubble out of whenController', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    class A {}
+    const container = new ControllerContainer();
+    container.get(A);
+    const bad = vi.fn(() => {
+      throw new Error('boom');
+    });
+    expect(() => container.whenController(A, bad)).not.toThrow();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('whenController immediate callback for A threw'),
+      expect.any(Error),
+    );
+    warn.mockRestore();
+  });
+
+  it('defers the callback for a token still mid-init, flushing it only after init() completes', () => {
+    // A `whenController` called re-entrantly during a token's own `init()` sees
+    // the cached-before-init instance, but that instance is only partially
+    // wired — the callback must defer to the post-init flush, not fire against
+    // the half-built instance.
+    const order: string[] = [];
+    const cb = vi.fn(() => order.push('waiter'));
+    class A {
+      public init(): void {
+        order.push('init-start');
+        container.whenController(A, cb);
+        // Not fired yet: the token is still resolving.
+        expect(cb).not.toHaveBeenCalled();
+        order.push('init-end');
+      }
+    }
+    const container = new ControllerContainer();
+    const a = container.get(A);
+    expect(cb).toHaveBeenCalledWith(a);
+    expect(order).toEqual(['init-start', 'init-end', 'waiter']);
+  });
+
+  it('a double unsubscribe does not evict a fresh subscription for the same token', () => {
+    // Stale-unsubscribe guard: after the first unsub empties + drops its set,
+    // a new subscription creates a fresh set for the token. Calling the first
+    // unsub AGAIN must not delete that fresh set out from under the new waiter.
+    class A {}
+    const container = new ControllerContainer();
+    const off1 = container.whenController(A, vi.fn());
+    off1();
+    const kept = vi.fn();
+    container.whenController(A, kept);
+    off1(); // stale second call — must be a no-op against the current set
+
+    container.get(A);
+    expect(kept).toHaveBeenCalledTimes(1);
+  });
 });

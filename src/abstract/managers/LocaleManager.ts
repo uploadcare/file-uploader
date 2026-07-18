@@ -21,9 +21,10 @@ export const DEFAULT_LOCALE = 'en';
  * alone). Seeding the `en` dictionary and wiring the config subscriptions as
  * part of the constructor would leak locale state into every such scope.
  * Instead {@link activate} — the real construction-time work — is called
- * explicitly by `ensureUploaderCtx`/`ensurePluginManager` once the DOM layer
- * (`LitBlock`) is really initializing an uploader scope. It also takes the
- * plugin-manager coupling (`onPluginsChange`/`snapshot`, for plugin-supplied
+ * explicitly by `ensureUploaderCtx` the moment a ctx's container exists (on
+ * every path, including the pre-element one with no block mounted), and again
+ * by `ensurePluginManager` to re-couple the real plugin manager. It also takes
+ * the plugin-manager coupling (`onPluginsChange`/`snapshot`, for plugin-supplied
  * `registerL10n` dictionaries): `PluginController` isn't resolved by
  * `ensureUploaderCtx` (it's bound later by `ensurePluginManager`), so
  * `activate` accepts a nullable plugin manager and re-couples idempotently

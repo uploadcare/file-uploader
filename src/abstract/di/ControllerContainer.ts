@@ -137,9 +137,20 @@ export class ControllerContainer {
    */
   public whenController<T>(token: Token<T>, cb: (inst: T) => void): () => void {
     const Ctrl = resolveToken(token);
-    const existing = this.#instances.get(Ctrl);
-    if (existing !== undefined) {
-      cb(existing as T);
+    // Fire immediately only if the instance is FULLY resolved: present
+    // (`has()`, not `get() !== undefined` — a bound factory may legitimately
+    // yield `undefined`, and treating that as "not resolved" would register a
+    // waiter that never fires) AND not still mid-init. A token in `#resolving`
+    // is cached-before-init (line in `get()`), so its instance is only
+    // partially wired — defer to the post-init flush rather than hand a waiter a
+    // half-built instance. Isolate-and-warn on the immediate callback, matching
+    // `#flushControllerWaiters`.
+    if (this.#instances.has(Ctrl) && !this.#resolving.has(Ctrl)) {
+      try {
+        cb(this.#instances.get(Ctrl) as T);
+      } catch (err) {
+        console.warn(`[uc] a whenController immediate callback for ${Ctrl.name} threw`, err);
+      }
       return () => {};
     }
     let set = this.#controllerWaiters.get(Ctrl);
@@ -150,6 +161,13 @@ export class ControllerContainer {
     const waiter = cb as (inst: unknown) => void;
     set.add(waiter);
     return () => {
+      // Stale-unsubscribe guard: only mutate the set STILL registered for this
+      // token. Once flushed/cleared, `#controllerWaiters` may hold a fresh set
+      // for the same token; a captured-set `delete` (and especially the empty
+      // cleanup below) must not touch it.
+      if (this.#controllerWaiters.get(Ctrl) !== set) {
+        return;
+      }
       set.delete(waiter);
       if (set.size === 0) this.#controllerWaiters.delete(Ctrl);
     };
@@ -187,6 +205,10 @@ export class ControllerContainer {
   }
 
   public dispose(): void {
+    // Clear pending `whenController` waiters BEFORE running destroys: a
+    // `destroy()` may resolve a not-yet-built `@inject` peer via `get()`, which
+    // flushes waiters — those must not fire against a container mid-teardown.
+    this.#controllerWaiters.clear();
     // Drain the live LIFO list rather than iterating fixed indexes: a
     // `destroy()` can touch a not-yet-resolved `@inject` peer, which appends a
     // fresh instance to `#order` mid-loop. Popping until empty guarantees every

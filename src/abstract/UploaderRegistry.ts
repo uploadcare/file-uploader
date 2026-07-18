@@ -88,9 +88,22 @@ class UploaderRegistryImpl {
     // Cache BEFORE the eager init so a re-entrant `ensure`/`get` during that
     // init resolves this same instance.
     this._map.set(ctxName, container);
-    container.get(ConfigController);
-    container.get(RouterController);
-    container.get(TelemetryManager);
+    try {
+      container.get(ConfigController);
+      container.get(RouterController);
+      container.get(TelemetryManager);
+    } catch (err) {
+      // Eager init threw: roll the half-built container back out of `_map` so a
+      // later `ensure()` retries a clean creation (instead of returning the
+      // partial container and skipping init) and no consumer is ever notified of
+      // it. Guard `=== container` in case a re-entrant `register()` already
+      // replaced it. Best-effort dispose, then rethrow.
+      if (this._map.get(ctxName) === container) {
+        this._map.delete(ctxName);
+      }
+      container.dispose();
+      throw err;
+    }
     // Notify `whenAvailable` subscribers AFTER the eager init — the same point
     // `register()` notifies from.
     this._notifyConsumers(ctxName, container);
