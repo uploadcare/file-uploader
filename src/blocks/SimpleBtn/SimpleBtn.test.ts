@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
@@ -80,5 +81,32 @@ describe('SimpleBtn (M-god step 6b-1 migration)', () => {
     await el.updateComplete;
     await delay(0);
     expect(buttonText(el)).toBe(multiText);
+  });
+
+  it('re-renders the button text reactively on a locale change with no explicit subscription (l10n getTracked)', async () => {
+    const ctxName = freshCtxName();
+    const { el, config } = await mountWithConfig(ctxName);
+
+    // Pin the single-file key so the locale key under test (`upload-file`) is
+    // the one actually rendered, regardless of the `multiple` default.
+    config.set('multiple', false);
+    await el.updateComplete;
+    await delay(0);
+
+    // Default English dictionary value, resolved through `this.l10n('upload-file')`.
+    expect(buttonText(el)).toBe('Upload file');
+
+    // This block declares no `subscriptionsFor` override (removed — M-god step
+    // 9e-3): `createL10n` now reads `LocaleController.getTracked`, so the
+    // `l10n('upload-file')` call inside `render()` auto-tracks that key under
+    // `SignalWatcher` on its own. Writing the key directly on the controller
+    // (bypassing any block-level subscription) must still re-render the block.
+    const locale = UploaderRegistry.get(ctxName)?.get(LocaleController);
+    if (!locale) throw new Error('locale controller not resolved');
+    locale.set('upload-file', 'CUSTOM');
+    await el.updateComplete;
+    await delay(0);
+
+    expect(buttonText(el)).toBe('CUSTOM');
   });
 });
