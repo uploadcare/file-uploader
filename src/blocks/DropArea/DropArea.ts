@@ -2,7 +2,6 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, type Ref, ref } from 'lit/directives/ref.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
@@ -224,10 +223,6 @@ export class DropArea extends ChildBlock {
     this._destroyDropzone = null;
     this._destroyContentWrapperDropzone?.();
     this._destroyContentWrapperDropzone = null;
-  }
-
-  protected override subscriptionsFor(container: ControllerContainer): Array<(listener: () => void) => () => void> {
-    return [(l: () => void) => container.get(LocaleController).subscribe(l)];
   }
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {

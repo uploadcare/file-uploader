@@ -170,9 +170,10 @@ export abstract class ChildBlock extends ChildBlockBase {
    * key fallback, template variables, pluralization. Reads directly from this
    * ctx's `LocaleController` (M-god step 7: off the `*l10n/*` PubSub facade).
    * Call at render time (the render gate guarantees the container is adopted, so
-   * `use()` resolves); blocks that render l10n text should add
-   * `(l) => ctrl.locale.subscribe(l)` to `subscriptionsFor` so the text
-   * re-renders when the dictionary loads or the locale switches.
+   * `use()` resolves). Lookups go through `LocaleController.getTracked`, so an
+   * `l10n(key)` read inside `render()`/`willUpdate()` auto-tracks that key under
+   * `SignalWatcher` and re-renders the block when the dictionary loads or the
+   * locale switches — no explicit subscription needed.
    */
   public l10n = createL10n(() => this.use(LocaleController));
 
@@ -375,10 +376,6 @@ export abstract class ChildBlock extends ChildBlockBase {
     // each block's `@inject` fields (and via `use()`/`whenController` for the
     // scope-bound ones), so there is no eager pre-warm here — adoption only tags
     // the container and wires the subscriptions below.
-    const rerender = () => this.requestUpdate();
-    for (const subscribe of this.subscriptionsFor(container)) {
-      this._subs.push(subscribe(rerender));
-    }
     this._subs.push(container.get(ConfigController).subscribe(() => this._syncTestId(container)));
     this._syncTestId(container);
     try {
@@ -510,15 +507,6 @@ export abstract class ChildBlock extends ChildBlockBase {
     const unsub = this.use(RouterController).subscribe(callback);
     this.trackSub(unsub);
     return unsub;
-  }
-
-  /**
-   * Controller-change subscriptions that should trigger a re-render — return
-   * `subscribe` functions (e.g. `(l) => container.get(LocaleController).subscribe(l)`).
-   * Wired on adoption, torn down on release.
-   */
-  protected subscriptionsFor(_container: ControllerContainer): Array<(listener: () => void) => () => void> {
-    return [];
   }
 
   /** Called after the ctx's container is adopted (initial and on re-adoption). */

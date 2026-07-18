@@ -1,8 +1,6 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { LocaleController } from '../../abstract/controllers/LocaleController';
-import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -25,10 +23,6 @@ export class SimpleBtn extends ChildBlock {
   private readonly _handleClick = () => {
     this._api.initFlow();
   };
-
-  protected override subscriptionsFor(container: ControllerContainer) {
-    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
-  }
 
   public override render() {
     const buttonTextKey = this._config.getTracked('multiple') ? 'upload-files' : 'upload-file';

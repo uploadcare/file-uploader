@@ -2,10 +2,8 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { UploadController } from '../../abstract/controllers/UploadController';
-import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
@@ -421,10 +419,6 @@ export class FileItem extends FileItemConfig {
 
   protected override controllerReleased(): void {
     this._pluginManager = null;
-  }
-
-  protected override subscriptionsFor(container: ControllerContainer) {
-    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   public override connectedCallback(): void {
