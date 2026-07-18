@@ -2,7 +2,6 @@ import { html } from 'lit';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { ConfigController } from '@/abstract/controllers/ConfigController';
-import { LocaleController } from '@/abstract/controllers/LocaleController';
 import { RouterController } from '@/abstract/controllers/RouterController';
 import { ControllerContainer } from '@/abstract/di/ControllerContainer';
 import { UploaderRegistry } from '@/abstract/UploaderRegistry';
@@ -29,13 +28,6 @@ class TestChildBlock extends ChildBlock {
     return this.useOrNull(RouterController);
   }
 
-  protected override subscriptionsFor(container: ControllerContainer) {
-    return [
-      (listener: () => void) => container.get(ConfigController).subscribe(listener),
-      (listener: () => void) => container.get(LocaleController).subscribe(listener),
-    ];
-  }
-
   protected override controllerReady(): void {
     if (this.throwInReady) {
       throw new Error('boom in controllerReady');
@@ -56,7 +48,7 @@ class TestChildBlock extends ChildBlock {
   }
 
   public override render() {
-    return html`<span class="pk">${this.useOrNull(ConfigController)?.get('pubkey') ?? ''}</span
+    return html`<span class="pk">${this.useOrNull(ConfigController)?.getTracked('pubkey') ?? ''}</span
       ><span class="l10n">${this.l10n('upload-file')}</span
       ><span class="inner" data-testid="inner"></span>`;
   }
@@ -144,7 +136,7 @@ describe('ChildBlock', () => {
     expect(containerOf(ctxName)).toBe(container);
   });
 
-  it('re-renders on controller change notifications (subscriptionsFor)', async () => {
+  it('re-renders on controller change notifications (getTracked)', async () => {
     const ctxName = getCtxName();
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
     const child = append('test-child-block', { 'ctx-name': ctxName });

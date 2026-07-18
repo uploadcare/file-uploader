@@ -1,7 +1,5 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { LocaleController } from '../../abstract/controllers/LocaleController';
-import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -60,10 +58,6 @@ export class SourceBtn extends ChildBlock {
     const { label, icon, id } = source;
     this._srcTypeKey = label;
     this._iconName = icon ?? id ?? 'default';
-  }
-
-  protected override subscriptionsFor(container: ControllerContainer) {
-    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   public activate(): void {

@@ -1,9 +1,7 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
@@ -45,10 +43,6 @@ export class PrimaryAction extends ChildBlock {
 
   private get _isMultiple(): boolean {
     return this._config.getTracked('multiple');
-  }
-
-  protected override subscriptionsFor(container: ControllerContainer) {
-    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   private get hasEntries(): boolean {

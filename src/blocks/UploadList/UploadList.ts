@@ -2,7 +2,6 @@ import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
@@ -311,10 +310,6 @@ export class UploadList extends ActivityChildBlock {
     // eager `subConfigValue` fire. `mode` is not a reactive property, so setting
     // it schedules no further update.
     this.setAttribute('mode', this._config.getTracked('filesViewMode'));
-  }
-
-  protected override subscriptionsFor(container: ControllerContainer) {
-    return [(listener: () => void) => container.get(LocaleController).subscribe(listener)];
   }
 
   public override render() {
