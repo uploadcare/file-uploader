@@ -1,8 +1,6 @@
 import { fileIsImage } from '../../../utils/fileTypes';
-import { ConfigController } from '../../controllers/ConfigController';
-import { containerOf } from '../../di/ControllerContainer';
+import { controllerLogger } from '../../controllerLogger';
 import { Disposables } from '../../di/Disposables';
-import { logger } from '../../logger';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
 import type { PluginApi, PluginRegistrySnapshot, PluginUploaderApi, UploaderPlugin } from './PluginTypes';
@@ -39,7 +37,7 @@ type RegisteredPlugin = {
 export class PluginController {
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
   // (resolved lazily at log time via the container that built this instance).
-  private readonly _log = logger.scope('plugin-manager', { ctxName: () => containerOf(this)?.ctxName });
+  private readonly _log = controllerLogger(this, 'plugin-manager');
   private _deps: PluginControllerDeps;
   private _isDestroyed = false;
   private _plugins: Map<string, RegisteredPlugin> = new Map();
@@ -129,10 +127,7 @@ export class PluginController {
     // A logger scoped to this plugin — `[uc][<ctx-name>][plugin:<id>]`, verbose
     // tier gated by the uploader's `debug` config. Handed to `setup` so plugins
     // log through the centralized logger with attribution for free.
-    const pluginLogger = logger.scope(`plugin:${plugin.id}`, {
-      ctxName: () => containerOf(this)?.ctxName,
-      isVerbose: () => containerOf(this)?.get(ConfigController).get('debug') ?? false,
-    });
+    const pluginLogger = controllerLogger(this, `plugin:${plugin.id}`);
     let pluginDispose: Unsubscribe | undefined;
     try {
       pluginDispose = (await plugin.setup({ pluginApi, uploaderApi, logger: pluginLogger })) ?? undefined;

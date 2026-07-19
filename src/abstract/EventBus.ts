@@ -1,8 +1,6 @@
 import type { ActivityType, RegisteredActivityType } from '../lit/activity-constants';
 import type { OutputCollectionState, OutputFileEntry } from '../types/exported';
-import { ConfigController } from './controllers/ConfigController';
-import { containerOf } from './di/ControllerContainer';
-import { logger } from './logger';
+import { controllerLogger } from './controllerLogger';
 
 /**
  * Canonical event surface for the whole library. `EventEmitter`
@@ -75,10 +73,7 @@ export class EventBus {
   // Per-ctx logger: `warn`/`error` always print; the verbose tier (event logging)
   // is gated by THIS ctx's `debug` config. ctx-name + gate resolve lazily at log
   // time via the container that built this instance.
-  private readonly _log = logger.scope('event-bus', {
-    ctxName: () => containerOf(this)?.ctxName,
-    isVerbose: () => containerOf(this)?.get(ConfigController).get('debug') ?? false,
-  });
+  private readonly _log = controllerLogger(this, 'event-bus');
   private _listeners = new Map<string, Set<(payload: unknown) => void>>();
   private _debounceTimers = new Map<string, number>();
   private static readonly DEFAULT_DEBOUNCE_MS = 20;

@@ -15,10 +15,9 @@ import {
   validateMaxSizeLimit,
   validateUploadError,
 } from '../../utils/validators/file/index';
-import { containerOf } from '../di/ControllerContainer';
+import { controllerLogger } from '../controllerLogger';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
-import { logger } from '../logger';
 import type { TypedData } from '../TypedData';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import type {
@@ -77,7 +76,7 @@ type EntryValidationState = {
 export class ValidationController {
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
   // (resolved lazily at log time via the container that built this instance).
-  private readonly _log = logger.scope('validation', { ctxName: () => containerOf(this)?.ctxName });
+  private readonly _log = controllerLogger(this, 'validation');
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;

@@ -29,14 +29,14 @@ import { parseCdnUrl } from '../utils/parseCdnUrl';
 import { stringToArray } from '../utils/stringToArray';
 import { UploadSource } from '../utils/UploadSource';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
+import { controllerLogger } from './controllerLogger';
 import { CollectionStateController } from './controllers/CollectionStateController';
 import { ConfigController } from './controllers/ConfigController';
 import { LocaleController } from './controllers/LocaleController';
 import { RouterController } from './controllers/RouterController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
-import { CONTAINER, type ControllerContainer, containerOf } from './di/ControllerContainer';
+import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
 import { inject } from './di/inject';
-import { logger } from './logger';
 import { PluginController } from './managers/plugin';
 import { TypedData } from './TypedData';
 import type { UploadEntryData } from './uploadEntrySchema';
@@ -71,7 +71,7 @@ export type ApiAddFileCommonOptions = {
 export class UploaderPublicApi {
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
   // (resolved lazily at log time via the container that built this instance).
-  private readonly _log = logger.scope('public-api', { ctxName: () => containerOf(this)?.ctxName });
+  private readonly _log = controllerLogger(this, 'public-api');
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(LocaleController) private readonly _locale!: LocaleController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
