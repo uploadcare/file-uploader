@@ -34,7 +34,6 @@ describe('logger (base / always-on tier)', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     logger.log('l');
     logger.debug('d');
-    logger.table('t', [{ a: 1 }]);
     expect(log).not.toHaveBeenCalled();
   });
 });
@@ -116,73 +115,5 @@ describe('logger.scope', () => {
     scoped.debug(build);
     expect(build).toHaveBeenCalledTimes(1);
     expect(log).toHaveBeenCalledWith('%c uc %c X %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, '', 'expensive');
-  });
-});
-
-describe('logger pretty helpers (gated)', () => {
-  it('table logs a labelled header then console.table, only when enabled', () => {
-    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const table = vi.spyOn(console, 'table').mockImplementation(() => {});
-    const scoped = logger.scope('Upload', { isVerbose: () => true });
-
-    scoped.table('upload options', { a: 1 });
-    expect(log).toHaveBeenCalledWith('%c uc %c Upload %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, '', 'upload options');
-    expect(table).toHaveBeenCalledWith({ a: 1 });
-  });
-
-  it('table is a no-op when disabled', () => {
-    const table = vi.spyOn(console, 'table').mockImplementation(() => {});
-    logger.scope('Upload', { isVerbose: () => false }).table('x', {});
-    expect(table).not.toHaveBeenCalled();
-  });
-
-  it('table forwards a columns filter to console.table when given', () => {
-    const table = vi.spyOn(console, 'table').mockImplementation(() => {});
-    logger.scope('Upload', { isVerbose: () => true }).table('rows', [{ a: 1, b: 2 }], ['a']);
-    expect(table).toHaveBeenCalledWith([{ a: 1, b: 2 }], ['a']);
-  });
-
-  it('group returns a closer; dir is gated', () => {
-    const group = vi.spyOn(console, 'group').mockImplementation(() => {});
-    const groupEnd = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
-    const dir = vi.spyOn(console, 'dir').mockImplementation(() => {});
-    const scoped = logger.scope('S', { isVerbose: () => true });
-
-    const end = scoped.group('steps');
-    scoped.dir({ nested: true });
-    end();
-    end(); // idempotent — a second close is a no-op
-
-    expect(group).toHaveBeenCalledWith('%c uc %c S %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, '', 'steps');
-    expect(dir).toHaveBeenCalledWith({ nested: true });
-    expect(groupEnd).toHaveBeenCalledTimes(1);
-  });
-
-  it('the group closer still closes even if isVerbose flips false between open and close', () => {
-    const group = vi.spyOn(console, 'group').mockImplementation(() => {});
-    const groupEnd = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
-    let on = true;
-    const scoped = logger.scope('S', { isVerbose: () => on });
-
-    const end = scoped.group('steps'); // opened while enabled
-    on = false; // ctx debug turned off / ctx torn down mid-sequence
-    end();
-
-    expect(group).toHaveBeenCalledTimes(1);
-    expect(groupEnd).toHaveBeenCalledTimes(1); // no dangling group
-  });
-
-  it('a group opened while disabled returns a no-op closer (no unmatched groupEnd)', () => {
-    const group = vi.spyOn(console, 'group').mockImplementation(() => {});
-    const groupEnd = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
-    let on = false;
-    const scoped = logger.scope('S', { isVerbose: () => on });
-
-    const end = scoped.group('steps'); // not opened (disabled)
-    on = true; // even if enabled later…
-    end(); // …the closer must not fire an unmatched groupEnd
-
-    expect(group).not.toHaveBeenCalled();
-    expect(groupEnd).not.toHaveBeenCalled();
   });
 });

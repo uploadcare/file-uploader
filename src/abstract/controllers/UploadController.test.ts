@@ -505,12 +505,10 @@ describe('UploadController', () => {
   });
 
   describe('debug', () => {
-    it('emits an "upload options" table through the per-ctx gated logger', async () => {
+    it('emits an "upload options" debug line through the per-ctx gated logger', async () => {
       // Debug output is gated per-ctx by the `debug` config — enable it so the
-      // gated tier fires. The table helper logs a multi-chip badge header via
-      // console.log, then dumps the options object via console.table.
+      // gated tier fires; the multi-chip badge header is logged via console.log.
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const tableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
       const { controller, collection } = setup({ cfg: { debug: true } });
       const id = collection.add({ file: new File(['x'], 'a.txt') });
       await expect(controller.uploadEntry(id)).resolves.toBeUndefined();
@@ -520,8 +518,8 @@ describe('UploadController', () => {
         expect.any(String),
         '',
         'upload options',
+        expect.any(Object),
       );
-      expect(tableSpy).toHaveBeenCalledWith(expect.any(Object));
     });
 
     it('stays silent when this ctx has debug off', async () => {

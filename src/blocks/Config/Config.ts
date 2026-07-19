@@ -20,6 +20,21 @@ const allConfigKeys = [
 ] as Array<keyof ConfigType>;
 
 /**
+ * Render a config value for the change log with consistent quoting — strings
+ * (incl. the empty string, which would otherwise be invisible) show quoted as
+ * `""`, functions as `ƒ`, and everything else via `JSON.stringify`.
+ */
+const formatConfigLogValue = (value: unknown): string => {
+  if (value === undefined) return 'undefined';
+  if (typeof value === 'function') return 'ƒ';
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    return String(value);
+  }
+};
+
+/**
  * Config keys that can't be passed as attribute (because they are object or function)
  */
 export const complexConfigKeys = [
@@ -210,8 +225,9 @@ export class Config extends ChildBlock {
     // Flush the value to the state and attribute
     this._flushValueToAttribute(key, normalizedValue);
     this._flushValueToState(key, normalizedValue);
-
-    this._log.debug(`"${key}"`, normalizedValue);
+    // NB: config-change logging is NOT done here — it's a separate observer on
+    // `ConfigController` set up in `controllerReady` (`_setupChangeLog`), so it
+    // catches every change (incl. non-block writers) decoupled from the setter.
 
     // Only run assertions for built-in configs
     if (!this._isCustomConfig(key)) {
@@ -348,6 +364,35 @@ export class Config extends ChildBlock {
     }
   }
 
+  /**
+   * Change-log observer (verbose/debug-gated): logs every `ConfigController`
+   * change as `key: <old> → <new>` — decoupled from the setter and covering
+   * ALL writers (this block, `api`, plugin `registerConfig`), not just
+   * `_setValue`. Recovers the per-key old/new by diffing a snapshot over the
+   * coarse `subscribe` notify (same pattern as the per-key sync subscriptions).
+   * Seeded before the initial-value flush so startup sets are logged; re-seeded
+   * per adoption and torn down via `trackSub`.
+   */
+  private _setupChangeLog(): void {
+    let snapshot: Record<string, unknown> = { ...this._config.values };
+    this.trackSub(
+      this._config.subscribe(() => {
+        const next = this._config.values as Record<string, unknown>;
+        for (const key of Object.keys(next)) {
+          const prev = snapshot[key];
+          const curr = next[key];
+          if (!Object.is(curr, prev)) {
+            // Thunked so the `formatConfigLogValue` (JSON.stringify) only runs
+            // when debug is on. Values are quoted for consistency and so an
+            // empty string is visible as `""`.
+            this._log.debug(() => [`${key}: ${formatConfigLogValue(prev)} → ${formatConfigLogValue(curr)}`]);
+          }
+        }
+        snapshot = { ...next };
+      }),
+    );
+  }
+
   private _setupCustomConfigs(): void {
     // Wait for the plugin manager via the `PluginManagerBridge` token: fires
     // synchronously if the bridge is already resolved (uploader scope attached),
@@ -442,6 +487,10 @@ export class Config extends ChildBlock {
     if (!this._mutationObserver) {
       this._setupMutationObserver();
     }
+
+    // Change-log observer — set up BEFORE the initial-value flush below so the
+    // startup config values are logged too. Verbose/debug-gated.
+    this._setupChangeLog();
 
     // Subscribe to the state changes and update the local properties and attributes.
     // Initial callback call is disabled to prevent the initial value to be set here.

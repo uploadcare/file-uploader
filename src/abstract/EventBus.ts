@@ -1,5 +1,6 @@
 import type { ActivityType, RegisteredActivityType } from '../lit/activity-constants';
 import type { OutputCollectionState, OutputFileEntry } from '../types/exported';
+import { ConfigController } from './controllers/ConfigController';
 import { containerOf } from './di/ControllerContainer';
 import { logger } from './logger';
 
@@ -71,9 +72,13 @@ export type UploaderEventPayload = {
  * Introduced as a standalone primitive in M0; wired to nothing yet.
  */
 export class EventBus {
-  // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
-  // (resolved lazily at log time via the container that built this instance).
-  private readonly _log = logger.scope('event-bus', { ctxName: () => containerOf(this)?.ctxName });
+  // Per-ctx logger: `warn`/`error` always print; the verbose tier (event logging)
+  // is gated by THIS ctx's `debug` config. ctx-name + gate resolve lazily at log
+  // time via the container that built this instance.
+  private readonly _log = logger.scope('event-bus', {
+    ctxName: () => containerOf(this)?.ctxName,
+    isVerbose: () => containerOf(this)?.get(ConfigController).get('debug') ?? false,
+  });
   private _listeners = new Map<string, Set<(payload: unknown) => void>>();
   private _debounceTimers = new Map<string, number>();
   private static readonly DEFAULT_DEBOUNCE_MS = 20;
@@ -100,6 +105,11 @@ export class EventBus {
    * bubble back to the code that triggered the event.
    */
   public emit<K extends UploaderEventKey>(type: K, payload: UploaderEventPayload[K]): void {
+    // Central event logging (verbose/debug-gated) — one readable line per event,
+    // moved here from the DOM event bridge so every emit is logged at the source.
+    // `→ <type>` marks a dispatch (the `event-bus` scope already says it's an
+    // event). Thunked + shallow-copied so the snapshot is only built when on.
+    this._log.debug(() => [`→ ${type}`, payload && typeof payload === 'object' ? { ...payload } : payload]);
     const set = this._listeners.get(type);
     if (!set) return;
     for (const handler of set) {

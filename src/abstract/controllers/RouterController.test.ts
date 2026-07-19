@@ -3,6 +3,7 @@ import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityId } from '../../lit/activity-constants';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
+import { ConfigController } from './ConfigController';
 import { NAVIGATE_CANCEL, RouterController } from './RouterController';
 
 const setup = () => {
@@ -806,6 +807,66 @@ describe('RouterController (v2)', () => {
       router.navigate('start-from'); // hooks cleared → proceeds; listeners cleared → no notify
       expect(onChange).not.toHaveBeenCalled();
       expect(router.activity).toBe('start-from');
+    });
+  });
+
+  describe('debug logging (verbose, gated by this ctx debug)', () => {
+    const setupDebug = () => {
+      const container = new ControllerContainer();
+      container.bind(EventEmitter, () => ({ emit: vi.fn() }) as unknown as EventEmitter);
+      container.get(ConfigController).set('debug', true);
+      return { router: container.get(RouterController) };
+    };
+
+    it('logs the effective activity transition (from → to)', () => {
+      const { router } = setupDebug();
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      router.navigate('start-from');
+
+      expect(log).toHaveBeenCalledWith(
+        '%c uc %c router %c',
+        expect.any(String),
+        expect.any(String),
+        '',
+        'activity: none → start-from',
+      );
+    });
+
+    it('logs a traverse intent and a guard refusal', () => {
+      const { router } = setupDebug();
+      router.guard('camera', () => false); // camera not activatable
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      router.traverse('onClose');
+      router.navigate('camera'); // refused by the guard
+
+      expect(log).toHaveBeenCalledWith(
+        '%c uc %c router %c',
+        expect.any(String),
+        expect.any(String),
+        '',
+        'traverse "onClose"',
+      );
+      expect(log).toHaveBeenCalledWith(
+        '%c uc %c router %c',
+        expect.any(String),
+        expect.any(String),
+        '',
+        'navigate to "camera" refused (guard)',
+      );
+    });
+
+    it('does not log when this ctx has debug off', () => {
+      const container = new ControllerContainer();
+      container.bind(EventEmitter, () => ({ emit: vi.fn() }) as unknown as EventEmitter);
+      const router = container.get(RouterController);
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      router.navigate('start-from');
+      router.traverse('onClose');
+
+      expect(log).not.toHaveBeenCalled();
     });
   });
 });
