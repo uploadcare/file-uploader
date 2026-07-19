@@ -8,7 +8,6 @@ import type { ControllerContainer } from '../../abstract/di/ControllerContainer'
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
-import { createDebugPrinter } from '../../lit/createDebugPrinter';
 import { ensureUploaderScope } from '../../lit/ensureUploaderScope';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
@@ -41,9 +40,6 @@ export class DropArea extends ChildBlock {
     text?: string;
     'ctx-name': string;
   };
-
-  /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
-  private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
 
   /**
    * CSS-only attribute
@@ -141,11 +137,7 @@ export class DropArea extends ChildBlock {
     // never render `<uc-upload-ctx-provider>`), so it must attach the
     // uploader scope itself — same contract as v1's `LitUploaderBlock.
     // initCallback`, and the identical seam `<uc-upload-ctx-provider>` uses.
-    ensureUploaderScope(
-      container,
-      (...args) => this._debugPrint(...args),
-      (type, payload, options) => this.emit(type, payload, options),
-    );
+    ensureUploaderScope(container, (type, payload, options) => this.emit(type, payload, options));
 
     // Re-adoption (release-while-connected followed by re-adopt) would
     // otherwise stack a new dropzone per adoption without ever removing the

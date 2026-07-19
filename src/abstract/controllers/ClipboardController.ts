@@ -1,5 +1,6 @@
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { inject } from '../di/inject';
+import { logger } from '../logger';
 import { ConfigController } from './ConfigController';
 import { RouterController } from './RouterController';
 import { UploadHostBridge } from './UploadHostBridge';
@@ -48,7 +49,7 @@ export class ClipboardController {
     // rejection.
     this._listener = (event) => {
       this._handlePasteEvent(event).catch((err) => {
-        console.warn('[uc] clipboard paste handling failed', err);
+        logger.warn('clipboard paste handling failed', err);
       });
     };
   }

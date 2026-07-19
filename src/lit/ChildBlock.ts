@@ -158,8 +158,8 @@ export abstract class ChildBlock extends ChildBlockBase {
    * This ctx's DI container once adopted, else `null` (pre-adoption, or after
    * `_releaseController` cleared it during a teardown / not-yet-adopted race).
    * The null-safe counterpart to the `use()`/`useOrNull()` render-gate anchor,
-   * for plumbing wired at construction time — before adoption — such as
-   * `createDebugPrinter`, whose accessor must not throw when read early.
+   * for null-tolerant reads wired at construction time — before adoption — that
+   * must not throw when a block is queried early.
    */
   protected get containerOrNull(): ControllerContainer | null {
     return this._container;

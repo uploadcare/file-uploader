@@ -5,9 +5,9 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
+import { logger } from '../../abstract/logger';
 import type { TypedData } from '../../abstract/TypedData';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
-import { createDebugPrinter } from '../../lit/createDebugPrinter';
 import type { ApplyResult, ChangeResult } from '../CloudImageEditor/src/types';
 import './cloud-image-editor-activity.css';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
@@ -35,8 +35,8 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
   @state()
   private _cdnUrl: string | null = null;
 
-  /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
-  private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
+  /** Scoped debug logger; gated globally by the `debug` config option (see `LoggerConfigSync`). */
+  private readonly _log = logger.scope(this.constructor.name);
 
   protected override controllerReady(container: ControllerContainer): void {
     super.controllerReady(container);
@@ -52,7 +52,7 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
     if (!this._entry) {
       return;
     }
-    this._debugPrint(`editor event "apply"`, e.detail);
+    this._log.debug(`editor event "apply"`, e.detail);
     const result = e.detail;
     this._entry.setMultipleValues({
       cdnUrl: result.cdnUrl,
@@ -65,12 +65,12 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
 
   private _handleCancel(event?: Event): void {
     const detail = event instanceof CustomEvent ? event.detail : undefined;
-    this._debugPrint(`editor event "cancel"`, detail);
+    this._log.debug(`editor event "cancel"`, detail);
     this._router.traverse('onBack');
   }
 
   public handleChange(event: CustomEvent<ChangeResult>): void {
-    this._debugPrint(`editor event "change"`, event.detail);
+    this._log.debug(`editor event "change"`, event.detail);
   }
 
   private _mountEditor(): void {

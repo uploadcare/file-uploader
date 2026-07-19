@@ -1,6 +1,7 @@
 import type { SecureUploadsSignatureAndExpire } from '../../types/index';
 import { isSecureTokenExpired } from '../../utils/isSecureTokenExpired';
 import { inject } from '../di/inject';
+import { logger } from '../logger';
 import { ConfigController } from './ConfigController';
 import { UploadHostBridge } from './UploadHostBridge';
 
@@ -8,10 +9,11 @@ import { UploadHostBridge } from './UploadHostBridge';
  * DOM-free secure-uploads engine — a faithful port of v1's `SecureUploadsManager`.
  *
  * Same resolver-vs-static precedence, same token caching with
- * expire-threshold-driven refresh, same warning/error/debug output. Container-
- * resolved (M-god step 5): its `ConfigController` peer and the `UploadHostBridge`
- * (for `debug` + the telemetry `onResolverError` sink) are `@inject`-ed, so it
- * constructs zero-arg without a DOM and is unit testable in isolation.
+ * expire-threshold-driven refresh, same warning/error/debug output (debug now
+ * via the centralized `logger`). Container-resolved (M-god step 5): its
+ * `ConfigController` peer and the `UploadHostBridge` (for the telemetry
+ * `onResolverError` sink) are `@inject`-ed, so it constructs zero-arg without a
+ * DOM and is unit testable in isolation.
  */
 export class SecureUploadsController {
   @inject(ConfigController) private readonly _config!: ConfigController;
@@ -30,23 +32,20 @@ export class SecureUploadsController {
     if (secureUploadsSignatureResolver) {
       if (!this._secureToken || isSecureTokenExpired(this._secureToken, { threshold: secureUploadsExpireThreshold })) {
         if (!this._secureToken) {
-          this._host.debug('Secure signature is not set yet.');
+          logger.debug('Secure signature is not set yet.');
         } else {
-          this._host.debug('Secure signature is expired. Resolving a new one...');
+          logger.debug('Secure signature is expired. Resolving a new one...');
         }
         try {
           const result = await secureUploadsSignatureResolver();
           if (!result) {
-            this._host.debug('Secure signature resolver returned nothing.');
+            logger.debug('Secure signature resolver returned nothing.');
             this._secureToken = null;
           } else if (!result.secureSignature || !result.secureExpire) {
             console.error('Secure signature resolver returned an invalid result:', result);
           } else {
-            this._host.debug('Secure signature resolved:', result);
-            this._host.debug(
-              'Secure signature will expire in',
-              new Date(Number(result.secureExpire) * 1000).toISOString(),
-            );
+            logger.debug('Secure signature resolved:', result);
+            logger.debug('Secure signature will expire in', new Date(Number(result.secureExpire) * 1000).toISOString());
             this._secureToken = result;
           }
         } catch (err) {
@@ -62,7 +61,7 @@ export class SecureUploadsController {
     }
 
     if (secureSignature && secureExpire) {
-      this._host.debug('Secure signature and expire are set. Using them...', {
+      logger.debug('Secure signature and expire are set. Using them...', {
         secureSignature,
         secureExpire,
       });

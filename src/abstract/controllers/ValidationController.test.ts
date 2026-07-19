@@ -12,7 +12,6 @@ import { ValidationController } from './ValidationController';
 // about are overridden. Inlined (not shared) so it stays out of coverage.
 const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
   ({
-    debug: () => {},
     getFileHooks: () => [],
     getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
     getApi: (() => ({})) as unknown as UploadHostBridge['getApi'],

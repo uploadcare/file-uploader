@@ -7,9 +7,10 @@ import type { UploadStackControllers } from '../abstract/controllers/registerUpl
 import { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import { UploadController } from '../abstract/controllers/UploadController';
 import { UploadEventsController } from '../abstract/controllers/UploadEventsController';
-import type { UploadHostBridge, UploadHostDebug, UploadHostEmit } from '../abstract/controllers/UploadHostBridge';
+import type { UploadHostBridge, UploadHostEmit } from '../abstract/controllers/UploadHostBridge';
 import { ValidationController } from '../abstract/controllers/ValidationController';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
+import { logger } from '../abstract/logger';
 import { PluginController } from '../abstract/managers/plugin';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
@@ -28,16 +29,16 @@ export type UploaderScopeDeps = {
  * the DOM side (resolved from the per-ctx `ControllerContainer`) — the four
  * upload-stack constructors and the `UploadHostBridge` value the
  * abstract-layer controllers `@inject`. Both the ported `UploadCtxProvider` and
- * `<uc-drop-area>` build the identical container-derived bridge; only `debug`
- * and `emit` differ per host and stay caller-supplied — `emit` in particular
- * must keep each host's exact teardown-guard semantics (see
- * `UploadHostBridge.emit`), so it is never derived here.
+ * `<uc-drop-area>` build the identical container-derived bridge; only `emit`
+ * differs per host and stays caller-supplied — `emit` in particular must keep
+ * each host's exact teardown-guard semantics (see `UploadHostBridge.emit`), so
+ * it is never derived here.
  *
  * The three telemetry error sinks (`onResolverError`/`onUploadError`/
  * `onValidatorError`) are built here too, wrapping
  * `TelemetryManager.sendEventError` in a never-throw try/catch (an upload's
  * async error handler can fire after the scope is torn down) and logging via the
- * host `debug`.
+ * centralized `logger`.
  *
  * Resolves every instance off the `ControllerContainer`:
  * `container.get(TelemetryManager)` for the sinks, `container.get(EventEmitter)`
@@ -45,12 +46,7 @@ export type UploaderScopeDeps = {
  * `container.getOrNull` / `container.whenController` for the conditionally-bound
  * `PluginController`.
  */
-export function buildUploaderScopeDeps(
-  container: ControllerContainer,
-  debug: UploadHostDebug | undefined,
-  emit: UploadHostEmit,
-): UploaderScopeDeps {
-  const hostDebug: UploadHostDebug = debug ?? (() => {});
+export function buildUploaderScopeDeps(container: ControllerContainer, emit: UploadHostEmit): UploaderScopeDeps {
   const reportTelemetryError =
     (report: string) =>
     (error: unknown, context: string): void => {
@@ -62,7 +58,7 @@ export function buildUploaderScopeDeps(
         // The fallback logger must not throw either, or the original async
         // upload failure becomes an unhandled rejection.
         try {
-          hostDebug(report, err);
+          logger.debug(report, err);
         } catch {
           // Error reporting must never mask the original failure.
         }
@@ -70,7 +66,6 @@ export function buildUploaderScopeDeps(
     };
 
   const host: UploadHostBridge = {
-    debug: hostDebug,
     getFileHooks: () => container.getOrNull(PluginController)?.snapshot().fileHooks ?? [],
     getOutputItem: <TStatus extends OutputFileStatus>(uid: Uid) =>
       container.get(UploaderPublicApi).getOutputItem<TStatus>(uid),
