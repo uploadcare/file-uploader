@@ -31,6 +31,8 @@ import { EditorBlock } from './editor-context';
 import { classNames } from './lib/classNames.js';
 import type { Direction, FrameThumbs, Rectangle } from './types';
 
+const log = logger.scope('crop-frame');
+
 type FrameThumb = NonNullable<FrameThumbs[Direction]>;
 
 type Delta = [number, number];
@@ -444,7 +446,7 @@ export class CropFrame extends EditorBlock {
     }
 
     if (!Object.values(rect).every((number) => Number.isFinite(number) && number >= 0)) {
-      logger.error('CropFrame is trying to create invalid rectangle', {
+      log.error('CropFrame is trying to create invalid rectangle', {
         payload: rect,
       });
       return;

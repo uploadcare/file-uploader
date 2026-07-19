@@ -2,6 +2,8 @@ import { logger } from '../../abstract/logger';
 import type { ConfigType } from '../../types/index';
 import { debounce } from '../../utils/debounce';
 
+const log = logger.scope('config-assertions');
+
 type Assertion = {
   test: (cfg: ConfigType) => boolean;
   message: string;
@@ -33,7 +35,7 @@ const ASSERTIONS: Assertion[] = [
 export const runAssertions = debounce((cfg: ConfigType) => {
   for (const { test, message } of ASSERTIONS) {
     if (test(cfg)) {
-      logger.warnOnce(message);
+      log.warnOnce(message);
     }
   }
 }, 0);

@@ -1,5 +1,7 @@
 import { logger } from './logger';
 
+const log = logger.scope('host-subscription');
+
 /**
  * Generic, framework-agnostic listener set.
  *
@@ -23,7 +25,7 @@ export class Listeners {
       try {
         listener();
       } catch (err) {
-        logger.warn('a state-change listener threw', err);
+        log.warn('a state-change listener threw', err);
       }
     }
   }

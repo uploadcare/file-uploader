@@ -114,7 +114,7 @@ describe('applyInitialCrop', () => {
 
     const entry = collection.read(id);
     expect(entry?.getValue('cdnUrlModifiers')).toBeNull();
-    expect(warnSpy).toHaveBeenCalledWith('[uc]', 'Failed to get image info for entry', entry?.uid);
+    expect(warnSpy).toHaveBeenCalledWith('[uc][initial-crop]', 'Failed to get image info for entry', entry?.uid);
 
     warnSpy.mockRestore();
   });
@@ -132,7 +132,7 @@ describe('applyInitialCrop', () => {
 
     const entry = collection.read(id);
     expect(entry?.getValue('cdnUrlModifiers')).toBeNull();
-    expect(warnSpy).toHaveBeenCalledWith('[uc]', 'Failed to get cdnUrl for entry', entry?.uid);
+    expect(warnSpy).toHaveBeenCalledWith('[uc][initial-crop]', 'Failed to get cdnUrl for entry', entry?.uid);
 
     warnSpy.mockRestore();
   });

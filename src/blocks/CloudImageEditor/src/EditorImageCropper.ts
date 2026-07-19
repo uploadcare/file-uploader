@@ -26,6 +26,8 @@ import { viewerImageSrc } from './util.js';
 
 import './CropFrame';
 
+const log = logger.scope('editor-image-cropper');
+
 type CropTransform = NonNullable<Transformations['crop']>;
 
 type Operations = {
@@ -400,7 +402,7 @@ export class EditorImageCropper extends EditorBlock {
       ],
     };
     if (!validateCrop(crop)) {
-      logger.error('Cropper is trying to create invalid crop object', {
+      log.error('Cropper is trying to create invalid crop object', {
         payload: crop,
       });
       return undefined;
@@ -493,7 +495,7 @@ export class EditorImageCropper extends EditorBlock {
       this._handleResizeThrottled();
       this._animateIn({ fromViewer });
     } catch (err) {
-      logger.error('Failed to activate cropper', { error: err });
+      log.error('Failed to activate cropper', { error: err });
       this.editorControllerOrNull?.telemetry.sendEventError(err, 'cloud editor image. Failed to activate cropper');
     }
 
@@ -586,7 +588,7 @@ export class EditorImageCropper extends EditorBlock {
     return promise
       .then(() => image)
       .catch((err) => {
-        logger.error('Failed to load image', { error: err });
+        log.error('Failed to load image', { error: err });
         controller.set('*networkProblems', true);
         return image;
       });

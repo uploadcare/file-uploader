@@ -9,6 +9,7 @@ import {
 import type { Uid } from '../../lit/Uid';
 import { fileIsImage } from '../../utils/fileTypes';
 import { customUserAgent } from '../../utils/userAgent';
+import { containerOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { logger } from '../logger';
@@ -42,7 +43,10 @@ export class UploadController {
 
   // Per-ctx gated logger: the verbose tier prints only when THIS ctx's `debug`
   // config is on. The predicate reads `_config` lazily at log time.
-  private readonly _log = logger.scope('Upload', { isEnabled: () => this._config.get('debug') });
+  private readonly _log = logger.scope('upload', {
+    isVerbose: () => this._config.get('debug'),
+    ctxName: () => containerOf(this)?.ctxName,
+  });
 
   // One queue per uploader scope → global concurrency across all entries (v1 parity).
   private _queue = new Queue(1);
@@ -167,7 +171,7 @@ export class UploadController {
                 }
               }
             } catch (error) {
-              logger.warn(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
+              this._log.warn(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
             }
           }
         }
@@ -223,7 +227,7 @@ export class UploadController {
           uploadError: cause,
         });
       } else {
-        logger.error('Unknown upload error', cause);
+        this._log.error('Unknown upload error', cause);
         entry.setMultipleValues({
           isUploading: false,
           uploadProgress: 0,

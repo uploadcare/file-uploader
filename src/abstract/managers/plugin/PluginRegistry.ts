@@ -12,6 +12,8 @@ import type {
   PluginSourceRegistration,
 } from './PluginTypes';
 
+const log = logger.scope('plugin-registry');
+
 export class PluginRegistry {
   private _sources: Owned<PluginSourceRegistration>[] = [];
   private _activities: Owned<PluginActivityRegistration>[] = [];
@@ -47,11 +49,9 @@ export class PluginRegistry {
   public addSource(pluginId: string, item: PluginSourceRegistration): void {
     const existing = this._sources.find((s) => s.id === item.id);
     if (existing) {
-      logger
-        .scope('PluginRegistry')
-        .warn(
-          `Plugin "${pluginId}" Source with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
-        );
+      log.warn(
+        `Plugin "${pluginId}" Source with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
+      );
       return;
     }
     this._sources.push(this._own(pluginId, item));
@@ -61,11 +61,9 @@ export class PluginRegistry {
   public addActivity(pluginId: string, item: PluginActivityRegistration): void {
     const existing = this._activities.find((a) => a.id === item.id);
     if (existing) {
-      logger
-        .scope('PluginRegistry')
-        .warn(
-          `Plugin "${pluginId}" Activity with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
-        );
+      log.warn(
+        `Plugin "${pluginId}" Activity with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
+      );
       return;
     }
     this._activities.push(this._own(pluginId, item));

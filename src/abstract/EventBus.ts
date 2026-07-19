@@ -1,5 +1,6 @@
 import type { ActivityType, RegisteredActivityType } from '../lit/activity-constants';
 import type { OutputCollectionState, OutputFileEntry } from '../types/exported';
+import { containerOf } from './di/ControllerContainer';
 import { logger } from './logger';
 
 /**
@@ -70,6 +71,9 @@ export type UploaderEventPayload = {
  * Introduced as a standalone primitive in M0; wired to nothing yet.
  */
 export class EventBus {
+  // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
+  // (resolved lazily at log time via the container that built this instance).
+  private readonly _log = logger.scope('event-bus', { ctxName: () => containerOf(this)?.ctxName });
   private _listeners = new Map<string, Set<(payload: unknown) => void>>();
   private _debounceTimers = new Map<string, number>();
   private static readonly DEFAULT_DEBOUNCE_MS = 20;
@@ -102,7 +106,7 @@ export class EventBus {
       try {
         handler(payload);
       } catch (err) {
-        logger.warn(`listener for "${type}" threw`, err);
+        this._log.warn(`listener for "${type}" threw`, err);
       }
     }
   }
@@ -124,7 +128,7 @@ export class EventBus {
       try {
         this.emit(type, payload());
       } catch (err) {
-        logger.warn(`payload thunk for "${type}" threw`, err);
+        this._log.warn(`payload thunk for "${type}" threw`, err);
       }
     }, ms);
     this._debounceTimers.set(type, timeoutId);

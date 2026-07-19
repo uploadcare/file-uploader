@@ -90,7 +90,7 @@ describe('PluginController', () => {
 
       await t.sync([{ id: '', setup: () => {} }]);
 
-      expect(warn).toHaveBeenCalledWith('[uc][PluginManager]', expect.stringContaining('missing the required "id"'));
+      expect(warn).toHaveBeenCalledWith('[uc][plugin-manager]', expect.stringContaining('missing the required "id"'));
       expect(t.controller.snapshot().sources).toHaveLength(0);
     });
 
@@ -103,7 +103,7 @@ describe('PluginController', () => {
 
       await t.sync([sourcePlugin('dup', setupSpy), sourcePlugin('dup', setupSpy)]);
 
-      expect(warn).toHaveBeenCalledWith('[uc][PluginManager]', expect.stringContaining('already in the list'));
+      expect(warn).toHaveBeenCalledWith('[uc][plugin-manager]', expect.stringContaining('already in the list'));
       expect(setupSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -127,7 +127,7 @@ describe('PluginController', () => {
       await t.sync([boom, sourcePlugin('ok')]);
 
       expect(error).toHaveBeenCalledWith(
-        '[uc][PluginManager]',
+        '[uc][plugin-manager]',
         expect.stringContaining('"boom" setup() threw'),
         expect.any(Error),
       );
@@ -174,7 +174,7 @@ describe('PluginController', () => {
       await expect(t.sync([])).resolves.toBeUndefined(); // unregister doesn't throw
       expect(dispose).toHaveBeenCalled();
       expect(t.controller.snapshot().sources).toHaveLength(0); // cleanup still ran
-      expect(warn).toHaveBeenCalledWith('[uc]', 'Failed to dispose plugin', expect.any(Error));
+      expect(warn).toHaveBeenCalledWith('[uc][plugin-manager]', 'Failed to dispose plugin', expect.any(Error));
     });
 
     it('recovers the sync queue after a rejected emission so later syncs still run', async () => {
@@ -185,7 +185,7 @@ describe('PluginController', () => {
       await t.controller.pluginsReady(); // must not reject
 
       expect(errorSpy).toHaveBeenCalledWith(
-        '[uc][PluginManager]',
+        '[uc][plugin-manager]',
         expect.stringContaining('Failed to sync plugins'),
         expect.any(Error),
       );
@@ -291,7 +291,7 @@ describe('PluginController', () => {
 
       await t.controller.runOnAddHooks(entry);
 
-      expect(warn).toHaveBeenCalledWith('[uc]', expect.stringContaining('onAdd'), expect.any(Error));
+      expect(warn).toHaveBeenCalledWith('[uc][plugin-manager]', expect.stringContaining('onAdd'), expect.any(Error));
       expect(entry.getValue('file')).toBe(original);
     });
 
@@ -319,7 +319,7 @@ describe('PluginController', () => {
       await vi.advanceTimersByTimeAsync(60);
       await promise;
 
-      expect(warn).toHaveBeenCalledWith('[uc]', expect.stringContaining('onAdd'), expect.any(Error));
+      expect(warn).toHaveBeenCalledWith('[uc][plugin-manager]', expect.stringContaining('onAdd'), expect.any(Error));
     });
   });
 
@@ -376,7 +376,11 @@ describe('PluginController', () => {
       );
       await controller.pluginsReady();
 
-      expect(warn).toHaveBeenCalledWith('[uc]', 'Failed to unsubscribe config listener', expect.any(Error));
+      expect(warn).toHaveBeenCalledWith(
+        '[uc][plugin-manager]',
+        'Failed to unsubscribe config listener',
+        expect.any(Error),
+      );
     });
 
     it('contains a config-subscription that throws during unregister', async () => {

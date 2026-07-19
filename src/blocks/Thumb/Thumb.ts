@@ -3,7 +3,6 @@ import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { inject } from '../../abstract/di/inject';
-import { logger } from '../../abstract/logger';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils';
 import { debounce } from '../../utils/debounce';
@@ -252,7 +251,7 @@ export class Thumb extends FileItemConfig {
         if (error instanceof DOMException && error.name === 'AbortError') {
           return;
         }
-        logger.scope('Thumb').warn('Failed to decode thumbnail image', error);
+        this._log.warn('Failed to decode thumbnail image', error);
       });
   }
 

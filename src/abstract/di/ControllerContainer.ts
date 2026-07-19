@@ -12,6 +12,8 @@
 
 import { logger } from '../logger';
 
+const log = logger.scope('controller-container');
+
 // A token constructor. Unbound tokens are built by the container with a
 // zero-arg `new Ctrl()`; a token whose value isn't a zero-arg-constructible
 // class (e.g. `UploadHostBridge`, a plain value built by `buildUploaderScopeDeps`)
@@ -24,6 +26,15 @@ export type Token<T> = Ctor<T> | (() => Ctor<T>);
 
 /** Tag written onto every container-built instance so `@inject` can resolve. */
 export const CONTAINER = Symbol('uc.container');
+
+/**
+ * The `ControllerContainer` that built `instance` (via the `CONTAINER` tag), or
+ * `undefined` if it wasn't container-built. Lets a controller resolve its own
+ * ctx (e.g. `containerOf(this)?.ctxName` for logging attribution) without
+ * threading the container in.
+ */
+export const containerOf = (instance: unknown): ControllerContainer | undefined =>
+  (instance as { [CONTAINER]?: ControllerContainer })?.[CONTAINER];
 
 /**
  * A thunk `() => Ctor` has no `.prototype` (arrow functions never do), while a
@@ -43,6 +54,14 @@ export interface Destroyable {
 }
 
 export class ControllerContainer {
+  /**
+   * The `ctx-name` this container serves, set by `UploaderRegistry` at creation.
+   * Purely informational (e.g. for logging attribution) — resolution keys off
+   * the container instance, not this name. `undefined` for throwaway containers
+   * built directly (tests) rather than via the registry.
+   */
+  public ctxName?: string;
+
   #instances = new Map<Ctor<unknown>, unknown>();
   #order: Ctor<unknown>[] = [];
   #resolving = new Set<Ctor<unknown>>();
@@ -151,7 +170,7 @@ export class ControllerContainer {
       try {
         cb(this.#instances.get(Ctrl) as T);
       } catch (err) {
-        logger.warn(`a whenController immediate callback for ${Ctrl.name} threw`, err);
+        log.warn(`a whenController immediate callback for ${Ctrl.name} threw`, err);
       }
       return () => {};
     }
@@ -189,7 +208,7 @@ export class ControllerContainer {
       try {
         waiter(inst);
       } catch (err) {
-        logger.warn(`a whenController waiter for ${Ctrl.name} threw`, err);
+        log.warn(`a whenController waiter for ${Ctrl.name} threw`, err);
       }
     }
   }
@@ -224,7 +243,7 @@ export class ControllerContainer {
       } catch (err) {
         // Isolate-and-warn: one controller's failed teardown must not abort the
         // rest of the disposal chain (mirrors EventBus/Listeners fan-out).
-        logger.warn(`${Ctrl.name}.destroy() threw`, err);
+        log.warn(`${Ctrl.name}.destroy() threw`, err);
       }
     }
     this.#instances.clear();

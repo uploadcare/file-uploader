@@ -45,6 +45,8 @@ import './EditorImageFader';
 import './EditorToolbar';
 import './EditorIcon';
 
+const log = logger.scope('cloud-image-editor');
+
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
 const DEFAULT_TABS = serializeCsv([...ALL_TABS]);
@@ -447,7 +449,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     }
     const originalUrl = this._editorController.get('*originalUrl');
     if (!originalUrl) {
-      logger.warn('Original URL is null, cannot apply transformations');
+      log.warn('Original URL is null, cannot apply transformations');
       return;
     }
     const cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
@@ -531,7 +533,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         const error = new Error('[cloud-image-editor] timeout waiting for non-zero container size');
         cleanup();
         if (this.isConnected) {
-          logger.error(error.message);
+          log.error(error.message);
         }
         reject(error);
       };
@@ -814,7 +816,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     } catch (err) {
       if (err) {
         editorController.telemetry.sendEventError(err, 'cloud editor image. Failed to load image info');
-        logger.error('Failed to load image info', err);
+        log.error('Failed to load image info', err);
       }
     }
 

@@ -52,7 +52,10 @@ export function buildUploaderScopeDeps(container: ControllerContainer, emit: Upl
   // only when THIS ctx's `debug` config is on. The predicate reads the config
   // lazily at log time, and the `log.debug` call below stays inside the
   // never-throw try/catch, so a torn-down container can't surface an error.
-  const log = logger.scope('uploader', { isEnabled: () => container.get(ConfigController).get('debug') });
+  const log = logger.scope('upload-scope', {
+    isVerbose: () => container.get(ConfigController).get('debug'),
+    ctxName: () => container.ctxName,
+  });
   const reportTelemetryError =
     (report: string) =>
     (error: unknown, context: string): void => {

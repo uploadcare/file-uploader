@@ -3,6 +3,8 @@ import { extractCdnUrlModifiers, extractFilename, extractUuid } from '../utils/c
 import { applyTemplateData } from '../utils/template-utils';
 import { logger } from './logger';
 
+const log = logger.scope('secure-delivery-proxy');
+
 export type SecureDeliveryProxyConfig = Pick<ConfigType, 'secureDeliveryProxy' | 'secureDeliveryProxyUrlResolver'>;
 
 /**
@@ -16,7 +18,7 @@ export async function resolveSecureDeliveryProxyUrl(
   url: string,
 ): Promise<string> {
   if (config.secureDeliveryProxy && config.secureDeliveryProxyUrlResolver) {
-    logger.warn(
+    log.warn(
       'Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. The secureDeliveryProxyUrlResolver will be used.',
     );
   }
@@ -28,7 +30,7 @@ export async function resolveSecureDeliveryProxyUrl(
         fileName: extractFilename(url),
       });
     } catch (err) {
-      logger.error('Failed to resolve secure delivery proxy URL. Falling back to the default URL.', err);
+      log.error('Failed to resolve secure delivery proxy URL. Falling back to the default URL.', err);
       onResolverError(
         err,
         'secureDeliveryProxyUrlResolver. Failed to resolve secure delivery proxy URL. Falling back to the default URL.',

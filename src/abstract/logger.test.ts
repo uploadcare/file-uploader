@@ -46,16 +46,16 @@ describe('logger.scope', () => {
     expect(warn).toHaveBeenCalledWith('[uc][EventBus]', 'boom');
   });
 
-  it('a scope without isEnabled keeps the gated tier off', () => {
+  it('a scope without isVerbose keeps the gated tier off', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     logger.scope('EventBus').debug('nope');
     expect(log).not.toHaveBeenCalled();
   });
 
-  it('gated log/debug print (with the badge prefix) only when isEnabled() is true', () => {
+  it('gated log/debug print (with the badge prefix) only when isVerbose() is true', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     let on = false;
-    const scoped = logger.scope('DropArea', { isEnabled: () => on });
+    const scoped = logger.scope('DropArea', { isVerbose: () => on });
 
     scoped.debug('d1');
     expect(log).not.toHaveBeenCalled();
@@ -67,10 +67,27 @@ describe('logger.scope', () => {
     expect(log).toHaveBeenCalledWith('%c[uc][DropArea]', BADGE_STYLE, 'l2');
   });
 
+  it('inserts the resolved ctx-name into the prefix, between `[uc]` and the scope', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    let ctx: string | undefined = 'my-uploader';
+    const scoped = logger.scope('secure-uploads', { isVerbose: () => true, ctxName: () => ctx });
+
+    scoped.warn('boom');
+    scoped.debug('d');
+    expect(warn).toHaveBeenCalledWith('[uc][my-uploader][secure-uploads]', 'boom');
+    expect(log).toHaveBeenCalledWith('%c[uc][my-uploader][secure-uploads]', BADGE_STYLE, 'd');
+
+    // Resolved lazily per call: when no ctx is available the segment is omitted.
+    ctx = undefined;
+    scoped.warn('later');
+    expect(warn).toHaveBeenCalledWith('[uc][secure-uploads]', 'later');
+  });
+
   it('gating is per-scope: two scopes with independent predicates do not affect each other', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const a = logger.scope('A', { isEnabled: () => true });
-    const b = logger.scope('B', { isEnabled: () => false });
+    const a = logger.scope('A', { isVerbose: () => true });
+    const b = logger.scope('B', { isVerbose: () => false });
 
     a.debug('from-a');
     b.debug('from-b');
@@ -83,7 +100,7 @@ describe('logger.scope', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     const build = vi.fn(() => ['expensive']);
     let on = false;
-    const scoped = logger.scope('X', { isEnabled: () => on });
+    const scoped = logger.scope('X', { isVerbose: () => on });
 
     scoped.debug(build);
     expect(build).not.toHaveBeenCalled();
@@ -99,7 +116,7 @@ describe('logger pretty helpers (gated)', () => {
   it('table logs a labelled header then console.table, only when enabled', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     const table = vi.spyOn(console, 'table').mockImplementation(() => {});
-    const scoped = logger.scope('Upload', { isEnabled: () => true });
+    const scoped = logger.scope('Upload', { isVerbose: () => true });
 
     scoped.table('upload options', { a: 1 });
     expect(log).toHaveBeenCalledWith('%c[uc][Upload]', BADGE_STYLE, 'upload options');
@@ -108,13 +125,13 @@ describe('logger pretty helpers (gated)', () => {
 
   it('table is a no-op when disabled', () => {
     const table = vi.spyOn(console, 'table').mockImplementation(() => {});
-    logger.scope('Upload', { isEnabled: () => false }).table('x', {});
+    logger.scope('Upload', { isVerbose: () => false }).table('x', {});
     expect(table).not.toHaveBeenCalled();
   });
 
   it('table forwards a columns filter to console.table when given', () => {
     const table = vi.spyOn(console, 'table').mockImplementation(() => {});
-    logger.scope('Upload', { isEnabled: () => true }).table('rows', [{ a: 1, b: 2 }], ['a']);
+    logger.scope('Upload', { isVerbose: () => true }).table('rows', [{ a: 1, b: 2 }], ['a']);
     expect(table).toHaveBeenCalledWith([{ a: 1, b: 2 }], ['a']);
   });
 
@@ -122,7 +139,7 @@ describe('logger pretty helpers (gated)', () => {
     const group = vi.spyOn(console, 'group').mockImplementation(() => {});
     const groupEnd = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
     const dir = vi.spyOn(console, 'dir').mockImplementation(() => {});
-    const scoped = logger.scope('S', { isEnabled: () => true });
+    const scoped = logger.scope('S', { isVerbose: () => true });
 
     const end = scoped.group('steps');
     scoped.dir({ nested: true });
@@ -134,11 +151,11 @@ describe('logger pretty helpers (gated)', () => {
     expect(groupEnd).toHaveBeenCalledTimes(1);
   });
 
-  it('the group closer still closes even if isEnabled flips false between open and close', () => {
+  it('the group closer still closes even if isVerbose flips false between open and close', () => {
     const group = vi.spyOn(console, 'group').mockImplementation(() => {});
     const groupEnd = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
     let on = true;
-    const scoped = logger.scope('S', { isEnabled: () => on });
+    const scoped = logger.scope('S', { isVerbose: () => on });
 
     const end = scoped.group('steps'); // opened while enabled
     on = false; // ctx debug turned off / ctx torn down mid-sequence
@@ -152,7 +169,7 @@ describe('logger pretty helpers (gated)', () => {
     const group = vi.spyOn(console, 'group').mockImplementation(() => {});
     const groupEnd = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
     let on = false;
-    const scoped = logger.scope('S', { isEnabled: () => on });
+    const scoped = logger.scope('S', { isVerbose: () => on });
 
     const end = scoped.group('steps'); // not opened (disabled)
     on = true; // even if enabled later…

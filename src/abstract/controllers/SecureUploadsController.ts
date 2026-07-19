@@ -1,5 +1,6 @@
 import type { SecureUploadsSignatureAndExpire } from '../../types/index';
 import { isSecureTokenExpired } from '../../utils/isSecureTokenExpired';
+import { containerOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';
 import { logger } from '../logger';
 import { ConfigController } from './ConfigController';
@@ -23,13 +24,16 @@ export class SecureUploadsController {
 
   // Per-ctx gated logger: the verbose tier prints only when THIS ctx's `debug`
   // config is on. The predicate reads `_config` lazily at log time.
-  private readonly _log = logger.scope('SecureUploads', { isEnabled: () => this._config.get('debug') });
+  private readonly _log = logger.scope('secure-uploads', {
+    isVerbose: () => this._config.get('debug'),
+    ctxName: () => containerOf(this)?.ctxName,
+  });
 
   public async getSecureToken(): Promise<SecureUploadsSignatureAndExpire | null> {
     const { secureSignature, secureExpire, secureUploadsSignatureResolver, secureUploadsExpireThreshold } =
       this._config.values;
     if ((secureSignature || secureExpire) && secureUploadsSignatureResolver) {
-      logger.warn(
+      this._log.warn(
         'Both secureSignature/secureExpire and secureUploadsSignatureResolver are set. secureUploadsSignatureResolver will be used.',
       );
     }
@@ -51,7 +55,7 @@ export class SecureUploadsController {
             this._log.debug('Secure signature resolver returned nothing.');
             this._secureToken = null;
           } else if (!result.secureSignature || !result.secureExpire) {
-            logger.error('Secure signature resolver returned an invalid result:', result);
+            this._log.error('Secure signature resolver returned an invalid result:', result);
           } else {
             this._log.debug('Secure signature resolved:', result);
             this._log.debug(
@@ -61,7 +65,7 @@ export class SecureUploadsController {
             this._secureToken = result;
           }
         } catch (err) {
-          logger.error('Secure signature resolving failed. Falling back to the previous one.', err);
+          this._log.error('Secure signature resolving failed. Falling back to the previous one.', err);
           this._host.onResolverError(
             err,
             'secureUploadsSignatureResolver. Secure signature resolving failed. Falling back to the previous one.',

@@ -202,7 +202,10 @@ describe('Cloud Image Editor', () => {
       await delay(3100);
 
       expect(errorSpy).toHaveBeenCalledTimes(1);
-      expect(errorSpy).toHaveBeenCalledWith('[uc]', '[cloud-image-editor] timeout waiting for non-zero container size');
+      expect(errorSpy).toHaveBeenCalledWith(
+        '[uc][cloud-image-editor]',
+        '[cloud-image-editor] timeout waiting for non-zero container size',
+      );
     } finally {
       errorSpy.mockRestore();
     }

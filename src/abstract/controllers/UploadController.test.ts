@@ -340,7 +340,7 @@ describe('UploadController', () => {
 
       await controller.uploadEntry(id);
 
-      expect(warn).toHaveBeenCalledWith('[uc]', expect.stringContaining('beforeUpload'), expect.any(Error));
+      expect(warn).toHaveBeenCalledWith('[uc][upload]', expect.stringContaining('beforeUpload'), expect.any(Error));
       expect(mockUploadFile).toHaveBeenCalledTimes(1);
     });
 
@@ -356,7 +356,7 @@ describe('UploadController', () => {
       await vi.advanceTimersByTimeAsync(60);
       await promise;
 
-      expect(warn).toHaveBeenCalledWith('[uc]', expect.stringContaining('beforeUpload'), expect.any(Error));
+      expect(warn).toHaveBeenCalledWith('[uc][upload]', expect.stringContaining('beforeUpload'), expect.any(Error));
       expect(mockUploadFile).toHaveBeenCalledTimes(1);
     });
 
@@ -399,7 +399,7 @@ describe('UploadController', () => {
       const entry = collection.read(id);
       expect(entry?.getValue('isUploading')).toBe(false);
       expect(entry?.getValue('uploadError')?.message).toBe('Something went wrong');
-      expect(error).toHaveBeenCalledWith('[uc]', 'Unknown upload error', expect.any(Error));
+      expect(error).toHaveBeenCalledWith('[uc][upload]', 'Unknown upload error', expect.any(Error));
       expect(onUploadError).toHaveBeenCalledWith(expect.any(Error), expect.stringContaining('file upload'));
     });
 
@@ -507,14 +507,14 @@ describe('UploadController', () => {
   describe('debug', () => {
     it('emits an "upload options" table through the per-ctx gated logger', async () => {
       // Debug output is gated per-ctx by the `debug` config — enable it so the
-      // gated tier fires. The table helper logs a `%c[uc][Upload]` header via
+      // gated tier fires. The table helper logs a `%c[uc][upload]` header via
       // console.log, then dumps the options object via console.table.
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const tableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
       const { controller, collection } = setup({ cfg: { debug: true } });
       const id = collection.add({ file: new File(['x'], 'a.txt') });
       await expect(controller.uploadEntry(id)).resolves.toBeUndefined();
-      expect(logSpy).toHaveBeenCalledWith('%c[uc][Upload]', expect.any(String), 'upload options');
+      expect(logSpy).toHaveBeenCalledWith('%c[uc][upload]', expect.any(String), 'upload options');
       expect(tableSpy).toHaveBeenCalledWith(expect.any(Object));
     });
 

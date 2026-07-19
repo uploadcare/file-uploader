@@ -5,6 +5,8 @@ import { deserializeCsv, serializeCsv } from '../../utils/comma-separated';
 import { isPromiseLike } from '../../utils/isPromiseLike';
 import { DEFAULT_CDN_CNAME } from './initialConfig';
 
+const log = logger.scope('computed-properties');
+
 type ConfigKey = keyof ConfigType;
 type ConfigValue<TKey extends ConfigKey> = ConfigType[TKey];
 type DepKeys<TKey extends ConfigKey> = ReadonlyArray<Exclude<ConfigKey, TKey>>;
@@ -127,7 +129,7 @@ export const computeProperty = <TKey extends ConfigKey>({
       if (computationControllers.get(computed.fn) === abortController) {
         computationControllers.delete(computed.fn);
       }
-      logger.error(`Failed to compute value for "${computed.key}"`, error);
+      log.error(`Failed to compute value for "${computed.key}"`, error);
       return;
     }
     if (isPromiseLike(result)) {
@@ -142,7 +144,7 @@ export const computeProperty = <TKey extends ConfigKey>({
           if (abortController.signal.aborted) {
             return;
           }
-          logger.error(`Failed to compute value for "${computed.key}"`, error);
+          log.error(`Failed to compute value for "${computed.key}"`, error);
         })
         .finally(() => {
           if (computationControllers.get(computed.fn) === abortController) {

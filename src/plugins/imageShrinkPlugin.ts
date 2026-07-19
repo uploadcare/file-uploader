@@ -3,6 +3,8 @@ import { logger } from '../abstract/logger';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
 import { parseShrink } from '../utils/parseShrink';
 
+const log = logger.scope('image-shrink-plugin');
+
 export const imageShrinkPlugin: UploaderPlugin = {
   id: 'image-shrink',
   setup({ pluginApi }) {
@@ -14,7 +16,7 @@ export const imageShrinkPlugin: UploaderPlugin = {
 
         const settings = parseShrink(imageShrink);
         if (!settings) {
-          logger.scope('ImageShrinkPlugin').warn('Image shrink settings are invalid, skipping shrinking');
+          log.warn('Image shrink settings are invalid, skipping shrinking');
           return { file };
         }
 

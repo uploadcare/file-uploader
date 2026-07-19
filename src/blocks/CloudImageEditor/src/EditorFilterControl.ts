@@ -14,6 +14,8 @@ import type { Transformations } from './types';
 
 import './EditorIcon';
 
+const log = logger.scope('editor-filter-control');
+
 /**
  * Bubbles up to `EditorToolbar`, which owns the toolbar-local `currentFilter`/
  * `showSlider` state and the slider ref. `active`/`isOriginal` are threaded
@@ -251,7 +253,7 @@ export class EditorFilterControl extends EditorButtonControl {
       src = await this.editorController.proxyUrl(this._previewSrc());
     } catch (err) {
       this.editorController.set('*networkProblems', true);
-      logger.error('Failed to resolve preview URL', { error: err });
+      log.error('Failed to resolve preview URL', { error: err });
       return;
     }
 
@@ -276,7 +278,7 @@ export class EditorFilterControl extends EditorButtonControl {
       (observer ?? this._observer)?.unobserve(this);
     } catch (err) {
       this.editorController.set('*networkProblems', true);
-      logger.error('Failed to load image', { error: err });
+      log.error('Failed to load image', { error: err });
       this._schedulePreviewVisibilityCheck();
     } finally {
       if (this._lastPreviewRequestId === requestId) {

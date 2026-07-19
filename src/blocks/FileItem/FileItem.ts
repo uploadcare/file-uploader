@@ -5,7 +5,6 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { UploadController } from '../../abstract/controllers/UploadController';
 import { inject } from '../../abstract/di/inject';
-import { logger } from '../../abstract/logger';
 import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
@@ -310,7 +309,7 @@ export class FileItem extends FileItemConfig {
       try {
         return action.shouldRender(outputFileEntry);
       } catch (error) {
-        logger.error(`Error in plugin file action shouldRender (${action.id}):`, error);
+        this._log.error(`Error in plugin file action shouldRender (${action.id}):`, error);
         return false;
       }
     });
@@ -344,7 +343,7 @@ export class FileItem extends FileItemConfig {
     try {
       action.onClick(outputFileEntry);
     } catch (error) {
-      logger.error(`Error in plugin file action onClick (${action.id}):`, error);
+      this._log.error(`Error in plugin file action onClick (${action.id}):`, error);
     }
   }
 

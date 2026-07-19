@@ -1,4 +1,3 @@
-import { logger } from '../../abstract/logger';
 import { getTopLevelOrigin } from '../../utils/get-top-level-origin';
 import { stringToArray } from '../../utils/stringToArray';
 import { ExternalUploadSource } from '../../utils/UploadSource';
@@ -95,7 +94,7 @@ export class ExternalSource extends ChildBlock {
       }
       const { externalSourceType } = this._router.params as ActivityParams;
       if (!externalSourceType) {
-        logger.error(`Param "externalSourceType" is required for external source activity`);
+        this._log.error(`Param "externalSourceType" is required for external source activity`);
         return;
       }
       this._unmountIframe();
@@ -165,7 +164,7 @@ export class ExternalSource extends ChildBlock {
 
   private async _handleSelectedFilesChange(message: InputMessageMap['selected-files-change']) {
     if (this._config.get('multiple') !== message.isMultipleMode) {
-      logger.error('Multiple mode mismatch');
+      this._log.error('Multiple mode mismatch');
       return;
     }
 

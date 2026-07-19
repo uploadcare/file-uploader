@@ -43,7 +43,7 @@ describe('resolveSecureDeliveryProxyUrl', () => {
     const result = await resolveSecureDeliveryProxyUrl(config, onResolverError, cdnUrl);
 
     expect(warnSpy).toHaveBeenCalledExactlyOnceWith(
-      '[uc]',
+      '[uc][secure-delivery-proxy]',
       'Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. The secureDeliveryProxyUrlResolver will be used.',
     );
     expect(result).toBe('https://resolved.example.com/photo.jpg');
@@ -77,7 +77,7 @@ describe('resolveSecureDeliveryProxyUrl', () => {
 
     expect(result).toBe(cdnUrl);
     expect(errorSpy).toHaveBeenCalledExactlyOnceWith(
-      '[uc]',
+      '[uc][secure-delivery-proxy]',
       'Failed to resolve secure delivery proxy URL. Falling back to the default URL.',
       failure,
     );

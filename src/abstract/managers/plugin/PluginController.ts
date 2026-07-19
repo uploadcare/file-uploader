@@ -1,4 +1,5 @@
 import { fileIsImage } from '../../../utils/fileTypes';
+import { containerOf } from '../../di/ControllerContainer';
 import { Disposables } from '../../di/Disposables';
 import { logger } from '../../logger';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
@@ -35,6 +36,9 @@ type RegisteredPlugin = {
  * / the `@inject(() => PluginController)` thunk.
  */
 export class PluginController {
+  // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
+  // (resolved lazily at log time via the container that built this instance).
+  private readonly _log = logger.scope('plugin-manager', { ctxName: () => containerOf(this)?.ctxName });
   private _deps: PluginControllerDeps;
   private _isDestroyed = false;
   private _plugins: Map<string, RegisteredPlugin> = new Map();
@@ -62,7 +66,7 @@ export class PluginController {
           // Recover the queue: a rejected emission must not permanently poison the
           // chain so later emissions never run. (`_pluginsUpdate` always resolves.)
           .catch((error) => {
-            logger.scope('PluginManager').error('Failed to sync plugins', error);
+            this._log.error('Failed to sync plugins', error);
           });
       }),
     );
@@ -85,12 +89,12 @@ export class PluginController {
 
     for (const plugin of plugins) {
       if (!plugin.id) {
-        logger.scope('PluginManager').warn('A plugin is missing the required "id" field, skipping');
+        this._log.warn('A plugin is missing the required "id" field, skipping');
         continue;
       }
 
       if (processedIds.has(plugin.id)) {
-        logger.scope('PluginManager').warn(`Plugin "${plugin.id}" is already in the list, skipping duplicate`);
+        this._log.warn(`Plugin "${plugin.id}" is already in the list, skipping duplicate`);
         continue;
       }
       processedIds.add(plugin.id);
@@ -101,7 +105,7 @@ export class PluginController {
         } catch (error) {
           this.registry.purge(plugin.id);
           this._notifySubscribers();
-          logger.scope('PluginManager').error(`Plugin "${plugin.id}" setup() threw an error`, error);
+          this._log.error(`Plugin "${plugin.id}" setup() threw an error`, error);
         }
       }
       currentPluginIds.delete(plugin.id);
@@ -129,7 +133,7 @@ export class PluginController {
         try {
           unsub();
         } catch (e) {
-          logger.warn('Failed to unsubscribe config listener', e);
+          this._log.warn('Failed to unsubscribe config listener', e);
         }
       }
       throw error;
@@ -149,14 +153,14 @@ export class PluginController {
       try {
         unsub();
       } catch (error) {
-        logger.warn('Failed to unsubscribe config listener', error);
+        this._log.warn('Failed to unsubscribe config listener', error);
       }
     }
 
     try {
       registered.dispose?.();
     } catch (error) {
-      logger.warn('Failed to dispose plugin', error);
+      this._log.warn('Failed to dispose plugin', error);
     }
     this._plugins.delete(pluginId);
     this._notifySubscribers();
@@ -184,7 +188,7 @@ export class PluginController {
         );
         ({ file } = await Promise.race([hookPromise, timeoutPromise]));
       } catch (error) {
-        logger.warn(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
+        this._log.warn(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
       }
     }
 
