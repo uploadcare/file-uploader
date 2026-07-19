@@ -818,19 +818,17 @@ describe('RouterController (v2)', () => {
       return { router: container.get(RouterController) };
     };
 
-    it('logs the effective activity transition (from → to)', () => {
+    it('logs slot transitions, flagging background vs modal', () => {
       const { router } = setupDebug();
       const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const badge = ['%c uc %c router %c', expect.any(String), expect.any(String), ''] as const;
 
-      router.navigate('start-from');
+      router.navigate('start-from'); // background strategy → background slot
+      expect(log).toHaveBeenCalledWith(...badge, 'background activity: none → start-from');
 
-      expect(log).toHaveBeenCalledWith(
-        '%c uc %c router %c',
-        expect.any(String),
-        expect.any(String),
-        '',
-        'activity: none → start-from',
-      );
+      router.navigationStrategy = () => 'foreground';
+      router.navigate('camera'); // foreground → modal slot
+      expect(log).toHaveBeenCalledWith(...badge, 'modal activity: none → camera');
     });
 
     it('logs a traverse intent and a guard refusal', () => {
@@ -854,6 +852,34 @@ describe('RouterController (v2)', () => {
         expect.any(String),
         '',
         'navigate to "camera" refused (guard)',
+      );
+    });
+
+    it('logs hook registration, hook execution result, and the applied navigation strategy', () => {
+      const { router } = setupDebug();
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const badge = ['%c uc %c router %c', expect.any(String), expect.any(String), ''] as const;
+
+      router.hooks.beforeChange(() => 'upload-list'); // registration
+      router.navigate('start-from'); // hook runs → redirects; strategy applies to the resolved target
+
+      expect(log).toHaveBeenCalledWith(...badge, 'hook registered: "beforeChange" (1 total)');
+      expect(log).toHaveBeenCalledWith(...badge, 'hook "beforeChange" → "upload-list"');
+      expect(log).toHaveBeenCalledWith(...badge, 'strategy for "upload-list": background');
+    });
+
+    it('logs the configured done activity', () => {
+      const { router } = setupDebug();
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      router.configure({ doneActivity: 'upload-list' });
+
+      expect(log).toHaveBeenCalledWith(
+        '%c uc %c router %c',
+        expect.any(String),
+        expect.any(String),
+        '',
+        'configure: done activity = upload-list',
       );
     });
 

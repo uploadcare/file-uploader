@@ -150,6 +150,7 @@ export class RouterController {
   /** Per-preset routing config (solution-level), e.g. the post-flow done activity. */
   public configure(table: RouteTable): void {
     this._table = { ...table };
+    this._log.debug(() => [`configure: done activity = ${this._table.doneActivity ?? 'none'}`]);
   }
 
   // ─── Guards ───
@@ -163,6 +164,7 @@ export class RouterController {
    */
   public guard(activityId: ActivityId, canActivate: () => boolean): () => void {
     this._guards.set(activityId, canActivate);
+    this._log.debug(() => [`guard registered: "${activityId}"`]);
     return () => {
       if (this._guards.get(activityId) === canActivate) {
         this._guards.delete(activityId);
@@ -243,6 +245,7 @@ export class RouterController {
 
   private _register(name: keyof typeof this._hooks, h: Hook): () => void {
     this._hooks[name].push(h);
+    this._log.debug(() => [`hook registered: "${name}" (${this._hooks[name].length} total)`]);
     return () => {
       this._hooks[name] = this._hooks[name].filter((x) => x !== h);
     };
@@ -273,6 +276,11 @@ export class RouterController {
   private _resolveHooks(name: keyof typeof this._hooks, ctx: EdgeContext): EdgeTarget | NavigateCancel | undefined {
     for (const hook of this._hooks[name]) {
       const r = this._invokeHook(name, hook, ctx);
+      this._log.debug(() => [
+        `hook "${name}" → ${
+          r === NAVIGATE_CANCEL ? 'cancel' : r === undefined ? 'defer' : r === null ? 'close (null)' : `"${r}"`
+        }`,
+      ]);
       if (r !== undefined) return r;
     }
     return undefined;
@@ -348,7 +356,9 @@ export class RouterController {
     onCommit?.(to);
     // A background target closes any open modal first — the inline content is
     // the focus now; a foreground target leaves the background slot untouched.
-    if (this.navigationStrategy(to) === 'background') {
+    const slot = this.navigationStrategy(to);
+    this._log.debug(() => [`strategy for "${to}": ${slot}`]);
+    if (slot === 'background') {
       this._transition(to, null);
     } else {
       this._transition(this._activity, to);
@@ -362,6 +372,7 @@ export class RouterController {
    * upload list while a modal is open in the foreground slot).
    */
   public setActivity(to: EdgeTarget, params?: Record<string, unknown>): void {
+    this._log.debug(() => [`set activity (direct): ${to ?? 'null'}`]);
     if (!this._canActivate(to)) {
       return;
     }
@@ -380,12 +391,23 @@ export class RouterController {
    * Always notifies subscribers, so params-only updates still re-render.
    */
   private _transition(nextActivity: EdgeTarget, nextModal: EdgeTarget): void {
+    const prevActivity = this._activity;
     const prevModal = this._modal;
     const prevEffective = this._currentActivity;
     this._activity = nextActivity;
     this._modal = nextModal;
     const nextEffective = this._modal ?? this._activity;
     this._currentActivity = nextEffective;
+
+    // Per-slot debug logs (verbose): flag the background vs the foreground (modal)
+    // slot explicitly, so a background change while a modal is open (which leaves
+    // the *effective* activity unchanged) is still visible.
+    if (nextActivity !== prevActivity) {
+      this._log.debug(() => [`background activity: ${prevActivity ?? 'none'} → ${nextActivity ?? 'none'}`]);
+    }
+    if (nextModal !== prevModal) {
+      this._log.debug(() => [`modal activity: ${prevModal ?? 'none'} → ${nextModal ?? 'none'}`]);
+    }
 
     if (prevModal === null && nextModal !== null) {
       this._emit(UploaderEventType.MODAL_OPEN, { modalId: nextModal });
@@ -394,7 +416,6 @@ export class RouterController {
     }
 
     if (nextEffective !== prevEffective) {
-      this._log.debug(() => [`activity: ${prevEffective ?? 'none'} → ${nextEffective ?? 'none'}`]);
       this._pushHistory(nextEffective);
       this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: nextEffective });
     }
