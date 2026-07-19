@@ -507,9 +507,9 @@ describe('UploadController', () => {
   describe('debug', () => {
     it('emits an "upload options" debug log through the centralized logger', async () => {
       // Debug output is gated off at the default `warn` level — raise verbosity
-      // so console.debug fires. `[uc]` is the logger's prefix.
+      // so console.log fires. `[uc]` is the logger's prefix.
       logger.configure({ level: 'debug' });
-      const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
+      const debug = vi.spyOn(console, 'log').mockImplementation(() => {});
       const { controller, collection } = setup();
       const id = collection.add({ file: new File(['x'], 'a.txt') });
       await expect(controller.uploadEntry(id)).resolves.toBeUndefined();
@@ -517,7 +517,7 @@ describe('UploadController', () => {
     });
 
     it('stays silent at the default log level', async () => {
-      const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
+      const debug = vi.spyOn(console, 'log').mockImplementation(() => {});
       const { controller, collection } = setup();
       const id = collection.add({ file: new File(['x'], 'a.txt') });
       await expect(controller.uploadEntry(id)).resolves.toBeUndefined();

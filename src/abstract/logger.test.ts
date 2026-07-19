@@ -10,8 +10,9 @@ describe('logger', () => {
   it('defaults to the `warn` level: error/warn/warnOnce print, log/debug are gated off', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // `log` and `debug` both emit via console.log (debug intentionally avoids
+    // console.debug — see logger.ts — so `<uc-config debug>` stays visible).
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
 
     expect(logger.level).toBe(DEFAULT_LEVEL);
     logger.error('e');
@@ -23,20 +24,18 @@ describe('logger', () => {
     expect(error).toHaveBeenCalledWith('[uc]', 'e');
     expect(warn).toHaveBeenCalledWith('[uc]', 'w');
     expect(warn).toHaveBeenCalledWith('[uc]', 'wo');
-    expect(log).not.toHaveBeenCalled();
-    expect(debug).not.toHaveBeenCalled();
+    expect(log).not.toHaveBeenCalled(); // both log + debug gated off at default
   });
 
-  it('raising the level to `debug` prints log + debug', () => {
+  it('raising the level to `debug` prints log + debug (both via console.log)', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
 
     logger.configure({ level: 'debug' });
     logger.log('l');
     logger.debug('d');
 
     expect(log).toHaveBeenCalledWith('[uc]', 'l');
-    expect(debug).toHaveBeenCalledWith('[uc]', 'd');
+    expect(log).toHaveBeenCalledWith('[uc]', 'd');
   });
 
   it('`silent` suppresses everything including error/warn', () => {
@@ -64,19 +63,19 @@ describe('logger', () => {
   });
 
   it('log/debug accept a lazy `() => args` thunk that is not evaluated when gated', () => {
-    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     const build = vi.fn(() => ['expensive']);
 
     // Gated off at the default level → thunk must NOT run.
     logger.debug(build);
     expect(build).not.toHaveBeenCalled();
-    expect(debug).not.toHaveBeenCalled();
+    expect(log).not.toHaveBeenCalled();
 
     // Enabled → thunk runs and its args are spread.
     logger.configure({ level: 'debug' });
     logger.debug(build);
     expect(build).toHaveBeenCalledTimes(1);
-    expect(debug).toHaveBeenCalledWith('[uc]', 'expensive');
+    expect(log).toHaveBeenCalledWith('[uc]', 'expensive');
   });
 
   it('scope() prefixes output with `[uc][name]`', () => {

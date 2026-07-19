@@ -38,9 +38,9 @@ describe('buildUploaderScopeDeps', () => {
       throw new Error('telemetry sink is down');
     });
     // The fallback log is `logger.debug`, gated off at the default `warn` level —
-    // raise verbosity so console.debug actually fires and can be asserted.
+    // raise verbosity so console.log actually fires and can be asserted.
     logger.configure({ level: 'debug' });
-    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
+    const debug = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const { host } = buildUploaderScopeDeps(container, vi.fn());
 
@@ -62,7 +62,7 @@ describe('buildUploaderScopeDeps', () => {
 
     const sendEventError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {});
     logger.configure({ level: 'debug' });
-    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
+    const debug = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const { host } = buildUploaderScopeDeps(container, vi.fn());
     const error = new Error('resolver failed');
