@@ -1,103 +1,109 @@
 /**
  * Centralized, DOM-free, container-free logger for the whole codebase.
  *
- * It knows nothing about the uploader's config, the DI container, or Lit — so
- * container-less primitives (`EventBus`, `Listeners`, `Disposables`,
- * `UploaderRegistry`, utils) and DOM-free controllers can all `import { logger }`
- * and just call a method. The logger itself decides whether to print, based on a
- * single configurable verbosity {@link LogLevel}.
+ * Two tiers:
+ * - **Always-on** (`error` / `warn` / `warnOnce`) — print unconditionally, with a
+ *   plain `[uc]` / `[uc][scope]` prefix (greppable). Usable by container-less
+ *   primitives (`EventBus`, `Listeners`, `Disposables`, utils) via the bare
+ *   `logger`, since they need no ctx.
+ * - **Gated** (`log` / `debug` and the pretty helpers `table` / `group` /
+ *   `groupEnd` / `dir`) — print only when the scoped logger is enabled. The base
+ *   `logger` is never enabled, so a bare `logger.debug(...)` is a no-op; gated
+ *   output comes from a **ctx-scoped** logger created via
+ *   `logger.scope(name, { isEnabled })`.
  *
- * The verbosity is wired to the per-ctx `debug` config option by a separate
- * middle layer (`logger-config-sync.ts`), so this module never depends on
- * `ConfigController`. By default only `error`/`warn`/`warnOnce` print; `log` and
- * `debug` are silent until verbosity is raised (what `<uc-config debug>` does).
+ * The logger stays config-agnostic: gating is a caller-supplied
+ * `isEnabled: () => boolean` predicate, NOT a `ConfigController`. Each per-ctx
+ * caller binds it to its OWN config's `debug` flag (see `ChildBlock._log` and the
+ * upload/plugin controllers), so debug output is per-ctx accurate — one uploader
+ * enabling `debug` never turns on another's, and lines carry that ctx's scope.
  */
 
-/** Verbosity, ordered least→most noisy. A method prints iff `level >= its tier`. */
-export type LogLevel = 'silent' | 'error' | 'warn' | 'info' | 'debug';
+/** `log`/`debug` accept plain args OR a single `() => unknown[]` thunk (not built when gated off). */
+export type LazyArgs = [() => unknown[]];
 
-const SEVERITY: Record<LogLevel, number> = { silent: 0, error: 1, warn: 2, info: 3, debug: 4 };
-
-/** Errors + isolate-and-warn diagnostics print; `log`/`debug` are gated off. */
-export const DEFAULT_LEVEL: LogLevel = 'warn';
-
-/** The noisier of two levels — the config→logger sync uses it to aggregate across ctxs. */
-export const maxLevel = (a: LogLevel, b: LogLevel): LogLevel => (SEVERITY[a] >= SEVERITY[b] ? a : b);
-
-/**
- * `log`/`debug` accept either plain args or a single `() => unknown[]` thunk, so
- * an expensive message isn't built when the level gates it out.
- */
-type LazyArgs = [() => unknown[]];
-
-export interface ScopedLogger {
+export interface Logger {
+  /** Always-on. */
   error(...args: unknown[]): void;
+  /** Always-on. */
   warn(...args: unknown[]): void;
+  /** Always-on; dedupes by message across the process. */
   warnOnce(message: string): void;
+  /** Gated (info). No-op unless this scoped logger is enabled. */
   log(...args: unknown[] | LazyArgs): void;
+  /** Gated (verbose). No-op unless this scoped logger is enabled. */
   debug(...args: unknown[] | LazyArgs): void;
+  /** Gated pretty helper: a labelled `console.table` for structured/tabular data. */
+  table(label: string, data: unknown, columns?: readonly string[]): void;
+  /** Gated pretty helper: open a `console.group` (pair with `groupEnd`). */
+  group(label: string): void;
+  /** Gated pretty helper: close the current group. */
+  groupEnd(): void;
+  /** Gated pretty helper: `console.dir` for deep object inspection. */
+  dir(obj: unknown): void;
+  /** A child logger prefixed `[uc][scope]`; pass `isEnabled` to gate its verbose tier. */
+  scope(name: string, options?: { isEnabled?: () => boolean }): Logger;
 }
 
-export interface Logger extends ScopedLogger {
-  /** Set the verbosity. Called only by the config→logger middle layer. */
-  configure(options: { level: LogLevel }): void;
-  /** Current verbosity (mainly for the sync layer / tests). */
-  readonly level: LogLevel;
-  /** A logger whose output is prefixed `[uc][name]` — optional source tagging. */
-  scope(name: string): ScopedLogger;
-}
-
-let currentLevel: LogLevel = DEFAULT_LEVEL;
 const warnedOnce = new Set<string>();
 
-const enabled = (tier: LogLevel): boolean => SEVERITY[currentLevel] >= SEVERITY[tier];
+// A subtle DevTools badge for the gated (dev-only) stream. No-op styling in
+// non-browser consoles (the `%c` + style arg is simply ignored there).
+const BADGE_STYLE = 'background:#7048e8;color:#fff;padding:1px 5px;border-radius:3px;font-weight:600';
 
 const resolveArgs = (args: unknown[] | LazyArgs): unknown[] =>
   args.length === 1 && typeof args[0] === 'function' ? (args[0] as () => unknown[])() : (args as unknown[]);
 
-/** Build the method set for a given prefix (`[uc]` or `[uc][scope]`). */
-const makeScoped = (prefix: string): ScopedLogger => ({
-  error(...args: unknown[]): void {
-    if (enabled('error')) console.error(prefix, ...args);
-  },
-  warn(...args: unknown[]): void {
-    if (enabled('warn')) console.warn(prefix, ...args);
-  },
-  warnOnce(message: string): void {
-    // Dedupe by message (byte-for-byte with the old `warnOnce` util), so the
-    // same warning from repeated calls prints once per process.
-    if (!enabled('warn') || warnedOnce.has(message)) return;
-    warnedOnce.add(message);
-    console.warn(prefix, message);
-  },
-  log(...args: unknown[] | LazyArgs): void {
-    if (enabled('info')) console.log(prefix, ...resolveArgs(args));
-  },
-  // Uses `console.log`, not `console.debug`: `console.debug` maps to DevTools'
-  // "Verbose" level, which is hidden by default — so `<uc-config debug>` output
-  // (the old `createDebugPrinter` used `console.log`) would appear to vanish.
-  debug(...args: unknown[] | LazyArgs): void {
-    if (enabled('debug')) console.log(prefix, ...resolveArgs(args));
-  },
-});
-
-const root = makeScoped('[uc]');
-
-export const logger: Logger = {
-  ...root,
-  configure({ level }: { level: LogLevel }): void {
-    currentLevel = level;
-  },
-  get level(): LogLevel {
-    return currentLevel;
-  },
-  scope(name: string): ScopedLogger {
-    return makeScoped(`[uc][${name}]`);
-  },
+const create = (label: string, isEnabled: () => boolean): Logger => {
+  const plain = label ? `[uc][${label}]` : '[uc]';
+  const badge = label ? `%c[uc][${label}]` : '%c[uc]';
+  return {
+    error(...args: unknown[]): void {
+      console.error(plain, ...args);
+    },
+    warn(...args: unknown[]): void {
+      console.warn(plain, ...args);
+    },
+    warnOnce(message: string): void {
+      if (warnedOnce.has(message)) return;
+      warnedOnce.add(message);
+      console.warn(plain, message);
+    },
+    log(...args: unknown[] | LazyArgs): void {
+      if (isEnabled()) console.log(badge, BADGE_STYLE, ...resolveArgs(args));
+    },
+    debug(...args: unknown[] | LazyArgs): void {
+      if (isEnabled()) console.log(badge, BADGE_STYLE, ...resolveArgs(args));
+    },
+    table(labelText: string, data: unknown, columns?: readonly string[]): void {
+      if (!isEnabled()) return;
+      console.log(badge, BADGE_STYLE, labelText);
+      // `columns` narrows which object keys are shown, when supported.
+      columns ? console.table(data, columns as string[]) : console.table(data);
+    },
+    group(labelText: string): void {
+      if (isEnabled()) console.group(badge, BADGE_STYLE, labelText);
+    },
+    groupEnd(): void {
+      if (isEnabled()) console.groupEnd();
+    },
+    dir(obj: unknown): void {
+      if (!isEnabled()) return;
+      console.log(badge, BADGE_STYLE);
+      console.dir(obj);
+    },
+    scope(name: string, options?: { isEnabled?: () => boolean }): Logger {
+      const childLabel = label ? `${label}][${name}` : name;
+      // A child without its own predicate inherits the parent's gate.
+      return create(childLabel, options?.isEnabled ?? isEnabled);
+    },
+  };
 };
 
-/** Test-only: reset verbosity + the `warnOnce` dedupe set between cases. */
+/** The base logger: always-on tiers print; the gated tier is a no-op (never enabled). */
+export const logger: Logger = create('', () => false);
+
+/** Test-only: reset the `warnOnce` dedupe set between cases. */
 export const __resetLoggerForTests = (): void => {
-  currentLevel = DEFAULT_LEVEL;
   warnedOnce.clear();
 };

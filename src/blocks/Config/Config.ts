@@ -9,7 +9,6 @@ import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types
 import { toKebabCase } from '../../utils/toKebabCase';
 import { runAssertions } from './assertions';
 import './config.css';
-import { logger } from '../../abstract/logger';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
@@ -75,9 +74,6 @@ export class Config extends ChildBlock {
   public declare attributesMeta: Partial<ConfigPlainType> & {
     'ctx-name': string;
   };
-
-  /** Scoped debug logger; gated globally by the `debug` config option (see `LoggerConfigSync`). */
-  private readonly _log = logger.scope(this.constructor.name);
 
   private _computationControllers: ComputedPropertyControllers = new Map();
   private _pluginChangeUnsubscribe?: () => void;

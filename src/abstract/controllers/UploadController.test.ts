@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Uid } from '../../lit/Uid';
 import type { ConfigType, OutputFileEntry } from '../../types';
 import { ControllerContainer } from '../di/ControllerContainer';
-import { __resetLoggerForTests, logger } from '../logger';
+import { __resetLoggerForTests } from '../logger';
 import type { Owned, PluginFileHookRegistration } from '../managers/plugin/PluginTypes';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import { ConfigController } from './ConfigController';
@@ -505,23 +505,27 @@ describe('UploadController', () => {
   });
 
   describe('debug', () => {
-    it('emits an "upload options" debug log through the centralized logger', async () => {
-      // Debug output is gated off at the default `warn` level — raise verbosity
-      // so console.log fires. `[uc]` is the logger's prefix.
-      logger.configure({ level: 'debug' });
-      const debug = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const { controller, collection } = setup();
+    it('emits an "upload options" table through the per-ctx gated logger', async () => {
+      // Debug output is gated per-ctx by the `debug` config — enable it so the
+      // gated tier fires. The table helper logs a `%c[uc][Upload]` header via
+      // console.log, then dumps the options object via console.table.
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const tableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
+      const { controller, collection } = setup({ cfg: { debug: true } });
       const id = collection.add({ file: new File(['x'], 'a.txt') });
       await expect(controller.uploadEntry(id)).resolves.toBeUndefined();
-      expect(debug).toHaveBeenCalledWith('[uc]', 'upload options', expect.anything(), expect.anything());
+      expect(logSpy).toHaveBeenCalledWith('%c[uc][Upload]', expect.any(String), 'upload options');
+      expect(tableSpy).toHaveBeenCalledWith(expect.any(Object));
     });
 
-    it('stays silent at the default log level', async () => {
-      const debug = vi.spyOn(console, 'log').mockImplementation(() => {});
+    it('stays silent when this ctx has debug off', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const tableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
       const { controller, collection } = setup();
       const id = collection.add({ file: new File(['x'], 'a.txt') });
       await expect(controller.uploadEntry(id)).resolves.toBeUndefined();
-      expect(debug).not.toHaveBeenCalled();
+      expect(logSpy).not.toHaveBeenCalled();
+      expect(tableSpy).not.toHaveBeenCalled();
     });
   });
 

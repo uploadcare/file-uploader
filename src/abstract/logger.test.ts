@@ -1,53 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { __resetLoggerForTests, DEFAULT_LEVEL, type LogLevel, logger, maxLevel } from './logger';
+import { __resetLoggerForTests, logger } from './logger';
 
 afterEach(() => {
   __resetLoggerForTests();
   vi.restoreAllMocks();
 });
 
-describe('logger', () => {
-  it('defaults to the `warn` level: error/warn/warnOnce print, log/debug are gated off', () => {
+describe('logger (base / always-on tier)', () => {
+  it('error/warn/warnOnce always print with the plain `[uc]` prefix', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    // `log` and `debug` both emit via console.log (debug intentionally avoids
-    // console.debug — see logger.ts — so `<uc-config debug>` stays visible).
-    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-    expect(logger.level).toBe(DEFAULT_LEVEL);
     logger.error('e');
     logger.warn('w');
     logger.warnOnce('wo');
-    logger.log('l');
-    logger.debug('d');
 
     expect(error).toHaveBeenCalledWith('[uc]', 'e');
     expect(warn).toHaveBeenCalledWith('[uc]', 'w');
     expect(warn).toHaveBeenCalledWith('[uc]', 'wo');
-    expect(log).not.toHaveBeenCalled(); // both log + debug gated off at default
-  });
-
-  it('raising the level to `debug` prints log + debug (both via console.log)', () => {
-    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-    logger.configure({ level: 'debug' });
-    logger.log('l');
-    logger.debug('d');
-
-    expect(log).toHaveBeenCalledWith('[uc]', 'l');
-    expect(log).toHaveBeenCalledWith('[uc]', 'd');
-  });
-
-  it('`silent` suppresses everything including error/warn', () => {
-    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    logger.configure({ level: 'silent' });
-    logger.error('e');
-    logger.warn('w');
-
-    expect(error).not.toHaveBeenCalled();
-    expect(warn).not.toHaveBeenCalled();
   });
 
   it('warnOnce dedupes by message across repeated calls', () => {
@@ -58,41 +28,102 @@ describe('logger', () => {
     logger.warnOnce('other');
 
     expect(warn).toHaveBeenCalledTimes(2);
-    expect(warn).toHaveBeenNthCalledWith(1, '[uc]', 'same');
-    expect(warn).toHaveBeenNthCalledWith(2, '[uc]', 'other');
   });
 
-  it('log/debug accept a lazy `() => args` thunk that is not evaluated when gated', () => {
+  it('the base logger`s gated tier is a no-op (never enabled)', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    const build = vi.fn(() => ['expensive']);
-
-    // Gated off at the default level → thunk must NOT run.
-    logger.debug(build);
-    expect(build).not.toHaveBeenCalled();
+    logger.log('l');
+    logger.debug('d');
+    logger.table('t', [{ a: 1 }]);
     expect(log).not.toHaveBeenCalled();
-
-    // Enabled → thunk runs and its args are spread.
-    logger.configure({ level: 'debug' });
-    logger.debug(build);
-    expect(build).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalledWith('[uc]', 'expensive');
   });
+});
 
-  it('scope() prefixes output with `[uc][name]`', () => {
+describe('logger.scope', () => {
+  it('prefixes always-on output with `[uc][name]`', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     logger.scope('EventBus').warn('boom');
     expect(warn).toHaveBeenCalledWith('[uc][EventBus]', 'boom');
   });
 
-  it('maxLevel returns the noisier level', () => {
-    const cases: Array<[LogLevel, LogLevel, LogLevel]> = [
-      ['warn', 'debug', 'debug'],
-      ['debug', 'warn', 'debug'],
-      ['silent', 'error', 'error'],
-      ['warn', 'warn', 'warn'],
-    ];
-    for (const [a, b, expected] of cases) {
-      expect(maxLevel(a, b)).toBe(expected);
-    }
+  it('a scope without isEnabled keeps the gated tier off', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    logger.scope('EventBus').debug('nope');
+    expect(log).not.toHaveBeenCalled();
+  });
+
+  it('gated log/debug print (with the badge prefix) only when isEnabled() is true', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    let on = false;
+    const scoped = logger.scope('DropArea', { isEnabled: () => on });
+
+    scoped.debug('d1');
+    expect(log).not.toHaveBeenCalled();
+
+    on = true;
+    scoped.debug('d2');
+    scoped.log('l2');
+    expect(log).toHaveBeenCalledWith('%c[uc][DropArea]', expect.any(String), 'd2');
+    expect(log).toHaveBeenCalledWith('%c[uc][DropArea]', expect.any(String), 'l2');
+  });
+
+  it('gating is per-scope: two scopes with independent predicates do not affect each other', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const a = logger.scope('A', { isEnabled: () => true });
+    const b = logger.scope('B', { isEnabled: () => false });
+
+    a.debug('from-a');
+    b.debug('from-b');
+
+    expect(log).toHaveBeenCalledTimes(1);
+    expect(log).toHaveBeenCalledWith('%c[uc][A]', expect.any(String), 'from-a');
+  });
+
+  it('debug accepts a lazy `() => args` thunk that is not evaluated when gated off', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const build = vi.fn(() => ['expensive']);
+    let on = false;
+    const scoped = logger.scope('X', { isEnabled: () => on });
+
+    scoped.debug(build);
+    expect(build).not.toHaveBeenCalled();
+
+    on = true;
+    scoped.debug(build);
+    expect(build).toHaveBeenCalledTimes(1);
+    expect(log).toHaveBeenCalledWith('%c[uc][X]', expect.any(String), 'expensive');
+  });
+});
+
+describe('logger pretty helpers (gated)', () => {
+  it('table logs a labelled header then console.table, only when enabled', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const table = vi.spyOn(console, 'table').mockImplementation(() => {});
+    const scoped = logger.scope('Upload', { isEnabled: () => true });
+
+    scoped.table('upload options', { a: 1 });
+    expect(log).toHaveBeenCalledWith('%c[uc][Upload]', expect.any(String), 'upload options');
+    expect(table).toHaveBeenCalledWith({ a: 1 });
+  });
+
+  it('table is a no-op when disabled', () => {
+    const table = vi.spyOn(console, 'table').mockImplementation(() => {});
+    logger.scope('Upload', { isEnabled: () => false }).table('x', {});
+    expect(table).not.toHaveBeenCalled();
+  });
+
+  it('group/groupEnd and dir are gated', () => {
+    const group = vi.spyOn(console, 'group').mockImplementation(() => {});
+    const groupEnd = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
+    const dir = vi.spyOn(console, 'dir').mockImplementation(() => {});
+    const scoped = logger.scope('S', { isEnabled: () => true });
+
+    scoped.group('steps');
+    scoped.dir({ nested: true });
+    scoped.groupEnd();
+
+    expect(group).toHaveBeenCalledWith('%c[uc][S]', expect.any(String), 'steps');
+    expect(dir).toHaveBeenCalledWith({ nested: true });
+    expect(groupEnd).toHaveBeenCalledTimes(1);
   });
 });

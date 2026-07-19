@@ -2,7 +2,6 @@ import { UploadCollectionController } from '../../abstract/controllers/UploadCol
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { EventBus } from '../../abstract/EventBus';
-import { logger } from '../../abstract/logger';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { EventBridgeController } from '../../lit/EventBridgeController';
@@ -20,9 +19,6 @@ export class UploadCtxProvider extends ChildBlock {
   // (they throw pre-adoption exactly as the v1 getters did), so they stay on
   // `use()`.
   @inject(EventBus) private readonly _eventBus!: EventBus;
-
-  /** Scoped debug logger; gated globally by the `debug` config option (see `LoggerConfigSync`). */
-  private readonly _log = logger.scope(this.constructor.name);
 
   private _eventBridge: EventBridgeController | null = null;
 
