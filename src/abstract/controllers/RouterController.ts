@@ -6,6 +6,7 @@ import { signalState } from '../di/signalState';
 import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
 import { Listeners } from '../host-subscription';
 import { logger } from '../logger';
+import { ConfigController } from './ConfigController';
 
 export type EdgeTarget = ActivityId | null;
 
@@ -53,7 +54,10 @@ type Hook = (ctx: EdgeContext) => EdgeTarget | NavigateCancel | undefined;
 export class RouterController {
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
   // (resolved lazily at log time via the container that built this instance).
-  private readonly _log = logger.scope('router', { ctxName: () => containerOf(this)?.ctxName });
+  private readonly _log = logger.scope('router', {
+    ctxName: () => containerOf(this)?.ctxName,
+    isVerbose: () => containerOf(this)?.get(ConfigController).get('debug') ?? false,
+  });
   // Container-resolved emit target (M-god step 3c). Thunked `@inject` because
   // the module graph around the event surface is circular-prone; resolution is
   // lazy so there is zero construction cycle. Telemetry observes the bus, so
@@ -311,7 +315,11 @@ export class RouterController {
     const ctx: EdgeContext = { edge: 'navigate', from: this.currentActivity, proposed: to, defaults: () => to };
     const resolved = this._resolveHooks('beforeChange', ctx);
     if (resolved === NAVIGATE_CANCEL) {
+      this._log.debug(() => [`navigate to ${to ?? 'null'} cancelled by a beforeChange hook`]);
       return;
+    }
+    if (resolved !== undefined && resolved !== to) {
+      this._log.debug(() => [`beforeChange hook redirected: ${to ?? 'null'} → ${resolved ?? 'null'}`]);
     }
     // All hooks deferred (`undefined`) → the proposed target goes through.
     // Note `null` is a real decision (close everything), so no `??` here.
@@ -333,6 +341,7 @@ export class RouterController {
     // refuse the navigation and stay where we are — leaving `_params` untouched
     // so readers never observe params for an activity we didn't actually enter.
     if (!this._canActivate(to)) {
+      this._log.debug(() => [`navigate to "${to}" refused (guard)`]);
       return;
     }
     this._params = params;
@@ -385,6 +394,7 @@ export class RouterController {
     }
 
     if (nextEffective !== prevEffective) {
+      this._log.debug(() => [`activity: ${prevEffective ?? 'none'} → ${nextEffective ?? 'none'}`]);
       this._pushHistory(nextEffective);
       this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: nextEffective });
     }
@@ -435,6 +445,7 @@ export class RouterController {
    * - `onFileAdd` → navigate to `upload-list`.
    */
   public traverse(edge: NavigationEdge): void {
+    this._log.debug(() => [`traverse "${edge}"`]);
     // `proposed`/`defaults()` carry a concrete target only when the default
     // *is* a target (`onDone` → done activity, `onFileAdd` → upload-list).
     // For `onBack`/`onCancel`/`onClose` the default is an *action*

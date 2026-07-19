@@ -40,10 +40,6 @@ export class SecureUploadsController {
 
     if (secureUploadsSignatureResolver) {
       if (!this._secureToken || isSecureTokenExpired(this._secureToken, { threshold: secureUploadsExpireThreshold })) {
-        // Bounded, multi-step refresh sequence — group it so the lifecycle
-        // reads as one block. `finally` guarantees the group closes even if the
-        // resolver throws.
-        const endGroup = this._log.group('secure signature');
         try {
           if (!this._secureToken) {
             this._log.debug('Secure signature is not set yet.');
@@ -70,8 +66,6 @@ export class SecureUploadsController {
             err,
             'secureUploadsSignatureResolver. Secure signature resolving failed. Falling back to the previous one.',
           );
-        } finally {
-          endGroup();
         }
       }
 

@@ -194,7 +194,7 @@ export class UploadController {
           signal: abortController.signal,
           metadata: await this.getMetadataFor(uid),
         };
-        this._log.table('upload options', uploadClientOptions);
+        this._log.debug('upload options', uploadClientOptions);
         return uploadFile(fileInput, uploadClientOptions);
       };
 

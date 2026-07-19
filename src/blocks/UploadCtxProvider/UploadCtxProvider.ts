@@ -35,11 +35,7 @@ export class UploadCtxProvider extends ChildBlock {
     // element. Recreated on every adoption (matching the teardown above) so
     // its internal subscription is rebound to the *new* controller's bus
     // rather than staying latched onto a released one.
-    this._eventBridge = new EventBridgeController(
-      this,
-      () => this._eventBus,
-      (...args) => this._log.debug(...args),
-    );
+    this._eventBridge = new EventBridgeController(this, () => this._eventBus);
   }
 
   protected override controllerReleased(): void {

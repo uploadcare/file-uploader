@@ -3,10 +3,9 @@
  *
  * Two tiers:
  * - **Always-on** (`error` / `warn` / `warnOnce`) — print unconditionally.
- * - **Gated / verbose** (`log` / `debug` and the pretty helpers `table` / `group`
- *   / `dir`) — print only when the scoped logger's `isVerbose()` predicate is
- *   true. The base `logger` is never verbose, so a bare `logger.debug(...)` is a
- *   no-op; verbose output comes from a scoped logger.
+ * - **Gated / verbose** (`log` / `debug`) — print only when the scoped logger's
+ *   `isVerbose()` predicate is true. The base `logger` is never verbose, so a
+ *   bare `logger.debug(...)` is a no-op; verbose output comes from a scoped logger.
  *
  * Every log line is prefixed `[uc]`, then the **ctx-name** when the scope can
  * resolve one (so multi-uploader output is attributable to its uploader), then
@@ -25,7 +24,7 @@ export type LazyArgs = [() => unknown[]];
 
 /** Options for a scoped logger. Both resolvers are read lazily, at log time. */
 export interface ScopeOptions {
-  /** Verbose gate: `log`/`debug`/pretty helpers print only when this returns true. */
+  /** Verbose gate: `log`/`debug` print only when this returns true. */
   isVerbose?: () => boolean;
   /** Resolves the current ctx-name for the prefix; omit for ctx-less scopes. */
   ctxName?: () => string | undefined;
@@ -42,18 +41,6 @@ export interface Logger {
   log(...args: unknown[] | LazyArgs): void;
   /** Verbose. No-op unless this scope's `isVerbose()` is true. */
   debug(...args: unknown[] | LazyArgs): void;
-  /** Verbose pretty helper: a labelled `console.table` for structured/tabular data. */
-  table(label: string, data: unknown, columns?: readonly string[]): void;
-  /**
-   * Verbose pretty helper: open a `console.group` and return a closer. The closer
-   * closes the group iff this call opened one (captured at open time) and is
-   * idempotent — so a verbosity flip (or ctx teardown) between open and close can
-   * never leave a dangling group or fire an unmatched `groupEnd`. Use with
-   * try/finally: `const end = log.group('x'); try { … } finally { end(); }`.
-   */
-  group(label: string): () => void;
-  /** Verbose pretty helper: `console.dir` for deep object inspection. */
-  dir(obj: unknown): void;
   /** A child scope. Prefer one per file/class at the top; do not chain a log call on the result. */
   scope(name: string, options?: ScopeOptions): Logger;
 }
@@ -86,18 +73,12 @@ const create = (scopeName: string, isVerbose: () => boolean, getCtxName?: () => 
   // console call — one `%c` chip per present segment, then a reset so the
   // following user args aren't styled.
   const styledPrefix = (): unknown[] => {
-    const chips = ['%c uc '];
-    const styles: string[] = [UC_BADGE_STYLE];
+    const chips: Array<[string, string]> = [['uc', UC_BADGE_STYLE]];
     const ctx = getCtxName?.();
-    if (ctx) {
-      chips.push(`%c ${ctx} `);
-      styles.push(CTX_BADGE_STYLE);
-    }
-    if (scopeName) {
-      chips.push(`%c ${scopeName} `);
-      styles.push(SCOPE_BADGE_STYLE);
-    }
-    return [`${chips.join('')}%c`, ...styles, ''];
+    if (ctx) chips.push([ctx, CTX_BADGE_STYLE]);
+    if (scopeName) chips.push([scopeName, SCOPE_BADGE_STYLE]);
+    const fmt = `${chips.map(([label]) => `%c ${label} `).join('')}%c`;
+    return [fmt, ...chips.map(([, style]) => style), ''];
   };
   return {
     error(...args: unknown[]): void {
@@ -116,26 +97,6 @@ const create = (scopeName: string, isVerbose: () => boolean, getCtxName?: () => 
     },
     debug(...args: unknown[] | LazyArgs): void {
       if (isVerbose()) console.log(...styledPrefix(), ...resolveArgs(args));
-    },
-    table(labelText: string, data: unknown, columns?: readonly string[]): void {
-      if (!isVerbose()) return;
-      console.log(...styledPrefix(), labelText);
-      columns ? console.table(data, columns as string[]) : console.table(data);
-    },
-    group(labelText: string): () => void {
-      if (!isVerbose()) return () => {};
-      console.group(...styledPrefix(), labelText);
-      let closed = false;
-      return () => {
-        if (closed) return;
-        closed = true;
-        console.groupEnd();
-      };
-    },
-    dir(obj: unknown): void {
-      if (!isVerbose()) return;
-      console.log(...styledPrefix());
-      console.dir(obj);
     },
     scope(name: string, options?: ScopeOptions): Logger {
       // A child inherits the parent's resolvers unless it overrides them.
