@@ -1,12 +1,10 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityId } from '../../lit/activity-constants';
-import { containerOf } from '../di/ControllerContainer';
+import { controllerLogger } from '../controllerLogger';
 import { inject } from '../di/inject';
 import { signalState } from '../di/signalState';
 import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
 import { Listeners } from '../host-subscription';
-import { logger } from '../logger';
-import { ConfigController } from './ConfigController';
 
 export type EdgeTarget = ActivityId | null;
 
@@ -54,10 +52,7 @@ type Hook = (ctx: EdgeContext) => EdgeTarget | NavigateCancel | undefined;
 export class RouterController {
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
   // (resolved lazily at log time via the container that built this instance).
-  private readonly _log = logger.scope('router', {
-    ctxName: () => containerOf(this)?.ctxName,
-    isVerbose: () => containerOf(this)?.get(ConfigController).get('debug') ?? false,
-  });
+  private readonly _log = controllerLogger(this, 'router');
   // Container-resolved emit target (M-god step 3c). Thunked `@inject` because
   // the module graph around the event surface is circular-prone; resolution is
   // lazy so there is zero construction cycle. Telemetry observes the bus, so

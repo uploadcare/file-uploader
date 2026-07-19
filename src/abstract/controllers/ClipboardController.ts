@@ -1,7 +1,6 @@
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
-import { containerOf } from '../di/ControllerContainer';
+import { controllerLogger } from '../controllerLogger';
 import { inject } from '../di/inject';
-import { logger } from '../logger';
 import { ConfigController } from './ConfigController';
 import { RouterController } from './RouterController';
 import { UploadHostBridge } from './UploadHostBridge';
@@ -32,7 +31,7 @@ const ALLOWED_PASTE_ACTIVITIES = new Set<string>([ACTIVITY_TYPES.START_FROM, ACT
 export class ClipboardController {
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
   // (resolved lazily at log time via the container that built this instance).
-  private readonly _log = logger.scope('clipboard', { ctxName: () => containerOf(this)?.ctxName });
+  private readonly _log = controllerLogger(this, 'clipboard');
   // Config is a leaf, imported directly; the router graph is circular-prone
   // (event bus ↔ controllers), so it uses a token thunk. Resolution is lazy, so
   // there is zero construction cycle. The api arrives via the host bridge (see

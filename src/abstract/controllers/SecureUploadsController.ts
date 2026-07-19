@@ -1,8 +1,7 @@
 import type { SecureUploadsSignatureAndExpire } from '../../types/index';
 import { isSecureTokenExpired } from '../../utils/isSecureTokenExpired';
-import { containerOf } from '../di/ControllerContainer';
+import { controllerLogger } from '../controllerLogger';
 import { inject } from '../di/inject';
-import { logger } from '../logger';
 import { ConfigController } from './ConfigController';
 import { UploadHostBridge } from './UploadHostBridge';
 
@@ -23,11 +22,9 @@ export class SecureUploadsController {
   private _secureToken: SecureUploadsSignatureAndExpire | null = null;
 
   // Per-ctx gated logger: the verbose tier prints only when THIS ctx's `debug`
-  // config is on. The predicate reads `_config` lazily at log time.
-  private readonly _log = logger.scope('secure-uploads', {
-    isVerbose: () => this._config.get('debug'),
-    ctxName: () => containerOf(this)?.ctxName,
-  });
+  // config is on; ctx-name + gate resolve lazily at log time via the container
+  // that built this instance.
+  private readonly _log = controllerLogger(this, 'secure-uploads');
 
   public async getSecureToken(): Promise<SecureUploadsSignatureAndExpire | null> {
     const { secureSignature, secureExpire, secureUploadsSignatureResolver, secureUploadsExpireThreshold } =

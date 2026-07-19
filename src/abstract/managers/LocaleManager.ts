@@ -1,12 +1,11 @@
 import { default as en } from '../../locales/file-uploader/en';
 import type { ConfigType } from '../../types';
+import { controllerLogger } from '../controllerLogger';
 import { ConfigController } from '../controllers/ConfigController';
 import { LocaleController } from '../controllers/LocaleController';
-import { containerOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { type LocaleDefinition, resolveLocaleDefinition } from '../localeRegistry';
-import { logger } from '../logger';
 import type { PluginController } from './plugin';
 
 export const localeStateKey = <T extends keyof LocaleDefinition>(key: T): `*l10n/${T}` => `*l10n/${key}`;
@@ -36,7 +35,7 @@ export const DEFAULT_LOCALE = 'en';
 export class LocaleManager {
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
   // (resolved lazily at log time via the container that built this instance).
-  private readonly _log = logger.scope('locale-manager', { ctxName: () => containerOf(this)?.ctxName });
+  private readonly _log = controllerLogger(this, 'locale-manager');
   /** v2 config source of truth — `localeName`/`localeDefinitionOverride` reads + subscriptions. */
   @inject(ConfigController) private readonly _config!: ConfigController;
   /** v2 locale string store — where the resolved dictionary is written. */

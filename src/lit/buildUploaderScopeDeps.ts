@@ -3,7 +3,7 @@
 // them, keeping editor-only bundles (which import neither this builder nor
 // `ensureUploaderScope`) free of `@uploadcare/upload-client` and friends.
 
-import { ConfigController } from '../abstract/controllers/ConfigController';
+import { scopedLogger } from '../abstract/controllerLogger';
 import type { UploadStackControllers } from '../abstract/controllers/registerUploadStack';
 import { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import { UploadController } from '../abstract/controllers/UploadController';
@@ -11,7 +11,6 @@ import { UploadEventsController } from '../abstract/controllers/UploadEventsCont
 import type { UploadHostBridge, UploadHostEmit } from '../abstract/controllers/UploadHostBridge';
 import { ValidationController } from '../abstract/controllers/ValidationController';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
-import { logger } from '../abstract/logger';
 import { PluginController } from '../abstract/managers/plugin';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
@@ -52,10 +51,7 @@ export function buildUploaderScopeDeps(container: ControllerContainer, emit: Upl
   // only when THIS ctx's `debug` config is on. The predicate reads the config
   // lazily at log time, and the `log.debug` call below stays inside the
   // never-throw try/catch, so a torn-down container can't surface an error.
-  const log = logger.scope('upload-scope', {
-    isVerbose: () => container.get(ConfigController).get('debug'),
-    ctxName: () => container.ctxName,
-  });
+  const log = scopedLogger('upload-scope', () => container);
   const reportTelemetryError =
     (report: string) =>
     (error: unknown, context: string): void => {
