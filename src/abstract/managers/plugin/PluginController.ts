@@ -1,4 +1,5 @@
 import { fileIsImage } from '../../../utils/fileTypes';
+import { ConfigController } from '../../controllers/ConfigController';
 import { containerOf } from '../../di/ControllerContainer';
 import { Disposables } from '../../di/Disposables';
 import { logger } from '../../logger';
@@ -125,9 +126,16 @@ export class PluginController {
     const pluginApi = this._deps.buildApi(this.registry, plugin.id, configSubscriptions);
 
     const uploaderApi = this._deps.getUploaderApi();
+    // A logger scoped to this plugin — `[uc][<ctx-name>][plugin:<id>]`, verbose
+    // tier gated by the uploader's `debug` config. Handed to `setup` so plugins
+    // log through the centralized logger with attribution for free.
+    const pluginLogger = logger.scope(`plugin:${plugin.id}`, {
+      ctxName: () => containerOf(this)?.ctxName,
+      isVerbose: () => containerOf(this)?.get(ConfigController).get('debug') ?? false,
+    });
     let pluginDispose: Unsubscribe | undefined;
     try {
-      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
+      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi, logger: pluginLogger })) ?? undefined;
     } catch (error) {
       for (const unsub of configSubscriptions) {
         try {

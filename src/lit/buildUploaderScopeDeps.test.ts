@@ -40,7 +40,7 @@ describe('buildUploaderScopeDeps', () => {
     });
     // The fallback log is a per-ctx gated `logger.debug` — enable this ctx's
     // `debug` config so the gated tier fires and can be asserted. The badge
-    // header is `%c[uc][<ctxName>][upload-scope]` + a style arg.
+    // header is the multi-chip badge (uc + ctx + scope) + style args.
     container.get(ConfigController).set('debug', true);
     const debug = vi.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -53,20 +53,29 @@ describe('buildUploaderScopeDeps', () => {
     expect(sendEventError).toHaveBeenCalledTimes(3);
     expect(debug).toHaveBeenCalledTimes(3);
     expect(debug).toHaveBeenCalledWith(
-      `%c[uc][${ctxName}][upload-scope]`,
+      `%c uc %c ${ctxName} %c upload-scope %c`,
       expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      '',
       'telemetry unavailable for a resolver error report',
       expect.any(Error),
     );
     expect(debug).toHaveBeenCalledWith(
-      `%c[uc][${ctxName}][upload-scope]`,
+      `%c uc %c ${ctxName} %c upload-scope %c`,
       expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      '',
       'telemetry unavailable for an upload error report',
       expect.any(Error),
     );
     expect(debug).toHaveBeenCalledWith(
-      `%c[uc][${ctxName}][upload-scope]`,
+      `%c uc %c ${ctxName} %c upload-scope %c`,
       expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      '',
       'telemetry unavailable for a validator error report',
       expect.any(Error),
     );

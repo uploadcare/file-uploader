@@ -53,7 +53,7 @@ describe('SecureUploadsController', () => {
   // The controller's debug output goes through a per-ctx gated `logger` scope,
   // enabled only when this ctx's `debug` config is on (create the controller
   // with `{ debug: true }`). The gated tier prints via `console.log` prefixed
-  // `%c[uc][secure-uploads]` + a badge style arg — spy `console.log` to assert it.
+  // the multi-chip badge (uc + scope) + style args — spy `console.log` to assert it.
   const spyLoggerDebug = () => vi.spyOn(console, 'log').mockImplementation(() => {});
 
   beforeEach(() => {
@@ -347,8 +347,10 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(debug).toHaveBeenCalledWith(
-          '%c[uc][secure-uploads]',
+          '%c uc %c secure-uploads %c',
           expect.any(String),
+          expect.any(String),
+          '',
           'Secure signature is not set yet.',
         );
       });
@@ -379,8 +381,10 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(debug).toHaveBeenCalledWith(
-          '%c[uc][secure-uploads]',
+          '%c uc %c secure-uploads %c',
           expect.any(String),
+          expect.any(String),
+          '',
           'Secure signature is expired. Resolving a new one...',
         );
       });
@@ -401,8 +405,10 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(debug).toHaveBeenCalledWith(
-          '%c[uc][secure-uploads]',
+          '%c uc %c secure-uploads %c',
           expect.any(String),
+          expect.any(String),
+          '',
           'Secure signature resolved:',
           mockToken,
         );

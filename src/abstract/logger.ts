@@ -60,51 +60,71 @@ export interface Logger {
 
 const warnedOnce = new Set<string>();
 
-// A subtle DevTools badge for the verbose (dev-only) stream. No-op styling in
-// non-browser consoles (the `%c` + style arg is simply ignored there). Exported
-// so tests can pin the exact style rather than matching `any(String)`.
-export const BADGE_STYLE = 'background:#7048e8;color:#fff;padding:1px 5px;border-radius:3px;font-weight:600';
+// Per-segment DevTools badges for the verbose (dev-only) stream: `uc`, the
+// ctx-name, and the scope each get a distinct background so the three are visually
+// separable. No-op styling in non-browser consoles (the `%c` + style args are
+// simply ignored there). Exported so tests can pin the exact styles.
+const CHIP = 'color:#fff;padding:1px 5px;border-radius:2px;margin-right:1px;font-weight:600';
+export const UC_BADGE_STYLE = `background:#7048e8;${CHIP}`; // purple — `uc`
+export const CTX_BADGE_STYLE = `background:#0ca678;${CHIP}`; // teal — ctx-name
+export const SCOPE_BADGE_STYLE = `background:#495057;${CHIP}`; // slate — scope
 
 const resolveArgs = (args: unknown[] | LazyArgs): unknown[] =>
   args.length === 1 && typeof args[0] === 'function' ? (args[0] as () => unknown[])() : (args as unknown[]);
 
 const create = (scopeName: string, isVerbose: () => boolean, getCtxName?: () => string | undefined): Logger => {
-  // Prefix is rebuilt per call: `ctxName` is dynamic (a scope may outlive one
-  // ctx, and the value isn't known at scope-creation time).
-  const prefix = (styled: boolean): string => {
+  // Always-on plain prefix, e.g. `[uc][my-uploader][scope]` — greppable, and
+  // DevTools already colors warn/error by level. ctxName is resolved per call.
+  const plainPrefix = (): string => {
     const parts = ['uc'];
     const ctx = getCtxName?.();
     if (ctx) parts.push(ctx);
     if (scopeName) parts.push(scopeName);
-    const text = parts.map((p) => `[${p}]`).join('');
-    return styled ? `%c${text}` : text;
+    return parts.map((p) => `[${p}]`).join('');
+  };
+  // Verbose styled prefix: returns `[format, ...styleArgs]` to spread into a
+  // console call — one `%c` chip per present segment, then a reset so the
+  // following user args aren't styled.
+  const styledPrefix = (): unknown[] => {
+    const chips = ['%c uc '];
+    const styles: string[] = [UC_BADGE_STYLE];
+    const ctx = getCtxName?.();
+    if (ctx) {
+      chips.push(`%c ${ctx} `);
+      styles.push(CTX_BADGE_STYLE);
+    }
+    if (scopeName) {
+      chips.push(`%c ${scopeName} `);
+      styles.push(SCOPE_BADGE_STYLE);
+    }
+    return [`${chips.join('')}%c`, ...styles, ''];
   };
   return {
     error(...args: unknown[]): void {
-      console.error(prefix(false), ...args);
+      console.error(plainPrefix(), ...args);
     },
     warn(...args: unknown[]): void {
-      console.warn(prefix(false), ...args);
+      console.warn(plainPrefix(), ...args);
     },
     warnOnce(message: string): void {
       if (warnedOnce.has(message)) return;
       warnedOnce.add(message);
-      console.warn(prefix(false), message);
+      console.warn(plainPrefix(), message);
     },
     log(...args: unknown[] | LazyArgs): void {
-      if (isVerbose()) console.log(prefix(true), BADGE_STYLE, ...resolveArgs(args));
+      if (isVerbose()) console.log(...styledPrefix(), ...resolveArgs(args));
     },
     debug(...args: unknown[] | LazyArgs): void {
-      if (isVerbose()) console.log(prefix(true), BADGE_STYLE, ...resolveArgs(args));
+      if (isVerbose()) console.log(...styledPrefix(), ...resolveArgs(args));
     },
     table(labelText: string, data: unknown, columns?: readonly string[]): void {
       if (!isVerbose()) return;
-      console.log(prefix(true), BADGE_STYLE, labelText);
+      console.log(...styledPrefix(), labelText);
       columns ? console.table(data, columns as string[]) : console.table(data);
     },
     group(labelText: string): () => void {
       if (!isVerbose()) return () => {};
-      console.group(prefix(true), BADGE_STYLE, labelText);
+      console.group(...styledPrefix(), labelText);
       let closed = false;
       return () => {
         if (closed) return;
@@ -114,7 +134,7 @@ const create = (scopeName: string, isVerbose: () => boolean, getCtxName?: () => 
     },
     dir(obj: unknown): void {
       if (!isVerbose()) return;
-      console.log(prefix(true), BADGE_STYLE);
+      console.log(...styledPrefix());
       console.dir(obj);
     },
     scope(name: string, options?: ScopeOptions): Logger {
