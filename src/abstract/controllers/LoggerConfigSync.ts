@@ -49,7 +49,14 @@ export class LoggerConfigSync {
 
   public destroy(): void {
     this.#unsubscribe?.();
+    this.#unsubscribe = undefined; // guard a double-destroy from re-running the unsub
     sources.delete(this);
     recompute();
   }
 }
+
+/** Test-only: drop all registered sources and reset the logger to its default level. */
+export const __resetLoggerConfigSyncForTests = (): void => {
+  sources.clear();
+  recompute();
+};

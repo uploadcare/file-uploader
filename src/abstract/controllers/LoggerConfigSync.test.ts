@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { __resetLoggerForTests, DEFAULT_LEVEL, logger } from '../logger';
 import { ConfigController } from './ConfigController';
-import { LoggerConfigSync } from './LoggerConfigSync';
+import { __resetLoggerConfigSyncForTests, LoggerConfigSync } from './LoggerConfigSync';
 
 // The sync's cross-ctx aggregation is module-level, so dispose every container
 // created in a test (running each LoggerConfigSync.destroy → clears its source)
@@ -12,6 +12,7 @@ afterEach(() => {
   for (const c of containers.splice(0)) {
     c.dispose();
   }
+  __resetLoggerConfigSyncForTests(); // drop any source a test left registered
   __resetLoggerForTests();
 });
 

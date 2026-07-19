@@ -51,11 +51,11 @@ describe('SecureUploadsController', () => {
   };
 
   // The controller's debug output now goes through the centralized `logger`,
-  // gated off at the default `warn` level — raise verbosity and spy console.debug
+  // gated off at the default `warn` level — raise verbosity and spy console.log
   // to assert it. `[uc]` is the logger's prefix.
   const spyLoggerDebug = () => {
     logger.configure({ level: 'debug' });
-    return vi.spyOn(console, 'debug').mockImplementation(() => {});
+    return vi.spyOn(console, 'log').mockImplementation(() => {});
   };
 
   beforeEach(() => {

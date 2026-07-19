@@ -73,8 +73,11 @@ const makeScoped = (prefix: string): ScopedLogger => ({
   log(...args: unknown[] | LazyArgs): void {
     if (enabled('info')) console.log(prefix, ...resolveArgs(args));
   },
+  // Uses `console.log`, not `console.debug`: `console.debug` maps to DevTools'
+  // "Verbose" level, which is hidden by default — so `<uc-config debug>` output
+  // (the old `createDebugPrinter` used `console.log`) would appear to vanish.
   debug(...args: unknown[] | LazyArgs): void {
-    if (enabled('debug')) console.debug(prefix, ...resolveArgs(args));
+    if (enabled('debug')) console.log(prefix, ...resolveArgs(args));
   },
 });
 
