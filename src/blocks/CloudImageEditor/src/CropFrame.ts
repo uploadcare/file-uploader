@@ -2,6 +2,7 @@ import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
+import { logger } from '../../../abstract/logger';
 import { UID } from '../../../utils/UID';
 import {
   clamp,
@@ -443,7 +444,7 @@ export class CropFrame extends EditorBlock {
     }
 
     if (!Object.values(rect).every((number) => Number.isFinite(number) && number >= 0)) {
-      console.error('CropFrame is trying to create invalid rectangle', {
+      logger.error('CropFrame is trying to create invalid rectangle', {
         payload: rect,
       });
       return;

@@ -46,6 +46,23 @@ export default defineConfig([
     rules: {
       'wc/no-self-class': 'warn', // TODO: We should get rid of self class assignment
       'wc/no-constructor-attributes': 'warn', // TODO: We should move attribute definitions out of constructor
+      // All logging must go through the centralized logger (`src/abstract/logger.ts`)
+      // so verbosity/prefixing stay uniform and the editor bundle stays lean.
+      'no-console': 'error',
+    },
+  },
+  {
+    // The logger itself is the single sanctioned `console.*` implementation.
+    files: ['src/abstract/logger.ts'],
+    rules: {
+      'no-console': 'off',
+    },
+  },
+  {
+    // Tests legitimately spy on / stub `console.*`.
+    files: ['src/**/*.test.ts', 'src/**/*.test.js'],
+    rules: {
+      'no-console': 'off',
     },
   },
 ]);

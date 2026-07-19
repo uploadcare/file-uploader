@@ -6,6 +6,7 @@ import { ConfigController } from '../abstract/controllers/ConfigController';
 import { LocaleController } from '../abstract/controllers/LocaleController';
 import { RouterController } from '../abstract/controllers/RouterController';
 import { CONTAINER, type ControllerContainer, type Token } from '../abstract/di/ControllerContainer';
+import { logger } from '../abstract/logger';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
@@ -384,7 +385,7 @@ export abstract class ChildBlock extends ChildBlockBase {
       // One block's adoption hook must not break the adoption cycle or escape
       // the registry callback as an unhandled error (isolate-and-warn, as in
       // teardown and EventBus fan-out).
-      console.warn(`[uc] ${this.tagName.toLowerCase()}: controllerReady threw during adoption`, err);
+      logger.warn(`${this.tagName.toLowerCase()}: controllerReady threw during adoption`, err);
     }
     this.requestUpdate();
   }
@@ -397,10 +398,7 @@ export abstract class ChildBlock extends ChildBlockBase {
       } catch (err) {
         // Teardown must be isolated: one throwing unsubscriber must not
         // prevent the rest from running.
-        console.warn(
-          `[uc] ${this.tagName.toLowerCase()}: a subscription teardown threw during controller release`,
-          err,
-        );
+        logger.warn(`${this.tagName.toLowerCase()}: a subscription teardown threw during controller release`, err);
       }
     }
     this._subs = [];

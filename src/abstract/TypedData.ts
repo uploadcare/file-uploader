@@ -51,7 +51,7 @@ export class TypedData<T extends Record<string, unknown>> {
 
   public setValue<K extends keyof T>(prop: K, value: T[K]): void {
     if (!Object.hasOwn(this._data, prop as PropertyKey)) {
-      console.warn(`${MSG_NAME}${String(prop)}`);
+      logger.warn(`${MSG_NAME}${String(prop)}`);
       return;
     }
     if (this._data[prop] === value) {
@@ -85,7 +85,7 @@ export class TypedData<T extends Record<string, unknown>> {
 
   public getValue<K extends keyof T>(prop: K): T[K] {
     if (!Object.hasOwn(this._data, prop as PropertyKey)) {
-      console.warn(`${MSG_NAME}${String(prop)}`);
+      logger.warn(`${MSG_NAME}${String(prop)}`);
     }
     return this._data[prop];
   }

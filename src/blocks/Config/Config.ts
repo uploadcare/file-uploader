@@ -193,7 +193,7 @@ export class Config extends ChildBlock {
       try {
         normalizedValue = config?.normalize?.(value) ?? value;
       } catch (error) {
-        console.warn(`[uc-config] normalize() for "${key}" threw an error, keeping previous value`, error);
+        this._log.warn(`normalize() for "${key}" threw an error, keeping previous value`, error);
         return;
       }
     } else {
@@ -240,14 +240,10 @@ export class Config extends ChildBlock {
         typeof previousValue === 'object' &&
         JSON.stringify(nextValue) === JSON.stringify(previousValue)
       ) {
-        console.warn(
-          `[uc-config] Option "${key}" value is the same as the previous one but the reference is different`,
-        );
-        console.warn(
-          `[uc-config] You should avoid changing the reference of the object to prevent unnecessary calculations`,
-        );
-        console.warn(`[uc-config] "${key}" previous value:`, previousValue);
-        console.warn(`[uc-config] "${key}" new value:`, nextValue);
+        this._log.warn(`Option "${key}" value is the same as the previous one but the reference is different`);
+        this._log.warn(`You should avoid changing the reference of the object to prevent unnecessary calculations`);
+        this._log.warn(`"${key}" previous value:`, previousValue);
+        this._log.warn(`"${key}" new value:`, nextValue);
       }
     }
   }
@@ -294,10 +290,7 @@ export class Config extends ChildBlock {
             try {
               preExistingValue = definition.fromAttribute ? definition.fromAttribute(attrValue) : attrValue;
             } catch (error) {
-              console.warn(
-                `[uc-config] fromAttribute() for "${name}" threw an error, using raw attribute value`,
-                error,
-              );
+              this._log.warn(`fromAttribute() for "${name}" threw an error, using raw attribute value`, error);
               preExistingValue = attrValue;
             }
             hasPreExistingValue = true;

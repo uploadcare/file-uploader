@@ -24,7 +24,7 @@ export class SecureUploadsController {
     const { secureSignature, secureExpire, secureUploadsSignatureResolver, secureUploadsExpireThreshold } =
       this._config.values;
     if ((secureSignature || secureExpire) && secureUploadsSignatureResolver) {
-      console.warn(
+      logger.warn(
         'Both secureSignature/secureExpire and secureUploadsSignatureResolver are set. secureUploadsSignatureResolver will be used.',
       );
     }
@@ -42,14 +42,14 @@ export class SecureUploadsController {
             logger.debug('Secure signature resolver returned nothing.');
             this._secureToken = null;
           } else if (!result.secureSignature || !result.secureExpire) {
-            console.error('Secure signature resolver returned an invalid result:', result);
+            logger.error('Secure signature resolver returned an invalid result:', result);
           } else {
             logger.debug('Secure signature resolved:', result);
             logger.debug('Secure signature will expire in', new Date(Number(result.secureExpire) * 1000).toISOString());
             this._secureToken = result;
           }
         } catch (err) {
-          console.error('Secure signature resolving failed. Falling back to the previous one.', err);
+          logger.error('Secure signature resolving failed. Falling back to the previous one.', err);
           this._host.onResolverError(
             err,
             'secureUploadsSignatureResolver. Secure signature resolving failed. Falling back to the previous one.',
