@@ -3,6 +3,7 @@ import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityId } from '../../lit/activity-constants';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
+import { SCOPE_BADGE_STYLE, UC_BADGE_STYLE } from '../logger';
 import { ConfigController } from './ConfigController';
 import { NAVIGATE_CANCEL, RouterController } from './RouterController';
 
@@ -821,7 +822,7 @@ describe('RouterController (v2)', () => {
     it('logs slot transitions, flagging background vs modal', () => {
       const { router } = setupDebug();
       const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const badge = ['%c uc %c router %c', expect.any(String), expect.any(String), ''] as const;
+      const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
 
       router.navigate('start-from'); // background strategy → background slot
       expect(log).toHaveBeenCalledWith(...badge, 'background activity: none → start-from');
@@ -841,15 +842,15 @@ describe('RouterController (v2)', () => {
 
       expect(log).toHaveBeenCalledWith(
         '%c uc %c router %c',
-        expect.any(String),
-        expect.any(String),
+        UC_BADGE_STYLE,
+        SCOPE_BADGE_STYLE,
         '',
         'traverse "onClose"',
       );
       expect(log).toHaveBeenCalledWith(
         '%c uc %c router %c',
-        expect.any(String),
-        expect.any(String),
+        UC_BADGE_STYLE,
+        SCOPE_BADGE_STYLE,
         '',
         'navigate to "camera" refused (guard)',
       );
@@ -858,7 +859,7 @@ describe('RouterController (v2)', () => {
     it('logs hook registration, hook execution result, and the applied navigation strategy', () => {
       const { router } = setupDebug();
       const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const badge = ['%c uc %c router %c', expect.any(String), expect.any(String), ''] as const;
+      const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
 
       router.hooks.beforeChange(() => 'upload-list'); // registration
       router.navigate('start-from'); // hook runs → redirects; strategy applies to the resolved target
@@ -871,13 +872,39 @@ describe('RouterController (v2)', () => {
     it('logs guard registration and unregistration', () => {
       const { router } = setupDebug();
       const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const badge = ['%c uc %c router %c', expect.any(String), expect.any(String), ''] as const;
+      const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
 
       const off = router.guard('camera', () => true);
       expect(log).toHaveBeenCalledWith(...badge, 'guard registered: "camera"');
 
       off();
       expect(log).toHaveBeenCalledWith(...badge, 'guard unregistered: "camera"');
+    });
+
+    it('logs hook registration and unregistration', () => {
+      const { router } = setupDebug();
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
+
+      const off = router.hooks.onClose(() => undefined);
+      expect(log).toHaveBeenCalledWith(...badge, 'hook registered: "onClose" (1 total)');
+
+      off();
+      expect(log).toHaveBeenCalledWith(...badge, 'hook unregistered: "onClose" (0 total)');
+    });
+
+    it('does not log a second unregister when the hook was already removed', () => {
+      const { router } = setupDebug();
+      const off = router.hooks.onClose(() => undefined);
+      off();
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      // Idempotent unregister: the second call removes nothing, so it must not log.
+      off();
+      expect(log).not.toHaveBeenCalledWith(
+        ...(['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const),
+        'hook unregistered: "onClose" (0 total)',
+      );
     });
 
     it('logs the configured done activity', () => {
@@ -888,8 +915,8 @@ describe('RouterController (v2)', () => {
 
       expect(log).toHaveBeenCalledWith(
         '%c uc %c router %c',
-        expect.any(String),
-        expect.any(String),
+        UC_BADGE_STYLE,
+        SCOPE_BADGE_STYLE,
         '',
         'configure: done activity = upload-list',
       );

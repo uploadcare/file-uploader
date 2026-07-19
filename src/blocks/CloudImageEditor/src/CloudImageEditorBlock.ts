@@ -709,6 +709,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       case 'secureDeliveryProxyUrlResolver':
       case 'cloudImageEditorMaskHref':
       case 'testMode':
+      case 'debug':
         return key;
       default:
         return undefined;

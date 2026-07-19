@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../abstract/controllers/ConfigController';
-import { __resetLoggerForTests } from '../abstract/logger';
+import { __resetLoggerForTests, CTX_BADGE_STYLE, SCOPE_BADGE_STYLE, UC_BADGE_STYLE } from '../abstract/logger';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
@@ -54,27 +54,27 @@ describe('buildUploaderScopeDeps', () => {
     expect(debug).toHaveBeenCalledTimes(3);
     expect(debug).toHaveBeenCalledWith(
       `%c uc %c ${ctxName} %c upload-scope %c`,
-      expect.any(String),
-      expect.any(String),
-      expect.any(String),
+      UC_BADGE_STYLE,
+      CTX_BADGE_STYLE,
+      SCOPE_BADGE_STYLE,
       '',
       'telemetry unavailable for a resolver error report',
       expect.any(Error),
     );
     expect(debug).toHaveBeenCalledWith(
       `%c uc %c ${ctxName} %c upload-scope %c`,
-      expect.any(String),
-      expect.any(String),
-      expect.any(String),
+      UC_BADGE_STYLE,
+      CTX_BADGE_STYLE,
+      SCOPE_BADGE_STYLE,
       '',
       'telemetry unavailable for an upload error report',
       expect.any(Error),
     );
     expect(debug).toHaveBeenCalledWith(
       `%c uc %c ${ctxName} %c upload-scope %c`,
-      expect.any(String),
-      expect.any(String),
-      expect.any(String),
+      UC_BADGE_STYLE,
+      CTX_BADGE_STYLE,
+      SCOPE_BADGE_STYLE,
       '',
       'telemetry unavailable for a validator error report',
       expect.any(Error),

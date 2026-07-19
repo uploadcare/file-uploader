@@ -19,8 +19,18 @@
  * lint rule): `const log = logger.scope('my-scope');` then `log.warn(...)`.
  */
 
-/** `log`/`debug` accept plain args OR a single `() => unknown[]` thunk (not built when gated off). */
-export type LazyArgs = [() => unknown[]];
+// Explicit lazy-args brand. `log`/`debug` build a `lazy(...)` payload only when
+// the scope is actually verbose — but a BARE function arg is passed through as a
+// value and NEVER invoked (the logger is public plugin surface, so auto-invoking
+// any sole function would be a footgun). Only a `lazy(...)`-branded arg is built.
+const LAZY = Symbol('uc.lazy');
+type Lazy = { readonly [LAZY]: () => unknown[] };
+/** Wrap an args builder so `log`/`debug` invoke it only when the scope is verbose: `log.debug(lazy(() => [expensive()]))`. */
+export const lazy = (build: () => unknown[]): Lazy => ({ [LAZY]: build });
+const isLazy = (v: unknown): v is Lazy => typeof v === 'object' && v !== null && LAZY in v;
+
+/** `log`/`debug` accept plain args OR a single `lazy(() => unknown[])` (built only when verbose). */
+export type LazyArgs = [Lazy];
 
 /** Options for a scoped logger. Both resolvers are read lazily, at log time. */
 export interface ScopeOptions {
@@ -57,7 +67,7 @@ export const CTX_BADGE_STYLE = `background:#0ca678;${CHIP}`; // teal — ctx-nam
 export const SCOPE_BADGE_STYLE = `background:#495057;${CHIP}`; // slate — scope
 
 const resolveArgs = (args: unknown[] | LazyArgs): unknown[] =>
-  args.length === 1 && typeof args[0] === 'function' ? (args[0] as () => unknown[])() : (args as unknown[]);
+  args.length === 1 && isLazy(args[0]) ? args[0][LAZY]() : args;
 
 const create = (scopeName: string, isVerbose: () => boolean, getCtxName?: () => string | undefined): Logger => {
   // Always-on plain prefix, e.g. `[uc][my-uploader][scope]` — greppable, and

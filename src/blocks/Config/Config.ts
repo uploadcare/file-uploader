@@ -4,6 +4,7 @@ import type { CustomConfig } from '../../abstract/customConfigOptions';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { PluginManagerBridge } from '../../abstract/di/PluginManagerBridge';
+import { lazy } from '../../abstract/logger';
 import type { PluginController } from '../../abstract/managers/plugin';
 import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types';
 import { toKebabCase } from '../../utils/toKebabCase';
@@ -385,7 +386,7 @@ export class Config extends ChildBlock {
             // Thunked so the `formatConfigLogValue` (JSON.stringify) only runs
             // when debug is on. Values are quoted for consistency and so an
             // empty string is visible as `""`.
-            this._log.debug(() => [`${key}: ${formatConfigLogValue(prev)} → ${formatConfigLogValue(curr)}`]);
+            this._log.debug(lazy(() => [`${key}: ${formatConfigLogValue(prev)} → ${formatConfigLogValue(curr)}`]));
           }
         }
         snapshot = { ...next };

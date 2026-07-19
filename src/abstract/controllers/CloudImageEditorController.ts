@@ -16,6 +16,7 @@ export type EditorConfig = {
   secureDeliveryProxyUrlResolver?: SecureDeliveryProxyUrlResolver;
   cloudImageEditorMaskHref?: string;
   testMode: boolean;
+  debug: boolean;
 };
 
 /** Built-in fallback config — the lowest precedence tier (below own props and the transitional ctx read). */
@@ -25,6 +26,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   secureDeliveryProxyUrlResolver: undefined,
   cloudImageEditorMaskHref: undefined,
   testMode: false,
+  debug: false,
 };
 
 /**
