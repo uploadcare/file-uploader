@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { __resetLoggerForTests, logger } from '../abstract/logger';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
@@ -17,6 +18,8 @@ const freshCtxName = () => {
 
 afterEach(() => {
   for (const id of ids.splice(0)) UploaderRegistry.dispose(id);
+  __resetLoggerForTests();
+  vi.restoreAllMocks();
 });
 
 describe('buildUploaderScopeDeps', () => {
@@ -26,7 +29,7 @@ describe('buildUploaderScopeDeps', () => {
   // never be allowed to throw back into the caller, or the original failure
   // becomes an unhandled rejection (see the module doc comment). This is the
   // coverage that was lost when `attachUploaderScope` was deleted in step 5.
-  it('never rethrows when telemetryManager.sendEventError throws, and logs via the host debug for all three sinks', () => {
+  it('never rethrows when telemetryManager.sendEventError throws, and logs via the logger for all three sinks', () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
     const container = UploaderRegistry.get(ctxName)!;
@@ -34,9 +37,12 @@ describe('buildUploaderScopeDeps', () => {
     const sendEventError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {
       throw new Error('telemetry sink is down');
     });
-    const debug = vi.fn();
+    // The fallback log is `logger.debug`, gated off at the default `warn` level —
+    // raise verbosity so console.debug actually fires and can be asserted.
+    logger.configure({ level: 'debug' });
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
 
-    const { host } = buildUploaderScopeDeps(container, debug, vi.fn());
+    const { host } = buildUploaderScopeDeps(container, vi.fn());
 
     expect(() => host.onResolverError(new Error('resolver failed'), 'resolver-context')).not.toThrow();
     expect(() => host.onUploadError(new Error('upload failed'), 'upload-context')).not.toThrow();
@@ -44,20 +50,21 @@ describe('buildUploaderScopeDeps', () => {
 
     expect(sendEventError).toHaveBeenCalledTimes(3);
     expect(debug).toHaveBeenCalledTimes(3);
-    expect(debug).toHaveBeenCalledWith('telemetry unavailable for a resolver error report', expect.any(Error));
-    expect(debug).toHaveBeenCalledWith('telemetry unavailable for an upload error report', expect.any(Error));
-    expect(debug).toHaveBeenCalledWith('telemetry unavailable for a validator error report', expect.any(Error));
+    expect(debug).toHaveBeenCalledWith('[uc]', 'telemetry unavailable for a resolver error report', expect.any(Error));
+    expect(debug).toHaveBeenCalledWith('[uc]', 'telemetry unavailable for an upload error report', expect.any(Error));
+    expect(debug).toHaveBeenCalledWith('[uc]', 'telemetry unavailable for a validator error report', expect.any(Error));
   });
 
-  it('reports through telemetryManager.sendEventError without touching debug when it does not throw', () => {
+  it('reports through telemetryManager.sendEventError without touching the logger when it does not throw', () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
     const container = UploaderRegistry.get(ctxName)!;
 
     const sendEventError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {});
-    const debug = vi.fn();
+    logger.configure({ level: 'debug' });
+    const debug = vi.spyOn(console, 'debug').mockImplementation(() => {});
 
-    const { host } = buildUploaderScopeDeps(container, debug, vi.fn());
+    const { host } = buildUploaderScopeDeps(container, vi.fn());
     const error = new Error('resolver failed');
 
     host.onResolverError(error, 'resolver-context');

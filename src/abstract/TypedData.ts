@@ -1,5 +1,6 @@
 import type { Uid } from '../lit/Uid';
 import { UID } from '../utils/UID';
+import { logger } from './logger';
 
 const MSG_NAME = '[Typed State] Wrong property name: ';
 
@@ -72,7 +73,7 @@ export class TypedData<T extends Record<string, unknown>> {
     try {
       handler(value);
     } catch (err) {
-      console.warn(`[Typed State] subscriber for "${String(prop)}" threw`, err);
+      logger.warn(`subscriber for "${String(prop)}" threw`, err);
     }
   }
 

@@ -10,6 +10,8 @@
  * (the upload-client SDK, DOM callbacks, …) enter only through `bind()`.
  */
 
+import { logger } from '../logger';
+
 // A token constructor. Unbound tokens are built by the container with a
 // zero-arg `new Ctrl()`; a token whose value isn't a zero-arg-constructible
 // class (e.g. `UploadHostBridge`, a plain value built by `buildUploaderScopeDeps`)
@@ -149,7 +151,7 @@ export class ControllerContainer {
       try {
         cb(this.#instances.get(Ctrl) as T);
       } catch (err) {
-        console.warn(`[uc] a whenController immediate callback for ${Ctrl.name} threw`, err);
+        logger.warn(`a whenController immediate callback for ${Ctrl.name} threw`, err);
       }
       return () => {};
     }
@@ -187,7 +189,7 @@ export class ControllerContainer {
       try {
         waiter(inst);
       } catch (err) {
-        console.warn(`[uc] a whenController waiter for ${Ctrl.name} threw`, err);
+        logger.warn(`a whenController waiter for ${Ctrl.name} threw`, err);
       }
     }
   }
@@ -222,7 +224,7 @@ export class ControllerContainer {
       } catch (err) {
         // Isolate-and-warn: one controller's failed teardown must not abort the
         // rest of the disposal chain (mirrors EventBus/Listeners fan-out).
-        console.warn(`[uc] ${Ctrl.name}.destroy() threw`, err);
+        logger.warn(`${Ctrl.name}.destroy() threw`, err);
       }
     }
     this.#instances.clear();

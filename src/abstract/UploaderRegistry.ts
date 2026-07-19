@@ -1,6 +1,8 @@
 import { ConfigController } from './controllers/ConfigController';
+import { LoggerConfigSync } from './controllers/LoggerConfigSync';
 import { RouterController } from './controllers/RouterController';
 import { ControllerContainer } from './di/ControllerContainer';
+import { logger } from './logger';
 import { TelemetryManager } from './managers/TelemetryManager';
 
 /**
@@ -59,7 +61,7 @@ class UploaderRegistryImpl {
       try {
         sub.cb(container);
       } catch (err) {
-        console.warn(`[uc] a whenAvailable consumer for ctx-name="${ctxName}" threw`, err);
+        logger.warn(`a whenAvailable consumer for ctx-name="${ctxName}" threw`, err);
       }
     }
   }
@@ -92,6 +94,10 @@ class UploaderRegistryImpl {
       container.get(ConfigController);
       container.get(RouterController);
       container.get(TelemetryManager);
+      // Connect this ctx's `debug` config to the global logger's verbosity
+      // (init subscribes; container disposal runs its destroy). Eager so debug
+      // logging works from ctx creation, before any block renders.
+      container.get(LoggerConfigSync);
     } catch (err) {
       // Eager init threw: roll the half-built container back out of `_map` so a
       // later `ensure()` retries a clean creation (instead of returning the
@@ -132,8 +138,8 @@ class UploaderRegistryImpl {
       // deferred unregister hasn't fired yet. The new element takes over; the
       // deferred unregister becomes a no-op (it checks identity before
       // deleting).
-      console.warn(
-        `[uc] Replacing the container registered under ctx-name="${ctxName}". If two uploaders share this name simultaneously the second one wins.`,
+      logger.warn(
+        `Replacing the container registered under ctx-name="${ctxName}". If two uploaders share this name simultaneously the second one wins.`,
       );
     }
     this._map.set(ctxName, container);

@@ -39,7 +39,7 @@ describe('Disposables', () => {
 
     expect(before).toHaveBeenCalledTimes(1);
     expect(after).toHaveBeenCalledTimes(1);
-    expect(warnSpy).toHaveBeenCalledWith('[uc] Disposables: a teardown threw', boom);
+    expect(warnSpy).toHaveBeenCalledWith('[uc]', 'Disposables: a teardown threw', boom);
   });
 
   it('the canceller unregisters a fn without running it', () => {

@@ -5,6 +5,7 @@ import { LocaleController } from '../controllers/LocaleController';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { type LocaleDefinition, resolveLocaleDefinition } from '../localeRegistry';
+import { logger } from '../logger';
 import type { PluginController } from './plugin';
 
 export const localeStateKey = <T extends keyof LocaleDefinition>(key: T): `*l10n/${T}` => `*l10n/${key}`;
@@ -65,7 +66,7 @@ export class LocaleManager {
       // `onPluginsChange` must not abort re-wiring (matching `destroy()`'s
       // `#disposables.run()` teardown convention), or the manager would be left
       // half re-wired with the new coupling never established.
-      console.warn('[uc] LocaleManager: previous plugin-manager unsubscribe threw', err);
+      logger.warn('LocaleManager: previous plugin-manager unsubscribe threw', err);
     }
     this._cancelPluginManagerReg?.();
     this._pluginManagerUnsub = undefined;

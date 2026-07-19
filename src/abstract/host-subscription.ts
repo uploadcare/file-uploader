@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 /**
  * Generic, framework-agnostic listener set.
  *
@@ -21,7 +23,7 @@ export class Listeners {
       try {
         listener();
       } catch (err) {
-        console.warn('[uc] a state-change listener threw', err);
+        logger.warn('a state-change listener threw', err);
       }
     }
   }

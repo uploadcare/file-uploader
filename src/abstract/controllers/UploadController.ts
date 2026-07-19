@@ -11,6 +11,7 @@ import { fileIsImage } from '../../utils/fileTypes';
 import { customUserAgent } from '../../utils/userAgent';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
+import { logger } from '../logger';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
@@ -160,7 +161,7 @@ export class UploadController {
                 }
               }
             } catch (error) {
-              console.warn(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
+              logger.warn(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
             }
           }
         }
@@ -183,7 +184,7 @@ export class UploadController {
           signal: abortController.signal,
           metadata: await this.getMetadataFor(uid),
         };
-        this._host.debug('upload options', fileInput, uploadClientOptions);
+        logger.debug('upload options', fileInput, uploadClientOptions);
         return uploadFile(fileInput, uploadClientOptions);
       };
 

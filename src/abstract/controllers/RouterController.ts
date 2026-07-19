@@ -4,6 +4,7 @@ import { inject } from '../di/inject';
 import { signalState } from '../di/signalState';
 import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
 import { Listeners } from '../host-subscription';
+import { logger } from '../logger';
 
 export type EdgeTarget = ActivityId | null;
 
@@ -170,7 +171,7 @@ export class RouterController {
     try {
       return guard();
     } catch (err) {
-      console.warn(`[uc] router guard for "${id}" threw; treating the activity as not activatable`, err);
+      logger.warn(`router guard for "${id}" threw; treating the activity as not activatable`, err);
       return false;
     }
   }
@@ -248,7 +249,7 @@ export class RouterController {
     try {
       return hook(ctx);
     } catch (err) {
-      console.warn(`[uc] router "${name}" hook threw; skipping it`, err);
+      logger.warn(`router "${name}" hook threw; skipping it`, err);
       return undefined;
     }
   }

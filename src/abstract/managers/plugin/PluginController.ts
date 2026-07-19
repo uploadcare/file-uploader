@@ -1,5 +1,6 @@
 import { fileIsImage } from '../../../utils/fileTypes';
 import { Disposables } from '../../di/Disposables';
+import { logger } from '../../logger';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
 import type { PluginApi, PluginRegistrySnapshot, PluginUploaderApi, UploaderPlugin } from './PluginTypes';
@@ -16,8 +17,6 @@ export type PluginControllerDeps = {
    * Each emission is a promise of the plugins to sync to. Returns a teardown.
    */
   watchPlugins: (onCompute: (pluginsPromise: Promise<UploaderPlugin[] | undefined>) => void) => Unsubscribe;
-  /** Debug logger — defaults to a no-op. */
-  debug?: (...args: unknown[]) => void;
 };
 
 type RegisteredPlugin = {
@@ -37,7 +36,6 @@ type RegisteredPlugin = {
  */
 export class PluginController {
   private _deps: PluginControllerDeps;
-  private _debug: (...args: unknown[]) => void;
   private _isDestroyed = false;
   private _plugins: Map<string, RegisteredPlugin> = new Map();
   private _subscribers: Set<Unsubscribe> = new Set();
@@ -51,7 +49,6 @@ export class PluginController {
 
   public constructor(deps: PluginControllerDeps) {
     this._deps = deps;
-    this._debug = deps.debug ?? (() => {});
 
     this.#disposables.add(
       deps.watchPlugins((pluginsPromise) => {
@@ -132,7 +129,7 @@ export class PluginController {
         try {
           unsub();
         } catch (e) {
-          this._debug('Failed to unsubscribe config listener', e);
+          logger.warn('Failed to unsubscribe config listener', e);
         }
       }
       throw error;
@@ -152,14 +149,14 @@ export class PluginController {
       try {
         unsub();
       } catch (error) {
-        this._debug('Failed to unsubscribe config listener', error);
+        logger.warn('Failed to unsubscribe config listener', error);
       }
     }
 
     try {
       registered.dispose?.();
     } catch (error) {
-      this._debug('Failed to dispose plugin', error);
+      logger.warn('Failed to dispose plugin', error);
     }
     this._plugins.delete(pluginId);
     this._notifySubscribers();
@@ -187,7 +184,7 @@ export class PluginController {
         );
         ({ file } = await Promise.race([hookPromise, timeoutPromise]));
       } catch (error) {
-        console.warn(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
+        logger.warn(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
       }
     }
 

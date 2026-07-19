@@ -9,8 +9,8 @@ import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types
 import { toKebabCase } from '../../utils/toKebabCase';
 import { runAssertions } from './assertions';
 import './config.css';
+import { logger } from '../../abstract/logger';
 import { ChildBlock } from '../../lit/ChildBlock';
-import { createDebugPrinter } from '../../lit/createDebugPrinter';
 import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
 import { normalizeConfigValue } from './normalizeConfigValue';
@@ -76,8 +76,8 @@ export class Config extends ChildBlock {
     'ctx-name': string;
   };
 
-  /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
-  private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
+  /** Scoped debug logger; gated globally by the `debug` config option (see `LoggerConfigSync`). */
+  private readonly _log = logger.scope(this.constructor.name);
 
   private _computationControllers: ComputedPropertyControllers = new Map();
   private _pluginChangeUnsubscribe?: () => void;
@@ -215,7 +215,7 @@ export class Config extends ChildBlock {
     this._flushValueToAttribute(key, normalizedValue);
     this._flushValueToState(key, normalizedValue);
 
-    this._debugPrint(`"${key}"`, normalizedValue);
+    this._log.debug(`"${key}"`, normalizedValue);
 
     // Only run assertions for built-in configs
     if (!this._isCustomConfig(key)) {

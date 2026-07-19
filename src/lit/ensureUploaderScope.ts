@@ -1,6 +1,6 @@
 import { registerUploadStack } from '../abstract/controllers/registerUploadStack';
 import { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
-import type { UploadHostDebug, UploadHostEmit } from '../abstract/controllers/UploadHostBridge';
+import type { UploadHostEmit } from '../abstract/controllers/UploadHostBridge';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
@@ -14,8 +14,8 @@ import { ensurePluginManager } from './ensurePluginManager';
  *
  * All resolution is idempotent (`container.get` caches; `registerUploadStack`'s
  * own gate), so this is a no-op once a solution or a sibling host has already
- * attached. `debug`/`emit` are host-specific (see `buildUploaderScopeDeps`'s
- * doc) and stay caller-supplied.
+ * attached. `emit` is host-specific (see `buildUploaderScopeDeps`'s doc) and
+ * stays caller-supplied.
  *
  * Resolving the controllers here (in this order) fixes the container's
  * insertion order: UploadCollection → PublicApi → SecureUploads → Upload →
@@ -23,11 +23,7 @@ import { ensurePluginManager } from './ensurePluginManager';
  * order is UploadEvents → Validation → Upload → SecureUploads → PublicApi →
  * UploadCollection.
  */
-export function ensureUploaderScope(
-  container: ControllerContainer,
-  debug: UploadHostDebug | undefined,
-  emit: UploadHostEmit,
-): void {
+export function ensureUploaderScope(container: ControllerContainer, emit: UploadHostEmit): void {
   container.get(UploadCollectionController);
 
   // M-god step 8a: the public API is container-resolved (zero-arg ctor +
@@ -40,7 +36,7 @@ export function ensureUploaderScope(
   // the ONE place the four upload-stack constructors (and thus
   // `@uploadcare/upload-client`) enter — the element/upload layer, never the
   // editor. `registerUploadStack` is idempotent + binds the host-value bridge.
-  const { controllers, host } = buildUploaderScopeDeps(container, debug, emit);
+  const { controllers, host } = buildUploaderScopeDeps(container, emit);
   registerUploadStack(container, controllers, host);
 
   // Force the upload-stack instances into existence in dependency order

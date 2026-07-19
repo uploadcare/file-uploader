@@ -12,9 +12,6 @@ export type UploadHostEmit = <T extends UploaderEventKey>(
   options?: { debounce?: boolean | number },
 ) => void;
 
-/** Debug logger — wired to the block's `debugPrint` at the DOM boundary. */
-export type UploadHostDebug = (...args: unknown[]) => void;
-
 /**
  * The element/DOM-layer values the upload stack needs — everything that can
  * only be resolved at the DOM boundary (the public API, plugin hooks,
@@ -34,8 +31,6 @@ export type UploadHostDebug = (...args: unknown[]) => void;
  * controller. This bridge is strictly the host boundary.
  */
 export class UploadHostBridge {
-  /** Debug logger — shared by secure-uploads + upload controllers. */
-  public declare readonly debug: UploadHostDebug;
   /** Snapshot of the registered plugin file hooks (`PluginController`). */
   public declare readonly getFileHooks: () => readonly Owned<PluginFileHookRegistration>[];
   /** Resolves the public output entry (`UploaderPublicApi.getOutputItem`). */

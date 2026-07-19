@@ -1,5 +1,6 @@
 import type { ActivityType, RegisteredActivityType } from '../lit/activity-constants';
 import type { OutputCollectionState, OutputFileEntry } from '../types/exported';
+import { logger } from './logger';
 
 /**
  * Canonical event surface for the whole library. `EventEmitter`
@@ -101,7 +102,7 @@ export class EventBus {
       try {
         handler(payload);
       } catch (err) {
-        console.warn(`[v2/events] listener for "${type}" threw`, err);
+        logger.warn(`listener for "${type}" threw`, err);
       }
     }
   }
@@ -123,7 +124,7 @@ export class EventBus {
       try {
         this.emit(type, payload());
       } catch (err) {
-        console.warn(`[v2/events] payload thunk for "${type}" threw`, err);
+        logger.warn(`payload thunk for "${type}" threw`, err);
       }
     }, ms);
     this._debounceTimers.set(type, timeoutId);
