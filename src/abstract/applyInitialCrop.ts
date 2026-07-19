@@ -3,6 +3,7 @@ import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPre
 import type { ConfigType } from '../types';
 import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils';
 import type { UploadCollectionController } from './controllers/UploadCollectionController';
+import { logger } from './logger';
 
 /**
  * Apply the configured `cropPreset` as an initial centered crop to every
@@ -32,7 +33,7 @@ export function applyInitialCrop(collection: UploadCollectionController, cropPre
   for (const entry of entries) {
     const fileInfo = entry.getValue('fileInfo');
     if (!fileInfo || !fileInfo.imageInfo) {
-      console.warn('Failed to get image info for entry', entry.uid);
+      logger.warn('Failed to get image info for entry', entry.uid);
       continue;
     }
     const { width, height } = fileInfo.imageInfo;
@@ -48,7 +49,7 @@ export function applyInitialCrop(collection: UploadCollectionController, cropPre
     const cdnUrlModifiers = createCdnUrlModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`, 'preview');
     const cdnUrl = entry.getValue('cdnUrl');
     if (!cdnUrl) {
-      console.warn('Failed to get cdnUrl for entry', entry.uid);
+      logger.warn('Failed to get cdnUrl for entry', entry.uid);
       continue;
     }
     entry.setMultipleValues({

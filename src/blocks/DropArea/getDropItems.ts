@@ -1,3 +1,5 @@
+import { logger } from '../../abstract/logger';
+
 export type DropItem =
   | {
       type: 'file';
@@ -43,7 +45,7 @@ function readEntryContentAsync(webkitEntry: FileSystemEntry, dataTransferItemTyp
 
     const readEntry = (entry: FileSystemEntry | null) => {
       if (!entry) {
-        console.warn('Unexpectedly received empty content entry', { scope: 'drag-and-drop' });
+        logger.warn('Unexpectedly received empty content entry', { scope: 'drag-and-drop' });
         resolve(null);
         return;
       }

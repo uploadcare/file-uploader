@@ -104,7 +104,7 @@ describe('Source Registration', () => {
       await openModal();
 
       await vi.waitFor(() => {
-        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Instagram source was removed'));
+        expect(errorSpy).toHaveBeenCalledWith('[uc]', expect.stringContaining('Instagram source was removed'));
       });
 
       await expect.element(document.querySelector<HTMLElement>('[data-source-id="instagram"]')).not.toBeInTheDocument();
@@ -142,7 +142,7 @@ describe('Source Registration', () => {
     addSource(config, 'shared-source');
 
     await vi.waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"shared-source"'));
+      expect(warnSpy).toHaveBeenCalledWith('[uc][PluginRegistry]', expect.stringContaining('"shared-source"'));
     });
 
     await openModal();

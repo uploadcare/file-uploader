@@ -1,3 +1,4 @@
+import { logger } from '../../abstract/logger';
 import type { UploadEntryData, UploadEntryKeys, UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { ChildBlock } from '../../lit/ChildBlock';
 
@@ -14,7 +15,7 @@ export class FileItemConfig extends ChildBlock {
     return (...args: A) => {
       const entry = this.entry;
       if (!entry) {
-        console.warn('No entry found');
+        logger.warn('No entry found');
         return undefined;
       }
       return fn(entry, ...args);

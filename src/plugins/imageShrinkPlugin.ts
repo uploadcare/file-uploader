@@ -1,4 +1,5 @@
 import { shrinkFile } from '@uploadcare/image-shrink';
+import { logger } from '../abstract/logger';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
 import { parseShrink } from '../utils/parseShrink';
 
@@ -13,7 +14,7 @@ export const imageShrinkPlugin: UploaderPlugin = {
 
         const settings = parseShrink(imageShrink);
         if (!settings) {
-          console.warn('[ImageShrinkPlugin] Image shrink settings are invalid, skipping shrinking');
+          logger.scope('ImageShrinkPlugin').warn('Image shrink settings are invalid, skipping shrinking');
           return { file };
         }
 

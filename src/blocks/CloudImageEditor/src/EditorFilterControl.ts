@@ -3,6 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { styleMap } from 'lit/directives/style-map.js';
+import { logger } from '../../../abstract/logger';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../env';
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { preloadImage } from '../../../utils/preloadImage.js';
@@ -250,7 +251,7 @@ export class EditorFilterControl extends EditorButtonControl {
       src = await this.editorController.proxyUrl(this._previewSrc());
     } catch (err) {
       this.editorController.set('*networkProblems', true);
-      console.error('Failed to resolve preview URL', { error: err });
+      logger.error('Failed to resolve preview URL', { error: err });
       return;
     }
 
@@ -275,7 +276,7 @@ export class EditorFilterControl extends EditorButtonControl {
       (observer ?? this._observer)?.unobserve(this);
     } catch (err) {
       this.editorController.set('*networkProblems', true);
-      console.error('Failed to load image', { error: err });
+      logger.error('Failed to load image', { error: err });
       this._schedulePreviewVisibilityCheck();
     } finally {
       if (this._lastPreviewRequestId === requestId) {

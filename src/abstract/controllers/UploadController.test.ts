@@ -399,7 +399,7 @@ describe('UploadController', () => {
       const entry = collection.read(id);
       expect(entry?.getValue('isUploading')).toBe(false);
       expect(entry?.getValue('uploadError')?.message).toBe('Something went wrong');
-      expect(error).toHaveBeenCalledWith('Unknown upload error', expect.any(Error));
+      expect(error).toHaveBeenCalledWith('[uc]', 'Unknown upload error', expect.any(Error));
       expect(onUploadError).toHaveBeenCalledWith(expect.any(Error), expect.stringContaining('file upload'));
     });
 

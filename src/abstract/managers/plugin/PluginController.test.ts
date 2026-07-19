@@ -90,7 +90,7 @@ describe('PluginController', () => {
 
       await t.sync([{ id: '', setup: () => {} }]);
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('missing the required "id"'));
+      expect(warn).toHaveBeenCalledWith('[uc][PluginManager]', expect.stringContaining('missing the required "id"'));
       expect(t.controller.snapshot().sources).toHaveLength(0);
     });
 
@@ -103,7 +103,7 @@ describe('PluginController', () => {
 
       await t.sync([sourcePlugin('dup', setupSpy), sourcePlugin('dup', setupSpy)]);
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('already in the list'));
+      expect(warn).toHaveBeenCalledWith('[uc][PluginManager]', expect.stringContaining('already in the list'));
       expect(setupSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -126,7 +126,11 @@ describe('PluginController', () => {
 
       await t.sync([boom, sourcePlugin('ok')]);
 
-      expect(error).toHaveBeenCalledWith(expect.stringContaining('"boom" setup() threw'), expect.any(Error));
+      expect(error).toHaveBeenCalledWith(
+        '[uc][PluginManager]',
+        expect.stringContaining('"boom" setup() threw'),
+        expect.any(Error),
+      );
       expect(t.controller.snapshot().sources.map((s) => s.id)).toEqual(['ok']); // boom purged
       expect(t.configUnsubs[0]).toHaveBeenCalled(); // its config sub was cleaned up
     });
@@ -180,7 +184,11 @@ describe('PluginController', () => {
       t.push(Promise.reject(new Error('load failed')));
       await t.controller.pluginsReady(); // must not reject
 
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to sync plugins'), expect.any(Error));
+      expect(errorSpy).toHaveBeenCalledWith(
+        '[uc][PluginManager]',
+        expect.stringContaining('Failed to sync plugins'),
+        expect.any(Error),
+      );
 
       await t.sync([sourcePlugin('a')]); // queue recovered → still processes
       expect(t.controller.snapshot().sources.map((s) => s.id)).toEqual(['a']);

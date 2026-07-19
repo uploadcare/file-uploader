@@ -282,7 +282,7 @@ describe('Custom Config', () => {
     config.throwingNormOption = 'bad';
 
     await vi.waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('normalize()'), expect.any(Error));
+      expect(warnSpy).toHaveBeenCalledWith('[uc][Config]', expect.stringContaining('normalize()'), expect.any(Error));
     });
 
     // Value should remain unchanged
@@ -482,7 +482,7 @@ describe('Custom Config', () => {
 
     const config = page.getByTestId('uc-config').query()! as Config;
     await expect.poll(() => config.dupOption).toBe('first');
-    expect(warnSpy).toHaveBeenCalledWith('[CustomConfig] Config option "dupOption" is already registered');
+    expect(warnSpy).toHaveBeenCalledWith('[uc][CustomConfig]', 'Config option "dupOption" is already registered');
 
     warnSpy.mockRestore();
   });

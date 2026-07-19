@@ -3,6 +3,7 @@ import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
+import { logger } from '../../../abstract/logger';
 import { debounce } from '../../../utils/debounce.js';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { throttle } from '../../../utils/throttle.js';
@@ -399,7 +400,7 @@ export class EditorImageCropper extends EditorBlock {
       ],
     };
     if (!validateCrop(crop)) {
-      console.error('Cropper is trying to create invalid crop object', {
+      logger.error('Cropper is trying to create invalid crop object', {
         payload: crop,
       });
       return undefined;
@@ -492,7 +493,7 @@ export class EditorImageCropper extends EditorBlock {
       this._handleResizeThrottled();
       this._animateIn({ fromViewer });
     } catch (err) {
-      console.error('Failed to activate cropper', { error: err });
+      logger.error('Failed to activate cropper', { error: err });
       this.editorControllerOrNull?.telemetry.sendEventError(err, 'cloud editor image. Failed to activate cropper');
     }
 
@@ -585,7 +586,7 @@ export class EditorImageCropper extends EditorBlock {
     return promise
       .then(() => image)
       .catch((err) => {
-        console.error('Failed to load image', { error: err });
+        logger.error('Failed to load image', { error: err });
         controller.set('*networkProblems', true);
         return image;
       });

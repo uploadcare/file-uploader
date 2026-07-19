@@ -9,6 +9,7 @@ import {
   type EditorConfig,
   type EditorServices,
 } from '../../../abstract/controllers/CloudImageEditorController';
+import { logger } from '../../../abstract/logger';
 import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../../../abstract/secureDeliveryProxyUrl';
 import { ctxNameContext } from '../../../lit/ctx-name-context';
@@ -446,7 +447,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     }
     const originalUrl = this._editorController.get('*originalUrl');
     if (!originalUrl) {
-      console.warn('Original URL is null, cannot apply transformations');
+      logger.warn('Original URL is null, cannot apply transformations');
       return;
     }
     const cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
@@ -530,7 +531,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         const error = new Error('[cloud-image-editor] timeout waiting for non-zero container size');
         cleanup();
         if (this.isConnected) {
-          console.error(error.message);
+          logger.error(error.message);
         }
         reject(error);
       };
@@ -813,7 +814,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     } catch (err) {
       if (err) {
         editorController.telemetry.sendEventError(err, 'cloud editor image. Failed to load image info');
-        console.error('Failed to load image info', err);
+        logger.error('Failed to load image info', err);
       }
     }
 

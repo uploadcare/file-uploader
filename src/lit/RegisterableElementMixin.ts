@@ -1,4 +1,5 @@
 import type { LitElement } from 'lit';
+import { logger } from '../abstract/logger';
 import type { Constructor } from './Constructor';
 
 type RegisterableElementMixinClassInterface = Constructor<LitElement> & {
@@ -14,7 +15,7 @@ export function RegisterableElementMixin<T extends Constructor<LitElement>>(
       const registeredClass = window.customElements.get(tagName);
       if (registeredClass) {
         if (registeredClass !== currentCtor) {
-          console.warn(
+          logger.warn(
             [
               `Element with tag name "${tagName}" already registered.`,
               `You're trying to override it with another class "${this.name}".`,

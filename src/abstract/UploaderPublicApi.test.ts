@@ -585,7 +585,7 @@ describe('UploaderPublicApi', () => {
       api.navigate('camera');
       await new Promise((r) => setTimeout(r, 150));
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('camera'));
+      expect(warn).toHaveBeenCalledWith('[uc]', expect.stringContaining('camera'));
     });
 
     it('setCurrentActivity(null) closes everything', async () => {
@@ -605,7 +605,7 @@ describe('UploaderPublicApi', () => {
       api.setCurrentActivity('camera');
       await new Promise((r) => setTimeout(r, 150));
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('camera'));
+      expect(warn).toHaveBeenCalledWith('[uc]', expect.stringContaining('camera'));
     });
 
     it('setCurrentActivity sets the background activity', async () => {
@@ -648,7 +648,7 @@ describe('UploaderPublicApi', () => {
       api.setModalState(true);
       await flush();
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('setCurrentActivity'));
+      expect(warn).toHaveBeenCalledWith('[uc]', expect.stringContaining('setCurrentActivity'));
     });
 
     it('setModalState(true) keeps the modal closed if the block never mounts', async () => {

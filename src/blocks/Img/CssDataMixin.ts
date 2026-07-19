@@ -1,4 +1,5 @@
 import type { LitElement } from 'lit';
+import { logger } from '../../abstract/logger';
 import type { Constructor } from '../../lit/Constructor';
 import { parseCssPropertyValue } from './parseCssPropertyValue';
 
@@ -22,7 +23,7 @@ export function CssDataMixin<T extends Constructor<LitElement>>(ctor: T): T & Co
           cssDataCache[propName] = parseCssPropertyValue(val);
         } catch (error) {
           if (!silentCheck) {
-            console.warn(`CSS Data error: ${propName}`, error);
+            logger.warn(`CSS Data error: ${propName}`, error);
           }
           cssDataCache[propName] = null;
         }

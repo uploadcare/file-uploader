@@ -36,6 +36,7 @@ import { RouterController } from './controllers/RouterController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
 import { inject } from './di/inject';
+import { logger } from './logger';
 import { PluginController } from './managers/plugin';
 import { TypedData } from './TypedData';
 import type { UploadEntryData } from './uploadEntrySchema';
@@ -435,7 +436,7 @@ export class UploaderPublicApi {
       this._router.navigate(activityType, params[0] ?? {});
       if (activityType !== null) {
         waitForActivityBlock(this._router, activityType, {
-          onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
+          onTimeout: () => logger.warn(`Activity type "${activityType}" not found in the context`),
           timeout: 100,
         });
       }
@@ -466,7 +467,7 @@ export class UploaderPublicApi {
       }
       this._router.setActivity(activityType, params[0]);
       waitForActivityBlock(this._router, activityType, {
-        onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
+        onTimeout: () => logger.warn(`Activity type "${activityType}" not found in the context`),
         timeout: 100,
       });
     });
@@ -504,12 +505,12 @@ export class UploaderPublicApi {
       // if a modal is already open, is that stale modal and would no-op).
       const activityType = router.activity ?? router.currentActivity;
       if (!activityType) {
-        console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
+        logger.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
         return;
       }
 
       return waitForActivityBlock(router, activityType, {
-        onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
+        onTimeout: () => logger.warn(`Activity block "${activityType}" not found in the context`),
       }).then((found) => {
         if (!found) {
           // Timeout — the activity's block never appeared; keep the modal

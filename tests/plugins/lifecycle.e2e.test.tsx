@@ -214,8 +214,8 @@ describe('Plugin Registration & Lifecycle', () => {
 
     // Second plugin with same id should be skipped with a warning
     expect(setup2).not.toHaveBeenCalled();
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"dup-id"'));
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('duplicate'));
+    expect(warnSpy).toHaveBeenCalledWith('[uc][PluginManager]', expect.stringContaining('"dup-id"'));
+    expect(warnSpy).toHaveBeenCalledWith('[uc][PluginManager]', expect.stringContaining('duplicate'));
 
     warnSpy.mockRestore();
   });
@@ -233,7 +233,11 @@ describe('Plugin Registration & Lifecycle', () => {
     await renderUploader([plugin]);
 
     await vi.waitFor(() => {
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"setup-throws"'), expect.any(Error));
+      expect(errorSpy).toHaveBeenCalledWith(
+        '[uc][PluginManager]',
+        expect.stringContaining('"setup-throws"'),
+        expect.any(Error),
+      );
     });
 
     errorSpy.mockRestore();
@@ -253,7 +257,11 @@ describe('Plugin Registration & Lifecycle', () => {
     await renderUploader([plugin]);
 
     await vi.waitFor(() => {
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"async-setup-rejects"'), expect.any(Error));
+      expect(errorSpy).toHaveBeenCalledWith(
+        '[uc][PluginManager]',
+        expect.stringContaining('"async-setup-rejects"'),
+        expect.any(Error),
+      );
     });
 
     errorSpy.mockRestore();
@@ -268,7 +276,7 @@ describe('Plugin Registration & Lifecycle', () => {
     await renderUploader([pluginWithoutId]);
 
     await vi.waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"id"'));
+      expect(warnSpy).toHaveBeenCalledWith('[uc][PluginManager]', expect.stringContaining('"id"'));
     });
 
     // setup() should not be called since the plugin was skipped

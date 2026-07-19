@@ -217,7 +217,7 @@ export class UploadController {
           uploadError: cause,
         });
       } else {
-        console.error('Unknown upload error', cause);
+        logger.error('Unknown upload error', cause);
         entry.setMultipleValues({
           isUploading: false,
           uploadProgress: 0,

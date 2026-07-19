@@ -8,6 +8,7 @@ import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
+import { logger } from '../../abstract/logger';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
@@ -175,7 +176,7 @@ export class DynamicBtn extends ChildBlock {
     const collectionState = this.useOrNull(UploaderPublicApi)?.getOutputCollectionState();
 
     if (!collectionState) {
-      console.warn('Collection state is undefined');
+      logger.warn('Collection state is undefined');
       return;
     }
 

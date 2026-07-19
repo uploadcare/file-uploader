@@ -17,6 +17,7 @@ import {
 } from '../../utils/validators/file/index';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
+import { logger } from '../logger';
 import type { TypedData } from '../TypedData';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import type {
@@ -170,10 +171,10 @@ export class ValidationController {
         }
         errors.push(this._addCustomTypeToValidationError(error));
         if (!error.message) {
-          console.warn(LOG_TEXT.MISSING_ERROR_MESSAGE);
+          logger.warn(LOG_TEXT.MISSING_ERROR_MESSAGE);
         }
       } catch (error) {
-        console.warn(LOG_TEXT.COLLECTION_VALIDATION_FAILED, error);
+        logger.warn(LOG_TEXT.COLLECTION_VALIDATION_FAILED, error);
       }
     }
 
@@ -235,7 +236,7 @@ export class ValidationController {
         const timeoutId = setTimeout(() => {
           state.skippedValidators.add(validatorDescriptor.validator);
           abortController.abort();
-          console.warn(LOG_TEXT.FILE_VALIDATION_TIMEOUT);
+          logger.warn(LOG_TEXT.FILE_VALIDATION_TIMEOUT);
         }, timeoutMs);
 
         try {
@@ -251,12 +252,12 @@ export class ValidationController {
           errors.push(normalizedError);
 
           if (!error.message) {
-            console.warn(LOG_TEXT.MISSING_ERROR_MESSAGE);
+            logger.warn(LOG_TEXT.MISSING_ERROR_MESSAGE);
           }
         } catch (error) {
           if (!abortController.signal.aborted) {
             state.skippedValidators.add(validatorDescriptor.validator);
-            console.warn(LOG_TEXT.FILE_VALIDATION_FAILED, error);
+            logger.warn(LOG_TEXT.FILE_VALIDATION_FAILED, error);
             this._host.onValidatorError(error, `file validator. ${LOG_TEXT.FILE_VALIDATION_FAILED}`);
           }
         } finally {

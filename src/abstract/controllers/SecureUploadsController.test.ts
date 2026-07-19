@@ -227,6 +227,7 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(consoleWarnSpy).toHaveBeenCalledWith(
+          '[uc]',
           'Both secureSignature/secureExpire and secureUploadsSignatureResolver are set. secureUploadsSignatureResolver will be used.',
         );
       });
@@ -276,6 +277,7 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
+          '[uc]',
           'Secure signature resolver returned an invalid result:',
           invalidToken,
         );
@@ -293,6 +295,7 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
+          '[uc]',
           'Secure signature resolver returned an invalid result:',
           invalidToken,
         );
@@ -321,6 +324,7 @@ describe('SecureUploadsController', () => {
         const result2 = await controller.getSecureToken();
         expect(result2).toEqual(validToken);
         expect(consoleErrorSpy).toHaveBeenCalledWith(
+          '[uc]',
           'Secure signature resolving failed. Falling back to the previous one.',
           resolverError,
         );
