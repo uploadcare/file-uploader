@@ -45,8 +45,6 @@ import './EditorImageFader';
 import './EditorToolbar';
 import './EditorIcon';
 
-const log = logger.scope('cloud-image-editor');
-
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
 const DEFAULT_TABS = serializeCsv([...ALL_TABS]);
@@ -54,6 +52,10 @@ const DEFAULT_TABS = serializeCsv([...ALL_TABS]);
 const CloudImageEditorBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
 
 export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
+  // Shared `cloud-image-editor` scope — the same scope descendant `EditorBlock`s
+  // use via their inherited `_log`, so all editor output is one scope.
+  private readonly _log = logger.scope('cloud-image-editor');
+
   public declare attributesMeta: ({ uuid: string } | { 'cdn-url': string }) &
     Partial<{
       tabs: string;
@@ -449,7 +451,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     }
     const originalUrl = this._editorController.get('*originalUrl');
     if (!originalUrl) {
-      log.warn('Original URL is null, cannot apply transformations');
+      this._log.warn('Original URL is null, cannot apply transformations');
       return;
     }
     const cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
@@ -533,7 +535,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         const error = new Error('[cloud-image-editor] timeout waiting for non-zero container size');
         cleanup();
         if (this.isConnected) {
-          log.error(error.message);
+          this._log.error(error.message);
         }
         reject(error);
       };
@@ -816,7 +818,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     } catch (err) {
       if (err) {
         editorController.telemetry.sendEventError(err, 'cloud editor image. Failed to load image info');
-        log.error('Failed to load image info', err);
+        this._log.error('Failed to load image info', err);
       }
     }
 

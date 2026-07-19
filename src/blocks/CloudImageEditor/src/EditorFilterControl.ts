@@ -3,7 +3,6 @@ import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { logger } from '../../../abstract/logger';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../env';
 import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { preloadImage } from '../../../utils/preloadImage.js';
@@ -13,8 +12,6 @@ import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transforma
 import type { Transformations } from './types';
 
 import './EditorIcon';
-
-const log = logger.scope('editor-filter-control');
 
 /**
  * Bubbles up to `EditorToolbar`, which owns the toolbar-local `currentFilter`/
@@ -253,7 +250,7 @@ export class EditorFilterControl extends EditorButtonControl {
       src = await this.editorController.proxyUrl(this._previewSrc());
     } catch (err) {
       this.editorController.set('*networkProblems', true);
-      log.error('Failed to resolve preview URL', { error: err });
+      this._log.error('Failed to resolve preview URL', { error: err });
       return;
     }
 
@@ -278,7 +275,7 @@ export class EditorFilterControl extends EditorButtonControl {
       (observer ?? this._observer)?.unobserve(this);
     } catch (err) {
       this.editorController.set('*networkProblems', true);
-      log.error('Failed to load image', { error: err });
+      this._log.error('Failed to load image', { error: err });
       this._schedulePreviewVisibilityCheck();
     } finally {
       if (this._lastPreviewRequestId === requestId) {

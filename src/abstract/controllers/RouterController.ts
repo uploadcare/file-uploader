@@ -163,6 +163,7 @@ export class RouterController {
     return () => {
       if (this._guards.get(activityId) === canActivate) {
         this._guards.delete(activityId);
+        this._log.debug(() => [`guard unregistered: "${activityId}"`]);
       }
     };
   }

@@ -868,6 +868,18 @@ describe('RouterController (v2)', () => {
       expect(log).toHaveBeenCalledWith(...badge, 'strategy for "upload-list": background');
     });
 
+    it('logs guard registration and unregistration', () => {
+      const { router } = setupDebug();
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const badge = ['%c uc %c router %c', expect.any(String), expect.any(String), ''] as const;
+
+      const off = router.guard('camera', () => true);
+      expect(log).toHaveBeenCalledWith(...badge, 'guard registered: "camera"');
+
+      off();
+      expect(log).toHaveBeenCalledWith(...badge, 'guard unregistered: "camera"');
+    });
+
     it('logs the configured done activity', () => {
       const { router } = setupDebug();
       const log = vi.spyOn(console, 'log').mockImplementation(() => {});
