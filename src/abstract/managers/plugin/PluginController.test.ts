@@ -84,6 +84,24 @@ describe('PluginController', () => {
       expect(onChange).toHaveBeenCalled();
     });
 
+    it('passes setup a logger scoped to the plugin (`[uc][plugin:<id>]`)', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const t = setup();
+      let received: unknown;
+      const plugin: UploaderPlugin = {
+        id: 'my-plugin',
+        setup: (params) => {
+          received = params.logger;
+          params.logger.warn('hello from plugin');
+        },
+      };
+
+      await t.sync([plugin]);
+
+      expect(typeof (received as { warn?: unknown })?.warn).toBe('function');
+      expect(warn).toHaveBeenCalledWith('[uc][plugin:my-plugin]', 'hello from plugin');
+    });
+
     it('skips a plugin missing an id', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const t = setup();

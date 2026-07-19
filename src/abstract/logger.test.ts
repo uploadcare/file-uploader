@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { __resetLoggerForTests, BADGE_STYLE, logger } from './logger';
+import { __resetLoggerForTests, CTX_BADGE_STYLE, logger, SCOPE_BADGE_STYLE, UC_BADGE_STYLE } from './logger';
 
 afterEach(() => {
   __resetLoggerForTests();
@@ -63,8 +63,8 @@ describe('logger.scope', () => {
     on = true;
     scoped.debug('d2');
     scoped.log('l2');
-    expect(log).toHaveBeenCalledWith('%c[uc][DropArea]', BADGE_STYLE, 'd2');
-    expect(log).toHaveBeenCalledWith('%c[uc][DropArea]', BADGE_STYLE, 'l2');
+    expect(log).toHaveBeenCalledWith('%c uc %c DropArea %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, '', 'd2');
+    expect(log).toHaveBeenCalledWith('%c uc %c DropArea %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, '', 'l2');
   });
 
   it('inserts the resolved ctx-name into the prefix, between `[uc]` and the scope', () => {
@@ -76,7 +76,14 @@ describe('logger.scope', () => {
     scoped.warn('boom');
     scoped.debug('d');
     expect(warn).toHaveBeenCalledWith('[uc][my-uploader][secure-uploads]', 'boom');
-    expect(log).toHaveBeenCalledWith('%c[uc][my-uploader][secure-uploads]', BADGE_STYLE, 'd');
+    expect(log).toHaveBeenCalledWith(
+      '%c uc %c my-uploader %c secure-uploads %c',
+      UC_BADGE_STYLE,
+      CTX_BADGE_STYLE,
+      SCOPE_BADGE_STYLE,
+      '',
+      'd',
+    );
 
     // Resolved lazily per call: when no ctx is available the segment is omitted.
     ctx = undefined;
@@ -93,7 +100,7 @@ describe('logger.scope', () => {
     b.debug('from-b');
 
     expect(log).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalledWith('%c[uc][A]', BADGE_STYLE, 'from-a');
+    expect(log).toHaveBeenCalledWith('%c uc %c A %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, '', 'from-a');
   });
 
   it('debug accepts a lazy `() => args` thunk that is not evaluated when gated off', () => {
@@ -108,7 +115,7 @@ describe('logger.scope', () => {
     on = true;
     scoped.debug(build);
     expect(build).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalledWith('%c[uc][X]', BADGE_STYLE, 'expensive');
+    expect(log).toHaveBeenCalledWith('%c uc %c X %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, '', 'expensive');
   });
 });
 
@@ -119,7 +126,7 @@ describe('logger pretty helpers (gated)', () => {
     const scoped = logger.scope('Upload', { isVerbose: () => true });
 
     scoped.table('upload options', { a: 1 });
-    expect(log).toHaveBeenCalledWith('%c[uc][Upload]', BADGE_STYLE, 'upload options');
+    expect(log).toHaveBeenCalledWith('%c uc %c Upload %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, '', 'upload options');
     expect(table).toHaveBeenCalledWith({ a: 1 });
   });
 
@@ -146,7 +153,7 @@ describe('logger pretty helpers (gated)', () => {
     end();
     end(); // idempotent — a second close is a no-op
 
-    expect(group).toHaveBeenCalledWith('%c[uc][S]', BADGE_STYLE, 'steps');
+    expect(group).toHaveBeenCalledWith('%c uc %c S %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, '', 'steps');
     expect(dir).toHaveBeenCalledWith({ nested: true });
     expect(groupEnd).toHaveBeenCalledTimes(1);
   });

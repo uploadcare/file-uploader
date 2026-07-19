@@ -1,13 +1,10 @@
 import { shrinkFile } from '@uploadcare/image-shrink';
-import { logger } from '../abstract/logger';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
 import { parseShrink } from '../utils/parseShrink';
 
-const log = logger.scope('image-shrink-plugin');
-
 export const imageShrinkPlugin: UploaderPlugin = {
   id: 'image-shrink',
-  setup({ pluginApi }) {
+  setup({ pluginApi, logger: log }) {
     pluginApi.registry.registerFileHook({
       type: 'beforeUpload',
       handler: async ({ file }) => {

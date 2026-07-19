@@ -98,14 +98,14 @@ describe('Source Registration', () => {
   it('should print console.error and not render a source button for deprecated instagram source', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      const { config } = await renderUploader([instagramPlugin]);
+      const { config, ctxName } = await renderUploader([instagramPlugin]);
       addSource(config, 'instagram');
 
       await openModal();
 
       await vi.waitFor(() => {
         expect(errorSpy).toHaveBeenCalledWith(
-          '[uc][instagram-plugin]',
+          `[uc][${ctxName}][plugin:instagram]`,
           expect.stringContaining('Instagram source was removed'),
         );
       });

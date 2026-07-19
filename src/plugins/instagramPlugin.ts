@@ -1,11 +1,8 @@
-import { logger } from '../abstract/logger';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
-
-const log = logger.scope('instagram-plugin');
 
 export const instagramPlugin: UploaderPlugin = {
   id: 'instagram',
-  setup({ pluginApi }) {
+  setup({ pluginApi, logger: log }) {
     pluginApi.registry.registerSource({
       id: 'instagram',
       label: 'src-type-instagram',
