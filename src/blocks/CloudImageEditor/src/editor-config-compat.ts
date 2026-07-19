@@ -23,6 +23,7 @@ const EDITOR_CONFIG_KEYS = [
   'secureDeliveryProxyUrlResolver',
   'cloudImageEditorMaskHref',
   'testMode',
+  'debug',
 ] as const satisfies readonly (keyof EditorConfig)[];
 
 /** Hands the consumer an l10n function bound to the sibling `<uc-config>`'s locale (interpolating, reads the ctx live). */

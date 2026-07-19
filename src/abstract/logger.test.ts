@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { __resetLoggerForTests, CTX_BADGE_STYLE, logger, SCOPE_BADGE_STYLE, UC_BADGE_STYLE } from './logger';
+import { __resetLoggerForTests, CTX_BADGE_STYLE, lazy, logger, SCOPE_BADGE_STYLE, UC_BADGE_STYLE } from './logger';
 
 afterEach(() => {
   __resetLoggerForTests();
@@ -102,18 +102,31 @@ describe('logger.scope', () => {
     expect(log).toHaveBeenCalledWith('%c uc %c A %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, '', 'from-a');
   });
 
-  it('debug accepts a lazy `() => args` thunk that is not evaluated when gated off', () => {
+  it('debug accepts a `lazy(() => args)` payload that is not built when gated off', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     const build = vi.fn(() => ['expensive']);
     let on = false;
     const scoped = logger.scope('X', { isVerbose: () => on });
 
-    scoped.debug(build);
+    scoped.debug(lazy(build));
     expect(build).not.toHaveBeenCalled();
 
     on = true;
-    scoped.debug(build);
+    scoped.debug(lazy(build));
     expect(build).toHaveBeenCalledTimes(1);
     expect(log).toHaveBeenCalledWith('%c uc %c X %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, '', 'expensive');
+  });
+
+  it('a bare function arg is logged as a value and NEVER invoked (no auto-thunk)', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const fn = vi.fn(() => ['should-not-run']);
+    const scoped = logger.scope('x', { isVerbose: () => true });
+
+    scoped.debug(fn);
+
+    // The logger is public plugin surface: a sole function must be treated as a
+    // value to print, not silently invoked (only `lazy(...)` is built).
+    expect(fn).not.toHaveBeenCalled();
+    expect(log).toHaveBeenCalledWith('%c uc %c x %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, '', fn);
   });
 });

@@ -1,6 +1,7 @@
 import type { ActivityType, RegisteredActivityType } from '../lit/activity-constants';
 import type { OutputCollectionState, OutputFileEntry } from '../types/exported';
 import { controllerLogger } from './controllerLogger';
+import { lazy } from './logger';
 
 /**
  * Canonical event surface for the whole library. `EventEmitter`
@@ -104,7 +105,7 @@ export class EventBus {
     // moved here from the DOM event bridge so every emit is logged at the source.
     // `→ <type>` marks a dispatch (the `event-bus` scope already says it's an
     // event). Thunked + shallow-copied so the snapshot is only built when on.
-    this._log.debug(() => [`→ ${type}`, payload && typeof payload === 'object' ? { ...payload } : payload]);
+    this._log.debug(lazy(() => [`→ ${type}`, payload && typeof payload === 'object' ? { ...payload } : payload]));
     const set = this._listeners.get(type);
     if (!set) return;
     for (const handler of set) {

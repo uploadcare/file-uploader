@@ -194,9 +194,9 @@ export type PluginSetupParams = {
   uploaderApi: PluginUploaderApi;
   /**
    * A logger pre-scoped to this plugin (`[uc][<ctx-name>][plugin:<plugin-id>]`).
-   * `error`/`warn`/`warnOnce` always print; the verbose tier (`log`/`debug`/
-   * `table`/`group`/`dir`) prints only when the uploader's `debug` config is on.
-   * Prefer this over `console.*` so plugin output is attributable and gated.
+   * `error`/`warn`/`warnOnce` always print; the verbose tier (`log`/`debug`)
+   * prints only when the uploader's `debug` config is on. Prefer this over
+   * `console.*` so plugin output is attributable and gated.
    */
   logger: Logger;
 };

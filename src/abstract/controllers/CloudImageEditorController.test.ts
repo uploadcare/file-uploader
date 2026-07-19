@@ -138,9 +138,11 @@ describe('CloudImageEditorController', () => {
     const controller = new CloudImageEditorController();
     expect(controller.getConfigValue('cdnCname')).toBe('https://ucarecdn.com');
     expect(controller.getConfigValue('testMode')).toBe(false);
-    controller.setConfig({ cdnCname: 'https://cdn.example.com/', testMode: true });
+    expect(controller.getConfigValue('debug')).toBe(false);
+    controller.setConfig({ cdnCname: 'https://cdn.example.com/', testMode: true, debug: true });
     expect(controller.getConfigValue('cdnCname')).toBe('https://cdn.example.com/');
     expect(controller.getConfigValue('testMode')).toBe(true);
+    expect(controller.getConfigValue('debug')).toBe(true);
   });
 
   it('getOwnConfigValue distinguishes an explicit override from unset', () => {

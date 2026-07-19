@@ -5,6 +5,7 @@ import { inject } from '../di/inject';
 import { signalState } from '../di/signalState';
 import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
 import { Listeners } from '../host-subscription';
+import { lazy } from '../logger';
 
 export type EdgeTarget = ActivityId | null;
 
@@ -145,7 +146,7 @@ export class RouterController {
   /** Per-preset routing config (solution-level), e.g. the post-flow done activity. */
   public configure(table: RouteTable): void {
     this._table = { ...table };
-    this._log.debug(() => [`configure: done activity = ${this._table.doneActivity ?? 'none'}`]);
+    this._log.debug(lazy(() => [`configure: done activity = ${this._table.doneActivity ?? 'none'}`]));
   }
 
   // ─── Guards ───
@@ -159,11 +160,11 @@ export class RouterController {
    */
   public guard(activityId: ActivityId, canActivate: () => boolean): () => void {
     this._guards.set(activityId, canActivate);
-    this._log.debug(() => [`guard registered: "${activityId}"`]);
+    this._log.debug(lazy(() => [`guard registered: "${activityId}"`]));
     return () => {
       if (this._guards.get(activityId) === canActivate) {
         this._guards.delete(activityId);
-        this._log.debug(() => [`guard unregistered: "${activityId}"`]);
+        this._log.debug(lazy(() => [`guard unregistered: "${activityId}"`]));
       }
     };
   }
@@ -241,9 +242,13 @@ export class RouterController {
 
   private _register(name: keyof typeof this._hooks, h: Hook): () => void {
     this._hooks[name].push(h);
-    this._log.debug(() => [`hook registered: "${name}" (${this._hooks[name].length} total)`]);
+    this._log.debug(lazy(() => [`hook registered: "${name}" (${this._hooks[name].length} total)`]));
     return () => {
+      const before = this._hooks[name].length;
       this._hooks[name] = this._hooks[name].filter((x) => x !== h);
+      if (this._hooks[name].length !== before) {
+        this._log.debug(lazy(() => [`hook unregistered: "${name}" (${this._hooks[name].length} total)`]));
+      }
     };
   }
 
@@ -272,11 +277,13 @@ export class RouterController {
   private _resolveHooks(name: keyof typeof this._hooks, ctx: EdgeContext): EdgeTarget | NavigateCancel | undefined {
     for (const hook of this._hooks[name]) {
       const r = this._invokeHook(name, hook, ctx);
-      this._log.debug(() => [
-        `hook "${name}" → ${
-          r === NAVIGATE_CANCEL ? 'cancel' : r === undefined ? 'defer' : r === null ? 'close (null)' : `"${r}"`
-        }`,
-      ]);
+      this._log.debug(
+        lazy(() => [
+          `hook "${name}" → ${
+            r === NAVIGATE_CANCEL ? 'cancel' : r === undefined ? 'defer' : r === null ? 'close (null)' : `"${r}"`
+          }`,
+        ]),
+      );
       if (r !== undefined) return r;
     }
     return undefined;
@@ -319,11 +326,11 @@ export class RouterController {
     const ctx: EdgeContext = { edge: 'navigate', from: this.currentActivity, proposed: to, defaults: () => to };
     const resolved = this._resolveHooks('beforeChange', ctx);
     if (resolved === NAVIGATE_CANCEL) {
-      this._log.debug(() => [`navigate to ${to ?? 'null'} cancelled by a beforeChange hook`]);
+      this._log.debug(lazy(() => [`navigate to ${to ?? 'null'} cancelled by a beforeChange hook`]));
       return;
     }
     if (resolved !== undefined && resolved !== to) {
-      this._log.debug(() => [`beforeChange hook redirected: ${to ?? 'null'} → ${resolved ?? 'null'}`]);
+      this._log.debug(lazy(() => [`beforeChange hook redirected: ${to ?? 'null'} → ${resolved ?? 'null'}`]));
     }
     // All hooks deferred (`undefined`) → the proposed target goes through.
     // Note `null` is a real decision (close everything), so no `??` here.
@@ -345,7 +352,7 @@ export class RouterController {
     // refuse the navigation and stay where we are — leaving `_params` untouched
     // so readers never observe params for an activity we didn't actually enter.
     if (!this._canActivate(to)) {
-      this._log.debug(() => [`navigate to "${to}" refused (guard)`]);
+      this._log.debug(lazy(() => [`navigate to "${to}" refused (guard)`]));
       return;
     }
     this._params = params;
@@ -353,7 +360,7 @@ export class RouterController {
     // A background target closes any open modal first — the inline content is
     // the focus now; a foreground target leaves the background slot untouched.
     const slot = this.navigationStrategy(to);
-    this._log.debug(() => [`strategy for "${to}": ${slot}`]);
+    this._log.debug(lazy(() => [`strategy for "${to}": ${slot}`]));
     if (slot === 'background') {
       this._transition(to, null);
     } else {
@@ -368,7 +375,7 @@ export class RouterController {
    * upload list while a modal is open in the foreground slot).
    */
   public setActivity(to: EdgeTarget, params?: Record<string, unknown>): void {
-    this._log.debug(() => [`set activity (direct): ${to ?? 'null'}`]);
+    this._log.debug(lazy(() => [`set activity (direct): ${to ?? 'null'}`]));
     if (!this._canActivate(to)) {
       return;
     }
@@ -399,10 +406,10 @@ export class RouterController {
     // slot explicitly, so a background change while a modal is open (which leaves
     // the *effective* activity unchanged) is still visible.
     if (nextActivity !== prevActivity) {
-      this._log.debug(() => [`background activity: ${prevActivity ?? 'none'} → ${nextActivity ?? 'none'}`]);
+      this._log.debug(lazy(() => [`background activity: ${prevActivity ?? 'none'} → ${nextActivity ?? 'none'}`]));
     }
     if (nextModal !== prevModal) {
-      this._log.debug(() => [`modal activity: ${prevModal ?? 'none'} → ${nextModal ?? 'none'}`]);
+      this._log.debug(lazy(() => [`modal activity: ${prevModal ?? 'none'} → ${nextModal ?? 'none'}`]));
     }
 
     if (prevModal === null && nextModal !== null) {
@@ -462,7 +469,7 @@ export class RouterController {
    * - `onFileAdd` → navigate to `upload-list`.
    */
   public traverse(edge: NavigationEdge): void {
-    this._log.debug(() => [`traverse "${edge}"`]);
+    this._log.debug(lazy(() => [`traverse "${edge}"`]));
     // `proposed`/`defaults()` carry a concrete target only when the default
     // *is* a target (`onDone` → done activity, `onFileAdd` → upload-list).
     // For `onBack`/`onCancel`/`onClose` the default is an *action*

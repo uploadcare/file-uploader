@@ -180,9 +180,9 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   /**
    * Per-ctx logger for this block. `error`/`warn`/`warnOnce` always print; the
-   * gated `debug`/`log`/`table`/`group`/`dir` tier prints only when THIS ctx's
-   * `debug` config is on — so debug output is per-ctx accurate and prefixed with
-   * the block's tag. The `isEnabled` predicate reads the container lazily at log
+   * gated verbose tier (`log`/`debug`) prints only when THIS ctx's `debug`
+   * config is on — so debug output is per-ctx accurate and prefixed with the
+   * block's tag. The `isVerbose` predicate reads the container lazily at log
    * time (null-safe: a pre-adoption call is a no-op).
    */
   protected readonly _log = logger.scope(this.tagName.toLowerCase().replace(/^uc-/, ''), {
