@@ -4,6 +4,8 @@ import { ControllerContainer } from './di/ControllerContainer';
 import { logger } from './logger';
 import { TelemetryManager } from './managers/TelemetryManager';
 
+const log = logger.scope('uploader-registry');
+
 /**
  * Global registry of uploader scopes keyed by `ctx-name`, and the single
  * authoritative home of the per-ctx `ControllerContainer` lifecycle:
@@ -60,7 +62,7 @@ class UploaderRegistryImpl {
       try {
         sub.cb(container);
       } catch (err) {
-        logger.warn(`a whenAvailable consumer for ctx-name="${ctxName}" threw`, err);
+        log.warn(`a whenAvailable consumer for ctx-name="${ctxName}" threw`, err);
       }
     }
   }
@@ -86,6 +88,7 @@ class UploaderRegistryImpl {
       return existing;
     }
     const container = new ControllerContainer();
+    container.ctxName = ctxName; // informational, for logging attribution
     // Cache BEFORE the eager init so a re-entrant `ensure`/`get` during that
     // init resolves this same instance.
     this._map.set(ctxName, container);
@@ -127,13 +130,14 @@ class UploaderRegistryImpl {
   }
 
   public register(ctxName: string, container: ControllerContainer): void {
+    container.ctxName = ctxName; // informational, for logging attribution
     const existing = this._map.get(ctxName);
     if (existing && existing !== container) {
       // Common case: the previous owning element disconnected and its
       // deferred unregister hasn't fired yet. The new element takes over; the
       // deferred unregister becomes a no-op (it checks identity before
       // deleting).
-      logger.warn(
+      log.warn(
         `Replacing the container registered under ctx-name="${ctxName}". If two uploaders share this name simultaneously the second one wins.`,
       );
     }

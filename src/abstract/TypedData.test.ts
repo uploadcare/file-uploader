@@ -123,7 +123,7 @@ describe('TypedData', () => {
     ctx.setValue('missing' as any, 123);
 
     expect(warnSpy).toHaveBeenCalledTimes(1);
-    expect(warnSpy.mock.calls[0]?.[0]).toBe('[uc]');
+    expect(warnSpy.mock.calls[0]?.[0]).toBe('[uc][typed-data]');
     expect(warnSpy.mock.calls[0]?.[1]).toMatch(/\[Typed State\] Wrong property name:/);
     expect(ctx.getValue('a')).toBe(1);
 
@@ -147,7 +147,10 @@ describe('TypedData', () => {
     const value = ctx.getValue('missing' as any);
 
     expect(value).toBeUndefined();
-    expect(warn).toHaveBeenCalledWith('[uc]', expect.stringMatching(/\[Typed State\] Wrong property name:/));
+    expect(warn).toHaveBeenCalledWith(
+      '[uc][typed-data]',
+      expect.stringMatching(/\[Typed State\] Wrong property name:/),
+    );
 
     ctx.destroy();
     warn.mockRestore();

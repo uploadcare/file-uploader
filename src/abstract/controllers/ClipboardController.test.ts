@@ -343,7 +343,7 @@ describe('ClipboardController', () => {
     window.dispatchEvent(pasteEvent([fileItem(new File(['x'], 'x.txt'))]));
     await flush();
 
-    expect(warn).toHaveBeenCalledWith('[uc]', 'clipboard paste handling failed', expect.any(Error));
+    expect(warn).toHaveBeenCalledWith('[uc][clipboard]', 'clipboard paste handling failed', expect.any(Error));
   });
 
   it('destroy() detaches the window listener and clears scopes', async () => {

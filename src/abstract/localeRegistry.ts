@@ -1,6 +1,8 @@
 import { default as en } from '../locales/file-uploader/en';
 import { logger } from './logger';
 
+const log = logger.scope('locale-registry');
+
 export type LocaleDefinition = typeof en;
 export type LocaleDefinitionResolver = () => Promise<LocaleDefinition>;
 
@@ -9,7 +11,7 @@ const localeResolvers: Map<string, LocaleDefinitionResolver> = new Map();
 
 const defineLocaleSync = (localeName: string, definition: LocaleDefinition): LocaleDefinition => {
   if (localeRegistry.has(localeName)) {
-    logger.warn(`Locale ${localeName} is already defined. Overwriting...`);
+    log.warn(`Locale ${localeName} is already defined. Overwriting...`);
   }
 
   const locale: LocaleDefinition = { ...(en as unknown as LocaleDefinition), ...definition };

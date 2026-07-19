@@ -3,6 +3,8 @@ import { logger } from '../../abstract/logger';
 import type { Constructor } from '../../lit/Constructor';
 import { parseCssPropertyValue } from './parseCssPropertyValue';
 
+const log = logger.scope('css-data');
+
 declare class CssDataMixinClassInterface {
   public getCssData(propName: string, silentCheck?: boolean): string | number | boolean | null | undefined;
 }
@@ -23,7 +25,7 @@ export function CssDataMixin<T extends Constructor<LitElement>>(ctor: T): T & Co
           cssDataCache[propName] = parseCssPropertyValue(val);
         } catch (error) {
           if (!silentCheck) {
-            logger.warn(`CSS Data error: ${propName}`, error);
+            log.warn(`CSS Data error: ${propName}`, error);
           }
           cssDataCache[propName] = null;
         }

@@ -3,6 +3,8 @@ import { joinCdnOperations } from '../../../../utils/cdn-utils.js';
 import { stringToArray } from '../../../../utils/stringToArray.js';
 import type { Transformations } from '../types';
 
+const log = logger.scope('transformation-utils');
+
 type OperationDefaults = Readonly<Record<keyof Transformations, unknown>>;
 
 export const OPERATIONS_DEFAULTS: OperationDefaults = Object.freeze({
@@ -151,7 +153,7 @@ export function operationsToTransformations(operations: string[]): Transformatio
       const value = processor(args as ProcessorTuple<typeof operationName>);
       transformations[operationName] = value;
     } catch (err) {
-      logger.warn(
+      log.warn(
         [
           `Failed to parse URL operation "${operation}". It will be ignored.`,
           err instanceof Error ? `Error message: "${err.message}"` : err,

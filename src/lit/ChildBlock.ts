@@ -185,8 +185,11 @@ export abstract class ChildBlock extends ChildBlockBase {
    * the block's tag. The `isEnabled` predicate reads the container lazily at log
    * time (null-safe: a pre-adoption call is a no-op).
    */
-  protected readonly _log = logger.scope(this.constructor.name, {
-    isEnabled: () => this.containerOrNull?.get(ConfigController).get('debug') ?? false,
+  protected readonly _log = logger.scope(this.tagName.toLowerCase().replace(/^uc-/, ''), {
+    // Verbose tier prints only when THIS ctx's `debug` config is on; predicate +
+    // ctx-name resolve lazily at log time (null-safe pre-adoption).
+    isVerbose: () => this.containerOrNull?.get(ConfigController).get('debug') ?? false,
+    ctxName: () => this.effectiveCtxName,
   });
 
   /**
@@ -396,7 +399,7 @@ export abstract class ChildBlock extends ChildBlockBase {
       // One block's adoption hook must not break the adoption cycle or escape
       // the registry callback as an unhandled error (isolate-and-warn, as in
       // teardown and EventBus fan-out).
-      logger.warn(`${this.tagName.toLowerCase()}: controllerReady threw during adoption`, err);
+      this._log.warn(`${this.tagName.toLowerCase()}: controllerReady threw during adoption`, err);
     }
     this.requestUpdate();
   }
@@ -409,7 +412,7 @@ export abstract class ChildBlock extends ChildBlockBase {
       } catch (err) {
         // Teardown must be isolated: one throwing unsubscriber must not
         // prevent the rest from running.
-        logger.warn(`${this.tagName.toLowerCase()}: a subscription teardown threw during controller release`, err);
+        this._log.warn(`${this.tagName.toLowerCase()}: a subscription teardown threw during controller release`, err);
       }
     }
     this._subs = [];

@@ -53,7 +53,7 @@ describe('SecureUploadsController', () => {
   // The controller's debug output goes through a per-ctx gated `logger` scope,
   // enabled only when this ctx's `debug` config is on (create the controller
   // with `{ debug: true }`). The gated tier prints via `console.log` prefixed
-  // `%c[uc][SecureUploads]` + a badge style arg — spy `console.log` to assert it.
+  // `%c[uc][secure-uploads]` + a badge style arg — spy `console.log` to assert it.
   const spyLoggerDebug = () => vi.spyOn(console, 'log').mockImplementation(() => {});
 
   beforeEach(() => {
@@ -226,7 +226,7 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(consoleWarnSpy).toHaveBeenCalledWith(
-          '[uc]',
+          '[uc][secure-uploads]',
           'Both secureSignature/secureExpire and secureUploadsSignatureResolver are set. secureUploadsSignatureResolver will be used.',
         );
       });
@@ -277,7 +277,7 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
-          '[uc]',
+          '[uc][secure-uploads]',
           'Secure signature resolver returned an invalid result:',
           invalidToken,
         );
@@ -295,7 +295,7 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
-          '[uc]',
+          '[uc][secure-uploads]',
           'Secure signature resolver returned an invalid result:',
           invalidToken,
         );
@@ -324,7 +324,7 @@ describe('SecureUploadsController', () => {
         const result2 = await controller.getSecureToken();
         expect(result2).toEqual(validToken);
         expect(consoleErrorSpy).toHaveBeenCalledWith(
-          '[uc]',
+          '[uc][secure-uploads]',
           'Secure signature resolving failed. Falling back to the previous one.',
           resolverError,
         );
@@ -347,7 +347,7 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(debug).toHaveBeenCalledWith(
-          '%c[uc][SecureUploads]',
+          '%c[uc][secure-uploads]',
           expect.any(String),
           'Secure signature is not set yet.',
         );
@@ -379,7 +379,7 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(debug).toHaveBeenCalledWith(
-          '%c[uc][SecureUploads]',
+          '%c[uc][secure-uploads]',
           expect.any(String),
           'Secure signature is expired. Resolving a new one...',
         );
@@ -401,7 +401,7 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(debug).toHaveBeenCalledWith(
-          '%c[uc][SecureUploads]',
+          '%c[uc][secure-uploads]',
           expect.any(String),
           'Secure signature resolved:',
           mockToken,

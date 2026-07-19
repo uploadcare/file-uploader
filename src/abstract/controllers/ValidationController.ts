@@ -15,6 +15,7 @@ import {
   validateMaxSizeLimit,
   validateUploadError,
 } from '../../utils/validators/file/index';
+import { containerOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { logger } from '../logger';
@@ -74,6 +75,9 @@ type EntryValidationState = {
  * isolation. Entries remain `TypedData`.
  */
 export class ValidationController {
+  // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
+  // (resolved lazily at log time via the container that built this instance).
+  private readonly _log = logger.scope('validation', { ctxName: () => containerOf(this)?.ctxName });
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
@@ -171,10 +175,10 @@ export class ValidationController {
         }
         errors.push(this._addCustomTypeToValidationError(error));
         if (!error.message) {
-          logger.warn(LOG_TEXT.MISSING_ERROR_MESSAGE);
+          this._log.warn(LOG_TEXT.MISSING_ERROR_MESSAGE);
         }
       } catch (error) {
-        logger.warn(LOG_TEXT.COLLECTION_VALIDATION_FAILED, error);
+        this._log.warn(LOG_TEXT.COLLECTION_VALIDATION_FAILED, error);
       }
     }
 
@@ -236,7 +240,7 @@ export class ValidationController {
         const timeoutId = setTimeout(() => {
           state.skippedValidators.add(validatorDescriptor.validator);
           abortController.abort();
-          logger.warn(LOG_TEXT.FILE_VALIDATION_TIMEOUT);
+          this._log.warn(LOG_TEXT.FILE_VALIDATION_TIMEOUT);
         }, timeoutMs);
 
         try {
@@ -252,12 +256,12 @@ export class ValidationController {
           errors.push(normalizedError);
 
           if (!error.message) {
-            logger.warn(LOG_TEXT.MISSING_ERROR_MESSAGE);
+            this._log.warn(LOG_TEXT.MISSING_ERROR_MESSAGE);
           }
         } catch (error) {
           if (!abortController.signal.aborted) {
             state.skippedValidators.add(validatorDescriptor.validator);
-            logger.warn(LOG_TEXT.FILE_VALIDATION_FAILED, error);
+            this._log.warn(LOG_TEXT.FILE_VALIDATION_FAILED, error);
             this._host.onValidatorError(error, `file validator. ${LOG_TEXT.FILE_VALIDATION_FAILED}`);
           }
         } finally {

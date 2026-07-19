@@ -13,6 +13,8 @@ import { UploadCollectionController } from './controllers/UploadCollectionContro
 import type { ControllerContainer } from './di/ControllerContainer';
 import { logger } from './logger';
 
+const log = logger.scope('output-collection-state');
+
 function createAsyncAssertWrapper(warning: string) {
   let isAsync = false;
   setTimeout(() => {
@@ -22,7 +24,7 @@ function createAsyncAssertWrapper(warning: string) {
   const withAssert = <TArgs extends unknown[], TReturn, T extends (...args: TArgs) => TReturn>(fn: T): T => {
     return ((...args) => {
       if (isAsync) {
-        logger.warnOnce(warning);
+        log.warnOnce(warning);
       }
       return fn(...args);
     }) as T;

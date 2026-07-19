@@ -3,7 +3,6 @@ import { state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject } from '../../abstract/di/inject';
-import { logger } from '../../abstract/logger';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -371,7 +370,7 @@ export class CameraSource extends ChildBlock {
         this._setCameraState(CameraSourceEvents.PLAY);
       }
     } catch (error) {
-      logger.error('Failed to start recording', error);
+      this._log.error('Failed to start recording', error);
       this._telemetry.sendEventError(error, 'camera recording. Failed to start recording');
     }
   };
@@ -445,7 +444,7 @@ export class CameraSource extends ChildBlock {
 
       this._attachPreviewListeners(videoElement);
     } catch (error) {
-      logger.error('Failed to preview video', error);
+      this._log.error('Failed to preview video', error);
       this._telemetry.sendEventError(error, 'camera previewing. Failed to preview video');
     }
   };
@@ -829,7 +828,7 @@ export class CameraSource extends ChildBlock {
       this._setPermissionsState('granted');
     } catch (error) {
       this._setPermissionsState('denied');
-      logger.warn('Failed to capture camera', error);
+      this._log.warn('Failed to capture camera', error);
       this._telemetry.sendEventError(error, 'camera capturing. Failed to capture camera');
     }
   };
@@ -857,7 +856,7 @@ export class CameraSource extends ChildBlock {
       };
     } catch (error) {
       this._teardownPermissionListeners();
-      logger.warn('Failed to use permissions API. Fallback to manual request mode.', error);
+      this._log.warn('Failed to use permissions API. Fallback to manual request mode.', error);
       this._telemetry.sendEventError(error, 'camera permissions. Failed to use permissions API');
       this._capture();
     }
@@ -885,7 +884,7 @@ export class CameraSource extends ChildBlock {
       navigator.mediaDevices.addEventListener('devicechange', this._getDevices);
     } catch (error) {
       this._telemetry.sendEventError(error, 'camera devices. Failed to get user media');
-      logger.warn('Failed to get user media', error);
+      this._log.warn('Failed to get user media', error);
     }
   };
 
@@ -919,7 +918,7 @@ export class CameraSource extends ChildBlock {
       this._selectedAudioId = this._audioDevices[0]?.value ?? null;
     } catch (error) {
       this._telemetry.sendEventError(error, 'camera devices. Failed to get devices');
-      logger.warn('Failed to get devices', error);
+      this._log.warn('Failed to get devices', error);
     }
   };
 

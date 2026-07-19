@@ -2,25 +2,34 @@
  * Centralized, DOM-free, container-free logger for the whole codebase.
  *
  * Two tiers:
- * - **Always-on** (`error` / `warn` / `warnOnce`) — print unconditionally, with a
- *   plain `[uc]` / `[uc][scope]` prefix (greppable). Usable by container-less
- *   primitives (`EventBus`, `Listeners`, `Disposables`, utils) via the bare
- *   `logger`, since they need no ctx.
- * - **Gated** (`log` / `debug` and the pretty helpers `table` / `group` /
- *   `groupEnd` / `dir`) — print only when the scoped logger is enabled. The base
- *   `logger` is never enabled, so a bare `logger.debug(...)` is a no-op; gated
- *   output comes from a **ctx-scoped** logger created via
- *   `logger.scope(name, { isEnabled })`.
+ * - **Always-on** (`error` / `warn` / `warnOnce`) — print unconditionally.
+ * - **Gated / verbose** (`log` / `debug` and the pretty helpers `table` / `group`
+ *   / `dir`) — print only when the scoped logger's `isVerbose()` predicate is
+ *   true. The base `logger` is never verbose, so a bare `logger.debug(...)` is a
+ *   no-op; verbose output comes from a scoped logger.
  *
- * The logger stays config-agnostic: gating is a caller-supplied
- * `isEnabled: () => boolean` predicate, NOT a `ConfigController`. Each per-ctx
- * caller binds it to its OWN config's `debug` flag (see `ChildBlock._log` and the
- * upload/plugin controllers), so debug output is per-ctx accurate — one uploader
- * enabling `debug` never turns on another's, and lines carry that ctx's scope.
+ * Every log line is prefixed `[uc]`, then the **ctx-name** when the scope can
+ * resolve one (so multi-uploader output is attributable to its uploader), then
+ * the **scope** — e.g. `[uc][my-uploader][secure-uploads]`, or `[uc][event-bus]`
+ * for a container-less scope with no ctx. Both `isVerbose` and `ctxName` are
+ * caller-supplied lazy resolvers read at log time, so the logger stays
+ * config-agnostic and per-ctx accurate.
+ *
+ * Do NOT call the log methods inline on `logger.scope(...)`. Create ONE scoped
+ * logger per file/class at the top and reuse it (enforced by the `no-restricted-syntax`
+ * lint rule): `const log = logger.scope('my-scope');` then `log.warn(...)`.
  */
 
 /** `log`/`debug` accept plain args OR a single `() => unknown[]` thunk (not built when gated off). */
 export type LazyArgs = [() => unknown[]];
+
+/** Options for a scoped logger. Both resolvers are read lazily, at log time. */
+export interface ScopeOptions {
+  /** Verbose gate: `log`/`debug`/pretty helpers print only when this returns true. */
+  isVerbose?: () => boolean;
+  /** Resolves the current ctx-name for the prefix; omit for ctx-less scopes. */
+  ctxName?: () => string | undefined;
+}
 
 export interface Logger {
   /** Always-on. */
@@ -29,29 +38,29 @@ export interface Logger {
   warn(...args: unknown[]): void;
   /** Always-on; dedupes by message across the process. */
   warnOnce(message: string): void;
-  /** Gated (info). No-op unless this scoped logger is enabled. */
+  /** Verbose. No-op unless this scope's `isVerbose()` is true. */
   log(...args: unknown[] | LazyArgs): void;
-  /** Gated (verbose). No-op unless this scoped logger is enabled. */
+  /** Verbose. No-op unless this scope's `isVerbose()` is true. */
   debug(...args: unknown[] | LazyArgs): void;
-  /** Gated pretty helper: a labelled `console.table` for structured/tabular data. */
+  /** Verbose pretty helper: a labelled `console.table` for structured/tabular data. */
   table(label: string, data: unknown, columns?: readonly string[]): void;
   /**
-   * Gated pretty helper: open a `console.group` and return a closer. The closer
+   * Verbose pretty helper: open a `console.group` and return a closer. The closer
    * closes the group iff this call opened one (captured at open time) and is
-   * idempotent — so a `debug` flip (or ctx teardown) between open and close can
-   * never leave a dangling DevTools group or fire an unmatched `groupEnd`. Use
-   * with try/finally: `const end = log.group('x'); try { … } finally { end(); }`.
+   * idempotent — so a verbosity flip (or ctx teardown) between open and close can
+   * never leave a dangling group or fire an unmatched `groupEnd`. Use with
+   * try/finally: `const end = log.group('x'); try { … } finally { end(); }`.
    */
   group(label: string): () => void;
-  /** Gated pretty helper: `console.dir` for deep object inspection. */
+  /** Verbose pretty helper: `console.dir` for deep object inspection. */
   dir(obj: unknown): void;
-  /** A child logger prefixed `[uc][scope]`; pass `isEnabled` to gate its verbose tier. */
-  scope(name: string, options?: { isEnabled?: () => boolean }): Logger;
+  /** A child scope. Prefer one per file/class at the top; do not chain a log call on the result. */
+  scope(name: string, options?: ScopeOptions): Logger;
 }
 
 const warnedOnce = new Set<string>();
 
-// A subtle DevTools badge for the gated (dev-only) stream. No-op styling in
+// A subtle DevTools badge for the verbose (dev-only) stream. No-op styling in
 // non-browser consoles (the `%c` + style arg is simply ignored there). Exported
 // so tests can pin the exact style rather than matching `any(String)`.
 export const BADGE_STYLE = 'background:#7048e8;color:#fff;padding:1px 5px;border-radius:3px;font-weight:600';
@@ -59,40 +68,44 @@ export const BADGE_STYLE = 'background:#7048e8;color:#fff;padding:1px 5px;border
 const resolveArgs = (args: unknown[] | LazyArgs): unknown[] =>
   args.length === 1 && typeof args[0] === 'function' ? (args[0] as () => unknown[])() : (args as unknown[]);
 
-const create = (label: string, isEnabled: () => boolean): Logger => {
-  const plain = label ? `[uc][${label}]` : '[uc]';
-  const badge = label ? `%c[uc][${label}]` : '%c[uc]';
+const create = (scopeName: string, isVerbose: () => boolean, getCtxName?: () => string | undefined): Logger => {
+  // Prefix is rebuilt per call: `ctxName` is dynamic (a scope may outlive one
+  // ctx, and the value isn't known at scope-creation time).
+  const prefix = (styled: boolean): string => {
+    const parts = ['uc'];
+    const ctx = getCtxName?.();
+    if (ctx) parts.push(ctx);
+    if (scopeName) parts.push(scopeName);
+    const text = parts.map((p) => `[${p}]`).join('');
+    return styled ? `%c${text}` : text;
+  };
   return {
     error(...args: unknown[]): void {
-      console.error(plain, ...args);
+      console.error(prefix(false), ...args);
     },
     warn(...args: unknown[]): void {
-      console.warn(plain, ...args);
+      console.warn(prefix(false), ...args);
     },
     warnOnce(message: string): void {
       if (warnedOnce.has(message)) return;
       warnedOnce.add(message);
-      console.warn(plain, message);
+      console.warn(prefix(false), message);
     },
     log(...args: unknown[] | LazyArgs): void {
-      if (isEnabled()) console.log(badge, BADGE_STYLE, ...resolveArgs(args));
+      if (isVerbose()) console.log(prefix(true), BADGE_STYLE, ...resolveArgs(args));
     },
     debug(...args: unknown[] | LazyArgs): void {
-      if (isEnabled()) console.log(badge, BADGE_STYLE, ...resolveArgs(args));
+      if (isVerbose()) console.log(prefix(true), BADGE_STYLE, ...resolveArgs(args));
     },
     table(labelText: string, data: unknown, columns?: readonly string[]): void {
-      if (!isEnabled()) return;
-      console.log(badge, BADGE_STYLE, labelText);
-      // `columns` narrows which object keys are shown, when supported.
+      if (!isVerbose()) return;
+      console.log(prefix(true), BADGE_STYLE, labelText);
       columns ? console.table(data, columns as string[]) : console.table(data);
     },
     group(labelText: string): () => void {
-      if (!isEnabled()) return () => {};
-      console.group(badge, BADGE_STYLE, labelText);
+      if (!isVerbose()) return () => {};
+      console.group(prefix(true), BADGE_STYLE, labelText);
       let closed = false;
-      // Idempotent, self-contained closer: does NOT re-check isEnabled, so an
-      // async gap that flips debug off (or disposes the ctx) still closes the
-      // group this call opened — and closes it exactly once.
       return () => {
         if (closed) return;
         closed = true;
@@ -100,19 +113,18 @@ const create = (label: string, isEnabled: () => boolean): Logger => {
       };
     },
     dir(obj: unknown): void {
-      if (!isEnabled()) return;
-      console.log(badge, BADGE_STYLE);
+      if (!isVerbose()) return;
+      console.log(prefix(true), BADGE_STYLE);
       console.dir(obj);
     },
-    scope(name: string, options?: { isEnabled?: () => boolean }): Logger {
-      const childLabel = label ? `${label}][${name}` : name;
-      // A child without its own predicate inherits the parent's gate.
-      return create(childLabel, options?.isEnabled ?? isEnabled);
+    scope(name: string, options?: ScopeOptions): Logger {
+      // A child inherits the parent's resolvers unless it overrides them.
+      return create(name, options?.isVerbose ?? isVerbose, options?.ctxName ?? getCtxName);
     },
   };
 };
 
-/** The base logger: always-on tiers print; the gated tier is a no-op (never enabled). */
+/** The base logger: always-on tiers print; the verbose tier is a no-op (never verbose). */
 export const logger: Logger = create('', () => false);
 
 /** Test-only: reset the `warnOnce` dedupe set between cases. */

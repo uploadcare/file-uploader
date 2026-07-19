@@ -4,7 +4,6 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
 import type { RouterController } from '../../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
-import { logger } from '../../abstract/logger';
 import type { Owned, PluginActivityRegistration, PluginRenderDispose } from '../../abstract/managers/plugin';
 import { PluginController } from '../../abstract/managers/plugin';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
@@ -66,9 +65,7 @@ export class PluginActivityHost extends ActivityChildBlock {
       this._dispose = this.registration.render(container, this._router.params) ?? undefined;
       this._isMounted = true;
     } catch (error) {
-      logger
-        .scope('PluginActivityRenderer')
-        .error(`Plugin "${this.registration.pluginId}" Activity render() threw an error`, error);
+      this._log.error(`Plugin "${this.registration.pluginId}" Activity render() threw an error`, error);
     }
   }
 
@@ -76,9 +73,7 @@ export class PluginActivityHost extends ActivityChildBlock {
     try {
       this._dispose?.();
     } catch (error) {
-      logger
-        .scope('PluginActivityRenderer')
-        .error(`Plugin "${this.registration?.pluginId}" Activity dispose threw an error`, error);
+      this._log.error(`Plugin "${this.registration?.pluginId}" Activity dispose threw an error`, error);
     }
     this._dispose = undefined;
     this._containerRef.value?.replaceChildren();

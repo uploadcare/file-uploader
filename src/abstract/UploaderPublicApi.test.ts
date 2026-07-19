@@ -579,13 +579,13 @@ describe('UploaderPublicApi', () => {
     });
 
     it('navigate warns when the target activity block never mounts', async () => {
-      const { api } = setup();
+      const { api, ctxName } = setup();
       const warn = vi.spyOn(console, 'warn');
 
       api.navigate('camera');
       await new Promise((r) => setTimeout(r, 150));
 
-      expect(warn).toHaveBeenCalledWith('[uc]', expect.stringContaining('camera'));
+      expect(warn).toHaveBeenCalledWith(`[uc][${ctxName}][public-api]`, expect.stringContaining('camera'));
     });
 
     it('setCurrentActivity(null) closes everything', async () => {
@@ -599,13 +599,13 @@ describe('UploaderPublicApi', () => {
     });
 
     it('setCurrentActivity warns when the target activity block never mounts', async () => {
-      const { api } = setup();
+      const { api, ctxName } = setup();
       const warn = vi.spyOn(console, 'warn');
 
       api.setCurrentActivity('camera');
       await new Promise((r) => setTimeout(r, 150));
 
-      expect(warn).toHaveBeenCalledWith('[uc]', expect.stringContaining('camera'));
+      expect(warn).toHaveBeenCalledWith(`[uc][${ctxName}][public-api]`, expect.stringContaining('camera'));
     });
 
     it('setCurrentActivity sets the background activity', async () => {
@@ -642,13 +642,13 @@ describe('UploaderPublicApi', () => {
     });
 
     it('setModalState(true) warns when there is no current activity', async () => {
-      const { api } = setup();
+      const { api, ctxName } = setup();
       const warn = vi.spyOn(console, 'warn');
 
       api.setModalState(true);
       await flush();
 
-      expect(warn).toHaveBeenCalledWith('[uc]', expect.stringContaining('setCurrentActivity'));
+      expect(warn).toHaveBeenCalledWith(`[uc][${ctxName}][public-api]`, expect.stringContaining('setCurrentActivity'));
     });
 
     it('setModalState(true) keeps the modal closed if the block never mounts', async () => {

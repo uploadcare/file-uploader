@@ -5,6 +5,8 @@ import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils';
 import type { UploadCollectionController } from './controllers/UploadCollectionController';
 import { logger } from './logger';
 
+const log = logger.scope('initial-crop');
+
 /**
  * Apply the configured `cropPreset` as an initial centered crop to every
  * uploaded image entry that doesn't already carry a crop modifier. Pure
@@ -33,7 +35,7 @@ export function applyInitialCrop(collection: UploadCollectionController, cropPre
   for (const entry of entries) {
     const fileInfo = entry.getValue('fileInfo');
     if (!fileInfo || !fileInfo.imageInfo) {
-      logger.warn('Failed to get image info for entry', entry.uid);
+      log.warn('Failed to get image info for entry', entry.uid);
       continue;
     }
     const { width, height } = fileInfo.imageInfo;
@@ -49,7 +51,7 @@ export function applyInitialCrop(collection: UploadCollectionController, cropPre
     const cdnUrlModifiers = createCdnUrlModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`, 'preview');
     const cdnUrl = entry.getValue('cdnUrl');
     if (!cdnUrl) {
-      logger.warn('Failed to get cdnUrl for entry', entry.uid);
+      log.warn('Failed to get cdnUrl for entry', entry.uid);
       continue;
     }
     entry.setMultipleValues({
