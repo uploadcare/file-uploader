@@ -35,10 +35,14 @@ export interface Logger {
   debug(...args: unknown[] | LazyArgs): void;
   /** Gated pretty helper: a labelled `console.table` for structured/tabular data. */
   table(label: string, data: unknown, columns?: readonly string[]): void;
-  /** Gated pretty helper: open a `console.group` (pair with `groupEnd`). */
-  group(label: string): void;
-  /** Gated pretty helper: close the current group. */
-  groupEnd(): void;
+  /**
+   * Gated pretty helper: open a `console.group` and return a closer. The closer
+   * closes the group iff this call opened one (captured at open time) and is
+   * idempotent — so a `debug` flip (or ctx teardown) between open and close can
+   * never leave a dangling DevTools group or fire an unmatched `groupEnd`. Use
+   * with try/finally: `const end = log.group('x'); try { … } finally { end(); }`.
+   */
+  group(label: string): () => void;
   /** Gated pretty helper: `console.dir` for deep object inspection. */
   dir(obj: unknown): void;
   /** A child logger prefixed `[uc][scope]`; pass `isEnabled` to gate its verbose tier. */
@@ -48,8 +52,9 @@ export interface Logger {
 const warnedOnce = new Set<string>();
 
 // A subtle DevTools badge for the gated (dev-only) stream. No-op styling in
-// non-browser consoles (the `%c` + style arg is simply ignored there).
-const BADGE_STYLE = 'background:#7048e8;color:#fff;padding:1px 5px;border-radius:3px;font-weight:600';
+// non-browser consoles (the `%c` + style arg is simply ignored there). Exported
+// so tests can pin the exact style rather than matching `any(String)`.
+export const BADGE_STYLE = 'background:#7048e8;color:#fff;padding:1px 5px;border-radius:3px;font-weight:600';
 
 const resolveArgs = (args: unknown[] | LazyArgs): unknown[] =>
   args.length === 1 && typeof args[0] === 'function' ? (args[0] as () => unknown[])() : (args as unknown[]);
@@ -81,11 +86,18 @@ const create = (label: string, isEnabled: () => boolean): Logger => {
       // `columns` narrows which object keys are shown, when supported.
       columns ? console.table(data, columns as string[]) : console.table(data);
     },
-    group(labelText: string): void {
-      if (isEnabled()) console.group(badge, BADGE_STYLE, labelText);
-    },
-    groupEnd(): void {
-      if (isEnabled()) console.groupEnd();
+    group(labelText: string): () => void {
+      if (!isEnabled()) return () => {};
+      console.group(badge, BADGE_STYLE, labelText);
+      let closed = false;
+      // Idempotent, self-contained closer: does NOT re-check isEnabled, so an
+      // async gap that flips debug off (or disposes the ctx) still closes the
+      // group this call opened — and closes it exactly once.
+      return () => {
+        if (closed) return;
+        closed = true;
+        console.groupEnd();
+      };
     },
     dir(obj: unknown): void {
       if (!isEnabled()) return;

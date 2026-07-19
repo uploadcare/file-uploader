@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { __resetLoggerForTests, logger } from './logger';
+import { __resetLoggerForTests, BADGE_STYLE, logger } from './logger';
 
 afterEach(() => {
   __resetLoggerForTests();
@@ -63,8 +63,8 @@ describe('logger.scope', () => {
     on = true;
     scoped.debug('d2');
     scoped.log('l2');
-    expect(log).toHaveBeenCalledWith('%c[uc][DropArea]', expect.any(String), 'd2');
-    expect(log).toHaveBeenCalledWith('%c[uc][DropArea]', expect.any(String), 'l2');
+    expect(log).toHaveBeenCalledWith('%c[uc][DropArea]', BADGE_STYLE, 'd2');
+    expect(log).toHaveBeenCalledWith('%c[uc][DropArea]', BADGE_STYLE, 'l2');
   });
 
   it('gating is per-scope: two scopes with independent predicates do not affect each other', () => {
@@ -76,7 +76,7 @@ describe('logger.scope', () => {
     b.debug('from-b');
 
     expect(log).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalledWith('%c[uc][A]', expect.any(String), 'from-a');
+    expect(log).toHaveBeenCalledWith('%c[uc][A]', BADGE_STYLE, 'from-a');
   });
 
   it('debug accepts a lazy `() => args` thunk that is not evaluated when gated off', () => {
@@ -91,7 +91,7 @@ describe('logger.scope', () => {
     on = true;
     scoped.debug(build);
     expect(build).toHaveBeenCalledTimes(1);
-    expect(log).toHaveBeenCalledWith('%c[uc][X]', expect.any(String), 'expensive');
+    expect(log).toHaveBeenCalledWith('%c[uc][X]', BADGE_STYLE, 'expensive');
   });
 });
 
@@ -102,7 +102,7 @@ describe('logger pretty helpers (gated)', () => {
     const scoped = logger.scope('Upload', { isEnabled: () => true });
 
     scoped.table('upload options', { a: 1 });
-    expect(log).toHaveBeenCalledWith('%c[uc][Upload]', expect.any(String), 'upload options');
+    expect(log).toHaveBeenCalledWith('%c[uc][Upload]', BADGE_STYLE, 'upload options');
     expect(table).toHaveBeenCalledWith({ a: 1 });
   });
 
@@ -112,18 +112,53 @@ describe('logger pretty helpers (gated)', () => {
     expect(table).not.toHaveBeenCalled();
   });
 
-  it('group/groupEnd and dir are gated', () => {
+  it('table forwards a columns filter to console.table when given', () => {
+    const table = vi.spyOn(console, 'table').mockImplementation(() => {});
+    logger.scope('Upload', { isEnabled: () => true }).table('rows', [{ a: 1, b: 2 }], ['a']);
+    expect(table).toHaveBeenCalledWith([{ a: 1, b: 2 }], ['a']);
+  });
+
+  it('group returns a closer; dir is gated', () => {
     const group = vi.spyOn(console, 'group').mockImplementation(() => {});
     const groupEnd = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
     const dir = vi.spyOn(console, 'dir').mockImplementation(() => {});
     const scoped = logger.scope('S', { isEnabled: () => true });
 
-    scoped.group('steps');
+    const end = scoped.group('steps');
     scoped.dir({ nested: true });
-    scoped.groupEnd();
+    end();
+    end(); // idempotent — a second close is a no-op
 
-    expect(group).toHaveBeenCalledWith('%c[uc][S]', expect.any(String), 'steps');
+    expect(group).toHaveBeenCalledWith('%c[uc][S]', BADGE_STYLE, 'steps');
     expect(dir).toHaveBeenCalledWith({ nested: true });
     expect(groupEnd).toHaveBeenCalledTimes(1);
+  });
+
+  it('the group closer still closes even if isEnabled flips false between open and close', () => {
+    const group = vi.spyOn(console, 'group').mockImplementation(() => {});
+    const groupEnd = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
+    let on = true;
+    const scoped = logger.scope('S', { isEnabled: () => on });
+
+    const end = scoped.group('steps'); // opened while enabled
+    on = false; // ctx debug turned off / ctx torn down mid-sequence
+    end();
+
+    expect(group).toHaveBeenCalledTimes(1);
+    expect(groupEnd).toHaveBeenCalledTimes(1); // no dangling group
+  });
+
+  it('a group opened while disabled returns a no-op closer (no unmatched groupEnd)', () => {
+    const group = vi.spyOn(console, 'group').mockImplementation(() => {});
+    const groupEnd = vi.spyOn(console, 'groupEnd').mockImplementation(() => {});
+    let on = false;
+    const scoped = logger.scope('S', { isEnabled: () => on });
+
+    const end = scoped.group('steps'); // not opened (disabled)
+    on = true; // even if enabled later…
+    end(); // …the closer must not fire an unmatched groupEnd
+
+    expect(group).not.toHaveBeenCalled();
+    expect(groupEnd).not.toHaveBeenCalled();
   });
 });

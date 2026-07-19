@@ -39,7 +39,7 @@ export class SecureUploadsController {
         // Bounded, multi-step refresh sequence — group it so the lifecycle
         // reads as one block. `finally` guarantees the group closes even if the
         // resolver throws.
-        this._log.group('secure signature');
+        const endGroup = this._log.group('secure signature');
         try {
           if (!this._secureToken) {
             this._log.debug('Secure signature is not set yet.');
@@ -67,7 +67,7 @@ export class SecureUploadsController {
             'secureUploadsSignatureResolver. Secure signature resolving failed. Falling back to the previous one.',
           );
         } finally {
-          this._log.groupEnd();
+          endGroup();
         }
       }
 

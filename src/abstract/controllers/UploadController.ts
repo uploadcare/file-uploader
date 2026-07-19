@@ -27,8 +27,10 @@ import { UploadHostBridge } from './UploadHostBridge';
  * isolation), upload-client option assembly, the queued `uploadFile` call,
  * progress, and the success/cancel/error write-back. Container-resolved (M-god
  * step 5): controller peers (config, collection, secure-uploads) and the
- * `UploadHostBridge` (plugin hooks, output-item resolver, telemetry sink, debug)
- * are `@inject`-ed, so it runs zero-arg without a DOM and is unit-testable; the
+ * `UploadHostBridge` (plugin hooks, output-item resolver, telemetry sink)
+ * are `@inject`-ed, so it runs zero-arg without a DOM and is unit-testable;
+ * debug output goes through the per-ctx `this._log` (gated by this ctx's `debug`
+ * config), not a host bridge; the
  * FileItem UI reacts to the same entry mutations through its existing per-entry
  * subscriptions.
  */
