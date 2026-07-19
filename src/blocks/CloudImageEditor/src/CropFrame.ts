@@ -2,7 +2,6 @@ import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { logger } from '../../../abstract/logger';
 import { UID } from '../../../utils/UID';
 import {
   clamp,
@@ -30,8 +29,6 @@ import {
 import { EditorBlock } from './editor-context';
 import { classNames } from './lib/classNames.js';
 import type { Direction, FrameThumbs, Rectangle } from './types';
-
-const log = logger.scope('crop-frame');
 
 type FrameThumb = NonNullable<FrameThumbs[Direction]>;
 
@@ -446,7 +443,7 @@ export class CropFrame extends EditorBlock {
     }
 
     if (!Object.values(rect).every((number) => Number.isFinite(number) && number >= 0)) {
-      log.error('CropFrame is trying to create invalid rectangle', {
+      this._log.error('CropFrame is trying to create invalid rectangle', {
         payload: rect,
       });
       return;
