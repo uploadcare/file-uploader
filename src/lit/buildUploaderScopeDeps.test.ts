@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { __resetLoggerForTests, logger } from '../abstract/logger';
+import { ConfigController } from '../abstract/controllers/ConfigController';
+import { __resetLoggerForTests } from '../abstract/logger';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { buildUploaderScopeDeps } from './buildUploaderScopeDeps';
@@ -37,9 +38,10 @@ describe('buildUploaderScopeDeps', () => {
     const sendEventError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {
       throw new Error('telemetry sink is down');
     });
-    // The fallback log is `logger.debug`, gated off at the default `warn` level —
-    // raise verbosity so console.log actually fires and can be asserted.
-    logger.configure({ level: 'debug' });
+    // The fallback log is a per-ctx gated `logger.debug` — enable this ctx's
+    // `debug` config so the gated tier fires and can be asserted. The badge
+    // header is `%c[uc][uploader]` + a style arg.
+    container.get(ConfigController).set('debug', true);
     const debug = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const { host } = buildUploaderScopeDeps(container, vi.fn());
@@ -50,9 +52,24 @@ describe('buildUploaderScopeDeps', () => {
 
     expect(sendEventError).toHaveBeenCalledTimes(3);
     expect(debug).toHaveBeenCalledTimes(3);
-    expect(debug).toHaveBeenCalledWith('[uc]', 'telemetry unavailable for a resolver error report', expect.any(Error));
-    expect(debug).toHaveBeenCalledWith('[uc]', 'telemetry unavailable for an upload error report', expect.any(Error));
-    expect(debug).toHaveBeenCalledWith('[uc]', 'telemetry unavailable for a validator error report', expect.any(Error));
+    expect(debug).toHaveBeenCalledWith(
+      '%c[uc][uploader]',
+      expect.any(String),
+      'telemetry unavailable for a resolver error report',
+      expect.any(Error),
+    );
+    expect(debug).toHaveBeenCalledWith(
+      '%c[uc][uploader]',
+      expect.any(String),
+      'telemetry unavailable for an upload error report',
+      expect.any(Error),
+    );
+    expect(debug).toHaveBeenCalledWith(
+      '%c[uc][uploader]',
+      expect.any(String),
+      'telemetry unavailable for a validator error report',
+      expect.any(Error),
+    );
   });
 
   it('reports through telemetryManager.sendEventError without touching the logger when it does not throw', () => {
@@ -61,7 +78,7 @@ describe('buildUploaderScopeDeps', () => {
     const container = UploaderRegistry.get(ctxName)!;
 
     const sendEventError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {});
-    logger.configure({ level: 'debug' });
+    container.get(ConfigController).set('debug', true);
     const debug = vi.spyOn(console, 'log').mockImplementation(() => {});
 
     const { host } = buildUploaderScopeDeps(container, vi.fn());

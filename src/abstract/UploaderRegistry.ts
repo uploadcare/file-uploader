@@ -1,5 +1,4 @@
 import { ConfigController } from './controllers/ConfigController';
-import { LoggerConfigSync } from './controllers/LoggerConfigSync';
 import { RouterController } from './controllers/RouterController';
 import { ControllerContainer } from './di/ControllerContainer';
 import { logger } from './logger';
@@ -94,10 +93,6 @@ class UploaderRegistryImpl {
       container.get(ConfigController);
       container.get(RouterController);
       container.get(TelemetryManager);
-      // Connect this ctx's `debug` config to the global logger's verbosity
-      // (init subscribes; container disposal runs its destroy). Eager so debug
-      // logging works from ctx creation, before any block renders.
-      container.get(LoggerConfigSync);
     } catch (err) {
       // Eager init threw: roll the half-built container back out of `_map` so a
       // later `ensure()` retries a clean creation (instead of returning the

@@ -38,6 +38,10 @@ export class UploadController {
   @inject(SecureUploadsController) private readonly _secureUploads!: SecureUploadsController;
   @inject(UploadHostBridge) private readonly _host!: UploadHostBridge;
 
+  // Per-ctx gated logger: the verbose tier prints only when THIS ctx's `debug`
+  // config is on. The predicate reads `_config` lazily at log time.
+  private readonly _log = logger.scope('Upload', { isEnabled: () => this._config.get('debug') });
+
   // One queue per uploader scope → global concurrency across all entries (v1 parity).
   private _queue = new Queue(1);
   readonly #disposables = new Disposables();
@@ -184,7 +188,7 @@ export class UploadController {
           signal: abortController.signal,
           metadata: await this.getMetadataFor(uid),
         };
-        logger.debug('upload options', fileInput, uploadClientOptions);
+        this._log.table('upload options', uploadClientOptions);
         return uploadFile(fileInput, uploadClientOptions);
       };
 

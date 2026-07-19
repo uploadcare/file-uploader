@@ -3,6 +3,7 @@
 // them, keeping editor-only bundles (which import neither this builder nor
 // `ensureUploaderScope`) free of `@uploadcare/upload-client` and friends.
 
+import { ConfigController } from '../abstract/controllers/ConfigController';
 import type { UploadStackControllers } from '../abstract/controllers/registerUploadStack';
 import { SecureUploadsController } from '../abstract/controllers/SecureUploadsController';
 import { UploadController } from '../abstract/controllers/UploadController';
@@ -37,8 +38,8 @@ export type UploaderScopeDeps = {
  * The three telemetry error sinks (`onResolverError`/`onUploadError`/
  * `onValidatorError`) are built here too, wrapping
  * `TelemetryManager.sendEventError` in a never-throw try/catch (an upload's
- * async error handler can fire after the scope is torn down) and logging via the
- * centralized `logger`.
+ * async error handler can fire after the scope is torn down) and logging via a
+ * per-ctx gated `logger` scope (keyed off this ctx's `debug` config).
  *
  * Resolves every instance off the `ControllerContainer`:
  * `container.get(TelemetryManager)` for the sinks, `container.get(EventEmitter)`
@@ -47,6 +48,11 @@ export type UploaderScopeDeps = {
  * `PluginController`.
  */
 export function buildUploaderScopeDeps(container: ControllerContainer, emit: UploadHostEmit): UploaderScopeDeps {
+  // Per-ctx gated logger for the telemetry error sinks: the verbose tier prints
+  // only when THIS ctx's `debug` config is on. The predicate reads the config
+  // lazily at log time, and the `log.debug` call below stays inside the
+  // never-throw try/catch, so a torn-down container can't surface an error.
+  const log = logger.scope('uploader', { isEnabled: () => container.get(ConfigController).get('debug') });
   const reportTelemetryError =
     (report: string) =>
     (error: unknown, context: string): void => {
@@ -58,7 +64,7 @@ export function buildUploaderScopeDeps(container: ControllerContainer, emit: Upl
         // The fallback logger must not throw either, or the original async
         // upload failure becomes an unhandled rejection.
         try {
-          logger.debug(report, err);
+          log.debug(report, err);
         } catch {
           // Error reporting must never mask the original failure.
         }

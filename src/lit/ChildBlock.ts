@@ -179,6 +179,17 @@ export abstract class ChildBlock extends ChildBlockBase {
   public l10n = createL10n(() => this.use(LocaleController));
 
   /**
+   * Per-ctx logger for this block. `error`/`warn`/`warnOnce` always print; the
+   * gated `debug`/`log`/`table`/`group`/`dir` tier prints only when THIS ctx's
+   * `debug` config is on — so debug output is per-ctx accurate and prefixed with
+   * the block's tag. The `isEnabled` predicate reads the container lazily at log
+   * time (null-safe: a pre-adoption call is a no-op).
+   */
+  protected readonly _log = logger.scope(this.constructor.name, {
+    isEnabled: () => this.containerOrNull?.get(ConfigController).get('debug') ?? false,
+  });
+
+  /**
    * Emit a documented uploader event — same contract as v1 `LitBlock.emit`.
    * Guarded for teardown: emissions can race ctx destruction (queued events),
    * so a missing emitter is a no-op.
