@@ -69,7 +69,7 @@ export abstract class ChildBlock extends ChildBlockBase {
   private _watchedCtxName: string | undefined = undefined;
   private _registryUnsub?: () => void;
   // Teardown engine for this block's adoption-scoped subscriptions (config test
-  // sync, `@effect` / `@subscription` methods, and the transitional `trackSub`).
+  // sync, `@effect` / `@subscription` methods, and `addDisposer` teardowns).
   // Drained on controller release / disconnect. Uses this block's scoped logger
   // (thunked — `_log` initializes later) so an isolate-and-warn teardown throw
   // keeps the block tag + ctx-name context.
@@ -474,14 +474,17 @@ export abstract class ChildBlock extends ChildBlockBase {
   }
 
   /**
-   * Track a subscription for auto-teardown on controller release / disconnect.
+   * Register a teardown closure for auto-disposal on controller release /
+   * disconnect (adds it to this block's `Disposables`).
    *
-   * @deprecated Transitional — a migrated block declares reactive wiring with
-   * `@effect` (signal reactions) or `@subscription` (imperative subscribes),
-   * both auto-disposed, instead of tracking teardowns by hand. Removed once
-   * every remaining call site is migrated.
+   * Prefer the declarative decorators — `@effect` (signal reactions) or
+   * `@subscription` (imperative subscribes, returns its teardown) — which
+   * register and dispose automatically. Reach for `addDisposer` only for a
+   * teardown that isn't adoption-scoped-declarative: a subscription created
+   * dynamically after adoption, or one that must be wired at a specific point in
+   * `controllerReady` (ordering-sensitive), where a decorator can't express it.
    */
-  protected trackSub(unsub: () => void): void {
+  protected addDisposer(unsub: () => void): void {
     this._disposables.add(unsub);
   }
 

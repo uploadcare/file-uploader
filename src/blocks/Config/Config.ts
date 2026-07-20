@@ -359,7 +359,7 @@ export class Config extends ChildBlock {
           }
         });
         this._customConfigSubscriptions.set(name, unsub);
-        this.trackSub(unsub);
+        this.addDisposer(unsub);
       }
 
       if (hasPreExistingValue) {
@@ -379,11 +379,11 @@ export class Config extends ChildBlock {
    * `_setValue`. Recovers the per-key old/new by diffing a snapshot over the
    * coarse `subscribe` notify (same pattern as the per-key sync subscriptions).
    * Seeded before the initial-value flush so startup sets are logged; re-seeded
-   * per adoption and torn down via `trackSub`.
+   * per adoption and torn down via `addDisposer`.
    */
   private _setupChangeLog(): void {
     let snapshot: Record<string, unknown> = { ...this._config.values };
-    this.trackSub(
+    this.addDisposer(
       this._config.subscribe(() => {
         const next = this._config.values as Record<string, unknown>;
         for (const key of Object.keys(next)) {
@@ -410,7 +410,7 @@ export class Config extends ChildBlock {
     // instead of leaving it to fire against the wrong controller. (A synchronous
     // resolve returns a no-op unsub; tracking it is harmless.) In an editor-alone
     // ctx the bridge is never bound, so this stays inert (no plugins standalone).
-    this.trackSub(
+    this.addDisposer(
       this.container.whenController(PluginManagerBridge, (bridge) => {
         const pluginManager = bridge.getPluginManager();
         // Initial setup
@@ -465,11 +465,11 @@ export class Config extends ChildBlock {
   /**
    * Fires on every controller adoption — the initial one and any re-adoption
    * (ctx-name switch, or ctx death + re-adopt on a v1-managed ctx). All
-   * subscriptions below route through `trackSub` (or the manual
+   * subscriptions below route through `addDisposer` (or the manual
    * `ConfigController.subscribe` + dedup, tracked the same way) so a
    * re-adoption tears the previous cycle's subscriptions down instead of
    * stacking a second set on top. The plugin-change listener and the
-   * MutationObserver are host/DOM-level and not covered by `trackSub` — see
+   * MutationObserver are host/DOM-level and not covered by `addDisposer` — see
    * the teardown-before-resubscribe below and the idempotent guard,
    * respectively.
    */
@@ -499,25 +499,6 @@ export class Config extends ChildBlock {
     // Change-log observer — set up BEFORE the initial-value flush below so the
     // startup config values are logged too. Verbose/debug-gated.
     this._setupChangeLog();
-
-    // Subscribe to the state changes and update the local properties and attributes.
-    // Initial callback call is disabled to prevent the initial value to be set here.
-    // Initial value will be set below, skipping the default values.
-    // `trackSub` (not `subConfigValue`, which fires init=true) preserves the
-    // manual per-key dedup over the coarse `ConfigController.subscribe`
-    // notification, and ties teardown to controller release/re-adoption.
-    for (const key of plainConfigKeys) {
-      let lastValue = this._config.get(key);
-      this.trackSub(
-        this._config.subscribe(() => {
-          const nextValue = this._config.get(key);
-          if (!Object.is(nextValue, lastValue)) {
-            lastValue = nextValue;
-            this._setValue(key, nextValue);
-          }
-        }),
-      );
-    }
 
     for (const key of allConfigKeys) {
       // Flush the initial value to the state.
@@ -553,6 +534,15 @@ export class Config extends ChildBlock {
     }
   }
 
+  // Sync each plain (attribute-representable) config key into the local property
+  // on change. Per-key `ConfigController.observe` (atomic dedup) replaces the
+  // coarse `subscribe` + manual `Object.is` loop; change-only (no eager) — the
+  // initial values are seeded by the `allConfigKeys` flush in `controllerReady`.
+  @subscription()
+  protected _wirePlainConfigSync(): Unsubscribe[] {
+    return plainConfigKeys.map((key) => this._config.observe(key, (value) => this._setValue(key, value)));
+  }
+
   // Computed properties (`cdnCname`, `cameraModes`, …) recompute from their
   // dependency config keys. Per-key `ConfigController.observe` reproduces the
   // former per-key `subConfigValue` (dedup, no unrelated-key re-fire); the eager
@@ -580,7 +570,7 @@ export class Config extends ChildBlock {
    * clears the custom-config bookkeeping so a subsequent `controllerReady`
    * (re-adoption onto a different ctx) starts subscribing fresh instead of
    * skipping names it thinks are already subscribed on a now-defunct
-   * controller's `ConfigController`. The `trackSub`-registered subscriptions
+   * controller's `ConfigController`. The `addDisposer`-registered subscriptions
    * themselves are already torn down by `ChildBlock._releaseController`
    * before this hook runs.
    */

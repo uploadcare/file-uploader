@@ -34,10 +34,10 @@ class TestChildBlock extends ChildBlock {
     }
     this.readyCount += 1;
     if (this.throwOnRelease) {
-      this.trackSub(() => {
+      this.addDisposer(() => {
         throw new Error('boom');
       });
-      this.trackSub(() => {
+      this.addDisposer(() => {
         this.cleanupRanAfterThrow = true;
       });
     }
