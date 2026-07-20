@@ -6,6 +6,7 @@ import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { effect } from '../../lit/effect';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { debounce } from '../../utils/debounce';
@@ -955,27 +956,31 @@ export class CameraSource extends ChildBlock {
   };
 
   protected override controllerReady(): void {
-    // `cameraMirror` is now a tracked render read (see `_videoTransformCss`).
-    // These two stay `subConfigValue` (side-effecting, not pure render reads):
-    // `enableAudioRecording` and `cameraModes` mutate several imperative @state
-    // fields also written by the camera-stream handlers, so they can't collapse
-    // into a derived render getter.
-    this.subConfigValue('enableAudioRecording', (val) => {
-      this._audioToggleMicrophoneHidden = !val;
-      this._audioSelectDisabled = !val;
-    });
-
-    this.subConfigValue('cameraModes', (val) => {
-      if (!this.isConnected) return;
-      const cameraModes = deserializeCsv(val);
-      this._handleCameraModes(
-        cameraModes.filter(
-          (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
-        ),
-      );
-    });
-
     void this._onActivate();
+  }
+
+  // `cameraMirror` is a tracked render read (see `_videoTransformCss`). These two
+  // config reactions mutate imperative `@state` fields also written by the
+  // camera-stream handlers (two-writer), so they can't collapse into a derived
+  // render getter — they're `@effect`s. `beforeUpdate` fires them eagerly and
+  // synchronously on adoption (before `_onActivate`'s awaited work runs),
+  // matching the former eager `subConfigValue` fire, then again on change.
+  @effect({ beforeUpdate: true })
+  protected _syncEnableAudioRecording(): void {
+    const enabled = this._config.getTracked('enableAudioRecording');
+    this._audioToggleMicrophoneHidden = !enabled;
+    this._audioSelectDisabled = !enabled;
+  }
+
+  @effect({ beforeUpdate: true })
+  protected _syncCameraModes(): void {
+    if (!this.isConnected) return;
+    const cameraModes = deserializeCsv(this._config.getTracked('cameraModes'));
+    this._handleCameraModes(
+      cameraModes.filter(
+        (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
+      ),
+    );
   }
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
