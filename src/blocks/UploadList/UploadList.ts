@@ -31,18 +31,19 @@ export type Summary = {
 };
 
 export class UploadList extends ActivityChildBlock {
-  // Always-bound controllers read directly become `@inject` fields:
-  // `ConfigController` (tracked `filesViewMode` host attr + imperative
-  // derived-state reads), `CollectionStateController` (tracked `uploadList` /
-  // `collectionErrors` render reads), `TelemetryManager` (add-more / clear-all
-  // action events). `RouterController` is inherited from `ActivityChildBlock`
-  // (its `protected _router` @inject field). `UploaderPublicApi` (flow actions +
-  // output-state reads) and `UploadCollectionController` (clear-all + the guard's
-  // size read) are uploader-scope-bound — read via `use()`/`useOrNull`/
-  // `whenController`, so they stay off `@inject`.
+  // Controllers read from adopted handlers become `@inject` fields (the getter
+  // re-resolves from the current container on each access, so re-adoption is
+  // safe): `ConfigController`, `CollectionStateController`, `TelemetryManager`,
+  // plus `UploaderPublicApi` (flow actions) and `UploadCollectionController`
+  // (clear-all). `RouterController` is inherited from `ActivityChildBlock`.
+  // The teardown-tolerant reads stay on `useOrNull`/`whenController` (the guard
+  // predicate + the throttled tick can fire after release, where `@inject`
+  // would throw); the observer wiring goes through `whenController`.
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+  @inject(UploadCollectionController) private readonly _uploadCollection!: UploadCollectionController;
 
   public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
 
@@ -98,21 +99,18 @@ export class UploadList extends ActivityChildBlock {
         },
       },
     });
-    // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
-    // token — it is container-resolved (M-god step 8a), reached via `use()`.
-    this.use(UploaderPublicApi).initFlow(true);
+    this._api.initFlow(true);
   };
 
   private _handleUpload = (): void => {
     this.emit(EventType.UPLOAD_CLICK);
-    this.use(UploaderPublicApi).uploadAll();
+    this._api.uploadAll();
     this._throttledHandleCollectionUpdate();
   };
 
   private _handleDone = (): void => {
-    const api = this.use(UploaderPublicApi);
-    this.emit(EventType.DONE_CLICK, api.getOutputCollectionState());
-    api.doneFlow();
+    this.emit(EventType.DONE_CLICK, this._api.getOutputCollectionState());
+    this._api.doneFlow();
   };
 
   private _handleCancel = (): void => {
@@ -126,9 +124,7 @@ export class UploadList extends ActivityChildBlock {
       },
     });
 
-    // `uploadCollection` is container-owned (M-god step 4); this handler runs
-    // post-adoption (user click), so `use()` is safe.
-    this.use(UploadCollectionController).clearAll();
+    this._uploadCollection.clearAll();
   };
 
   private _throttledHandleCollectionUpdate = throttle(() => {
@@ -155,11 +151,11 @@ export class UploadList extends ActivityChildBlock {
   private _updateUploadsState(): void {
     // Imperative derived-state recompute (writes the toolbar/button `@state`
     // below), not a render read — runs only from the throttled tick after its
-    // container guard, so the container is adopted and `use()` is safe. Config
-    // reads use the untracked `get()` (a re-render is driven by the throttled
-    // tick's `subConfigValue`/collection observers, not by tracking here).
+    // container guard, so the container is adopted and `@inject` reads resolve.
+    // Config reads use the untracked `get()` (a re-render is driven by the
+    // throttled tick's config-`observe`/collection observers, not by tracking here).
     const config = this._config;
-    const collectionState = this.use(UploaderPublicApi).getOutputCollectionState();
+    const collectionState = this._api.getOutputCollectionState();
     const summary: Summary = {
       total: collectionState.totalCount,
       succeed: collectionState.successCount,
