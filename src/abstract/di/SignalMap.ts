@@ -111,6 +111,23 @@ export class SignalMap<T extends object> {
     return this.#listeners.subscribe(listener);
   }
 
+  /**
+   * Atomic per-key subscription: filters the coarse notify down to ONE key,
+   * invoking `listener` with the new value only when that key actually changes
+   * (`Object.is` dedup). Does NOT fire on subscribe — read `get(key)` for the
+   * current value if an eager pass is needed. Returns an unsubscriber.
+   */
+  public observe<K extends keyof T>(key: K, listener: (value: T[K] | undefined) => void): () => void {
+    let last = this.get(key);
+    return this.#listeners.subscribe(() => {
+      const next = this.get(key);
+      if (!Object.is(next, last)) {
+        last = next;
+        listener(next);
+      }
+    });
+  }
+
   /** Coarse notify with no state change — for a keyed store's owner to force it. */
   public notify(): void {
     this.#listeners.notify();
