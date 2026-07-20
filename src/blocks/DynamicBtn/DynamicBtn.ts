@@ -10,6 +10,7 @@ import type { ControllerContainer } from '../../abstract/di/ControllerContainer'
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import type { Uid } from '../../lit/Uid';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
@@ -194,39 +195,36 @@ export class DynamicBtn extends ChildBlock {
         this._sources = sources;
       },
     });
+  }
 
-    // The uploader-scope `UploadCollectionController` is resolved on the
-    // container only once the uploader/solution block attaches its scope
-    // (`ensureUploaderScope`), which can race this block's adoption — go through
-    // `whenController` (fires now if already resolved, else on first resolution)
-    // rather than the throwing `use(UploadCollectionController)`. Same
-    // now-or-when-available semantics as the v1 `bag.when('uploadCollection')`.
-    this.trackSub(
-      this.container.whenController(UploadCollectionController, (collection) => {
-        // Deliberate post-parity improvement (v1 never unobserved these):
-        // track the unsubscribers so a release/re-adoption cycle can't stack
-        // duplicate observers (same shape as ProgressBarCommon).
-        this.trackSub(collection.observeProperties(this._throttledHandleCollectionUpdate));
-        this.trackSub(collection.observeCollection(this._throttledHandleCollectionUpdate));
-      }),
-    );
+  // The uploader-scope `UploadCollectionController` resolves only once the scope
+  // attaches (which can race adoption), so go through `whenController`
+  // (now-or-when-available); its callback returns the two observers, which
+  // `whenController`'s unsubscribe disposes (so a re-adoption can't stack them).
+  @subscription()
+  protected _wireCollectionObservers(): Unsubscribe {
+    return this.container.whenController(UploadCollectionController, (collection) => [
+      collection.observeProperties(this._throttledHandleCollectionUpdate),
+      collection.observeCollection(this._throttledHandleCollectionUpdate),
+    ]);
+  }
 
+  @subscription()
+  protected _wireFileAddHook(): Unsubscribe {
     const router = this._router;
-    this.trackSub(
-      router.hooks.onFileAdd(() => {
-        // With confirmUpload, always land on the upload list.
-        if (this._config.get('confirmUpload')) {
-          return ACTIVITY_TYPES.UPLOAD_LIST;
-        }
-        // If the user navigated somewhere to add the file, fall through to the
-        // default (upload list); otherwise close everything so the dynamic button
-        // just shows inline status.
-        if (router.canGoBack) {
-          return undefined;
-        }
-        return null;
-      }),
-    );
+    return router.hooks.onFileAdd(() => {
+      // With confirmUpload, always land on the upload list.
+      if (this._config.get('confirmUpload')) {
+        return ACTIVITY_TYPES.UPLOAD_LIST;
+      }
+      // If the user navigated somewhere to add the file, fall through to the
+      // default (upload list); otherwise close everything so the dynamic button
+      // just shows inline status.
+      if (router.canGoBack) {
+        return undefined;
+      }
+      return null;
+    });
   }
 
   public override disconnectedCallback(): void {
