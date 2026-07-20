@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CONTAINER, ControllerContainer } from './ControllerContainer';
-import { inject } from './inject';
+import { inject, injectOrNull } from './inject';
 
 describe('@inject', () => {
   it('resolves the dependency lazily on access, not at construction', () => {
@@ -64,5 +64,30 @@ describe('@inject', () => {
     consumer[CONTAINER] = container;
 
     expect(consumer.dep).toBe(container.get(Dep));
+  });
+});
+
+describe('@injectOrNull', () => {
+  it('resolves the dependency when a container is adopted', () => {
+    class Dep {}
+    class Consumer {
+      @injectOrNull(Dep) public dep!: Dep | null;
+    }
+    const container = new ControllerContainer();
+    const consumer = new Consumer() as Consumer & { [CONTAINER]?: ControllerContainer };
+    consumer[CONTAINER] = container;
+
+    expect(consumer.dep).toBe(container.get(Dep));
+  });
+
+  it('returns null (instead of throwing) when no container is adopted', () => {
+    class Dep {}
+    class Consumer {
+      @injectOrNull(Dep) public dep!: Dep | null;
+    }
+
+    const orphan = new Consumer();
+
+    expect(orphan.dep).toBeNull();
   });
 });
