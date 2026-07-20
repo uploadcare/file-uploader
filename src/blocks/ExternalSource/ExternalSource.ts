@@ -12,6 +12,7 @@ import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { effect } from '../../lit/effect';
 import { MessageBridge } from './MessageBridge';
 import { queryString } from './query-string';
 import type { InputMessageMap } from './types';
@@ -121,22 +122,34 @@ export class ExternalSource extends ChildBlock {
         });
       }),
     );
-    // These stay on `subConfigValue` (which reads the same ConfigController):
-    // they are side-effecting subscriptions, not pure render reads — `multiple`
-    // seeds a `_showSelectionStatus` that the iframe's selection messages then
-    // overwrite, and `localeName`/`externalSourcesEmbedCss` `postMessage` into
-    // the iframe. A tracked `render()` read cannot express either, so they are
-    // not convertible to `getTracked` here (step 8).
+
+    // `_showSelectionStatus` stays on the imperative `subConfigValue('multiple')`
+    // path: its mount/reset write ordering relies on the synchronous eager fire
+    // that `@effect` (deferred to after `updateComplete`) can't reproduce. The
+    // iframe's selection messages still overwrite it.
     this.subConfigValue('multiple', (multiple) => {
       this._showSelectionStatus = multiple;
     });
+  }
 
-    this.subConfigValue('localeName', () => {
-      this._setupL10n();
+  // Two side-effecting config reactions, expressed as `@effect` methods: each
+  // re-runs when the config key it reads via `getTracked` changes (auto-tracked,
+  // auto-disposed on release), posting `localeName` / `externalSourcesEmbedCss`
+  // into the iframe. `_handleIframeLoad` also calls them directly to push the
+  // current values to a freshly-mounted iframe.
+  @effect()
+  protected _syncLocale(): void {
+    this._messageBridge?.send({
+      type: 'set-locale-definition',
+      localeDefinition: this._config.getTracked('localeName'),
     });
+  }
 
-    this.subConfigValue('externalSourcesEmbedCss', (embedCss) => {
-      this._applyEmbedCss(embedCss);
+  @effect()
+  protected _syncEmbedCss(): void {
+    this._messageBridge?.send({
+      type: 'set-embed-css',
+      css: this._config.getTracked('externalSourcesEmbedCss'),
     });
   }
 
@@ -181,29 +194,15 @@ export class ExternalSource extends ChildBlock {
   }
 
   private _handleIframeLoad(): void {
-    this._applyEmbedCss(this._config.get('externalSourcesEmbedCss'));
+    this._syncEmbedCss();
     this._applyTheme();
-    this._setupL10n();
+    this._syncLocale();
   }
 
   private _applyTheme(): void {
     this._messageBridge?.send({
       type: 'set-theme-definition',
       theme: buildThemeDefinition(this),
-    });
-  }
-
-  private _applyEmbedCss(css: string): void {
-    this._messageBridge?.send({
-      type: 'set-embed-css',
-      css,
-    });
-  }
-
-  private _setupL10n(): void {
-    this._messageBridge?.send({
-      type: 'set-locale-definition',
-      localeDefinition: this._config.get('localeName'),
     });
   }
 
