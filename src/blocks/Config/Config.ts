@@ -11,6 +11,7 @@ import { toKebabCase } from '../../utils/toKebabCase';
 import { runAssertions } from './assertions';
 import './config.css';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
 import { normalizeConfigValue } from './normalizeConfigValue';
@@ -550,7 +551,14 @@ export class Config extends ChildBlock {
         });
       }
     }
+  }
 
+  // Computed properties (`cdnCname`, `cameraModes`, …) recompute from their
+  // dependency config keys. Per-key `ConfigController.observe` reproduces the
+  // former per-key `subConfigValue` (dedup, no unrelated-key re-fire); the eager
+  // pass computes the initial value. Composed into one teardown, auto-disposed.
+  @subscription()
+  protected _wireComputedProperties(): Unsubscribe {
     const runComputeProperty = (key: keyof ConfigType) => {
       computeProperty({
         key,
@@ -559,10 +567,13 @@ export class Config extends ChildBlock {
         computationControllers: this._computationControllers,
       });
     };
-
-    for (const key of allConfigKeys) {
-      this.subConfigValue(key, () => runComputeProperty(key));
-    }
+    const unsubs = allConfigKeys.map((key) => {
+      runComputeProperty(key);
+      return this._config.observe(key, () => runComputeProperty(key));
+    });
+    return () => {
+      for (const u of unsubs) u();
+    };
   }
 
   /**
