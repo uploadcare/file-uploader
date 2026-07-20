@@ -7,7 +7,7 @@ import type { ControllerContainer } from '../../../abstract/di/ControllerContain
 import { inject } from '../../../abstract/di/inject';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { ACTIVITY_TYPES, type ActivityId } from '../../../lit/activity-constants';
+import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
 import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import './index.css';
@@ -103,13 +103,14 @@ export class FileUploaderInline extends SolutionChildBlock {
   // (dedup) + eager fire.
   @subscription()
   protected _wireActivityCoordination(): Unsubscribe {
-    const apply = (activity: ActivityId | null) => {
-      if (!activity) {
-        this._router.setActivity(ACTIVITY_TYPES.START_FROM);
-      }
-    };
-    apply(this._router.currentActivity);
-    return this._router.observeCurrentActivity(apply);
+    return this._router.observeCurrentActivity(
+      (activity) => {
+        if (!activity) {
+          this._router.setActivity(ACTIVITY_TYPES.START_FROM);
+        }
+      },
+      { immediate: true },
+    );
   }
 
   // Background slot follows file state (drives `setActivity`, not a render read).
@@ -117,14 +118,15 @@ export class FileUploaderInline extends SolutionChildBlock {
   // every collection-state notify. Does NOT drive `_couldCancel` (see its doc).
   @subscription()
   protected _wireUploadListActivity(): Unsubscribe {
-    const initialList = this._collectionState.get('uploadList');
-    const apply = (list: typeof initialList) => {
-      if (list.length > 0 && this._router.currentActivity === ACTIVITY_TYPES.START_FROM) {
-        this._router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
-      }
-    };
-    apply(initialList);
-    return this._collectionState.observe('uploadList', apply);
+    return this._collectionState.observe(
+      'uploadList',
+      (list) => {
+        if (list.length > 0 && this._router.currentActivity === ACTIVITY_TYPES.START_FROM) {
+          this._router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
+        }
+      },
+      { immediate: true },
+    );
   }
 
   // v1-exact cancel-button recompute: fires eagerly, then on EVERY router notify

@@ -6,7 +6,7 @@ import type { ControllerContainer } from '../../../abstract/di/ControllerContain
 import { inject } from '../../../abstract/di/inject';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { ACTIVITY_TYPES, type ActivityId } from '../../../lit/activity-constants';
+import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
 import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import './index.css';
@@ -78,12 +78,13 @@ export class FileUploaderMinimal extends SolutionChildBlock {
   // `uploadList` change, not every collection-state notify (e.g. a progress tick).
   @subscription()
   protected _wireUploadListActivity(): Unsubscribe {
-    const initialList = this._collectionState.get('uploadList');
-    const apply = (list: typeof initialList) => {
-      this._router.setActivity(list.length > 0 ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
-    };
-    apply(initialList);
-    return this._collectionState.observe('uploadList', apply);
+    return this._collectionState.observe(
+      'uploadList',
+      (list) => {
+        this._router.setActivity(list.length > 0 ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
+      },
+      { immediate: true },
+    );
   }
 
   // Activity coordination: close the modal once the background lands on the
@@ -91,28 +92,31 @@ export class FileUploaderMinimal extends SolutionChildBlock {
   // `observeCurrentActivity` (dedup) + eager fire.
   @subscription()
   protected _wireActivityCoordination(): Unsubscribe {
-    const apply = (activity: ActivityId | null) => {
-      if (activity === ACTIVITY_TYPES.UPLOAD_LIST) {
-        this._router.closeModal();
-      }
-      if (!activity) {
-        this._router.setActivity(ACTIVITY_TYPES.START_FROM);
-      }
-    };
-    apply(this._router.currentActivity);
-    return this._router.observeCurrentActivity(apply);
+    return this._router.observeCurrentActivity(
+      (activity) => {
+        if (activity === ACTIVITY_TYPES.UPLOAD_LIST) {
+          this._router.closeModal();
+        }
+        if (!activity) {
+          this._router.setActivity(ACTIVITY_TYPES.START_FROM);
+        }
+      },
+      { immediate: true },
+    );
   }
 
   // Minimal forces `confirmUpload` off. Atomic `observe('confirmUpload')` + eager.
   @subscription()
   protected _wireForceConfirmUploadOff(): Unsubscribe {
-    const apply = (confirmUpload: boolean) => {
-      if (confirmUpload !== false) {
-        this._config.set('confirmUpload', false);
-      }
-    };
-    apply(this._config.get('confirmUpload'));
-    return this._config.observe('confirmUpload', apply);
+    return this._config.observe(
+      'confirmUpload',
+      (confirmUpload) => {
+        if (confirmUpload !== false) {
+          this._config.set('confirmUpload', false);
+        }
+      },
+      { immediate: true },
+    );
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {

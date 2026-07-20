@@ -557,10 +557,7 @@ export class Config extends ChildBlock {
         computationControllers: this._computationControllers,
       });
     };
-    return allConfigKeys.map((key) => {
-      runComputeProperty(key); // eager initial compute
-      return this._config.observe(key, () => runComputeProperty(key));
-    });
+    return allConfigKeys.map((key) => this._config.observe(key, () => runComputeProperty(key), { immediate: true }));
   }
 
   /**

@@ -240,9 +240,8 @@ export class UploadList extends ActivityChildBlock {
   @subscription()
   protected _wireGroupSizeConfig(): Unsubscribe[] {
     const rerun = () => this._throttledHandleCollectionUpdate();
-    rerun();
     return [
-      this._config.observe('multiple', rerun),
+      this._config.observe('multiple', rerun, { immediate: true }),
       this._config.observe('multipleMin', rerun),
       this._config.observe('multipleMax', rerun),
     ];
@@ -253,14 +252,15 @@ export class UploadList extends ActivityChildBlock {
   // unrelated collection-state write never re-triggers it), plus an eager pass.
   @subscription()
   protected _wireGroupInfo(): Unsubscribe {
-    const initialGroupInfo = this._collectionState.get('groupInfo');
-    const onGroupInfo = (groupInfo: typeof initialGroupInfo): void => {
-      if (groupInfo) {
-        this._throttledHandleCollectionUpdate();
-      }
-    };
-    onGroupInfo(initialGroupInfo);
-    return this._collectionState.observe('groupInfo', onGroupInfo);
+    return this._collectionState.observe(
+      'groupInfo',
+      (groupInfo) => {
+        if (groupInfo) {
+          this._throttledHandleCollectionUpdate();
+        }
+      },
+      { immediate: true },
+    );
   }
 
   // Recompute button state on collection changes. The uploader-scope
