@@ -4,6 +4,7 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { effect } from '../../lit/effect';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils';
 import { debounce } from '../../utils/debounce';
 import { preloadImage } from '../../utils/preloadImage';
@@ -362,20 +363,22 @@ export class Thumb extends FileItemConfig {
 
   protected override controllerReady(_container: ControllerContainer): void {
     this._firstViewMode ??= this._config.get('filesViewMode');
-
-    // Side-effecting subscription (forces a one-time thumb regeneration on the
-    // first list->grid switch so the higher grid resolution is fetched), not a
-    // render read — stays on the imperative `subConfigValue` path.
-    this.subConfigValue('filesViewMode', (viewMode) => {
-      if (viewMode === 'grid' && !this._renderedGridOnce) {
-        if (this._firstViewMode === 'list') {
-          this._requestThumbGeneration(true);
-        }
-        this._renderedGridOnce = true;
-      }
-    });
-
     this._bindToEntry();
+  }
+
+  // Side effect (not a render read): a one-time thumb regeneration on the first
+  // list->grid switch so the higher grid resolution is fetched. `beforeUpdate`
+  // fires eagerly and synchronously on adoption — matching the former eager
+  // `subConfigValue` fire, and after `controllerReady` sets `_firstViewMode` —
+  // then again whenever `filesViewMode` changes.
+  @effect({ beforeUpdate: true })
+  protected _regenerateThumbOnGridSwitch(): void {
+    if (this._config.getTracked('filesViewMode') === 'grid' && !this._renderedGridOnce) {
+      if (this._firstViewMode === 'list') {
+        this._requestThumbGeneration(true);
+      }
+      this._renderedGridOnce = true;
+    }
   }
 
   public override connectedCallback(): void {
