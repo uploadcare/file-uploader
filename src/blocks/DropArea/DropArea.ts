@@ -8,6 +8,7 @@ import type { ControllerContainer } from '../../abstract/di/ControllerContainer'
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { effect } from '../../lit/effect';
 import { ensureUploaderScope } from '../../lit/ensureUploaderScope';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
@@ -77,16 +78,16 @@ export class DropArea extends ChildBlock {
   @state()
   private _isVisible = true;
 
-  private _dropTextKey = 'drop-files-here';
-
-  private _isMultiple = false;
-  private _updateDropText(): void {
+  // Derived render read: the drop-text l10n key from the `text` attribute +
+  // config `multiple`. Recomputes on either input through their native
+  // reactivity — Lit for the `text` property, `SignalWatcher` for the tracked
+  // config read — so no backing field or subscription is needed.
+  private get _dropTextKey(): string {
     const customText = this.text;
     if (typeof customText === 'string' && customText.length > 0) {
-      this._dropTextKey = customText;
-      return;
+      return customText;
     }
-    this._dropTextKey = this._isMultiple ? 'drop-files-here' : 'drop-file-here';
+    return this._config.getTracked('multiple') ? 'drop-files-here' : 'drop-file-here';
   }
 
   private _destroyDropzone: (() => void) | null = null;
@@ -190,24 +191,21 @@ export class DropArea extends ChildBlock {
     });
 
     this.updateComplete.then(() => this._setupContentWrapperDropzone());
+  }
 
-    // Kept as `subConfigValue` (side-effecting, not pure render reads): both
-    // drive imperative host/DOM state read outside `render()` — `sourceList`
-    // recomputes `_isEnabled` (consulted by the drop-handler `_shouldIgnore`/
-    // `isActive`) and toggles `this.hidden` on the host; `multiple` seeds
-    // `_dropTextKey`. `subConfigValue` reads the same `ConfigController`, so
-    // this is behavior-identical to a tracked read while staying imperative.
-    this.subConfigValue('sourceList', (value: string) => {
-      const list = stringToArray(value);
-      this._sourceListAllowsLocal = list.includes(UploadSource.LOCAL);
-      this._updateIsEnabled();
-      this._updateVisibility();
-    });
-
-    this.subConfigValue('multiple', (val) => {
-      this._isMultiple = Boolean(val);
-      this._updateDropText();
-    });
+  // `sourceList` drives imperative drop-handler/host state read outside
+  // `render()` — `_isEnabled` gates `_shouldIgnore`/`isActive`, and visibility
+  // toggles the host `.hidden` attribute — so it's an effect, not a render read.
+  // `beforeUpdate` fires it eagerly and synchronously on adoption (matching the
+  // former eager `subConfigValue` fire) so `_isEnabled` is correct before the
+  // first drop, and again whenever `sourceList` changes. (`multiple` folded into
+  // the `_dropTextKey` getter.)
+  @effect({ beforeUpdate: true })
+  protected _syncSourceList(): void {
+    const list = stringToArray(this._config.getTracked('sourceList'));
+    this._sourceListAllowsLocal = list.includes(UploadSource.LOCAL);
+    this._updateIsEnabled();
+    this._updateVisibility();
   }
 
   protected override controllerReleased(): void {
@@ -223,10 +221,6 @@ export class DropArea extends ChildBlock {
     if (changedProperties.has('disabled')) {
       this._updateIsEnabled();
       this._updateVisibility();
-    }
-
-    if (changedProperties.has('text')) {
-      this._updateDropText();
     }
   }
 
