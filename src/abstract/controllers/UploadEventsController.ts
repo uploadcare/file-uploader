@@ -1,5 +1,4 @@
 import { uploadFileGroup } from '@uploadcare/upload-client';
-import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState } from '../../types';
 import { debounce } from '../../utils/debounce';
 import { applyInitialCrop } from '../applyInitialCrop';
@@ -59,16 +58,6 @@ export class UploadEventsController {
   private _unobserveCollection?: Unsubscribe;
   private _unobserveProperties?: Unsubscribe;
 
-  /**
-   * The live `*uploadTrigger` set — the exact reference `CollectionStateController`
-   * holds, so `.delete(uid)` here mutates in place (Object.is dedup → no notify),
-   * exactly as v1's shared-state bridge did. `UploaderPublicApi.uploadAll`
-   * replaces the whole Set (fires); this path only mutates the live one.
-   */
-  private get _uploadTrigger(): Set<Uid> {
-    return this._collectionState.get('uploadTrigger');
-  }
-
   /** Apply the `cropPreset` to freshly-uploaded images (was a host-injected callback). */
   private _applyInitialCrop(): void {
     applyInitialCrop(this._collection, this._config.get('cropPreset'));
@@ -119,8 +108,7 @@ export class UploadEventsController {
     this._validation.runCollectionValidators();
 
     for (const entry of removed) {
-      this._uploadTrigger.delete(entry.uid);
-
+      // (`UploadController` drops removed uids from its own active batch.)
       this._validation.cleanupValidationForEntry(entry);
       entry.getValue('abortController')?.abort();
       entry.setMultipleValues({
@@ -292,7 +280,7 @@ export class UploadEventsController {
     const collection = this._collection;
     const { emit, getOutputCollectionState } = this._host;
     let commonProgress = 0;
-    const items = [...this._uploadTrigger].filter((id) => !!collection.read(id));
+    const items = this._upload.uploadBatch;
     items.forEach((id) => {
       const uploadProgress = collection.readProp(id, 'uploadProgress');
       if (typeof uploadProgress === 'number') {

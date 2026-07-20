@@ -6,15 +6,13 @@ import { CollectionStateController } from './CollectionStateController';
 const uid = (s: string) => s as Uid;
 
 describe('CollectionStateController', () => {
-  it('seeds the six derived keys with their v1 initial values', () => {
+  it('seeds the derived keys with their v1 initial values', () => {
     const c = new CollectionStateController();
     expect(c.get('uploadList')).toEqual([]);
     expect(c.get('commonProgress')).toBe(0);
     expect(c.get('collectionState')).toBeNull();
     expect(c.get('collectionErrors')).toEqual([]);
     expect(c.get('groupInfo')).toBeNull();
-    expect(c.get('uploadTrigger')).toBeInstanceOf(Set);
-    expect(c.get('uploadTrigger').size).toBe(0);
   });
 
   it('round-trips a write through get/set', () => {
@@ -30,7 +28,6 @@ describe('CollectionStateController', () => {
   it('builds fresh mutable seeds per instance (no cross-ctx sharing)', () => {
     const a = new CollectionStateController();
     const b = new CollectionStateController();
-    expect(a.get('uploadTrigger')).not.toBe(b.get('uploadTrigger'));
     expect(a.get('uploadList')).not.toBe(b.get('uploadList'));
     expect(a.get('collectionErrors')).not.toBe(b.get('collectionErrors'));
   });
@@ -50,27 +47,26 @@ describe('CollectionStateController', () => {
     expect(cb).toHaveBeenCalledTimes(2);
   });
 
-  it('uploadTrigger dedup is by reference: replacing fires, mutating in place does not', () => {
+  it('reference-typed keys dedup by reference: replacing fires, mutating in place does not', () => {
     const c = new CollectionStateController();
     const cb = vi.fn();
     c.subscribe(cb);
 
-    const set1 = new Set<Uid>([uid('a')]);
-    c.set('uploadTrigger', set1);
+    const list1 = [{ uid: uid('a') }];
+    c.set('uploadList', list1);
     expect(cb).toHaveBeenCalledTimes(1);
 
-    // Mutating the stored set in place does not route through set() → no notify
-    // (v1 nanostores parity — UploadEventsController mutates the live set).
-    c.get('uploadTrigger').delete(uid('a'));
+    // Mutating the stored array in place does not route through set() → no notify
+    // (v1 nanostores parity).
+    c.get('uploadList').push({ uid: uid('b') });
     expect(cb).toHaveBeenCalledTimes(1);
-    expect(c.get('uploadTrigger').size).toBe(0);
 
     // Setting the SAME reference again is a no-op (Object.is).
-    c.set('uploadTrigger', set1);
+    c.set('uploadList', list1);
     expect(cb).toHaveBeenCalledTimes(1);
 
     // A new reference fires.
-    c.set('uploadTrigger', new Set<Uid>());
+    c.set('uploadList', []);
     expect(cb).toHaveBeenCalledTimes(2);
   });
 
