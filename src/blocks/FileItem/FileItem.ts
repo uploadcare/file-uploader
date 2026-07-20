@@ -1,9 +1,7 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import { UploadController } from '../../abstract/controllers/UploadController';
 import { inject } from '../../abstract/di/inject';
 import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
@@ -40,11 +38,9 @@ export class FileItem extends FileItemConfig {
   // Always-bound controllers become `@inject` fields. `UploadCollectionController`
   // and `UploaderPublicApi` are uploader-scope-bound and read null-tolerantly via
   // `useOrNull` (handlers can run outside an adopted scope / during a teardown
-  // race); `PluginController` is conditionally bound and read via `whenController`;
-  // the upload stack's `UploadController` is a bound host-boundary token read via
-  // `use()` from the post-adoption upload trigger — all stay off `@inject`.
+  // race); `PluginController` is conditionally bound and read via `whenController`
+  // — all stay off `@inject`.
   @inject(ConfigController) private readonly _config!: ConfigController;
-  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
 
   @state()
@@ -382,24 +378,6 @@ export class FileItem extends FileItemConfig {
     FileItem.activeInstances.add(this);
   }
 
-  // Side effect (fires `_upload`, not a render read): `uploadTrigger` (owned by
-  // `CollectionStateController`) is a `Set` the writer REPLACES, so its atomic
-  // `observe` (Object.is dedup) fires only on a real trigger, not on unrelated
-  // collection-state writes; the eager pass covers a trigger set before adoption.
-  @subscription()
-  protected _wireUploadTrigger(): Unsubscribe {
-    return this._collectionState.observe(
-      'uploadTrigger',
-      (itemsToUpload) => {
-        if (this.entry && !itemsToUpload.has(this.entry.uid)) {
-          return;
-        }
-        setTimeout(() => this.isConnected && this._upload());
-      },
-      { immediate: true },
-    );
-  }
-
   // The uploader-scope `PluginController` is bound + resolved only once an
   // uploader scope attaches (`ensurePluginManager`, conditional) — possibly after
   // adoption, or never in a bare ctx — so go through `whenController`; its
@@ -440,10 +418,6 @@ export class FileItem extends FileItemConfig {
   // handling) now live in the DOM-free UploadController. This block stays the
   // trigger; it reacts to the resulting entry mutations through its existing
   // per-entry subscriptions (`isUploading`/`errors`/… → `_debouncedCalculateState`).
-  private _upload = this.withEntry(async (entry) => {
-    await this.use(UploadController).uploadEntry(entry.uid);
-  });
-
   public static activeInstances: Set<FileItem> = new Set<FileItem>();
 
   protected override shouldUpdate(changedProperties: PropertyValues<this>): boolean {

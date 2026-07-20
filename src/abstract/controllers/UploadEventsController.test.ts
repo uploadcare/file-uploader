@@ -65,8 +65,15 @@ const setup = (opts: { collectionState?: OutputCollectionState; outputDataLength
     cleanupValidationForEntry: vi.fn(),
   } as unknown as ValidationController;
   container.bind(ValidationController, () => validation);
+  // The active upload batch now lives on `UploadController` (not a `*uploadTrigger`
+  // state key). Back the mock's `uploadBatch` getter with a test-owned set,
+  // filtered by existence exactly as the real controller does.
+  const uploadBatchSet = new Set<Uid>();
   const upload = {
     buildUploadOptions: vi.fn(async () => ({}) as FileFromOptions),
+    get uploadBatch(): Uid[] {
+      return [...uploadBatchSet].filter((uid) => !!collection.read(uid));
+    },
   } as unknown as UploadController;
   container.bind(UploadController, () => upload);
 
@@ -102,9 +109,6 @@ const setup = (opts: { collectionState?: OutputCollectionState; outputDataLength
     else if (key === 'collectionState') setCollectionState(value);
     else if (key === 'commonProgress') setCommonProgress(value);
   });
-  // The live `*uploadTrigger` set the controller mutates in place.
-  const uploadTriggerSet = collectionState.get('uploadTrigger');
-
   // Capture the observer callbacks so tests invoke the handlers directly with
   // controlled (entries, added, removed) / changeMap — no collection debounce.
   let collectionObserver: CollectionObserver = () => {};
@@ -138,7 +142,7 @@ const setup = (opts: { collectionState?: OutputCollectionState; outputDataLength
     collectionState,
     deps,
     emit,
-    uploadTriggerSet,
+    uploadBatchSet,
     fireCollection: (entries: Uid[], added: Set<Entry>, removed: Set<Entry>) =>
       collectionObserver(entries, added, removed),
     fireProperties: (changeMap: Parameters<PropertyObserver>[0]) => propertyObserver(changeMap),
@@ -196,12 +200,10 @@ describe('UploadEventsController', () => {
       const ac = new AbortController();
       const abortSpy = vi.spyOn(ac, 'abort');
       entry.setValue('abortController', ac);
-      t.uploadTriggerSet.add(id);
       const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
       t.fireCollection([], new Set(), new Set([entry]));
 
-      expect(t.uploadTriggerSet.has(id)).toBe(false);
       expect(t.deps.validation.cleanupValidationForEntry).toHaveBeenCalledWith(entry);
       expect(abortSpy).toHaveBeenCalled();
       expect(entry.getValue('isRemoved')).toBe(true);
@@ -261,7 +263,7 @@ describe('UploadEventsController', () => {
     it('emits FILE_UPLOAD_PROGRESS for uploading non-silent entries + flushes common progress', () => {
       const t = setup();
       const id = addUploadingEntry(t);
-      t.uploadTriggerSet.add(id);
+      t.uploadBatchSet.add(id);
       t.collection.publishProp(id, 'uploadProgress', 50);
 
       t.fireProperties({ uploadProgress: new Set([id]) });
@@ -361,7 +363,7 @@ describe('UploadEventsController', () => {
     it('does not emit FILE_UPLOAD_PROGRESS for a non-uploading entry', () => {
       const t = setup();
       const id = t.collection.add({ isUploading: false });
-      t.uploadTriggerSet.add(id);
+      t.uploadBatchSet.add(id);
       t.collection.publishProp(id, 'uploadProgress', 50);
 
       t.fireProperties({ uploadProgress: new Set([id]) });
@@ -440,7 +442,7 @@ describe('UploadEventsController', () => {
       const t = setup();
       const id = t.collection.add({ isUploading: true });
       t.collection.read(id)?.setValue('uploadProgress', 'oops' as never);
-      t.uploadTriggerSet.add(id);
+      t.uploadBatchSet.add(id);
 
       expect(() => t.fireProperties({ uploadProgress: new Set([id]) })).not.toThrow();
     });
@@ -553,8 +555,8 @@ describe('UploadEventsController', () => {
       const b = t.collection.add({ isUploading: true });
       t.collection.publishProp(a, 'uploadProgress', 40);
       t.collection.publishProp(b, 'uploadProgress', 60);
-      t.uploadTriggerSet.add(a);
-      t.uploadTriggerSet.add(b);
+      t.uploadBatchSet.add(a);
+      t.uploadBatchSet.add(b);
 
       t.fireProperties({ uploadProgress: new Set([a, b]) });
 
@@ -566,7 +568,7 @@ describe('UploadEventsController', () => {
       const t = setup();
       const a = t.collection.add({ isUploading: true });
       t.collection.publishProp(a, 'uploadProgress', 0);
-      t.uploadTriggerSet.add(a);
+      t.uploadBatchSet.add(a);
 
       // common progress starts at 0; an all-zero average stays 0 → no emit
       t.fireProperties({ uploadProgress: new Set([a]) });

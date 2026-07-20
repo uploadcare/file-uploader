@@ -30,11 +30,11 @@ import { stringToArray } from '../utils/stringToArray';
 import { UploadSource } from '../utils/UploadSource';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
 import { controllerLogger } from './controllerLogger';
-import { CollectionStateController } from './controllers/CollectionStateController';
 import { ConfigController } from './controllers/ConfigController';
 import { LocaleController } from './controllers/LocaleController';
 import { RouterController } from './controllers/RouterController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
+import { UploadController } from './controllers/UploadController';
 import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
 import { inject } from './di/inject';
 import { PluginController } from './managers/plugin';
@@ -75,7 +75,7 @@ export class UploaderPublicApi {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(LocaleController) private readonly _locale!: LocaleController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
-  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
+  @inject(UploadController) private readonly _uploadController!: UploadController;
   @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
   @inject(RouterController) private readonly _router!: RouterController;
   // Lazy thunk: resolved at plugin-read time (`_pluginsReady`/`initFlow`), so
@@ -241,10 +241,12 @@ export class UploaderPublicApi {
       return;
     }
 
-    // Replace (not mutate) the `uploadTrigger` Set — the `Object.is` dedup on
-    // `CollectionStateController.set` fires subscribers only on a new reference,
-    // preserving the v1 `ctx.pub('*uploadTrigger', new Set(...))` semantics.
-    this._collectionState.set('uploadTrigger', new Set(itemsToUpload));
+    // Upload the entries directly through the controller (its `uploadEntry` is
+    // precondition-guarded + idempotent). This replaces the v1
+    // `ctx.pub('*uploadTrigger', new Set(...))` broadcast that each
+    // `<uc-file-item>` observed to self-upload — so upload no longer depends on
+    // an item being rendered.
+    this._uploadController.uploadEntries(itemsToUpload);
     this._eventEmitter.emit(
       EventType.COMMON_UPLOAD_START,
       this.getOutputCollectionState() as OutputCollectionState<'uploading'>,
