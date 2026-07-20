@@ -45,6 +45,29 @@ const isThunk = <T>(t: Token<T>): t is () => Ctor<T> => typeof t === 'function' 
 
 export const resolveToken = <T>(t: Token<T>): Ctor<T> => (isThunk(t) ? t() : t);
 
+/** A teardown closure a `whenController` callback may return. */
+type Teardown = () => void;
+
+/**
+ * Normalize a `whenController` callback's return into a single teardown (or
+ * `undefined`): a function passes through, an array is composed, anything else
+ * (void, a Promise, a non-function) yields no teardown.
+ */
+const toTeardown = (result: void | Teardown | Teardown[]): Teardown | undefined => {
+  if (typeof result === 'function') {
+    return result;
+  }
+  if (Array.isArray(result)) {
+    const fns = result.filter((fn): fn is Teardown => typeof fn === 'function');
+    return fns.length > 0
+      ? () => {
+          for (const fn of fns) fn();
+        }
+      : undefined;
+  }
+  return undefined;
+};
+
 export interface Initializable {
   init?(): void;
 }
@@ -152,11 +175,17 @@ export class ControllerContainer {
    * Run `cb` with the controller as soon as it is resolved on this container:
    * synchronously now if already constructed, otherwise on the first `get()`
    * that constructs it (e.g. a conditionally-bound `PluginController` resolved
-   * later by `ensurePluginManager`). Returns an unsubscribe that cancels a
-   * still-pending waiter (no-op once fired). The cross-token analogue of the
-   * registry's `whenAvailable`, for tokens that appear after container creation.
+   * later by `ensurePluginManager`). The cross-token analogue of the registry's
+   * `whenAvailable`, for tokens that appear after container creation.
+   *
+   * `cb` may return a teardown — a `() => void` or an array of them (e.g. the
+   * observers it attaches to the resolved controller). The returned unsubscribe
+   * then disposes that teardown once `cb` has fired, or cancels a still-pending
+   * waiter if it hasn't — so a caller returns its observers directly instead of
+   * hand-tracking them. A `void` return keeps the old "cancel waiter only"
+   * behavior.
    */
-  public whenController<T>(token: Token<T>, cb: (inst: T) => void): () => void {
+  public whenController<T>(token: Token<T>, cb: (inst: T) => void | Teardown | Teardown[]): () => void {
     const Ctrl = resolveToken(token);
     // Fire immediately only if the instance is FULLY resolved: present
     // (`has()`, not `get() !== undefined` — a bound factory may legitimately
@@ -167,25 +196,39 @@ export class ControllerContainer {
     // half-built instance. Isolate-and-warn on the immediate callback, matching
     // `#flushControllerWaiters`.
     if (this.#instances.has(Ctrl) && !this.#resolving.has(Ctrl)) {
+      let teardown: Teardown | undefined;
       try {
-        cb(this.#instances.get(Ctrl) as T);
+        teardown = toTeardown(cb(this.#instances.get(Ctrl) as T));
       } catch (err) {
         log.warn(`a whenController immediate callback for ${Ctrl.name} threw`, err);
       }
-      return () => {};
+      return () => teardown?.();
     }
     let set = this.#controllerWaiters.get(Ctrl);
     if (!set) {
       set = new Set();
       this.#controllerWaiters.set(Ctrl, set);
     }
-    const waiter = cb as (inst: unknown) => void;
+    // Wrap `cb` so the teardown it returns when the waiter fires is captured
+    // here and disposed by the unsubscribe below.
+    let teardown: Teardown | undefined;
+    let fired = false;
+    const waiter = (inst: unknown): void => {
+      fired = true;
+      teardown = toTeardown(cb(inst as T));
+    };
     set.add(waiter);
     return () => {
-      // Stale-unsubscribe guard: only mutate the set STILL registered for this
-      // token. Once flushed/cleared, `#controllerWaiters` may hold a fresh set
-      // for the same token; a captured-set `delete` (and especially the empty
-      // cleanup below) must not touch it.
+      // Already fired: dispose whatever the callback returned.
+      if (fired) {
+        teardown?.();
+        return;
+      }
+      // Still pending: cancel the waiter. Stale-unsubscribe guard — only mutate
+      // the set STILL registered for this token. Once flushed/cleared,
+      // `#controllerWaiters` may hold a fresh set for the same token; a
+      // captured-set `delete` (and especially the empty cleanup below) must not
+      // touch it.
       if (this.#controllerWaiters.get(Ctrl) !== set) {
         return;
       }

@@ -269,22 +269,16 @@ export class UploadList extends ActivityChildBlock {
 
   // Recompute button state on collection changes. The uploader-scope
   // `UploadCollectionController` resolves only once the scope attaches, so go
-  // through `whenController` (now-or-when-available) and compose the observer
-  // teardowns with the when-registration into a single returned closure.
+  // through `whenController` (now-or-when-available); its callback returns the
+  // observers directly and `whenController`'s unsubscribe disposes them.
   // TODO: could be a perf issue on many files — no need to update button state
   // on every progress tick.
   @subscription()
   protected _wireCollectionObservers(): Unsubscribe {
-    const disposers: Array<() => void> = [];
-    disposers.push(
-      this.container.whenController(UploadCollectionController, (collection) => {
-        disposers.push(collection.observeProperties(this._throttledHandleCollectionUpdate));
-        disposers.push(collection.observeCollection(this._throttledHandleCollectionUpdate));
-      }),
-    );
-    return () => {
-      for (const d of disposers) d();
-    };
+    return this.container.whenController(UploadCollectionController, (collection) => [
+      collection.observeProperties(this._throttledHandleCollectionUpdate),
+      collection.observeCollection(this._throttledHandleCollectionUpdate),
+    ]);
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {
