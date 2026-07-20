@@ -27,7 +27,7 @@ const setup = () => {
   created.push(ctxName);
   const eventEmitter = container.get(EventEmitter);
   const attach = () =>
-    ensureUploaderScope(container, undefined, (type, payload, options) => eventEmitter.emit(type, payload, options));
+    ensureUploaderScope(container, (type, payload, options) => eventEmitter.emit(type, payload, options));
   return { ctxName, container, attach };
 };
 

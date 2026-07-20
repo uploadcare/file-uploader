@@ -7,7 +7,6 @@ import { PluginController } from '../abstract/managers/plugin';
 import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
 import { LazyPluginLoader } from '../abstract/managers/plugin/LazyPluginLoader';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import { createDebugPrinter } from './createDebugPrinter';
 
 /**
  * ChildBlock-reachable construction of the ctx's `PluginController`, lifted from
@@ -28,7 +27,7 @@ import { createDebugPrinter } from './createDebugPrinter';
  * M-god step 8c: `PluginController` is container-owned. It has host/closure deps
  * (`buildApi` wraps `buildPluginApi` + the container, `watchPlugins` wraps the
  * `LazyPluginLoader` over the ctx's `LazyPluginsController`, `getUploaderApi`
- * resolves the public API, `debug`), so it can't be a zero-arg container token —
+ * resolves the public API), so it can't be a zero-arg container token —
  * it is `bind`-ed here with a host-value factory, then the container owns its
  * disposal (`container.dispose()` in reverse order). `UploaderPublicApi` reaches
  * it via `@inject(() => PluginController)`.
@@ -56,9 +55,6 @@ export function ensurePluginManager(container: ControllerContainer): void {
           const loader = new LazyPluginLoader(c.get(LazyPluginsController), config, onCompute);
           return () => loader.destroy();
         },
-        // Scope debug output to the controller (not a hosting block) so its
-        // logs stay consistently prefixed.
-        debug: createDebugPrinter(() => container, 'PluginController'),
       }),
   );
 

@@ -14,7 +14,7 @@ export class FileItemConfig extends ChildBlock {
     return (...args: A) => {
       const entry = this.entry;
       if (!entry) {
-        console.warn('No entry found');
+        this._log.warn('No entry found');
         return undefined;
       }
       return fn(entry, ...args);

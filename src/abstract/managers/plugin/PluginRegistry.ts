@@ -1,5 +1,6 @@
 import { debounce } from '../../../utils/debounce';
 import { type CustomConfigDefinition, CustomConfigRegistry } from '../../customConfigOptions';
+import { logger } from '../../logger';
 import type {
   Owned,
   PluginActivityRegistration,
@@ -10,6 +11,8 @@ import type {
   PluginRegistrySnapshot,
   PluginSourceRegistration,
 } from './PluginTypes';
+
+const log = logger.scope('plugin-registry');
 
 export class PluginRegistry {
   private _sources: Owned<PluginSourceRegistration>[] = [];
@@ -46,8 +49,8 @@ export class PluginRegistry {
   public addSource(pluginId: string, item: PluginSourceRegistration): void {
     const existing = this._sources.find((s) => s.id === item.id);
     if (existing) {
-      console.warn(
-        `[Plugin "${pluginId}"] Source with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
+      log.warn(
+        `Plugin "${pluginId}" Source with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
       );
       return;
     }
@@ -58,8 +61,8 @@ export class PluginRegistry {
   public addActivity(pluginId: string, item: PluginActivityRegistration): void {
     const existing = this._activities.find((a) => a.id === item.id);
     if (existing) {
-      console.warn(
-        `[Plugin "${pluginId}"] Activity with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
+      log.warn(
+        `Plugin "${pluginId}" Activity with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
       );
       return;
     }

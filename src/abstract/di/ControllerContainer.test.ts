@@ -281,7 +281,11 @@ describe('ControllerContainer', () => {
     expect(() => container.dispose()).not.toThrow();
     // Bad is disposed first (reverse order); Good must still run afterwards.
     expect(order).toEqual(['Good']);
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('Bad.destroy() threw'), expect.any(Error));
+    expect(warn).toHaveBeenCalledWith(
+      '[uc][controller-container]',
+      expect.stringContaining('Bad.destroy() threw'),
+      expect.any(Error),
+    );
   });
 
   it('resets its state after dispose()', () => {
@@ -416,7 +420,11 @@ describe('ControllerContainer.whenController', () => {
 
     expect(() => container.get(A)).not.toThrow();
     expect(good).toHaveBeenCalledTimes(1);
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('whenController waiter for A threw'), expect.any(Error));
+    expect(warn).toHaveBeenCalledWith(
+      '[uc][controller-container]',
+      expect.stringContaining('whenController waiter for A threw'),
+      expect.any(Error),
+    );
     warn.mockRestore();
   });
 
@@ -457,6 +465,7 @@ describe('ControllerContainer.whenController', () => {
     });
     expect(() => container.whenController(A, bad)).not.toThrow();
     expect(warn).toHaveBeenCalledWith(
+      '[uc][controller-container]',
       expect.stringContaining('whenController immediate callback for A threw'),
       expect.any(Error),
     );

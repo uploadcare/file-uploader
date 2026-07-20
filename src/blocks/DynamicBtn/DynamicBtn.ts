@@ -175,7 +175,7 @@ export class DynamicBtn extends ChildBlock {
     const collectionState = this.useOrNull(UploaderPublicApi)?.getOutputCollectionState();
 
     if (!collectionState) {
-      console.warn('Collection state is undefined');
+      this._log.warn('Collection state is undefined');
       return;
     }
 

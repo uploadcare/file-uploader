@@ -14,17 +14,18 @@ type EventBridgeHost = ReactiveControllerHost & EventTarget;
  * `EventEmitter._dispatch` did. It subscribes immediately (so events flow
  * regardless of when it's attached relative to the connect lifecycle) and
  * re-subscribes/tears down across reconnects.
+ *
+ * Debug-mode event logging is NOT done here — `EventBus.emit` logs every event
+ * centrally (verbose-gated), so it covers events regardless of any DOM bridge.
  */
 export class EventBridgeController implements ReactiveController {
   private _host: EventBridgeHost;
   private _getBus: () => EventBus;
-  private _debug?: (...args: unknown[]) => void;
   private _unsubscribe?: () => void;
 
-  public constructor(host: EventBridgeHost, getBus: () => EventBus, debug?: (...args: unknown[]) => void) {
+  public constructor(host: EventBridgeHost, getBus: () => EventBus) {
     this._host = host;
     this._getBus = getBus;
-    this._debug = debug;
     host.addController(this);
     this._subscribe();
   }
@@ -43,12 +44,6 @@ export class EventBridgeController implements ReactiveController {
       return;
     }
     this._unsubscribe = this._getBus().onAny((type, payload) => {
-      // Debug-mode event logging, gated by the host's `debugPrint` (preserves
-      // v1 `EventEmitter._dispatch` behavior). Thunked so it's free when off.
-      this._debug?.(() => {
-        const copy = payload && typeof payload === 'object' ? { ...payload } : payload;
-        return [`event "${type}"`, copy];
-      });
       this._host.dispatchEvent(new CustomEvent(type, { detail: payload }));
     });
   }

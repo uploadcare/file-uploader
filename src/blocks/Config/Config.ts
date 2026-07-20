@@ -4,13 +4,13 @@ import type { CustomConfig } from '../../abstract/customConfigOptions';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { PluginManagerBridge } from '../../abstract/di/PluginManagerBridge';
+import { lazy } from '../../abstract/logger';
 import type { PluginController } from '../../abstract/managers/plugin';
 import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types';
 import { toKebabCase } from '../../utils/toKebabCase';
 import { runAssertions } from './assertions';
 import './config.css';
 import { ChildBlock } from '../../lit/ChildBlock';
-import { createDebugPrinter } from '../../lit/createDebugPrinter';
 import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
 import { normalizeConfigValue } from './normalizeConfigValue';
@@ -19,6 +19,27 @@ const allConfigKeys = [
   // "debug" option should go first to be able to print debug messages from the very beginning
   ...new Set(['debug', ...Object.keys(initialConfig)]),
 ] as Array<keyof ConfigType>;
+
+/**
+ * Render a config value for the change log with consistent quoting — strings
+ * (incl. the empty string, which would otherwise be invisible) show quoted as
+ * `""`, functions as `ƒ`, and everything else via `JSON.stringify`.
+ */
+const formatConfigLogValue = (value: unknown): string => {
+  if (value === undefined) return 'undefined';
+  if (typeof value === 'function') return 'ƒ';
+  try {
+    return JSON.stringify(value) ?? String(value);
+  } catch {
+    // `String(value)` can ALSO throw (a throwing `Symbol.toPrimitive`/`toString`),
+    // so guard it too — logging a config change must never surface an exception.
+    try {
+      return String(value);
+    } catch {
+      return '[unserializable]';
+    }
+  }
+};
 
 /**
  * Config keys that can't be passed as attribute (because they are object or function)
@@ -75,9 +96,6 @@ export class Config extends ChildBlock {
   public declare attributesMeta: Partial<ConfigPlainType> & {
     'ctx-name': string;
   };
-
-  /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
-  private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
 
   private _computationControllers: ComputedPropertyControllers = new Map();
   private _pluginChangeUnsubscribe?: () => void;
@@ -193,7 +211,7 @@ export class Config extends ChildBlock {
       try {
         normalizedValue = config?.normalize?.(value) ?? value;
       } catch (error) {
-        console.warn(`[uc-config] normalize() for "${key}" threw an error, keeping previous value`, error);
+        this._log.warn(`normalize() for "${key}" threw an error, keeping previous value`, error);
         return;
       }
     } else {
@@ -214,8 +232,9 @@ export class Config extends ChildBlock {
     // Flush the value to the state and attribute
     this._flushValueToAttribute(key, normalizedValue);
     this._flushValueToState(key, normalizedValue);
-
-    this._debugPrint(`"${key}"`, normalizedValue);
+    // NB: config-change logging is NOT done here — it's a separate observer on
+    // `ConfigController` set up in `controllerReady` (`_setupChangeLog`), so it
+    // catches every change (incl. non-block writers) decoupled from the setter.
 
     // Only run assertions for built-in configs
     if (!this._isCustomConfig(key)) {
@@ -240,14 +259,10 @@ export class Config extends ChildBlock {
         typeof previousValue === 'object' &&
         JSON.stringify(nextValue) === JSON.stringify(previousValue)
       ) {
-        console.warn(
-          `[uc-config] Option "${key}" value is the same as the previous one but the reference is different`,
-        );
-        console.warn(
-          `[uc-config] You should avoid changing the reference of the object to prevent unnecessary calculations`,
-        );
-        console.warn(`[uc-config] "${key}" previous value:`, previousValue);
-        console.warn(`[uc-config] "${key}" new value:`, nextValue);
+        this._log.warn(`Option "${key}" value is the same as the previous one but the reference is different`);
+        this._log.warn(`You should avoid changing the reference of the object to prevent unnecessary calculations`);
+        this._log.warn(`"${key}" previous value:`, previousValue);
+        this._log.warn(`"${key}" new value:`, nextValue);
       }
     }
   }
@@ -294,10 +309,7 @@ export class Config extends ChildBlock {
             try {
               preExistingValue = definition.fromAttribute ? definition.fromAttribute(attrValue) : attrValue;
             } catch (error) {
-              console.warn(
-                `[uc-config] fromAttribute() for "${name}" threw an error, using raw attribute value`,
-                error,
-              );
+              this._log.warn(`fromAttribute() for "${name}" threw an error, using raw attribute value`, error);
               preExistingValue = attrValue;
             }
             hasPreExistingValue = true;
@@ -357,6 +369,35 @@ export class Config extends ChildBlock {
         this._flushValueToState(name, this._getValue(name));
       }
     }
+  }
+
+  /**
+   * Change-log observer (verbose/debug-gated): logs every `ConfigController`
+   * change as `key: <old> → <new>` — decoupled from the setter and covering
+   * ALL writers (this block, `api`, plugin `registerConfig`), not just
+   * `_setValue`. Recovers the per-key old/new by diffing a snapshot over the
+   * coarse `subscribe` notify (same pattern as the per-key sync subscriptions).
+   * Seeded before the initial-value flush so startup sets are logged; re-seeded
+   * per adoption and torn down via `trackSub`.
+   */
+  private _setupChangeLog(): void {
+    let snapshot: Record<string, unknown> = { ...this._config.values };
+    this.trackSub(
+      this._config.subscribe(() => {
+        const next = this._config.values as Record<string, unknown>;
+        for (const key of Object.keys(next)) {
+          const prev = snapshot[key];
+          const curr = next[key];
+          if (!Object.is(curr, prev)) {
+            // Thunked so the `formatConfigLogValue` (JSON.stringify) only runs
+            // when debug is on. Values are quoted for consistency and so an
+            // empty string is visible as `""`.
+            this._log.debug(lazy(() => [`${key}: ${formatConfigLogValue(prev)} → ${formatConfigLogValue(curr)}`]));
+          }
+        }
+        snapshot = { ...next };
+      }),
+    );
   }
 
   private _setupCustomConfigs(): void {
@@ -453,6 +494,10 @@ export class Config extends ChildBlock {
     if (!this._mutationObserver) {
       this._setupMutationObserver();
     }
+
+    // Change-log observer — set up BEFORE the initial-value flush below so the
+    // startup config values are logged too. Verbose/debug-gated.
+    this._setupChangeLog();
 
     // Subscribe to the state changes and update the local properties and attributes.
     // Initial callback call is disabled to prevent the initial value to be set here.

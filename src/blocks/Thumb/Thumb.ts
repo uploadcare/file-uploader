@@ -251,7 +251,7 @@ export class Thumb extends FileItemConfig {
         if (error instanceof DOMException && error.name === 'AbortError') {
           return;
         }
-        console.warn('[Thumb] Failed to decode thumbnail image', error);
+        this._log.warn('Failed to decode thumbnail image', error);
       });
   }
 

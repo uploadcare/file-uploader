@@ -1,6 +1,7 @@
 import type { ConfigType, OutputFileEntry } from '../../../types/exported';
 import type { NavigationEdge } from '../../controllers/RouterController';
 import type { CustomConfig, CustomConfigDefinition } from '../../customConfigOptions';
+import type { Logger } from '../../logger';
 import type { UploaderPublicApi } from '../../UploaderPublicApi';
 
 export type PluginIconRegistration = {
@@ -191,6 +192,13 @@ export type PluginSetupResult = (() => void) | void | Promise<(() => void) | voi
 export type PluginSetupParams = {
   pluginApi: PluginApi;
   uploaderApi: PluginUploaderApi;
+  /**
+   * A logger pre-scoped to this plugin (`[uc][<ctx-name>][plugin:<plugin-id>]`).
+   * `error`/`warn`/`warnOnce` always print; the verbose tier (`log`/`debug`)
+   * prints only when the uploader's `debug` config is on. Prefer this over
+   * `console.*` so plugin output is attributable and gated.
+   */
+  logger: Logger;
 };
 
 export type UploaderPlugin = {

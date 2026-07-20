@@ -4,7 +4,6 @@ import { inject } from '../../abstract/di/inject';
 import { EventBus } from '../../abstract/EventBus';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
-import { createDebugPrinter } from '../../lit/createDebugPrinter';
 import { EventBridgeController } from '../../lit/EventBridgeController';
 import { ensureUploaderScope } from '../../lit/ensureUploaderScope';
 import { type EventPayload, EventType } from './EventEmitter';
@@ -21,9 +20,6 @@ export class UploadCtxProvider extends ChildBlock {
   // `use()`.
   @inject(EventBus) private readonly _eventBus!: EventBus;
 
-  /** Same contract as v1 `LitBlock.debugPrint` (`createDebugPrinter`), scoped to this ctx. */
-  private _debugPrint = createDebugPrinter(() => this.containerOrNull, this.constructor.name);
-
   private _eventBridge: EventBridgeController | null = null;
 
   protected override controllerReady(container: ControllerContainer): void {
@@ -39,11 +35,7 @@ export class UploadCtxProvider extends ChildBlock {
     // element. Recreated on every adoption (matching the teardown above) so
     // its internal subscription is rebound to the *new* controller's bus
     // rather than staying latched onto a released one.
-    this._eventBridge = new EventBridgeController(
-      this,
-      () => this._eventBus,
-      (...args) => this._debugPrint(...args),
-    );
+    this._eventBridge = new EventBridgeController(this, () => this._eventBus);
   }
 
   protected override controllerReleased(): void {
@@ -75,8 +67,8 @@ export class UploadCtxProvider extends ChildBlock {
    * once a solution or a sibling provider has already attached.
    *
    * The `attachUploaderScope` deps come from the shared `buildUploaderScopeDeps`
-   * (one source of truth with `LitUploaderBlock.initCallback`); only `debug`
-   * and `emit` are host-specific. The guarded/idempotent body itself lives in
+   * (one source of truth with `LitUploaderBlock.initCallback`); only `emit` is
+   * host-specific. The guarded/idempotent body itself lives in
    * `ensureUploaderScope` (`src/lit/ensureUploaderScope.ts`) — a free-function
    * seam shared with the ported `<uc-drop-area>`, which needs the identical
    * synchronous-attach guarantee.
@@ -84,7 +76,6 @@ export class UploadCtxProvider extends ChildBlock {
   private _attachUploaderScopeIfNeeded(container: ControllerContainer): void {
     ensureUploaderScope(
       container,
-      (...args) => this._debugPrint(...args),
       // Same contract as `ChildBlock.emit`: pure EventEmitter dispatch (no
       // telemetry mirror — telemetry observes the bus independently via
       // `TelemetryManager.init()`), guarded for teardown races.

@@ -443,7 +443,7 @@ export class CropFrame extends EditorBlock {
     }
 
     if (!Object.values(rect).every((number) => Number.isFinite(number) && number >= 0)) {
-      console.error('CropFrame is trying to create invalid rectangle', {
+      this._log.error('CropFrame is trying to create invalid rectangle', {
         payload: rect,
       });
       return;

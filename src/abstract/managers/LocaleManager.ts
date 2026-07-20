@@ -1,5 +1,6 @@
 import { default as en } from '../../locales/file-uploader/en';
 import type { ConfigType } from '../../types';
+import { controllerLogger } from '../controllerLogger';
 import { ConfigController } from '../controllers/ConfigController';
 import { LocaleController } from '../controllers/LocaleController';
 import { Disposables } from '../di/Disposables';
@@ -32,6 +33,9 @@ export const DEFAULT_LOCALE = 'en';
  * when `ensurePluginManager` later activates it with the real one.
  */
 export class LocaleManager {
+  // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
+  // (resolved lazily at log time via the container that built this instance).
+  private readonly _log = controllerLogger(this, 'locale-manager');
   /** v2 config source of truth — `localeName`/`localeDefinitionOverride` reads + subscriptions. */
   @inject(ConfigController) private readonly _config!: ConfigController;
   /** v2 locale string store — where the resolved dictionary is written. */
@@ -65,7 +69,7 @@ export class LocaleManager {
       // `onPluginsChange` must not abort re-wiring (matching `destroy()`'s
       // `#disposables.run()` teardown convention), or the manager would be left
       // half re-wired with the new coupling never established.
-      console.warn('[uc] LocaleManager: previous plugin-manager unsubscribe threw', err);
+      this._log.warn('LocaleManager: previous plugin-manager unsubscribe threw', err);
     }
     this._cancelPluginManagerReg?.();
     this._pluginManagerUnsub = undefined;

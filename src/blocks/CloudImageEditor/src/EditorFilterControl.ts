@@ -250,7 +250,7 @@ export class EditorFilterControl extends EditorButtonControl {
       src = await this.editorController.proxyUrl(this._previewSrc());
     } catch (err) {
       this.editorController.set('*networkProblems', true);
-      console.error('Failed to resolve preview URL', { error: err });
+      this._log.error('Failed to resolve preview URL', { error: err });
       return;
     }
 
@@ -275,7 +275,7 @@ export class EditorFilterControl extends EditorButtonControl {
       (observer ?? this._observer)?.unobserve(this);
     } catch (err) {
       this.editorController.set('*networkProblems', true);
-      console.error('Failed to load image', { error: err });
+      this._log.error('Failed to load image', { error: err });
       this._schedulePreviewVisibilityCheck();
     } finally {
       if (this._lastPreviewRequestId === requestId) {

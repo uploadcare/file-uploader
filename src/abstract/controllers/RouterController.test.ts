@@ -3,6 +3,8 @@ import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityId } from '../../lit/activity-constants';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
+import { SCOPE_BADGE_STYLE, UC_BADGE_STYLE } from '../logger';
+import { ConfigController } from './ConfigController';
 import { NAVIGATE_CANCEL, RouterController } from './RouterController';
 
 const setup = () => {
@@ -806,6 +808,130 @@ describe('RouterController (v2)', () => {
       router.navigate('start-from'); // hooks cleared → proceeds; listeners cleared → no notify
       expect(onChange).not.toHaveBeenCalled();
       expect(router.activity).toBe('start-from');
+    });
+  });
+
+  describe('debug logging (verbose, gated by this ctx debug)', () => {
+    const setupDebug = () => {
+      const container = new ControllerContainer();
+      container.bind(EventEmitter, () => ({ emit: vi.fn() }) as unknown as EventEmitter);
+      container.get(ConfigController).set('debug', true);
+      return { router: container.get(RouterController) };
+    };
+
+    it('logs slot transitions, flagging background vs modal', () => {
+      const { router } = setupDebug();
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
+
+      router.navigate('start-from'); // background strategy → background slot
+      expect(log).toHaveBeenCalledWith(...badge, 'background activity: none → start-from');
+
+      router.navigationStrategy = () => 'foreground';
+      router.navigate('camera'); // foreground → modal slot
+      expect(log).toHaveBeenCalledWith(...badge, 'modal activity: none → camera');
+    });
+
+    it('logs a traverse intent and a guard refusal', () => {
+      const { router } = setupDebug();
+      router.guard('camera', () => false); // camera not activatable
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      router.traverse('onClose');
+      router.navigate('camera'); // refused by the guard
+
+      expect(log).toHaveBeenCalledWith(
+        '%c uc %c router %c',
+        UC_BADGE_STYLE,
+        SCOPE_BADGE_STYLE,
+        '',
+        'traverse "onClose"',
+      );
+      expect(log).toHaveBeenCalledWith(
+        '%c uc %c router %c',
+        UC_BADGE_STYLE,
+        SCOPE_BADGE_STYLE,
+        '',
+        'navigate to "camera" refused (guard)',
+      );
+    });
+
+    it('logs hook registration, hook execution result, and the applied navigation strategy', () => {
+      const { router } = setupDebug();
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
+
+      router.hooks.beforeChange(() => 'upload-list'); // registration
+      router.navigate('start-from'); // hook runs → redirects; strategy applies to the resolved target
+
+      expect(log).toHaveBeenCalledWith(...badge, 'hook registered: "beforeChange" (1 total)');
+      expect(log).toHaveBeenCalledWith(...badge, 'hook "beforeChange" → "upload-list"');
+      expect(log).toHaveBeenCalledWith(...badge, 'strategy for "upload-list": background');
+    });
+
+    it('logs guard registration and unregistration', () => {
+      const { router } = setupDebug();
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
+
+      const off = router.guard('camera', () => true);
+      expect(log).toHaveBeenCalledWith(...badge, 'guard registered: "camera"');
+
+      off();
+      expect(log).toHaveBeenCalledWith(...badge, 'guard unregistered: "camera"');
+    });
+
+    it('logs hook registration and unregistration', () => {
+      const { router } = setupDebug();
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
+
+      const off = router.hooks.onClose(() => undefined);
+      expect(log).toHaveBeenCalledWith(...badge, 'hook registered: "onClose" (1 total)');
+
+      off();
+      expect(log).toHaveBeenCalledWith(...badge, 'hook unregistered: "onClose" (0 total)');
+    });
+
+    it('does not log a second unregister when the hook was already removed', () => {
+      const { router } = setupDebug();
+      const off = router.hooks.onClose(() => undefined);
+      off();
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      // Idempotent unregister: the second call removes nothing, so it must not log.
+      off();
+      expect(log).not.toHaveBeenCalledWith(
+        ...(['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const),
+        'hook unregistered: "onClose" (0 total)',
+      );
+    });
+
+    it('logs the configured done activity', () => {
+      const { router } = setupDebug();
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      router.configure({ doneActivity: 'upload-list' });
+
+      expect(log).toHaveBeenCalledWith(
+        '%c uc %c router %c',
+        UC_BADGE_STYLE,
+        SCOPE_BADGE_STYLE,
+        '',
+        'configure: done activity = upload-list',
+      );
+    });
+
+    it('does not log when this ctx has debug off', () => {
+      const container = new ControllerContainer();
+      container.bind(EventEmitter, () => ({ emit: vi.fn() }) as unknown as EventEmitter);
+      const router = container.get(RouterController);
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      router.navigate('start-from');
+      router.traverse('onClose');
+
+      expect(log).not.toHaveBeenCalled();
     });
   });
 });

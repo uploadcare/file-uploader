@@ -1,3 +1,7 @@
+import { logger } from '../logger';
+
+const log = logger.scope('disposables');
+
 /**
  * A tiny composable teardown registry. Controllers `add()` their teardown
  * closures at each closure's creation site and call `run()` from `destroy()`,
@@ -30,7 +34,7 @@ export class Disposables {
       try {
         fn();
       } catch (err) {
-        console.warn('[uc] Disposables: a teardown threw', err);
+        log.warn('Disposables: a teardown threw', err);
       }
     }
     this.#fns.clear();
