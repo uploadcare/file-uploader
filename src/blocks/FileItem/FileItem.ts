@@ -309,7 +309,7 @@ export class FileItem extends FileItemConfig {
       try {
         return action.shouldRender(outputFileEntry);
       } catch (error) {
-        console.error(`Error in plugin file action shouldRender (${action.id}):`, error);
+        this._log.error(`Error in plugin file action shouldRender (${action.id}):`, error);
         return false;
       }
     });
@@ -343,7 +343,7 @@ export class FileItem extends FileItemConfig {
     try {
       action.onClick(outputFileEntry);
     } catch (error) {
-      console.error(`Error in plugin file action onClick (${action.id}):`, error);
+      this._log.error(`Error in plugin file action onClick (${action.id}):`, error);
     }
   }
 

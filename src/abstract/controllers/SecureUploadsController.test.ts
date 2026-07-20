@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vite
 import type { ConfigType } from '../../types';
 import type { SecureUploadsSignatureAndExpire } from '../../types/index';
 import { ControllerContainer } from '../di/ControllerContainer';
+import { __resetLoggerForTests } from '../logger';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadHostBridge } from './UploadHostBridge';
@@ -22,7 +23,6 @@ const applyConfig = (config: ConfigController, overrides: Partial<ConfigType>): 
 // about are overridden. Inlined (not shared) so it stays out of coverage.
 const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
   ({
-    debug: () => {},
     getFileHooks: () => [],
     getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
     getApi: (() => ({})) as unknown as UploadHostBridge['getApi'],
@@ -39,18 +39,22 @@ const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBr
 
 describe('SecureUploadsController', () => {
   let controller: SecureUploadsController;
-  let debug: Mock<(...args: unknown[]) => void>;
   let onResolverError: Mock<(error: unknown, context: string) => void>;
 
   const createController = (cfgOverrides: Partial<ConfigType> = {}) => {
     const container = new ControllerContainer();
     const config = container.get(ConfigController);
     applyConfig(config, cfgOverrides);
-    debug = vi.fn<(...args: unknown[]) => void>();
     onResolverError = vi.fn<(error: unknown, context: string) => void>();
-    container.bind(UploadHostBridge, () => makeUploadHost({ debug, onResolverError }));
+    container.bind(UploadHostBridge, () => makeUploadHost({ onResolverError }));
     controller = container.get(SecureUploadsController);
   };
+
+  // The controller's debug output goes through a per-ctx gated `logger` scope,
+  // enabled only when this ctx's `debug` config is on (create the controller
+  // with `{ debug: true }`). The gated tier prints via `console.log` prefixed
+  // the multi-chip badge (uc + scope) + style args — spy `console.log` to assert it.
+  const spyLoggerDebug = () => vi.spyOn(console, 'log').mockImplementation(() => {});
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -60,6 +64,7 @@ describe('SecureUploadsController', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    __resetLoggerForTests();
   });
 
   describe('constructor', () => {
@@ -67,12 +72,12 @@ describe('SecureUploadsController', () => {
       expect(controller).toBeInstanceOf(SecureUploadsController);
     });
 
-    it('resolves against a minimal host (inert debug/onResolverError)', async () => {
+    it('resolves against a minimal host (inert onResolverError)', async () => {
       const container = new ControllerContainer();
       const config = container.get(ConfigController);
       applyConfig(config, { secureSignature: 'sig', secureExpire: '1234567890' });
-      // A bare host (inert defaults, no debug/onResolverError override) → must
-      // still resolve without throwing.
+      // A bare host (inert defaults, no onResolverError override) → must still
+      // resolve without throwing.
       container.bind(UploadHostBridge, () => makeUploadHost());
       const bare = container.get(SecureUploadsController);
 
@@ -111,7 +116,9 @@ describe('SecureUploadsController', () => {
         createController({
           secureSignature: 'test-signature',
           secureExpire: '1234567890',
+          debug: true,
         });
+        const debug = spyLoggerDebug();
 
         await controller.getSecureToken();
 
@@ -219,6 +226,7 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(consoleWarnSpy).toHaveBeenCalledWith(
+          '[uc][secure-uploads]',
           'Both secureSignature/secureExpire and secureUploadsSignatureResolver are set. secureUploadsSignatureResolver will be used.',
         );
       });
@@ -247,7 +255,9 @@ describe('SecureUploadsController', () => {
 
         createController({
           secureUploadsSignatureResolver: resolver,
+          debug: true,
         });
+        const debug = spyLoggerDebug();
 
         const result = await controller.getSecureToken();
 
@@ -267,6 +277,7 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
+          '[uc][secure-uploads]',
           'Secure signature resolver returned an invalid result:',
           invalidToken,
         );
@@ -284,6 +295,7 @@ describe('SecureUploadsController', () => {
         await controller.getSecureToken();
 
         expect(consoleErrorSpy).toHaveBeenCalledWith(
+          '[uc][secure-uploads]',
           'Secure signature resolver returned an invalid result:',
           invalidToken,
         );
@@ -312,6 +324,7 @@ describe('SecureUploadsController', () => {
         const result2 = await controller.getSecureToken();
         expect(result2).toEqual(validToken);
         expect(consoleErrorSpy).toHaveBeenCalledWith(
+          '[uc][secure-uploads]',
           'Secure signature resolving failed. Falling back to the previous one.',
           resolverError,
         );
@@ -327,11 +340,19 @@ describe('SecureUploadsController', () => {
 
         createController({
           secureUploadsSignatureResolver: resolver,
+          debug: true,
         });
+        const debug = spyLoggerDebug();
 
         await controller.getSecureToken();
 
-        expect(debug).toHaveBeenCalledWith('Secure signature is not set yet.');
+        expect(debug).toHaveBeenCalledWith(
+          '%c uc %c secure-uploads %c',
+          expect.any(String),
+          expect.any(String),
+          '',
+          'Secure signature is not set yet.',
+        );
       });
 
       it('should debug print when token is expired', async () => {
@@ -349,7 +370,9 @@ describe('SecureUploadsController', () => {
         createController({
           secureUploadsSignatureResolver: resolver,
           secureUploadsExpireThreshold: 10000,
+          debug: true,
         });
+        const debug = spyLoggerDebug();
 
         await controller.getSecureToken();
 
@@ -357,7 +380,13 @@ describe('SecureUploadsController', () => {
 
         await controller.getSecureToken();
 
-        expect(debug).toHaveBeenCalledWith('Secure signature is expired. Resolving a new one...');
+        expect(debug).toHaveBeenCalledWith(
+          '%c uc %c secure-uploads %c',
+          expect.any(String),
+          expect.any(String),
+          '',
+          'Secure signature is expired. Resolving a new one...',
+        );
       });
 
       it('should debug print resolved token details', async () => {
@@ -369,11 +398,23 @@ describe('SecureUploadsController', () => {
 
         createController({
           secureUploadsSignatureResolver: resolver,
+          debug: true,
         });
+        const debug = spyLoggerDebug();
 
         await controller.getSecureToken();
 
-        expect(debug).toHaveBeenCalledWith('Secure signature resolved:', mockToken);
+        // The signing credential is redacted from the debug output.
+        expect(debug).toHaveBeenCalledWith(
+          '%c uc %c secure-uploads %c',
+          expect.any(String),
+          expect.any(String),
+          '',
+          'Secure signature resolved:',
+          { secureSignature: '[redacted]', secureExpire: mockToken.secureExpire },
+        );
+        // …and the real signature never reaches the console.
+        expect(JSON.stringify(debug.mock.calls)).not.toContain('resolved-signature');
       });
     });
 

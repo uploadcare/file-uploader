@@ -1,4 +1,5 @@
 import { fileIsImage } from '../../../utils/fileTypes';
+import { controllerLogger } from '../../controllerLogger';
 import { Disposables } from '../../di/Disposables';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
@@ -16,8 +17,6 @@ export type PluginControllerDeps = {
    * Each emission is a promise of the plugins to sync to. Returns a teardown.
    */
   watchPlugins: (onCompute: (pluginsPromise: Promise<UploaderPlugin[] | undefined>) => void) => Unsubscribe;
-  /** Debug logger — defaults to a no-op. */
-  debug?: (...args: unknown[]) => void;
 };
 
 type RegisteredPlugin = {
@@ -36,8 +35,10 @@ type RegisteredPlugin = {
  * / the `@inject(() => PluginController)` thunk.
  */
 export class PluginController {
+  // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
+  // (resolved lazily at log time via the container that built this instance).
+  private readonly _log = controllerLogger(this, 'plugin-manager');
   private _deps: PluginControllerDeps;
-  private _debug: (...args: unknown[]) => void;
   private _isDestroyed = false;
   private _plugins: Map<string, RegisteredPlugin> = new Map();
   private _subscribers: Set<Unsubscribe> = new Set();
@@ -51,7 +52,6 @@ export class PluginController {
 
   public constructor(deps: PluginControllerDeps) {
     this._deps = deps;
-    this._debug = deps.debug ?? (() => {});
 
     this.#disposables.add(
       deps.watchPlugins((pluginsPromise) => {
@@ -65,7 +65,7 @@ export class PluginController {
           // Recover the queue: a rejected emission must not permanently poison the
           // chain so later emissions never run. (`_pluginsUpdate` always resolves.)
           .catch((error) => {
-            console.error('[PluginManager] Failed to sync plugins', error);
+            this._log.error('Failed to sync plugins', error);
           });
       }),
     );
@@ -88,12 +88,12 @@ export class PluginController {
 
     for (const plugin of plugins) {
       if (!plugin.id) {
-        console.warn('[PluginManager] A plugin is missing the required "id" field, skipping');
+        this._log.warn('A plugin is missing the required "id" field, skipping');
         continue;
       }
 
       if (processedIds.has(plugin.id)) {
-        console.warn(`[PluginManager] Plugin "${plugin.id}" is already in the list, skipping duplicate`);
+        this._log.warn(`Plugin "${plugin.id}" is already in the list, skipping duplicate`);
         continue;
       }
       processedIds.add(plugin.id);
@@ -104,7 +104,7 @@ export class PluginController {
         } catch (error) {
           this.registry.purge(plugin.id);
           this._notifySubscribers();
-          console.error(`[PluginManager] Plugin "${plugin.id}" setup() threw an error`, error);
+          this._log.error(`Plugin "${plugin.id}" setup() threw an error`, error);
         }
       }
       currentPluginIds.delete(plugin.id);
@@ -124,15 +124,19 @@ export class PluginController {
     const pluginApi = this._deps.buildApi(this.registry, plugin.id, configSubscriptions);
 
     const uploaderApi = this._deps.getUploaderApi();
+    // A logger scoped to this plugin — `[uc][<ctx-name>][plugin:<id>]`, verbose
+    // tier gated by the uploader's `debug` config. Handed to `setup` so plugins
+    // log through the centralized logger with attribution for free.
+    const pluginLogger = controllerLogger(this, `plugin:${plugin.id}`);
     let pluginDispose: Unsubscribe | undefined;
     try {
-      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
+      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi, logger: pluginLogger })) ?? undefined;
     } catch (error) {
       for (const unsub of configSubscriptions) {
         try {
           unsub();
         } catch (e) {
-          this._debug('Failed to unsubscribe config listener', e);
+          this._log.warn('Failed to unsubscribe config listener', e);
         }
       }
       throw error;
@@ -152,14 +156,14 @@ export class PluginController {
       try {
         unsub();
       } catch (error) {
-        this._debug('Failed to unsubscribe config listener', error);
+        this._log.warn('Failed to unsubscribe config listener', error);
       }
     }
 
     try {
       registered.dispose?.();
     } catch (error) {
-      this._debug('Failed to dispose plugin', error);
+      this._log.warn('Failed to dispose plugin', error);
     }
     this._plugins.delete(pluginId);
     this._notifySubscribers();
@@ -187,7 +191,7 @@ export class PluginController {
         );
         ({ file } = await Promise.race([hookPromise, timeoutPromise]));
       } catch (error) {
-        console.warn(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
+        this._log.warn(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
       }
     }
 

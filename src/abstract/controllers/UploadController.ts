@@ -9,8 +9,10 @@ import {
 import type { Uid } from '../../lit/Uid';
 import { fileIsImage } from '../../utils/fileTypes';
 import { customUserAgent } from '../../utils/userAgent';
+import { controllerLogger } from '../controllerLogger';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
+import { lazy } from '../logger';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
@@ -26,8 +28,10 @@ import { UploadHostBridge } from './UploadHostBridge';
  * isolation), upload-client option assembly, the queued `uploadFile` call,
  * progress, and the success/cancel/error write-back. Container-resolved (M-god
  * step 5): controller peers (config, collection, secure-uploads) and the
- * `UploadHostBridge` (plugin hooks, output-item resolver, telemetry sink, debug)
- * are `@inject`-ed, so it runs zero-arg without a DOM and is unit-testable; the
+ * `UploadHostBridge` (plugin hooks, output-item resolver, telemetry sink)
+ * are `@inject`-ed, so it runs zero-arg without a DOM and is unit-testable;
+ * debug output goes through the per-ctx `this._log` (gated by this ctx's `debug`
+ * config), not a host bridge; the
  * FileItem UI reacts to the same entry mutations through its existing per-entry
  * subscriptions.
  */
@@ -36,6 +40,11 @@ export class UploadController {
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(SecureUploadsController) private readonly _secureUploads!: SecureUploadsController;
   @inject(UploadHostBridge) private readonly _host!: UploadHostBridge;
+
+  // Per-ctx gated logger: the verbose tier prints only when THIS ctx's `debug`
+  // config is on; ctx-name + gate resolve lazily at log time via the container
+  // that built this instance.
+  private readonly _log = controllerLogger(this, 'upload');
 
   // One queue per uploader scope → global concurrency across all entries (v1 parity).
   private _queue = new Queue(1);
@@ -160,7 +169,7 @@ export class UploadController {
                 }
               }
             } catch (error) {
-              console.warn(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
+              this._log.warn(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
             }
           }
         }
@@ -183,7 +192,17 @@ export class UploadController {
           signal: abortController.signal,
           metadata: await this.getMetadataFor(uid),
         };
-        this._host.debug('upload options', fileInput, uploadClientOptions);
+        // Redact the signing credential from debug output — never print
+        // `secureSignature` to the console. Lazy so the redacted copy is only
+        // built when this ctx is verbose.
+        this._log.debug(
+          lazy(() => [
+            'upload options',
+            uploadClientOptions.secureSignature
+              ? { ...uploadClientOptions, secureSignature: '[redacted]' }
+              : uploadClientOptions,
+          ]),
+        );
         return uploadFile(fileInput, uploadClientOptions);
       };
 
@@ -216,7 +235,7 @@ export class UploadController {
           uploadError: cause,
         });
       } else {
-        console.error('Unknown upload error', cause);
+        this._log.error('Unknown upload error', cause);
         entry.setMultipleValues({
           isUploading: false,
           uploadProgress: 0,

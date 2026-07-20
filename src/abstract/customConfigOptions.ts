@@ -1,3 +1,7 @@
+import { logger } from './logger';
+
+const log = logger.scope('custom-config');
+
 /**
  * Custom configuration options registration system for plugins
  */
@@ -49,7 +53,7 @@ export class CustomConfigRegistry {
 
   public register<T = unknown>(pluginId: string, definition: CustomConfigDefinition<T>): void {
     if (this._definitions.has(definition.name)) {
-      console.warn(`[CustomConfig] Config option "${definition.name}" is already registered`);
+      log.warn(`Config option "${definition.name}" is already registered`);
       return;
     }
 

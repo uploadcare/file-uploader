@@ -1,9 +1,11 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityId } from '../../lit/activity-constants';
+import { controllerLogger } from '../controllerLogger';
 import { inject } from '../di/inject';
 import { signalState } from '../di/signalState';
 import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
 import { Listeners } from '../host-subscription';
+import { lazy } from '../logger';
 
 export type EdgeTarget = ActivityId | null;
 
@@ -49,6 +51,9 @@ type Hook = (ctx: EdgeContext) => EdgeTarget | NavigateCancel | undefined;
  * the only side effect is the injected `emit`.
  */
 export class RouterController {
+  // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
+  // (resolved lazily at log time via the container that built this instance).
+  private readonly _log = controllerLogger(this, 'router');
   // Container-resolved emit target (M-god step 3c). Thunked `@inject` because
   // the module graph around the event surface is circular-prone; resolution is
   // lazy so there is zero construction cycle. Telemetry observes the bus, so
@@ -141,6 +146,7 @@ export class RouterController {
   /** Per-preset routing config (solution-level), e.g. the post-flow done activity. */
   public configure(table: RouteTable): void {
     this._table = { ...table };
+    this._log.debug(lazy(() => [`configure: done activity = ${this._table.doneActivity ?? 'none'}`]));
   }
 
   // ─── Guards ───
@@ -154,9 +160,11 @@ export class RouterController {
    */
   public guard(activityId: ActivityId, canActivate: () => boolean): () => void {
     this._guards.set(activityId, canActivate);
+    this._log.debug(lazy(() => [`guard registered: "${activityId}"`]));
     return () => {
       if (this._guards.get(activityId) === canActivate) {
         this._guards.delete(activityId);
+        this._log.debug(lazy(() => [`guard unregistered: "${activityId}"`]));
       }
     };
   }
@@ -170,7 +178,7 @@ export class RouterController {
     try {
       return guard();
     } catch (err) {
-      console.warn(`[uc] router guard for "${id}" threw; treating the activity as not activatable`, err);
+      this._log.warn(`router guard for "${id}" threw; treating the activity as not activatable`, err);
       return false;
     }
   }
@@ -234,8 +242,13 @@ export class RouterController {
 
   private _register(name: keyof typeof this._hooks, h: Hook): () => void {
     this._hooks[name].push(h);
+    this._log.debug(lazy(() => [`hook registered: "${name}" (${this._hooks[name].length} total)`]));
     return () => {
+      const before = this._hooks[name].length;
       this._hooks[name] = this._hooks[name].filter((x) => x !== h);
+      if (this._hooks[name].length !== before) {
+        this._log.debug(lazy(() => [`hook unregistered: "${name}" (${this._hooks[name].length} total)`]));
+      }
     };
   }
 
@@ -248,7 +261,7 @@ export class RouterController {
     try {
       return hook(ctx);
     } catch (err) {
-      console.warn(`[uc] router "${name}" hook threw; skipping it`, err);
+      this._log.warn(`router "${name}" hook threw; skipping it`, err);
       return undefined;
     }
   }
@@ -264,6 +277,13 @@ export class RouterController {
   private _resolveHooks(name: keyof typeof this._hooks, ctx: EdgeContext): EdgeTarget | NavigateCancel | undefined {
     for (const hook of this._hooks[name]) {
       const r = this._invokeHook(name, hook, ctx);
+      this._log.debug(
+        lazy(() => [
+          `hook "${name}" → ${
+            r === NAVIGATE_CANCEL ? 'cancel' : r === undefined ? 'defer' : r === null ? 'close (null)' : `"${r}"`
+          }`,
+        ]),
+      );
       if (r !== undefined) return r;
     }
     return undefined;
@@ -306,7 +326,11 @@ export class RouterController {
     const ctx: EdgeContext = { edge: 'navigate', from: this.currentActivity, proposed: to, defaults: () => to };
     const resolved = this._resolveHooks('beforeChange', ctx);
     if (resolved === NAVIGATE_CANCEL) {
+      this._log.debug(lazy(() => [`navigate to ${to ?? 'null'} cancelled by a beforeChange hook`]));
       return;
+    }
+    if (resolved !== undefined && resolved !== to) {
+      this._log.debug(lazy(() => [`beforeChange hook redirected: ${to ?? 'null'} → ${resolved ?? 'null'}`]));
     }
     // All hooks deferred (`undefined`) → the proposed target goes through.
     // Note `null` is a real decision (close everything), so no `??` here.
@@ -328,13 +352,16 @@ export class RouterController {
     // refuse the navigation and stay where we are — leaving `_params` untouched
     // so readers never observe params for an activity we didn't actually enter.
     if (!this._canActivate(to)) {
+      this._log.debug(lazy(() => [`navigate to "${to}" refused (guard)`]));
       return;
     }
     this._params = params;
     onCommit?.(to);
     // A background target closes any open modal first — the inline content is
     // the focus now; a foreground target leaves the background slot untouched.
-    if (this.navigationStrategy(to) === 'background') {
+    const slot = this.navigationStrategy(to);
+    this._log.debug(lazy(() => [`strategy for "${to}": ${slot}`]));
+    if (slot === 'background') {
       this._transition(to, null);
     } else {
       this._transition(this._activity, to);
@@ -348,6 +375,7 @@ export class RouterController {
    * upload list while a modal is open in the foreground slot).
    */
   public setActivity(to: EdgeTarget, params?: Record<string, unknown>): void {
+    this._log.debug(lazy(() => [`set activity (direct): ${to ?? 'null'}`]));
     if (!this._canActivate(to)) {
       return;
     }
@@ -366,12 +394,23 @@ export class RouterController {
    * Always notifies subscribers, so params-only updates still re-render.
    */
   private _transition(nextActivity: EdgeTarget, nextModal: EdgeTarget): void {
+    const prevActivity = this._activity;
     const prevModal = this._modal;
     const prevEffective = this._currentActivity;
     this._activity = nextActivity;
     this._modal = nextModal;
     const nextEffective = this._modal ?? this._activity;
     this._currentActivity = nextEffective;
+
+    // Per-slot debug logs (verbose): flag the background vs the foreground (modal)
+    // slot explicitly, so a background change while a modal is open (which leaves
+    // the *effective* activity unchanged) is still visible.
+    if (nextActivity !== prevActivity) {
+      this._log.debug(lazy(() => [`background activity: ${prevActivity ?? 'none'} → ${nextActivity ?? 'none'}`]));
+    }
+    if (nextModal !== prevModal) {
+      this._log.debug(lazy(() => [`modal activity: ${prevModal ?? 'none'} → ${nextModal ?? 'none'}`]));
+    }
 
     if (prevModal === null && nextModal !== null) {
       this._emit(UploaderEventType.MODAL_OPEN, { modalId: nextModal });
@@ -430,6 +469,7 @@ export class RouterController {
    * - `onFileAdd` → navigate to `upload-list`.
    */
   public traverse(edge: NavigationEdge): void {
+    this._log.debug(lazy(() => [`traverse "${edge}"`]));
     // `proposed`/`defaults()` carry a concrete target only when the default
     // *is* a target (`onDone` → done activity, `onFileAdd` → upload-list).
     // For `onBack`/`onCancel`/`onClose` the default is an *action*

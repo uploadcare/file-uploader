@@ -94,7 +94,7 @@ export class ExternalSource extends ChildBlock {
       }
       const { externalSourceType } = this._router.params as ActivityParams;
       if (!externalSourceType) {
-        console.error(`Param "externalSourceType" is required for external source activity`);
+        this._log.error(`Param "externalSourceType" is required for external source activity`);
         return;
       }
       this._unmountIframe();
@@ -164,7 +164,7 @@ export class ExternalSource extends ChildBlock {
 
   private async _handleSelectedFilesChange(message: InputMessageMap['selected-files-change']) {
     if (this._config.get('multiple') !== message.isMultipleMode) {
-      console.error('Multiple mode mismatch');
+      this._log.error('Multiple mode mismatch');
       return;
     }
 

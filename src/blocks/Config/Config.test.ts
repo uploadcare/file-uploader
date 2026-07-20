@@ -1,5 +1,6 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { CTX_BADGE_STYLE, SCOPE_BADGE_STYLE, UC_BADGE_STYLE } from '../../abstract/logger';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { delay } from '../../utils/delay';
@@ -23,6 +24,10 @@ afterEach(() => {
   for (const name of ctxNames.splice(0)) {
     UploaderRegistry.dispose(name);
   }
+  // Restore the console spies the change-log tests install — otherwise
+  // `vi.spyOn(console, 'log')` returns the same persistent mock and its
+  // `.mock.calls` accumulate across tests, breaking the debug-off assertion.
+  vi.restoreAllMocks();
 });
 
 const track = (el: HTMLElement): void => {
@@ -108,6 +113,62 @@ describe('Config (<uc-config>) — M-god step 6b-5 use(ConfigController)', () =>
 
     expect(el.pubkey).toBe('externallyset');
     expect(el.getAttribute('pubkey')).toBe('externallyset');
+  });
+
+  describe('change log (_setupChangeLog, verbose/debug-gated)', () => {
+    // Header the ChildBlock logger emits for `<uc-config>`: uc + this ctx-name +
+    // the `config` scope (tag minus the `uc-` prefix), then the reset chip.
+    const header = (ctxName: string) => `%c uc %c ${ctxName} %c config %c`;
+
+    it('logs a value change as `key: <old> → <new>`, quoting strings (empty string as "")', async () => {
+      const ctxName = freshCtxName();
+      const config = controllerFor(ctxName);
+      const el = await mount(ctxName);
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      config.set('debug', true); // turn the verbose gate on
+      el.pubkey = 'demopublickey'; // '' → 'demopublickey' — empty old value shows as ""
+      await delay(0);
+
+      expect(log).toHaveBeenCalledWith(
+        header(ctxName),
+        UC_BADGE_STYLE,
+        CTX_BADGE_STYLE,
+        SCOPE_BADGE_STYLE,
+        '',
+        'pubkey: "" → "demopublickey"',
+      );
+    });
+
+    it('logs a boolean change (debug: false → true)', async () => {
+      const ctxName = freshCtxName();
+      const config = controllerFor(ctxName);
+      await mount(ctxName);
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      config.set('debug', true);
+      await delay(0);
+
+      expect(log).toHaveBeenCalledWith(
+        header(ctxName),
+        UC_BADGE_STYLE,
+        CTX_BADGE_STYLE,
+        SCOPE_BADGE_STYLE,
+        '',
+        'debug: false → true',
+      );
+    });
+
+    it('does not log config changes when debug is off', async () => {
+      const ctxName = freshCtxName();
+      const el = await mount(ctxName);
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      el.pubkey = 'demopublickey';
+      await delay(0);
+
+      expect(log).not.toHaveBeenCalled();
+    });
   });
 
   // The custom-config attribute bridge (MutationObserver + attributeChangedCallback

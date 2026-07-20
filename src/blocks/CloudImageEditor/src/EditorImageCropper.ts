@@ -399,7 +399,7 @@ export class EditorImageCropper extends EditorBlock {
       ],
     };
     if (!validateCrop(crop)) {
-      console.error('Cropper is trying to create invalid crop object', {
+      this._log.error('Cropper is trying to create invalid crop object', {
         payload: crop,
       });
       return undefined;
@@ -492,7 +492,7 @@ export class EditorImageCropper extends EditorBlock {
       this._handleResizeThrottled();
       this._animateIn({ fromViewer });
     } catch (err) {
-      console.error('Failed to activate cropper', { error: err });
+      this._log.error('Failed to activate cropper', { error: err });
       this.editorControllerOrNull?.telemetry.sendEventError(err, 'cloud editor image. Failed to activate cropper');
     }
 
@@ -585,7 +585,7 @@ export class EditorImageCropper extends EditorBlock {
     return promise
       .then(() => image)
       .catch((err) => {
-        console.error('Failed to load image', { error: err });
+        this._log.error('Failed to load image', { error: err });
         controller.set('*networkProblems', true);
         return image;
       });

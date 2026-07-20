@@ -318,7 +318,11 @@ describe('ChildBlock', () => {
       child.remove();
       expect(child.releasedCount).toBe(1);
       expect(child.cleanupRanAfterThrow).toBe(true);
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('teardown threw'), expect.any(Error));
+      expect(warnSpy).toHaveBeenCalledWith(
+        `[uc][${ctxName}][test-child-block]`,
+        expect.stringContaining('teardown threw'),
+        expect.any(Error),
+      );
     } finally {
       warnSpy.mockRestore();
     }
@@ -363,6 +367,7 @@ describe('ChildBlock', () => {
       await expect.poll(() => child.querySelector('.pk')?.textContent).toBe('demopublickey');
       expect(child.readyCount).toBe(0);
       expect(warnSpy).toHaveBeenCalledWith(
+        `[uc][${ctxName}][test-child-block]`,
         expect.stringContaining('controllerReady threw during adoption'),
         expect.any(Error),
       );

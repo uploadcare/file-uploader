@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Uid } from '../../lit/Uid';
 import type { ConfigType, OutputFileEntry } from '../../types';
 import { ControllerContainer } from '../di/ControllerContainer';
+import { __resetLoggerForTests } from '../logger';
 import type { Owned, PluginFileHookRegistration } from '../managers/plugin/PluginTypes';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import { ConfigController } from './ConfigController';
@@ -15,7 +16,6 @@ import { UploadHostBridge } from './UploadHostBridge';
 // about are overridden. Inlined (not shared) so it stays out of coverage.
 const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
   ({
-    debug: () => {},
     getFileHooks: () => [],
     getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
     getApi: (() => ({})) as unknown as UploadHostBridge['getApi'],
@@ -77,7 +77,6 @@ const makeOutputItem = (uid: Uid): OutputFileEntry => ({ internalId: uid }) as u
 type SetupOpts = {
   cfg?: Partial<ConfigType>;
   hooks?: readonly FileHook[];
-  withDebug?: boolean;
   withOnError?: boolean;
 };
 
@@ -89,20 +88,18 @@ const setup = (opts: SetupOpts = {}) => {
   const getFileHooks = vi.fn<() => readonly FileHook[]>(() => opts.hooks ?? []);
   const getOutputItem = vi.fn<(uid: Uid) => OutputFileEntry>((uid) => makeOutputItem(uid));
   const onUploadError = vi.fn<(error: unknown, context: string) => void>();
-  const debug = vi.fn<(...args: unknown[]) => void>();
   container.bind(UploadHostBridge, () =>
     makeUploadHost({
       getFileHooks,
       getOutputItem: getOutputItem as unknown as UploadHostBridge['getOutputItem'],
-      // `withOnError: false` / `withDebug: false` → an inert no-op sink,
-      // mirroring v1's "no sink provided" path.
+      // `withOnError: false` → an inert no-op sink, mirroring v1's "no sink
+      // provided" path.
       onUploadError: opts.withOnError === false ? () => {} : onUploadError,
-      debug: opts.withDebug === false ? () => {} : debug,
     }),
   );
   const secureUploads = container.get(SecureUploadsController);
   const controller = container.get(UploadController);
-  return { controller, config, collection, secureUploads, getFileHooks, getOutputItem, onUploadError, debug };
+  return { controller, config, collection, secureUploads, getFileHooks, getOutputItem, onUploadError };
 };
 
 const queueConcurrency = (controller: UploadController): number =>
@@ -117,6 +114,7 @@ describe('UploadController', () => {
   afterEach(() => {
     vi.restoreAllMocks();
     vi.useRealTimers();
+    __resetLoggerForTests();
   });
 
   describe('preconditions (no upload)', () => {
@@ -342,7 +340,7 @@ describe('UploadController', () => {
 
       await controller.uploadEntry(id);
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('beforeUpload'), expect.any(Error));
+      expect(warn).toHaveBeenCalledWith('[uc][upload]', expect.stringContaining('beforeUpload'), expect.any(Error));
       expect(mockUploadFile).toHaveBeenCalledTimes(1);
     });
 
@@ -358,7 +356,7 @@ describe('UploadController', () => {
       await vi.advanceTimersByTimeAsync(60);
       await promise;
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('beforeUpload'), expect.any(Error));
+      expect(warn).toHaveBeenCalledWith('[uc][upload]', expect.stringContaining('beforeUpload'), expect.any(Error));
       expect(mockUploadFile).toHaveBeenCalledTimes(1);
     });
 
@@ -401,7 +399,7 @@ describe('UploadController', () => {
       const entry = collection.read(id);
       expect(entry?.getValue('isUploading')).toBe(false);
       expect(entry?.getValue('uploadError')?.message).toBe('Something went wrong');
-      expect(error).toHaveBeenCalledWith('Unknown upload error', expect.any(Error));
+      expect(error).toHaveBeenCalledWith('[uc][upload]', 'Unknown upload error', expect.any(Error));
       expect(onUploadError).toHaveBeenCalledWith(expect.any(Error), expect.stringContaining('file upload'));
     });
 
@@ -507,10 +505,50 @@ describe('UploadController', () => {
   });
 
   describe('debug', () => {
-    it('defaults debug to a no-op when not provided', async () => {
-      const { controller, collection } = setup({ withDebug: false });
+    it('emits an "upload options" debug line through the per-ctx gated logger', async () => {
+      // Debug output is gated per-ctx by the `debug` config — enable it so the
+      // gated tier fires; the multi-chip badge header is logged via console.log.
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const { controller, collection } = setup({ cfg: { debug: true } });
       const id = collection.add({ file: new File(['x'], 'a.txt') });
       await expect(controller.uploadEntry(id)).resolves.toBeUndefined();
+      expect(logSpy).toHaveBeenCalledWith(
+        '%c uc %c upload %c',
+        expect.any(String),
+        expect.any(String),
+        '',
+        'upload options',
+        expect.any(Object),
+      );
+    });
+
+    it('redacts secureSignature from the "upload options" debug log', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const { controller, collection } = setup({
+        cfg: {
+          debug: true,
+          secureSignature: 'SECRET-SIG',
+          secureExpire: String(Math.floor(Date.now() / 1000) + 100000),
+        },
+      });
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+      await expect(controller.uploadEntry(id)).resolves.toBeUndefined();
+
+      const optionsCall = logSpy.mock.calls.find((c) => c.includes('upload options'));
+      expect(optionsCall).toBeDefined();
+      expect((optionsCall?.at(-1) as { secureSignature?: string }).secureSignature).toBe('[redacted]');
+      // The real credential must never reach the console.
+      expect(JSON.stringify(logSpy.mock.calls)).not.toContain('SECRET-SIG');
+    });
+
+    it('stays silent when this ctx has debug off', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const tableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
+      const { controller, collection } = setup();
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+      await expect(controller.uploadEntry(id)).resolves.toBeUndefined();
+      expect(logSpy).not.toHaveBeenCalled();
+      expect(tableSpy).not.toHaveBeenCalled();
     });
   });
 

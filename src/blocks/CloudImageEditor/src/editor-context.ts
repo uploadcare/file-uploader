@@ -4,6 +4,7 @@ import type {
   CloudImageEditorController,
   CloudImageEditorControllerState,
 } from '../../../abstract/controllers/CloudImageEditorController';
+import { logger } from '../../../abstract/logger';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 
@@ -142,6 +143,17 @@ const EditorBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
 export abstract class EditorBlock extends EditorBlockBase {
   private readonly _editorCtx = new CloudImageEditorContextController(this);
   private _editorRerenderSub?: () => void;
+
+  /**
+   * Shared editor logger for this block and every descendant `EditorBlock` —
+   * one `cloud-image-editor` scope instead of a per-file scope in each editor
+   * component. `error`/`warn`/`warnOnce` always print; the verbose tier
+   * (`log`/`debug`) is gated by the editor's `debug` config (null-safe before a
+   * controller is adopted). No ctx-name — the editor base stays bundle-isolated.
+   */
+  protected readonly _log = logger.scope('cloud-image-editor', {
+    isVerbose: () => this.editorControllerOrNull?.getConfig('debug') ?? false,
+  });
 
   public constructor() {
     super();

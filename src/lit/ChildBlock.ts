@@ -6,6 +6,7 @@ import { ConfigController } from '../abstract/controllers/ConfigController';
 import { LocaleController } from '../abstract/controllers/LocaleController';
 import { RouterController } from '../abstract/controllers/RouterController';
 import { CONTAINER, type ControllerContainer, type Token } from '../abstract/di/ControllerContainer';
+import { logger } from '../abstract/logger';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
@@ -158,8 +159,8 @@ export abstract class ChildBlock extends ChildBlockBase {
    * This ctx's DI container once adopted, else `null` (pre-adoption, or after
    * `_releaseController` cleared it during a teardown / not-yet-adopted race).
    * The null-safe counterpart to the `use()`/`useOrNull()` render-gate anchor,
-   * for plumbing wired at construction time — before adoption — such as
-   * `createDebugPrinter`, whose accessor must not throw when read early.
+   * for null-tolerant reads wired at construction time — before adoption — that
+   * must not throw when a block is queried early.
    */
   protected get containerOrNull(): ControllerContainer | null {
     return this._container;
@@ -176,6 +177,20 @@ export abstract class ChildBlock extends ChildBlockBase {
    * locale switches — no explicit subscription needed.
    */
   public l10n = createL10n(() => this.use(LocaleController));
+
+  /**
+   * Per-ctx logger for this block. `error`/`warn`/`warnOnce` always print; the
+   * gated verbose tier (`log`/`debug`) prints only when THIS ctx's `debug`
+   * config is on — so debug output is per-ctx accurate and prefixed with the
+   * block's tag. The `isVerbose` predicate reads the container lazily at log
+   * time (null-safe: a pre-adoption call is a no-op).
+   */
+  protected readonly _log = logger.scope(this.tagName.toLowerCase().replace(/^uc-/, ''), {
+    // Verbose tier prints only when THIS ctx's `debug` config is on; predicate +
+    // ctx-name resolve lazily at log time (null-safe pre-adoption).
+    isVerbose: () => this.containerOrNull?.get(ConfigController).get('debug') ?? false,
+    ctxName: () => this.effectiveCtxName,
+  });
 
   /**
    * Emit a documented uploader event — same contract as v1 `LitBlock.emit`.
@@ -384,7 +399,7 @@ export abstract class ChildBlock extends ChildBlockBase {
       // One block's adoption hook must not break the adoption cycle or escape
       // the registry callback as an unhandled error (isolate-and-warn, as in
       // teardown and EventBus fan-out).
-      console.warn(`[uc] ${this.tagName.toLowerCase()}: controllerReady threw during adoption`, err);
+      this._log.warn(`${this.tagName.toLowerCase()}: controllerReady threw during adoption`, err);
     }
     this.requestUpdate();
   }
@@ -397,10 +412,7 @@ export abstract class ChildBlock extends ChildBlockBase {
       } catch (err) {
         // Teardown must be isolated: one throwing unsubscriber must not
         // prevent the rest from running.
-        console.warn(
-          `[uc] ${this.tagName.toLowerCase()}: a subscription teardown threw during controller release`,
-          err,
-        );
+        this._log.warn(`${this.tagName.toLowerCase()}: a subscription teardown threw during controller release`, err);
       }
     }
     this._subs = [];

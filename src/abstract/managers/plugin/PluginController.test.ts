@@ -12,7 +12,6 @@ const setup = () => {
   let onCompute: ((p: Promise<UploaderPlugin[] | undefined>) => void) | undefined;
   const unwatch = vi.fn();
   const getUploaderApi = vi.fn(() => ({}) as PluginUploaderApi);
-  const debug = vi.fn();
   const configUnsubs: Array<ReturnType<typeof vi.fn>> = [];
 
   const buildApi: PluginControllerDeps['buildApi'] = (registry: PluginRegistry, pluginId, configSubscriptions) => {
@@ -43,7 +42,6 @@ const setup = () => {
       onCompute = cb;
       return unwatch;
     },
-    debug,
   });
 
   const sync = async (plugins: UploaderPlugin[] | undefined) => {
@@ -52,7 +50,7 @@ const setup = () => {
   };
   const push = (pluginsPromise: Promise<UploaderPlugin[] | undefined>) => onCompute?.(pluginsPromise);
 
-  return { controller, sync, push, getUploaderApi, debug, unwatch, configUnsubs };
+  return { controller, sync, push, getUploaderApi, unwatch, configUnsubs };
 };
 
 const sourcePlugin = (id: string, setup?: UploaderPlugin['setup']): UploaderPlugin => ({
@@ -86,13 +84,31 @@ describe('PluginController', () => {
       expect(onChange).toHaveBeenCalled();
     });
 
+    it('passes setup a logger scoped to the plugin (`[uc][plugin:<id>]`)', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const t = setup();
+      let received: unknown;
+      const plugin: UploaderPlugin = {
+        id: 'my-plugin',
+        setup: (params) => {
+          received = params.logger;
+          params.logger.warn('hello from plugin');
+        },
+      };
+
+      await t.sync([plugin]);
+
+      expect(typeof (received as { warn?: unknown })?.warn).toBe('function');
+      expect(warn).toHaveBeenCalledWith('[uc][plugin:my-plugin]', 'hello from plugin');
+    });
+
     it('skips a plugin missing an id', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const t = setup();
 
       await t.sync([{ id: '', setup: () => {} }]);
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('missing the required "id"'));
+      expect(warn).toHaveBeenCalledWith('[uc][plugin-manager]', expect.stringContaining('missing the required "id"'));
       expect(t.controller.snapshot().sources).toHaveLength(0);
     });
 
@@ -105,7 +121,7 @@ describe('PluginController', () => {
 
       await t.sync([sourcePlugin('dup', setupSpy), sourcePlugin('dup', setupSpy)]);
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('already in the list'));
+      expect(warn).toHaveBeenCalledWith('[uc][plugin-manager]', expect.stringContaining('already in the list'));
       expect(setupSpy).toHaveBeenCalledTimes(1);
     });
 
@@ -128,7 +144,11 @@ describe('PluginController', () => {
 
       await t.sync([boom, sourcePlugin('ok')]);
 
-      expect(error).toHaveBeenCalledWith(expect.stringContaining('"boom" setup() threw'), expect.any(Error));
+      expect(error).toHaveBeenCalledWith(
+        '[uc][plugin-manager]',
+        expect.stringContaining('"boom" setup() threw'),
+        expect.any(Error),
+      );
       expect(t.controller.snapshot().sources.map((s) => s.id)).toEqual(['ok']); // boom purged
       expect(t.configUnsubs[0]).toHaveBeenCalled(); // its config sub was cleaned up
     });
@@ -157,6 +177,7 @@ describe('PluginController', () => {
     });
 
     it('isolates a throwing plugin dispose during unregister and still completes cleanup', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const t = setup();
       const dispose = vi.fn(() => {
         throw new Error('dispose boom');
@@ -171,7 +192,7 @@ describe('PluginController', () => {
       await expect(t.sync([])).resolves.toBeUndefined(); // unregister doesn't throw
       expect(dispose).toHaveBeenCalled();
       expect(t.controller.snapshot().sources).toHaveLength(0); // cleanup still ran
-      expect(t.debug).toHaveBeenCalledWith('Failed to dispose plugin', expect.any(Error));
+      expect(warn).toHaveBeenCalledWith('[uc][plugin-manager]', 'Failed to dispose plugin', expect.any(Error));
     });
 
     it('recovers the sync queue after a rejected emission so later syncs still run', async () => {
@@ -181,7 +202,11 @@ describe('PluginController', () => {
       t.push(Promise.reject(new Error('load failed')));
       await t.controller.pluginsReady(); // must not reject
 
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to sync plugins'), expect.any(Error));
+      expect(errorSpy).toHaveBeenCalledWith(
+        '[uc][plugin-manager]',
+        expect.stringContaining('Failed to sync plugins'),
+        expect.any(Error),
+      );
 
       await t.sync([sourcePlugin('a')]); // queue recovered → still processes
       expect(t.controller.snapshot().sources.map((s) => s.id)).toEqual(['a']);
@@ -284,7 +309,7 @@ describe('PluginController', () => {
 
       await t.controller.runOnAddHooks(entry);
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('onAdd'), expect.any(Error));
+      expect(warn).toHaveBeenCalledWith('[uc][plugin-manager]', expect.stringContaining('onAdd'), expect.any(Error));
       expect(entry.getValue('file')).toBe(original);
     });
 
@@ -312,7 +337,7 @@ describe('PluginController', () => {
       await vi.advanceTimersByTimeAsync(60);
       await promise;
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('onAdd'), expect.any(Error));
+      expect(warn).toHaveBeenCalledWith('[uc][plugin-manager]', expect.stringContaining('onAdd'), expect.any(Error));
     });
   });
 
@@ -339,9 +364,9 @@ describe('PluginController', () => {
       expect(t.controller.configRegistry).toBe(t.controller.registry.config);
     });
 
-    it('logs (via debug) when a config-subscription throws during error cleanup', async () => {
+    it('warns when a config-subscription throws during error cleanup', async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
-      const debug = vi.fn();
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       let onCompute: ((p: Promise<UploaderPlugin[] | undefined>) => void) | undefined;
       const controller = new PluginController({
         buildApi: (_registry, _pluginId, subs) => {
@@ -355,7 +380,6 @@ describe('PluginController', () => {
           onCompute = cb;
           return () => {};
         },
-        debug,
       });
 
       onCompute?.(
@@ -370,10 +394,15 @@ describe('PluginController', () => {
       );
       await controller.pluginsReady();
 
-      expect(debug).toHaveBeenCalledWith('Failed to unsubscribe config listener', expect.any(Error));
+      expect(warn).toHaveBeenCalledWith(
+        '[uc][plugin-manager]',
+        'Failed to unsubscribe config listener',
+        expect.any(Error),
+      );
     });
 
-    it('logs when a config-subscription throws during unregister, with debug defaulting to a no-op', async () => {
+    it('contains a config-subscription that throws during unregister', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
       let onCompute: ((p: Promise<UploaderPlugin[] | undefined>) => void) | undefined;
       const controller = new PluginController({
         buildApi: (_registry, _pluginId, subs) => {
@@ -387,7 +416,6 @@ describe('PluginController', () => {
           onCompute = cb;
           return () => {};
         },
-        // no debug → exercises the no-op default on the cleanup path
       });
 
       onCompute?.(Promise.resolve([{ id: 'x', setup: () => {} }]));

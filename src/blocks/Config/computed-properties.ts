@@ -1,8 +1,11 @@
 import { getPrefixedCdnBaseAsync, isPrefixedCdnBase } from '@uploadcare/cname-prefix/async';
+import { logger } from '../../abstract/logger';
 import type { ConfigType } from '../../types/index';
 import { deserializeCsv, serializeCsv } from '../../utils/comma-separated';
 import { isPromiseLike } from '../../utils/isPromiseLike';
 import { DEFAULT_CDN_CNAME } from './initialConfig';
+
+const log = logger.scope('computed-properties');
 
 type ConfigKey = keyof ConfigType;
 type ConfigValue<TKey extends ConfigKey> = ConfigType[TKey];
@@ -126,7 +129,7 @@ export const computeProperty = <TKey extends ConfigKey>({
       if (computationControllers.get(computed.fn) === abortController) {
         computationControllers.delete(computed.fn);
       }
-      console.error(`Failed to compute value for "${computed.key}"`, error);
+      log.error(`Failed to compute value for "${computed.key}"`, error);
       return;
     }
     if (isPromiseLike(result)) {
@@ -141,7 +144,7 @@ export const computeProperty = <TKey extends ConfigKey>({
           if (abortController.signal.aborted) {
             return;
           }
-          console.error(`Failed to compute value for "${computed.key}"`, error);
+          log.error(`Failed to compute value for "${computed.key}"`, error);
         })
         .finally(() => {
           if (computationControllers.get(computed.fn) === abortController) {

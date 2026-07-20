@@ -29,6 +29,7 @@ import { parseCdnUrl } from '../utils/parseCdnUrl';
 import { stringToArray } from '../utils/stringToArray';
 import { UploadSource } from '../utils/UploadSource';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
+import { controllerLogger } from './controllerLogger';
 import { CollectionStateController } from './controllers/CollectionStateController';
 import { ConfigController } from './controllers/ConfigController';
 import { LocaleController } from './controllers/LocaleController';
@@ -68,6 +69,9 @@ export type ApiAddFileCommonOptions = {
  * derived-collection controllers itself.
  */
 export class UploaderPublicApi {
+  // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
+  // (resolved lazily at log time via the container that built this instance).
+  private readonly _log = controllerLogger(this, 'public-api');
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(LocaleController) private readonly _locale!: LocaleController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
@@ -435,7 +439,7 @@ export class UploaderPublicApi {
       this._router.navigate(activityType, params[0] ?? {});
       if (activityType !== null) {
         waitForActivityBlock(this._router, activityType, {
-          onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
+          onTimeout: () => this._log.warn(`Activity type "${activityType}" not found in the context`),
           timeout: 100,
         });
       }
@@ -466,7 +470,7 @@ export class UploaderPublicApi {
       }
       this._router.setActivity(activityType, params[0]);
       waitForActivityBlock(this._router, activityType, {
-        onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
+        onTimeout: () => this._log.warn(`Activity type "${activityType}" not found in the context`),
         timeout: 100,
       });
     });
@@ -504,12 +508,12 @@ export class UploaderPublicApi {
       // if a modal is already open, is that stale modal and would no-op).
       const activityType = router.activity ?? router.currentActivity;
       if (!activityType) {
-        console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
+        this._log.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
         return;
       }
 
       return waitForActivityBlock(router, activityType, {
-        onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
+        onTimeout: () => this._log.warn(`Activity block "${activityType}" not found in the context`),
       }).then((found) => {
         if (!found) {
           // Timeout — the activity's block never appeared; keep the modal

@@ -1,3 +1,4 @@
+import { logger } from '../../abstract/logger';
 import type {
   CollectionValidators,
   ConfigType,
@@ -25,6 +26,8 @@ import {
   asStore,
   asString,
 } from './validatorsType';
+
+const log = logger.scope('normalize-config-value');
 
 type ConfigNormalizer<TKey extends keyof ConfigType> = (value: unknown) => ConfigType[TKey] | undefined;
 
@@ -125,7 +128,7 @@ export const normalizeConfigValue = <T extends keyof ConfigType>(key: T, value: 
   try {
     return mapping[key](value);
   } catch (reason) {
-    console.error(`Invalid value for config key "${key}".`, reason);
+    log.error(`Invalid value for config key "${key}".`, reason);
     return initialConfig[key];
   }
 };

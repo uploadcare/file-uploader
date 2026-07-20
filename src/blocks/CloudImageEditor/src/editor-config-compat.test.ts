@@ -61,6 +61,7 @@ describe('subscribeUploaderConfigCompat', () => {
         'secureDeliveryProxyUrlResolver',
         'cloudImageEditorMaskHref',
         'testMode',
+        'debug',
       ]),
     );
     unsubscribe();

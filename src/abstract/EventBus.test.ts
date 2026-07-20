@@ -1,4 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ConfigController } from './controllers/ConfigController';
+import { ControllerContainer } from './di/ControllerContainer';
 import { EventBus, UploaderEventType } from './EventBus';
 
 describe('EventBus', () => {
@@ -133,5 +135,44 @@ describe('EventBus', () => {
     bus.emit(UploaderEventType.UPLOAD_CLICK, undefined);
 
     expect(any).not.toHaveBeenCalled();
+  });
+
+  describe('event logging', () => {
+    afterEach(() => vi.restoreAllMocks());
+
+    it('logs each emitted event readably when this ctx has debug on (shallow-copying object payloads)', () => {
+      const container = new ControllerContainer();
+      container.get(ConfigController).set('debug', true);
+      const bus = container.get(EventBus);
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      const payload = { internalId: 'a' };
+      bus.emit(UploaderEventType.FILE_ADDED, payload as never);
+
+      // Verbose badge chips (uc + scope; no ctx-name — container built directly),
+      // then the readable `event <type>` label and the payload.
+      expect(log).toHaveBeenCalledWith(
+        '%c uc %c event-bus %c',
+        expect.any(String),
+        expect.any(String),
+        '',
+        '→ file-added',
+        payload,
+      );
+      // The logged payload is a shallow copy, not the live reference.
+      const loggedPayload = log.mock.calls.at(-1)?.at(-1);
+      expect(loggedPayload).toEqual(payload);
+      expect(loggedPayload).not.toBe(payload);
+    });
+
+    it('does not log events when this ctx has debug off', () => {
+      const container = new ControllerContainer();
+      const bus = container.get(EventBus);
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      bus.emit(UploaderEventType.FILE_ADDED, { internalId: 'a' } as never);
+
+      expect(log).not.toHaveBeenCalled();
+    });
   });
 });

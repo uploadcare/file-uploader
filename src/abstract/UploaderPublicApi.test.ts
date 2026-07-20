@@ -63,7 +63,7 @@ const setup = (): Harness => {
   const container = ensureUploaderCtx(ctxName);
   created.push(ctxName);
   const eventEmitter = container.get(EventEmitter);
-  ensureUploaderScope(container, undefined, (type, payload, options) => eventEmitter.emit(type, payload, options));
+  ensureUploaderScope(container, (type, payload, options) => eventEmitter.emit(type, payload, options));
   const ctrl: Ctrl = {
     get locale() {
       return container.get(LocaleController);
@@ -579,13 +579,13 @@ describe('UploaderPublicApi', () => {
     });
 
     it('navigate warns when the target activity block never mounts', async () => {
-      const { api } = setup();
+      const { api, ctxName } = setup();
       const warn = vi.spyOn(console, 'warn');
 
       api.navigate('camera');
       await new Promise((r) => setTimeout(r, 150));
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('camera'));
+      expect(warn).toHaveBeenCalledWith(`[uc][${ctxName}][public-api]`, expect.stringContaining('camera'));
     });
 
     it('setCurrentActivity(null) closes everything', async () => {
@@ -599,13 +599,13 @@ describe('UploaderPublicApi', () => {
     });
 
     it('setCurrentActivity warns when the target activity block never mounts', async () => {
-      const { api } = setup();
+      const { api, ctxName } = setup();
       const warn = vi.spyOn(console, 'warn');
 
       api.setCurrentActivity('camera');
       await new Promise((r) => setTimeout(r, 150));
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('camera'));
+      expect(warn).toHaveBeenCalledWith(`[uc][${ctxName}][public-api]`, expect.stringContaining('camera'));
     });
 
     it('setCurrentActivity sets the background activity', async () => {
@@ -642,13 +642,13 @@ describe('UploaderPublicApi', () => {
     });
 
     it('setModalState(true) warns when there is no current activity', async () => {
-      const { api } = setup();
+      const { api, ctxName } = setup();
       const warn = vi.spyOn(console, 'warn');
 
       api.setModalState(true);
       await flush();
 
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('setCurrentActivity'));
+      expect(warn).toHaveBeenCalledWith(`[uc][${ctxName}][public-api]`, expect.stringContaining('setCurrentActivity'));
     });
 
     it('setModalState(true) keeps the modal closed if the block never mounts', async () => {

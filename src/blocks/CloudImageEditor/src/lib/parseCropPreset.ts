@@ -1,7 +1,10 @@
+import { logger } from '../../../../abstract/logger';
 import type { ConfigType } from '../../../../types/exported';
 import { stringToArray } from '../../../../utils/stringToArray';
 import { UID } from '../../../../utils/UID';
 import type { CropAspectRatio, CropPresetList } from '../types';
+
+const log = logger.scope('crop-preset');
 
 const EXCLUDED_TYPES = ['free'];
 
@@ -16,7 +19,7 @@ export const parseCropPreset = (cropPreset: ConfigType['cropPreset']): CropAspec
 
     const sep = raw.indexOf(':');
     if (sep === -1 && !EXCLUDED_TYPES.includes(raw)) {
-      console.warn(`Invalid crop preset: ${raw}`);
+      log.warn(`Invalid crop preset: ${raw}`);
       continue;
     }
 
@@ -24,7 +27,7 @@ export const parseCropPreset = (cropPreset: ConfigType['cropPreset']): CropAspec
     const h = Number(raw.slice(sep + 1));
 
     if ((!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) && !EXCLUDED_TYPES.includes(raw)) {
-      console.warn(`Invalid crop preset: ${raw}`);
+      log.warn(`Invalid crop preset: ${raw}`);
       continue;
     }
 

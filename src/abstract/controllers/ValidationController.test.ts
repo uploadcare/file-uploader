@@ -12,7 +12,6 @@ import { ValidationController } from './ValidationController';
 // about are overridden. Inlined (not shared) so it stays out of coverage.
 const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
   ({
-    debug: () => {},
     getFileHooks: () => [],
     getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
     getApi: (() => ({})) as unknown as UploadHostBridge['getApi'],
@@ -160,7 +159,7 @@ describe('ValidationController', () => {
     config.set('collectionValidators', [() => ({ type: 'CUSTOM_ERROR', message: '' })]);
 
     controller.runCollectionValidators();
-    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/Missing message/));
+    expect(warn).toHaveBeenCalledWith('[uc][validation]', expect.stringMatching(/Missing message/));
   });
 
   it('runs a custom file validator and writes its (custom-typed) error to the entry', async () => {
@@ -211,7 +210,7 @@ describe('ValidationController', () => {
     controller.runFileValidators('change', [id]);
     await flush(800); // 500 debounce + 50 timeout + margin
 
-    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/timed out/));
+    expect(warn).toHaveBeenCalledWith('[uc][validation]', expect.stringMatching(/timed out/));
     expect(collection.read(id)?.getValue('isValidationPending')).toBe(false);
   });
 
@@ -283,7 +282,7 @@ describe('ValidationController', () => {
     controller.runFileValidators('change', [id]);
     await flush();
 
-    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/Missing message/));
+    expect(warn).toHaveBeenCalledWith('[uc][validation]', expect.stringMatching(/Missing message/));
   });
 
   it('carries over an error from a validator not run in the current phase', async () => {

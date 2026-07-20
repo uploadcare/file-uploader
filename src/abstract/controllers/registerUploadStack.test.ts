@@ -21,7 +21,6 @@ const controllers: UploadStackControllers = {
 // touches `getApi().getOutputCollectionState()`, so those return real shapes.
 const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
   ({
-    debug: () => {},
     getFileHooks: () => [],
     getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
     getApi: (() => ({

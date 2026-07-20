@@ -1,4 +1,5 @@
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
+import { controllerLogger } from '../controllerLogger';
 import { inject } from '../di/inject';
 import { ConfigController } from './ConfigController';
 import { RouterController } from './RouterController';
@@ -28,6 +29,9 @@ const ALLOWED_PASTE_ACTIVITIES = new Set<string>([ACTIVITY_TYPES.START_FROM, ACT
  * adapt the browser clipboard to the uploader — but imports nothing from lit.
  */
 export class ClipboardController {
+  // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
+  // (resolved lazily at log time via the container that built this instance).
+  private readonly _log = controllerLogger(this, 'clipboard');
   // Config is a leaf, imported directly; the router graph is circular-prone
   // (event bus ↔ controllers), so it uses a token thunk. Resolution is lazy, so
   // there is zero construction cycle. The api arrives via the host bridge (see
@@ -48,7 +52,7 @@ export class ClipboardController {
     // rejection.
     this._listener = (event) => {
       this._handlePasteEvent(event).catch((err) => {
-        console.warn('[uc] clipboard paste handling failed', err);
+        this._log.warn('clipboard paste handling failed', err);
       });
     };
   }

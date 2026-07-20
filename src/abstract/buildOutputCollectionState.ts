@@ -8,10 +8,12 @@ import type {
   UploadcareGroup,
 } from '../types/index';
 import { memoize } from '../utils/memoize';
-import { warnOnce } from '../utils/warnOnce';
 import { CollectionStateController } from './controllers/CollectionStateController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import type { ControllerContainer } from './di/ControllerContainer';
+import { logger } from './logger';
+
+const log = logger.scope('output-collection-state');
 
 function createAsyncAssertWrapper(warning: string) {
   let isAsync = false;
@@ -22,7 +24,7 @@ function createAsyncAssertWrapper(warning: string) {
   const withAssert = <TArgs extends unknown[], TReturn, T extends (...args: TArgs) => TReturn>(fn: T): T => {
     return ((...args) => {
       if (isAsync) {
-        warnOnce(warning);
+        log.warnOnce(warning);
       }
       return fn(...args);
     }) as T;

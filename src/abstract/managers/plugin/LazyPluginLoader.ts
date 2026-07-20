@@ -1,7 +1,10 @@
 import type { ConfigType } from '../../../types/index';
 import type { ConfigController } from '../../controllers/ConfigController';
 import type { LazyPluginsController } from '../../controllers/LazyPluginsController';
+import { logger } from '../../logger';
 import type { UploaderPlugin } from './PluginTypes';
+
+const log = logger.scope('lazy-plugin-loader');
 
 export type ConfigGetter = <K extends keyof ConfigType>(key: K) => ConfigType[K];
 
@@ -32,7 +35,7 @@ const resolveLazyPlugins = async ({
         return plugin ?? undefined;
       } catch (error) {
         if (!signal.aborted) {
-          console.warn(`Failed to load lazy plugin`, error);
+          log.warn(`Failed to load lazy plugin`, error);
         }
         return undefined;
       }
