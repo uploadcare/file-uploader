@@ -6,8 +6,9 @@ import type { ControllerContainer } from '../../../abstract/di/ControllerContain
 import { inject } from '../../../abstract/di/inject';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
+import { ACTIVITY_TYPES, type ActivityId } from '../../../lit/activity-constants';
 import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
+import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import './index.css';
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
@@ -69,76 +70,49 @@ export class FileUploaderMinimal extends SolutionChildBlock {
     const router = this._router;
     router.navigationStrategy = (to) => (to === ACTIVITY_TYPES.UPLOAD_LIST ? 'background' : 'foreground');
     router.configure({ doneActivity: ACTIVITY_TYPES.UPLOAD_LIST });
+  }
 
-    // Background slot follows file state: the upload list once files exist,
-    // otherwise the start-from trigger. Imperative side-effecting sub (drives
-    // `router.setActivity`, not a render read), now sourced from
-    // `CollectionStateController` directly instead of the `*uploadList` `bag.ctx`
-    // key. The per-key `Object.is` dedup + eager fire below reproduce the exact
-    // `PubSub.sub('*uploadList', …)` semantics (`_subDerived`): fire once now,
-    // then only when the `uploadList` reference actually changes — NOT on every
-    // coarse collection-state notify (e.g. a `commonProgress` tick).
-    const collectionState = this._collectionState;
-    let lastUploadList = collectionState.get('uploadList');
-    const applyUploadListActivity = (list: typeof lastUploadList) => {
-      const hasFiles = list.length > 0;
-      router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
+  // Background slot follows file state: the upload list once files exist,
+  // otherwise the start-from trigger. Side-effecting (drives `setActivity`, not
+  // a render read); the atomic `observe('uploadList')` fires only on a real
+  // `uploadList` change, not every collection-state notify (e.g. a progress tick).
+  @subscription()
+  protected _wireUploadListActivity(): Unsubscribe {
+    const initialList = this._collectionState.get('uploadList');
+    const apply = (list: typeof initialList) => {
+      this._router.setActivity(list.length > 0 ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
     };
-    applyUploadListActivity(lastUploadList);
-    this.trackSub(
-      collectionState.subscribe(() => {
-        const next = collectionState.get('uploadList');
-        if (!Object.is(next, lastUploadList)) {
-          lastUploadList = next;
-          applyUploadListActivity(next);
-        }
-      }),
-    );
+    apply(initialList);
+    return this._collectionState.observe('uploadList', apply);
+  }
 
-    // Side-effecting activity coordination (closes the modal on upload-list,
-    // re-seeds start-from when everything closes) — stays imperative, now off
-    // `RouterController` directly (replaces `subActivity`). The current-activity
-    // dedup + eager fire reproduce `subActivity`'s exact contract.
-    let lastActivity = router.currentActivity;
-    const applyActivityCoordination = (val: typeof lastActivity) => {
-      if (val === ACTIVITY_TYPES.UPLOAD_LIST) {
-        router.closeModal();
+  // Activity coordination: close the modal once the background lands on the
+  // upload list; re-seed start-from when everything closes. Atomic
+  // `observeCurrentActivity` (dedup) + eager fire.
+  @subscription()
+  protected _wireActivityCoordination(): Unsubscribe {
+    const apply = (activity: ActivityId | null) => {
+      if (activity === ACTIVITY_TYPES.UPLOAD_LIST) {
+        this._router.closeModal();
       }
-      if (!val) {
-        router.setActivity(ACTIVITY_TYPES.START_FROM);
+      if (!activity) {
+        this._router.setActivity(ACTIVITY_TYPES.START_FROM);
       }
     };
-    applyActivityCoordination(lastActivity);
-    this.trackSub(
-      router.subscribe(() => {
-        const next = router.currentActivity;
-        if (next !== lastActivity) {
-          lastActivity = next;
-          applyActivityCoordination(next);
-        }
-      }),
-    );
+    apply(this._router.currentActivity);
+    return this._router.observeCurrentActivity(apply);
+  }
 
-    // Side-effecting config write (minimal forces `confirmUpload` off) — stays
-    // imperative, now off `ConfigController` directly (replaces `subConfigValue`).
-    // Per-key `Object.is` dedup + eager fire reproduce `subConfigValue`'s contract.
-    const config = this._config;
-    let lastConfirmUpload = config.get('confirmUpload');
-    const applyConfirmUpload = (confirmUpload: typeof lastConfirmUpload) => {
+  // Minimal forces `confirmUpload` off. Atomic `observe('confirmUpload')` + eager.
+  @subscription()
+  protected _wireForceConfirmUploadOff(): Unsubscribe {
+    const apply = (confirmUpload: boolean) => {
       if (confirmUpload !== false) {
-        config.set('confirmUpload', false);
+        this._config.set('confirmUpload', false);
       }
     };
-    applyConfirmUpload(lastConfirmUpload);
-    this.trackSub(
-      config.subscribe(() => {
-        const next = config.get('confirmUpload');
-        if (!Object.is(next, lastConfirmUpload)) {
-          lastConfirmUpload = next;
-          applyConfirmUpload(next);
-        }
-      }),
-    );
+    apply(this._config.get('confirmUpload'));
+    return this._config.observe('confirmUpload', apply);
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {

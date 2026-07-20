@@ -143,6 +143,24 @@ export class RouterController {
     return this._listeners.subscribe(listener);
   }
 
+  /**
+   * Atomic subscription to the current (background-slot) activity: fires only
+   * when `currentActivity` actually changes, not on every router notify (modal
+   * open/close, params, background/foreground). Does not fire on subscribe.
+   * The router analogue of `ConfigController.observe`, encapsulating the per-key
+   * dedup callers used to hand-roll over `subscribe`.
+   */
+  public observeCurrentActivity(listener: (activity: ActivityId | null) => void): () => void {
+    let last = this._currentActivity;
+    return this._listeners.subscribe(() => {
+      const next = this._currentActivity;
+      if (next !== last) {
+        last = next;
+        listener(next);
+      }
+    });
+  }
+
   /** Per-preset routing config (solution-level), e.g. the post-flow done activity. */
   public configure(table: RouteTable): void {
     this._table = { ...table };
