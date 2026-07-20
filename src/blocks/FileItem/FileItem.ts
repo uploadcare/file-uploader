@@ -388,15 +388,16 @@ export class FileItem extends FileItemConfig {
   // collection-state writes; the eager pass covers a trigger set before adoption.
   @subscription()
   protected _wireUploadTrigger(): Unsubscribe {
-    const initialTrigger = this._collectionState.get('uploadTrigger');
-    const onTrigger = (itemsToUpload: typeof initialTrigger): void => {
-      if (this.entry && !itemsToUpload.has(this.entry.uid)) {
-        return;
-      }
-      setTimeout(() => this.isConnected && this._upload());
-    };
-    onTrigger(initialTrigger);
-    return this._collectionState.observe('uploadTrigger', onTrigger);
+    return this._collectionState.observe(
+      'uploadTrigger',
+      (itemsToUpload) => {
+        if (this.entry && !itemsToUpload.has(this.entry.uid)) {
+          return;
+        }
+        setTimeout(() => this.isConnected && this._upload());
+      },
+      { immediate: true },
+    );
   }
 
   // The uploader-scope `PluginController` is bound + resolved only once an

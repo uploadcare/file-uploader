@@ -1,6 +1,12 @@
 import { type Signal, signal } from '@lit-labs/signals';
 import { Listeners } from '../host-subscription';
 
+/** Options for an atomic per-key `observe` subscription. */
+export interface ObserveOptions {
+  /** Also fire the listener once with the current value on subscribe. */
+  immediate?: boolean;
+}
+
 /**
  * DOM-free reactive key/value store for controllers with a DYNAMIC keyspace —
  * `ConfigController` (~55 built-ins plus plugin-registered keys) and
@@ -114,11 +120,18 @@ export class SignalMap<T extends object> {
   /**
    * Atomic per-key subscription: filters the coarse notify down to ONE key,
    * invoking `listener` with the new value only when that key actually changes
-   * (`Object.is` dedup). Does NOT fire on subscribe — read `get(key)` for the
-   * current value if an eager pass is needed. Returns an unsubscriber.
+   * (`Object.is` dedup). Pass `{ immediate: true }` to also fire the listener
+   * once with the current value on subscribe. Returns an unsubscriber.
    */
-  public observe<K extends keyof T>(key: K, listener: (value: T[K] | undefined) => void): () => void {
+  public observe<K extends keyof T>(
+    key: K,
+    listener: (value: T[K] | undefined) => void,
+    options?: ObserveOptions,
+  ): () => void {
     let last = this.get(key);
+    if (options?.immediate) {
+      listener(last);
+    }
     return this.#listeners.subscribe(() => {
       const next = this.get(key);
       if (!Object.is(next, last)) {

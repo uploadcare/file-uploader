@@ -1,7 +1,7 @@
 import type { UploadcareGroup } from '@uploadcare/upload-client';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputErrorCollection } from '../../types';
-import { SignalMap } from '../di/SignalMap';
+import { type ObserveOptions, SignalMap } from '../di/SignalMap';
 
 /**
  * The six derived UI-state keys the upload stack publishes and the blocks read
@@ -86,11 +86,15 @@ export class CollectionStateController {
   /**
    * Atomic per-key subscription: fires only when THIS key changes (`Object.is`
    * dedup — a replaced `Set`/object fires, an in-place mutation does not), not on
-   * every collection-state write. Does not fire on subscribe. Mirrors
-   * `ConfigController.observe`.
+   * every collection-state write. Pass `{ immediate: true }` to also fire once
+   * with the current value on subscribe. Mirrors `ConfigController.observe`.
    */
-  public observe<K extends keyof CollectionState>(key: K, listener: (value: CollectionState[K]) => void): () => void {
-    return this.#state.observe(key, listener as (value: CollectionState[K] | undefined) => void);
+  public observe<K extends keyof CollectionState>(
+    key: K,
+    listener: (value: CollectionState[K]) => void,
+    options?: ObserveOptions,
+  ): () => void {
+    return this.#state.observe(key, listener as (value: CollectionState[K] | undefined) => void, options);
   }
 
   public destroy(): void {

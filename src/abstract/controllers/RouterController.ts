@@ -2,6 +2,7 @@ import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityId } from '../../lit/activity-constants';
 import { controllerLogger } from '../controllerLogger';
 import { inject } from '../di/inject';
+import type { ObserveOptions } from '../di/SignalMap';
 import { signalState } from '../di/signalState';
 import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
 import { Listeners } from '../host-subscription';
@@ -146,14 +147,18 @@ export class RouterController {
   /**
    * Atomic subscription to the current (background-slot) activity: fires only
    * when `currentActivity` actually changes, not on every router notify (modal
-   * open/close, params, background/foreground). Does not fire on subscribe.
-   * The router analogue of `ConfigController.observe`, encapsulating the per-key
-   * dedup callers used to hand-roll over `subscribe`.
+   * open/close, params, background/foreground). Pass `{ immediate: true }` to
+   * also fire once with the current value on subscribe. The router analogue of
+   * `ConfigController.observe`, encapsulating the per-key dedup callers used to
+   * hand-roll over `subscribe`.
    */
-  public observeCurrentActivity(listener: (activity: ActivityId | null) => void): () => void {
-    let last = this._currentActivity;
+  public observeCurrentActivity(listener: (activity: ActivityId | null) => void, options?: ObserveOptions): () => void {
+    let last: ActivityId | null = this.currentActivity;
+    if (options?.immediate) {
+      listener(last);
+    }
     return this._listeners.subscribe(() => {
-      const next = this._currentActivity;
+      const next = this.currentActivity;
       if (next !== last) {
         last = next;
         listener(next);

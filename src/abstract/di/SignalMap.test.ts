@@ -205,6 +205,17 @@ describe('SignalMap', () => {
       expect(listener).toHaveBeenCalledExactlyOnceWith(2);
     });
 
+    it('with { immediate: true } fires once with the current value on subscribe, then on change', () => {
+      const map = new SignalMap<Shape>({ a: 1 });
+      const listener = vi.fn();
+      map.observe('a', listener, { immediate: true });
+      expect(listener).toHaveBeenCalledExactlyOnceWith(1); // eager
+
+      map.set('a', 2);
+      expect(listener).toHaveBeenLastCalledWith(2);
+      expect(listener).toHaveBeenCalledTimes(2);
+    });
+
     it('dedups with Object.is (no fire when set to an equal value)', () => {
       const map = new SignalMap<Shape>({ a: 1 });
       const listener = vi.fn();
