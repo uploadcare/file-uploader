@@ -144,6 +144,12 @@ export class FileItem extends FileItemConfig {
 
   private _updateHintAndProgress = this.withEntry(
     throttle((entry: UploadEntryTypedData, state?: FileItemStateValue) => {
+      // A trailing throttle tick can fire after the item unmounts / its container
+      // is released (an entry update that raced teardown). The `l10n` reads below
+      // go through `use()`, which throws once the container is gone — bail first.
+      if (!this.containerOrNull) {
+        return;
+      }
       const errorText = entry.getValue('errors')?.[0]?.message ?? '';
       const source = entry.getValue('source');
       const externalUrl = entry.getValue('externalUrl');
