@@ -558,7 +558,7 @@ export class Config extends ChildBlock {
   // former per-key `subConfigValue` (dedup, no unrelated-key re-fire); the eager
   // pass computes the initial value. Composed into one teardown, auto-disposed.
   @subscription()
-  protected _wireComputedProperties(): Unsubscribe {
+  protected _wireComputedProperties(): Unsubscribe[] {
     const runComputeProperty = (key: keyof ConfigType) => {
       computeProperty({
         key,
@@ -567,13 +567,10 @@ export class Config extends ChildBlock {
         computationControllers: this._computationControllers,
       });
     };
-    const unsubs = allConfigKeys.map((key) => {
-      runComputeProperty(key);
+    return allConfigKeys.map((key) => {
+      runComputeProperty(key); // eager initial compute
       return this._config.observe(key, () => runComputeProperty(key));
     });
-    return () => {
-      for (const u of unsubs) u();
-    };
   }
 
   /**

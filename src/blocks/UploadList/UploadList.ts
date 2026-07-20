@@ -242,40 +242,29 @@ export class UploadList extends ActivityChildBlock {
   // render read. Per-key `observe` avoids re-firing on unrelated config changes;
   // the eager `rerun()` reproduces the former `subConfigValue` init fire.
   @subscription()
-  protected _wireGroupSizeConfig(): Unsubscribe {
+  protected _wireGroupSizeConfig(): Unsubscribe[] {
     const rerun = () => this._throttledHandleCollectionUpdate();
     rerun();
-    const unsubs = [
+    return [
       this._config.observe('multiple', rerun),
       this._config.observe('multipleMin', rerun),
       this._config.observe('multipleMax', rerun),
     ];
-    return () => {
-      for (const u of unsubs) u();
-    };
   }
 
   // `groupInfo` (owned by `CollectionStateController`): fire the recompute only
-  // when `groupInfo` itself changes — per-key `Object.is` dedup over the coarse
-  // notify, eager-init included — so an unrelated collection-state write (e.g.
-  // `commonProgress`) never re-triggers it.
+  // when `groupInfo` itself changes (its atomic `observe` dedups, so an
+  // unrelated collection-state write never re-triggers it), plus an eager pass.
   @subscription()
   protected _wireGroupInfo(): Unsubscribe {
-    const collectionState = this._collectionState;
-    let lastGroupInfo = collectionState.get('groupInfo');
-    const onGroupInfo = (groupInfo: typeof lastGroupInfo): void => {
+    const initialGroupInfo = this._collectionState.get('groupInfo');
+    const onGroupInfo = (groupInfo: typeof initialGroupInfo): void => {
       if (groupInfo) {
         this._throttledHandleCollectionUpdate();
       }
     };
-    onGroupInfo(lastGroupInfo);
-    return collectionState.subscribe(() => {
-      const next = collectionState.get('groupInfo');
-      if (!Object.is(next, lastGroupInfo)) {
-        lastGroupInfo = next;
-        onGroupInfo(next);
-      }
-    });
+    onGroupInfo(initialGroupInfo);
+    return this._collectionState.observe('groupInfo', onGroupInfo);
   }
 
   // Recompute button state on collection changes. The uploader-scope

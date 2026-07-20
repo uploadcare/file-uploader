@@ -83,6 +83,16 @@ export class CollectionStateController {
     return this.#state.subscribe(listener);
   }
 
+  /**
+   * Atomic per-key subscription: fires only when THIS key changes (`Object.is`
+   * dedup — a replaced `Set`/object fires, an in-place mutation does not), not on
+   * every collection-state write. Does not fire on subscribe. Mirrors
+   * `ConfigController.observe`.
+   */
+  public observe<K extends keyof CollectionState>(key: K, listener: (value: CollectionState[K]) => void): () => void {
+    return this.#state.observe(key, listener as (value: CollectionState[K] | undefined) => void);
+  }
+
   public destroy(): void {
     this.#state.destroy();
   }

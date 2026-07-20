@@ -27,6 +27,34 @@ describe('@subscription / registerHostSubscriptions', () => {
     expect(order).toEqual(['run:a', 'run:b', 'down:a', 'down:b']);
   });
 
+  it('flattens an array of teardowns returned by a method', () => {
+    const order: string[] = [];
+    class Host {
+      @subscription()
+      protected many(): Array<() => void> {
+        return [() => order.push('a'), () => order.push('b')];
+      }
+    }
+
+    const host = new Host();
+    const teardowns = registerHostSubscriptions(host);
+
+    expect(teardowns).toHaveLength(2);
+    for (const t of teardowns) t();
+    expect(order).toEqual(['a', 'b']);
+  });
+
+  it('ignores non-function entries in a returned array', () => {
+    class Host {
+      @subscription()
+      protected mixed(): unknown {
+        return [() => {}, undefined, null];
+      }
+    }
+    const host = new Host();
+    expect(registerHostSubscriptions(host)).toHaveLength(1);
+  });
+
   it('binds `this` to the host inside the subscription method', () => {
     class Host {
       public wired = '';
