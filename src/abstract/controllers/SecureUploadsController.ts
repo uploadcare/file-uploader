@@ -50,7 +50,7 @@ export class SecureUploadsController {
           } else if (!result.secureSignature || !result.secureExpire) {
             this._log.error('Secure signature resolver returned an invalid result:', result);
           } else {
-            this._log.debug('Secure signature resolved:', result);
+            this._log.debug('Secure signature resolved:', { ...result, secureSignature: '[redacted]' });
             this._log.debug(
               'Secure signature will expire in',
               new Date(Number(result.secureExpire) * 1000).toISOString(),
@@ -71,7 +71,7 @@ export class SecureUploadsController {
 
     if (secureSignature && secureExpire) {
       this._log.debug('Secure signature and expire are set. Using them...', {
-        secureSignature,
+        secureSignature: '[redacted]',
         secureExpire,
       });
 

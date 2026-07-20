@@ -522,6 +522,25 @@ describe('UploadController', () => {
       );
     });
 
+    it('redacts secureSignature from the "upload options" debug log', async () => {
+      const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      const { controller, collection } = setup({
+        cfg: {
+          debug: true,
+          secureSignature: 'SECRET-SIG',
+          secureExpire: String(Math.floor(Date.now() / 1000) + 100000),
+        },
+      });
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+      await expect(controller.uploadEntry(id)).resolves.toBeUndefined();
+
+      const optionsCall = logSpy.mock.calls.find((c) => c.includes('upload options'));
+      expect(optionsCall).toBeDefined();
+      expect((optionsCall?.at(-1) as { secureSignature?: string }).secureSignature).toBe('[redacted]');
+      // The real credential must never reach the console.
+      expect(JSON.stringify(logSpy.mock.calls)).not.toContain('SECRET-SIG');
+    });
+
     it('stays silent when this ctx has debug off', async () => {
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const tableSpy = vi.spyOn(console, 'table').mockImplementation(() => {});
