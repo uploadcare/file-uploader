@@ -13,6 +13,7 @@ import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { effect } from '../../lit/effect';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { MessageBridge } from './MessageBridge';
 import { queryString } from './query-string';
 import type { InputMessageMap } from './types';
@@ -122,14 +123,20 @@ export class ExternalSource extends ChildBlock {
         });
       }),
     );
+  }
 
-    // `_showSelectionStatus` stays on the imperative `subConfigValue('multiple')`
-    // path: its mount/reset write ordering relies on the synchronous eager fire
-    // that `@effect` (deferred to after `updateComplete`) can't reproduce. The
-    // iframe's selection messages still overwrite it.
-    this.subConfigValue('multiple', (multiple) => {
+  // `_showSelectionStatus` mirrors config `multiple` (the iframe's selection
+  // messages then overwrite it). An eager per-key subscription — not an
+  // `@effect` — so its synchronous eager fire on adoption preserves the exact
+  // mount/reset write ordering (an `@effect` defers the first run to after
+  // `updateComplete`). Behavior-identical to the former `subConfigValue`.
+  @subscription()
+  protected _wireShowSelectionStatus(): Unsubscribe {
+    const apply = (multiple: boolean) => {
       this._showSelectionStatus = multiple;
-    });
+    };
+    apply(this._config.get('multiple'));
+    return this._config.observe('multiple', apply);
   }
 
   // Two side-effecting config reactions, expressed as `@effect` methods: each

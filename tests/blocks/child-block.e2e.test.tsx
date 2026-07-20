@@ -147,27 +147,6 @@ describe('ChildBlock', () => {
     await expect.poll(() => child.querySelector('.pk')?.textContent).toBe('otherkey');
   });
 
-  it('subConfigValue fires immediately and dedupes per key', async () => {
-    const ctxName = getCtxName();
-    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
-    const child = append('test-child-block', { 'ctx-name': ctxName });
-    await expect.poll(() => child.readyCount).toBe(1);
-
-    const seen: unknown[] = [];
-    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected test helper
-    (child as any).subConfigValue('multiple', (v: boolean) => seen.push(v));
-    expect(seen).toEqual([true]);
-
-    const config = page.getByTestId('uc-config').query()! as Config;
-    config.pubkey = 'unrelated-change';
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(seen).toEqual([true]); // unrelated key change must not re-fire
-
-    config.multiple = false;
-    await expect.poll(() => seen.length).toBe(2);
-    expect(seen).toEqual([true, false]);
-  });
-
   it('reflects data-testid under testMode and removes it when off', async () => {
     const ctxName = getCtxName();
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
