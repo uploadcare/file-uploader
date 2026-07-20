@@ -15,6 +15,7 @@ import { throttle } from '../../utils/throttle';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
 import { effect } from '../../lit/effect';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import type { Uid } from '../../lit/Uid';
 import { FileItemConfig } from './FileItemConfig';
 
@@ -372,48 +373,37 @@ export class FileItem extends FileItemConfig {
       });
     };
 
-    // Side-effecting subscription (fires `_upload`, not a render read):
-    // `*uploadTrigger` is owned by `CollectionStateController` (M-god step 4).
-    // Subscribe over its coarse notify but fire only when `uploadTrigger` itself
-    // changes, replicating `the v1 per-key derived subscription`'s eager-init + per-key
-    // `Object.is` dedup. `uploadTrigger` is a `Set` the writer REPLACES (never
-    // mutates in place — see `CollectionStateController.set`), so the `Object.is`
-    // guard fires on a new Set and skips unrelated collection-state writes —
-    // behavior-identical to the v1 `ctx.sub('*uploadTrigger')`.
-    const collectionState = this._collectionState;
-    let lastTrigger = collectionState.get('uploadTrigger');
-    const onTrigger = (itemsToUpload: typeof lastTrigger): void => {
+    FileItem.activeInstances.add(this);
+  }
+
+  // Side effect (fires `_upload`, not a render read): `uploadTrigger` (owned by
+  // `CollectionStateController`) is a `Set` the writer REPLACES, so its atomic
+  // `observe` (Object.is dedup) fires only on a real trigger, not on unrelated
+  // collection-state writes; the eager pass covers a trigger set before adoption.
+  @subscription()
+  protected _wireUploadTrigger(): Unsubscribe {
+    const initialTrigger = this._collectionState.get('uploadTrigger');
+    const onTrigger = (itemsToUpload: typeof initialTrigger): void => {
       if (this.entry && !itemsToUpload.has(this.entry.uid)) {
         return;
       }
       setTimeout(() => this.isConnected && this._upload());
     };
-    onTrigger(lastTrigger);
-    this.trackSub(
-      collectionState.subscribe(() => {
-        const next = collectionState.get('uploadTrigger');
-        if (!Object.is(next, lastTrigger)) {
-          lastTrigger = next;
-          onTrigger(next);
-        }
-      }),
-    );
+    onTrigger(initialTrigger);
+    return this._collectionState.observe('uploadTrigger', onTrigger);
+  }
 
-    // The uploader-scope `PluginController` is bound + resolved on the container
-    // only once an uploader scope attaches (`ensurePluginManager`, conditional),
-    // which may be after this block's `controllerReady` — or never in a bare ctx
-    // — so go through `whenController` (fires now if resolved, else on first
-    // resolution) rather than the throwing `use(PluginController)`. Same
-    // now-or-when-available semantics as the v1 `bag.when('pluginManager')`.
-    this.trackSub(
-      this.container.whenController(PluginController, (pm) => {
-        this._pluginManager = pm;
-        this.trackSub(pm.onPluginsChange(() => this._updatePluginFileActions()));
-        this._updatePluginFileActions();
-      }),
-    );
-
-    FileItem.activeInstances.add(this);
+  // The uploader-scope `PluginController` is bound + resolved only once an
+  // uploader scope attaches (`ensurePluginManager`, conditional) — possibly after
+  // adoption, or never in a bare ctx — so go through `whenController`; its
+  // callback returns the plugin-change subscription, which the unsubscribe disposes.
+  @subscription()
+  protected _wirePluginFileActions(): Unsubscribe {
+    return this.container.whenController(PluginController, (pm) => {
+      this._pluginManager = pm;
+      this._updatePluginFileActions();
+      return pm.onPluginsChange(() => this._updatePluginFileActions());
+    });
   }
 
   protected override controllerReleased(): void {

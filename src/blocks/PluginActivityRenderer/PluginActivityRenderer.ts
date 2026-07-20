@@ -9,6 +9,7 @@ import { PluginController } from '../../abstract/managers/plugin';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import type { ActivityType } from '../../lit/activity-constants';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import '../Modal/Modal';
 import './uc-plugin-activity-host.css';
 
@@ -110,14 +111,13 @@ export class PluginActivityRenderer extends ChildBlock {
   // to `bag.when('pluginManager')`.
   private _pluginManager: PluginController | null = null;
 
-  protected override controllerReady(): void {
-    this.trackSub(
-      this.container.whenController(PluginController, (pluginManager) => {
-        this._pluginManager = pluginManager;
-        this.trackSub(pluginManager.onPluginsChange(() => this._syncActivities()));
-        this._syncActivities();
-      }),
-    );
+  @subscription()
+  protected _wirePluginActivities(): Unsubscribe {
+    return this.container.whenController(PluginController, (pluginManager) => {
+      this._pluginManager = pluginManager;
+      this._syncActivities();
+      return pluginManager.onPluginsChange(() => this._syncActivities());
+    });
   }
 
   protected override controllerReleased(): void {

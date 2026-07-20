@@ -13,6 +13,7 @@ import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { effect } from '../../lit/effect';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { MessageBridge } from './MessageBridge';
 import { queryString } from './query-string';
 import type { InputMessageMap } from './types';
@@ -107,27 +108,30 @@ export class ExternalSource extends ChildBlock {
       this._unmountIframe();
       this._mountIframe();
     });
-    this.trackSub(
-      this._router.subscribe(() => {
-        const params = this._router.params;
-        if (params === this._lastActivityParams) {
+  }
+
+  // Remount the iframe when the activity params change.
+  @subscription()
+  protected _wireParamsRemount(): Unsubscribe {
+    return this._router.subscribe(() => {
+      const params = this._router.params;
+      if (params === this._lastActivityParams) {
+        return;
+      }
+      this._lastActivityParams = params;
+      setTimeout(() => {
+        // Defer a tick before reacting to a params change: the router updates
+        // params and the current activity together in one transition, so a
+        // params change that coincides with navigating *away* from this activity
+        // would otherwise remount the iframe just as this block is being torn
+        // down. Waiting a tick lets that disconnect settle so we can bail here.
+        if (!this.isConnected) {
           return;
         }
-        this._lastActivityParams = params;
-        setTimeout(() => {
-          // Defer a tick before reacting to a params change: the router updates
-          // params and the current activity together in one transition, so a
-          // params change that coincides with navigating *away* from this activity
-          // would otherwise remount the iframe just as this block is being torn
-          // down. Waiting a tick lets that disconnect settle so we can bail here.
-          if (!this.isConnected) {
-            return;
-          }
-          this._unmountIframe();
-          this._mountIframe();
-        });
-      }),
-    );
+        this._unmountIframe();
+        this._mountIframe();
+      });
+    });
   }
 
   // Two side-effecting config reactions, expressed as `@effect` methods: each
