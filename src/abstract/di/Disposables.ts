@@ -1,6 +1,6 @@
-import { logger } from '../logger';
+import { type Logger, logger } from '../logger';
 
-const log = logger.scope('disposables');
+const defaultLog = logger.scope('disposables');
 
 /**
  * A tiny composable teardown registry. Controllers `add()` their teardown
@@ -12,9 +12,20 @@ const log = logger.scope('disposables');
  * field rather than mixed in. It covers ONLY teardown-closure running — a
  * controller's own state clearing (map/set `.clear()`, timeout clears, flag
  * sets, child `.destroy()` loops) stays in its `destroy()`.
+ *
+ * A host that owns a scoped logger (e.g. a `ChildBlock` whose `_log` carries its
+ * tag + ctx-name) can pass a `getLog` thunk so the isolate-and-warn message
+ * keeps that context instead of the generic `disposables` scope. The thunk is
+ * resolved lazily at `run()` time, so a host may pass `() => this._log` from a
+ * field initializer before `_log` itself is assigned.
  */
 export class Disposables {
   #fns = new Set<() => void>();
+  #getLog: () => Logger;
+
+  public constructor(getLog: () => Logger = () => defaultLog) {
+    this.#getLog = getLog;
+  }
 
   /** Register a teardown fn; returns a canceller that unregisters it (without running it). */
   public add(fn: () => void): () => void {
@@ -34,7 +45,7 @@ export class Disposables {
       try {
         fn();
       } catch (err) {
-        log.warn('Disposables: a teardown threw', err);
+        this.#getLog().warn('Disposables: a teardown threw', err);
       }
     }
     this.#fns.clear();

@@ -4,8 +4,8 @@ import { LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../abstract/controllers/ConfigController';
 import { LocaleController } from '../abstract/controllers/LocaleController';
-import { RouterController } from '../abstract/controllers/RouterController';
 import { CONTAINER, type ControllerContainer, type Token } from '../abstract/di/ControllerContainer';
+import { Disposables } from '../abstract/di/Disposables';
 import { logger } from '../abstract/logger';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
@@ -15,10 +15,12 @@ import type { ConfigType } from '../types';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import { destroyCtx, isCtxUnreferenced } from './ctx-lifecycle';
 import { ctxNameContext } from './ctx-name-context';
+import { registerHostEffects } from './effect';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { LightDomMixin } from './LightDomMixin';
 import { createL10n } from './l10n';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
+import { registerHostSubscriptions } from './subscription';
 import { TestModeController } from './TestModeController';
 
 // `SignalWatcher` sits at the base of the mixin chain so it wraps
@@ -67,7 +69,12 @@ export abstract class ChildBlock extends ChildBlockBase {
   private _container: ControllerContainer | null = null;
   private _watchedCtxName: string | undefined = undefined;
   private _registryUnsub?: () => void;
-  private _subs: Array<() => void> = [];
+  // Teardown engine for this block's adoption-scoped subscriptions (config test
+  // sync, `@effect` / `@subscription` methods, and the transitional `trackSub`).
+  // Drained on controller release / disconnect. Uses this block's scoped logger
+  // (thunked — `_log` initializes later) so an isolate-and-warn teardown throw
+  // keeps the block tag + ctx-name context.
+  private _disposables = new Disposables(() => this._log);
   private _ctxNameProvider: ContextProvider<{ __context__: string | undefined }> | undefined = undefined;
 
   public constructor() {
@@ -391,7 +398,7 @@ export abstract class ChildBlock extends ChildBlockBase {
     // each block's `@inject` fields (and via `use()`/`whenController` for the
     // scope-bound ones), so there is no eager pre-warm here — adoption only tags
     // the container and wires the subscriptions below.
-    this._subs.push(container.get(ConfigController).subscribe(() => this._syncTestId(container)));
+    this._disposables.add(container.get(ConfigController).subscribe(() => this._syncTestId(container)));
     this._syncTestId(container);
     try {
       this.controllerReady(container);
@@ -401,21 +408,25 @@ export abstract class ChildBlock extends ChildBlockBase {
       // teardown and EventBus fan-out).
       this._log.warn(`${this.tagName.toLowerCase()}: controllerReady threw during adoption`, err);
     }
+    // Wire this block's declarative reactive methods now that the container is
+    // adopted (so their `getTracked` / controller reads resolve): `@effect`
+    // (signal reactions; connected-guarded disposers — see `registerHostEffects`)
+    // and `@subscription` (imperative subscribes returning a teardown). Both are
+    // auto-disposed on release, so a block never tracks a disposer by hand.
+    for (const dispose of registerHostEffects(this)) {
+      this._disposables.add(dispose);
+    }
+    for (const teardown of registerHostSubscriptions(this)) {
+      this._disposables.add(teardown);
+    }
     this.requestUpdate();
   }
 
   private _releaseController(): void {
     const container = this._container;
-    for (const unsub of this._subs) {
-      try {
-        unsub();
-      } catch (err) {
-        // Teardown must be isolated: one throwing unsubscriber must not
-        // prevent the rest from running.
-        this._log.warn(`${this.tagName.toLowerCase()}: a subscription teardown threw during controller release`, err);
-      }
-    }
-    this._subs = [];
+    // Isolate-and-warn drain (a throwing teardown must not stop the rest) lives
+    // in `Disposables.run()`.
+    this._disposables.run();
     // Drop the container refcount BEFORE the deferred teardown check fires: once
     // the last consumer is gone `container.isUnreferenced()` reports the ctx dead
     // and `_teardownCtxIfUnreferenced` disposes it (via `destroyCtx`). A disposed
@@ -466,12 +477,13 @@ export abstract class ChildBlock extends ChildBlockBase {
   /**
    * Track a subscription for auto-teardown on controller release / disconnect.
    *
-   * @deprecated Transitional v1 compat — a migrated block tracks reactive state
-   * with signals (`SignalWatcher` auto-tracks + auto-disposes), not manual
-   * subscriptions. Removed once every block is migrated.
+   * @deprecated Transitional — a migrated block declares reactive wiring with
+   * `@effect` (signal reactions) or `@subscription` (imperative subscribes),
+   * both auto-disposed, instead of tracking teardowns by hand. Removed once
+   * every remaining call site is migrated.
    */
   protected trackSub(unsub: () => void): void {
-    this._subs.push(unsub);
+    this._disposables.add(unsub);
   }
 
   /**
@@ -495,28 +507,6 @@ export abstract class ChildBlock extends ChildBlockBase {
         callback(next);
       }
     });
-    this.trackSub(unsub);
-    return unsub;
-  }
-
-  /**
-   * Subscribe to *any* router change. Fires immediately, then on every
-   * notification — no value dedup. Auto-tracked. Call from `controllerReady`
-   * or later (the render gate guarantees the container is adopted, so `use()`
-   * resolves).
-   *
-   * M-god step 9b-1: reads the `RouterController` off the container
-   * (`use(RouterController)`) instead of `bag.router`. The `*router` shared
-   * instance re-exposes this very container singleton, so this is the same
-   * instance the `bag` getter returned — behavior-identical.
-   *
-   * @deprecated Transitional v1 compat — a migrated block reads router state
-   * reactively via signals under `SignalWatcher`. Removed once every block is
-   * migrated.
-   */
-  protected subRouter(callback: () => void): () => void {
-    callback();
-    const unsub = this.use(RouterController).subscribe(callback);
     this.trackSub(unsub);
     return unsub;
   }
