@@ -31,7 +31,13 @@ const formatConfigLogValue = (value: unknown): string => {
   try {
     return JSON.stringify(value) ?? String(value);
   } catch {
-    return String(value);
+    // `String(value)` can ALSO throw (a throwing `Symbol.toPrimitive`/`toString`),
+    // so guard it too — logging a config change must never surface an exception.
+    try {
+      return String(value);
+    } catch {
+      return '[unserializable]';
+    }
   }
 };
 

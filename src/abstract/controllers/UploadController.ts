@@ -12,6 +12,7 @@ import { customUserAgent } from '../../utils/userAgent';
 import { controllerLogger } from '../controllerLogger';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
+import { lazy } from '../logger';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
@@ -191,7 +192,17 @@ export class UploadController {
           signal: abortController.signal,
           metadata: await this.getMetadataFor(uid),
         };
-        this._log.debug('upload options', uploadClientOptions);
+        // Redact the signing credential from debug output — never print
+        // `secureSignature` to the console. Lazy so the redacted copy is only
+        // built when this ctx is verbose.
+        this._log.debug(
+          lazy(() => [
+            'upload options',
+            uploadClientOptions.secureSignature
+              ? { ...uploadClientOptions, secureSignature: '[redacted]' }
+              : uploadClientOptions,
+          ]),
+        );
         return uploadFile(fileInput, uploadClientOptions);
       };
 
