@@ -14,6 +14,7 @@ import { debounce } from '../../utils/debounce';
 import { throttle } from '../../utils/throttle';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
+import { effect } from '../../lit/effect';
 import type { Uid } from '../../lit/Uid';
 import { FileItemConfig } from './FileItemConfig';
 
@@ -347,21 +348,19 @@ export class FileItem extends FileItemConfig {
     }
   }
 
+  // Host `[mode]` attribute: the `uc-file-item[mode="grid"]` CSS selectors key
+  // off it, driving the grid/list box sizing, so it must be set eagerly before
+  // first paint. `beforeUpdate` fires this synchronously on adoption AND keeps
+  // firing on `filesViewMode` change even while this block's `_pauseRender`
+  // lazy-render gate holds `shouldUpdate` off (verified in effect.integration.test)
+  // — which a plain `willUpdate`+`getTracked` host-attr write could not do.
+  @effect({ beforeUpdate: true })
+  protected _applyMode(): void {
+    this.setAttribute('mode', this._config.getTracked('filesViewMode'));
+  }
+
   protected override controllerReady(): void {
     this._handleEntryId(this.uid);
-
-    // Host `[mode]` attribute: the `uc-file-item[mode="grid"]` CSS selectors key
-    // off the host attr, driving the grid/list box sizing. Kept as an imperative
-    // `subConfigValue` side-effect (repointed to a `filesViewMode`-only read)
-    // rather than the 6b-3 `willUpdate`+`getTracked` host-attr recipe: this block
-    // gates rendering behind `_pauseRender` (an IntersectionObserver lazy-render
-    // gate), so a `willUpdate` host-attr write would not run until the item
-    // scrolls into view — whereas v1 sets `mode` eagerly on adoption so the box
-    // sizing is correct before first paint. `_showFileNames` (a pure render read)
-    // moved to a tracked getter; only this host side-effect remains here.
-    this.subConfigValue('filesViewMode', (mode) => {
-      this.setAttribute('mode', mode);
-    });
 
     this.onclick = () => {
       FileItem.activeInstances.forEach((inst) => {
