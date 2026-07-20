@@ -13,7 +13,6 @@ import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { effect } from '../../lit/effect';
-import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { MessageBridge } from './MessageBridge';
 import { queryString } from './query-string';
 import type { InputMessageMap } from './types';
@@ -61,9 +60,6 @@ export class ExternalSource extends ChildBlock {
   private _couldDeselectAll = false;
 
   @state()
-  private _showSelectionStatus = false;
-
-  @state()
   private _showDoneBtn = false;
 
   @state()
@@ -82,6 +78,15 @@ export class ExternalSource extends ChildBlock {
       count: selectedCount,
       total,
     });
+  }
+
+  // Derived: the selection-status box shows only in multiple mode once the
+  // iframe reports a non-empty selection. A pure function of config `multiple`
+  // (tracked) + the latest selection summary — same reactive coupling as
+  // `_counterText` (every `_latestSelectionSummary` write rides with sibling
+  // `@state` writes that re-render).
+  private get _showSelectionStatus(): boolean {
+    return this._config.getTracked('multiple') && (this._latestSelectionSummary?.total ?? 0) > 0;
   }
 
   protected override controllerReady(): void {
@@ -123,20 +128,6 @@ export class ExternalSource extends ChildBlock {
         });
       }),
     );
-  }
-
-  // `_showSelectionStatus` mirrors config `multiple` (the iframe's selection
-  // messages then overwrite it). An eager per-key subscription — not an
-  // `@effect` — so its synchronous eager fire on adoption preserves the exact
-  // mount/reset write ordering (an `@effect` defers the first run to after
-  // `updateComplete`). Behavior-identical to the former `subConfigValue`.
-  @subscription()
-  protected _wireShowSelectionStatus(): Unsubscribe {
-    const apply = (multiple: boolean) => {
-      this._showSelectionStatus = multiple;
-    };
-    apply(this._config.get('multiple'));
-    return this._config.observe('multiple', apply);
   }
 
   // Two side-effecting config reactions, expressed as `@effect` methods: each
@@ -193,7 +184,6 @@ export class ExternalSource extends ChildBlock {
     this._doneBtnTextClass = message.isReady ? '' : 'uc-hidden';
     this._isSelectionReady = message.isReady;
     this._isDoneBtnEnabled = message.isReady && message.selectedFiles.length > 0;
-    this._showSelectionStatus = message.isMultipleMode && message.total > 0;
     this._couldSelectAll = message.selectedCount < message.total;
     this._couldDeselectAll = message.selectedCount === message.total;
     this._selectedList = message.selectedFiles ?? [];
@@ -318,7 +308,6 @@ export class ExternalSource extends ChildBlock {
     this._isDoneBtnEnabled = false;
     this._couldSelectAll = false;
     this._couldDeselectAll = false;
-    this._showSelectionStatus = false;
     this._showDoneBtn = false;
     this._doneBtnTextClass = 'uc-hidden';
     this._latestSelectionSummary = null;
