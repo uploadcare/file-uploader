@@ -354,7 +354,9 @@ describe('ControllerContainer.whenController', () => {
       }
     }
     const container = new ControllerContainer();
-    const cb = vi.fn(() => order.push('waiter'));
+    const cb = vi.fn(() => {
+      order.push('waiter');
+    });
     container.whenController(A, cb);
     expect(cb).not.toHaveBeenCalled();
 
@@ -391,6 +393,43 @@ describe('ControllerContainer.whenController', () => {
     off();
     container.get(A);
     expect(cb).not.toHaveBeenCalled();
+  });
+
+  it('disposes a teardown the callback returns when it fired immediately', () => {
+    class A {}
+    const container = new ControllerContainer();
+    container.get(A);
+    const teardown = vi.fn();
+    const off = container.whenController(A, () => teardown);
+    expect(teardown).not.toHaveBeenCalled();
+    off();
+    expect(teardown).toHaveBeenCalledTimes(1);
+  });
+
+  it('composes and disposes an array of teardowns returned by a deferred callback', () => {
+    class A {}
+    const container = new ControllerContainer();
+    const a = vi.fn();
+    const b = vi.fn();
+    const off = container.whenController(A, () => [a, b]);
+
+    container.get(A); // fires the waiter, capturing the teardowns
+    expect(a).not.toHaveBeenCalled();
+    off();
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(b).toHaveBeenCalledTimes(1);
+  });
+
+  it('unsubscribe before the deferred callback fires cancels it (no teardown created)', () => {
+    class A {}
+    const container = new ControllerContainer();
+    const teardown = vi.fn();
+    const cb = vi.fn(() => teardown);
+    const off = container.whenController(A, cb);
+    off();
+    container.get(A);
+    expect(cb).not.toHaveBeenCalled();
+    expect(teardown).not.toHaveBeenCalled();
   });
 
   it('unsubscribing one of two pending waiters leaves the other live', () => {
@@ -478,7 +517,9 @@ describe('ControllerContainer.whenController', () => {
     // wired — the callback must defer to the post-init flush, not fire against
     // the half-built instance.
     const order: string[] = [];
-    const cb = vi.fn(() => order.push('waiter'));
+    const cb = vi.fn(() => {
+      order.push('waiter');
+    });
     class A {
       public init(): void {
         order.push('init-start');
