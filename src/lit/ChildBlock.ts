@@ -11,7 +11,6 @@ import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
-import type { ConfigType } from '../types';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import { destroyCtx, isCtxUnreferenced } from './ctx-lifecycle';
 import { ctxNameContext } from './ctx-name-context';
@@ -26,10 +25,10 @@ import { TestModeController } from './TestModeController';
 // `SignalWatcher` sits at the base of the mixin chain so it wraps
 // `performUpdate` (not `render()`): a fully-overridden `render()`/`shouldUpdate()`
 // in a leaf block still auto-tracks any `@lit-labs/signals` signal read during
-// its update, and re-renders when that signal changes. Blocks reading state
-// imperatively (`subConfigValue`, which does not touch a signal) have nothing
-// tracked, so their update cycle is behavior-identical — it only adds a
-// per-element watcher no signal notifies.
+// its update, and re-renders when that signal changes. A block that reads state
+// imperatively (a `.get()` read that touches no signal) has nothing tracked, so
+// its update cycle is behavior-identical — it only adds a per-element watcher no
+// signal notifies.
 const ChildBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)));
 
 /**
@@ -451,8 +450,8 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   /**
    * TestModeController hook — subscribe once a controller is adopted.
-   * Subscribes directly on the controller's config (not via `subConfigValue`/
-   * `trackSub`) so the `TestModeController`'s own `_unsubscribe` is the sole
+   * Subscribes directly on the controller's config (not tracked in
+   * `_disposables`) so the `TestModeController`'s own `_unsubscribe` is the sole
    * owner of the teardown, rather than being released early by controller
    * re-adoption. This binds to the first adopted controller's config for the
    * host's lifetime, matching v1's single-ctx `LitBlock` lifetime; ctx swaps
@@ -484,31 +483,6 @@ export abstract class ChildBlock extends ChildBlockBase {
    */
   protected trackSub(unsub: () => void): void {
     this._disposables.add(unsub);
-  }
-
-  /**
-   * Per-key config subscription: fires immediately with the current value,
-   * then on every change of that key (`Object.is` dedup over the coarse
-   * config notification). Same contract as v1 `LitBlock.subConfigValue`.
-   * Call from `controllerReady` or later; auto-tracked.
-   *
-   * @deprecated Transitional v1 compat. A migrated block reads config
-   * reactively in `render()` via `this.use(ConfigController).getTracked(key)`,
-   * which `SignalWatcher` auto-tracks. Removed once every block is migrated.
-   */
-  protected subConfigValue<K extends keyof ConfigType>(key: K, callback: (value: ConfigType[K]) => void): () => void {
-    const config = this.use(ConfigController);
-    let last = config.get(key);
-    callback(last);
-    const unsub = config.subscribe(() => {
-      const next = config.get(key);
-      if (!Object.is(next, last)) {
-        last = next;
-        callback(next);
-      }
-    });
-    this.trackSub(unsub);
-    return unsub;
   }
 
   /** Called after the ctx's container is adopted (initial and on re-adoption). */
