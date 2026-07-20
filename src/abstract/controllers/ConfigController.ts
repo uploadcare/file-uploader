@@ -70,6 +70,20 @@ export class ConfigController {
     return this.#state.subscribe(listener);
   }
 
+  /**
+   * Atomic per-key subscription: fires only when THIS key changes (`Object.is`
+   * dedup), unlike the coarse `subscribe`. Does not fire on subscribe — read
+   * `get(key)` for the current value. The successor to the eager-fire
+   * `ChildBlock.subConfigValue` for side-effecting reactions that can't be pure
+   * render reads (a value recomputed elsewhere, or pushed to a non-reactive
+   * sink); pair it with an eager call + `@subscription` for auto-teardown.
+   */
+  public observe<K extends keyof ConfigType>(key: K, listener: (value: ConfigType[K]) => void): () => void {
+    // Built-ins are always seeded, so the map's `| undefined` value arm never
+    // materializes for a `ConfigType` key — narrow it at this typed boundary.
+    return this.#state.observe(key, listener as (value: (ConfigType & Record<string, unknown>)[K] | undefined) => void);
+  }
+
   /** Coarse notify with no state change — for a re-render on a non-keyed change. */
   public notify(): void {
     this.#state.notify();
