@@ -100,4 +100,16 @@ describe('CollectionStateController', () => {
     c.set('commonProgress', 99);
     expect(cb).not.toHaveBeenCalled();
   });
+
+  it('setMany coalesces multiple genuinely-changed keys into one notify', () => {
+    const c = new CollectionStateController();
+    const listener = vi.fn();
+    c.subscribe(listener);
+    // Two keys that ACTUALLY change: commonProgress (0 -> 50) and a fresh
+    // collectionErrors array reference (Object.is-distinct from the seeded []).
+    // Without coalescing this would notify twice; with it, exactly once.
+    c.setMany({ commonProgress: 50, collectionErrors: [] });
+    expect(c.get('commonProgress')).toBe(50);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
 });

@@ -88,12 +88,12 @@ export function buildPluginApi(
       const entry = container.getOrNull(UploadCollectionController)?.read(internalId as Uid);
       if (!entry) return;
       if (changes.file !== undefined) {
-        entry.setValue('file', changes.file as File);
-        entry.setValue('fileSize', changes.file.size);
+        entry.set('file', changes.file as File);
+        entry.set('fileSize', changes.file.size);
       }
-      if (changes.cdnUrl !== undefined) entry.setValue('cdnUrl', changes.cdnUrl);
-      if (changes.cdnUrlModifiers !== undefined) entry.setValue('cdnUrlModifiers', changes.cdnUrlModifiers);
-      if (changes.mimeType !== undefined) entry.setValue('mimeType', changes.mimeType);
+      if (changes.cdnUrl !== undefined) entry.set('cdnUrl', changes.cdnUrl);
+      if (changes.cdnUrlModifiers !== undefined) entry.set('cdnUrlModifiers', changes.cdnUrlModifiers);
+      if (changes.mimeType !== undefined) entry.set('mimeType', changes.mimeType);
     },
   };
 

@@ -248,3 +248,54 @@ describe('SignalMap', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 });
+
+describe('SignalMap.getTracked', () => {
+  it('returns the current value (same as get)', () => {
+    const m = new SignalMap<{ a: number }>({ a: 1 });
+    expect(m.getTracked('a')).toBe(1);
+    m.set('a', 2);
+    expect(m.getTracked('a')).toBe(2);
+  });
+});
+
+describe('SignalMap.setMany', () => {
+  it('applies every changed key and fires ONE coalesced coarse notify', () => {
+    const m = new SignalMap<{ a: number; b: number; c: number }>({ a: 0, b: 0, c: 0 });
+    const listener = vi.fn();
+    m.subscribe(listener);
+
+    m.setMany({ a: 1, b: 2 });
+
+    expect(m.get('a')).toBe(1);
+    expect(m.get('b')).toBe(2);
+    expect(m.get('c')).toBe(0);
+    expect(listener).toHaveBeenCalledTimes(1); // coalesced, not 2
+  });
+
+  it('does not notify when nothing actually changes (Object.is dedup)', () => {
+    const m = new SignalMap<{ a: number }>({ a: 1 });
+    const listener = vi.fn();
+    m.subscribe(listener);
+    m.setMany({ a: 1 });
+    expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('keeps materialized per-key signals in sync', () => {
+    const m = new SignalMap<{ a: number; b: number }>({ a: 0, b: 0 });
+    const sigA = m.signal('a'); // materialize
+    m.setMany({ a: 5, b: 6 });
+    expect(sigA.get()).toBe(5);
+  });
+
+  it('writes an explicit undefined (clears the key), consistent with set — not skipped', () => {
+    const m = new SignalMap<{ a?: number }>({ a: 5 });
+    const observed: (number | undefined)[] = [];
+    m.observe('a', (v) => observed.push(v));
+
+    m.setMany({ a: undefined });
+
+    expect(m.get('a')).toBeUndefined();
+    // The clear must reach observers — the regression was silently dropping it.
+    expect(observed).toEqual([undefined]);
+  });
+});

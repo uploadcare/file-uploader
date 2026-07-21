@@ -1,7 +1,7 @@
 import type { UploadEntryData, UploadEntryKeys, UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { ChildBlock } from '../../lit/ChildBlock';
 
-type EntrySubscription = ReturnType<UploadEntryTypedData['subscribe']>;
+type EntrySubscription = ReturnType<UploadEntryTypedData['observe']>;
 
 export class FileItemConfig extends ChildBlock {
   private _entrySubs: Set<EntrySubscription> = new Set<EntrySubscription>();
@@ -21,13 +21,23 @@ export class FileItemConfig extends ChildBlock {
     };
   }
 
-  protected subEntry<K extends UploadEntryKeys>(prop: K, handler: (value: UploadEntryData[K]) => void): void {
-    this.withEntry<[K, (value: UploadEntryData[K]) => void], void>((entry, propInner, handlerInner) => {
-      const sub = entry.subscribe(propInner, (value) => {
-        if (this.isConnected) {
+  protected subEntry<K extends UploadEntryKeys>(
+    prop: K,
+    handler: (value: UploadEntryData[K] | undefined) => void,
+  ): void {
+    this.withEntry<[K, (value: UploadEntryData[K] | undefined) => void], void>((entry, propInner, handlerInner) => {
+      const sub = entry.observe(
+        propInner,
+        (value) => {
+          // Deliver the value even when it's `undefined` — clearing an optional
+          // field (e.g. `thumbUrl`/`fileName` reset to `undefined`) is a real
+          // observation consumers must see, not one to drop. Only bail if we're
+          // no longer connected (a trailing tick after teardown).
+          if (!this.isConnected) return;
           handlerInner(value);
-        }
-      });
+        },
+        { immediate: true },
+      );
       this._entrySubs.add(sub);
     })(prop, handler);
   }

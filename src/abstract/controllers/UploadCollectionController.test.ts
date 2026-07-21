@@ -97,7 +97,7 @@ describe('UploadCollectionController', () => {
     const b = collection.add({ uploadProgress: 90 });
     vi.runOnlyPendingTimers();
 
-    expect(collection.findItems((e) => (e.getValue('uploadProgress') as number) > 50)).toEqual([b]);
+    expect(collection.findItems((e) => (e.get('uploadProgress') as number) > 50)).toEqual([b]);
 
     collection.clearAll();
     expect(collection.size).toBe(0);

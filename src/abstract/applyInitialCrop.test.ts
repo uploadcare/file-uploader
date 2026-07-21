@@ -40,8 +40,8 @@ describe('applyInitialCrop', () => {
 
     // A rejected preset must not fall through to the 1:1 default crop.
     const entry = collection.read(id);
-    expect(entry?.getValue('cdnUrlModifiers')).toBeNull();
-    expect(entry?.getValue('cdnUrl')).toBe(cdnUrl);
+    expect(entry?.get('cdnUrlModifiers')).toBeNull();
+    expect(entry?.get('cdnUrl')).toBe(cdnUrl);
   });
 
   it('applies a centered crop modifier + rewritten cdnUrl to an image entry without an existing crop modifier', () => {
@@ -56,12 +56,12 @@ describe('applyInitialCrop', () => {
     applyInitialCrop(collection, '4:3');
 
     const entry = collection.read(id);
-    const cdnUrlModifiers = entry?.getValue('cdnUrlModifiers');
+    const cdnUrlModifiers = entry?.get('cdnUrlModifiers');
     expect(cdnUrlModifiers).toContain('crop/');
     expect(cdnUrlModifiers).toContain('-/preview/');
     // 800x600 at a 4:3 aspect ratio is already 4:3 — full-frame centered crop.
     expect(cdnUrlModifiers).toContain('crop/800x600/0,0');
-    expect(entry?.getValue('cdnUrl')).toBe(createCdnUrl(cdnUrl, cdnUrlModifiers ?? undefined));
+    expect(entry?.get('cdnUrl')).toBe(createCdnUrl(cdnUrl, cdnUrlModifiers ?? undefined));
   });
 
   it('skips entries that already have /crop/ in cdnUrlModifiers (values unchanged)', () => {
@@ -77,8 +77,8 @@ describe('applyInitialCrop', () => {
     applyInitialCrop(collection, '4:3');
 
     const entry = collection.read(id);
-    expect(entry?.getValue('cdnUrlModifiers')).toBe(existingModifiers);
-    expect(entry?.getValue('cdnUrl')).toBe(cdnUrl);
+    expect(entry?.get('cdnUrlModifiers')).toBe(existingModifiers);
+    expect(entry?.get('cdnUrl')).toBe(cdnUrl);
   });
 
   it('skips non-image entries and entries without fileInfo', () => {
@@ -97,8 +97,8 @@ describe('applyInitialCrop', () => {
 
     applyInitialCrop(collection, '4:3');
 
-    expect(collection.read(nonImageId)?.getValue('cdnUrlModifiers')).toBeNull();
-    expect(collection.read(noFileInfoId)?.getValue('cdnUrlModifiers')).toBeNull();
+    expect(collection.read(nonImageId)?.get('cdnUrlModifiers')).toBeNull();
+    expect(collection.read(noFileInfoId)?.get('cdnUrlModifiers')).toBeNull();
   });
 
   it('warns + skips when fileInfo.imageInfo is missing', () => {
@@ -113,7 +113,7 @@ describe('applyInitialCrop', () => {
     applyInitialCrop(collection, '4:3');
 
     const entry = collection.read(id);
-    expect(entry?.getValue('cdnUrlModifiers')).toBeNull();
+    expect(entry?.get('cdnUrlModifiers')).toBeNull();
     expect(warnSpy).toHaveBeenCalledWith('[uc][initial-crop]', 'Failed to get image info for entry', entry?.uid);
 
     warnSpy.mockRestore();
@@ -131,7 +131,7 @@ describe('applyInitialCrop', () => {
     applyInitialCrop(collection, '4:3');
 
     const entry = collection.read(id);
-    expect(entry?.getValue('cdnUrlModifiers')).toBeNull();
+    expect(entry?.get('cdnUrlModifiers')).toBeNull();
     expect(warnSpy).toHaveBeenCalledWith('[uc][initial-crop]', 'Failed to get cdnUrl for entry', entry?.uid);
 
     warnSpy.mockRestore();
@@ -152,7 +152,7 @@ describe('applyInitialCrop', () => {
     applyInitialCrop(collection, 'free');
 
     const entry = collection.read(id);
-    const cdnUrlModifiers = entry?.getValue('cdnUrlModifiers');
+    const cdnUrlModifiers = entry?.get('cdnUrlModifiers');
     // A 500x500 source at aspect ratio 1 crops to the full square: 500x500 at 0,0.
     expect(cdnUrlModifiers).toContain('crop/500x500/0,0');
   });

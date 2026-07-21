@@ -10,7 +10,7 @@ export const validateUploadError: FuncFileValidator = (outputEntry, api) => {
   }
   const internalEntry = api._uploadCollection.read(internalId as Uid);
 
-  const cause: unknown = internalEntry?.getValue('uploadError');
+  const cause: unknown = internalEntry?.get('uploadError');
   if (!cause) {
     return;
   }

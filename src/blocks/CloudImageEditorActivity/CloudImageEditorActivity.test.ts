@@ -32,11 +32,11 @@ afterEach(() => {
 });
 
 type FakeEntry = {
-  setMultipleValues: ReturnType<typeof vi.fn>;
+  setMany: ReturnType<typeof vi.fn>;
 };
 
 // Minimal `UploadCollectionController` fake: `read(uid)` returns an entry whose
-// `getValue('cdnUrl')` resolves so `_mountEditor` sets `_cdnUrl`. Absent a
+// `get('cdnUrl')` resolves so `_mountEditor` sets `_cdnUrl`. Absent a
 // `cdnUrl` (or absent the whole collection) the block's
 // `whenController(UploadCollectionController)` observer leaves `_cdnUrl` null and
 // nothing renders — matching the v1 mount gate.
@@ -46,8 +46,8 @@ const makeFakeCollection = (entriesById: Record<string, { cdnUrl?: string } & Fa
       const entry = entriesById[uid as string];
       if (!entry) return undefined;
       return {
-        getValue: (key: string) => (key === 'cdnUrl' ? entry.cdnUrl : undefined),
-        setMultipleValues: entry.setMultipleValues,
+        get: (key: string) => (key === 'cdnUrl' ? entry.cdnUrl : undefined),
+        setMany: entry.setMany,
       } as unknown as TypedData<UploadEntryData>;
     },
   }) as unknown as UploadCollectionController;
@@ -116,7 +116,7 @@ describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
     const ctxName = freshCtxName();
     const { el } = await mount(ctxName, {
       internalId: 'file-1',
-      entries: { 'file-1': { cdnUrl: 'https://cdn.test/file-1/', setMultipleValues: vi.fn() } },
+      entries: { 'file-1': { cdnUrl: 'https://cdn.test/file-1/', setMany: vi.fn() } },
     });
     const editor = editorEl(el);
     expect(editor).not.toBeNull();
@@ -127,7 +127,7 @@ describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
     const ctxName = freshCtxName();
     const { el, config } = await mount(ctxName, {
       internalId: 'file-1',
-      entries: { 'file-1': { cdnUrl: 'https://cdn.test/file-1/', setMultipleValues: vi.fn() } },
+      entries: { 'file-1': { cdnUrl: 'https://cdn.test/file-1/', setMany: vi.fn() } },
     });
     config.set('cropPreset', '1:1');
     config.set('cloudImageEditorTabs', 'crop,tuning');
@@ -146,10 +146,10 @@ describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
 
   it('applies the editor result to the entry and traverses onBack on the "apply" event', async () => {
     const ctxName = freshCtxName();
-    const setMultipleValues = vi.fn();
+    const setMany = vi.fn();
     const { el, router } = await mount(ctxName, {
       internalId: 'file-1',
-      entries: { 'file-1': { cdnUrl: 'https://cdn.test/file-1/', setMultipleValues } },
+      entries: { 'file-1': { cdnUrl: 'https://cdn.test/file-1/', setMany } },
     });
     const traverse = vi.spyOn(router, 'traverse');
     const editor = editorEl(el);
@@ -161,7 +161,7 @@ describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
       }),
     );
 
-    expect(setMultipleValues).toHaveBeenCalledWith({
+    expect(setMany).toHaveBeenCalledWith({
       cdnUrl: 'https://cdn.test/file-1/-/edited/',
       cdnUrlModifiers: '-/edited/',
     });
@@ -172,7 +172,7 @@ describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
     const ctxName = freshCtxName();
     const { el, router } = await mount(ctxName, {
       internalId: 'file-1',
-      entries: { 'file-1': { cdnUrl: 'https://cdn.test/file-1/', setMultipleValues: vi.fn() } },
+      entries: { 'file-1': { cdnUrl: 'https://cdn.test/file-1/', setMany: vi.fn() } },
     });
     const traverse = vi.spyOn(router, 'traverse');
     editorEl(el)?.dispatchEvent(new CustomEvent('cancel', { detail: {} }));
@@ -188,7 +188,7 @@ describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
     const ctxName = freshCtxName();
     const { el, router } = await mount(ctxName, {
       internalId: 'file-1',
-      entries: { 'file-1': { cdnUrl: 'https://cdn.test/file-1/', setMultipleValues: vi.fn() } },
+      entries: { 'file-1': { cdnUrl: 'https://cdn.test/file-1/', setMany: vi.fn() } },
     });
     const traverse = vi.spyOn(router, 'traverse');
     editorEl(el)?.dispatchEvent(new CustomEvent('change', { detail: { cdnUrlModifiers: '-/x/' } }));
@@ -199,10 +199,10 @@ describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
 
   it('ignores the "apply" event when there is no resolved entry', async () => {
     const ctxName = freshCtxName();
-    const setMultipleValues = vi.fn();
+    const setMany = vi.fn();
     const { el, router } = await mount(ctxName, {
       internalId: 'file-1',
-      entries: { 'file-1': { cdnUrl: 'https://cdn.test/file-1/', setMultipleValues } },
+      entries: { 'file-1': { cdnUrl: 'https://cdn.test/file-1/', setMany } },
     });
     const editor = editorEl(el);
     const traverse = vi.spyOn(router, 'traverse');
@@ -212,7 +212,7 @@ describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
     editor?.dispatchEvent(
       new CustomEvent('apply', { detail: { cdnUrl: 'https://cdn.test/x/', cdnUrlModifiers: '-/x/' } }),
     );
-    expect(setMultipleValues).not.toHaveBeenCalled();
+    expect(setMany).not.toHaveBeenCalled();
     expect(traverse).not.toHaveBeenCalled();
   });
 
@@ -228,7 +228,7 @@ describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
     const ctxName = freshCtxName();
     const { el } = await mount(ctxName, {
       internalId: 'file-1',
-      entries: { 'file-1': { setMultipleValues: vi.fn() } },
+      entries: { 'file-1': { setMany: vi.fn() } },
     });
     expect(editorEl(el)).toBeNull();
   });
