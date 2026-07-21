@@ -62,6 +62,12 @@ class ScopedMinimalWindow implements MinimalWindow {
     this._scope.push(scope);
   }
 
+  /** Drop a scope; returns the number of scopes still registered. */
+  public unregisterScope(scope: Node): number {
+    this._scope = this._scope.filter((el) => el !== scope);
+    return this._scope.length;
+  }
+
   public destroy(): void {
     this._scope = [];
     // Runs one `removeEventListener('keydown'/'keyup', …)` teardown per attached
@@ -110,6 +116,28 @@ export class A11y implements Destroyable {
     }
     this._scopedWindow.registerScope(scope);
     this._arm();
+  }
+
+  /**
+   * Detach a block's scope. When the last scope is removed, disarm the keyux
+   * window listeners (they re-arm on the next `registerBlock`) so a fully
+   * disconnected widget doesn't retain global `keydown`/`keyup` handlers.
+   */
+  public unregisterBlock(scope: Node): void {
+    if (this._destroyed) {
+      return;
+    }
+    const remaining = this._scopedWindow.unregisterScope(scope);
+    if (remaining === 0) {
+      this._disarm();
+    }
+  }
+
+  /** Tear down the keyux window listeners; `_arm()` can re-attach them later. */
+  private _disarm(): void {
+    this._armed = false;
+    this._destroyKeyUX?.();
+    this._destroyKeyUX = undefined;
   }
 
   public destroy(): void {
