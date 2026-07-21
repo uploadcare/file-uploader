@@ -1,40 +1,42 @@
 import type { Uid } from '../lit/Uid';
 import { UID } from '../utils/UID';
+import type { ReactiveStore } from './di/ReactiveStore';
+import { SignalMap } from './di/SignalMap';
+import type { ObserveOptions } from './host-subscription';
 import { logger } from './logger';
 
 const log = logger.scope('typed-data');
-
 const MSG_NAME = '[Typed State] Wrong property name: ';
 
 /**
  * Per-entry reactive store. Each upload entry is one `TypedData`.
  *
- * As of the v1 → v2 strangler (M3a) this is self-contained — a plain
- * null-prototype field object plus per-key listener sets — rather than a
- * per-ctx store `PubSub` context per entry. A module-level registry keyed by the
- * entry's `uid` replaces the old `PubSub.getCtx(uid)` lookup that hot paths
- * (`getOutputItem`, event emission) used to read entry state by id; because
- * the collection defers `destroy()` ~10s after removal, `getByUid` keeps
- * returning a removed entry's data during that window, exactly as the old
- * per-entry context did.
+ * Composes a `SignalMap` (the same keyed reactive store backing
+ * `ConfigController`/`LocaleController`) rather than hand-rolling its own
+ * per-key `Set` bookkeeping, so it gets the canonical `ReactiveStore<T>`
+ * surface (`get`/`set`/`setMany`/`values`/`subscribe`/`observe`/`getTracked`/
+ * `notify`/`destroy`) — plus this class's own module-level `uid` registry,
+ * which replaces the old per-entry `PubSub.getCtx(uid)` lookup that hot paths
+ * (`getOutputItem`, event emission) use to read entry state by id. Because the
+ * collection defers `destroy()` ~10s after removal, `getByUid` keeps
+ * returning a removed entry's data during that window, exactly as before.
  *
- * Public API (`uid`, `getValue`, `setValue`, `setMultipleValues`, `subscribe`,
- * `destroy`) is unchanged, so the collection and all consumers are
- * untouched. `subscribe` fires immediately with the current value, matching
- * the previous `PubSub.sub(..., init=true)` behavior.
+ * `getValue`/`setValue`/`setMultipleValues`/`snapshot` remain as temporary
+ * `@deprecated` aliases over `get`/`set`/`setMany`/`values` — a migration
+ * scaffold for existing callers, removed once they're ported to the
+ * canonical names. The old immediate per-key `subscribe(prop, handler)` has
+ * no alias: it maps to `observe(key, handler, { immediate: true })`.
  */
-export class TypedData<T extends Record<string, unknown>> {
+export class TypedData<T extends Record<string, unknown>> implements ReactiveStore<T> {
   private static _registry = new Map<string, TypedData<Record<string, unknown>>>();
 
-  private _ctxId: Uid;
-  private _data: T;
-  private _subs = new Map<keyof T, Set<(value: unknown) => void>>();
+  private _uid: Uid;
+  #store: SignalMap<T>;
 
   public constructor(initialValue: T) {
-    this._ctxId = UID.generateFastUid();
-    // Null-prototype so a field name like `__proto__` can't touch the chain.
-    this._data = Object.assign(Object.create(null), initialValue);
-    TypedData._registry.set(this._ctxId, this as unknown as TypedData<Record<string, unknown>>);
+    this._uid = UID.generateFastUid();
+    this.#store = new SignalMap<T>(initialValue);
+    TypedData._registry.set(this._uid, this as unknown as TypedData<Record<string, unknown>>);
   }
 
   /** Look up a live entry store by its uid (returns removed-but-not-yet-destroyed entries too). */
@@ -43,74 +45,87 @@ export class TypedData<T extends Record<string, unknown>> {
   }
 
   public get uid(): Uid {
-    return this._ctxId;
+    return this._uid;
   }
 
-  /** Full current field object — the replacement for the old `PubSub#store`. */
-  public snapshot(): Readonly<T> {
-    return this._data;
+  /** Live field object — the former `snapshot()`. */
+  public get values(): Readonly<T> {
+    return this.#store.values;
   }
 
-  public setValue<K extends keyof T>(prop: K, value: T[K]): void {
-    if (!Object.hasOwn(this._data, prop as PropertyKey)) {
-      log.warn(`${MSG_NAME}${String(prop)}`);
+  public get<K extends keyof T>(key: K): T[K] {
+    if (!this.#store.has(key)) {
+      log.warn(`${MSG_NAME}${String(key)}`);
+    }
+    return this.#store.get(key) as T[K];
+  }
+
+  public getTracked<K extends keyof T>(key: K): T[K] {
+    return this.#store.getTracked(key) as T[K];
+  }
+
+  public set<K extends keyof T>(key: K, value: T[K]): void {
+    if (!this.#store.has(key)) {
+      log.warn(`${MSG_NAME}${String(key)}`);
       return;
     }
-    if (this._data[prop] === value) {
-      return;
-    }
-    this._data[prop] = value;
-    const set = this._subs.get(prop);
-    if (set) {
-      // Isolate each subscriber so one that throws can't abort notification of
-      // the rest — notably the collection watch-list observer, whose
-      // failure to run would stall collection/event updates. Matches the
-      // fan-out semantics of `Listeners.notify` / `EventBus.emit`.
-      for (const handler of [...set]) this._emit(prop, handler, value);
-    }
+    this.#store.set(key, value);
   }
 
-  /** Invoke a subscriber, isolating (and logging) any error it throws. */
-  private _emit(prop: keyof T, handler: (value: unknown) => void, value: unknown): void {
-    try {
-      handler(value);
-    } catch (err) {
-      log.warn(`subscriber for "${String(prop)}" threw`, err);
+  public setMany(patch: Partial<T>): void {
+    const known: Partial<T> = {};
+    for (const key of Object.keys(patch) as (keyof T)[]) {
+      if (!this.#store.has(key)) {
+        log.warn(`${MSG_NAME}${String(key)}`);
+        continue;
+      }
+      known[key] = patch[key];
     }
+    this.#store.setMany(known);
   }
 
-  public setMultipleValues(updObj: Partial<T>): void {
-    for (const [prop, value] of Object.entries(updObj)) {
-      this.setValue(prop as keyof T, value as T[keyof T]);
+  /** @deprecated use `observe(key, handler, { immediate: true })` — the old per-key immediate-fire form. */
+  public subscribe<K extends keyof T>(key: K, handler: (value: T[K]) => void): () => void;
+  public subscribe(listener: () => void): () => void;
+  public subscribe<K extends keyof T>(keyOrListener: K | (() => void), handler?: (value: T[K]) => void): () => void {
+    if (handler) {
+      return this.observe(keyOrListener as K, handler as (value: T[K] | undefined) => void, { immediate: true });
     }
+    return this.#store.subscribe(keyOrListener as () => void);
   }
 
-  public getValue<K extends keyof T>(prop: K): T[K] {
-    if (!Object.hasOwn(this._data, prop as PropertyKey)) {
-      log.warn(`${MSG_NAME}${String(prop)}`);
-    }
-    return this._data[prop];
+  public observe<K extends keyof T>(
+    key: K,
+    listener: (value: T[K] | undefined) => void,
+    options?: ObserveOptions,
+  ): () => void {
+    return this.#store.observe(key, listener, options);
   }
 
-  public subscribe<K extends keyof T>(prop: K, handler: (newVal: T[K]) => void): () => void {
-    let set = this._subs.get(prop);
-    if (!set) {
-      set = new Set();
-      this._subs.set(prop, set);
-    }
-    const wrapped = handler as (value: unknown) => void;
-    set.add(wrapped);
-    // Fire immediately with the current value (parity with the previous
-    // `PubSub.sub(..., init=true)` subscription semantics), isolated like the
-    // notify path so a throwing subscriber can't break the subscribe call.
-    this._emit(prop, wrapped, this._data[prop]);
-    return () => {
-      set?.delete(wrapped);
-    };
+  public notify(): void {
+    this.#store.notify();
   }
 
   public destroy(): void {
-    TypedData._registry.delete(this._ctxId);
-    this._subs.clear();
+    TypedData._registry.delete(this._uid);
+    this.#store.destroy();
+  }
+
+  // ── Deprecated aliases (removed in the follow-up rename task) ──
+  /** @deprecated use `values` */
+  public snapshot(): Readonly<T> {
+    return this.values;
+  }
+  /** @deprecated use `get` */
+  public getValue<K extends keyof T>(key: K): T[K] {
+    return this.get(key);
+  }
+  /** @deprecated use `set` */
+  public setValue<K extends keyof T>(key: K, value: T[K]): void {
+    this.set(key, value);
+  }
+  /** @deprecated use `setMany` */
+  public setMultipleValues(patch: Partial<T>): void {
+    this.setMany(patch);
   }
 }
