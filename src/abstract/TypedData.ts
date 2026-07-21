@@ -50,14 +50,20 @@ export class TypedData<T extends Record<string, unknown>> implements ReactiveSto
     return this.#store.values;
   }
 
-  public get<K extends keyof T>(key: K): T[K] {
+  /** Shared has-check-and-warn for an unknown key, used by both `get` and `getTracked`. */
+  #read<K extends keyof T>(key: K): void {
     if (!this.#store.has(key)) {
       log.warn(`${MSG_NAME}${String(key)}`);
     }
+  }
+
+  public get<K extends keyof T>(key: K): T[K] {
+    this.#read(key);
     return this.#store.get(key) as T[K];
   }
 
   public getTracked<K extends keyof T>(key: K): T[K] {
+    this.#read(key);
     return this.#store.getTracked(key) as T[K];
   }
 

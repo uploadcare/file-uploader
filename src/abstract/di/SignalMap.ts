@@ -116,7 +116,9 @@ export class SignalMap<T extends object> implements ReactiveStore<T> {
   public setMany(patch: Partial<T>): void {
     let changed = false;
     for (const key of Object.keys(patch) as (keyof T)[]) {
-      const value = patch[key] as T[keyof T];
+      if (!Object.hasOwn(patch, key)) continue;
+      const value = patch[key];
+      if (value === undefined) continue;
       if (Object.hasOwn(this.#bag, key) && Object.is(this.#bag[key], value)) {
         continue;
       }

@@ -48,7 +48,9 @@ export class StateController<TState extends object> implements ReactiveStore<TSt
   public setMany(patch: Partial<TState>): void {
     let changed = false;
     for (const key of Object.keys(patch) as (keyof TState)[]) {
-      const value = patch[key] as TState[keyof TState];
+      if (!Object.hasOwn(patch, key)) continue;
+      const value = patch[key];
+      if (value === undefined) continue;
       if (Object.is(this._state[key], value)) continue;
       this._state[key] = value;
       changed = true;
