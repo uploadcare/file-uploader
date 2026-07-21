@@ -63,7 +63,7 @@ const setup = (): Harness => {
   const container = ensureUploaderCtx(ctxName);
   created.push(ctxName);
   const eventEmitter = container.get(EventEmitter);
-  ensureUploaderScope(container, (type, payload, options) => eventEmitter.emit(type, payload, options));
+  ensureUploaderScope(container);
   const ctrl: Ctrl = {
     get locale() {
       return container.get(LocaleController);

@@ -48,7 +48,6 @@ describe('ensureUploaderCtx', () => {
     expect(container.has(LocaleManager)).toBe(true);
     expect(container.has(A11y)).toBe(true);
     expect(container.has(RouterController)).toBe(true);
-    expect(container.has(ClipboardController)).toBe(true);
     expect(container.has(TelemetryManager)).toBe(true);
   });
 
@@ -58,6 +57,11 @@ describe('ensureUploaderCtx', () => {
 
     expect(container.has(PluginController)).toBe(false);
     expect(container.has(UploadCollectionController)).toBe(false);
+    // `ClipboardController` has no construction-time side effect (its paste
+    // listener arms lazily on the first registered scope) and scopes are only
+    // registered per-solution by `SolutionChildBlock`. Keeping it out of this
+    // shared seam keeps it out of the editor-alone bundle's static graph.
+    expect(container.has(ClipboardController)).toBe(false);
   });
 
   it('activates LocaleManager with a null plugin manager (no PluginController in this v1-free seam)', () => {

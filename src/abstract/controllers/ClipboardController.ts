@@ -1,9 +1,9 @@
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { controllerLogger } from '../controllerLogger';
 import { inject } from '../di/inject';
+import { UploaderPublicApi } from '../UploaderPublicApi';
 import { ConfigController } from './ConfigController';
 import { RouterController } from './RouterController';
-import { UploadHostBridge } from './UploadHostBridge';
 
 export type PasteScope = 'local' | 'global' | false;
 
@@ -17,16 +17,14 @@ const ALLOWED_PASTE_ACTIVITIES = new Set<string>([ACTIVITY_TYPES.START_FROM, ACT
  * public API) are resolved lazily from the per-ctx DI container at paste
  * time, not captured at construction: there is no throw-before-set window.
  *
- * The public API is reached through the container-bound {@link UploadHostBridge}
- * (`getApi()`), NOT a direct `@inject(UploaderPublicApi)` — deliberately. This
- * module is in the editor-alone bundle's static graph, so a value import of
- * `UploaderPublicApi` here would drag the whole public API (camera modes,
- * output-state builder, upload sources) into the editor bundle and blow its
- * 50 KB size-limit. `UploadHostBridge` is a `declare`-only token (`import type`
- * members, ~0 runtime bytes) already bound by `ensureUploaderScope` — so the
- * api reaches the clipboard with the exact same availability/timing while the
- * editor bundle stays lean. It is DOM-*event*-coupled by nature — it exists to
- * adapt the browser clipboard to the uploader — but imports nothing from lit.
+ * It `@inject`s the real {@link UploaderPublicApi} directly. That is
+ * editor-bundle-safe because this controller is NOT constructed at ctx creation:
+ * it is resolved per-solution in `SolutionChildBlock.controllerReady` (which
+ * registers the paste scope), so it — and its value import of the public API —
+ * enter only the uploader-solution bundles, never the editor-alone
+ * `uc-cloud-image-editor` bundle (whose `ChildBlock` graph no longer reaches it).
+ * It is DOM-*event*-coupled by nature — it exists to adapt the browser clipboard
+ * to the uploader — but imports nothing from lit.
  */
 export class ClipboardController {
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
@@ -34,11 +32,11 @@ export class ClipboardController {
   private readonly _log = controllerLogger(this, 'clipboard');
   // Config is a leaf, imported directly; the router graph is circular-prone
   // (event bus ↔ controllers), so it uses a token thunk. Resolution is lazy, so
-  // there is zero construction cycle. The api arrives via the host bridge (see
-  // the class doc) — bound by the element layer, editor-bundle-safe.
+  // there is zero construction cycle. The public API is a direct `@inject`
+  // (editor-bundle-safe — see the class doc).
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(() => RouterController) private readonly _router!: RouterController;
-  @inject(UploadHostBridge) private readonly _host!: UploadHostBridge;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   private _armedEventTarget: Pick<Window, 'addEventListener' | 'removeEventListener'> | undefined;
   private _scopes: Set<Node> = new Set();
@@ -207,7 +205,7 @@ export class ClipboardController {
     let hasAddedFiles = false;
 
     if (files.length > 0) {
-      const api = this._host.getApi();
+      const api = this._api;
       files.forEach((file) => {
         api.addFileFromObject(file, { source: 'clipboard' });
       });
@@ -217,7 +215,7 @@ export class ClipboardController {
     if (urlItems.length > 0) {
       const resolvedUrls = (await Promise.all(urlItems)).filter((url): url is string => url !== null);
       if (resolvedUrls.length > 0) {
-        const api = this._host.getApi();
+        const api = this._api;
         resolvedUrls.forEach((url) => {
           api.addFileFromUrl(url, { source: 'clipboard' });
         });

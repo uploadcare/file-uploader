@@ -1,10 +1,13 @@
 import type { FileFromOptions, UploadcareGroup } from '@uploadcare/upload-client';
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { Uid } from '../../lit/Uid';
-import type { OutputCollectionState, OutputFileEntry } from '../../types';
+import type { OutputCollectionState } from '../../types';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
+import { PluginController } from '../managers/plugin';
 import type { TypedData } from '../TypedData';
+import { UploaderPublicApi } from '../UploaderPublicApi';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import { CollectionStateController } from './CollectionStateController';
 import { ConfigController } from './ConfigController';
@@ -12,7 +15,6 @@ import type { CollectionObserver, PropertyObserver } from './UploadCollectionCon
 import { UploadCollectionController } from './UploadCollectionController';
 import { UploadController } from './UploadController';
 import { UploadEventsController } from './UploadEventsController';
-import { UploadHostBridge } from './UploadHostBridge';
 import { ValidationController } from './ValidationController';
 
 vi.mock('@uploadcare/upload-client', async (importOriginal) => {
@@ -32,28 +34,10 @@ const mockApplyInitialCrop = vi.mocked(applyInitialCrop);
 
 type Entry = TypedData<UploadEntryData>;
 
-// A full `UploadHostBridge` with inert defaults; only the members a test cares
-// about are overridden. Inlined (not shared) so it stays out of coverage.
-const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
-  ({
-    getFileHooks: () => [],
-    getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
-    getApi: (() => ({})) as unknown as UploadHostBridge['getApi'],
-    emitCommonUploadFailed: () => {},
-    emit: () => {},
-    getOutputCollectionState: (() => ({})) as unknown as UploadHostBridge['getOutputCollectionState'],
-    getOutputData: () => [],
-    runOnAddHooks: () => {},
-    onResolverError: () => {},
-    onUploadError: () => {},
-    onValidatorError: () => {},
-    ...overrides,
-  }) satisfies UploadHostBridge;
-
 const makeState = (overrides: Partial<OutputCollectionState> = {}): OutputCollectionState =>
   ({ totalCount: 0, status: 'idle', allEntries: [], ...overrides }) as OutputCollectionState;
 
-const setup = (opts: { collectionState?: OutputCollectionState; outputDataLength?: number } = {}) => {
+const setup = (opts: { collectionState?: OutputCollectionState } = {}) => {
   const container = new ControllerContainer();
   const collection = container.get(UploadCollectionController);
   const config = container.get(ConfigController);
@@ -77,22 +61,31 @@ const setup = (opts: { collectionState?: OutputCollectionState; outputDataLength
   } as unknown as UploadController;
   container.bind(UploadController, () => upload);
 
-  // Invoke thunk payloads like the real emit does, so deferred-payload bodies run.
+  // Invoke thunk payloads like the real EventEmitter does, so deferred-payload
+  // bodies run. Bound to the per-ctx `EventEmitter` the controller `@injectOrNull`s.
   const emit = vi.fn((_type: unknown, payload?: unknown) => {
     if (typeof payload === 'function') (payload as () => unknown)();
-  }) as Mock & UploadHostBridge['emit'];
-  const runOnAddHooks = vi.fn();
+  }) as Mock & EventEmitter['emit'];
+  container.bind(EventEmitter, () => ({ emit }) as unknown as EventEmitter);
   const outputCollectionState = opts.collectionState ?? makeState();
-
-  container.bind(UploadHostBridge, () =>
-    makeUploadHost({
-      emit,
-      getOutputItem: ((uid: Uid) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
-      getOutputCollectionState: () => outputCollectionState,
-      getOutputData: () => new Array(opts.outputDataLength ?? collection.size).fill(0) as OutputFileEntry[],
-      runOnAddHooks,
-    }),
+  // `getOutputItem`/`getOutputCollectionState` come from the real
+  // `UploaderPublicApi` token the controller now `@inject`s; the inlined
+  // `getOutputData` derives from `collection.items()` + this `getOutputItem`.
+  container.bind(
+    UploaderPublicApi,
+    () =>
+      ({
+        getOutputItem: (uid: Uid) => ({ internalId: uid }),
+        getOutputCollectionState: () => outputCollectionState,
+      }) as unknown as UploaderPublicApi,
   );
+  // Plugin `onAdd` hooks fire through the conditionally-bound `PluginController`
+  // (`containerOf(this).whenController(...)`), which resolves only a CONSTRUCTED
+  // instance — bind a fake and force it into existence (production:
+  // `ensurePluginManager`).
+  const runOnAddHooks = vi.fn();
+  container.bind(PluginController, () => ({ runOnAddHooks }) as unknown as PluginController);
+  container.get(PluginController);
 
   // The six derived collection keys are now written to `CollectionStateController`
   // via `set(key, value)`. Fan the writes out to per-key spies so the original
@@ -465,7 +458,7 @@ describe('UploadEventsController', () => {
 
   describe('output flush + group', () => {
     it('flushes collection state + emits CHANGE when output data matches collection size', () => {
-      const t = setup({ collectionState: makeState({ totalCount: 1, status: 'idle' }), outputDataLength: 1 });
+      const t = setup({ collectionState: makeState({ totalCount: 1, status: 'idle' }) });
       const id = t.collection.add({ fileName: 'a.txt' });
 
       t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
@@ -476,8 +469,12 @@ describe('UploadEventsController', () => {
     });
 
     it('skips flush when output data length does not match the collection size', () => {
-      const t = setup({ outputDataLength: 0 });
-      const id = t.collection.add({ fileName: 'a.txt' }); // size 1, output 0
+      const t = setup();
+      const id = t.collection.add({ fileName: 'a.txt' }); // size 1
+      // The flush derives its output list from `collection.items()` and guards
+      // on `data.length !== collection.size`. Force a genuine mismatch (items
+      // empty while size reports 1) so the defensive early-return is exercised.
+      vi.spyOn(t.collection, 'items').mockReturnValue([]);
       (t.deps.setCollectionState as Mock).mockClear();
 
       t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
@@ -492,7 +489,7 @@ describe('UploadEventsController', () => {
         status: 'success',
         allEntries: [{ uuid: 'u1', cdnUrlModifiers: '-/preview/' }] as never,
       });
-      const t = setup({ collectionState: state, outputDataLength: 1 });
+      const t = setup({ collectionState: state });
       t.config.set('groupOutput', true);
       mockUploadFileGroup.mockResolvedValue({ uuid: 'group~1' } as UploadcareGroup);
       const id = t.collection.add({ fileName: 'a.txt' });
@@ -511,7 +508,7 @@ describe('UploadEventsController', () => {
         status: 'success',
         allEntries: [{ uuid: 'u1', cdnUrlModifiers: '' }] as never,
       });
-      const t = setup({ collectionState: state, outputDataLength: 1 });
+      const t = setup({ collectionState: state });
       t.config.set('groupOutput', true);
       mockUploadFileGroup.mockImplementation(async () => {
         t.controller.unobserve(); // host disconnects while the group upload is in-flight
@@ -532,7 +529,7 @@ describe('UploadEventsController', () => {
         status: 'success',
         allEntries: [{ uuid: 'u1', cdnUrlModifiers: '' }] as never,
       });
-      const t = setup({ collectionState: state, outputDataLength: 1 });
+      const t = setup({ collectionState: state });
       t.config.set('groupOutput', true);
       mockUploadFileGroup.mockImplementation(async () => {
         t.setCollectionStateValue(makeState({ totalCount: 2, status: 'success' })); // race: state replaced

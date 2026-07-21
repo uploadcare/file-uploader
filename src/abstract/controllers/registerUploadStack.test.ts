@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Uid } from '../../lit/Uid';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { ConfigController } from './ConfigController';
 import { registerUploadStack, type UploadStackControllers } from './registerUploadStack';
@@ -7,7 +6,6 @@ import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
 import { UploadController } from './UploadController';
 import { UploadEventsController } from './UploadEventsController';
-import { UploadHostBridge } from './UploadHostBridge';
 import { ValidationController } from './ValidationController';
 
 const controllers: UploadStackControllers = {
@@ -16,31 +14,6 @@ const controllers: UploadStackControllers = {
   ValidationController,
   UploadEventsController,
 };
-
-// A full `UploadHostBridge` with inert-but-valid defaults; the validation pass
-// touches `getApi().getOutputCollectionState()`, so those return real shapes.
-const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
-  ({
-    getFileHooks: () => [],
-    getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
-    getApi: (() => ({
-      getOutputCollectionState: () => ({ totalCount: 0, status: 'idle', allEntries: [] }),
-      getOutputItem: (uid: Uid) => ({ internalId: uid }),
-    })) as unknown as UploadHostBridge['getApi'],
-    emitCommonUploadFailed: () => {},
-    emit: () => {},
-    getOutputCollectionState: (() => ({
-      totalCount: 0,
-      status: 'idle',
-      allEntries: [],
-    })) as unknown as UploadHostBridge['getOutputCollectionState'],
-    getOutputData: () => [],
-    runOnAddHooks: () => {},
-    onResolverError: () => {},
-    onUploadError: () => {},
-    onValidatorError: () => {},
-    ...overrides,
-  }) satisfies UploadHostBridge;
 
 describe('registerUploadStack', () => {
   beforeEach(() => {
@@ -53,7 +26,7 @@ describe('registerUploadStack', () => {
 
   it('resolves all four upload-stack controllers on the container', () => {
     const container = new ControllerContainer();
-    registerUploadStack(container, controllers, makeUploadHost());
+    registerUploadStack(container, controllers);
 
     expect(container.get(SecureUploadsController)).toBeInstanceOf(SecureUploadsController);
     expect(container.get(UploadController)).toBeInstanceOf(UploadController);
@@ -63,21 +36,11 @@ describe('registerUploadStack', () => {
     container.dispose();
   });
 
-  it('binds the host bridge so the controllers can @inject it', () => {
-    const container = new ControllerContainer();
-    const host = makeUploadHost();
-    registerUploadStack(container, controllers, host);
-
-    expect(container.get(UploadHostBridge)).toBe(host);
-
-    container.dispose();
-  });
-
   it('starts the upload-events collection observation exactly once', () => {
     const observeSpy = vi.spyOn(UploadEventsController.prototype, 'observe');
     const container = new ControllerContainer();
 
-    registerUploadStack(container, controllers, makeUploadHost());
+    registerUploadStack(container, controllers);
 
     expect(observeSpy).toHaveBeenCalledTimes(1);
 
@@ -86,13 +49,13 @@ describe('registerUploadStack', () => {
 
   it('is idempotent — a second call does not rebind or reconstruct', () => {
     const container = new ControllerContainer();
-    registerUploadStack(container, controllers, makeUploadHost());
+    registerUploadStack(container, controllers);
     const events = container.get(UploadEventsController);
     const secure = container.get(SecureUploadsController);
 
     // A second call (a sibling host / re-adoption) must be inert — and must NOT
     // throw from a re-`bind()` after resolution.
-    expect(() => registerUploadStack(container, controllers, makeUploadHost())).not.toThrow();
+    expect(() => registerUploadStack(container, controllers)).not.toThrow();
     expect(container.get(UploadEventsController)).toBe(events);
     expect(container.get(SecureUploadsController)).toBe(secure);
 
@@ -101,7 +64,7 @@ describe('registerUploadStack', () => {
 
   it('container.dispose() tears the stack down in reverse construction order', () => {
     const container = new ControllerContainer();
-    registerUploadStack(container, controllers, makeUploadHost());
+    registerUploadStack(container, controllers);
 
     const eventsDestroy = vi.spyOn(container.get(UploadEventsController), 'destroy');
     const validationDestroy = vi.spyOn(container.get(ValidationController), 'destroy');
@@ -122,7 +85,7 @@ describe('registerUploadStack', () => {
 
   it('wires the four to the SAME container-owned config/collection', () => {
     const container = new ControllerContainer();
-    registerUploadStack(container, controllers, makeUploadHost());
+    registerUploadStack(container, controllers);
 
     const collection = container.get(UploadCollectionController);
     const config = container.get(ConfigController);

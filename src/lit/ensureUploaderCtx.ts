@@ -1,4 +1,3 @@
-import { ClipboardController } from '../abstract/controllers/ClipboardController';
 import { RouterController } from '../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { A11y } from '../abstract/managers/a11y';
@@ -18,12 +17,20 @@ import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
  * `TelemetryManager` at creation time (see `UploaderRegistry.ensure`).
  *
  * On top of that low-level create, this seam eagerly constructs the remaining
- * ctx-scoped managers (`EventEmitter`, `LocaleManager`, `A11y`,
- * `ClipboardController`) so their construction-time side effects fire the moment
- * the ctx exists — the same timing the removed `*`-keyed shared-instance
- * re-exposers gave, and reachable with no element in the composition at all (a
- * pure `ChildBlock` tree). Order matters only for reverse-dispose ordering; it
- * mirrors the previous re-exposer registration order.
+ * ctx-scoped managers (`EventEmitter`, `LocaleManager`, `A11y`) so their
+ * construction-time side effects fire the moment the ctx exists — the same
+ * timing the removed `*`-keyed shared-instance re-exposers gave, and reachable
+ * with no element in the composition at all (a pure `ChildBlock` tree). Order
+ * matters only for reverse-dispose ordering; it mirrors the previous re-exposer
+ * registration order.
+ *
+ * `ClipboardController` is deliberately NOT constructed here: it has no
+ * construction-time side effect (its `paste` listener arms lazily on the first
+ * registered scope), and scopes are only ever registered per-solution by
+ * `SolutionChildBlock.controllerReady`. Keeping it out of this shared seam keeps
+ * it — and its value import of `UploaderPublicApi` — out of the editor-alone
+ * bundle's `ChildBlock` graph, so the clipboard can `@inject` the real public API
+ * directly without breaching the `uc-cloud-image-editor` size-limit.
  *
  * It then activates `LocaleManager` (seed the `en` dictionary, subscribe to
  * `localeName`/`localeDefinitionOverride`). No `PluginController` exists yet on
@@ -39,7 +46,6 @@ export function ensureUploaderCtx(ctxName: string): ControllerContainer {
   container.get(LocaleManager);
   container.get(A11y);
   container.get(RouterController);
-  container.get(ClipboardController);
   container.get(TelemetryManager);
 
   container.get(LocaleManager).activate(container.getOrNull(PluginController));
