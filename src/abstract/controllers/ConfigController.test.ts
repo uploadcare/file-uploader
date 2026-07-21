@@ -173,4 +173,14 @@ describe('ConfigController', () => {
     config.setCustom('unsplashApiKey', 'w'); // changed → notify
     expect(listener).toHaveBeenCalledTimes(1);
   });
+
+  it('setMany applies several keys with one coalesced notify', () => {
+    const c = new ConfigController();
+    const listener = vi.fn();
+    c.subscribe(listener);
+    c.setMany({ multiple: true, imgOnly: true });
+    expect(c.get('multiple')).toBe(true);
+    expect(c.get('imgOnly')).toBe(true);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
 });
