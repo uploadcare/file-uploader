@@ -57,6 +57,18 @@ describe('TypedData (ReactiveStore)', () => {
     d.destroy();
   });
 
+  it('clearing an optional key to undefined is observed (not dropped)', () => {
+    // The behavior FileItemConfig.subEntry relies on: setting a field back to
+    // `undefined` (e.g. a removed thumbUrl/fileName) must reach observers.
+    const d = new TypedData<{ a?: number }>({ a: 5 });
+    const seen: (number | undefined)[] = [];
+    d.observe('a', (v) => seen.push(v)); // no immediate
+    d.set('a', undefined);
+    expect(d.get('a')).toBeUndefined();
+    expect(seen).toEqual([undefined]);
+    d.destroy();
+  });
+
   it('values returns the live bag', () => {
     const d = make();
     d.set('a', 9);
