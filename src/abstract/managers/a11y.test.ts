@@ -168,4 +168,109 @@ describe('A11y', () => {
 
     expect(button.classList.contains('is-pressed')).toBe(false);
   });
+
+  const buttonInScope = (): { scope: HTMLDivElement; button: HTMLButtonElement } => {
+    const scope = document.createElement('div');
+    document.body.append(scope);
+    const button = document.createElement('button');
+    scope.append(button);
+    return { scope, button };
+  };
+
+  it('unregisterBlock detaches a scope: keydown targeting it goes inert', () => {
+    const a11y = track(new A11y());
+    const { scope, button } = buttonInScope();
+    a11y.registerBlock(asNode(scope));
+
+    a11y.unregisterBlock(asNode(scope));
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+    expect(button.classList.contains('is-pressed')).toBe(false);
+  });
+
+  it('unregistering one of two scopes keeps the other armed and observable', () => {
+    const a11y = track(new A11y());
+    const a = buttonInScope();
+    const b = buttonInScope();
+    a11y.registerBlock(asNode(a.scope));
+    a11y.registerBlock(asNode(b.scope));
+
+    a11y.unregisterBlock(asNode(a.scope));
+
+    a.button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    b.button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(a.button.classList.contains('is-pressed')).toBe(false);
+    expect(b.button.classList.contains('is-pressed')).toBe(true);
+  });
+
+  it('unregistering the last scope disarms the window listeners (paired remove for every add)', () => {
+    const addSpy = vi.spyOn(window, 'addEventListener');
+    const removeSpy = vi.spyOn(window, 'removeEventListener');
+    const a11y = track(new A11y());
+    const { scope } = buttonInScope();
+
+    a11y.registerBlock(asNode(scope));
+    const addedTypes = addSpy.mock.calls.map((call) => call[0]).sort();
+    expect(addedTypes.length).toBeGreaterThan(0);
+
+    a11y.unregisterBlock(asNode(scope));
+    const removedTypes = removeSpy.mock.calls.map((call) => call[0]).sort();
+    expect(removedTypes).toEqual(addedTypes);
+  });
+
+  it('re-arms when a scope is registered again after the last one was unregistered', () => {
+    const a11y = track(new A11y());
+    const { scope, button } = buttonInScope();
+
+    a11y.registerBlock(asNode(scope));
+    a11y.unregisterBlock(asNode(scope)); // last scope → disarm
+    a11y.registerBlock(asNode(scope)); // re-arm
+
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(button.classList.contains('is-pressed')).toBe(true);
+  });
+
+  it('unregisterBlock after destroy() is a no-op (does not throw)', () => {
+    const a11y = new A11y();
+    const { scope } = buttonInScope();
+    a11y.registerBlock(asNode(scope));
+    a11y.destroy();
+
+    expect(() => a11y.unregisterBlock(asNode(scope))).not.toThrow();
+  });
+
+  it('double unregisterBlock is safe: the second call is a no-op and stays disarmed', () => {
+    const a11y = track(new A11y());
+    const { scope, button } = buttonInScope();
+    a11y.registerBlock(asNode(scope));
+
+    a11y.unregisterBlock(asNode(scope)); // last scope → disarm
+    expect(() => a11y.unregisterBlock(asNode(scope))).not.toThrow();
+
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(button.classList.contains('is-pressed')).toBe(false);
+  });
+
+  it('unregisterBlock for a never-registered scope leaves other scopes armed', () => {
+    const a11y = track(new A11y());
+    const registered = buttonInScope();
+    a11y.registerBlock(asNode(registered.scope));
+
+    a11y.unregisterBlock(asNode(document.createElement('div'))); // never registered → no disarm
+
+    registered.button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(registered.button.classList.contains('is-pressed')).toBe(true);
+  });
+
+  it('registering the same scope twice is idempotent: one unregisterBlock fully detaches it', () => {
+    const a11y = track(new A11y());
+    const { scope, button } = buttonInScope();
+
+    a11y.registerBlock(asNode(scope));
+    a11y.registerBlock(asNode(scope)); // idempotent (Set-backed)
+    a11y.unregisterBlock(asNode(scope)); // single unregister removes it
+
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(button.classList.contains('is-pressed')).toBe(false);
+  });
 });

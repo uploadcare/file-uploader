@@ -20,7 +20,18 @@ class ScopedMinimalWindow implements MinimalWindow {
   // listener (keyux's own teardown removes each listener before `destroy()`).
   private readonly _listeners = new Map<KeyEventListener, { wrapped: KeyEventListener; cancel: () => void }>();
   readonly #disposables = new Disposables();
-  private _scope: Node[] = [];
+  // A `Set` (matching `ClipboardController._scopes`): registering the same node
+  // twice is idempotent, and one `unregisterScope` fully removes it.
+  private _scope = new Set<Node>();
+
+  private _isInScope(target: Node): boolean {
+    for (const el of this._scope) {
+      if (el === target || el.contains(target)) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   public addEventListener(type: 'keydown' | 'keyup', listener: KeyEventListener): void {
     const wrappedListener: KeyEventListener = (event) => {
@@ -28,7 +39,7 @@ class ScopedMinimalWindow implements MinimalWindow {
       if (!(target instanceof Node)) {
         return;
       }
-      if (this._scope.some((el) => el === target || el.contains(target))) {
+      if (this._isInScope(target)) {
         listener(event);
       }
     };
@@ -59,11 +70,17 @@ class ScopedMinimalWindow implements MinimalWindow {
   }
 
   public registerScope(scope: Node): void {
-    this._scope.push(scope);
+    this._scope.add(scope);
+  }
+
+  /** Drop a scope; returns the number of scopes still registered. */
+  public unregisterScope(scope: Node): number {
+    this._scope.delete(scope);
+    return this._scope.size;
   }
 
   public destroy(): void {
-    this._scope = [];
+    this._scope.clear();
     // Runs one `removeEventListener('keydown'/'keyup', …)` teardown per attached
     // wrapped listener (isolate-and-warn), matching the previous manual loop.
     this.#disposables.run();
@@ -112,11 +129,31 @@ export class A11y implements Destroyable {
     this._arm();
   }
 
-  public destroy(): void {
-    this._destroyed = true;
+  /**
+   * Detach a block's scope. When the last scope is removed, disarm the keyux
+   * window listeners (they re-arm on the next `registerBlock`) so a fully
+   * disconnected widget doesn't retain global `keydown`/`keyup` handlers.
+   */
+  public unregisterBlock(scope: Node): void {
+    if (this._destroyed) {
+      return;
+    }
+    const remaining = this._scopedWindow.unregisterScope(scope);
+    if (remaining === 0) {
+      this._disarm();
+    }
+  }
+
+  /** Tear down the keyux window listeners; `_arm()` can re-attach them later. */
+  private _disarm(): void {
     this._armed = false;
     this._destroyKeyUX?.();
     this._destroyKeyUX = undefined;
+  }
+
+  public destroy(): void {
+    this._destroyed = true;
+    this._disarm();
     this._scopedWindow.destroy();
   }
 }
