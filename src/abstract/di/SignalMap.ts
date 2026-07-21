@@ -1,5 +1,6 @@
 import { type Signal, signal } from '@lit-labs/signals';
 import { Listeners, type ObserveOptions } from '../host-subscription';
+import type { ReactiveStore } from './ReactiveStore';
 
 // `ObserveOptions` lives with `Listeners.observe` (the shared atomic-observe
 // engine); re-exported here so existing `di/SignalMap` importers are unaffected.
@@ -33,7 +34,7 @@ export type { ObserveOptions };
  * The bag is null-proto and keys live by their string name, so a plugin/locale
  * key named `__proto__` is an ordinary own property, never a prototype write.
  */
-export class SignalMap<T extends object> {
+export class SignalMap<T extends object> implements ReactiveStore<T> {
   // Authoritative value + presence store, and the live view returned by `values`.
   #bag: T = Object.create(null);
   // Lazily-populated per-key signals (created on first `get`), kept in sync with
@@ -75,6 +76,15 @@ export class SignalMap<T extends object> {
     return s as Signal.State<T[K] | undefined>;
   }
 
+  /**
+   * Trackable read — the `ReactiveStore` counterpart to `get`. Reads through the
+   * per-key signal, so under a `SignalWatcher` it auto-tracks `key`. The facades'
+   * hand-rolled `signal(key).get()` wrappers collapse to this.
+   */
+  public getTracked<K extends keyof T>(key: K): T[K] | undefined {
+    return this.signal(key).get();
+  }
+
   public has(key: keyof T): boolean {
     return Object.hasOwn(this.#bag, key);
   }
@@ -95,6 +105,28 @@ export class SignalMap<T extends object> {
     // key stays lazy and its next `get` seeds from the now-updated bag.
     this.#signals.get(key)?.set(value);
     this.#listeners.notify();
+  }
+
+  /**
+   * Batch set: apply each changed key (`Object.is` dedup, updating the bag + any
+   * materialized signal), then fire exactly ONE coarse notify if anything changed.
+   * Per-key `getTracked`/`observe` consumers still fire only for their changed key
+   * (their own signal/`Object.is` filter); coarse `subscribe`rs fire once.
+   */
+  public setMany(patch: Partial<T>): void {
+    let changed = false;
+    for (const key of Object.keys(patch) as (keyof T)[]) {
+      const value = patch[key] as T[keyof T];
+      if (Object.hasOwn(this.#bag, key) && Object.is(this.#bag[key], value)) {
+        continue;
+      }
+      this.#bag[key] = value;
+      this.#signals.get(key)?.set(value);
+      changed = true;
+    }
+    if (changed) {
+      this.#listeners.notify();
+    }
   }
 
   /**
