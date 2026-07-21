@@ -214,7 +214,7 @@ export class ValidationController {
       if (entryDescriptors.length === 0 || !this._collection.hasItem(entry.uid)) {
         return;
       }
-      entry.setMultipleValues({
+      entry.setMany({
         isQueuedForValidation: true,
         isValidationPending: true,
       });
@@ -277,7 +277,7 @@ export class ValidationController {
       // runs after teardown — no in-task `_isDestroyed` guard is reachable.
       await this._queue.add(
         async () => {
-          entry.setValue('isQueuedForValidation', false);
+          entry.set('isQueuedForValidation', false);
           await Promise.all(tasks.map((task) => task())).catch(() => {});
         },
         {
@@ -286,14 +286,14 @@ export class ValidationController {
       );
 
       if (abortController.signal.aborted) {
-        entry.setMultipleValues({
+        entry.setMany({
           isQueuedForValidation: false,
           isValidationPending: false,
         });
         return;
       }
 
-      entry.setMultipleValues({
+      entry.setMany({
         isValidationPending: false,
         isQueuedForValidation: false,
         errors,

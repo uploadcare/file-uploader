@@ -163,10 +163,10 @@ export class UploadController {
     }
 
     if (
-      entry.getValue('fileInfo') ||
-      entry.getValue('isUploading') ||
-      entry.getValue('errors').length > 0 ||
-      entry.getValue('isValidationPending')
+      entry.get('fileInfo') ||
+      entry.get('isUploading') ||
+      entry.get('errors').length > 0 ||
+      entry.get('isValidationPending')
     ) {
       return;
     }
@@ -176,7 +176,7 @@ export class UploadController {
       return;
     }
 
-    entry.setMultipleValues({
+    entry.setMany({
       isUploading: true,
       errors: [],
       isQueuedForUploading: true,
@@ -184,11 +184,11 @@ export class UploadController {
 
     try {
       const abortController = new AbortController();
-      entry.setValue('abortController', abortController);
+      entry.set('abortController', abortController);
 
       const uploadTask = async (): Promise<UploadcareFile> => {
-        entry.setValue('isQueuedForUploading', false);
-        let file: File | Blob | null = entry.getValue('file');
+        entry.set('isQueuedForUploading', false);
+        let file: File | Blob | null = entry.get('file');
 
         if (file instanceof File || file instanceof Blob) {
           const beforeUploadHooks = this._host.getFileHooks().filter((h) => h.type === 'beforeUpload');
@@ -201,11 +201,11 @@ export class UploadController {
               const { file: newFile } = await Promise.race([hookPromise, timeoutPromise]);
               if (newFile !== file) {
                 file = newFile;
-                entry.setValue('mimeType', file.type || null);
-                entry.setValue('isImage', fileIsImage(file));
-                entry.setValue('fileSize', file.size);
+                entry.set('mimeType', file.type || null);
+                entry.set('isImage', fileIsImage(file));
+                entry.set('fileSize', file.size);
                 if (file instanceof File) {
-                  entry.setValue('fileName', file.name);
+                  entry.set('fileName', file.name);
                 }
               }
             } catch (error) {
@@ -214,19 +214,19 @@ export class UploadController {
           }
         }
 
-        const fileInput = file || entry.getValue('externalUrl') || entry.getValue('uuid');
+        const fileInput = file || entry.get('externalUrl') || entry.get('uuid');
         if (!fileInput) {
           throw new Error('No file input');
         }
         const baseUploadClientOptions = await this.buildUploadOptions();
         const uploadClientOptions: FileFromOptions = {
           ...baseUploadClientOptions,
-          fileName: entry.getValue('fileName') ?? undefined,
-          source: entry.getValue('source') ?? undefined,
+          fileName: entry.get('fileName') ?? undefined,
+          source: entry.get('source') ?? undefined,
           onProgress: (progress) => {
             if (progress.isComputable) {
               const percentage = progress.value * 100;
-              entry.setValue('uploadProgress', percentage);
+              entry.set('uploadProgress', percentage);
             }
           },
           signal: abortController.signal,
@@ -247,7 +247,7 @@ export class UploadController {
       };
 
       const fileInfo = await this._queue.add(uploadTask);
-      entry.setMultipleValues({
+      entry.setMany({
         fileInfo,
         isQueuedForUploading: false,
         isUploading: false,
@@ -256,27 +256,27 @@ export class UploadController {
         isImage: fileInfo.isImage ?? false,
         mimeType: fileInfo.contentInfo?.mime?.mime ?? fileInfo.mimeType,
         uuid: fileInfo.uuid,
-        cdnUrl: entry.getValue('cdnUrl') ?? fileInfo.cdnUrl,
-        cdnUrlModifiers: entry.getValue('cdnUrlModifiers') ?? '',
+        cdnUrl: entry.get('cdnUrl') ?? fileInfo.cdnUrl,
+        cdnUrlModifiers: entry.get('cdnUrlModifiers') ?? '',
         uploadProgress: 100,
-        source: entry.getValue('source') ?? null,
+        source: entry.get('source') ?? null,
       });
     } catch (cause) {
       const isCancelError = cause instanceof CancelError && cause.isCancel;
       if (isCancelError) {
-        entry.setMultipleValues({
+        entry.setMany({
           isUploading: false,
           uploadProgress: 0,
         });
       } else if (cause instanceof UploadcareError) {
-        entry.setMultipleValues({
+        entry.setMany({
           isUploading: false,
           uploadProgress: 0,
           uploadError: cause,
         });
       } else {
         this._log.error('Unknown upload error', cause);
-        entry.setMultipleValues({
+        entry.setMany({
           isUploading: false,
           uploadProgress: 0,
           // TODO: Add translation?
@@ -293,7 +293,7 @@ export class UploadController {
   }
 
   public abort(uid: Uid): void {
-    this._collection.read(uid)?.getValue('abortController')?.abort();
+    this._collection.read(uid)?.get('abortController')?.abort();
   }
 
   public destroy(): void {

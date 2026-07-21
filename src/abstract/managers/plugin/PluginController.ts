@@ -174,7 +174,7 @@ export class PluginController {
   }
 
   public async runOnAddHooks(entry: UploadEntryTypedData): Promise<void> {
-    const initialFile = entry.getValue('file');
+    const initialFile = entry.get('file');
     if (!initialFile) return;
 
     const onAddHooks = this.registry.snapshot().fileHooks.filter((h) => h.type === 'onAdd');
@@ -196,12 +196,12 @@ export class PluginController {
     }
 
     if (file !== initialFile) {
-      entry.setValue('file', file as File);
-      entry.setValue('fileSize', file.size);
-      entry.setValue('mimeType', file.type || null);
-      entry.setValue('isImage', fileIsImage(file));
+      entry.set('file', file as File);
+      entry.set('fileSize', file.size);
+      entry.set('mimeType', file.type || null);
+      entry.set('isImage', fileIsImage(file));
       if (file instanceof File) {
-        entry.setValue('fileName', file.name);
+        entry.set('fileName', file.name);
       }
     }
   }

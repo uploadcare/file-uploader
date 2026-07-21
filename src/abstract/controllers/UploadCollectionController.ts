@@ -133,7 +133,7 @@ export class UploadCollectionController {
       keyof UploadEntryData,
       UploadEntryData[keyof UploadEntryData],
     ][]) {
-      item.setValue(prop, value);
+      item.set(prop, value);
     }
     this._items.add(item.uid);
     this._notify();
@@ -146,7 +146,7 @@ export class UploadCollectionController {
         subs = [];
         this._subsMap.set(item.uid, subs);
       }
-      subs.push(item.subscribe(propName, () => this._notifyObservers(propName, item.uid)));
+      subs.push(item.observe(propName, () => this._notifyObservers(propName, item.uid), { immediate: true }));
     }
     return item.uid;
   }
@@ -164,7 +164,7 @@ export class UploadCollectionController {
     if (!item) {
       throw new Error(`UploadCollectionController#readProp: Item with id ${id} not found`);
     }
-    return item.getValue(propName);
+    return item.get(propName);
   }
 
   public publishProp<K extends keyof UploadEntryData>(id: Uid, propName: K, value: UploadEntryData[K]): void {
@@ -172,7 +172,7 @@ export class UploadCollectionController {
     if (!item) {
       throw new Error(`UploadCollectionController#publishProp: Item with id ${id} not found`);
     }
-    item.setValue(propName, value);
+    item.set(propName, value);
   }
 
   public remove(id: Uid): void {
@@ -193,7 +193,7 @@ export class UploadCollectionController {
 
   public abort(id: Uid): void {
     const item = this.read(id);
-    if (item?.getValue('isUploading')) {
+    if (item?.get('isUploading')) {
       this.remove(id);
     }
   }

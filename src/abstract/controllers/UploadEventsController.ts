@@ -99,7 +99,7 @@ export class UploadEventsController {
     );
 
     for (const entry of added) {
-      if (!entry.getValue('silent')) {
+      if (!entry.get('silent')) {
         emit(UploaderEventType.FILE_ADDED, getOutputItem(entry.uid));
       }
       this._host.runOnAddHooks(entry);
@@ -110,14 +110,14 @@ export class UploadEventsController {
     for (const entry of removed) {
       // (`UploadController` drops removed uids from its own active batch.)
       this._validation.cleanupValidationForEntry(entry);
-      entry.getValue('abortController')?.abort();
-      entry.setMultipleValues({
+      entry.get('abortController')?.abort();
+      entry.setMany({
         isRemoved: true,
         abortController: null,
         isUploading: false,
         uploadProgress: 0,
       });
-      const thumbUrl = entry?.getValue('thumbUrl');
+      const thumbUrl = entry?.get('thumbUrl');
       thumbUrl && URL.revokeObjectURL(thumbUrl);
       emit(UploaderEventType.FILE_REMOVED, getOutputItem(entry.uid));
     }
@@ -154,7 +154,7 @@ export class UploadEventsController {
         // We can't modify entry properties in the same tick, so we need to wait a bit
         const entriesToRunOnUpload = entriesToRunValidation.filter(
           (entryId) =>
-            changeMap.fileInfo?.has(entryId) && !!TypedData.getByUid<UploadEntryData>(entryId)?.snapshot().fileInfo,
+            changeMap.fileInfo?.has(entryId) && !!TypedData.getByUid<UploadEntryData>(entryId)?.values.fileInfo,
         );
         if (entriesToRunOnUpload.length > 0) {
           validation.runFileValidators('upload', entriesToRunOnUpload);
@@ -166,7 +166,7 @@ export class UploadEventsController {
       for (const entryId of changeMap.uploadProgress) {
         const entry = TypedData.getByUid<UploadEntryData>(entryId);
         if (!entry) continue;
-        const { isUploading, silent } = entry.snapshot();
+        const { isUploading, silent } = entry.values;
         if (isUploading && !silent) {
           emit(UploaderEventType.FILE_UPLOAD_PROGRESS, getOutputItem(entryId));
         }
@@ -178,7 +178,7 @@ export class UploadEventsController {
       for (const entryId of changeMap.isUploading) {
         const entry = TypedData.getByUid<UploadEntryData>(entryId);
         if (!entry) continue;
-        const { isUploading, silent } = entry.snapshot();
+        const { isUploading, silent } = entry.values;
         if (isUploading && !silent) {
           emit(UploaderEventType.FILE_UPLOAD_START, getOutputItem(entryId));
         }
@@ -188,7 +188,7 @@ export class UploadEventsController {
       for (const entryId of changeMap.fileInfo) {
         const entry = TypedData.getByUid<UploadEntryData>(entryId);
         if (!entry) continue;
-        const { fileInfo, silent } = entry.snapshot();
+        const { fileInfo, silent } = entry.values;
         if (fileInfo && !silent) {
           emit(UploaderEventType.FILE_UPLOAD_SUCCESS, getOutputItem(entryId));
         }
@@ -203,7 +203,7 @@ export class UploadEventsController {
       for (const entryId of changeMap.errors) {
         const entry = TypedData.getByUid<UploadEntryData>(entryId);
         if (!entry) continue;
-        const { errors } = entry.snapshot();
+        const { errors } = entry.values;
         if (errors.length > 0) {
           emit(UploaderEventType.FILE_UPLOAD_FAILED, getOutputItem(entryId));
           emit(
@@ -213,8 +213,8 @@ export class UploadEventsController {
           );
         }
       }
-      const loadedItems = collection.findItems((entry) => !!entry.getValue('fileInfo'));
-      const errorItems = collection.findItems((entry) => entry.getValue('errors').length > 0);
+      const loadedItems = collection.findItems((entry) => !!entry.get('fileInfo'));
+      const errorItems = collection.findItems((entry) => entry.get('errors').length > 0);
       if (
         collection.size > 0 &&
         errorItems.length === 0 &&
@@ -225,7 +225,7 @@ export class UploadEventsController {
       }
     }
     if (changeMap.cdnUrl) {
-      const uids = [...changeMap.cdnUrl].filter((uid) => !!collection.read(uid)?.getValue('cdnUrl'));
+      const uids = [...changeMap.cdnUrl].filter((uid) => !!collection.read(uid)?.get('cdnUrl'));
       uids.forEach((uid) => {
         emit(UploaderEventType.FILE_URL_CHANGED, getOutputItem(uid));
       });
