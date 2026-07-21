@@ -66,10 +66,10 @@ export abstract class SolutionChildBlock extends ChildBlock {
   }
 
   private _teardownScopes(): void {
-    for (const scope of [this._clipboardScope, this._a11yScope]) {
-      if (scope) {
-        scope.hostDisconnected();
-        this.removeController(scope);
+    for (const controller of [this._clipboardScope, this._a11yScope]) {
+      if (controller) {
+        controller.hostDisconnected();
+        this.removeController(controller);
       }
     }
     this._clipboardScope = null;
