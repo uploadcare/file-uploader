@@ -100,4 +100,13 @@ describe('CollectionStateController', () => {
     c.set('commonProgress', 99);
     expect(cb).not.toHaveBeenCalled();
   });
+
+  it('setMany applies several keys with one coalesced notify', () => {
+    const c = new CollectionStateController();
+    const listener = vi.fn();
+    c.subscribe(listener);
+    c.setMany({ commonProgress: 50, groupInfo: null });
+    expect(c.get('commonProgress')).toBe(50);
+    expect(listener).toHaveBeenCalledTimes(1);
+  });
 });
