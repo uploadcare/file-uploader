@@ -1,7 +1,9 @@
 import { Queue } from '@uploadcare/upload-client';
+import { EventEmitter, EventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { Uid } from '../../lit/Uid';
 import type {
   OutputCollectionErrorType,
+  OutputCollectionState,
   OutputError,
   OutputErrorCollection,
   OutputErrorFile,
@@ -17,8 +19,10 @@ import {
 } from '../../utils/validators/file/index';
 import { controllerLogger } from '../controllerLogger';
 import { Disposables } from '../di/Disposables';
-import { inject } from '../di/inject';
+import { inject, injectOrNull } from '../di/inject';
+import { TelemetryManager } from '../managers/TelemetryManager';
 import type { TypedData } from '../TypedData';
+import { UploaderPublicApi } from '../UploaderPublicApi';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import type {
   FileValidator,
@@ -29,7 +33,6 @@ import type {
 import { CollectionStateController } from './CollectionStateController';
 import { ConfigController } from './ConfigController';
 import { UploadCollectionController } from './UploadCollectionController';
-import { UploadHostBridge } from './UploadHostBridge';
 
 const LOG_TEXT = {
   FILE_VALIDATION_FAILED: 'File validator execution has failed',
@@ -68,10 +71,11 @@ type EntryValidationState = {
  * Same built-in validators, same async queue with per-entry abort/timeout and
  * `runOn` (`add`/`upload`/`change`) semantics, same error-dedup behavior.
  * Container-resolved (M-god step 5): controller peers (config, collection, and
- * `CollectionStateController` — the collection-errors sink) and the
- * `UploadHostBridge` (public api, `emitCommonUploadFailed`, telemetry sink) are
- * `@inject`-ed, so it runs zero-arg without a DOM and is unit testable in
- * isolation. Entries remain `TypedData`.
+ * `CollectionStateController` — the collection-errors sink), the public API, the
+ * per-ctx `EventEmitter` (for the debounced `common-upload-failed`) and
+ * `TelemetryManager` (the never-throwing validator-error sink) are `@inject`-ed,
+ * so it runs zero-arg without a DOM and is unit testable in isolation. Entries
+ * remain `TypedData`.
  */
 export class ValidationController {
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
@@ -80,7 +84,11 @@ export class ValidationController {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
-  @inject(UploadHostBridge) private readonly _host!: UploadHostBridge;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  // `@injectOrNull`: a teardown-time emit (released container) resolves `null` →
+  // no-op, matching the guard the removed host `emit` closure carried.
+  @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
 
   private _commonFileValidators: FuncFileValidator[] = [
     validateIsImage,
@@ -161,7 +169,7 @@ export class ValidationController {
   public runCollectionValidators(): void {
     if (this._isDestroyed) return;
 
-    const api = this._host.getApi();
+    const api = this._api;
     const collection = api.getOutputCollectionState();
     const errors: Array<OutputErrorCollection> = [];
     const collectionValidators = this._config.get('collectionValidators');
@@ -184,7 +192,13 @@ export class ValidationController {
     this._collectionState.set('collectionErrors', errors);
 
     if (errors.length > 0) {
-      this._host.emitCommonUploadFailed();
+      // Inlined from the removed bridge's `emitCommonUploadFailed`: the debounced
+      // `common-upload-failed` with a thunked failed-collection-state payload.
+      this._eventEmitter?.emit(
+        EventType.COMMON_UPLOAD_FAILED,
+        () => this._api.getOutputCollectionState() as OutputCollectionState<'failed'>,
+        { debounce: true },
+      );
     }
   }
 
@@ -203,7 +217,7 @@ export class ValidationController {
     // The only caller (`runFileValidators`) already guards `_isDestroyed`, and
     // there is no async boundary between there and here, so no re-check is
     // needed until after the first `await` below.
-    const api = this._host.getApi();
+    const api = this._api;
     const state = this._getEntryValidationState(entry);
 
     const previousPromise = state.promise ?? Promise.resolve();
@@ -261,7 +275,7 @@ export class ValidationController {
           if (!abortController.signal.aborted) {
             state.skippedValidators.add(validatorDescriptor.validator);
             this._log.warn(LOG_TEXT.FILE_VALIDATION_FAILED, error);
-            this._host.onValidatorError(error, `file validator. ${LOG_TEXT.FILE_VALIDATION_FAILED}`);
+            this._telemetry.sendEventError(error, `file validator. ${LOG_TEXT.FILE_VALIDATION_FAILED}`);
           }
         } finally {
           clearTimeout(timeoutId);

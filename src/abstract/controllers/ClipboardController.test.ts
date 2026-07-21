@@ -1,11 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { ActivityId } from '../../lit/activity-constants';
 import { ControllerContainer } from '../di/ControllerContainer';
-import type { UploaderPublicApi } from '../UploaderPublicApi';
+import { UploaderPublicApi } from '../UploaderPublicApi';
 import { ClipboardController, type PasteScope } from './ClipboardController';
 import { ConfigController } from './ConfigController';
 import { RouterController } from './RouterController';
-import { UploadHostBridge } from './UploadHostBridge';
 
 type FakeItem =
   | { kind: 'file'; type?: string; getAsFile: () => File | null }
@@ -30,13 +29,13 @@ const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 // M-god step 8b: `ClipboardController` is container-resolved — it `@inject`s
 // `ConfigController` (live `pasteScope`), `RouterController` (`currentActivity`
-// + post-add `traverse('onFileAdd')`), and `UploadHostBridge` (whose `getApi()`
-// is the add-file path — the editor-bundle-safe route to `UploaderPublicApi`).
-// The harness binds a fake for each on a real `ControllerContainer` and resolves
-// the controller through it, so `@inject` finds the container-tagged instance
-// exactly as production does. `onFileAdd` is the router's `traverse('onFileAdd')`
-// spy (the clipboard's only `traverse` caller), kept under the old name so the
-// behavioral assertions are unchanged.
+// + post-add `traverse('onFileAdd')`), and `UploaderPublicApi` directly (its
+// `addFileFromObject`/`addFileFromUrl` are the add-file path). The harness binds
+// a fake for each on a real `ControllerContainer` and resolves the controller
+// through it, so `@inject` finds the container-tagged instance exactly as
+// production does. `onFileAdd` is the router's `traverse('onFileAdd')` spy (the
+// clipboard's only `traverse` caller), kept under the old name so the behavioral
+// assertions are unchanged.
 const setup = ({ pasteScope, currentActivity = null }: { pasteScope: PasteScope; currentActivity?: string | null }) => {
   const container = new ControllerContainer();
   const addFileFromObject = vi.fn();
@@ -50,11 +49,7 @@ const setup = ({ pasteScope, currentActivity = null }: { pasteScope: PasteScope;
     RouterController,
     () => ({ currentActivity: currentActivity as ActivityId | null, traverse }) as unknown as RouterController,
   );
-  container.bind(
-    UploadHostBridge,
-    () =>
-      ({ getApi: () => ({ addFileFromObject, addFileFromUrl }) as unknown as UploaderPublicApi }) as UploadHostBridge,
-  );
+  container.bind(UploaderPublicApi, () => ({ addFileFromObject, addFileFromUrl }) as unknown as UploaderPublicApi);
   const layer = container.get(ClipboardController);
   return { layer, api: { addFileFromObject, addFileFromUrl }, onFileAdd: traverse, container };
 };

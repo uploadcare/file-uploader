@@ -38,9 +38,6 @@ const ctrlView = (container: ControllerContainer) => ({
   get router() {
     return container.get(RouterController);
   },
-  get clipboard() {
-    return container.get(ClipboardController);
-  },
   get telemetryManager() {
     return container.get(TelemetryManager);
   },
@@ -71,8 +68,8 @@ beforeAll(async () => {
  * the composition (e.g. a solution block), which a config-only composition no
  * longer has. `ensureUploaderCtx` still forces the `UploaderController` (and
  * therefore `ConfigController`, `EventBus`, `LocaleController`,
- * `RouterController`, `A11y`, `ClipboardController`, `TelemetryManager`) into
- * existence the moment the ctx exists — those six are readable directly off
+ * `RouterController`, `A11y`, `TelemetryManager`) into
+ * existence the moment the ctx exists — those are readable directly off
  * the controller, just not re-exposed under their legacy `*`-prefixed ctx
  * keys without a v1 block to do the re-exposing. `*pluginManager` has no
  * controller equivalent at all (it stays DOM/`LitBlock`-constructed by
@@ -90,26 +87,28 @@ describe('instance lifecycle (config-only ctx)', () => {
     const container = containerOf(ctxName);
     const controller = ctrlView(container);
 
-    // The six always-constructed managers exist — `ensureUploaderCtx` eagerly
+    // The always-constructed managers exist — `ensureUploaderCtx` eagerly
     // resolves them off the container the moment the ctx exists, with no v1
     // block required.
     expect(controller.eventEmitter).toBeTruthy();
     expect(controller.localeManager).toBeTruthy();
     expect(controller.a11y).toBeTruthy();
     expect(controller.router).toBeTruthy();
-    expect(controller.clipboard).toBeTruthy();
     expect(controller.telemetryManager).toBeTruthy();
 
-    // The six eagerly-constructed managers are present on the container the
-    // moment the ctx-creation seam (`ensureUploaderCtx`) ran — no v1 `LitBlock`
+    // The eagerly-constructed managers are present on the container the moment
+    // the ctx-creation seam (`ensureUploaderCtx`) ran — no v1 `LitBlock`
     // required. (These were the `*`-keyed re-exposers before M-god step 9c-2;
     // the container is now the sole home.)
     expect(container.has(EventEmitter)).toBe(true);
     expect(container.has(LocaleManager)).toBe(true);
     expect(container.has(A11y)).toBe(true);
     expect(container.has(RouterController)).toBe(true);
-    expect(container.has(ClipboardController)).toBe(true);
     expect(container.has(TelemetryManager)).toBe(true);
+    // `ClipboardController` is NOT eager — it is constructed per-solution by
+    // `SolutionChildBlock`, and a config-only ctx has no solution, so it never
+    // exists here (also keeping it out of the editor-alone bundle graph).
+    expect(container.has(ClipboardController)).toBe(false);
 
     // `PluginController` is v1-element-gated (needs plugins) — a config-only ctx
     // never constructs it.
@@ -410,7 +409,7 @@ describe('instance lifecycle (attachUploaderScope idempotency across two LitUplo
  * `activate`) from the ctx-scope seam itself, not `LitBlock`.
  */
 describe('instance lifecycle (M9q ChildBlock-only ctx-scope keys)', () => {
-  it('a ChildBlock-only ctx (no v1 block anywhere) resolves all six controller-owned ctx-scope keys after adoption', async () => {
+  it('a ChildBlock-only ctx (no v1 block anywhere) resolves the eagerly-constructed controller-owned ctx-scope keys after adoption', async () => {
     const ctxName = getCtxName();
     // `uc-copyright` is a pure-consumer ported `ChildBlock` — no `uc-config`,
     // no solution tag, no `uc-drop-area`: nothing v1 in this composition.
@@ -422,15 +421,20 @@ describe('instance lifecycle (M9q ChildBlock-only ctx-scope keys)', () => {
     const container = containerOf(ctxName);
     const controller = ctrlView(container);
 
-    // A v1-free composition still eagerly constructs the six ctx-scoped
-    // managers off the container — `ensureUploaderCtx` runs on the ChildBlock
-    // self-bootstrap path, no `LitBlock.initCallback` required.
+    // A v1-free composition still eagerly constructs the ctx-scoped managers off
+    // the container — `ensureUploaderCtx` runs on the ChildBlock self-bootstrap
+    // path, no `LitBlock.initCallback` required.
     expect(container.has(RouterController)).toBe(true);
     expect(container.has(EventEmitter)).toBe(true);
     expect(container.has(LocaleManager)).toBe(true);
     expect(container.has(A11y)).toBe(true);
-    expect(container.has(ClipboardController)).toBe(true);
     expect(container.has(TelemetryManager)).toBe(true);
+    // `ClipboardController` is deliberately NOT eager: it has no construction-time
+    // side effect (its paste listener arms lazily on the first registered scope)
+    // and scopes are only registered per-solution by `SolutionChildBlock`. In a
+    // solution-less composition it is never constructed — this also keeps it out
+    // of the editor-alone bundle's static graph.
+    expect(container.has(ClipboardController)).toBe(false);
 
     // Identity, not just presence: the container resolves the exact instance
     // the `ctrlView` getters own — a single cached instance per token, no
@@ -439,7 +443,6 @@ describe('instance lifecycle (M9q ChildBlock-only ctx-scope keys)', () => {
     expect(container.get(EventEmitter)).toBe(controller.eventEmitter);
     expect(container.get(LocaleManager)).toBe(controller.localeManager);
     expect(container.get(A11y)).toBe(controller.a11y);
-    expect(container.get(ClipboardController)).toBe(controller.clipboard);
     expect(container.get(TelemetryManager)).toBe(controller.telemetryManager);
 
     // `l10n` resolves a real dictionary entry — proves `LocaleManager.

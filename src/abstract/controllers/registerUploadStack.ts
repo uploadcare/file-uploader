@@ -11,7 +11,6 @@ import type { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
 import type { UploadController } from './UploadController';
 import type { UploadEventsController } from './UploadEventsController';
-import { UploadHostBridge } from './UploadHostBridge';
 import type { ValidationController } from './ValidationController';
 
 /**
@@ -31,10 +30,11 @@ export type UploadStackControllers = {
  * Register the upload stack on a per-ctx container — the DOM-free successor to
  * `UploaderController.attachUploaderScope` (M-god step 5).
  *
- * The four controllers use `@inject` for their controller peers (config,
- * collection, secure-uploads, validation, upload, collection-state), so all this
- * needs to do is `bind` the host-value token (`UploadHostBridge`) the element
- * layer built, then resolve the stack and start it observing.
+ * The four controllers use `@inject` for every collaborator (config, collection,
+ * secure-uploads, validation, upload, collection-state, the public API,
+ * `TelemetryManager`, `EventEmitter`, and the conditionally-bound
+ * `PluginController` via the container), so all this needs to do is resolve the
+ * stack and start it observing — there is no host-value bridge to bind.
  *
  * Resolution order is load-bearing: it fixes the container's insertion order and
  * therefore its reverse-insertion `dispose()` order — `UploadEventsController`
@@ -46,19 +46,12 @@ export type UploadStackControllers = {
  * collection is gone.
  *
  * Idempotent: a second call (a sibling host / a re-adoption) is a no-op once the
- * events controller is resolved — mirroring `attachUploaderScope`'s own gate and
- * keeping `bind()` (which rejects a re-bind after resolution) from throwing.
+ * events controller is resolved — mirroring `attachUploaderScope`'s own gate.
  */
-export function registerUploadStack(
-  container: ControllerContainer,
-  controllers: UploadStackControllers,
-  host: UploadHostBridge,
-): void {
+export function registerUploadStack(container: ControllerContainer, controllers: UploadStackControllers): void {
   if (container.has(controllers.UploadEventsController)) {
     return;
   }
-
-  container.bind(UploadHostBridge, () => host);
 
   // Resolve the collection FIRST so it is inserted before the upload stack and
   // therefore disposed AFTER it (reverse-insertion order) — guaranteeing

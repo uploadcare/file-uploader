@@ -1,30 +1,14 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { EventEmitter, EventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { Uid } from '../../lit/Uid';
-import type { OutputErrorCollection, UploaderPublicApi } from '../../types';
+import type { OutputErrorCollection } from '../../types';
 import { ControllerContainer } from '../di/ControllerContainer';
+import { TelemetryManager } from '../managers/TelemetryManager';
+import { UploaderPublicApi } from '../UploaderPublicApi';
 import { CollectionStateController } from './CollectionStateController';
 import { ConfigController } from './ConfigController';
 import { UploadCollectionController } from './UploadCollectionController';
-import { UploadHostBridge } from './UploadHostBridge';
 import { ValidationController } from './ValidationController';
-
-// A full `UploadHostBridge` with inert defaults; only the members a test cares
-// about are overridden. Inlined (not shared) so it stays out of coverage.
-const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
-  ({
-    getFileHooks: () => [],
-    getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
-    getApi: (() => ({})) as unknown as UploadHostBridge['getApi'],
-    emitCommonUploadFailed: () => {},
-    emit: () => {},
-    getOutputCollectionState: (() => ({})) as unknown as UploadHostBridge['getOutputCollectionState'],
-    getOutputData: () => [],
-    runOnAddHooks: () => {},
-    onResolverError: () => {},
-    onUploadError: () => {},
-    onValidatorError: () => {},
-    ...overrides,
-  }) satisfies UploadHostBridge;
 
 // The async path runs through a 500ms queue debounce, so the async tests use
 // real timers and wait it out rather than choreographing fake timers across
@@ -70,16 +54,15 @@ function buildOutputItem(collection: UploadCollectionController, uid: Uid) {
 
 const active: ValidationController[] = [];
 
-function setup(hostOverrides: Partial<UploadHostBridge> = {}) {
+function setup(overrides: { onValidatorError?: (error: unknown, context?: string) => void } = {}) {
   const container = new ControllerContainer();
   const config = container.get(ConfigController);
   const collection = container.get(UploadCollectionController);
   const collectionState = container.get(CollectionStateController);
-  const emitCommonUploadFailed = vi.fn();
-  const onValidatorError = vi.fn();
   // A minimal public-api stand-in. Only the members the controller and the
   // built-in validators touch are implemented; the mock-boundary assertion is
-  // unavoidable for a class this large.
+  // unavoidable for a class this large. Bound to the real `UploaderPublicApi`
+  // token the controller now `@inject`s directly.
   const api = {
     cfg: config.values,
     l10n: (key: string) => key,
@@ -90,13 +73,22 @@ function setup(hostOverrides: Partial<UploadHostBridge> = {}) {
       allEntries: collection.items().map((id) => buildOutputItem(collection, id)),
     }),
   } as unknown as UploaderPublicApi;
-  // The collection-errors sink is now a direct `CollectionStateController.set`
-  // write; spy on it so the old `setCollectionErrors` assertions (called / last
-  // value) still hold. `set('collectionErrors', errors)` → value at index [1].
+  container.bind(UploaderPublicApi, () => api);
+  // `common-upload-failed` is emitted through the per-ctx `EventEmitter` the
+  // controller `@injectOrNull`s; bind a fake with an `emit` spy so the old
+  // `emitCommonUploadFailed` assertions become "emit fired with that type".
+  const emit = vi.fn();
+  container.bind(EventEmitter, () => ({ emit }) as unknown as EventEmitter);
+  // Validator errors report to `TelemetryManager.sendEventError` (the never-
+  // throwing sink); spy it. A test may install a throwing impl to prove the
+  // controller's own catch swallows a pathological sink.
+  const onValidatorError = vi
+    .spyOn(container.get(TelemetryManager), 'sendEventError')
+    .mockImplementation(overrides.onValidatorError ?? (() => {}));
+  // The collection-errors sink is a direct `CollectionStateController.set` write;
+  // spy on it so the old `setCollectionErrors` assertions (called / last value)
+  // still hold. `set('collectionErrors', errors)` → value at index [1].
   const setCollectionErrors = vi.spyOn(collectionState, 'set');
-  container.bind(UploadHostBridge, () =>
-    makeUploadHost({ getApi: () => api, emitCommonUploadFailed, onValidatorError, ...hostOverrides }),
-  );
   const controller = container.get(ValidationController);
   active.push(controller);
   return {
@@ -105,7 +97,7 @@ function setup(hostOverrides: Partial<UploadHostBridge> = {}) {
     collection,
     collectionState,
     setCollectionErrors,
-    emitCommonUploadFailed,
+    emit,
     onValidatorError,
     api,
   };
@@ -127,7 +119,7 @@ describe('ValidationController', () => {
   });
 
   it('runCollectionValidators reports the built-in multiple (too few) error and fires common-upload-failed', () => {
-    const { controller, config, collectionState, emitCommonUploadFailed } = setup();
+    const { controller, config, collectionState, emit } = setup();
     config.set('multiple', true);
     config.set('multipleMin', 2);
 
@@ -135,7 +127,7 @@ describe('ValidationController', () => {
 
     const errors: OutputErrorCollection[] = collectionState.get('collectionErrors');
     expect(errors.some((e) => e.type === 'TOO_FEW_FILES')).toBe(true);
-    expect(emitCommonUploadFailed).toHaveBeenCalled();
+    expect(emit).toHaveBeenCalledWith(EventType.COMMON_UPLOAD_FAILED, expect.any(Function), { debounce: true });
   });
 
   it('runCollectionValidators isolates a throwing custom collection validator and warns', () => {

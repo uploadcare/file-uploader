@@ -7,6 +7,7 @@ import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/Eve
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import type { ConfigType } from '../../types/index';
 import { UID } from '../../utils/UID';
+import { controllerLogger } from '../controllerLogger';
 import { AppInfo } from '../controllers/AppInfo';
 import { ConfigController } from '../controllers/ConfigController';
 import { RouterController } from '../controllers/RouterController';
@@ -69,6 +70,11 @@ export class TelemetryManager {
   @inject(() => EventBus) private readonly _bus!: EventBus;
   @inject(() => AppInfo) private readonly _appInfo!: AppInfo;
   @inject(() => RouterController) private readonly _router!: RouterController;
+
+  // Per-ctx gated logger: the verbose tier prints only when THIS ctx's `debug`
+  // config is on; ctx-name + gate resolve lazily at log time via the container
+  // that built this instance. Used only by `sendEventError`'s never-throw guard.
+  private readonly _log = controllerLogger(this, 'telemetry');
 
   private readonly _sessionId: string = UID.generateRandomUUID();
   private readonly _telemetryInstance: TelemetryAPIService = new TelemetryAPIService();
@@ -231,17 +237,29 @@ export class TelemetryManager {
     });
   }
 
+  /**
+   * Report an error to telemetry. This is a terminal error SINK — it must never
+   * throw, or the original failure it reports (a rejected upload/validator/
+   * resolver handler, often on an async path) would surface as an unhandled
+   * rejection. It absorbs the never-throw guard the removed `UploadHostBridge`
+   * telemetry sinks used to wrap around this call; the fallback log is
+   * debug-gated (verbose only) and cannot throw either.
+   */
   public sendEventError(error: unknown, context = 'unknown'): void {
-    this.sendEvent({
-      eventType: InternalEventType.ERROR_EVENT,
-      payload: {
-        metadata: {
-          event: 'error',
-          text: `Error in ${context}`,
-          error: (error as Error).message,
+    try {
+      this.sendEvent({
+        eventType: InternalEventType.ERROR_EVENT,
+        payload: {
+          metadata: {
+            event: 'error',
+            text: `Error in ${context}`,
+            error: (error as Error).message,
+          },
         },
-      },
-    });
+      });
+    } catch (err) {
+      this._log.debug('failed to report an error event to telemetry', err);
+    }
   }
 
   /**
