@@ -55,13 +55,26 @@ type Teardown = () => void;
  */
 const toTeardown = (result: void | Teardown | Teardown[]): Teardown | undefined => {
   if (typeof result === 'function') {
-    return result;
+    return () => {
+      try {
+        result();
+      } catch (err) {
+        log.warn('a whenController teardown threw', err);
+      }
+    };
   }
   if (Array.isArray(result)) {
     const fns = result.filter((fn): fn is Teardown => typeof fn === 'function');
     return fns.length > 0
       ? () => {
-          for (const fn of fns) fn();
+          // Isolate-and-warn: one throwing teardown must not stop the rest.
+          for (const fn of fns) {
+            try {
+              fn();
+            } catch (err) {
+              log.warn('a whenController teardown threw', err);
+            }
+          }
         }
       : undefined;
   }

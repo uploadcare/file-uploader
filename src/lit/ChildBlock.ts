@@ -160,7 +160,6 @@ export abstract class ChildBlock extends ChildBlockBase {
     return this._container;
   }
 
-  /**
   /** This ctx's `LocaleController`, resolved lazily off the adopted container. */
   @inject(LocaleController) private readonly _locale!: LocaleController;
 

@@ -415,6 +415,7 @@ describe('ControllerContainer.whenController', () => {
 
     container.get(A); // fires the waiter, capturing the teardowns
     expect(a).not.toHaveBeenCalled();
+    expect(b).not.toHaveBeenCalled();
     off();
     expect(a).toHaveBeenCalledTimes(1);
     expect(b).toHaveBeenCalledTimes(1);
@@ -533,6 +534,49 @@ describe('ControllerContainer.whenController', () => {
     const a = container.get(A);
     expect(cb).toHaveBeenCalledWith(a);
     expect(order).toEqual(['init-start', 'init-end', 'waiter']);
+  });
+
+  it('isolates a throwing single-function teardown so calling the unsubscribe does not throw', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    class A {}
+    const container = new ControllerContainer();
+    container.get(A);
+    const badTeardown = vi.fn(() => {
+      throw new Error('boom');
+    });
+    const off = container.whenController(A, () => badTeardown);
+
+    expect(() => off()).not.toThrow();
+    expect(badTeardown).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(
+      '[uc][controller-container]',
+      expect.stringContaining('whenController teardown threw'),
+      expect.any(Error),
+    );
+  });
+
+  it('isolates a throwing teardown WITHIN an array so the rest still run', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    class A {}
+    const container = new ControllerContainer();
+    container.get(A);
+    const a = vi.fn();
+    const bad = vi.fn(() => {
+      throw new Error('boom');
+    });
+    const c = vi.fn();
+    const off = container.whenController(A, () => [a, bad, c]);
+
+    expect(() => off()).not.toThrow();
+    // Every teardown in the array runs, despite `bad` throwing in the middle.
+    expect(a).toHaveBeenCalledTimes(1);
+    expect(bad).toHaveBeenCalledTimes(1);
+    expect(c).toHaveBeenCalledTimes(1);
+    expect(warn).toHaveBeenCalledWith(
+      '[uc][controller-container]',
+      expect.stringContaining('whenController teardown threw'),
+      expect.any(Error),
+    );
   });
 
   it('a double unsubscribe does not evict a fresh subscription for the same token', () => {

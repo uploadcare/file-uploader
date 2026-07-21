@@ -1,5 +1,9 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { type EffectHost, type EffectOptions, effect, registerHostEffects } from './effect';
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
 
 // Minimal fake host that records `updateEffect` registrations and hands back a
 // disposer that notes when it ran. `isConnected` is toggled to exercise the
@@ -111,5 +115,54 @@ describe('@effect / registerHostEffects', () => {
     const host = new Host();
     expect(wire(host)).toHaveLength(0);
     expect(host.registered).toHaveLength(0);
+  });
+
+  it('isolates a throwing effect body so it does not escape updateEffect, and other effects still register/run', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    class Host extends FakeHost {
+      public readonly ran: string[] = [];
+      @effect()
+      protected bad(): void {
+        throw new Error('boom');
+      }
+      @effect()
+      protected good(): void {
+        this.ran.push('good');
+      }
+    }
+
+    const host = new Host();
+    const disposers = wire(host);
+
+    // Both still registered (the throw happens when the wrapped fn RUNS, not at
+    // registration time).
+    expect(host.registered).toHaveLength(2);
+    expect(disposers).toHaveLength(2);
+
+    // Invoking the registered (wrapped) fn for the throwing method must not
+    // throw, and the sibling effect still runs fine.
+    expect(() => host.registered[0]?.fn()).not.toThrow();
+    expect(warn).toHaveBeenCalled();
+    host.registered[1]?.fn();
+    expect(host.ran).toEqual(['good']);
+  });
+
+  it("uses the host's scoped `_log.warn` when reachable, instead of the module logger", () => {
+    const scopedWarn = vi.fn();
+    const moduleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    class Host extends FakeHost {
+      public _log = { warn: scopedWarn };
+      @effect()
+      protected bad(): void {
+        throw new Error('boom');
+      }
+    }
+
+    const host = new Host();
+    wire(host);
+    host.registered[0]?.fn();
+
+    expect(scopedWarn).toHaveBeenCalledTimes(1);
+    expect(moduleWarn).not.toHaveBeenCalled();
   });
 });

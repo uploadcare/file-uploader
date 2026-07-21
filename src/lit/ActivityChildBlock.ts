@@ -46,16 +46,20 @@ export class ActivityChildBlock extends ChildBlock {
   // `[active]` host attribute. Both slots `isActivityActive` reads —
   // `router.modal` AND `router.activity` — are now `@signalState`-backed, so once
   // a block with a real `activityType` has rendered, those tracked reads re-run
-  // the update on their own. This coarse subscription is retained for the
-  // null-`activityType` case: a `PluginActivityHost` whose `.registration`
-  // arrives later adopts with `activityType === null`, so `isActivityActive`
-  // early-returns BEFORE reading any router signal — nothing is tracked, and
-  // without this subscription the host would have no router wake-up to re-render
-  // once it syncs a real activityType. Harmless extra re-renders for a
-  // null-activity host meanwhile; preserves the v1 `subRouter(() =>
-  // this.requestUpdate())` timing.
+  // the update on their own — the coarse `router.subscribe` below would only add
+  // redundant renders for it. So it is GATED to the null-`activityType` case: a
+  // `PluginActivityHost` whose `.registration` arrives later adopts with
+  // `activityType === null`, so `isActivityActive` early-returns BEFORE reading
+  // any router signal — nothing is tracked, and without this subscription the
+  // host would have no router wake-up to re-render once it syncs a real
+  // activityType. A block already adopting with a real `activityType` skips the
+  // subscription entirely; preserves the v1 `subRouter(() =>
+  // this.requestUpdate())` timing only for the case that still needs it.
   @subscription()
-  protected _wireActivityRerender(): Unsubscribe {
+  protected _wireActivityRerender(): Unsubscribe | void {
+    if (this.activityType) {
+      return;
+    }
     return this._router.subscribe(() => this.requestUpdate());
   }
 
