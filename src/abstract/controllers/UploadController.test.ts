@@ -272,7 +272,7 @@ describe('UploadController', () => {
       // Capture progress before the final 100 write.
       const seen: number[] = [];
       const entry = collection.read(id);
-      entry?.subscribe('uploadProgress', (v) => seen.push(v));
+      entry?.observe('uploadProgress', (v) => v !== undefined && seen.push(v), { immediate: true });
 
       await controller.uploadEntry(id);
 
@@ -287,7 +287,7 @@ describe('UploadController', () => {
       const { controller, collection } = setup();
       const id = collection.add({ file: new File(['x'], 'a.txt') });
       const seen: number[] = [];
-      collection.read(id)?.subscribe('uploadProgress', (v) => seen.push(v));
+      collection.read(id)?.observe('uploadProgress', (v) => v !== undefined && seen.push(v), { immediate: true });
 
       await controller.uploadEntry(id);
 

@@ -36,7 +36,7 @@ type FakeEntry = {
 };
 
 // Minimal `UploadCollectionController` fake: `read(uid)` returns an entry whose
-// `getValue('cdnUrl')` resolves so `_mountEditor` sets `_cdnUrl`. Absent a
+// `get('cdnUrl')` resolves so `_mountEditor` sets `_cdnUrl`. Absent a
 // `cdnUrl` (or absent the whole collection) the block's
 // `whenController(UploadCollectionController)` observer leaves `_cdnUrl` null and
 // nothing renders — matching the v1 mount gate.
@@ -46,8 +46,8 @@ const makeFakeCollection = (entriesById: Record<string, { cdnUrl?: string } & Fa
       const entry = entriesById[uid as string];
       if (!entry) return undefined;
       return {
-        getValue: (key: string) => (key === 'cdnUrl' ? entry.cdnUrl : undefined),
-        setMultipleValues: entry.setMultipleValues,
+        get: (key: string) => (key === 'cdnUrl' ? entry.cdnUrl : undefined),
+        setMany: entry.setMultipleValues,
       } as unknown as TypedData<UploadEntryData>;
     },
   }) as unknown as UploadCollectionController;
