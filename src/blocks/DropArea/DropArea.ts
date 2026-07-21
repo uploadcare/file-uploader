@@ -27,8 +27,11 @@ export class DropArea extends ChildBlock {
   @inject(RouterController) private readonly _router!: RouterController;
   // `UploadCollectionController` and `UploaderPublicApi` are uploader-scope-bound
   // (this block attaches the scope itself in `controllerReady` via
-  // `ensureUploaderScope`); their reads run after that attach, so they stay on
-  // `use()` rather than becoming eagerly-resolving `@inject` fields.
+  // `ensureUploaderScope`); their reads run after that attach, from click/drop
+  // handlers + the drop guard that only fire while mounted (the dropzone
+  // listeners are torn down on release), so both are `@inject`.
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+  @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
 
   public declare attributesMeta: {
     single?: boolean;
@@ -102,15 +105,12 @@ export class DropArea extends ChildBlock {
       return;
     }
 
-    // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
-    // token — it is container-resolved (M-god step 8a), reached via `use()`
-    // (same for the `onItems` add-file calls below).
     if (this.initflow) {
-      this.use(UploaderPublicApi).initFlow();
+      this._api.initFlow();
       return;
     }
 
-    this.use(UploaderPublicApi).openSystemDialog();
+    this._api.openSystemDialog();
   };
   private _sourceListAllowsLocal = true;
   private _clickableListenersAttached = false;
@@ -168,8 +168,8 @@ export class DropArea extends ChildBlock {
         if (!items.length) {
           return;
         }
-        const collection = this.use(UploadCollectionController);
-        const api = this.use(UploaderPublicApi);
+        const collection = this._collection;
+        const api = this._api;
         const prevSize = collection.size;
 
         items.forEach((item) => {
@@ -209,6 +209,10 @@ export class DropArea extends ChildBlock {
   }
 
   protected override controllerReleased(): void {
+    // Release counterpart of `controllerReady` (disconnect, or ctx release/
+    // re-adoption): drop the registry membership (added in `controllerReady`)
+    // and the dropzone bindings.
+    dropAreaRegistry.delete(this);
     this._destroyDropzone?.();
     this._destroyDropzone = null;
     this._destroyContentWrapperDropzone?.();
@@ -258,7 +262,7 @@ export class DropArea extends ChildBlock {
     // resolved here via `use()` (this path runs only after adoption).
     const isMultiple = this._config.get('multiple');
     const multipleMax = this._config.get('multipleMax');
-    const currentFilesCount = this.use(UploadCollectionController).size;
+    const currentFilesCount = this._collection.size;
 
     if (isMultiple && multipleMax && currentFilesCount >= multipleMax) {
       return false;
@@ -329,12 +333,11 @@ export class DropArea extends ChildBlock {
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    dropAreaRegistry.delete(this);
-
-    this._destroyDropzone?.();
-    this._destroyDropzone = null;
-    this._destroyContentWrapperDropzone?.();
-    this._destroyContentWrapperDropzone = null;
+    // Registry membership + dropzone bindings are torn down by `controllerReleased`
+    // (which `super.disconnectedCallback()` → `_releaseController` invokes). Only
+    // the clickable host listeners are handled here: they're toggled by the
+    // `clickable` property via `updated()` (DOM lifecycle, not adoption), so their
+    // removal + reconnect-guard flag reset stays on the DOM disconnect.
     if (this._clickableListenersAttached) {
       this.removeEventListener('keydown', this._handleAreaInteraction);
       this.removeEventListener('click', this._handleAreaInteraction);

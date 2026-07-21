@@ -423,7 +423,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   /**
    * Mirror `data-testid` from the `testMode` config for e2e/`getByTestId`
-   * locators — same contract as `ChildBlock._syncTestId` / v1 `LitBlock`'s
+   * locators — same contract as `ChildBlock._applyTestMode` / v1 `LitBlock`'s
    * `subConfigValue('testMode', ...)`, reimplemented here since the root's
    * light base deliberately isn't `ChildBlock`.
    */

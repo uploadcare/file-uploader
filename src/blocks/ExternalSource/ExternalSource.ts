@@ -317,8 +317,11 @@ export class ExternalSource extends ChildBlock {
     this._latestSelectionSummary = null;
   }
 
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
+  // The iframe + `MessageBridge` mount is adoption-scoped (`controllerReady` and
+  // the `@subscription _wireParamsRemount`), so tear it down in `controllerReleased`
+  // — invoked on disconnect (via the base `disconnectedCallback` →
+  // `_releaseController`) and additionally on ctx release/re-adoption.
+  protected override controllerReleased(): void {
     this._unmountIframe();
   }
 

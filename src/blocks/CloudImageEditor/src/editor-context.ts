@@ -178,7 +178,7 @@ export abstract class EditorBlock extends EditorBlockBase {
     });
 
     // `data-testid` for e2e/`getByTestId` locators — same contract as
-    // `ChildBlock._syncTestId`/v1 `LitBlock.subConfigValue('testMode', ...)`,
+    // `ChildBlock._applyTestMode`/v1 `LitBlock.subConfigValue('testMode', ...)`,
     // reimplemented here since `EditorBlock` deliberately isn't `ChildBlock`
     // (see the class doc). `testMode` is read once per (re)attach rather than
     // tracked reactively — `EditorServices.getConfig` has no dedicated

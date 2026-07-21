@@ -8,7 +8,7 @@ import { ChildBlock } from './ChildBlock';
 // ─── Test-only ChildBlock subclasses ──────────────────────────────────────────
 class UseBlock extends ChildBlock {
   public callUse<T>(token: Token<T>): T {
-    return this.use(token);
+    return this.container.get(token);
   }
   public callUseOrNull<T>(token: Token<T>): T | null {
     return this.useOrNull(token);
@@ -49,7 +49,7 @@ afterEach(() => {
   }
 });
 
-describe('ChildBlock.use()', () => {
+describe('ChildBlock.container', () => {
   it('throws when the container is not adopted yet', () => {
     const el = document.createElement('uc-test-use-block') as UseBlock;
     mounted.push(el);
@@ -74,7 +74,7 @@ describe('ChildBlock.useOrNull()', () => {
     expect(el.callUseOrNull(ConfigController)).toBeNull();
   });
 
-  it('resolves the same singleton as use() after adoption', async () => {
+  it('resolves the same singleton as container.get() after adoption', async () => {
     const ctxName = freshCtxName();
     const el = await mount<UseBlock>('uc-test-use-block', ctxName);
 

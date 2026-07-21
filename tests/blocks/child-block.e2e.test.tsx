@@ -307,10 +307,10 @@ describe('ChildBlock', () => {
     }
   });
 
-  it('throws a descriptive error when a controller is resolved via use() before adoption', () => {
+  it('throws a descriptive error when the container is read before adoption', () => {
     const child = document.createElement('test-child-block');
-    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected method
-    expect(() => (child as any).use(ConfigController)).toThrowError(/test-child-block/);
+    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
+    expect(() => (child as any).container).toThrowError(/test-child-block/);
   });
 
   it('l10n resolves dictionary keys once the locale is loaded', async () => {

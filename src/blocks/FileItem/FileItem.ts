@@ -1,8 +1,9 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import { inject } from '../../abstract/di/inject';
+import { inject, injectOrNull } from '../../abstract/di/inject';
 import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
@@ -35,13 +36,15 @@ const FileItemState = Object.freeze({
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
 
 export class FileItem extends FileItemConfig {
-  // Always-bound controllers become `@inject` fields. `UploadCollectionController`
-  // and `UploaderPublicApi` are uploader-scope-bound and read null-tolerantly via
-  // `useOrNull` (handlers can run outside an adopted scope / during a teardown
-  // race); `PluginController` is conditionally bound and read via `whenController`
-  // — all stay off `@inject`.
+  // `ConfigController`/`TelemetryManager` are always-bound `@inject` fields.
+  // `UploadCollectionController` and `UploaderPublicApi` are uploader-scope-bound
+  // and read null-tolerantly (handlers can run outside an adopted scope / during
+  // a teardown race), so they are `@injectOrNull` (`?.`-read); `PluginController`
+  // is conditionally bound and wired via `whenController`.
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  @injectOrNull(UploadCollectionController) private readonly _collection!: UploadCollectionController | null;
+  @injectOrNull(UploaderPublicApi) private readonly _api!: UploaderPublicApi | null;
 
   @state()
   private _pauseRender = true;
@@ -104,7 +107,7 @@ export class FileItem extends FileItemConfig {
     // `uploadCollection` is container-owned (M-god step 4). Read it
     // null-tolerantly via `useOrNull`: this handler can run outside an adopted
     // scope (teardown race), where the throwing `use()` would be unsafe.
-    const collection = this.useOrNull(UploadCollectionController);
+    const collection = this._collection;
     if (this.uid && collection?.hasItem(this.uid)) {
       this.entry?.getValue('abortController')?.abort();
       collection.remove(this.uid);
@@ -142,8 +145,9 @@ export class FileItem extends FileItemConfig {
     throttle((entry: UploadEntryTypedData, state?: FileItemStateValue) => {
       // A trailing throttle tick can fire after the item unmounts / its container
       // is released (an entry update that raced teardown). The `l10n` reads below
-      // go through `use()`, which throws once the container is gone — bail first.
-      if (!this.containerOrNull) {
+      // resolve `LocaleController` off the container, which is gone by then —
+      // bail first via the null-tolerant `useOrNull`.
+      if (!this.useOrNull(LocaleController)) {
         return;
       }
       const errorText = entry.getValue('errors')?.[0]?.message ?? '';
@@ -214,7 +218,7 @@ export class FileItem extends FileItemConfig {
     this.reset();
 
     // The uploader-scope controllers exist only once an uploader block initializes this ctx.
-    const entry = this.useOrNull(UploadCollectionController)?.read(id) ?? null;
+    const entry = this._collection?.read(id) ?? null;
     this.entry = entry;
 
     if (!entry) {
@@ -295,7 +299,7 @@ export class FileItem extends FileItemConfig {
     }
 
     // The uploader-scope controllers exist only once an uploader block initializes this ctx.
-    const api = this.useOrNull(UploaderPublicApi);
+    const api = this._api;
     if (!api) {
       this._pluginFileActions = [];
       return;
@@ -324,7 +328,7 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    const api = this.useOrNull(UploaderPublicApi);
+    const api = this._api;
     if (!api) {
       return;
     }
@@ -393,6 +397,9 @@ export class FileItem extends FileItemConfig {
 
   protected override controllerReleased(): void {
     this._pluginManager = null;
+    // Adoption-scoped: `activeInstances.add(this)` runs in `controllerReady`, so
+    // drop it on release/re-adoption (and disconnect, via `_releaseController`).
+    FileItem.activeInstances.delete(this);
   }
 
   public override connectedCallback(): void {
@@ -407,10 +414,12 @@ export class FileItem extends FileItemConfig {
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
+    // `activeInstances` membership is dropped by `controllerReleased` (invoked
+    // via `super.disconnectedCallback()` → `_releaseController`). The
+    // `IntersectionObserver` observes this element's own node (created in
+    // `connectedCallback`), so it stays on the DOM disconnect; `reset()` cancels
+    // in-flight per-entry work.
     this._observer?.disconnect();
-
-    FileItem.activeInstances.delete(this);
-
     this.reset();
   }
 

@@ -3,6 +3,7 @@ import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import type { TypedData } from '../../abstract/TypedData';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
@@ -34,8 +35,13 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
   @state()
   private _cdnUrl: string | null = null;
 
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
+  // The editor mount is adoption-scoped (the cdn-url marker is resolved by the
+  // `@subscription _resolveEntry`), so reset it in `controllerReleased` — invoked
+  // on disconnect (via the base `disconnectedCallback` → `_releaseController`)
+  // and additionally on ctx release/re-adoption, which the old disconnect-only
+  // path missed.
+  protected override controllerReleased(container: ControllerContainer): void {
+    super.controllerReleased(container);
     this._unmountEditor();
   }
 
