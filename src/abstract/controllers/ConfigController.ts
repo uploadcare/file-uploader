@@ -92,6 +92,16 @@ export class ConfigController {
     );
   }
 
+  /**
+   * Atomic per-key subscription for a plugin-registered CUSTOM key (the
+   * `getCustom` keyspace), with the same `Object.is` dedup + optional
+   * `{ immediate }` as `observe`. Separate from `observe` because custom keys
+   * live outside the typed `ConfigType` surface.
+   */
+  public observeCustom<T = unknown>(name: string, listener: (value: T) => void, options?: ObserveOptions): () => void {
+    return this.#state.observe(name, listener as (value: unknown) => void, options);
+  }
+
   /** Coarse notify with no state change — for a re-render on a non-keyed change. */
   public notify(): void {
     this.#state.notify();

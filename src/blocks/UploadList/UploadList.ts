@@ -31,14 +31,13 @@ export type Summary = {
 };
 
 export class UploadList extends ActivityChildBlock {
-  // Controllers read from adopted handlers become `@inject` fields (the getter
-  // re-resolves from the current container on each access, so re-adoption is
-  // safe): `ConfigController`, `CollectionStateController`, `TelemetryManager`,
-  // plus `UploaderPublicApi` (flow actions) and `UploadCollectionController`
-  // (clear-all). `RouterController` is inherited from `ActivityChildBlock`.
-  // The teardown-tolerant reads stay on `useOrNull`/`whenController` (the guard
-  // predicate + the throttled tick can fire after release, where `@inject`
-  // would throw); the observer wiring goes through `whenController`.
+  // Controllers become `@inject` fields (the getter re-resolves from the
+  // current container on each access, so re-adoption is safe): `ConfigController`,
+  // `CollectionStateController`, `TelemetryManager`, plus `UploaderPublicApi`
+  // (flow actions) and `UploadCollectionController` (clear-all). `RouterController`
+  // is inherited from `ActivityChildBlock`. The teardown-tolerant reads (the guard
+  // predicate + the throttled tick can fire after release, where an `@inject` read
+  // would throw) stay on `useOrNull`.
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
@@ -129,9 +128,8 @@ export class UploadList extends ActivityChildBlock {
 
   private _throttledHandleCollectionUpdate = throttle(() => {
     // A trailing tick can fire after the block is released while still connected
-    // (registry unregistration race) — read the container null-tolerantly via
-    // `useOrNull` and bail rather than throwing uncaught in the timeout
-    // (DynamicBtn precedent).
+    // (registry unregistration race) — read null-tolerantly via `useOrNull` and
+    // bail rather than throwing uncaught in the timeout (DynamicBtn precedent).
     const config = this.useOrNull(ConfigController);
     if (!this.isConnected || !config) {
       return;

@@ -1,7 +1,7 @@
 import { html, type PropertyValues } from 'lit';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import { inject } from '../../abstract/di/inject';
+import { inject, injectOrNull } from '../../abstract/di/inject';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './modal.css';
 import { property } from 'lit/decorators.js';
@@ -13,7 +13,7 @@ export class Modal extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
 
   @inject(ConfigController) private readonly _config!: ConfigController;
-  @inject(RouterController) private readonly _router!: RouterController;
+  @injectOrNull(RouterController) private readonly _router!: RouterController | null;
 
   private _mouseDownTarget: EventTarget | null | undefined;
 
@@ -40,11 +40,10 @@ export class Modal extends ChildBlock {
     // The native <dialog> "close" event is dispatched from a queued task and
     // can land after this block's ctx was torn down (deferred destroyCtx once
     // the last block disconnects) — there is no router to notify then, and
-    // nothing left to close. Deliberately kept on the null-safe
-    // `useOrNull(RouterController)` rather than `use(RouterController)`: the
-    // latter throws once the container is released, exactly the post-teardown
-    // race this guard exists to absorb.
-    const router = this.useOrNull(RouterController);
+    // nothing left to close. `_router` is `@injectOrNull` (not `@inject`): it
+    // reads `null` once the container is released, exactly the post-teardown
+    // race this guard exists to absorb, rather than throwing.
+    const router = this._router;
     if (!router) {
       return;
     }
@@ -132,7 +131,7 @@ export class Modal extends ChildBlock {
     // other uploader instances on the same page. `modalScrollLock` is read
     // untracked (v1 read it fresh inside the router callback, not as its own
     // reactive trigger) — the router-slot signal is what re-runs this.
-    const isForeground = this._router.modal === (this.id as RegisteredActivityType);
+    const isForeground = this._router?.modal === (this.id as RegisteredActivityType);
     if (isForeground && this._config.get('modalScrollLock')) {
       this._releaseScrollLock ??= getScrollLock(document).acquire();
     } else {

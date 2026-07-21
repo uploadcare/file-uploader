@@ -26,9 +26,9 @@ export type { UploaderEventKey as EventKey, UploaderEventPayload as EventPayload
  * Facade over the per-ctx DOM-free `EventBus`.
  *
  * `on`/`emit` delegate to the bus; the DOM `CustomEvent` dispatch lives in the
- * reactive `EventBridgeController` attached to `<uc-upload-ctx-provider>`. The
- * public surface (event types, debounce, payload thunks, `api.on`) is
- * unchanged — only the storage/dispatch moved behind the bus.
+ * `@subscription() _bridgeBusToDom` on `<uc-upload-ctx-provider>`. The public
+ * surface (event types, debounce, payload thunks, `api.on`) is unchanged — only
+ * the storage/dispatch moved behind the bus.
  *
  * Container-resolved with a zero-arg ctor, `@inject`-ing the per-ctx
  * `EventBus`; `container.get(EventEmitter)` yields the single per-ctx

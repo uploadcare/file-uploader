@@ -60,8 +60,9 @@ export class CameraSource extends ChildBlock {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(RouterController) private readonly _router!: RouterController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
-  // `UploaderPublicApi` is uploader-scope-bound host-boundary state read via
-  // `use()` from `_toSend` (post-adoption), so it stays off `@inject`.
+  // `UploaderPublicApi` is read from `_toSend` (a capture handler that runs
+  // post-adoption), so `@inject` resolves it safely.
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   private _unsubPermissions: (() => void) | null = null;
 
@@ -700,9 +701,7 @@ export class CameraSource extends ChildBlock {
    * The send file to the server
    */
   private _toSend = (file: File): void => {
-    // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
-    // token — it is container-resolved (M-god step 8a), reached via `use()`.
-    this.use(UploaderPublicApi).addFileFromObject(file, { source: UploadSource.CAMERA });
+    this._api.addFileFromObject(file, { source: UploadSource.CAMERA });
 
     this._router.traverse('onFileAdd');
   };
@@ -715,8 +714,8 @@ export class CameraSource extends ChildBlock {
 
   private _setPermissionsState = debounce((state: 'granted' | 'denied' | 'prompt') => {
     // The 300ms debounce can fire after disconnect (container already
-    // released) — bail rather than let the throwing `use()` reads below run
-    // without an adopted container.
+    // released) — bail rather than let the `@inject` reads below throw without
+    // an adopted container.
     if (!this.useOrNull(ConfigController)) return;
 
     this.classList.toggle('uc-initialized', state === 'granted');
@@ -1000,9 +999,13 @@ export class CameraSource extends ChildBlock {
     this._setVideoSource(null);
   }
 
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-
+  // Camera activation is adoption-scoped (`_onActivate` runs in `controllerReady`),
+  // so release the stream + device/permission listeners in `controllerReleased`
+  // — invoked on disconnect (via the base `disconnectedCallback` →
+  // `_releaseController`) and additionally on ctx release/re-adoption, which the
+  // old disconnect-only path missed (re-adoption re-activated without first
+  // deactivating).
+  protected override controllerReleased(): void {
     void this._onDeactivate();
     this._destroy();
   }

@@ -6,6 +6,7 @@ import { ConfigController } from '../abstract/controllers/ConfigController';
 import { LocaleController } from '../abstract/controllers/LocaleController';
 import { CONTAINER, type ControllerContainer, type Token } from '../abstract/di/ControllerContainer';
 import { Disposables } from '../abstract/di/Disposables';
+import { inject, injectOrNull } from '../abstract/di/inject';
 import { logger } from '../abstract/logger';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
@@ -14,13 +15,12 @@ import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import { destroyCtx, isCtxUnreferenced } from './ctx-lifecycle';
 import { ctxNameContext } from './ctx-name-context';
-import { registerHostEffects } from './effect';
+import { effect, registerHostEffects } from './effect';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { LightDomMixin } from './LightDomMixin';
 import { createL10n } from './l10n';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
 import { registerHostSubscriptions } from './subscription';
-import { TestModeController } from './TestModeController';
 
 // `SignalWatcher` sits at the base of the mixin chain so it wraps
 // `performUpdate` (not `render()`): a fully-overridden `render()`/`shouldUpdate()`
@@ -30,6 +30,9 @@ import { TestModeController } from './TestModeController';
 // its update cycle is behavior-identical — it only adds a per-element watcher no
 // signal notifies.
 const ChildBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)));
+
+/** A custom element has a hyphen in its tag name (the test-mode rewrite skips these). */
+const isCustomElement = (el: Element): boolean => el.tagName?.includes('-') ?? false;
 
 /**
  * Base class for blocks ported off `SymbioteCompatMixin` (M9). Resolves the
@@ -43,7 +46,8 @@ const ChildBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitE
  * the block releases its container — closing the render gate — rather than
  * outliving the ctx it was reading from.
  *
- * Subclasses read controllers directly off the container (`this.use(Token)`):
+ * Subclasses declare the controllers they need as `@inject(Token)` /
+ * `@injectOrNull(Token)` fields, resolved lazily off the adopted container:
  * no `$` proxy, no per-ctx store. Rendering is gated until a container
  * is adopted (matching v1's `shouldUpdate` gate on ctx init); do
  * container-dependent setup in `controllerReady`, never in `connectedCallback`.
@@ -62,8 +66,8 @@ export abstract class ChildBlock extends ChildBlockBase {
   private _inheritedCtxName: string | undefined = undefined;
 
   // This ctx's DI container, adopted from `UploaderRegistry.whenAvailable`. It
-  // is the resolution source for `use()`, the render gate (adopted = container
-  // present), and the consumer-refcount anchor for teardown
+  // is the resolution source for `@inject` fields, the render gate (adopted =
+  // container present), and the consumer-refcount anchor for teardown
   // (`addConsumer`/`removeConsumer`/`isUnreferenced`).
   private _container: ControllerContainer | null = null;
   private _watchedCtxName: string | undefined = undefined;
@@ -76,14 +80,15 @@ export abstract class ChildBlock extends ChildBlockBase {
   private _disposables = new Disposables(() => this._log);
   private _ctxNameProvider: ContextProvider<{ __context__: string | undefined }> | undefined = undefined;
 
-  public constructor() {
-    super();
-    new TestModeController(this);
-  }
-
   public get testId(): string {
     return this.tagName.toLowerCase();
   }
+
+  // Test-mode `data-testid` state (folded in from the former reactive
+  // `TestModeController`): the inner non-custom `[data-testid]` elements this
+  // host owns, and their original (unprefixed) values. Driven by `_applyTestMode`.
+  private _testModeTracked = new Set<Element>();
+  private _testModeOriginal = new Map<Element, string>();
 
   // biome-ignore lint/correctness/noUnusedPrivateClassMembers: `ContextConsumer` subscribes by side effect — the field keeps it alive for the host's lifetime.
   private _ctxNameConsumer = new ContextConsumer(this, {
@@ -102,41 +107,22 @@ export abstract class ChildBlock extends ChildBlockBase {
   }
 
   /**
-   * Resolve a single-responsibility controller from this ctx's DI container —
-   * the v2 successor to the dissolved monolithic `UploaderController`. Read it at
-   * render time (or in/after `controllerReady`); the render gate guarantees the
-   * container is adopted by then. Reading a `@signalState`/`SignalMap`-backed
-   * value off the returned controller (e.g. `ConfigController.getTracked`)
-   * inside `render()` auto-tracks it via `SignalWatcher`.
-   *
-   * Throws if the container isn't adopted yet (pre-adoption access is a bug).
-   */
-  protected use<T>(token: Token<T>): T {
-    if (!this._container) {
-      throw new Error(
-        `${this.tagName.toLowerCase()}: controller container is not available yet. ` +
-          'Call use() in render() or controllerReady(), not connectedCallback().',
-      );
-    }
-    return this._container.get(token);
-  }
-
-  /**
-   * Null-tolerant `use()`. Returns `null` when no container is adopted
-   * (pre-adoption, or after
-   * `_releaseController` cleared it during a teardown / not-yet-adopted race),
-   * instead of throwing. Use it from callbacks that can outlive adoption — a
-   * trailing throttle/debounce tick, or a router guard predicate invoked during
-   * a teardown-time navigation — where `use()` would throw.
+   * Null-tolerant controller read: the resolved controller, or `null` when no
+   * container is adopted (pre-adoption, or after `_releaseController` cleared it
+   * during a teardown / not-yet-adopted race). The idiom for reads from a
+   * callback that can outlive adoption — a trailing throttle/debounce tick, or a
+   * router guard predicate invoked during a teardown-time navigation — where an
+   * `@inject` field read would throw. Always-adopted reads use `@inject` fields
+   * instead; this is only for the teardown-race sites.
    *
    * For the always-bound uploader-scope tokens read through it (`ConfigController`,
    * `UploaderPublicApi`, `UploadCollectionController`) a non-null container always
    * resolves the instance; a conditionally-bound token (e.g. an unbound
    * `PluginController`) would still throw from `get()` — that is the caller's
-   * concern, matching `use()`. A block only ever holds a live (never disposed)
-   * container in `_container`: `_releaseController` nulls it out under the same
-   * `removeConsumer` that precedes disposal, so `get()` here never resurrects a
-   * controller on a dead container.
+   * concern. A block only ever holds a live (never disposed) container in
+   * `_container`: `_releaseController` nulls it under the same `removeConsumer`
+   * that precedes disposal, so `get()` here never resurrects a controller on a
+   * dead container.
    */
   protected useOrNull<T>(token: Token<T>): T | null {
     return this._container ? this._container.get(token) : null;
@@ -144,8 +130,8 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   /**
    * This ctx's DI container once adopted. Throws if not adopted yet
-   * (pre-adoption access is a bug — same contract as `use()`). The non-null
-   * counterpart to `containerOrNull`, for the observer-registration reads that
+   * (pre-adoption access is a bug — same contract as an `@inject` field read).
+   * The non-null counterpart to `containerOrNull`, for the observer-registration reads that
    * run from `controllerReady` (where adoption is guaranteed) — e.g.
    * `this.container.whenController(UploadCollectionController, cb)`, the direct
    * successor to the `bag.when('uploadCollection', cb)` now-or-when-available
@@ -164,25 +150,39 @@ export abstract class ChildBlock extends ChildBlockBase {
   /**
    * This ctx's DI container once adopted, else `null` (pre-adoption, or after
    * `_releaseController` cleared it during a teardown / not-yet-adopted race).
-   * The null-safe counterpart to the `use()`/`useOrNull()` render-gate anchor,
-   * for null-tolerant reads wired at construction time — before adoption — that
-   * must not throw when a block is queried early.
+   * The null-safe counterpart to `container`; use it as the teardown-race guard
+   * before reading `@inject` fields from a callback that can outlive adoption (a
+   * trailing throttle tick, a router guard predicate), or for null-tolerant reads
+   * wired at construction time — before adoption — that must not throw when a
+   * block is queried early.
    */
   protected get containerOrNull(): ControllerContainer | null {
     return this._container;
   }
 
   /**
+  /** This ctx's `LocaleController`, resolved lazily off the adopted container. */
+  @inject(LocaleController) private readonly _locale!: LocaleController;
+
+  /**
+   * This ctx's `EventEmitter`, or `null` when no container is adopted — a
+   * teardown-time `emit()` (released container) resolves `null` and no-ops,
+   * matching the v1 guard where a torn-down ctx had no emitter.
+   */
+  @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
+
+  /**
    * Same contract as v1 `LitBlock.l10n` (`createL10n`): dictionary lookup with
    * key fallback, template variables, pluralization. Reads directly from this
    * ctx's `LocaleController` (M-god step 7: off the `*l10n/*` PubSub facade).
    * Call at render time (the render gate guarantees the container is adopted, so
-   * `use()` resolves). Lookups go through `LocaleController.getTracked`, so an
-   * `l10n(key)` read inside `render()`/`willUpdate()` auto-tracks that key under
-   * `SignalWatcher` and re-renders the block when the dictionary loads or the
-   * locale switches — no explicit subscription needed.
+   * the `@inject` `_locale` read resolves). Lookups go through
+   * `LocaleController.getTracked`, so an `l10n(key)` read inside
+   * `render()`/`willUpdate()` auto-tracks that key under `SignalWatcher` and
+   * re-renders the block when the dictionary loads or the locale switches — no
+   * explicit subscription needed.
    */
-  public l10n = createL10n(() => this.use(LocaleController));
+  public l10n = createL10n(() => this._locale);
 
   /**
    * Per-ctx logger for this block. `error`/`warn`/`warnOnce` always print; the
@@ -194,7 +194,7 @@ export abstract class ChildBlock extends ChildBlockBase {
   protected readonly _log = logger.scope(this.tagName.toLowerCase().replace(/^uc-/, ''), {
     // Verbose tier prints only when THIS ctx's `debug` config is on; predicate +
     // ctx-name resolve lazily at log time (null-safe pre-adoption).
-    isVerbose: () => this.containerOrNull?.get(ConfigController).get('debug') ?? false,
+    isVerbose: () => this.useOrNull(ConfigController)?.get('debug') ?? false,
     ctxName: () => this.effectiveCtxName,
   });
 
@@ -216,10 +216,9 @@ export abstract class ChildBlock extends ChildBlockBase {
     payload?: Parameters<EventEmitter['emit']>[1],
     options?: Parameters<EventEmitter['emit']>[2],
   ): void {
-    // Resolve the ctx's `EventEmitter` off this block's adopted container. A
-    // teardown-time emit (released container) resolves `null` → no-op, matching
-    // the v1 guard where a torn-down ctx had no emitter.
-    const eventEmitter = this.useOrNull(EventEmitter);
+    // `@injectOrNull`: a teardown-time emit (released container) resolves `null`
+    // → no-op, matching the v1 guard where a torn-down ctx had no emitter.
+    const eventEmitter = this._eventEmitter;
     if (!eventEmitter) {
       return;
     }
@@ -267,6 +266,9 @@ export abstract class ChildBlock extends ChildBlockBase {
     this._registryUnsub?.();
     this._registryUnsub = undefined;
     this._watchedCtxName = undefined;
+    // Drop the test-mode element refs (the `@effect` itself auto-disposes).
+    this._testModeTracked.clear();
+    this._testModeOriginal.clear();
     this._releaseController();
     super.disconnectedCallback();
 
@@ -389,14 +391,21 @@ export abstract class ChildBlock extends ChildBlockBase {
     // path sets this (the container tags instances IT constructs, but a block is
     // created by the browser and merely adopts its container here). Cleared in
     // `_releaseController`, so pre-adoption / post-release `@inject` reads throw
-    // (the same "no container" contract as `use()`, though the thrown message
-    // differs); `render()` is gated on adoption, so reads there are safe.
+    // (the same "no container" contract as the `container` getter, though the
+    // thrown message differs); `render()` is gated on adoption, so reads there
+    // are safe.
     (this as { [CONTAINER]?: ControllerContainer })[CONTAINER] = container;
     container.addConsumer(this);
     // Container-owned controllers are resolved lazily on first access through
-    // each block's `@inject` fields (and via `use()`/`whenController` for the
-    // scope-bound ones), so there is no eager pre-warm here — adoption only tags
-    // the container and wires the subscriptions below.
+    // each block's `@inject`/`@injectOrNull` fields (and via `container`/
+    // `whenController` for the scope-bound ones), so there is no eager pre-warm
+    // here — adoption only tags the container and wires the subscriptions below.
+    // The HOST element's `data-testid` is synced synchronously at adoption (and
+    // re-synced on config change) — NOT via `@effect`: e2e helpers query
+    // `getByTestId('uc-…')` synchronously right after `page.render()`, before the
+    // first post-render effect microtask, so the attribute must exist by the time
+    // adoption returns. (The inner `[data-testid]` prefixing, which only applies
+    // to already-rendered elements, is the `@effect` `_applyTestMode`.)
     this._disposables.add(container.get(ConfigController).subscribe(() => this._syncTestId(container)));
     this._syncTestId(container);
     try {
@@ -440,6 +449,7 @@ export abstract class ChildBlock extends ChildBlockBase {
     if (container) this.controllerReleased(container);
   }
 
+  /** Mirror the ctx's `testMode` config onto the HOST element's own `data-testid`. */
   private _syncTestId(container: ControllerContainer): void {
     if (container.get(ConfigController).get('testMode')) {
       this.setAttribute('data-testid', this.tagName.toLowerCase());
@@ -449,28 +459,75 @@ export abstract class ChildBlock extends ChildBlockBase {
   }
 
   /**
-   * TestModeController hook — subscribe once a controller is adopted.
-   * Subscribes directly on the controller's config (not tracked in
-   * `_disposables`) so the `TestModeController`'s own `_unsubscribe` is the sole
-   * owner of the teardown, rather than being released early by controller
-   * re-adoption. This binds to the first adopted controller's config for the
-   * host's lifetime, matching v1's single-ctx `LitBlock` lifetime; ctx swaps
-   * mid-life are exotic and not covered here.
+   * Prefix every inner non-custom `[data-testid]` this block owns with its
+   * `testId` while the ctx's `testMode` config is on (folded in from the former
+   * reactive `TestModeController` + its `trySubscribeTestMode` hook). This
+   * `@effect` replaces the controller's manual subscribe/retry lifecycle: it
+   * runs after every update (re-collecting newly rendered elements, as
+   * `hostUpdated` did) and, because it reads `testMode` via `getTracked`, re-runs
+   * when that signal flips — auto-disposed on release, so no hand-managed
+   * subscribe/unsubscribe. (The HOST element's own `data-testid` is synced
+   * separately at adoption — see `_syncTestId` — because e2e locators need it
+   * synchronously, before the first post-render effect microtask.)
    */
-  public trySubscribeTestMode(callback: (enabled: boolean) => void): (() => void) | undefined {
+  @effect()
+  protected _applyTestMode(): void {
+    // Runs post-adoption (effects wire at adoption), so the container is present;
+    // stay null-tolerant for the teardown-race tick via `useOrNull`.
     const config = this.useOrNull(ConfigController);
     if (!config) {
-      return undefined;
+      return;
     }
-    let last = config.get('testMode');
-    callback(Boolean(last));
-    return config.subscribe(() => {
-      const next = config.get('testMode');
-      if (!Object.is(next, last)) {
-        last = next;
-        callback(Boolean(next));
+    const enabled = Boolean(config.getTracked('testMode'));
+
+    this._collectTestModeElements();
+    const prefix = this.testId || '';
+    for (const el of this._testModeTracked) {
+      const baseValue = this._testModeOriginal.get(el);
+      if (!baseValue) {
+        continue;
       }
-    });
+      if (enabled) {
+        el.setAttribute('data-testid', `${prefix}--${baseValue}`);
+      } else {
+        el.removeAttribute('data-testid');
+      }
+    }
+  }
+
+  /**
+   * Collect the inner (non-custom-element) `[data-testid]` elements scoped to
+   * this host, recording each one's original value, and drop any that are no
+   * longer connected under this host. Ported verbatim from `TestModeController`.
+   */
+  private _collectTestModeElements(): void {
+    const root = (this.renderRoot ?? this) as Element | DocumentFragment;
+    if (!root) {
+      return;
+    }
+    const hostTag = this.tagName?.toLowerCase();
+    const candidates = Array.from(root.querySelectorAll('[data-testid]')).filter((el) => !isCustomElement(el));
+
+    for (const el of candidates) {
+      if (hostTag && el.closest(hostTag) !== this) {
+        continue;
+      }
+      if (!this._testModeTracked.has(el)) {
+        const attrValue = el.getAttribute('data-testid');
+        if (!attrValue) {
+          continue;
+        }
+        this._testModeTracked.add(el);
+        this._testModeOriginal.set(el, attrValue);
+      }
+    }
+
+    for (const el of Array.from(this._testModeTracked)) {
+      if (!el.isConnected || (hostTag && el.closest(hostTag) !== this)) {
+        this._testModeTracked.delete(el);
+        this._testModeOriginal.delete(el);
+      }
+    }
   }
 
   /**
@@ -497,8 +554,8 @@ export abstract class ChildBlock extends ChildBlockBase {
   /** Resolve a CDN url through the configured secure-delivery proxy, if any. */
   protected async proxyUrl(url: string): Promise<string> {
     return resolveSecureDeliveryProxyUrl(
-      this.use(ConfigController).values,
-      (error, context) => this.use(TelemetryManager).sendEventError(error, context),
+      this.container.get(ConfigController).values,
+      (error, context) => this.container.get(TelemetryManager).sendEventError(error, context),
       url,
     );
   }

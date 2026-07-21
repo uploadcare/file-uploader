@@ -7,7 +7,7 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
-import { inject } from '../../abstract/di/inject';
+import { inject, injectOrNull } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
@@ -65,12 +65,13 @@ export class DynamicBtn extends ChildBlock {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(RouterController) private readonly _router!: RouterController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
-  // `UploadCollectionController` and `UploaderPublicApi` are NOT `@inject` fields:
-  // the former is uploader-scope-bound and can race this block's adoption (read
-  // via `whenController` in `controllerReady`, and via `use()` from click handlers
-  // that only fire once entries exist, i.e. after the scope attaches); the latter
-  // is read via `useOrNull` from a trailing throttle tick that can outlive
-  // release. An `@inject` field would throw in those windows.
+  // `UploadCollectionController` and `UploaderPublicApi` are `@injectOrNull`
+  // (not `@inject`): the former is uploader-scope-bound and can race this block's
+  // adoption; the latter is read from a trailing throttle tick that can outlive
+  // release. Both would throw as `@inject` in those windows, so they resolve
+  // `null` and are read with `?.`. (Observer wiring goes through `whenController`.)
+  @injectOrNull(UploaderPublicApi) private readonly _api!: UploaderPublicApi | null;
+  @injectOrNull(UploadCollectionController) private readonly _uploadCollection!: UploadCollectionController | null;
 
   @property({ attribute: 'dropzone', type: Boolean })
   public dropzone = true;
@@ -169,11 +170,10 @@ export class DynamicBtn extends ChildBlock {
   }, 300);
 
   private _updateButtonBasedOnCollectionState() {
-    // `api` (UploaderPublicApi) is container-resolved (M-god step 8a). This runs
-    // from the throttled tick, which can fire after the block is released while
-    // still connected — read it null-tolerantly via `useOrNull` (the trailing-tick
-    // guard the v1 `bag.apiOrNull` read provided).
-    const collectionState = this.useOrNull(UploaderPublicApi)?.getOutputCollectionState();
+    // This runs from the throttled tick, which can fire after the block is
+    // released while still connected — `_api` is `@injectOrNull`, so it reads
+    // `null` then (the trailing-tick guard the v1 `bag.apiOrNull` read provided).
+    const collectionState = this._api?.getOutputCollectionState();
 
     if (!collectionState) {
       this._log.warn('Collection state is undefined');
@@ -227,13 +227,6 @@ export class DynamicBtn extends ChildBlock {
     });
   }
 
-  public override disconnectedCallback(): void {
-    if (typeof this._throttledHandleCollectionUpdate.cancel === 'function') {
-      this._throttledHandleCollectionUpdate.cancel();
-    }
-    super.disconnectedCallback();
-  }
-
   private _renderInline() {
     return html`
       <uc-no-wrap-mode-dynamic-btn>
@@ -249,11 +242,12 @@ export class DynamicBtn extends ChildBlock {
   }
 
   private _clearAllEntries() {
-    this.use(UploadCollectionController).clearAll();
+    this._uploadCollection?.clearAll();
   }
 
   private _clearAllFailedEntries() {
-    const collection = this.use(UploadCollectionController);
+    const collection = this._uploadCollection;
+    if (!collection) return;
     this._collection.failedEntries.forEach((it) => {
       if (it && collection.hasItem(it.internalId as Uid)) {
         collection.remove(it.internalId as Uid);
@@ -261,7 +255,7 @@ export class DynamicBtn extends ChildBlock {
     });
   }
   private _abortAllEntries() {
-    this.use(UploadCollectionController).abortAll();
+    this._uploadCollection?.abortAll();
   }
 
   private _handleRemove() {
@@ -336,6 +330,13 @@ export class DynamicBtn extends ChildBlock {
 
   protected override controllerReleased(): void {
     this._teardownSourceListController();
+    // The throttled collection-update tick is fed by the `@subscription`
+    // collection observers (auto-disposed on release); cancel any trailing tick
+    // here so it can't fire against a released container. Runs on disconnect too,
+    // via the base `disconnectedCallback` → `_releaseController`.
+    if (typeof this._throttledHandleCollectionUpdate.cancel === 'function') {
+      this._throttledHandleCollectionUpdate.cancel();
+    }
   }
 
   private _teardownSourceListController(): void {

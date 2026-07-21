@@ -62,7 +62,14 @@ export class RouterController {
   @inject(() => EventEmitter) private readonly _eventEmitter!: EventEmitter;
   private _listeners = new Listeners();
   private _table: RouteTable = {};
-  private _activity: ActivityId | null = null;
+  // The background activity slot. Backed by `@signalState` so a `SignalWatcher`
+  // consumer can track it directly — completing the trio with `_modal`/
+  // `_currentActivity`: `ActivityChildBlock.isActivityActive` reads
+  // `router.activity` for its background-slot branch (under `SignalWatcher` when
+  // `updated()` calls in), so a background transition now auto-re-tracks rather
+  // than relying solely on the coarse `_listeners.notify()`. That coarse notify
+  // is preserved unchanged for every existing `subscribe()` reader.
+  @signalState() private _activity: ActivityId | null = null;
   // Backed by `@signalState` so a `SignalWatcher` consumer can track the
   // foreground modal slot directly (M-god step 6b-3: `<uc-modal>` reads
   // `router.modal` in `willUpdate` to drive its `<dialog>` open/close). This is

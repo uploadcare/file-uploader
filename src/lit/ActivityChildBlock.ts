@@ -43,18 +43,17 @@ export class ActivityChildBlock extends ChildBlock {
   }
 
   // Re-render on every router transition so `updated()` re-evaluates the
-  // `[active]` host attribute. Wired unconditionally, even when `activityType`
-  // is still null at adoption (e.g. a `PluginActivityHost` whose `.registration`
-  // arrives later) — otherwise a host that later syncs a real activityType would
-  // have no router subscription and never re-render. Harmless extra re-renders
-  // for a null-activity host meanwhile.
-  //
-  // Deliberately a COARSE `router.subscribe`, not a tracked signal read: the
-  // background-slot branch of `isActivityActive` reads `router.activity`, which
-  // is NOT signal-backed (only `router.modal`/`router.currentActivity` are), so
-  // a background transition under an open modal would not re-track and the toggle
-  // would go stale. The coarse subscription fires on every transition (both
-  // slots), preserving the v1 `subRouter(() => this.requestUpdate())` timing.
+  // `[active]` host attribute. Both slots `isActivityActive` reads —
+  // `router.modal` AND `router.activity` — are now `@signalState`-backed, so once
+  // a block with a real `activityType` has rendered, those tracked reads re-run
+  // the update on their own. This coarse subscription is retained for the
+  // null-`activityType` case: a `PluginActivityHost` whose `.registration`
+  // arrives later adopts with `activityType === null`, so `isActivityActive`
+  // early-returns BEFORE reading any router signal — nothing is tracked, and
+  // without this subscription the host would have no router wake-up to re-render
+  // once it syncs a real activityType. Harmless extra re-renders for a
+  // null-activity host meanwhile; preserves the v1 `subRouter(() =>
+  // this.requestUpdate())` timing.
   @subscription()
   protected _wireActivityRerender(): Unsubscribe {
     return this._router.subscribe(() => this.requestUpdate());
@@ -78,16 +77,16 @@ export class ActivityChildBlock extends ChildBlock {
     this._unreportActivityMounted = this._router.activityBlockMounted(this.activityType);
   }
 
+  // The activity-mounted report is released in `controllerReleased`, which the
+  // base's `disconnectedCallback` → `_releaseController` already invokes on
+  // disconnect (and on ctx release/re-adoption). No separate `disconnectedCallback`
+  // override is needed: the report is only ever set from `controllerReady` (it
+  // needs the adopted `_router`), so a disconnect with no adopted container has
+  // nothing to release.
   protected override controllerReleased(container: ControllerContainer): void {
     super.controllerReleased(container);
     this._unreportActivityMounted?.();
     this._unreportActivityMounted = undefined;
-  }
-
-  public override disconnectedCallback(): void {
-    this._unreportActivityMounted?.();
-    this._unreportActivityMounted = undefined;
-    super.disconnectedCallback();
   }
 
   /** Whether this block's activity currently owns its slot. */
@@ -97,10 +96,10 @@ export class ActivityChildBlock extends ChildBlock {
     }
     const router = this._router;
     const isInModal = this.closest('uc-modal') !== null;
-    // `router.modal` is a tracked signal (read here under `SignalWatcher` when
-    // `updated()` calls in); `router.activity` is a plain field — the coarse
-    // subscription wired in `controllerReady` is what re-runs the update for a
-    // background-slot change (see the note there).
+    // Both `router.modal` and `router.activity` are tracked signals (read here
+    // under `SignalWatcher` when `updated()` calls in), so a transition in
+    // either slot auto-re-runs this update. The coarse `_wireActivityRerender`
+    // subscription remains only for the null-`activityType` host (see its note).
     const slot = isInModal ? router.modal : router.activity;
     return slot === this.activityType;
   }

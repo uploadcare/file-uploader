@@ -99,7 +99,6 @@ export class Config extends ChildBlock {
   };
 
   private _computationControllers: ComputedPropertyControllers = new Map();
-  private _pluginChangeUnsubscribe?: () => void;
   private _mutationObserver?: MutationObserver;
 
   /**
@@ -345,18 +344,12 @@ export class Config extends ChildBlock {
 
       // Subscribe to state changes (only if not already subscribed)
       if (!this._customConfigSubscriptions.has(name)) {
-        // Manual per-key dedup over the coarse `ConfigController.subscribe`
-        // notification — same contract as v1's `this.sub(stateKey, cb, false)`
-        // (init=false: no immediate call, only on subsequent changes).
-        let lastValue = this._config.getCustom(name);
-        const unsub = this._config.subscribe(() => {
-          const nextValue = this._config.getCustom(name);
-          if (!Object.is(nextValue, lastValue)) {
-            lastValue = nextValue;
-            // Use _setValue for consistent handling (matches built-in config pattern)
-            // The early return guard in _setValue prevents circular updates
-            this._setValue(name, nextValue);
-          }
+        // Atomic per-key `observeCustom` — same contract as v1's
+        // `this.sub(stateKey, cb, false)` (init=false: no immediate call, only on
+        // subsequent changes). `_setValue`'s early-return guard prevents circular
+        // updates.
+        const unsub = this._config.observeCustom(name, (nextValue) => {
+          this._setValue(name, nextValue);
         });
         this._customConfigSubscriptions.set(name, unsub);
         this.addDisposer(unsub);
@@ -405,19 +398,24 @@ export class Config extends ChildBlock {
     // Wait for the plugin manager via the `PluginManagerBridge` token: fires
     // synchronously if the bridge is already resolved (uploader scope attached),
     // else on the `ensurePluginManager` `get` that constructs it. When it isn't
-    // resolved yet, `whenController` returns a real unsubscriber — track it so a
-    // re-adoption (ctx-name switch) tears down the previous ctx's pending waiter
-    // instead of leaving it to fire against the wrong controller. (A synchronous
-    // resolve returns a no-op unsub; tracking it is harmless.) In an editor-alone
-    // ctx the bridge is never bound, so this stays inert (no plugins standalone).
+    // resolved yet, `whenController` returns a real unsubscriber — `addDisposer`'d
+    // so a re-adoption (ctx-name switch) tears down the previous ctx's pending
+    // waiter instead of leaving it to fire against the wrong controller. (A
+    // synchronous resolve returns a no-op unsub; tracking it is harmless.) In an
+    // editor-alone ctx the bridge is never bound, so this stays inert (no plugins
+    // standalone).
     this.addDisposer(
       this.container.whenController(PluginManagerBridge, (bridge) => {
         const pluginManager = bridge.getPluginManager();
-        // Initial setup
+        // Initial setup.
         this._processCustomConfigs(pluginManager);
 
-        // Subscribe to plugin changes to reload custom configs dynamically
-        this._pluginChangeUnsubscribe = pluginManager.onPluginsChange(() => {
+        // Reload custom configs when plugins change. RETURN the unsubscriber as
+        // the waiter's teardown: `whenController`'s own unsub (the `addDisposer`'d
+        // one above) disposes it, so `ChildBlock._releaseController` tears the
+        // plugin-change listener down on release/re-adoption automatically — no
+        // manual `_pluginChangeUnsubscribe` bookkeeping and no teardown-first dance.
+        return pluginManager.onPluginsChange(() => {
           this._processCustomConfigs(pluginManager);
         });
       }),
@@ -476,16 +474,10 @@ export class Config extends ChildBlock {
   protected override controllerReady(_container: ControllerContainer): void {
     const anyThis = this as any;
 
-    // Setup custom configs first. Tear down the previous cycle's
-    // plugin-change subscription before resubscribing — otherwise a
-    // re-adoption would stack a second `onPluginsChange` listener on top of
-    // one still bound to the previously-adopted controller's plugin manager
-    // (mirrors `UploadCtxProvider`'s `EventBridgeController` teardown-first
-    // pattern for the same re-adoption hazard).
-    if (this._pluginChangeUnsubscribe) {
-      this._pluginChangeUnsubscribe();
-      this._pluginChangeUnsubscribe = undefined;
-    }
+    // Setup custom configs. The plugin-change listener it opens is torn down on
+    // release (via the `addDisposer`'d `whenController` teardown), so a
+    // re-adoption — which releases before re-adopting — starts fresh instead of
+    // stacking a second listener; no teardown-first needed here.
     this._setupCustomConfigs();
 
     // Setup MutationObserver to detect dynamic attribute changes. This
@@ -562,20 +554,15 @@ export class Config extends ChildBlock {
 
   /**
    * Release counterpart of `controllerReady` (disconnect, or a scope switch
-   * that drops the controller ahead of a re-adopt). Tears down the
-   * plugin-change subscription (idempotent — already-cleared is a no-op) and
-   * clears the custom-config bookkeeping so a subsequent `controllerReady`
-   * (re-adoption onto a different ctx) starts subscribing fresh instead of
-   * skipping names it thinks are already subscribed on a now-defunct
-   * controller's `ConfigController`. The `addDisposer`-registered subscriptions
-   * themselves are already torn down by `ChildBlock._releaseController`
-   * before this hook runs.
+   * that drops the controller ahead of a re-adopt). Clears the custom-config
+   * bookkeeping so a subsequent `controllerReady` (re-adoption onto a different
+   * ctx) starts subscribing fresh instead of skipping names it thinks are
+   * already subscribed on a now-defunct controller's `ConfigController`. The
+   * subscriptions themselves — including the plugin-change listener returned by
+   * the `_setupCustomConfigs` waiter — are `addDisposer`-registered and already
+   * torn down by `ChildBlock._releaseController` before this hook runs.
    */
   protected override controllerReleased(): void {
-    if (this._pluginChangeUnsubscribe) {
-      this._pluginChangeUnsubscribe();
-      this._pluginChangeUnsubscribe = undefined;
-    }
     this._customConfigSubscriptions.clear();
   }
 
@@ -632,24 +619,18 @@ export class Config extends ChildBlock {
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    // Clean up plugin change subscription (already cleared in most cases by
-    // `controllerReleased`, above — this is a defensive no-op then).
-    if (this._pluginChangeUnsubscribe) {
-      this._pluginChangeUnsubscribe();
-      this._pluginChangeUnsubscribe = undefined;
-    }
-
-    // Clean up MutationObserver
+    // `super.disconnectedCallback()` (→ `ChildBlock._releaseController`) already
+    // tore down every `addDisposer`'d subscription — the plugin-change listener
+    // AND the per-custom-key `observeCustom` subs (each `addDisposer`'d in
+    // `_processCustomConfigs`) — and ran `controllerReleased`, which clears
+    // `_customConfigSubscriptions`. Only the MutationObserver needs manual
+    // cleanup: it observes this element's own node (per-element lifetime, created
+    // once behind an idempotency guard), so it's outside the adoption-scoped
+    // disposer engine.
     if (this._mutationObserver) {
       this._mutationObserver.disconnect();
       this._mutationObserver = undefined;
     }
-
-    // Clean up all custom config subscriptions
-    for (const unsub of this._customConfigSubscriptions.values()) {
-      unsub();
-    }
-    this._customConfigSubscriptions.clear();
   }
 
   public static override get observedAttributes(): string[] {
