@@ -1,6 +1,7 @@
 import type { UploadcareGroup } from '@uploadcare/upload-client';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputErrorCollection } from '../../types';
+import type { ReactiveStore } from '../di/ReactiveStore';
 import { type ObserveOptions, SignalMap } from '../di/SignalMap';
 
 /**
@@ -38,7 +39,7 @@ export type CollectionState = {
  * once per construction) so the mutable seeds — the `uploadList`/`collectionErrors`
  * arrays — are never shared across ctxs.
  */
-export class CollectionStateController {
+export class CollectionStateController implements ReactiveStore<CollectionState> {
   #state = new SignalMap<CollectionState>({
     uploadList: [],
     commonProgress: 0,
@@ -72,6 +73,20 @@ export class CollectionStateController {
   /** `Object.is` dedup — a replaced reference fires; mutating a held value in place does not (v1 parity). */
   public set<K extends keyof CollectionState>(key: K, value: CollectionState[K]): void {
     this.#state.set(key, value);
+  }
+
+  /** Batch set collection-state keys — one coalesced notify. */
+  public setMany(patch: Partial<CollectionState>): void {
+    this.#state.setMany(patch);
+  }
+
+  public notify(): void {
+    this.#state.notify();
+  }
+
+  /** The live value bag (a stable reference, mutated in place on write). */
+  public get values(): Readonly<CollectionState> {
+    return this.#state.values;
   }
 
   /** Coarse subscribe — fires on any collection-state change, not per-key. */
