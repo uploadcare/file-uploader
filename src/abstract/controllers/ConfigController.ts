@@ -1,6 +1,7 @@
 import type { CustomConfigDefinition } from '../../abstract/customConfigOptions';
 import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { ConfigType } from '../../types/exported';
+import type { ReactiveStore } from '../di/ReactiveStore';
 import { type ObserveOptions, SignalMap } from '../di/SignalMap';
 
 /**
@@ -25,7 +26,7 @@ import { type ObserveOptions, SignalMap } from '../di/SignalMap';
  * the v1 ctx facade `*cfg/` routing depends on. The map is typed over `ConfigType`
  * intersected with a string index so runtime custom keys type cleanly.
  */
-export class ConfigController {
+export class ConfigController implements ReactiveStore<ConfigType> {
   // Signal-backed store, seeded with the built-in defaults. The `Record<string,
   // unknown>` arm models the dynamic plugin-registered keyspace so custom-key
   // access needs no per-call cast.
@@ -63,6 +64,11 @@ export class ConfigController {
   /** Notifies only when the value actually changes (`Object.is` dedup). */
   public set<K extends keyof ConfigType>(key: K, value: ConfigType[K]): void {
     this.#state.set(key, value);
+  }
+
+  /** Batch set built-in keys — one coalesced notify (see `SignalMap.setMany`). */
+  public setMany(patch: Partial<ConfigType>): void {
+    this.#state.setMany(patch);
   }
 
   /** Coarse subscribe — fires on any config change, not per-key. */
