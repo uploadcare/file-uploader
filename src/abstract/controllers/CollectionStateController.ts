@@ -67,7 +67,7 @@ export class CollectionStateController implements ReactiveStore<CollectionState>
    * only during the strangler migration.
    */
   public getTracked<K extends keyof CollectionState>(key: K): CollectionState[K] {
-    return this.#state.signal(key).get() as CollectionState[K];
+    return this.#state.getTracked(key) as CollectionState[K];
   }
 
   /** `Object.is` dedup — a replaced reference fires; mutating a held value in place does not (v1 parity). */

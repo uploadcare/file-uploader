@@ -26,9 +26,8 @@ export class FileItemConfig extends ChildBlock {
       const sub = entry.observe(
         propInner,
         (value) => {
-          if (this.isConnected) {
-            handlerInner(value);
-          }
+          if (!this.isConnected || value === undefined) return;
+          handlerInner(value);
         },
         { immediate: true },
       );

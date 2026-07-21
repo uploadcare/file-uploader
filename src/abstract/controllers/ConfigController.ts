@@ -58,7 +58,7 @@ export class ConfigController implements ReactiveStore<ConfigType> {
    * tracked reader, `get()` can route through the signal and this splits away.
    */
   public getTracked<K extends keyof ConfigType>(key: K): ConfigType[K] {
-    return this.#state.signal(key).get() as ConfigType[K];
+    return this.#state.getTracked(key) as ConfigType[K];
   }
 
   /** Notifies only when the value actually changes (`Object.is` dedup). */

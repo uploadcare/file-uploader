@@ -24,7 +24,7 @@ describe('TypedData (ReactiveStore)', () => {
     ctx2.destroy();
   });
 
-  it('get/set with Object.is dedup', () => {
+  it('get/set round-trip', () => {
     const d = make();
     expect(d.get('a')).toBe(0);
     d.set('a', 1);
@@ -140,15 +140,30 @@ describe('TypedData (ReactiveStore)', () => {
       throw new Error('boom');
     });
     const good = vi.fn();
-    // Registered WITHOUT `{ immediate: true }`: this isolates a throwing
-    // observer during a change NOTIFICATION (the `set` below), which is what
-    // `Listeners.notify` isolates. An immediate registration-time fire is not
-    // wrapped in the same isolation, so it's out of scope here.
+    // Registered WITHOUT `{ immediate: true }`: isolates a throwing observer
+    // during a change NOTIFICATION (the `set` below) — `Listeners.notify`
+    // catches per-listener and warns rather than aborting the fan-out.
     d.observe('a', bad);
     d.observe('a', good);
 
     expect(() => d.set('a', 2)).not.toThrow();
     expect(good).toHaveBeenCalledWith(2);
+    expect(warn).toHaveBeenCalled();
+
+    d.destroy();
+  });
+
+  it('isolates a throwing observer registered with { immediate: true }', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const d = make();
+    const bad = vi.fn(() => {
+      throw new Error('boom');
+    });
+
+    // The immediate registration-time fire is isolated the same way as a
+    // later notification (`Listeners.observe` wraps it in try/catch + warn).
+    expect(() => d.observe('a', bad, { immediate: true })).not.toThrow();
+    expect(bad).toHaveBeenCalledWith(0);
     expect(warn).toHaveBeenCalled();
 
     d.destroy();
