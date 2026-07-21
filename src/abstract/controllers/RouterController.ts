@@ -2,10 +2,9 @@ import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityId } from '../../lit/activity-constants';
 import { controllerLogger } from '../controllerLogger';
 import { inject } from '../di/inject';
-import type { ObserveOptions } from '../di/SignalMap';
 import { signalState } from '../di/signalState';
 import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
-import { Listeners } from '../host-subscription';
+import { Listeners, type ObserveOptions } from '../host-subscription';
 import { lazy } from '../logger';
 
 export type EdgeTarget = ActivityId | null;
@@ -160,17 +159,7 @@ export class RouterController {
    * hand-roll over `subscribe`.
    */
   public observeCurrentActivity(listener: (activity: ActivityId | null) => void, options?: ObserveOptions): () => void {
-    let last: ActivityId | null = this.currentActivity;
-    if (options?.immediate) {
-      listener(last);
-    }
-    return this._listeners.subscribe(() => {
-      const next = this.currentActivity;
-      if (next !== last) {
-        last = next;
-        listener(next);
-      }
-    });
+    return this._listeners.observe(() => this.currentActivity, listener, options);
   }
 
   /** Per-preset routing config (solution-level), e.g. the post-flow done activity. */
