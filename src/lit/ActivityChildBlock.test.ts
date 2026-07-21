@@ -1,5 +1,5 @@
 import { html } from 'lit';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RouterController } from '../abstract/controllers/RouterController';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { delay } from '../utils/delay';
@@ -213,5 +213,42 @@ describe('ActivityChildBlock with a null activityType', () => {
     router(ctxName).setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
     await flush(el);
     expect(el.hasAttribute('active')).toBe(false);
+  });
+});
+
+describe('ActivityChildBlock _wireActivityRerender gating', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('does NOT subscribe to the router when adopted with a real activityType (tracked signal reads already drive re-render)', async () => {
+    const ctxName = freshCtxName();
+    const subscribeSpy = vi.spyOn(RouterController.prototype, 'subscribe');
+    const el = document.createElement('uc-test-bg-activity') as BgActivityBlock & { updateComplete: Promise<unknown> };
+    el.setAttribute('ctx-name', ctxName);
+    document.body.append(el);
+    mounted.push(el);
+    await el.updateComplete;
+
+    expect(subscribeSpy).not.toHaveBeenCalled();
+
+    // Still fully reactive without the coarse subscription.
+    router(ctxName).setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
+    await flush(el);
+    expect(el.hasAttribute('active')).toBe(true);
+  });
+
+  it('DOES subscribe to the router when adopted with a null activityType (a late-registering PluginActivityHost)', async () => {
+    const ctxName = freshCtxName();
+    const subscribeSpy = vi.spyOn(RouterController.prototype, 'subscribe');
+    const el = document.createElement('uc-test-null-activity') as ActivityChildBlock & {
+      updateComplete: Promise<unknown>;
+    };
+    el.setAttribute('ctx-name', ctxName);
+    document.body.append(el);
+    mounted.push(el);
+    await el.updateComplete;
+
+    expect(subscribeSpy).toHaveBeenCalledTimes(1);
   });
 });

@@ -35,16 +35,23 @@ export class Listeners {
    */
   public observe<T>(select: () => T, listener: (value: T) => void, options?: ObserveOptions): () => void {
     let last = select();
-    if (options?.immediate) {
-      listener(last);
-    }
-    return this.subscribe(() => {
+    const unsubscribe = this.subscribe(() => {
       const next = select();
       if (!Object.is(next, last)) {
         last = next;
         listener(next);
       }
     });
+    if (options?.immediate) {
+      // Isolated: a throwing immediate listener must not prevent the
+      // subscription above (already registered) from taking effect.
+      try {
+        listener(last);
+      } catch (err) {
+        log.warn('an observe immediate listener threw', err);
+      }
+    }
+    return unsubscribe;
   }
 
   public notify(): void {

@@ -1,5 +1,8 @@
 import type { ReactiveElement } from 'lit';
+import { logger } from '../abstract/logger';
 import { boundMethod, collectDecoratedMethods, makeMethodDecorator } from './reactive-method-registry';
+
+const log = logger.scope('effect');
 
 /**
  * `@effect()` — a method decorator over the `SignalWatcher` mixin's built-in
@@ -30,8 +33,6 @@ import { boundMethod, collectDecoratedMethods, makeMethodDecorator } from './rea
 export interface EffectOptions {
   /** Run before the element updates (and eagerly, synchronously, on registration). Default: after. */
   beforeUpdate?: boolean;
-  /** Opt out of auto-dispose on disconnect (the host owns teardown otherwise). */
-  manualDispose?: boolean;
 }
 
 /** The slice of the `SignalWatcher` mixin API an effect host must expose. */
@@ -54,13 +55,26 @@ export const effect = makeMethodDecorator<EffectOptions>(EFFECT);
  * would throw on the second. We therefore only dispose manually while the host
  * is still connected (a ctx re-adoption without a disconnect); on a real
  * disconnect the mixin's own auto-unwatch tears the effects down.
+ *
+ * Isolate-and-warn: a throwing effect body (most reachably a `beforeUpdate`
+ * effect, which runs synchronously at registration) is contained — logged via
+ * the host's scoped logger when reachable, else the module logger — so the
+ * remaining methods still register and any disposers already collected stay
+ * intact.
  */
 export function registerHostEffects(host: EffectHost): Array<() => void> {
   const disposers: Array<() => void> = [];
+  const warn = (host as { _log?: { warn: (...args: unknown[]) => void } })._log?.warn ?? log.warn;
   for (const { key, options } of collectDecoratedMethods<EffectOptions>(host, EFFECT)) {
     const fn = boundMethod(host, key);
     if (!fn) continue;
-    const dispose = host.updateEffect(() => fn(), options);
+    const dispose = host.updateEffect(() => {
+      try {
+        fn();
+      } catch (err) {
+        warn(`an @effect method (${String(key)}) threw`, err);
+      }
+    }, options);
     disposers.push(() => {
       if (host.isConnected) dispose();
     });
