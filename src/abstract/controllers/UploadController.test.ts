@@ -165,12 +165,12 @@ describe('UploadController', () => {
       await controller.uploadEntry(id);
 
       const entry = collection.read(id);
-      expect(entry?.getValue('fileInfo')).toMatchObject({ uuid: 'u1' });
-      expect(entry?.getValue('isUploading')).toBe(false);
-      expect(entry?.getValue('isQueuedForUploading')).toBe(false);
-      expect(entry?.getValue('uuid')).toBe('u1');
-      expect(entry?.getValue('uploadProgress')).toBe(100);
-      expect(entry?.getValue('cdnUrl')).toBe('https://cdn/u1/');
+      expect(entry?.get('fileInfo')).toMatchObject({ uuid: 'u1' });
+      expect(entry?.get('isUploading')).toBe(false);
+      expect(entry?.get('isQueuedForUploading')).toBe(false);
+      expect(entry?.get('uuid')).toBe('u1');
+      expect(entry?.get('uploadProgress')).toBe(100);
+      expect(entry?.get('cdnUrl')).toBe('https://cdn/u1/');
     });
 
     it('prefers an existing entry cdnUrl over the server one', async () => {
@@ -180,7 +180,7 @@ describe('UploadController', () => {
 
       await controller.uploadEntry(id);
 
-      expect(collection.read(id)?.getValue('cdnUrl')).toBe('https://cdn/preset/');
+      expect(collection.read(id)?.get('cdnUrl')).toBe('https://cdn/preset/');
     });
 
     it('derives mimeType from contentInfo when present, falls back to isImage=false', async () => {
@@ -197,8 +197,8 @@ describe('UploadController', () => {
       await controller.uploadEntry(id);
 
       const entry = collection.read(id);
-      expect(entry?.getValue('mimeType')).toBe('image/webp');
-      expect(entry?.getValue('isImage')).toBe(false);
+      expect(entry?.get('mimeType')).toBe('image/webp');
+      expect(entry?.get('isImage')).toBe(false);
     });
 
     it('uploads from externalUrl when there is no file', async () => {
@@ -309,10 +309,10 @@ describe('UploadController', () => {
       mockUploadFile.mockImplementation(async () => {
         const e = collection.read(id);
         atUpload = {
-          mimeType: e?.getValue('mimeType'),
-          isImage: e?.getValue('isImage'),
-          fileName: e?.getValue('fileName'),
-          fileSize: e?.getValue('fileSize'),
+          mimeType: e?.get('mimeType'),
+          isImage: e?.get('isImage'),
+          fileName: e?.get('fileName'),
+          fileSize: e?.get('fileSize'),
         };
         return makeFileInfo();
       });
@@ -333,7 +333,7 @@ describe('UploadController', () => {
 
       let fileNameAtUpload: string | null | undefined;
       mockUploadFile.mockImplementation(async () => {
-        fileNameAtUpload = collection.read(id)?.getValue('fileName');
+        fileNameAtUpload = collection.read(id)?.get('fileName');
         return makeFileInfo();
       });
 
@@ -395,14 +395,14 @@ describe('UploadController', () => {
 
       let mimeAtUpload: string | null | undefined;
       mockUploadFile.mockImplementation(async () => {
-        mimeAtUpload = collection.read(id)?.getValue('mimeType');
+        mimeAtUpload = collection.read(id)?.get('mimeType');
         return makeFileInfo();
       });
 
       await controller.uploadEntry(id);
 
       expect(mimeAtUpload).toBeNull(); // file.type '' || null
-      expect(collection.read(id)?.getValue('cdnUrlModifiers')).toBe('-/preview/'); // preset kept over ?? ''
+      expect(collection.read(id)?.get('cdnUrlModifiers')).toBe('-/preview/'); // preset kept over ?? ''
     });
 
     it('does not run hooks for a non-File input (externalUrl)', async () => {
@@ -425,8 +425,8 @@ describe('UploadController', () => {
       await controller.uploadEntry(id);
 
       const entry = collection.read(id);
-      expect(entry?.getValue('isUploading')).toBe(false);
-      expect(entry?.getValue('uploadError')?.message).toBe('Something went wrong');
+      expect(entry?.get('isUploading')).toBe(false);
+      expect(entry?.get('uploadError')?.message).toBe('Something went wrong');
       expect(error).toHaveBeenCalledWith('[uc][upload]', 'Unknown upload error', expect.any(Error));
       expect(onUploadError).toHaveBeenCalledWith(expect.any(Error), expect.stringContaining('file upload'));
     });
@@ -441,9 +441,9 @@ describe('UploadController', () => {
       await controller.uploadEntry(id);
 
       const entry = collection.read(id);
-      expect(entry?.getValue('isUploading')).toBe(false);
-      expect(entry?.getValue('uploadProgress')).toBe(0);
-      expect(entry?.getValue('uploadError')).toBeNull();
+      expect(entry?.get('isUploading')).toBe(false);
+      expect(entry?.get('uploadProgress')).toBe(0);
+      expect(entry?.get('uploadError')).toBeNull();
       expect(onUploadError).not.toHaveBeenCalled();
     });
 
@@ -456,7 +456,7 @@ describe('UploadController', () => {
       await controller.uploadEntry(id);
 
       const entry = collection.read(id);
-      expect(entry?.getValue('uploadError')).toBe(ucError);
+      expect(entry?.get('uploadError')).toBe(ucError);
       expect(onUploadError).toHaveBeenCalled();
     });
 
@@ -476,7 +476,7 @@ describe('UploadController', () => {
       const id = collection.add({ file: new File(['x'], 'a.txt') });
       const ac = new AbortController();
       const spy = vi.spyOn(ac, 'abort');
-      collection.read(id)?.setValue('abortController', ac);
+      collection.read(id)?.set('abortController', ac);
 
       controller.abort(id);
 
