@@ -126,9 +126,9 @@ describe('buildPluginApi', () => {
       });
 
       const entry = collection.read(internalId)!;
-      expect(entry.getValue('cdnUrl')).toBe('https://ucarecdn.com/uuid/');
-      expect(entry.getValue('cdnUrlModifiers')).toBe('-/resize/100x/');
-      expect(entry.getValue('mimeType')).toBe('image/png');
+      expect(entry.get('cdnUrl')).toBe('https://ucarecdn.com/uuid/');
+      expect(entry.get('cdnUrlModifiers')).toBe('-/resize/100x/');
+      expect(entry.get('mimeType')).toBe('image/png');
     });
 
     it('update applies a new file, syncing fileSize', () => {
@@ -140,8 +140,8 @@ describe('buildPluginApi', () => {
       api.files.update(internalId, { file });
 
       const entry = collection.read(internalId)!;
-      expect(entry.getValue('file')).toBe(file);
-      expect(entry.getValue('fileSize')).toBe(file.size);
+      expect(entry.get('file')).toBe(file);
+      expect(entry.get('fileSize')).toBe(file.size);
     });
 
     it('update is a no-op for an unknown internalId (no throw)', () => {

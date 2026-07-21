@@ -41,7 +41,7 @@ const flush = (ms = QUEUE_FLUSH_MS) => new Promise((resolve) => setTimeout(resol
 function buildOutputItem(collection: UploadCollectionController, uid: Uid) {
   const entry = collection.read(uid);
   if (!entry) throw new Error(`test fixture: entry "${uid}" not found`);
-  const e = entry.snapshot();
+  const e = entry.values;
   const status = e.isRemoved
     ? 'removed'
     : e.errors.length > 0
@@ -171,7 +171,7 @@ describe('ValidationController', () => {
     controller.runFileValidators('change', [id]);
     await flush();
 
-    const errors = collection.read(id)?.getValue('errors') ?? [];
+    const errors = collection.read(id)?.get('errors') ?? [];
     expect(errors).toHaveLength(1);
     expect(errors[0]).toMatchObject({ message: 'nope', type: 'CUSTOM_ERROR' });
   });
@@ -211,7 +211,7 @@ describe('ValidationController', () => {
     await flush(800); // 500 debounce + 50 timeout + margin
 
     expect(warn).toHaveBeenCalledWith('[uc][validation]', expect.stringMatching(/timed out/));
-    expect(collection.read(id)?.getValue('isValidationPending')).toBe(false);
+    expect(collection.read(id)?.get('isValidationPending')).toBe(false);
   });
 
   it('isolates a throwing async validator (reports via onValidatorError) without crashing', async () => {
@@ -229,7 +229,7 @@ describe('ValidationController', () => {
     await flush();
 
     expect(onValidatorError).toHaveBeenCalled();
-    expect(collection.read(id)?.getValue('isValidationPending')).toBe(false);
+    expect(collection.read(id)?.get('isValidationPending')).toBe(false);
   });
 
   it('cleanupValidationForEntry aborts in-flight validation and is a no-op without state', async () => {
@@ -269,7 +269,7 @@ describe('ValidationController', () => {
     controller.runFileValidators('upload', [id]);
     await flush();
 
-    expect(collection.read(id)?.getValue('isValidationPending')).toBe(false);
+    expect(collection.read(id)?.get('isValidationPending')).toBe(false);
   });
 
   it('warns when a file validator returns an error without a message', async () => {
@@ -296,7 +296,7 @@ describe('ValidationController', () => {
     controller.runFileValidators('change', [id]); // add validator filtered out → error carried
     await flush();
 
-    const errors = collection.read(id)?.getValue('errors') ?? [];
+    const errors = collection.read(id)?.get('errors') ?? [];
     expect(errors.some((e) => e.message === 'add-err')).toBe(true);
   });
 
@@ -310,7 +310,7 @@ describe('ValidationController', () => {
     controller.destroy(); // before the microtask resumes → post-await guard returns
     await flush();
 
-    expect(collection.read(id)?.getValue('isValidationPending')).toBe(false);
+    expect(collection.read(id)?.get('isValidationPending')).toBe(false);
   });
 
   it('syncs queue concurrency from config without throwing', () => {
@@ -355,7 +355,7 @@ describe('ValidationController', () => {
     controller.runFileValidators('change', [id]);
     await flush();
 
-    expect(collection.read(id)?.getValue('isValidationPending')).toBe(false);
+    expect(collection.read(id)?.get('isValidationPending')).toBe(false);
   });
 
   it('is inert after destroy', async () => {
