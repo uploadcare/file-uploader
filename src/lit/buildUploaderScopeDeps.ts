@@ -91,7 +91,9 @@ export function buildUploaderScopeDeps(container: ControllerContainer, emit: Upl
       // Container-native equivalent of `bag.wait('pluginManager').then(…)`: fire
       // as soon as `PluginController` is resolved (synchronously if already bound
       // by `ensurePluginManager`, which runs in the same `ensureUploaderScope`).
-      container.whenController(PluginController, (pluginManager) => pluginManager.runOnAddHooks(entry));
+      container.whenController(PluginController, (pluginManager) => {
+        pluginManager.runOnAddHooks(entry);
+      });
     },
     onResolverError: reportTelemetryError('telemetry unavailable for a resolver error report'),
     onUploadError: reportTelemetryError('telemetry unavailable for an upload error report'),

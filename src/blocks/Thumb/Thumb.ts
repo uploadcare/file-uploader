@@ -2,8 +2,9 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import { inject } from '../../abstract/di/inject';
+import { inject, injectOrNull } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { effect } from '../../lit/effect';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils';
 import { debounce } from '../../utils/debounce';
 import { preloadImage } from '../../utils/preloadImage';
@@ -33,10 +34,11 @@ export class Thumb extends FileItemConfig {
   // (`.get()` / method calls). The thumb image itself renders from the per-entry
   // `thumbUrl` observer, which has no DI token and stays on the v1 `subEntry`
   // path (step 8). `UploadCollectionController` is the entry source for
-  // `_bindToEntry`, read null-tolerantly via `useOrNull` (a thumb can render
-  // outside an uploader scope), so it stays off `@inject`.
+  // `_bindToEntry`, read null-tolerantly via `@injectOrNull` (a thumb can render
+  // outside an uploader scope, where it resolves `null`).
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  @injectOrNull(UploadCollectionController) private readonly _collection!: UploadCollectionController | null;
 
   @property({ type: String })
   public badgeIcon = '';
@@ -324,7 +326,7 @@ export class Thumb extends FileItemConfig {
     // initializes this ctx — a thumb rendered outside that scope (e.g. an
     // isolated composition, or a teardown-time tick after release) has no
     // collection and therefore no entry; `useOrNull` returns null there.
-    const entry = this.useOrNull(UploadCollectionController)?.read(id);
+    const entry = this._collection?.read(id);
     if (!entry) {
       // The uid no longer resolves (entry removed, scope lost, or uid swapped
       // to an unknown id) — drop the previous entry's subscriptions and image
@@ -362,20 +364,22 @@ export class Thumb extends FileItemConfig {
 
   protected override controllerReady(_container: ControllerContainer): void {
     this._firstViewMode ??= this._config.get('filesViewMode');
-
-    // Side-effecting subscription (forces a one-time thumb regeneration on the
-    // first list->grid switch so the higher grid resolution is fetched), not a
-    // render read — stays on the imperative `subConfigValue` path.
-    this.subConfigValue('filesViewMode', (viewMode) => {
-      if (viewMode === 'grid' && !this._renderedGridOnce) {
-        if (this._firstViewMode === 'list') {
-          this._requestThumbGeneration(true);
-        }
-        this._renderedGridOnce = true;
-      }
-    });
-
     this._bindToEntry();
+  }
+
+  // Side effect (not a render read): a one-time thumb regeneration on the first
+  // list->grid switch so the higher grid resolution is fetched. `beforeUpdate`
+  // fires eagerly and synchronously on adoption — matching the former eager
+  // `subConfigValue` fire, and after `controllerReady` sets `_firstViewMode` —
+  // then again whenever `filesViewMode` changes.
+  @effect({ beforeUpdate: true })
+  protected _regenerateThumbOnGridSwitch(): void {
+    if (this._config.getTracked('filesViewMode') === 'grid' && !this._renderedGridOnce) {
+      if (this._firstViewMode === 'list') {
+        this._requestThumbGeneration(true);
+      }
+      this._renderedGridOnce = true;
+    }
   }
 
   public override connectedCallback(): void {

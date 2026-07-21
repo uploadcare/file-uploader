@@ -4,8 +4,8 @@ import { inject } from '../../abstract/di/inject';
 import { EventBus } from '../../abstract/EventBus';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
-import { EventBridgeController } from '../../lit/EventBridgeController';
 import { ensureUploaderScope } from '../../lit/ensureUploaderScope';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { type EventPayload, EventType } from './EventEmitter';
 
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add event listener types
@@ -14,41 +14,34 @@ export class UploadCtxProvider extends ChildBlock {
   public static EventType = EventType;
 
   // `EventBus` is always-bound → `@inject` field. `UploaderPublicApi` and
-  // `UploadCollectionController` are uploader-scope-bound host-boundary tokens
-  // exposed through the documented `getAPI()`/`.api`/`.uploadCollection` getters
-  // (they throw pre-adoption exactly as the v1 getters did), so they stay on
-  // `use()`.
+  // `UploadCollectionController` are exposed through the documented
+  // `getAPI()`/`.api`/`.uploadCollection` getters; `@inject` throws pre-adoption
+  // exactly as the v1 getters (and the prior `use()`) did.
   @inject(EventBus) private readonly _eventBus!: EventBus;
-
-  private _eventBridge: EventBridgeController | null = null;
+  @inject(UploadCollectionController) private readonly _uploadCollection!: UploadCollectionController;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   protected override controllerReady(container: ControllerContainer): void {
-    // Re-adoption (release-while-connected followed by re-adopt) would otherwise
-    // stack a new EventBridgeController per adoption without ever removing the
-    // previous one's subscription — tear down the old instance first (mirrors
-    // the SourceListController pattern in SourceList.ts).
-    this._teardownEventBridge();
-
     this._attachUploaderScopeIfNeeded(container);
-
-    // Bridge the per-ctx EventBus to documented DOM CustomEvents on this
-    // element. Recreated on every adoption (matching the teardown above) so
-    // its internal subscription is rebound to the *new* controller's bus
-    // rather than staying latched onto a released one.
-    this._eventBridge = new EventBridgeController(this, () => this._eventBus);
   }
 
-  protected override controllerReleased(): void {
-    this._teardownEventBridge();
-  }
-
-  private _teardownEventBridge(): void {
-    if (!this._eventBridge) {
-      return;
-    }
-    this._eventBridge.hostDisconnected();
-    this.removeController(this._eventBridge);
-    this._eventBridge = null;
+  /**
+   * Bridge the per-ctx {@link EventBus} to documented DOM `CustomEvent`s on this
+   * `<uc-upload-ctx-provider>` element — the UI-coupled half of the event system
+   * (the DOM-free controllers emit on the bus; this re-dispatches each event as
+   * `new CustomEvent(type, { detail })`, exactly as v1's `EventEmitter._dispatch`
+   * did). `@subscription` wires at adoption and auto-disposes on release, so the
+   * subscription always tracks the current container's bus and re-adoption
+   * rebinds it to the new bus rather than latching onto a released one — no
+   * manual teardown-first dance. Debug-mode event logging is not done here:
+   * `EventBus.emit` logs every event centrally (verbose-gated), covering events
+   * regardless of any DOM bridge.
+   */
+  @subscription()
+  protected _bridgeBusToDom(): Unsubscribe {
+    return this._eventBus.onAny((type, payload) => {
+      this.dispatchEvent(new CustomEvent(type, { detail: payload }));
+    });
   }
 
   /**
@@ -91,7 +84,7 @@ export class UploadCtxProvider extends ChildBlock {
    * v1 getter did before `initCallback` ran.
    */
   public get uploadCollection(): UploadCollectionController {
-    return this.use(UploadCollectionController);
+    return this._uploadCollection;
   }
 
   /**
@@ -100,12 +93,12 @@ export class UploadCtxProvider extends ChildBlock {
    * instance `*publicApi` exposes.
    */
   public getAPI(): UploaderPublicApi {
-    return this.use(UploaderPublicApi);
+    return this._api;
   }
 
   /** Same contract as v1 `LitUploaderBlock.get api()` — throws pre-adoption via `use()`. */
   public get api(): UploaderPublicApi {
-    return this.use(UploaderPublicApi);
+    return this._api;
   }
 }
 

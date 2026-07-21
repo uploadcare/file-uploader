@@ -6,6 +6,7 @@ import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { effect } from '../../lit/effect';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { debounce } from '../../utils/debounce';
@@ -59,8 +60,9 @@ export class CameraSource extends ChildBlock {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(RouterController) private readonly _router!: RouterController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
-  // `UploaderPublicApi` is uploader-scope-bound host-boundary state read via
-  // `use()` from `_toSend` (post-adoption), so it stays off `@inject`.
+  // `UploaderPublicApi` is read from `_toSend` (a capture handler that runs
+  // post-adoption), so `@inject` resolves it safely.
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   private _unsubPermissions: (() => void) | null = null;
 
@@ -699,9 +701,7 @@ export class CameraSource extends ChildBlock {
    * The send file to the server
    */
   private _toSend = (file: File): void => {
-    // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
-    // token — it is container-resolved (M-god step 8a), reached via `use()`.
-    this.use(UploaderPublicApi).addFileFromObject(file, { source: UploadSource.CAMERA });
+    this._api.addFileFromObject(file, { source: UploadSource.CAMERA });
 
     this._router.traverse('onFileAdd');
   };
@@ -714,8 +714,8 @@ export class CameraSource extends ChildBlock {
 
   private _setPermissionsState = debounce((state: 'granted' | 'denied' | 'prompt') => {
     // The 300ms debounce can fire after disconnect (container already
-    // released) — bail rather than let the throwing `use()` reads below run
-    // without an adopted container.
+    // released) — bail rather than let the `@inject` reads below throw without
+    // an adopted container.
     if (!this.useOrNull(ConfigController)) return;
 
     this.classList.toggle('uc-initialized', state === 'granted');
@@ -955,27 +955,31 @@ export class CameraSource extends ChildBlock {
   };
 
   protected override controllerReady(): void {
-    // `cameraMirror` is now a tracked render read (see `_videoTransformCss`).
-    // These two stay `subConfigValue` (side-effecting, not pure render reads):
-    // `enableAudioRecording` and `cameraModes` mutate several imperative @state
-    // fields also written by the camera-stream handlers, so they can't collapse
-    // into a derived render getter.
-    this.subConfigValue('enableAudioRecording', (val) => {
-      this._audioToggleMicrophoneHidden = !val;
-      this._audioSelectDisabled = !val;
-    });
-
-    this.subConfigValue('cameraModes', (val) => {
-      if (!this.isConnected) return;
-      const cameraModes = deserializeCsv(val);
-      this._handleCameraModes(
-        cameraModes.filter(
-          (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
-        ),
-      );
-    });
-
     void this._onActivate();
+  }
+
+  // `cameraMirror` is a tracked render read (see `_videoTransformCss`). These two
+  // config reactions mutate imperative `@state` fields also written by the
+  // camera-stream handlers (two-writer), so they can't collapse into a derived
+  // render getter — they're `@effect`s. `beforeUpdate` fires them eagerly and
+  // synchronously on adoption (before `_onActivate`'s awaited work runs),
+  // matching the former eager `subConfigValue` fire, then again on change.
+  @effect({ beforeUpdate: true })
+  protected _syncEnableAudioRecording(): void {
+    const enabled = this._config.getTracked('enableAudioRecording');
+    this._audioToggleMicrophoneHidden = !enabled;
+    this._audioSelectDisabled = !enabled;
+  }
+
+  @effect({ beforeUpdate: true })
+  protected _syncCameraModes(): void {
+    if (!this.isConnected) return;
+    const cameraModes = deserializeCsv(this._config.getTracked('cameraModes'));
+    this._handleCameraModes(
+      cameraModes.filter(
+        (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
+      ),
+    );
   }
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
@@ -995,9 +999,13 @@ export class CameraSource extends ChildBlock {
     this._setVideoSource(null);
   }
 
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-
+  // Camera activation is adoption-scoped (`_onActivate` runs in `controllerReady`),
+  // so release the stream + device/permission listeners in `controllerReleased`
+  // — invoked on disconnect (via the base `disconnectedCallback` →
+  // `_releaseController`) and additionally on ctx release/re-adoption, which the
+  // old disconnect-only path missed (re-adoption re-activated without first
+  // deactivating).
+  protected override controllerReleased(): void {
     void this._onDeactivate();
     this._destroy();
   }

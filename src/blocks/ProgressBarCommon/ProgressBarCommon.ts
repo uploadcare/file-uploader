@@ -4,6 +4,7 @@ import { CollectionStateController } from '../../abstract/controllers/Collection
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { inject } from '../../abstract/di/inject';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import './progress-bar-common.css';
 
 import '../ProgressBar/ProgressBar';
@@ -23,27 +24,32 @@ export class ProgressBarCommon extends ChildBlock {
     return this._collectionState.getTracked('commonProgress');
   }
 
-  protected override controllerReady(): void {
-    // The uploader-scope `UploadCollectionController` is resolved on the
-    // container only once the uploader/solution block attaches its scope
-    // (`ensureUploaderScope`) — go through `whenController` (fires now if
-    // resolved, else on first resolution) rather than the throwing
-    // `use(UploadCollectionController)`. Same now-or-when-available semantics as
-    // the v1 `bag.when('uploadCollection')`.
-    this.trackSub(
-      this.container.whenController(UploadCollectionController, (collection) => {
-        this.trackSub(
-          collection.observeProperties(() => {
-            const anyUploading = collection.items().some((id) => {
-              const item = collection.read(id);
-              return item?.getValue('isUploading') ?? false;
-            });
+  /** Recompute `_visible` from current collection membership + `isUploading` state. */
+  private _recomputeVisible(collection: UploadCollectionController): void {
+    this._visible = collection.items().some((id) => collection.read(id)?.getValue('isUploading') ?? false);
+  }
 
-            this._visible = anyUploading;
-          }),
-        );
-      }),
-    );
+  // The uploader-scope `UploadCollectionController` resolves only once the scope
+  // attaches, so go through `whenController` (now-or-when-available); its callback
+  // returns both observers, which `whenController`'s unsubscribe (an array
+  // teardown) disposes. `_visible` depends on both entry PROPERTIES
+  // (`isUploading` flipping on an existing entry — `observeProperties`) and
+  // collection MEMBERSHIP (an entry added/removed altogether, e.g. `remove()`/
+  // `abort()` clearing the last uploading entry, which fires only the
+  // collection observer, never a property one — `observeCollection`). Wiring
+  // only the former left the bar stuck visible after the last upload was
+  // removed. The initial recompute covers an already-populated collection,
+  // which otherwise wouldn't set `_visible` until the next property/collection
+  // change.
+  @subscription()
+  protected _wireProgress(): Unsubscribe {
+    return this.container.whenController(UploadCollectionController, (collection) => {
+      this._recomputeVisible(collection);
+      return [
+        collection.observeProperties(() => this._recomputeVisible(collection)),
+        collection.observeCollection(() => this._recomputeVisible(collection)),
+      ];
+    });
   }
 
   public override render() {

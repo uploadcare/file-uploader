@@ -191,6 +191,50 @@ describe('SignalMap', () => {
     expect(Object.hasOwn(map.values, '__proto__')).toBe(true);
   });
 
+  describe('observe (atomic per-key)', () => {
+    it('fires only when the observed key changes, with the new value; not on subscribe', () => {
+      const map = new SignalMap<Shape>({ a: 1, b: 'x' });
+      const listener = vi.fn();
+      map.observe('a', listener);
+      expect(listener).not.toHaveBeenCalled(); // no eager fire
+
+      map.set('b', 'y'); // unrelated key
+      expect(listener).not.toHaveBeenCalled();
+
+      map.set('a', 2);
+      expect(listener).toHaveBeenCalledExactlyOnceWith(2);
+    });
+
+    it('with { immediate: true } fires once with the current value on subscribe, then on change', () => {
+      const map = new SignalMap<Shape>({ a: 1 });
+      const listener = vi.fn();
+      map.observe('a', listener, { immediate: true });
+      expect(listener).toHaveBeenCalledExactlyOnceWith(1); // eager
+
+      map.set('a', 2);
+      expect(listener).toHaveBeenLastCalledWith(2);
+      expect(listener).toHaveBeenCalledTimes(2);
+    });
+
+    it('dedups with Object.is (no fire when set to an equal value)', () => {
+      const map = new SignalMap<Shape>({ a: 1 });
+      const listener = vi.fn();
+      map.observe('a', listener);
+      map.set('a', 1);
+      expect(listener).not.toHaveBeenCalled();
+    });
+
+    it('returns an unsubscriber that stops further notifications', () => {
+      const map = new SignalMap<Shape>({ a: 1 });
+      const listener = vi.fn();
+      const unsub = map.observe('a', listener);
+      map.set('a', 2);
+      unsub();
+      map.set('a', 3);
+      expect(listener).toHaveBeenCalledExactlyOnceWith(2);
+    });
+  });
+
   it('destroy() clears values and listeners', () => {
     const map = new SignalMap<Shape>({ a: 1 });
     const listener = vi.fn();

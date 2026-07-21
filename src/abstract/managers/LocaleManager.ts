@@ -1,5 +1,4 @@
 import { default as en } from '../../locales/file-uploader/en';
-import type { ConfigType } from '../../types';
 import { controllerLogger } from '../controllerLogger';
 import { ConfigController } from '../controllers/ConfigController';
 import { LocaleController } from '../controllers/LocaleController';
@@ -95,58 +94,48 @@ export class LocaleManager {
     }
 
     this.#disposables.add(
-      this._subConfig('localeName', async (localeName) => {
-        if (!localeName) {
-          return;
-        }
-        this._localeName = localeName;
-        const definition = await resolveLocaleDefinition(localeName);
-        // Uniform staleness guard: `resolveLocaleDefinition` always crosses a
-        // microtask boundary — even for the `en` default — so a rapid
-        // second `localeName` change in the same tick can settle this
-        // continuation after `_localeName` has already moved on. Applying it
-        // then would clobber the newer locale's dictionary with the stale
-        // one's. Bail uniformly (no `en`-only carve-out) and also bail if
-        // the manager was torn down while this resolution was in flight.
-        if (this._destroyed || this._localeName !== localeName) {
-          return;
-        }
-        this._applyPluginLocales(localeName);
+      this._config.observe(
+        'localeName',
+        async (localeName) => {
+          if (!localeName) {
+            return;
+          }
+          this._localeName = localeName;
+          const definition = await resolveLocaleDefinition(localeName);
+          // Uniform staleness guard: `resolveLocaleDefinition` always crosses a
+          // microtask boundary — even for the `en` default — so a rapid
+          // second `localeName` change in the same tick can settle this
+          // continuation after `_localeName` has already moved on. Applying it
+          // then would clobber the newer locale's dictionary with the stale
+          // one's. Bail uniformly (no `en`-only carve-out) and also bail if
+          // the manager was torn down while this resolution was in flight.
+          if (this._destroyed || this._localeName !== localeName) {
+            return;
+          }
+          this._applyPluginLocales(localeName);
 
-        this._applyOverrides(localeName, definition);
-      }),
+          this._applyOverrides(localeName, definition);
+        },
+        { immediate: true },
+      ),
     );
 
     this.#disposables.add(
-      this._subConfig('localeDefinitionOverride', (localeDefinitionOverride) => {
-        if (!localeDefinitionOverride) {
-          return;
-        }
-        const definition = localeDefinitionOverride[this._localeName];
-        if (!definition) {
-          return;
-        }
-        this._applyOverrides(this._localeName, definition);
-      }),
+      this._config.observe(
+        'localeDefinitionOverride',
+        (localeDefinitionOverride) => {
+          if (!localeDefinitionOverride) {
+            return;
+          }
+          const definition = localeDefinitionOverride[this._localeName];
+          if (!definition) {
+            return;
+          }
+          this._applyOverrides(this._localeName, definition);
+        },
+        { immediate: true },
+      ),
     );
-  }
-
-  /**
-   * Subscribe to a config key's derived value: fires once immediately with
-   * the current value, then again only when it actually changes — the same
-   * per-key dedup semantics as the v1 ctx facade's `*cfg/` facade (which this
-   * replaces for `LocaleManager`'s two config reads).
-   */
-  private _subConfig<K extends keyof ConfigType>(key: K, cb: (value: ConfigType[K]) => void): () => void {
-    let last = this._config.get(key);
-    cb(last);
-    return this._config.subscribe(() => {
-      const next = this._config.get(key);
-      if (!Object.is(next, last)) {
-        last = next;
-        cb(next);
-      }
-    });
   }
 
   private _setLocale(key: string, value: string, rewrite: boolean): void {

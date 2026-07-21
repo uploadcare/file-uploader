@@ -9,6 +9,7 @@ import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
+import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import './index.css';
 
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
@@ -91,71 +92,55 @@ export class FileUploaderInline extends SolutionChildBlock {
       eventType: InternalEventType.INIT_SOLUTION,
     });
 
-    const initActivity = ACTIVITY_TYPES.START_FROM;
-
     // Inline renders every activity in place (no modal), so all navigation
     // targets the background slot; a completed flow returns to start-from.
     const router = this._router;
     router.navigationStrategy = () => 'background';
     router.configure({ doneActivity: ACTIVITY_TYPES.START_FROM });
+  }
 
-    // Side-effecting activity coordination (re-seeds start-from when everything
-    // closes) — stays imperative, now off `RouterController` directly (replaces
-    // `subActivity`). The current-activity dedup + eager fire reproduce
-    // `subActivity`'s exact contract.
-    let lastActivity = router.currentActivity;
-    const applyActivityCoordination = (val: typeof lastActivity) => {
-      if (!val) {
-        router.setActivity(initActivity);
-      }
-    };
-    applyActivityCoordination(lastActivity);
-    this.trackSub(
-      router.subscribe(() => {
-        const next = router.currentActivity;
-        if (next !== lastActivity) {
-          lastActivity = next;
-          applyActivityCoordination(next);
+  // Re-seed start-from when everything closes. Atomic `observeCurrentActivity`
+  // (dedup) + eager fire.
+  @subscription()
+  protected _wireActivityCoordination(): Unsubscribe {
+    return this._router.observeCurrentActivity(
+      (activity) => {
+        if (!activity) {
+          this._router.setActivity(ACTIVITY_TYPES.START_FROM);
         }
-      }),
+      },
+      { immediate: true },
     );
+  }
 
-    // Imperative side-effecting sub (drives `router.setActivity`, not a render
-    // read), now sourced from `CollectionStateController` directly instead of the
-    // `*uploadList` `bag.ctx` key. The per-key `Object.is` dedup + eager fire
-    // reproduce the exact `PubSub.sub('*uploadList', …)` semantics
-    // (`_subDerived`): fire once now, then only when the `uploadList` reference
-    // actually changes — NOT on every coarse collection-state notify. This does
-    // NOT drive `_couldCancel` (see its doc): that stays a router-only recompute.
-    const collectionState = this._collectionState;
-    let lastUploadList = collectionState.get('uploadList');
-    const applyUploadListActivity = (list: typeof lastUploadList) => {
-      if (list.length > 0 && router.currentActivity === initActivity) {
-        router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
-      }
-    };
-    applyUploadListActivity(lastUploadList);
-    this.trackSub(
-      collectionState.subscribe(() => {
-        const next = collectionState.get('uploadList');
-        if (!Object.is(next, lastUploadList)) {
-          lastUploadList = next;
-          applyUploadListActivity(next);
+  // Background slot follows file state (drives `setActivity`, not a render read).
+  // Atomic `observe('uploadList')` fires only on a real `uploadList` change, not
+  // every collection-state notify. Does NOT drive `_couldCancel` (see its doc).
+  @subscription()
+  protected _wireUploadListActivity(): Unsubscribe {
+    return this._collectionState.observe(
+      'uploadList',
+      (list) => {
+        if (list.length > 0 && this._router.currentActivity === ACTIVITY_TYPES.START_FROM) {
+          this._router.setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
         }
-      }),
+      },
+      { immediate: true },
     );
+  }
 
-    // v1-exact cancel-button recompute: fires immediately, then on every router
-    // notify (the v1 `subRouter` contract). `_couldCancel` is written ONLY here —
-    // never from an `uploadList`/`showEmptyList` change — so it is stale-by-design
-    // between router transitions (see the `_couldCancel` doc comment). The read
-    // is imperative (`_couldShowList`/`_couldHistoryBack` use `get()`), so this
-    // subscription is the sole re-render trigger for the button's `?hidden`.
-    const recomputeCouldCancel = () => {
+  // v1-exact cancel-button recompute: fires eagerly, then on EVERY router notify
+  // (the v1 `subRouter` contract) — a coarse subscription, deliberately not
+  // atomic. `_couldCancel` is written ONLY here (stale-by-design between router
+  // transitions, see its doc), and `_couldShowList`/`_couldHistoryBack` read
+  // imperatively, so this is the button's sole `?hidden` re-render trigger.
+  @subscription()
+  protected _wireCouldCancel(): Unsubscribe {
+    const recompute = () => {
       this._couldCancel = this._couldHistoryBack || this._couldShowList;
     };
-    recomputeCouldCancel();
-    this.trackSub(router.subscribe(recomputeCouldCancel));
+    recompute();
+    return this._router.subscribe(recompute);
   }
 
   public override render() {

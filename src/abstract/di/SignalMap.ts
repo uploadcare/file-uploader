@@ -1,5 +1,9 @@
 import { type Signal, signal } from '@lit-labs/signals';
-import { Listeners } from '../host-subscription';
+import { Listeners, type ObserveOptions } from '../host-subscription';
+
+// `ObserveOptions` lives with `Listeners.observe` (the shared atomic-observe
+// engine); re-exported here so existing `di/SignalMap` importers are unaffected.
+export type { ObserveOptions };
 
 /**
  * DOM-free reactive key/value store for controllers with a DYNAMIC keyspace —
@@ -109,6 +113,20 @@ export class SignalMap<T extends object> {
 
   public subscribe(listener: () => void): () => void {
     return this.#listeners.subscribe(listener);
+  }
+
+  /**
+   * Atomic per-key subscription: filters the coarse notify down to ONE key,
+   * invoking `listener` with the new value only when that key actually changes
+   * (`Object.is` dedup). Pass `{ immediate: true }` to also fire the listener
+   * once with the current value on subscribe. Returns an unsubscriber.
+   */
+  public observe<K extends keyof T>(
+    key: K,
+    listener: (value: T[K] | undefined) => void,
+    options?: ObserveOptions,
+  ): () => void {
+    return this.#listeners.observe(() => this.get(key), listener, options);
   }
 
   /** Coarse notify with no state change — for a keyed store's owner to force it. */

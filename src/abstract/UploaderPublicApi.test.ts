@@ -8,11 +8,11 @@ import { createL10n } from '../lit/l10n';
 import type { UploadcareFile } from '../types/index';
 import { BASIC_IMAGE_WILDCARD, BASIC_VIDEO_WILDCARD } from '../utils/fileTypes';
 import { UploadSource } from '../utils/UploadSource';
-import { CollectionStateController } from './controllers/CollectionStateController';
 import { ConfigController } from './controllers/ConfigController';
 import { LocaleController } from './controllers/LocaleController';
 import { RouterController } from './controllers/RouterController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
+import { UploadController } from './controllers/UploadController';
 import { ControllerContainer } from './di/ControllerContainer';
 import { PluginController } from './managers/plugin';
 import type { UploaderPublicApi } from './UploaderPublicApi';
@@ -253,21 +253,10 @@ describe('UploaderPublicApi', () => {
   });
 
   describe('uploadAll', () => {
-    it('replaces the uploadTrigger Set and emits COMMON_UPLOAD_START for uploadable entries', () => {
+    it('uploads the uploadable entries through the controller and emits COMMON_UPLOAD_START', () => {
       const { api, container } = setup();
-      const collectionState = container.get(CollectionStateController);
-      const before = collectionState.get('uploadTrigger');
-      const triggerValues: Array<Set<unknown>> = [];
-      // Reproduces the v1 `ctx.sub('*uploadTrigger', …, init=false)`: fire only
-      // on a real change (coarse `subscribe` + per-key `Object.is` dedup).
-      let lastTrigger = collectionState.get('uploadTrigger');
-      const unsub = collectionState.subscribe(() => {
-        const next = collectionState.get('uploadTrigger');
-        if (!Object.is(next, lastTrigger)) {
-          lastTrigger = next;
-          triggerValues.push(next as Set<unknown>);
-        }
-      });
+      // Stub the real upload so the unit test asserts delegation, not a network call.
+      const uploadEntries = vi.spyOn(container.get(UploadController), 'uploadEntries').mockImplementation(() => {});
       const startHandler = vi.fn();
       api.on(EventType.COMMON_UPLOAD_START, startHandler);
 
@@ -276,33 +265,27 @@ describe('UploaderPublicApi', () => {
 
       api.uploadAll();
 
-      // REPLACE-semantics: a NEW Set instance (not the seeded one, not mutated).
-      const after = collectionState.get('uploadTrigger') as Set<string>;
-      expect(after).not.toBe(before);
-      expect([...after].sort()).toEqual([e1.internalId, e2.internalId].sort());
-      // The replace fired the subscriber exactly once with the new Set.
-      expect(triggerValues).toHaveLength(1);
-      expect(triggerValues[0]).toBe(after);
+      expect(uploadEntries).toHaveBeenCalledTimes(1);
+      const uploadedUids = uploadEntries.mock.calls[0]?.[0] ?? [];
+      expect([...uploadedUids].sort()).toEqual([e1.internalId, e2.internalId].sort());
       expect(startHandler).toHaveBeenCalledTimes(1);
-      unsub();
     });
 
-    it('is a no-op (no emit, no trigger change) when nothing is uploadable', () => {
+    it('is a no-op (no upload, no emit) when nothing is uploadable', () => {
       const { api, container } = setup();
-      const collectionState = container.get(CollectionStateController);
-      const before = collectionState.get('uploadTrigger');
+      const uploadEntries = vi.spyOn(container.get(UploadController), 'uploadEntries').mockImplementation(() => {});
       const startHandler = vi.fn();
       api.on(EventType.COMMON_UPLOAD_START, startHandler);
 
       api.uploadAll();
 
-      expect(collectionState.get('uploadTrigger')).toBe(before);
+      expect(uploadEntries).not.toHaveBeenCalled();
       expect(startHandler).not.toHaveBeenCalled();
     });
 
     it('skips entries already uploaded (fileInfo present)', () => {
       const { api, container } = setup();
-      const collectionState = container.get(CollectionStateController);
+      const uploadEntries = vi.spyOn(container.get(UploadController), 'uploadEntries').mockImplementation(() => {});
       const startHandler = vi.fn();
       api.on(EventType.COMMON_UPLOAD_START, startHandler);
       // A file added from an UploadcareFile has fileInfo → not uploadable.
@@ -317,9 +300,8 @@ describe('UploaderPublicApi', () => {
 
       api.uploadAll();
 
+      expect(uploadEntries).not.toHaveBeenCalled();
       expect(startHandler).not.toHaveBeenCalled();
-      expect(collectionState.get('uploadTrigger')).toBeInstanceOf(Set);
-      expect((collectionState.get('uploadTrigger') as Set<string>).size).toBe(0);
     });
   });
 

@@ -79,10 +79,13 @@ describe('ProgressBarCommon (M-god step 6b-2 migration)', () => {
     const container = UploaderRegistry.get(ctxName);
     if (!container) throw new Error('container not resolved');
 
-    const unobserve = vi.fn();
-    const observeProperties = vi.fn(() => unobserve);
+    const unobserveProperties = vi.fn();
+    const unobserveCollection = vi.fn();
+    const observeProperties = vi.fn(() => unobserveProperties);
+    const observeCollection = vi.fn(() => unobserveCollection);
     const collection = {
       observeProperties,
+      observeCollection,
       items: () => [],
       read: () => null,
     } as unknown as UploadCollectionController;
@@ -96,14 +99,82 @@ describe('ProgressBarCommon (M-god step 6b-2 migration)', () => {
 
     // whenController is pending — UploadCollectionController is bound but not resolved.
     expect(observeProperties).not.toHaveBeenCalled();
+    expect(observeCollection).not.toHaveBeenCalled();
 
     // Resolving it (mirrors `ensureUploaderScope`) flushes the waiter, registering
-    // the property observer.
+    // both the property and collection-membership observers.
     container.get(UploadCollectionController);
     expect(observeProperties).toHaveBeenCalledOnce();
+    expect(observeCollection).toHaveBeenCalledOnce();
 
-    // Disconnect tears the tracked observer subscription down.
+    // Disconnect tears both tracked observer subscriptions down.
     el.remove();
-    expect(unobserve).toHaveBeenCalledOnce();
+    expect(unobserveProperties).toHaveBeenCalledOnce();
+    expect(unobserveCollection).toHaveBeenCalledOnce();
+  });
+
+  it('sets initial visibility for an already-populated (uploading) collection at wire time, without waiting for a property/collection change', async () => {
+    const ctxName = freshCtxName();
+    ensureUploaderCtx(ctxName);
+    const container = UploaderRegistry.get(ctxName);
+    if (!container) throw new Error('container not resolved');
+
+    const collection = {
+      observeProperties: vi.fn(() => vi.fn()),
+      observeCollection: vi.fn(() => vi.fn()),
+      items: () => ['a'],
+      read: () => ({ getValue: () => true }),
+    } as unknown as UploadCollectionController;
+    container.bind(UploadCollectionController, () => collection);
+    container.get(UploadCollectionController); // resolve eagerly (simulates an already-populated scope)
+
+    const el = document.createElement('uc-progress-bar-common') as ProgressBarCommon;
+    el.setAttribute('ctx-name', ctxName);
+    document.body.append(el);
+    mounted.push(el);
+    await el.updateComplete;
+
+    const bar = el.querySelector('uc-progress-bar') as ProgressBar | null;
+    expect(bar?.visible).toBe(true);
+  });
+
+  it('recomputes visibility on collection membership change (observeCollection), not just property change', async () => {
+    const ctxName = freshCtxName();
+    ensureUploaderCtx(ctxName);
+    const container = UploaderRegistry.get(ctxName);
+    if (!container) throw new Error('container not resolved');
+
+    let uploading = true;
+    let collectionHandler: (() => void) | undefined;
+    const collection = {
+      observeProperties: vi.fn(() => vi.fn()),
+      observeCollection: vi.fn((handler: () => void) => {
+        collectionHandler = handler;
+        return vi.fn();
+      }),
+      items: () => (uploading ? ['a'] : []),
+      read: () => ({ getValue: () => uploading }),
+    } as unknown as UploadCollectionController;
+    container.bind(UploadCollectionController, () => collection);
+
+    const el = document.createElement('uc-progress-bar-common') as ProgressBarCommon;
+    el.setAttribute('ctx-name', ctxName);
+    document.body.append(el);
+    mounted.push(el);
+    await el.updateComplete;
+
+    container.get(UploadCollectionController); // flush whenController waiter
+    await el.updateComplete;
+
+    const bar = () => el.querySelector('uc-progress-bar') as ProgressBar | null;
+    expect(bar()?.visible).toBe(true);
+
+    // Simulate the last upload being removed entirely (e.g. `remove()`/`abort()`):
+    // this fires ONLY the collection observer, never a property one.
+    uploading = false;
+    collectionHandler?.();
+    await el.updateComplete;
+
+    expect(bar()?.visible).toBe(false);
   });
 });

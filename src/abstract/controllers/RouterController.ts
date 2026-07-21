@@ -4,7 +4,7 @@ import { controllerLogger } from '../controllerLogger';
 import { inject } from '../di/inject';
 import { signalState } from '../di/signalState';
 import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
-import { Listeners } from '../host-subscription';
+import { Listeners, type ObserveOptions } from '../host-subscription';
 import { lazy } from '../logger';
 
 export type EdgeTarget = ActivityId | null;
@@ -61,7 +61,14 @@ export class RouterController {
   @inject(() => EventEmitter) private readonly _eventEmitter!: EventEmitter;
   private _listeners = new Listeners();
   private _table: RouteTable = {};
-  private _activity: ActivityId | null = null;
+  // The background activity slot. Backed by `@signalState` so a `SignalWatcher`
+  // consumer can track it directly — completing the trio with `_modal`/
+  // `_currentActivity`: `ActivityChildBlock.isActivityActive` reads
+  // `router.activity` for its background-slot branch (under `SignalWatcher` when
+  // `updated()` calls in), so a background transition now auto-re-tracks rather
+  // than relying solely on the coarse `_listeners.notify()`. That coarse notify
+  // is preserved unchanged for every existing `subscribe()` reader.
+  @signalState() private _activity: ActivityId | null = null;
   // Backed by `@signalState` so a `SignalWatcher` consumer can track the
   // foreground modal slot directly (M-god step 6b-3: `<uc-modal>` reads
   // `router.modal` in `willUpdate` to drive its `<dialog>` open/close). This is
@@ -141,6 +148,18 @@ export class RouterController {
 
   public subscribe(listener: () => void): () => void {
     return this._listeners.subscribe(listener);
+  }
+
+  /**
+   * Atomic subscription to the current (background-slot) activity: fires only
+   * when `currentActivity` actually changes, not on every router notify (modal
+   * open/close, params, background/foreground). Pass `{ immediate: true }` to
+   * also fire once with the current value on subscribe. The router analogue of
+   * `ConfigController.observe`, encapsulating the per-key dedup callers used to
+   * hand-roll over `subscribe`.
+   */
+  public observeCurrentActivity(listener: (activity: ActivityId | null) => void, options?: ObserveOptions): () => void {
+    return this._listeners.observe(() => this.currentActivity, listener, options);
   }
 
   /** Per-preset routing config (solution-level), e.g. the post-flow done activity. */

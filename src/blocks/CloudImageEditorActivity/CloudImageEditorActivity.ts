@@ -7,6 +7,7 @@ import type { ControllerContainer } from '../../abstract/di/ControllerContainer'
 import { inject } from '../../abstract/di/inject';
 import type { TypedData } from '../../abstract/TypedData';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import type { ApplyResult, ChangeResult } from '../CloudImageEditor/src/types';
 import './cloud-image-editor-activity.css';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
@@ -34,13 +35,13 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
   @state()
   private _cdnUrl: string | null = null;
 
-  protected override controllerReady(container: ControllerContainer): void {
-    super.controllerReady(container);
-    this._mountEditor();
-  }
-
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
+  // The editor mount is adoption-scoped (the cdn-url marker is resolved by the
+  // `@subscription _resolveEntry`), so reset it in `controllerReleased` — invoked
+  // on disconnect (via the base `disconnectedCallback` → `_releaseController`)
+  // and additionally on ctx release/re-adoption, which the old disconnect-only
+  // path missed.
+  protected override controllerReleased(container: ControllerContainer): void {
+    super.controllerReleased(container);
     this._unmountEditor();
   }
 
@@ -69,31 +70,26 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
     this._log.debug(`editor event "change"`, event.detail);
   }
 
-  private _mountEditor(): void {
-    // `internalId` comes from the router-params object, whose shape is a
-    // per-activity contract (ExternalSource precedent) rather than a runtime
-    // guard the router already enforces.
+  // The uploader-scope `UploadCollectionController` resolves only once the scope
+  // attaches (`ensureUploaderScope`), which can race this adoption — go through
+  // `whenController` (fires now if resolved, else on resolution). `internalId`
+  // comes from the router-params object, a per-activity contract (ExternalSource
+  // precedent) rather than a runtime guard the router already enforces.
+  @subscription()
+  protected _resolveEntry(): Unsubscribe {
     const { internalId } = this._router.params as ActivityParams;
-    // The uploader-scope `UploadCollectionController` is resolved on the
-    // container only once the uploader/solution block attaches its scope
-    // (`ensureUploaderScope`), which can race this adoption path — go through
-    // `whenController` (fires now if resolved, else on first resolution) rather
-    // than the throwing `use(UploadCollectionController)`. Same
-    // now-or-when-available semantics as the v1 `bag.when('uploadCollection')`.
-    this.trackSub(
-      this.container.whenController(UploadCollectionController, (collection) => {
-        const entry = collection.read(internalId as Uid);
-        if (!entry) {
-          throw new Error(`Entry with internalId "${internalId}" not found`);
-        }
-        this._entry = entry;
-        const cdnUrl = this._entry.getValue('cdnUrl');
-        if (!cdnUrl) {
-          throw new Error(`Entry with internalId "${internalId}" hasn't uploaded yet`);
-        }
-        this._cdnUrl = cdnUrl;
-      }),
-    );
+    return this.container.whenController(UploadCollectionController, (collection) => {
+      const entry = collection.read(internalId as Uid);
+      if (!entry) {
+        throw new Error(`Entry with internalId "${internalId}" not found`);
+      }
+      this._entry = entry;
+      const cdnUrl = this._entry.getValue('cdnUrl');
+      if (!cdnUrl) {
+        throw new Error(`Entry with internalId "${internalId}" hasn't uploaded yet`);
+      }
+      this._cdnUrl = cdnUrl;
+    });
   }
 
   private _unmountEditor(): void {

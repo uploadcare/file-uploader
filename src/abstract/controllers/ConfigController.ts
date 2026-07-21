@@ -1,7 +1,7 @@
 import type { CustomConfigDefinition } from '../../abstract/customConfigOptions';
 import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { ConfigType } from '../../types/exported';
-import { SignalMap } from '../di/SignalMap';
+import { type ObserveOptions, SignalMap } from '../di/SignalMap';
 
 /**
  * Pure-logic config store. Knows nothing about DOM, attributes, or Lit.
@@ -68,6 +68,38 @@ export class ConfigController {
   /** Coarse subscribe — fires on any config change, not per-key. */
   public subscribe(listener: () => void): () => void {
     return this.#state.subscribe(listener);
+  }
+
+  /**
+   * Atomic per-key subscription: fires only when THIS key changes (`Object.is`
+   * dedup), unlike the coarse `subscribe`. Pass `{ immediate: true }` to also
+   * fire once with the current value on subscribe. The successor to
+   * `ChildBlock.subConfigValue` for side-effecting reactions that can't be pure
+   * render reads (a value recomputed elsewhere, or pushed to a non-reactive
+   * sink); pair with `@subscription` for auto-teardown.
+   */
+  public observe<K extends keyof ConfigType>(
+    key: K,
+    listener: (value: ConfigType[K]) => void,
+    options?: ObserveOptions,
+  ): () => void {
+    // Built-ins are always seeded, so the map's `| undefined` value arm never
+    // materializes for a `ConfigType` key — narrow it at this typed boundary.
+    return this.#state.observe(
+      key,
+      listener as (value: (ConfigType & Record<string, unknown>)[K] | undefined) => void,
+      options,
+    );
+  }
+
+  /**
+   * Atomic per-key subscription for a plugin-registered CUSTOM key (the
+   * `getCustom` keyspace), with the same `Object.is` dedup + optional
+   * `{ immediate }` as `observe`. Separate from `observe` because custom keys
+   * live outside the typed `ConfigType` surface.
+   */
+  public observeCustom<T = unknown>(name: string, listener: (value: T) => void, options?: ObserveOptions): () => void {
+    return this.#state.observe(name, listener as (value: unknown) => void, options);
   }
 
   /** Coarse notify with no state change — for a re-render on a non-keyed change. */

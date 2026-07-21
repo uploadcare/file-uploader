@@ -1,16 +1,14 @@
 import { html } from 'lit';
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../abstract/controllers/ConfigController';
-import { RouterController } from '../abstract/controllers/RouterController';
 import type { Token } from '../abstract/di/ControllerContainer';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
-import { ACTIVITY_TYPES } from './activity-constants';
 import { ChildBlock } from './ChildBlock';
 
 // ─── Test-only ChildBlock subclasses ──────────────────────────────────────────
 class UseBlock extends ChildBlock {
   public callUse<T>(token: Token<T>): T {
-    return this.use(token);
+    return this.container.get(token);
   }
   public callUseOrNull<T>(token: Token<T>): T | null {
     return this.useOrNull(token);
@@ -20,22 +18,6 @@ class UseBlock extends ChildBlock {
   }
 }
 UseBlock.reg('uc-test-use-block');
-
-// Exposes `subRouter` (protected) so a spec can assert its immediate-fire /
-// fire-on-router-change / tear-down-on-release contract after M-god step 9b-1
-// moved it off `bag.router` onto `use(RouterController)`.
-class SubRouterBlock extends ChildBlock {
-  public fires = 0;
-  public callSubRouter(): () => void {
-    return this.subRouter(() => {
-      this.fires++;
-    });
-  }
-  public override render() {
-    return html``;
-  }
-}
-SubRouterBlock.reg('uc-test-subrouter-block');
 
 // ─── Harness ──────────────────────────────────────────────────────────────────
 let seq = 0;
@@ -67,7 +49,7 @@ afterEach(() => {
   }
 });
 
-describe('ChildBlock.use()', () => {
+describe('ChildBlock.container', () => {
   it('throws when the container is not adopted yet', () => {
     const el = document.createElement('uc-test-use-block') as UseBlock;
     mounted.push(el);
@@ -92,7 +74,7 @@ describe('ChildBlock.useOrNull()', () => {
     expect(el.callUseOrNull(ConfigController)).toBeNull();
   });
 
-  it('resolves the same singleton as use() after adoption', async () => {
+  it('resolves the same singleton as container.get() after adoption', async () => {
     const ctxName = freshCtxName();
     const el = await mount<UseBlock>('uc-test-use-block', ctxName);
 
@@ -165,34 +147,6 @@ describe('ChildBlock consumer lifecycle (M-god step 6a)', () => {
   });
 });
 
-describe('ChildBlock.subRouter() (off bag.router → use(RouterController), M-god step 9b-1)', () => {
-  it('subscribes to the same RouterController the container owns', async () => {
-    const ctxName = freshCtxName();
-    const el = await mount<SubRouterBlock>('uc-test-subrouter-block', ctxName);
-    const router = UploaderRegistry.get(ctxName)?.get(RouterController);
-    expect(router).toBeInstanceOf(RouterController);
-
-    // Immediate fire on subscribe, then again on a router notification.
-    const before = el.fires;
-    el.callSubRouter();
-    expect(el.fires).toBe(before + 1);
-
-    const release = router!.activityBlockMounted(ACTIVITY_TYPES.UPLOAD_LIST);
-    expect(el.fires).toBe(before + 2);
-    release();
-    expect(el.fires).toBe(before + 3);
-  });
-
-  it('stops firing after the block is released (tracked unsub)', async () => {
-    const ctxName = freshCtxName();
-    const el = await mount<SubRouterBlock>('uc-test-subrouter-block', ctxName);
-    const router = UploaderRegistry.get(ctxName)!.get(RouterController);
-    el.callSubRouter();
-    const afterSubscribe = el.fires;
-
-    el.remove(); // synchronous _releaseController tears down tracked subs
-
-    router.activityBlockMounted(ACTIVITY_TYPES.UPLOAD_LIST);
-    expect(el.fires).toBe(afterSubscribe);
-  });
-});
+// `ChildBlock.subRouter()` was removed (signals migration) — blocks read router
+// state reactively via `SignalWatcher`; its former contract is covered by the
+// router's own tests.
