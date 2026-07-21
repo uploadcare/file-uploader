@@ -105,4 +105,30 @@ describe('SolutionChildBlock', () => {
     // above) — re-adoption must not double-release it.
     expect(unregister).toHaveBeenCalledTimes(1);
   });
+
+  it('releases the a11y scope (unregisterBlock) on disconnect and re-registers on reconnect (re-adoption)', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const container = containerOf(ctxName);
+
+    const registerBlockSpy = vi.spyOn(container.get(A11y), 'registerBlock');
+    const unregisterBlockSpy = vi.spyOn(container.get(A11y), 'unregisterBlock');
+
+    const child = append('uc-test-solution-child', { 'ctx-name': ctxName });
+    await expect.poll(() => child.readyCount).toBe(1);
+    expect(registerBlockSpy).toHaveBeenCalledWith(child);
+    expect(unregisterBlockSpy).not.toHaveBeenCalled();
+
+    // The load-bearing fix: on disconnect the a11y scope is released (previously
+    // it leaked until ctx teardown — there was no unregisterBlock at all).
+    child.remove();
+    expect(unregisterBlockSpy).toHaveBeenCalledWith(child);
+    expect(unregisterBlockSpy).toHaveBeenCalledTimes(1);
+
+    document.body.append(child);
+    await expect.poll(() => child.readyCount).toBe(2);
+    // Re-adoption re-registers rather than stacking; no extra release.
+    expect(registerBlockSpy).toHaveBeenCalledTimes(2);
+    expect(unregisterBlockSpy).toHaveBeenCalledTimes(1);
+  });
 });
