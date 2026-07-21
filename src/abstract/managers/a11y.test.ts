@@ -238,4 +238,39 @@ describe('A11y', () => {
 
     expect(() => a11y.unregisterBlock(asNode(scope))).not.toThrow();
   });
+
+  it('double unregisterBlock is safe: the second call is a no-op and stays disarmed', () => {
+    const a11y = track(new A11y());
+    const { scope, button } = buttonInScope();
+    a11y.registerBlock(asNode(scope));
+
+    a11y.unregisterBlock(asNode(scope)); // last scope → disarm
+    expect(() => a11y.unregisterBlock(asNode(scope))).not.toThrow();
+
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(button.classList.contains('is-pressed')).toBe(false);
+  });
+
+  it('unregisterBlock for a never-registered scope leaves other scopes armed', () => {
+    const a11y = track(new A11y());
+    const registered = buttonInScope();
+    a11y.registerBlock(asNode(registered.scope));
+
+    a11y.unregisterBlock(asNode(document.createElement('div'))); // never registered → no disarm
+
+    registered.button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(registered.button.classList.contains('is-pressed')).toBe(true);
+  });
+
+  it('registering the same scope twice is idempotent: one unregisterBlock fully detaches it', () => {
+    const a11y = track(new A11y());
+    const { scope, button } = buttonInScope();
+
+    a11y.registerBlock(asNode(scope));
+    a11y.registerBlock(asNode(scope)); // idempotent (Set-backed)
+    a11y.unregisterBlock(asNode(scope)); // single unregister removes it
+
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(button.classList.contains('is-pressed')).toBe(false);
+  });
 });
