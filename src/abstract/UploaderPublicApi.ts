@@ -228,12 +228,12 @@ export class UploaderPublicApi {
       const entry = this._uploadCollection.read(id);
       if (!entry) return false;
       return (
-        !entry.getValue('isRemoved') &&
-        !entry.getValue('isUploading') &&
-        !entry.getValue('fileInfo') &&
-        entry.getValue('errors').length === 0 &&
-        !entry.getValue('isValidationPending') &&
-        !entry.getValue('isQueuedForValidation')
+        !entry.get('isRemoved') &&
+        !entry.get('isUploading') &&
+        !entry.get('fileInfo') &&
+        entry.get('errors').length === 0 &&
+        !entry.get('isValidationPending') &&
+        !entry.get('isQueuedForValidation')
       );
     });
 
@@ -324,7 +324,7 @@ export class UploaderPublicApi {
     if (!entry) {
       throw new Error(`UploaderPublicApi#getOutputItem: Entry with ID "${entryId}" not found in the upload collection`);
     }
-    const uploadEntryData = entry.snapshot();
+    const uploadEntryData = entry.values;
     const fileInfo = uploadEntryData.fileInfo as UploadcareFile | null;
 
     const status: OutputFileEntry['status'] = uploadEntryData.isRemoved

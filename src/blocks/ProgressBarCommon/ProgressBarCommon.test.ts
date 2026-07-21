@@ -123,7 +123,7 @@ describe('ProgressBarCommon (M-god step 6b-2 migration)', () => {
       observeProperties: vi.fn(() => vi.fn()),
       observeCollection: vi.fn(() => vi.fn()),
       items: () => ['a'],
-      read: () => ({ getValue: () => true }),
+      read: () => ({ get: () => true }),
     } as unknown as UploadCollectionController;
     container.bind(UploadCollectionController, () => collection);
     container.get(UploadCollectionController); // resolve eagerly (simulates an already-populated scope)
@@ -153,7 +153,7 @@ describe('ProgressBarCommon (M-god step 6b-2 migration)', () => {
         return vi.fn();
       }),
       items: () => (uploading ? ['a'] : []),
-      read: () => ({ getValue: () => uploading }),
+      read: () => ({ get: () => uploading }),
     } as unknown as UploadCollectionController;
     container.bind(UploadCollectionController, () => collection);
 

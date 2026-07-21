@@ -51,7 +51,7 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
     }
     this._log.debug(`editor event "apply"`, e.detail);
     const result = e.detail;
-    this._entry.setMultipleValues({
+    this._entry.setMany({
       cdnUrl: result.cdnUrl,
       cdnUrlModifiers: result.cdnUrlModifiers,
     });
@@ -84,7 +84,7 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
         throw new Error(`Entry with internalId "${internalId}" not found`);
       }
       this._entry = entry;
-      const cdnUrl = this._entry.getValue('cdnUrl');
+      const cdnUrl = this._entry.get('cdnUrl');
       if (!cdnUrl) {
         throw new Error(`Entry with internalId "${internalId}" hasn't uploaded yet`);
       }

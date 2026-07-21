@@ -83,10 +83,10 @@ export class Thumb extends FileItemConfig {
 
   // biome-ignore lint/style/noInferrableTypes: Here the type is needed because `_withEntry` could not infer it correctly
   private _generateThumbnail = this.withEntry(async (entry, force: boolean = false) => {
-    const fileInfo = entry.getValue('fileInfo');
-    const isImage = entry.getValue('isImage');
-    const uuid = entry.getValue('uuid');
-    const currentThumbUrl = entry.getValue('thumbUrl');
+    const fileInfo = entry.get('fileInfo');
+    const isImage = entry.get('isImage');
+    const uuid = entry.get('uuid');
+    const currentThumbUrl = entry.get('thumbUrl');
 
     const size = this._calculateThumbSize(force);
 
@@ -94,7 +94,7 @@ export class Thumb extends FileItemConfig {
       const thumbUrl = await this.proxyUrl(
         createCdnUrl(
           createOriginalUrl(this._config.get('cdnCname'), uuid),
-          createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `stretch/off`, `scale_crop/${size}x${size}/center`),
+          createCdnUrlModifiers(entry.get('cdnUrlModifiers'), `stretch/off`, `scale_crop/${size}x${size}/center`),
         ),
       );
 
@@ -106,43 +106,43 @@ export class Thumb extends FileItemConfig {
 
       promise
         .then(() => {
-          entry.setValue('thumbUrl', thumbUrl);
+          entry.set('thumbUrl', thumbUrl);
           currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
         })
         .catch(async () => {
           if (currentThumbUrl?.startsWith('blob:')) return;
           try {
-            const file = entry.getValue('file');
+            const file = entry.get('file');
             if (!file) return;
             const blobThumbUrl = await generateThumb(file, size);
-            entry.setValue('thumbUrl', blobThumbUrl);
+            entry.set('thumbUrl', blobThumbUrl);
           } catch (err) {
             this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
             const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-            entry.setValue('thumbUrl', fileCssBg(color));
+            entry.set('thumbUrl', fileCssBg(color));
           }
         });
 
       return;
     }
 
-    if (entry.getValue('thumbUrl')) {
+    if (entry.get('thumbUrl')) {
       return;
     }
 
-    const file = entry.getValue('file');
+    const file = entry.get('file');
     if (file?.type.includes('image')) {
       try {
         const thumbUrl = await generateThumb(file, size);
-        entry.setValue('thumbUrl', thumbUrl);
+        entry.set('thumbUrl', thumbUrl);
       } catch (err) {
         this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
         const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-        entry.setValue('thumbUrl', fileCssBg(color));
+        entry.set('thumbUrl', fileCssBg(color));
       }
     } else {
       const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-      entry.setValue('thumbUrl', fileCssBg(color));
+      entry.set('thumbUrl', fileCssBg(color));
     }
   });
 

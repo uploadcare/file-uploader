@@ -199,14 +199,14 @@ describe('UploadEventsController', () => {
       const entry = t.collection.read(id) as Entry;
       const ac = new AbortController();
       const abortSpy = vi.spyOn(ac, 'abort');
-      entry.setValue('abortController', ac);
+      entry.set('abortController', ac);
       const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
       t.fireCollection([], new Set(), new Set([entry]));
 
       expect(t.deps.validation.cleanupValidationForEntry).toHaveBeenCalledWith(entry);
       expect(abortSpy).toHaveBeenCalled();
-      expect(entry.getValue('isRemoved')).toBe(true);
+      expect(entry.get('isRemoved')).toBe(true);
       expect(revokeSpy).toHaveBeenCalledWith('blob:xyz');
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.FILE_REMOVED, expect.objectContaining({ internalId: id }));
     });
@@ -441,7 +441,7 @@ describe('UploadEventsController', () => {
     it('ignores a non-numeric uploadProgress when averaging', () => {
       const t = setup();
       const id = t.collection.add({ isUploading: true });
-      t.collection.read(id)?.setValue('uploadProgress', 'oops' as never);
+      t.collection.read(id)?.set('uploadProgress', 'oops' as never);
       t.uploadBatchSet.add(id);
 
       expect(() => t.fireProperties({ uploadProgress: new Set([id]) })).not.toThrow();

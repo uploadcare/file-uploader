@@ -109,7 +109,7 @@ export class FileItem extends FileItemConfig {
     // scope (teardown race), where the throwing `use()` would be unsafe.
     const collection = this._collection;
     if (this.uid && collection?.hasItem(this.uid)) {
-      this.entry?.getValue('abortController')?.abort();
+      this.entry?.get('abortController')?.abort();
       collection.remove(this.uid);
     }
   };
@@ -122,17 +122,17 @@ export class FileItem extends FileItemConfig {
 
     let state: FileItemStateValue = FileItemState.IDLE;
 
-    if (entry.getValue('errors').length > 0) {
+    if (entry.get('errors').length > 0) {
       state = FileItemState.FAILED;
-    } else if (entry.getValue('isQueuedForUploading')) {
+    } else if (entry.get('isQueuedForUploading')) {
       state = FileItemState.QUEUED_UPLOADING;
-    } else if (entry.getValue('isQueuedForValidation')) {
+    } else if (entry.get('isQueuedForValidation')) {
       state = FileItemState.QUEUED_VALIDATION;
-    } else if (entry.getValue('isValidationPending')) {
+    } else if (entry.get('isValidationPending')) {
       state = FileItemState.VALIDATION;
-    } else if (entry.getValue('isUploading')) {
+    } else if (entry.get('isUploading')) {
       state = FileItemState.UPLOADING;
-    } else if (entry.getValue('fileInfo')) {
+    } else if (entry.get('fileInfo')) {
       state = FileItemState.FINISHED;
     }
 
@@ -150,13 +150,13 @@ export class FileItem extends FileItemConfig {
       if (!this.useOrNull(LocaleController)) {
         return;
       }
-      const errorText = entry.getValue('errors')?.[0]?.message ?? '';
-      const source = entry.getValue('source');
-      const externalUrl = entry.getValue('externalUrl');
+      const errorText = entry.get('errors')?.[0]?.message ?? '';
+      const source = entry.get('source');
+      const externalUrl = entry.get('externalUrl');
       const isFinished = state === FileItemState.FINISHED;
       const isQueuedForValidation = state === FileItemState.QUEUED_VALIDATION;
       const isValidationPending = state === FileItemState.VALIDATION;
-      const fileName = entry.getValue('fileName');
+      const fileName = entry.get('fileName');
       let hint = '';
 
       if (errorText) {
@@ -167,7 +167,7 @@ export class FileItem extends FileItemConfig {
 
       this._hint = hint;
       this._errorText = errorText;
-      this._progressValue = isQueuedForValidation || isValidationPending ? 0 : entry.getValue('uploadProgress');
+      this._progressValue = isQueuedForValidation || isValidationPending ? 0 : entry.get('uploadProgress');
       this._ariaLabelStatusFile = fileName
         ? this.l10n('a11y-file-item-status', {
             fileName,
@@ -243,12 +243,12 @@ export class FileItem extends FileItemConfig {
     });
 
     this.subEntry('fileName', (name) => {
-      this._itemName = name || entry.getValue('externalUrl') || this.l10n('file-no-name');
+      this._itemName = name || entry.get('externalUrl') || this.l10n('file-no-name');
       this._debouncedCalculateState();
     });
 
     this.subEntry('externalUrl', (externalUrl) => {
-      this._itemName = entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
+      this._itemName = entry.get('fileName') || externalUrl || this.l10n('file-no-name');
     });
 
     this.subEntry('fileInfo', () => {

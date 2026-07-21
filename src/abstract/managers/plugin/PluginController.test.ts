@@ -251,7 +251,7 @@ describe('PluginController', () => {
   describe('runOnAddHooks', () => {
     const makeEntry = (file: File | null): UploadEntryTypedData => {
       const entry = new TypedData<UploadEntryData>(initialUploadEntryData);
-      if (file) entry.setValue('file', file);
+      if (file) entry.set('file', file);
       return entry;
     };
 
@@ -268,11 +268,11 @@ describe('PluginController', () => {
 
       await t.controller.runOnAddHooks(entry);
 
-      expect(entry.getValue('file')).toBe(newFile);
-      expect(entry.getValue('fileName')).toBe('new.png');
-      expect(entry.getValue('mimeType')).toBe('image/png');
-      expect(entry.getValue('isImage')).toBe(true);
-      expect(entry.getValue('fileSize')).toBe(newFile.size);
+      expect(entry.get('file')).toBe(newFile);
+      expect(entry.get('fileName')).toBe('new.png');
+      expect(entry.get('mimeType')).toBe('image/png');
+      expect(entry.get('isImage')).toBe(true);
+      expect(entry.get('fileSize')).toBe(newFile.size);
     });
 
     it('no-ops when the entry has no file', async () => {
@@ -289,11 +289,11 @@ describe('PluginController', () => {
       const t = setup();
       await t.sync([sourcePlugin('a')]);
       const entry = makeEntry(new File(['x'], 'a.txt'));
-      const original = entry.getValue('file');
+      const original = entry.get('file');
 
       await t.controller.runOnAddHooks(entry);
 
-      expect(entry.getValue('file')).toBe(original);
+      expect(entry.get('file')).toBe(original);
     });
 
     it('isolates a throwing hook and keeps the original file', async () => {
@@ -310,7 +310,7 @@ describe('PluginController', () => {
       await t.controller.runOnAddHooks(entry);
 
       expect(warn).toHaveBeenCalledWith('[uc][plugin-manager]', expect.stringContaining('onAdd'), expect.any(Error));
-      expect(entry.getValue('file')).toBe(original);
+      expect(entry.get('file')).toBe(original);
     });
 
     it('applies a Blob-returning hook without touching fileName', async () => {
@@ -318,13 +318,13 @@ describe('PluginController', () => {
       const newBlob = new Blob(['data'], { type: 'text/plain' });
       await t.sync([withOnAddHook(() => ({ file: newBlob }))]);
       const entry = makeEntry(new File(['x'], 'a.txt'));
-      entry.setValue('fileName', 'original.txt');
+      entry.set('fileName', 'original.txt');
 
       await t.controller.runOnAddHooks(entry);
 
-      expect(entry.getValue('file')).toBe(newBlob);
-      expect(entry.getValue('fileName')).toBe('original.txt'); // unchanged — a Blob has no name
-      expect(entry.getValue('mimeType')).toBe('text/plain');
+      expect(entry.get('file')).toBe(newBlob);
+      expect(entry.get('fileName')).toBe('original.txt'); // unchanged — a Blob has no name
+      expect(entry.get('mimeType')).toBe('text/plain');
     });
 
     it('skips a hook that exceeds its timeout', async () => {

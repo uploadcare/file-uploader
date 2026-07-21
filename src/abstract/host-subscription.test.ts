@@ -46,6 +46,35 @@ describe('Listeners', () => {
     warn.mockRestore();
   });
 
+  it('isolates a listener that throws on the immediate fire', () => {
+    const listeners = new Listeners();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const bad = () => {
+      throw new Error('boom');
+    };
+    const good = vi.fn();
+
+    let unsubscribe: (() => void) | undefined;
+    expect(() => {
+      unsubscribe = listeners.observe(() => 1, bad, { immediate: true });
+    }).not.toThrow();
+    expect(warn).toHaveBeenCalled();
+
+    // The later-notify path still works after an immediate-fire throw.
+    let value = 2;
+    listeners.observe(
+      () => value,
+      () => good(),
+      { immediate: false },
+    );
+    value = 3;
+    listeners.notify();
+    expect(good).toHaveBeenCalledTimes(1);
+
+    unsubscribe?.();
+    warn.mockRestore();
+  });
+
   it('clear() removes all listeners', () => {
     const listeners = new Listeners();
     const a = vi.fn();

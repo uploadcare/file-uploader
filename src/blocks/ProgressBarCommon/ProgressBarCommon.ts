@@ -26,7 +26,7 @@ export class ProgressBarCommon extends ChildBlock {
 
   /** Recompute `_visible` from current collection membership + `isUploading` state. */
   private _recomputeVisible(collection: UploadCollectionController): void {
-    this._visible = collection.items().some((id) => collection.read(id)?.getValue('isUploading') ?? false);
+    this._visible = collection.items().some((id) => collection.read(id)?.get('isUploading') ?? false);
   }
 
   // The uploader-scope `UploadCollectionController` resolves only once the scope

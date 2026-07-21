@@ -24,16 +24,13 @@ export function applyInitialCrop(collection: UploadCollectionController, cropPre
   const [aspectRatioPreset] = parsed;
   const entries = collection
     .findItems(
-      (entry) =>
-        !!entry.getValue('fileInfo') &&
-        entry.getValue('isImage') &&
-        !entry.getValue('cdnUrlModifiers')?.includes('/crop/'),
+      (entry) => !!entry.get('fileInfo') && entry.get('isImage') && !entry.get('cdnUrlModifiers')?.includes('/crop/'),
     )
     .map((id) => collection.read(id))
     .filter(Boolean);
 
   for (const entry of entries) {
-    const fileInfo = entry.getValue('fileInfo');
+    const fileInfo = entry.get('fileInfo');
     if (!fileInfo || !fileInfo.imageInfo) {
       log.warn('Failed to get image info for entry', entry.uid);
       continue;
@@ -49,12 +46,12 @@ export function applyInitialCrop(collection: UploadCollectionController, cropPre
 
     const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
     const cdnUrlModifiers = createCdnUrlModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`, 'preview');
-    const cdnUrl = entry.getValue('cdnUrl');
+    const cdnUrl = entry.get('cdnUrl');
     if (!cdnUrl) {
       log.warn('Failed to get cdnUrl for entry', entry.uid);
       continue;
     }
-    entry.setMultipleValues({
+    entry.setMany({
       cdnUrlModifiers,
       cdnUrl: createCdnUrl(cdnUrl, cdnUrlModifiers),
     });
