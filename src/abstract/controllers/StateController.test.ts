@@ -128,4 +128,13 @@ describe('StateController ReactiveStore surface', () => {
     s.setMany({ a: 1, b: 2 });
     expect(listener).not.toHaveBeenCalled();
   });
+
+  it('setMany writes an explicit undefined (clears the key), consistent with set', () => {
+    const s = new StateController<{ a?: number }>({ a: 5 });
+    const seen: (number | undefined)[] = [];
+    s.observe('a', (v) => seen.push(v));
+    s.setMany({ a: undefined });
+    expect(s.get('a')).toBeUndefined();
+    expect(seen).toEqual([undefined]);
+  });
 });

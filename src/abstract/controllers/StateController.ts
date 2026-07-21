@@ -47,10 +47,10 @@ export class StateController<TState extends object> implements ReactiveStore<TSt
   /** Sets several keys at once; per-key `Object.is` dedup, ONE coalesced notify. */
   public setMany(patch: Partial<TState>): void {
     let changed = false;
+    // Consistent with `set`: an explicit `undefined` is written (clears the
+    // key), not skipped, so optional state can be cleared through the batch API.
     for (const key of Object.keys(patch) as (keyof TState)[]) {
-      if (!Object.hasOwn(patch, key)) continue;
-      const value = patch[key];
-      if (value === undefined) continue;
+      const value = patch[key] as TState[keyof TState];
       if (Object.is(this._state[key], value)) continue;
       this._state[key] = value;
       changed = true;
