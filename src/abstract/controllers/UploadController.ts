@@ -50,6 +50,12 @@ export class UploadController {
   private _queue = new Queue(1);
   readonly #disposables = new Disposables();
 
+  // Uids in the current upload batch — the set most recently handed to
+  // `uploadEntries` (i.e. a `uploadAll`), minus entries that have since been
+  // removed. It is the denominator for common-progress; kept here (the upload
+  // owner) rather than as a replaceable-`Set` state key.
+  readonly #activeBatch = new Set<Uid>();
+
   /**
    * Container lifecycle hook — runs after the container has tagged + cached this
    * instance, so `@inject` fields resolve (they must NOT be read in the zero-arg
@@ -64,6 +70,40 @@ export class UploadController {
         this._queue.concurrency = this._concurrencyFromConfig();
       }),
     );
+    // Drop removed entries from the active batch so common-progress doesn't
+    // average over uids that no longer exist.
+    this.#disposables.add(
+      this._collection.observeCollection((_list, _added, removed) => {
+        for (const entry of removed) {
+          this.#activeBatch.delete(entry.uid);
+        }
+      }),
+    );
+  }
+
+  /**
+   * Upload the given entries: the direct successor to the v1 `*uploadTrigger`
+   * broadcast. Each uid is added to the active batch and uploaded via
+   * `uploadEntry` (which is precondition-guarded + idempotent). Unlike the old
+   * per-`<uc-file-item>` trigger, this doesn't depend on any item being rendered.
+   *
+   * The `uploadEntry` call is deferred a macrotask (as the v1 per-item
+   * `setTimeout(() => _upload())` was): a file added in the same tick kicks off
+   * async validation that sets `isValidationPending`, and `uploadEntry` bails on
+   * a pending entry — so we let that settle first rather than racing it.
+   */
+  public uploadEntries(uids: Uid[]): void {
+    for (const uid of uids) {
+      this.#activeBatch.add(uid);
+      setTimeout(() => {
+        void this.uploadEntry(uid);
+      });
+    }
+  }
+
+  /** Uids in the current upload batch that still exist — the common-progress set. */
+  public get uploadBatch(): Uid[] {
+    return [...this.#activeBatch].filter((uid) => !!this._collection.read(uid));
   }
 
   private _concurrencyFromConfig(): number {

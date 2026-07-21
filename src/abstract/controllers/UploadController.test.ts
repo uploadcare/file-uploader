@@ -232,6 +232,34 @@ describe('UploadController', () => {
     });
   });
 
+  describe('uploadEntries / active batch', () => {
+    it('uploads every uid and exposes them as the active batch', async () => {
+      vi.useFakeTimers();
+      const { controller, collection } = setup({ cfg: { multiple: true, multipleMax: 0 } });
+      const a = collection.add({ file: new File(['a'], 'a.txt') });
+      const b = collection.add({ file: new File(['b'], 'b.txt') });
+
+      controller.uploadEntries([a, b]);
+
+      // The batch is populated synchronously; the uploads are deferred a macrotask.
+      expect([...controller.uploadBatch].sort()).toEqual([a, b].sort());
+      await vi.runAllTimersAsync();
+      expect(mockUploadFile).toHaveBeenCalledTimes(2);
+    });
+
+    it('excludes removed entries from the active batch', () => {
+      // Fake timers so the deferred `uploadEntry` calls don't leak into later tests.
+      vi.useFakeTimers();
+      const { controller, collection } = setup({ cfg: { multiple: true, multipleMax: 0 } });
+      const a = collection.add({ file: new File(['a'], 'a.txt') });
+      const b = collection.add({ file: new File(['b'], 'b.txt') });
+      controller.uploadEntries([a, b]);
+
+      collection.remove(a);
+      expect(controller.uploadBatch).toEqual([b]);
+    });
+  });
+
   describe('progress', () => {
     it('writes uploadProgress when the progress event is computable', async () => {
       mockUploadFile.mockImplementation(async (_input, options) => {

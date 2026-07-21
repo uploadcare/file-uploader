@@ -34,10 +34,10 @@ class TestChildBlock extends ChildBlock {
     }
     this.readyCount += 1;
     if (this.throwOnRelease) {
-      this.trackSub(() => {
+      this.addDisposer(() => {
         throw new Error('boom');
       });
-      this.trackSub(() => {
+      this.addDisposer(() => {
         this.cleanupRanAfterThrow = true;
       });
     }
@@ -145,27 +145,6 @@ describe('ChildBlock', () => {
     const config = page.getByTestId('uc-config').query()! as Config;
     config.pubkey = 'otherkey';
     await expect.poll(() => child.querySelector('.pk')?.textContent).toBe('otherkey');
-  });
-
-  it('subConfigValue fires immediately and dedupes per key', async () => {
-    const ctxName = getCtxName();
-    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
-    const child = append('test-child-block', { 'ctx-name': ctxName });
-    await expect.poll(() => child.readyCount).toBe(1);
-
-    const seen: unknown[] = [];
-    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected test helper
-    (child as any).subConfigValue('multiple', (v: boolean) => seen.push(v));
-    expect(seen).toEqual([true]);
-
-    const config = page.getByTestId('uc-config').query()! as Config;
-    config.pubkey = 'unrelated-change';
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    expect(seen).toEqual([true]); // unrelated key change must not re-fire
-
-    config.multiple = false;
-    await expect.poll(() => seen.length).toBe(2);
-    expect(seen).toEqual([true, false]);
   });
 
   it('reflects data-testid under testMode and removes it when off', async () => {
@@ -328,10 +307,10 @@ describe('ChildBlock', () => {
     }
   });
 
-  it('throws a descriptive error when a controller is resolved via use() before adoption', () => {
+  it('throws a descriptive error when the container is read before adoption', () => {
     const child = document.createElement('test-child-block');
-    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected method
-    expect(() => (child as any).use(ConfigController)).toThrowError(/test-child-block/);
+    // biome-ignore lint/suspicious/noExplicitAny: reaching into a protected getter
+    expect(() => (child as any).container).toThrowError(/test-child-block/);
   });
 
   it('l10n resolves dictionary keys once the locale is loaded', async () => {

@@ -12,6 +12,8 @@ import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { effect } from '../../lit/effect';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { MessageBridge } from './MessageBridge';
 import { queryString } from './query-string';
 import type { InputMessageMap } from './types';
@@ -59,9 +61,6 @@ export class ExternalSource extends ChildBlock {
   private _couldDeselectAll = false;
 
   @state()
-  private _showSelectionStatus = false;
-
-  @state()
   private _showDoneBtn = false;
 
   @state()
@@ -82,6 +81,15 @@ export class ExternalSource extends ChildBlock {
     });
   }
 
+  // Derived: the selection-status box shows only in multiple mode once the
+  // iframe reports a non-empty selection. A pure function of config `multiple`
+  // (tracked) + the latest selection summary — same reactive coupling as
+  // `_counterText` (every `_latestSelectionSummary` write rides with sibling
+  // `@state` writes that re-render).
+  private get _showSelectionStatus(): boolean {
+    return this._config.getTracked('multiple') && (this._latestSelectionSummary?.total ?? 0) > 0;
+  }
+
   protected override controllerReady(): void {
     // The iframe container ref only exists after the first render, so the
     // initial mount is deferred a tick (v1 relied on its immediate-fire
@@ -100,43 +108,50 @@ export class ExternalSource extends ChildBlock {
       this._unmountIframe();
       this._mountIframe();
     });
-    this.trackSub(
-      this._router.subscribe(() => {
-        const params = this._router.params;
-        if (params === this._lastActivityParams) {
+  }
+
+  // Remount the iframe when the activity params change.
+  @subscription()
+  protected _wireParamsRemount(): Unsubscribe {
+    return this._router.subscribe(() => {
+      const params = this._router.params;
+      if (params === this._lastActivityParams) {
+        return;
+      }
+      this._lastActivityParams = params;
+      setTimeout(() => {
+        // Defer a tick before reacting to a params change: the router updates
+        // params and the current activity together in one transition, so a
+        // params change that coincides with navigating *away* from this activity
+        // would otherwise remount the iframe just as this block is being torn
+        // down. Waiting a tick lets that disconnect settle so we can bail here.
+        if (!this.isConnected) {
           return;
         }
-        this._lastActivityParams = params;
-        setTimeout(() => {
-          // Defer a tick before reacting to a params change: the router updates
-          // params and the current activity together in one transition, so a
-          // params change that coincides with navigating *away* from this activity
-          // would otherwise remount the iframe just as this block is being torn
-          // down. Waiting a tick lets that disconnect settle so we can bail here.
-          if (!this.isConnected) {
-            return;
-          }
-          this._unmountIframe();
-          this._mountIframe();
-        });
-      }),
-    );
-    // These stay on `subConfigValue` (which reads the same ConfigController):
-    // they are side-effecting subscriptions, not pure render reads — `multiple`
-    // seeds a `_showSelectionStatus` that the iframe's selection messages then
-    // overwrite, and `localeName`/`externalSourcesEmbedCss` `postMessage` into
-    // the iframe. A tracked `render()` read cannot express either, so they are
-    // not convertible to `getTracked` here (step 8).
-    this.subConfigValue('multiple', (multiple) => {
-      this._showSelectionStatus = multiple;
+        this._unmountIframe();
+        this._mountIframe();
+      });
     });
+  }
 
-    this.subConfigValue('localeName', () => {
-      this._setupL10n();
+  // Two side-effecting config reactions, expressed as `@effect` methods: each
+  // re-runs when the config key it reads via `getTracked` changes (auto-tracked,
+  // auto-disposed on release), posting `localeName` / `externalSourcesEmbedCss`
+  // into the iframe. `_handleIframeLoad` also calls them directly to push the
+  // current values to a freshly-mounted iframe.
+  @effect()
+  protected _syncLocale(): void {
+    this._messageBridge?.send({
+      type: 'set-locale-definition',
+      localeDefinition: this._config.getTracked('localeName'),
     });
+  }
 
-    this.subConfigValue('externalSourcesEmbedCss', (embedCss) => {
-      this._applyEmbedCss(embedCss);
+  @effect()
+  protected _syncEmbedCss(): void {
+    this._messageBridge?.send({
+      type: 'set-embed-css',
+      css: this._config.getTracked('externalSourcesEmbedCss'),
     });
   }
 
@@ -173,7 +188,6 @@ export class ExternalSource extends ChildBlock {
     this._doneBtnTextClass = message.isReady ? '' : 'uc-hidden';
     this._isSelectionReady = message.isReady;
     this._isDoneBtnEnabled = message.isReady && message.selectedFiles.length > 0;
-    this._showSelectionStatus = message.isMultipleMode && message.total > 0;
     this._couldSelectAll = message.selectedCount < message.total;
     this._couldDeselectAll = message.selectedCount === message.total;
     this._selectedList = message.selectedFiles ?? [];
@@ -181,29 +195,15 @@ export class ExternalSource extends ChildBlock {
   }
 
   private _handleIframeLoad(): void {
-    this._applyEmbedCss(this._config.get('externalSourcesEmbedCss'));
+    this._syncEmbedCss();
     this._applyTheme();
-    this._setupL10n();
+    this._syncLocale();
   }
 
   private _applyTheme(): void {
     this._messageBridge?.send({
       type: 'set-theme-definition',
       theme: buildThemeDefinition(this),
-    });
-  }
-
-  private _applyEmbedCss(css: string): void {
-    this._messageBridge?.send({
-      type: 'set-embed-css',
-      css,
-    });
-  }
-
-  private _setupL10n(): void {
-    this._messageBridge?.send({
-      type: 'set-locale-definition',
-      localeDefinition: this._config.get('localeName'),
     });
   }
 
@@ -312,14 +312,16 @@ export class ExternalSource extends ChildBlock {
     this._isDoneBtnEnabled = false;
     this._couldSelectAll = false;
     this._couldDeselectAll = false;
-    this._showSelectionStatus = false;
     this._showDoneBtn = false;
     this._doneBtnTextClass = 'uc-hidden';
     this._latestSelectionSummary = null;
   }
 
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
+  // The iframe + `MessageBridge` mount is adoption-scoped (`controllerReady` and
+  // the `@subscription _wireParamsRemount`), so tear it down in `controllerReleased`
+  // — invoked on disconnect (via the base `disconnectedCallback` →
+  // `_releaseController`) and additionally on ctx release/re-adoption.
+  protected override controllerReleased(): void {
     this._unmountIframe();
   }
 

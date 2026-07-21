@@ -41,17 +41,17 @@ vi.mock('../localeRegistry', async (importOriginal) => {
 describe('LocaleManager.activate', () => {
   it('is idempotent: a second activate() does not re-register the config subscriptions', () => {
     const { config, manager } = setup();
-    const subscribeSpy = vi.spyOn(config, 'subscribe');
+    const observeSpy = vi.spyOn(config, 'observe');
 
     manager.activate(null);
-    const afterFirst = subscribeSpy.mock.calls.length;
-    // localeName + localeDefinitionOverride — exactly two subscriptions wired.
+    const afterFirst = observeSpy.mock.calls.length;
+    // localeName + localeDefinitionOverride — exactly two atomic `observe`s wired.
     expect(afterFirst).toBe(2);
 
     manager.activate(null);
     manager.activate(null);
 
-    expect(subscribeSpy).toHaveBeenCalledTimes(afterFirst);
+    expect(observeSpy).toHaveBeenCalledTimes(afterFirst);
   });
 
   it('is idempotent: a second activate() does not re-seed the en dictionary over a value set since', () => {

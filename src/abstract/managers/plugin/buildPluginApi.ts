@@ -53,16 +53,10 @@ export function buildPluginApi(
       configName: TKey,
       callback: (value: (ConfigType & CustomConfig)[TKey]) => void,
     ): (() => void) => {
-      // Immediate fire + per-key `Object.is` dedup — the same semantics the
-      // `ctx.sub('*cfg/<name>', …)` facade subscription gave.
-      let last = config.getCustom<(ConfigType & CustomConfig)[TKey]>(configName);
-      callback(last);
-      const unsub = config.subscribe(() => {
-        const next = config.getCustom<(ConfigType & CustomConfig)[TKey]>(configName);
-        if (!Object.is(next, last)) {
-          last = next;
-          callback(next);
-        }
+      // Immediate fire + per-key `Object.is` dedup via the atomic `observeCustom`
+      // — the same semantics the `ctx.sub('*cfg/<name>', …)` facade gave.
+      const unsub = config.observeCustom<(ConfigType & CustomConfig)[TKey]>(configName, callback, {
+        immediate: true,
       });
       configSubscriptions.push(unsub);
       return unsub;

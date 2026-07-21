@@ -1,17 +1,15 @@
 import type { UploadcareGroup } from '@uploadcare/upload-client';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputErrorCollection } from '../../types';
-import { SignalMap } from '../di/SignalMap';
+import { type ObserveOptions, SignalMap } from '../di/SignalMap';
 
 /**
- * The six derived UI-state keys the upload stack publishes and the blocks read
+ * The derived UI-state keys the upload stack publishes and the blocks read
  * every render — `*uploadList`, `*commonProgress`, `*collectionState`,
- * `*collectionErrors`, `*groupInfo`, `*uploadTrigger`. In v1 these were orphan
- * `*`-keys in the per-ctx store map with no controller owner; this is
- * their signal-backed owner, routed through the v1 ctx facade so the existing
- * writers (the 9 `stateBridges`, `UploaderPublicApi.uploadAll`) and readers
- * (`UploadList`, `ProgressBarCommon`, `DynamicBtn`, `buildOutputCollectionState`)
- * keep working unchanged.
+ * `*collectionErrors`, `*groupInfo`. In v1 these were orphan `*`-keys in the
+ * per-ctx store map with no controller owner; this is their signal-backed owner.
+ * (The former `*uploadTrigger` key is gone — `uploadAll` now uploads through
+ * `UploadController.uploadEntries` directly, not a broadcast state key.)
  */
 export type CollectionState = {
   uploadList: { uid: Uid }[];
@@ -19,7 +17,6 @@ export type CollectionState = {
   collectionState: OutputCollectionState | null;
   collectionErrors: OutputErrorCollection[];
   groupInfo: UploadcareGroup | null;
-  uploadTrigger: Set<Uid>;
 };
 
 /**
@@ -39,7 +36,7 @@ export type CollectionState = {
  *
  * The initial values are built fresh per instance (in the field initializer, run
  * once per construction) so the mutable seeds — the `uploadList`/`collectionErrors`
- * arrays and the live `uploadTrigger` `Set` — are never shared across ctxs.
+ * arrays — are never shared across ctxs.
  */
 export class CollectionStateController {
   #state = new SignalMap<CollectionState>({
@@ -48,7 +45,6 @@ export class CollectionStateController {
     collectionState: null,
     collectionErrors: [],
     groupInfo: null,
-    uploadTrigger: new Set<Uid>(),
   });
 
   /** Every key is seeded at construction, so the value is always present. */
@@ -73,7 +69,7 @@ export class CollectionStateController {
     return this.#state.signal(key).get() as CollectionState[K];
   }
 
-  /** `Object.is` dedup — replacing the `uploadTrigger` `Set` fires; mutating it in place does not (v1 parity). */
+  /** `Object.is` dedup — a replaced reference fires; mutating a held value in place does not (v1 parity). */
   public set<K extends keyof CollectionState>(key: K, value: CollectionState[K]): void {
     this.#state.set(key, value);
   }
@@ -81,6 +77,20 @@ export class CollectionStateController {
   /** Coarse subscribe — fires on any collection-state change, not per-key. */
   public subscribe(listener: () => void): () => void {
     return this.#state.subscribe(listener);
+  }
+
+  /**
+   * Atomic per-key subscription: fires only when THIS key changes (`Object.is`
+   * dedup — a replaced `Set`/object fires, an in-place mutation does not), not on
+   * every collection-state write. Pass `{ immediate: true }` to also fire once
+   * with the current value on subscribe. Mirrors `ConfigController.observe`.
+   */
+  public observe<K extends keyof CollectionState>(
+    key: K,
+    listener: (value: CollectionState[K]) => void,
+    options?: ObserveOptions,
+  ): () => void {
+    return this.#state.observe(key, listener as (value: CollectionState[K] | undefined) => void, options);
   }
 
   public destroy(): void {

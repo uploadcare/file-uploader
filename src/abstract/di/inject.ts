@@ -24,3 +24,27 @@ export function inject<T>(token: Token<T>) {
     });
   };
 }
+
+/**
+ * Null-tolerant sibling of {@link inject}: the getter returns `null` instead of
+ * throwing when the host has no container adopted — the field form of the old
+ * `useOrNull(token)`. Read it with `?.`.
+ *
+ * Use it for a dependency that can legitimately be absent where it's read:
+ * a token whose value is only bound once the uploader scope attaches (so it may
+ * be unresolved at adoption), or a read from a context that can outlive adoption
+ * (a trailing throttle/debounce tick, a router-guard predicate invoked during a
+ * teardown-time navigation). For a read that is genuinely guaranteed-adopted,
+ * prefer {@link inject} so an early/late access surfaces as a bug.
+ */
+export function injectOrNull<T>(token: Token<T>) {
+  return (target: object, key: string): void => {
+    Object.defineProperty(target, key, {
+      get(this: { [CONTAINER]?: ControllerContainer }): T | null {
+        return this[CONTAINER]?.get(token) ?? null;
+      },
+      enumerable: false,
+      configurable: true,
+    });
+  };
+}

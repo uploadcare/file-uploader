@@ -5,6 +5,7 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { inject } from '../../abstract/di/inject';
 import { PluginController } from '../../abstract/managers/plugin';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { renderIconSvg } from './renderIconSvg';
 import './icon.css';
 
@@ -28,14 +29,13 @@ export class Icon extends ChildBlock {
     this.setAttribute('aria-hidden', 'true');
   }
 
-  protected override controllerReady(): void {
-    this.trackSub(
-      this.container.whenController(PluginController, (pluginManager) => {
-        this._pluginManager = pluginManager;
-        this.trackSub(pluginManager.onPluginsChange(() => this.requestUpdate()));
-        this.requestUpdate();
-      }),
-    );
+  @subscription()
+  protected _wirePluginIcons(): Unsubscribe {
+    return this.container.whenController(PluginController, (pluginManager) => {
+      this._pluginManager = pluginManager;
+      this.requestUpdate();
+      return pluginManager.onPluginsChange(() => this.requestUpdate());
+    });
   }
 
   protected override controllerReleased(): void {

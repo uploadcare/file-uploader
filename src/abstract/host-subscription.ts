@@ -2,6 +2,12 @@ import { logger } from './logger';
 
 const log = logger.scope('host-subscription');
 
+/** Options for an atomic `observe` subscription. */
+export interface ObserveOptions {
+  /** Also fire the listener once with the current value on subscribe. */
+  immediate?: boolean;
+}
+
 /**
  * Generic, framework-agnostic listener set.
  *
@@ -15,6 +21,37 @@ export class Listeners {
   public subscribe(listener: () => void): () => void {
     this._set.add(listener);
     return () => this._set.delete(listener);
+  }
+
+  /**
+   * Atomic derived-value subscription over the coarse notify: filters it down to
+   * a single value produced by `select()`, invoking `listener` only when that
+   * value actually changes (`Object.is` dedup) — so callers don't hand-roll the
+   * last-value comparison. Pass `{ immediate: true }` to also fire once with the
+   * current value on subscribe. Returns an unsubscriber.
+   *
+   * This is the shared engine behind `SignalMap.observe` (select = a keyed read)
+   * and the controllers' derived observes (e.g. `RouterController.observeCurrentActivity`).
+   */
+  public observe<T>(select: () => T, listener: (value: T) => void, options?: ObserveOptions): () => void {
+    let last = select();
+    const unsubscribe = this.subscribe(() => {
+      const next = select();
+      if (!Object.is(next, last)) {
+        last = next;
+        listener(next);
+      }
+    });
+    if (options?.immediate) {
+      // Isolated: a throwing immediate listener must not prevent the
+      // subscription above (already registered) from taking effect.
+      try {
+        listener(last);
+      } catch (err) {
+        log.warn('an observe immediate listener threw', err);
+      }
+    }
+    return unsubscribe;
   }
 
   public notify(): void {

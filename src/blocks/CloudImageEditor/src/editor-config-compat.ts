@@ -75,19 +75,14 @@ function attach(
   // on / re-subscribe to a `*telemetryManager` registration as the v1 store did.
   onTelemetry?.(container.get(TelemetryManager));
 
-  // Per-key change forwarding over `ConfigController`'s coarse `subscribe`
-  // (`Object.is` dedup reproduces the v1 per-`*cfg/*`-key `ctx.sub(..., false)`:
-  // no immediate fire — the initial values already went out via `initialPatch`).
-  const unsubscribers = EDITOR_CONFIG_KEYS.map((key) => {
-    let last = config.get(key);
-    return config.subscribe(() => {
-      const next = config.get(key);
-      if (!Object.is(next, last)) {
-        last = next;
-        onConfig({ [key]: next } as Partial<EditorConfig>);
-      }
-    });
-  });
+  // Per-key change forwarding via the atomic `observe` (its `Object.is` dedup
+  // reproduces the v1 per-`*cfg/*`-key `ctx.sub(..., false)`). No `{ immediate }`:
+  // the initial values already went out via `initialPatch`.
+  const unsubscribers = EDITOR_CONFIG_KEYS.map((key) =>
+    config.observe(key, (next) => {
+      onConfig({ [key]: next } as Partial<EditorConfig>);
+    }),
+  );
 
   return () => {
     for (const unsubscribe of unsubscribers) {

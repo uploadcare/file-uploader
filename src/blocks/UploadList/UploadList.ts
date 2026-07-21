@@ -4,12 +4,12 @@ import { CollectionStateController } from '../../abstract/controllers/Collection
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { throttle } from '../../utils/throttle';
 import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './upload-list.css';
@@ -31,18 +31,18 @@ export type Summary = {
 };
 
 export class UploadList extends ActivityChildBlock {
-  // Always-bound controllers read directly become `@inject` fields:
-  // `ConfigController` (tracked `filesViewMode` host attr + imperative
-  // derived-state reads), `CollectionStateController` (tracked `uploadList` /
-  // `collectionErrors` render reads), `TelemetryManager` (add-more / clear-all
-  // action events). `RouterController` is inherited from `ActivityChildBlock`
-  // (its `protected _router` @inject field). `UploaderPublicApi` (flow actions +
-  // output-state reads) and `UploadCollectionController` (clear-all + the guard's
-  // size read) are uploader-scope-bound — read via `use()`/`useOrNull`/
-  // `whenController`, so they stay off `@inject`.
+  // Controllers become `@inject` fields (the getter re-resolves from the
+  // current container on each access, so re-adoption is safe): `ConfigController`,
+  // `CollectionStateController`, `TelemetryManager`, plus `UploaderPublicApi`
+  // (flow actions) and `UploadCollectionController` (clear-all). `RouterController`
+  // is inherited from `ActivityChildBlock`. The teardown-tolerant reads (the guard
+  // predicate + the throttled tick can fire after release, where an `@inject` read
+  // would throw) stay on `useOrNull`.
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+  @inject(UploadCollectionController) private readonly _uploadCollection!: UploadCollectionController;
 
   public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
 
@@ -98,21 +98,18 @@ export class UploadList extends ActivityChildBlock {
         },
       },
     });
-    // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
-    // token — it is container-resolved (M-god step 8a), reached via `use()`.
-    this.use(UploaderPublicApi).initFlow(true);
+    this._api.initFlow(true);
   };
 
   private _handleUpload = (): void => {
     this.emit(EventType.UPLOAD_CLICK);
-    this.use(UploaderPublicApi).uploadAll();
+    this._api.uploadAll();
     this._throttledHandleCollectionUpdate();
   };
 
   private _handleDone = (): void => {
-    const api = this.use(UploaderPublicApi);
-    this.emit(EventType.DONE_CLICK, api.getOutputCollectionState());
-    api.doneFlow();
+    this.emit(EventType.DONE_CLICK, this._api.getOutputCollectionState());
+    this._api.doneFlow();
   };
 
   private _handleCancel = (): void => {
@@ -126,24 +123,21 @@ export class UploadList extends ActivityChildBlock {
       },
     });
 
-    // `uploadCollection` is container-owned (M-god step 4); this handler runs
-    // post-adoption (user click), so `use()` is safe.
-    this.use(UploadCollectionController).clearAll();
+    this._uploadCollection.clearAll();
   };
 
   private _throttledHandleCollectionUpdate = throttle(() => {
     // A trailing tick can fire after the block is released while still connected
-    // (registry unregistration race) — read the container null-tolerantly via
-    // `useOrNull` and bail rather than throwing uncaught in the timeout
-    // (DynamicBtn precedent).
+    // (registry unregistration race) — read null-tolerantly via `useOrNull` and
+    // bail rather than throwing uncaught in the timeout (DynamicBtn precedent).
     const config = this.useOrNull(ConfigController);
     if (!this.isConnected || !config) {
       return;
     }
     this._updateUploadsState();
 
-    // The router guard (registered in controllerReady) decides whether the empty
-    // list may stay open; ask it to re-check now that the collection changed.
+    // The router guard (registered via `_guardNonEmpty`) decides whether the
+    // empty list may stay open; ask it to re-check now that the collection changed.
     // Null-tolerant (`useOrNull`): this trailing tick can fire after release.
     this.useOrNull(RouterController)?.revalidate();
 
@@ -155,11 +149,11 @@ export class UploadList extends ActivityChildBlock {
   private _updateUploadsState(): void {
     // Imperative derived-state recompute (writes the toolbar/button `@state`
     // below), not a render read — runs only from the throttled tick after its
-    // container guard, so the container is adopted and `use()` is safe. Config
-    // reads use the untracked `get()` (a re-render is driven by the throttled
-    // tick's `subConfigValue`/collection observers, not by tracking here).
+    // container guard, so the container is adopted and `@inject` reads resolve.
+    // Config reads use the untracked `get()` (a re-render is driven by the
+    // throttled tick's config-`observe`/collection observers, not by tracking here).
     const config = this._config;
-    const collectionState = this.use(UploaderPublicApi).getOutputCollectionState();
+    const collectionState = this._api.getOutputCollectionState();
     const summary: Summary = {
       total: collectionState.totalCount,
       succeed: collectionState.successCount,
@@ -221,79 +215,64 @@ export class UploadList extends ActivityChildBlock {
     return localizedText('total');
   }
 
-  protected override controllerReady(container: ControllerContainer): void {
-    super.controllerReady(container);
-
-    // Guard: the upload list may only be open while it has files (or
-    // `showEmptyList`). The router blocks navigating into it otherwise and
-    // `revalidate()` (called on collection changes) leaves it once it empties.
-    // `uploadCollection` may not have registered yet when this guard is later
-    // invoked by the router (FileItem/DynamicBtn `bag.when`/`OrNull` precedent
-    // for the adoption-reentrancy race) — read it null-tolerantly. Tracked
-    // like the other subscriptions below so teardown is uniform (release-time,
-    // not just disconnect) and the predicate itself reads the controller
-    // non-throwingly so a teardown-time navigation can't warn spuriously.
-    // The guard registration goes through `use(RouterController)` (container is
-    // adopted by `controllerReady`), but the predicate keeps null-tolerant
-    // `useOrNull` reads — it can fire during a teardown-time navigation, after
-    // the container is released, where `use()` would throw.
-    this.trackSub(
-      this._router.guard(
-        this.activityType,
-        () =>
-          (this.useOrNull(ConfigController)?.get('showEmptyList') ?? false) ||
-          (this.useOrNull(UploadCollectionController)?.size ?? 0) > 0,
-      ),
+  // Guard: the upload list may only be open while it has files (or
+  // `showEmptyList`). The router blocks navigating into it otherwise and
+  // `revalidate()` (called on collection changes) leaves it once it empties.
+  // The predicate reads null-tolerantly (`useOrNull`) — it can fire during a
+  // teardown-time navigation, after the container is released, where `use()`
+  // would throw.
+  @subscription()
+  protected _guardNonEmpty(): Unsubscribe {
+    return this._router.guard(
+      this.activityType,
+      () =>
+        (this.useOrNull(ConfigController)?.get('showEmptyList') ?? false) ||
+        (this.useOrNull(UploadCollectionController)?.size ?? 0) > 0,
     );
+  }
 
-    // Imperative derived-state triggers (kept on the v1 `subConfigValue`/`ctx.sub`
-    // path, step 8): these don't feed `render()` directly — they re-run
-    // `_updateUploadsState` (which writes the toolbar/button `@state`) on a config
-    // or group change. A tracked read can't replace them because that recompute
-    // runs outside the `SignalWatcher` update cycle, so it wouldn't auto-track.
-    this.subConfigValue('multiple', this._throttledHandleCollectionUpdate);
-    this.subConfigValue('multipleMin', this._throttledHandleCollectionUpdate);
-    this.subConfigValue('multipleMax', this._throttledHandleCollectionUpdate);
-    // `*groupInfo` is owned by `CollectionStateController` (M-god step 4).
-    // Subscribe over its coarse notify but fire only when `groupInfo` itself
-    // changes, replicating `the v1 per-key derived subscription`'s eager-init + per-key
-    // `Object.is` dedup so an unrelated collection-state write (e.g.
-    // `commonProgress`) never re-triggers this — behavior-identical to the v1
-    // `ctx.sub('*groupInfo')`.
-    const collectionState = this._collectionState;
-    let lastGroupInfo = collectionState.get('groupInfo');
-    const onGroupInfo = (groupInfo: typeof lastGroupInfo): void => {
-      if (groupInfo) {
-        this._throttledHandleCollectionUpdate();
-      }
-    };
-    onGroupInfo(lastGroupInfo);
-    this.trackSub(
-      collectionState.subscribe(() => {
-        const next = collectionState.get('groupInfo');
-        if (!Object.is(next, lastGroupInfo)) {
-          lastGroupInfo = next;
-          onGroupInfo(next);
+  // Group-size config re-runs the derived toolbar/button recompute — which
+  // writes `@state` outside `render()`, so it's a subscription, not a tracked
+  // render read. Per-key `observe` avoids re-firing on unrelated config changes;
+  // the eager `rerun()` reproduces the former `subConfigValue` init fire.
+  @subscription()
+  protected _wireGroupSizeConfig(): Unsubscribe[] {
+    const rerun = () => this._throttledHandleCollectionUpdate();
+    return [
+      this._config.observe('multiple', rerun, { immediate: true }),
+      this._config.observe('multipleMin', rerun),
+      this._config.observe('multipleMax', rerun),
+    ];
+  }
+
+  // `groupInfo` (owned by `CollectionStateController`): fire the recompute only
+  // when `groupInfo` itself changes (its atomic `observe` dedups, so an
+  // unrelated collection-state write never re-triggers it), plus an eager pass.
+  @subscription()
+  protected _wireGroupInfo(): Unsubscribe {
+    return this._collectionState.observe(
+      'groupInfo',
+      (groupInfo) => {
+        if (groupInfo) {
+          this._throttledHandleCollectionUpdate();
         }
-      }),
+      },
+      { immediate: true },
     );
+  }
 
-    // TODO: could be performance issue on many files
-    // there is no need to update buttons state on every progress tick
-    //
-    // The uploader-scope `UploadCollectionController` is resolved on the
-    // container only once the uploader/solution block attaches its scope
-    // (`ensureUploaderScope`) — go through `whenController` (fires now if
-    // resolved, else on first resolution) rather than the throwing
-    // `use(UploadCollectionController)`, and track the observer unsubscribers so
-    // release/re-adoption can't stack duplicate observers. Same
-    // now-or-when-available semantics as the v1 `bag.when('uploadCollection')`.
-    this.trackSub(
-      this.container.whenController(UploadCollectionController, (collection) => {
-        this.trackSub(collection.observeProperties(this._throttledHandleCollectionUpdate));
-        this.trackSub(collection.observeCollection(this._throttledHandleCollectionUpdate));
-      }),
-    );
+  // Recompute button state on collection changes. The uploader-scope
+  // `UploadCollectionController` resolves only once the scope attaches, so go
+  // through `whenController` (now-or-when-available); its callback returns the
+  // observers directly and `whenController`'s unsubscribe disposes them.
+  // TODO: could be a perf issue on many files — no need to update button state
+  // on every progress tick.
+  @subscription()
+  protected _wireCollectionObservers(): Unsubscribe {
+    return this.container.whenController(UploadCollectionController, (collection) => [
+      collection.observeProperties(this._throttledHandleCollectionUpdate),
+      collection.observeCollection(this._throttledHandleCollectionUpdate),
+    ]);
   }
 
   protected override willUpdate(changed: PropertyValues<this>): void {

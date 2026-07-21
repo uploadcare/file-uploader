@@ -8,6 +8,7 @@ import type { ControllerContainer } from '../../abstract/di/ControllerContainer'
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { effect } from '../../lit/effect';
 import { ensureUploaderScope } from '../../lit/ensureUploaderScope';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
@@ -26,8 +27,11 @@ export class DropArea extends ChildBlock {
   @inject(RouterController) private readonly _router!: RouterController;
   // `UploadCollectionController` and `UploaderPublicApi` are uploader-scope-bound
   // (this block attaches the scope itself in `controllerReady` via
-  // `ensureUploaderScope`); their reads run after that attach, so they stay on
-  // `use()` rather than becoming eagerly-resolving `@inject` fields.
+  // `ensureUploaderScope`); their reads run after that attach, from click/drop
+  // handlers + the drop guard that only fire while mounted (the dropzone
+  // listeners are torn down on release), so both are `@inject`.
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+  @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
 
   public declare attributesMeta: {
     single?: boolean;
@@ -77,16 +81,16 @@ export class DropArea extends ChildBlock {
   @state()
   private _isVisible = true;
 
-  private _dropTextKey = 'drop-files-here';
-
-  private _isMultiple = false;
-  private _updateDropText(): void {
+  // Derived render read: the drop-text l10n key from the `text` attribute +
+  // config `multiple`. Recomputes on either input through their native
+  // reactivity — Lit for the `text` property, `SignalWatcher` for the tracked
+  // config read — so no backing field or subscription is needed.
+  private get _dropTextKey(): string {
     const customText = this.text;
     if (typeof customText === 'string' && customText.length > 0) {
-      this._dropTextKey = customText;
-      return;
+      return customText;
     }
-    this._dropTextKey = this._isMultiple ? 'drop-files-here' : 'drop-file-here';
+    return this._config.getTracked('multiple') ? 'drop-files-here' : 'drop-file-here';
   }
 
   private _destroyDropzone: (() => void) | null = null;
@@ -101,15 +105,12 @@ export class DropArea extends ChildBlock {
       return;
     }
 
-    // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
-    // token — it is container-resolved (M-god step 8a), reached via `use()`
-    // (same for the `onItems` add-file calls below).
     if (this.initflow) {
-      this.use(UploaderPublicApi).initFlow();
+      this._api.initFlow();
       return;
     }
 
-    this.use(UploaderPublicApi).openSystemDialog();
+    this._api.openSystemDialog();
   };
   private _sourceListAllowsLocal = true;
   private _clickableListenersAttached = false;
@@ -167,8 +168,8 @@ export class DropArea extends ChildBlock {
         if (!items.length) {
           return;
         }
-        const collection = this.use(UploadCollectionController);
-        const api = this.use(UploaderPublicApi);
+        const collection = this._collection;
+        const api = this._api;
         const prevSize = collection.size;
 
         items.forEach((item) => {
@@ -190,27 +191,28 @@ export class DropArea extends ChildBlock {
     });
 
     this.updateComplete.then(() => this._setupContentWrapperDropzone());
+  }
 
-    // Kept as `subConfigValue` (side-effecting, not pure render reads): both
-    // drive imperative host/DOM state read outside `render()` — `sourceList`
-    // recomputes `_isEnabled` (consulted by the drop-handler `_shouldIgnore`/
-    // `isActive`) and toggles `this.hidden` on the host; `multiple` seeds
-    // `_dropTextKey`. `subConfigValue` reads the same `ConfigController`, so
-    // this is behavior-identical to a tracked read while staying imperative.
-    this.subConfigValue('sourceList', (value: string) => {
-      const list = stringToArray(value);
-      this._sourceListAllowsLocal = list.includes(UploadSource.LOCAL);
-      this._updateIsEnabled();
-      this._updateVisibility();
-    });
-
-    this.subConfigValue('multiple', (val) => {
-      this._isMultiple = Boolean(val);
-      this._updateDropText();
-    });
+  // `sourceList` drives imperative drop-handler/host state read outside
+  // `render()` — `_isEnabled` gates `_shouldIgnore`/`isActive`, and visibility
+  // toggles the host `.hidden` attribute — so it's an effect, not a render read.
+  // `beforeUpdate` fires it eagerly and synchronously on adoption (matching the
+  // former eager `subConfigValue` fire) so `_isEnabled` is correct before the
+  // first drop, and again whenever `sourceList` changes. (`multiple` folded into
+  // the `_dropTextKey` getter.)
+  @effect({ beforeUpdate: true })
+  protected _syncSourceList(): void {
+    const list = stringToArray(this._config.getTracked('sourceList'));
+    this._sourceListAllowsLocal = list.includes(UploadSource.LOCAL);
+    this._updateIsEnabled();
+    this._updateVisibility();
   }
 
   protected override controllerReleased(): void {
+    // Release counterpart of `controllerReady` (disconnect, or ctx release/
+    // re-adoption): drop the registry membership (added in `controllerReady`)
+    // and the dropzone bindings.
+    dropAreaRegistry.delete(this);
     this._destroyDropzone?.();
     this._destroyDropzone = null;
     this._destroyContentWrapperDropzone?.();
@@ -223,10 +225,6 @@ export class DropArea extends ChildBlock {
     if (changedProperties.has('disabled')) {
       this._updateIsEnabled();
       this._updateVisibility();
-    }
-
-    if (changedProperties.has('text')) {
-      this._updateDropText();
     }
   }
 
@@ -264,7 +262,7 @@ export class DropArea extends ChildBlock {
     // resolved here via `use()` (this path runs only after adoption).
     const isMultiple = this._config.get('multiple');
     const multipleMax = this._config.get('multipleMax');
-    const currentFilesCount = this.use(UploadCollectionController).size;
+    const currentFilesCount = this._collection.size;
 
     if (isMultiple && multipleMax && currentFilesCount >= multipleMax) {
       return false;
@@ -335,12 +333,11 @@ export class DropArea extends ChildBlock {
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    dropAreaRegistry.delete(this);
-
-    this._destroyDropzone?.();
-    this._destroyDropzone = null;
-    this._destroyContentWrapperDropzone?.();
-    this._destroyContentWrapperDropzone = null;
+    // Registry membership + dropzone bindings are torn down by `controllerReleased`
+    // (which `super.disconnectedCallback()` → `_releaseController` invokes). Only
+    // the clickable host listeners are handled here: they're toggled by the
+    // `clickable` property via `updated()` (DOM lifecycle, not adoption), so their
+    // removal + reconnect-guard flag reset stays on the DOM disconnect.
     if (this._clickableListenersAttached) {
       this.removeEventListener('keydown', this._handleAreaInteraction);
       this.removeEventListener('click', this._handleAreaInteraction);
