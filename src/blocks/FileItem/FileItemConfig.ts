@@ -53,6 +53,10 @@ export class FileItemConfig extends ChildBlock {
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this._entrySubs = new Set<EntrySubscription>();
+    // Unsubscribe on disconnect — the previous `= new Set()` dropped the
+    // subscription refs WITHOUT calling them, leaking `Listeners` callbacks that
+    // kept running `select()` on every later entry write until the entry's
+    // deferred destroy (~10s). `reset()` invokes each unsubscribe first.
+    this.reset();
   }
 }

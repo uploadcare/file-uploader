@@ -122,6 +122,21 @@ describe('FileItem (M-god step 6b-6 migration)', () => {
   // `UploadController.uploadEntries` directly. See UploaderPublicApi /
   // UploadController specs.)
 
+  it('single-focus: clicking an item focuses it and unfocuses the previously-focused one', async () => {
+    const ctxName = freshCtxName();
+    ensureUploaderCtx(ctxName);
+    const a = await mount(ctxName);
+    const b = await mount(ctxName);
+
+    a.el.click();
+    expect(a.el.hasAttribute('focused')).toBe(true);
+    expect(b.el.hasAttribute('focused')).toBe(false);
+
+    b.el.click();
+    expect(b.el.hasAttribute('focused')).toBe(true);
+    expect(a.el.hasAttribute('focused')).toBe(false); // previous focus dropped — O(1), no full sweep
+  });
+
   it('wires the plugin manager via whenController once the PluginController resolves, and unsubscribes on disconnect', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
