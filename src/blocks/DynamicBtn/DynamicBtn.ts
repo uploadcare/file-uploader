@@ -10,6 +10,7 @@ import type { ControllerContainer } from '../../abstract/di/ControllerContainer'
 import { inject, injectOrNull } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { throttled } from '../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
 import type { Uid } from '../../lit/Uid';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
@@ -20,7 +21,6 @@ import './dynamic-btn.css';
 import './dynamic-btn-mode.css';
 
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types/exported';
-import { throttle } from '../../utils/throttle';
 import '../Thumb/Thumb';
 import { classMap } from 'lit/directives/class-map.js';
 
@@ -162,17 +162,19 @@ export class DynamicBtn extends ChildBlock {
     return !this.isIdle && this.hasCollectionEntries;
   }
 
-  private _throttledHandleCollectionUpdate = throttle(() => {
-    if (!this.isConnected) {
-      return;
-    }
+  // `@throttled` makes this adopted-guarded (a trailing tick after release
+  // no-ops) and cancels the pending timer on release — replacing the old
+  // `!this.isConnected` bail and the manual `.cancel()` in `controllerReleased`.
+  // The name is unchanged, so the `@subscription` observers can still hand this
+  // stable bound reference to `observeCollection`.
+  @throttled(300)
+  protected _throttledHandleCollectionUpdate(): void {
     this._updateButtonBasedOnCollectionState();
-  }, 300);
+  }
 
   private _updateButtonBasedOnCollectionState() {
-    // This runs from the throttled tick, which can fire after the block is
-    // released while still connected — `_api` is `@injectOrNull`, so it reads
-    // `null` then (the trailing-tick guard the v1 `bag.apiOrNull` read provided).
+    // Reached only through the adopted-guarded throttled tick, so `_api` is live
+    // here; the `?.` remains only because the field is `@injectOrNull`-typed.
     const collectionState = this._api?.getOutputCollectionState();
 
     if (!collectionState) {
@@ -330,13 +332,9 @@ export class DynamicBtn extends ChildBlock {
 
   protected override controllerReleased(): void {
     this._teardownSourceListController();
-    // The throttled collection-update tick is fed by the `@subscription`
-    // collection observers (auto-disposed on release); cancel any trailing tick
-    // here so it can't fire against a released container. Runs on disconnect too,
-    // via the base `disconnectedCallback` → `_releaseController`.
-    if (typeof this._throttledHandleCollectionUpdate.cancel === 'function') {
-      this._throttledHandleCollectionUpdate.cancel();
-    }
+    // The throttled collection-update tick is cancelled on release automatically
+    // by `@throttled` (registered in `_adoptController`, drained by
+    // `_releaseController`) — no manual `.cancel()` needed here.
   }
 
   private _teardownSourceListController(): void {
