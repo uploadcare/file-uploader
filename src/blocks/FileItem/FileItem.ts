@@ -211,6 +211,11 @@ export class FileItem extends FileItemConfig {
     if (entry.isIntersecting && !this._renderedOnce) {
       this._pauseRender = false;
       this._renderedOnce = true;
+      // One-shot: the observer's only job is to un-pause on first view. Disconnect
+      // so it stops firing on every subsequent scroll for this row's whole life
+      // (matches Thumb). Without this, N rows keep N live callbacks running on
+      // every scroll frame at large N.
+      this._observer?.disconnect();
     }
   }
 
@@ -369,17 +374,18 @@ export class FileItem extends FileItemConfig {
   protected override controllerReady(): void {
     this._handleEntryId(this.uid);
 
+    // Single-focus: unfocus the previously-focused item and focus this one — O(1)
+    // per click. Replaces an O(N) sweep over every connected FileItem (which
+    // mutated `[focused]` on all rows, dirtying style for the whole list at large
+    // N) and the static `Set` of all instances (which pinned every row from GC).
     this.onclick = () => {
-      FileItem.activeInstances.forEach((inst) => {
-        if (inst === this) {
-          inst.setAttribute('focused', '');
-        } else {
-          inst.removeAttribute('focused');
-        }
-      });
+      const previous = FileItem._focusedInstance;
+      if (previous && previous !== this) {
+        previous.removeAttribute('focused');
+      }
+      this.setAttribute('focused', '');
+      FileItem._focusedInstance = this;
     };
-
-    FileItem.activeInstances.add(this);
   }
 
   // The uploader-scope `PluginController` is bound + resolved only once an
@@ -397,9 +403,11 @@ export class FileItem extends FileItemConfig {
 
   protected override controllerReleased(): void {
     this._pluginManager = null;
-    // Adoption-scoped: `activeInstances.add(this)` runs in `controllerReady`, so
-    // drop it on release/re-adoption (and disconnect, via `_releaseController`).
-    FileItem.activeInstances.delete(this);
+    // Release the static focus reference if it points at this row, so a removed/
+    // re-adopted item isn't retained (and a later click doesn't touch a stale one).
+    if (FileItem._focusedInstance === this) {
+      FileItem._focusedInstance = null;
+    }
   }
 
   public override connectedCallback(): void {
@@ -427,7 +435,8 @@ export class FileItem extends FileItemConfig {
   // handling) now live in the DOM-free UploadController. This block stays the
   // trigger; it reacts to the resulting entry mutations through its existing
   // per-entry subscriptions (`isUploading`/`errors`/… → `_debouncedCalculateState`).
-  public static activeInstances: Set<FileItem> = new Set<FileItem>();
+  // The currently-focused item (single-focus model — see the click handler).
+  private static _focusedInstance: FileItem | null = null;
 
   protected override shouldUpdate(changedProperties: PropertyValues<this>): boolean {
     if (this._pauseRender) {
