@@ -81,18 +81,26 @@ export class UploadList extends ActivityChildBlock {
     itemSelector: 'uc-file-item',
     rowMetrics: (scrollEl, firstItem) => {
       if (this._config.get('filesViewMode') !== 'grid') {
+        this._rowGap = 0;
         return { columns: 1, rowHeight: firstItem.offsetHeight };
       }
       const gridCol = Number.parseInt(getComputedStyle(this).getPropertyValue('--uc-grid-col'), 10);
       // Flex `gap` sits BETWEEN grid cells (not in offsetHeight), so one grid row
       // is a cell plus one inter-row gap; list rows fold the gap into their box.
       const rowGap = Number.parseFloat(getComputedStyle(scrollEl).rowGap) || 0;
+      this._rowGap = rowGap;
       return {
         columns: Number.isFinite(gridCol) && gridCol >= 1 ? gridCol : 1,
         rowHeight: firstItem.offsetHeight + rowGap,
       };
     },
   });
+
+  // The measured inter-row flex gap (grid mode; 0 in list mode). A spacer is
+  // itself a flex line, so the browser inserts one extra `gap` between it and the
+  // adjacent item row — subtract it from the spacer height so the visible window
+  // isn't pushed down/up by one gap.
+  private _rowGap = 0;
 
   private get _headerText() {
     if (!this._latestSummary) {
@@ -405,6 +413,12 @@ export class UploadList extends ActivityChildBlock {
     // the scroll height. Unmeasured geometry → full list, no spacers (unchanged).
     const view = this._virtualList.window(uploadList);
     const windowItems = view.items;
+    // A spacer occupies its own flex line, so the flex `gap` adds one extra gap
+    // between it and the adjacent row — shrink the spacer by that gap so the
+    // rendered window lands where the scroll position expects (grid mode; `_rowGap`
+    // is 0 in list mode, where the gap is folded into each row's own box).
+    const topSpacer = view.topPad > 0 ? Math.max(0, view.topPad - this._rowGap) : 0;
+    const bottomSpacer = view.bottomPad > 0 ? Math.max(0, view.bottomPad - this._rowGap) : 0;
     return html`
   <uc-activity-header>
     <span aria-live="polite" class="uc-header-text">${this._headerText}</span>
@@ -425,13 +439,13 @@ export class UploadList extends ActivityChildBlock {
 
   <div class="uc-files">
     <div class="uc-files-wrapper">
-    ${view.topPad > 0 ? html`<div class="uc-list-spacer" style="height:${view.topPad}px"></div>` : ''}
+    ${topSpacer > 0 ? html`<div class="uc-list-spacer" style="height:${topSpacer}px"></div>` : ''}
     ${repeat(
       windowItems,
       ({ uid }) => uid,
       ({ uid }) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
     )}
-    ${view.bottomPad > 0 ? html`<div class="uc-list-spacer" style="height:${view.bottomPad}px"></div>` : ''}
+    ${bottomSpacer > 0 ? html`<div class="uc-list-spacer" style="height:${bottomSpacer}px"></div>` : ''}
     </div>
     <button
       type="button"
