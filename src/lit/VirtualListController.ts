@@ -80,7 +80,8 @@ export class VirtualListController implements ReactiveController {
     this._scrollContainer = options.scrollContainer;
     this._itemSelector = options.itemSelector;
     this._rowMetrics = options.rowMetrics;
-    this._overscanRows = options.overscanRows ?? 4;
+    // Clamp to >= 0: a negative overscan would shrink the window / yield a bad slice.
+    this._overscanRows = Math.max(0, options.overscanRows ?? 4);
     host.addController(this);
   }
 
@@ -156,8 +157,12 @@ export class VirtualListController implements ReactiveController {
       this._scrollEl = scrollEl;
       this._measured = false;
       scrollEl.addEventListener('scroll', this._onScroll, { passive: true });
-      // Seed viewport once; the observer owns it thereafter (no per-render read).
+      // Seed viewport + scroll offset once (a reconnect/restore can attach to an
+      // already-scrolled container; without this `_scrollTop` stays 0 until the
+      // next scroll event and the first window would be wrong). The observer +
+      // scroll listener own them thereafter (no per-render layout read).
       this._viewportHeight = scrollEl.clientHeight;
+      this._scrollTop = scrollEl.scrollTop;
       this._resizeObserver = new ResizeObserver((entries) => {
         const height = entries[0]?.contentRect.height ?? scrollEl.clientHeight;
         // A resize can change viewport AND row metrics (grid cell height scales
