@@ -97,6 +97,27 @@ describe('UploadCollectionController', () => {
     collection.destroy();
   });
 
+  it('drops a queued property change for an entry removed before the flush', () => {
+    const collection = new UploadCollectionController();
+    const propObserver = vi.fn();
+    collection.observeProperties(['uploadProgress'], propObserver);
+    const id = collection.add({});
+    vi.runOnlyPendingTimers();
+    propObserver.mockClear();
+
+    // Queue a property change, then remove the entry in the same macrotask —
+    // the pending flush must not report the now-unresolvable uid.
+    collection.publishProp(id, 'uploadProgress', 50);
+    collection.remove(id);
+    vi.runOnlyPendingTimers();
+
+    for (const call of propObserver.mock.calls) {
+      const changeMap = call[0] as Record<string, Set<string>>;
+      expect(changeMap.uploadProgress?.has(id) ?? false).toBe(false);
+    }
+    collection.destroy();
+  });
+
   it('does not notify property observers for an unobserved key', () => {
     const collection = new UploadCollectionController();
     const id = collection.add({});

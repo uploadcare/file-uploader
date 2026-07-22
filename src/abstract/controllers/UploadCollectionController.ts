@@ -226,6 +226,18 @@ export class UploadCollectionController {
     this._entrySubs.get(id)?.();
     this._entrySubs.delete(id);
 
+    // Drop any property change queued for this entry before the next flush: a
+    // property tick must not notify observers about a uid that `read()` no
+    // longer resolves (and, with membership armed just below, must not deliver a
+    // stale property change ahead of the removal). The removal itself is carried
+    // by the membership `removed` set.
+    for (const key of Object.keys(this._changeMap) as (keyof UploadEntryData)[]) {
+      const set = this._changeMap[key];
+      if (set?.delete(id) && set.size === 0) {
+        delete this._changeMap[key];
+      }
+    }
+
     this._scheduleMembership();
     // Deferred-destroy is armed here, once, when something is actually marked —
     // not re-armed from the notify paths.
