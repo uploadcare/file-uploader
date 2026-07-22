@@ -130,10 +130,61 @@ describe('computeWindow', () => {
     });
 
     it('clamps end to total (last partial row) at the bottom', () => {
-      // 100 items / 3 cols → last row has 1 item (row 33). Scroll to the end.
+      // 100 items / 3 cols → 34 rows. An over-scroll past the end (34*120) is
+      // clamped to the last page: 2 visible rows → start row 32 → item 96.
       const result = computeWindow({ ...gridBase, scrollTop: 34 * 120 });
+      expect(result.start).toBe(96);
+      expect(result.topPad).toBe(32 * 120);
       expect(result.end).toBe(100);
       expect(result.bottomPad).toBe(0);
+    });
+  });
+
+  describe('stale / over-scrolled scrollTop → clamped to last page (never an empty window)', () => {
+    it('list: a scrollTop far past a shrunken list snaps to the last page', () => {
+      // Was 1000+ rows, user scrolled deep (scrollTop 40000), list shrank to 10.
+      const result = computeWindow({
+        ...base,
+        total: 10,
+        viewportHeight: 200,
+        rowHeight: 40,
+        columns: 1,
+        overscanRows: 0,
+        scrollTop: 40_000,
+      });
+      // maxScrollTop = 10*40 - 200 = 200 → row 5 → last 5 rows, NOT an empty slice.
+      expect(result.start).toBe(5);
+      expect(result.end).toBe(10);
+      expect(result.topPad).toBe(200);
+      expect(result.bottomPad).toBe(0);
+      expect(result.end).toBeGreaterThan(result.start);
+    });
+
+    it('list shorter than the viewport clamps to the whole list', () => {
+      const result = computeWindow({
+        ...base,
+        total: 3,
+        viewportHeight: 500,
+        rowHeight: 40,
+        columns: 1,
+        overscanRows: 0,
+        scrollTop: 9999,
+      });
+      expect(result).toEqual({ start: 0, end: 3, topPad: 0, bottomPad: 0 });
+    });
+
+    it('grid: an over-scrolled offset never yields start > end', () => {
+      const result = computeWindow({
+        ...base,
+        total: 100,
+        viewportHeight: 240,
+        rowHeight: 120,
+        columns: 3,
+        overscanRows: 0,
+        scrollTop: 999_999,
+      });
+      expect(result.start).toBeLessThan(result.end);
+      expect(result.end).toBe(100);
     });
   });
 });

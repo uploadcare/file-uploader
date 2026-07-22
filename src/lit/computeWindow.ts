@@ -48,7 +48,14 @@ export function computeWindow(metrics: WindowMetrics): WindowSlice {
   }
 
   const totalRows = Math.ceil(total / columns);
-  const firstVisibleRow = Math.floor(Math.max(0, scrollTop) / rowHeight);
+  // Clamp scrollTop to the real scrollable range. A stale/oversized offset — the
+  // list shrank while scrolled deep, or an over-scroll the browser clamped
+  // without firing `scroll` — would otherwise push `firstVisibleRow` past the
+  // last row, making `start > end` (an empty window with a huge top spacer, i.e.
+  // a blank list). Clamping snaps the window to the last page instead.
+  const maxScrollTop = Math.max(0, totalRows * rowHeight - viewportHeight);
+  const clampedScrollTop = Math.min(Math.max(0, scrollTop), maxScrollTop);
+  const firstVisibleRow = Math.floor(clampedScrollTop / rowHeight);
   const startRow = Math.max(0, firstVisibleRow - overscanRows);
   const visibleRowCount = Math.ceil(viewportHeight / rowHeight) + overscanRows * 2;
   const endRow = Math.min(totalRows, startRow + visibleRowCount);

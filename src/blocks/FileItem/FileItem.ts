@@ -95,10 +95,18 @@ export class FileItem extends FileItemConfig {
   private _observer?: IntersectionObserver;
   private _pluginManager: PluginController | null = null;
 
-  // Thin UI handler: the file/upload side-effects live at the collection level —
-  // `UploadCollectionController.remove` aborts the in-flight upload and emits the
-  // removal telemetry. The element just requests the removal for its entry.
   private _handleRemove = (): void => {
+    this._telemetry.sendEvent({
+      payload: {
+        metadata: {
+          event: 'remove-file',
+          node: this.tagName,
+        },
+      },
+    });
+
+    // Aborting the in-flight upload is file/upload logic and lives in
+    // `UploadCollectionController.remove` — the UI just requests the removal.
     const collection = this._collection;
     if (this.uid && collection?.hasItem(this.uid)) {
       collection.remove(this.uid);
