@@ -276,12 +276,23 @@ export class UploadEventsController {
           );
         }
       }
-      const loadedItems = collection.findItems((entry) => !!entry.get('fileInfo'));
-      const errorItems = collection.findItems((entry) => entry.get('errors').length > 0);
+      // One pass instead of two `findItems` scans: "all loaded, none errored".
+      let loadedCount = 0;
+      let hasErrored = false;
+      for (const uid of collection.items()) {
+        const entry = collection.read(uid);
+        if (!entry) continue;
+        if (entry.get('errors').length > 0) {
+          hasErrored = true;
+        }
+        if (entry.get('fileInfo')) {
+          loadedCount++;
+        }
+      }
       if (
         collection.size > 0 &&
-        errorItems.length === 0 &&
-        collection.size === loadedItems.length &&
+        !hasErrored &&
+        collection.size === loadedCount &&
         this._collectionState.get('collectionErrors').length === 0
       ) {
         emit(UploaderEventType.COMMON_UPLOAD_SUCCESS, getOutputCollectionState() as OutputCollectionState<'success'>);
@@ -302,10 +313,12 @@ export class UploadEventsController {
     const config = this._config;
     const emit = this._emit;
     const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
-    // Inlined from the removed bridge's `getOutputData(container)`: the flat
-    // output list is the collection's items resolved through the public api.
-    const data = collection.items().map((uid) => this._api.getOutputItem(uid));
-    if (data.length !== collection.size) {
+    // Defensive early-return on an inconsistent item set. Compare the uid-list
+    // length to `size` directly — the old code built an `OutputFileEntry` for
+    // every item via `getOutputItem` just to read `data.length` (a wasted O(N)
+    // allocation on every flush); `items().length === data.length`, so this is
+    // equivalent without the build.
+    if (collection.items().length !== collection.size) {
       return;
     }
     const collectionState = getOutputCollectionState();
