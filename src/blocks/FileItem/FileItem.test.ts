@@ -63,6 +63,7 @@ const thumb = (el: FileItem): HTMLElement & { badgeIcon: string } =>
   el.querySelector('uc-thumb') as HTMLElement & { badgeIcon: string };
 type ActionButton = HTMLElement & {
   uploading: boolean;
+  queued: boolean;
   hideRemove: boolean;
   progress: number;
   failed: boolean;
@@ -289,7 +290,15 @@ describe('FileItem entry-state rendering', () => {
     const btn = actionButton(el);
     expect(btn.hideRemove).toBe(true);
     expect(btn.uploading).toBe(false);
+    expect(btn.queued).toBe(true); // surfaced as the indeterminate queued indicator
     expect(btn.progress).toBe(0.3);
+  });
+
+  it('is not marked queued while actively uploading', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    await bindEntry(el, getCollection(ctxName), { fileName: 'photo.png', isUploading: true });
+    expect(actionButton(el).queued).toBe(false);
   });
 
   it('VALIDATION-pending entry: progress zeroed even with uploadProgress set', async () => {
@@ -347,6 +356,81 @@ describe('FileItem entry-state rendering', () => {
     expect(el.hasAttribute('focused')).toBe(true);
 
     collection.publishProp(uid, 'isUploading', true);
+    await delay(120);
+    expect(el.hasAttribute('focused')).toBe(false);
+  });
+});
+
+// The uid-change path must fully rebind: the render getters + side-effects read
+// `this.entry`/`this.uid`, and `reset()` tears down the previous entry's keyed
+// subscription — so no state or subscription from a previous uid leaks in.
+describe('FileItem uid rebinding', () => {
+  it('rebinds to the new entry on uid change; the previous entry no longer drives it', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    const collection = getCollection(ctxName);
+    const uidA = await bindEntry(el, collection, { fileName: 'a.png' });
+    expect(fileNameText(el)).toBe('a.png');
+
+    const uidB = collection.add({ fileName: 'b.png' });
+    el.uid = uidB;
+    await el.updateComplete;
+    await delay(0);
+    expect(fileNameText(el)).toBe('b.png');
+
+    // A write to the PREVIOUS entry must not leak into this item (subscription
+    // torn down by reset(); its signals no longer tracked by render).
+    collection.publishProp(uidA, 'fileName', 'a-changed.png');
+    await el.updateComplete;
+    await delay(120);
+    expect(fileNameText(el)).toBe('b.png');
+
+    // A write to the CURRENT entry still updates it.
+    collection.publishProp(uidB, 'fileName', 'b-changed.png');
+    await el.updateComplete;
+    await delay(0);
+    expect(fileNameText(el)).toBe('b-changed.png');
+  });
+
+  it('clears its bound entry when uid changes to an unknown id', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    const collection = getCollection(ctxName);
+    await bindEntry(el, collection, { fileName: 'a.png', fileInfo: { uuid: 'srv' } as never });
+    expect(fileNameText(el)).toBe('a.png');
+    expect(inner(el).hasAttribute('data-finished')).toBe(true);
+
+    el.uid = 'nonexistent-uid' as Uid;
+    await el.updateComplete;
+    await delay(0);
+    // entry === null → the name clears to '' (NOT the stale previous name, which
+    // the pre-S2 @state mirror retained) and status flags reset.
+    expect(fileNameText(el)).toBe('');
+    expect(inner(el).hasAttribute('data-finished')).toBe(false);
+  });
+
+  it('does not let the previous entry drive side-effects after a uid change', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    const collection = getCollection(ctxName);
+    const uidA = await bindEntry(el, collection, { fileName: 'a.png' });
+
+    const uidB = collection.add({ fileName: 'b.png' });
+    el.uid = uidB;
+    await el.updateComplete;
+    await delay(0);
+
+    el.click();
+    expect(el.hasAttribute('focused')).toBe(true);
+
+    // The PREVIOUS entry starting to upload must NOT clear this item's focus —
+    // its keyed subscription (which drives focus-clear-on-uploading) is gone.
+    collection.publishProp(uidA, 'isUploading', true);
+    await delay(120);
+    expect(el.hasAttribute('focused')).toBe(true);
+
+    // The CURRENT entry uploading still clears focus.
+    collection.publishProp(uidB, 'isUploading', true);
     await delay(120);
     expect(el.hasAttribute('focused')).toBe(false);
   });
