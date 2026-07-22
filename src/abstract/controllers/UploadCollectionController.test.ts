@@ -63,6 +63,40 @@ describe('UploadCollectionController', () => {
     collection.destroy();
   });
 
+  it('scopes fan-out per observer: an observer is not woken by another observer’s key', () => {
+    const collection = new UploadCollectionController();
+    const id = collection.add({});
+    vi.runOnlyPendingTimers();
+
+    const progressObs = vi.fn();
+    const uploadingObs = vi.fn();
+    collection.observeProperties(['uploadProgress'], progressObs);
+    collection.observeProperties(['isUploading'], uploadingObs);
+
+    collection.publishProp(id, 'uploadProgress', 50); // only uploadProgress changes
+    vi.runOnlyPendingTimers();
+
+    expect(progressObs).toHaveBeenCalledTimes(1);
+    expect(uploadingObs).not.toHaveBeenCalled(); // not woken — it declared only isUploading
+    // …and each observer sees only its own key.
+    expect(Object.keys((progressObs.mock.calls[0]?.[0] ?? {}) as object)).toEqual(['uploadProgress']);
+    collection.destroy();
+  });
+
+  it('add fires the collection (membership) observer before the property observer', () => {
+    const collection = new UploadCollectionController();
+    const order: string[] = [];
+    collection.observeCollection(() => order.push('collection'));
+    collection.observeProperties(['fileInfo'], () => order.push('property'));
+
+    // An already-uploaded entry (fileInfo set) fires both on add; membership first.
+    collection.add({ fileInfo: { uuid: 'srv' } as never });
+    vi.runOnlyPendingTimers();
+
+    expect(order).toEqual(['collection', 'property']);
+    collection.destroy();
+  });
+
   it('does not notify property observers for an unobserved key', () => {
     const collection = new UploadCollectionController();
     const id = collection.add({});
