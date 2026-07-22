@@ -14,6 +14,7 @@ import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './upload-list.css';
 import { repeat } from 'lit/directives/repeat.js';
+import { VirtualListController } from '../../lit/VirtualListController';
 
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
@@ -67,6 +68,30 @@ export class UploadList extends ActivityChildBlock {
 
   @state()
   private _latestSummary: Summary | null = null;
+
+  // List virtualization: only ~viewport±overscan `<uc-file-item>` render at large
+  // file counts. The shared controller measures the `.uc-files` scroll container
+  // and turns `uploadList` into the visible slice + spacer heights; row metrics
+  // are app-specific (list = 1 col, grid = `--uc-grid-col` cols + inter-row gap),
+  // so this block supplies them. It degrades to rendering the full list whenever
+  // the container isn't laid out (happy-dom, hidden panel, pre-measurement paint).
+  private readonly _virtualList = new VirtualListController(this, {
+    scrollContainer: () => this.querySelector<HTMLElement>('.uc-files'),
+    itemSelector: 'uc-file-item',
+    rowMetrics: (scrollEl, firstItem) => {
+      if (this._config.get('filesViewMode') !== 'grid') {
+        return { columns: 1, rowHeight: firstItem.offsetHeight };
+      }
+      const gridCol = Number.parseInt(getComputedStyle(this).getPropertyValue('--uc-grid-col'), 10);
+      // Flex `gap` sits BETWEEN grid cells (not in offsetHeight), so one grid row
+      // is a cell plus one inter-row gap; list rows fold the gap into their box.
+      const rowGap = Number.parseFloat(getComputedStyle(scrollEl).rowGap) || 0;
+      return {
+        columns: Number.isFinite(gridCol) && gridCol >= 1 ? gridCol : 1,
+        rowHeight: firstItem.offsetHeight + rowGap,
+      };
+    },
+  });
 
   private get _headerText() {
     if (!this._latestSummary) {
@@ -296,6 +321,16 @@ export class UploadList extends ActivityChildBlock {
     this.setAttribute('mode', this._config.getTracked('filesViewMode'));
   }
 
+  // A list⇆grid view-mode switch changes row height + column count but need not
+  // resize the scroll container (so the ResizeObserver may not fire), so drop the
+  // virtualizer's latched row metrics on the change to force a re-measure.
+  // `observe` dedups per key and fires only on an actual change — no prev-value
+  // bookkeeping.
+  @subscription()
+  protected _invalidateVirtualListOnViewMode(): Unsubscribe {
+    return this._config.observe('filesViewMode', () => this._virtualList.invalidate());
+  }
+
   public override render() {
     // Tracked render reads: `uploadList` drives the `<uc-file-item>` list and
     // `collectionErrors` (via `_commonErrorMessage`) drives the common-error row —
@@ -303,6 +338,11 @@ export class UploadList extends ActivityChildBlock {
     // `SignalWatcher`, so a collection change re-renders with no `ctx.sub`.
     const uploadList = this._collectionState.getTracked('uploadList');
     const commonErrorMessage = this._commonErrorMessage;
+
+    // Render only the visible window (+ overscan) with top/bottom spacers holding
+    // the scroll height. Unmeasured geometry → full list, no spacers (unchanged).
+    const view = this._virtualList.window(uploadList);
+    const windowItems = view.items;
     return html`
   <uc-activity-header>
     <span aria-live="polite" class="uc-header-text">${this._headerText}</span>
@@ -323,11 +363,13 @@ export class UploadList extends ActivityChildBlock {
 
   <div class="uc-files">
     <div class="uc-files-wrapper">
+    ${view.topPad > 0 ? html`<div class="uc-list-spacer" style="height:${view.topPad}px"></div>` : ''}
     ${repeat(
-      uploadList,
+      windowItems,
       ({ uid }) => uid,
       ({ uid }) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
     )}
+    ${view.bottomPad > 0 ? html`<div class="uc-list-spacer" style="height:${view.bottomPad}px"></div>` : ''}
     </div>
     <button
       type="button"
