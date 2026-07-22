@@ -477,6 +477,19 @@ describe('UploadEventsController', () => {
 
       expect(t.emit).not.toHaveBeenCalled();
     });
+
+    it('common-success scan tolerates a listed id whose entry cannot be read (defensive)', () => {
+      const t = setup();
+      const id = t.collection.add({ fileName: 'a.txt' });
+      // Force the defensive `!entry` branch in the common-success scan (a uid in
+      // `items()` that `read()` can't resolve — can't happen in practice).
+      vi.spyOn(t.collection, 'read').mockReturnValue(null);
+      t.emit.mockClear();
+
+      t.fireProperties({ errors: new Set([id]) });
+
+      expect(t.emit).not.toHaveBeenCalledWith(UploaderEventType.COMMON_UPLOAD_SUCCESS, expect.anything());
+    });
   });
 
   describe('output flush + group', () => {
