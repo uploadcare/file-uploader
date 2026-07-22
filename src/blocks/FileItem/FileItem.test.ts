@@ -346,6 +346,24 @@ describe('FileItem entry-state rendering', () => {
     expect(fileNameText(el)).toBe('new.png');
   });
 
+  it('remove action sends remove-file telemetry and delegates to collection.remove (which owns abort)', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    const collection = getCollection(ctxName);
+    const uid = await bindEntry(el, collection, { fileName: 'photo.png' });
+    const remove = vi.spyOn(collection, 'remove');
+    const telemetry = UploaderRegistry.get(ctxName)?.get(TelemetryManager);
+    const sendEvent = vi.spyOn(telemetry as TelemetryManager, 'sendEvent');
+
+    el.querySelector('uc-file-action-button')?.dispatchEvent(
+      new CustomEvent('uc:remove', { bubbles: true, composed: true }),
+    );
+    expect(sendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ payload: { metadata: { event: 'remove-file', node: 'UC-FILE-ITEM' } } }),
+    );
+    expect(remove).toHaveBeenCalledWith(uid);
+  });
+
   it('clears focus when the bound entry transitions to uploading', async () => {
     const ctxName = freshCtxName();
     const { el } = await mount(ctxName);
