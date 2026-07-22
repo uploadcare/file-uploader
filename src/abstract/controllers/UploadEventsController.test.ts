@@ -37,7 +37,7 @@ type Entry = TypedData<UploadEntryData>;
 const makeState = (overrides: Partial<OutputCollectionState> = {}): OutputCollectionState =>
   ({ totalCount: 0, status: 'idle', allEntries: [], ...overrides }) as OutputCollectionState;
 
-const setup = (opts: { collectionState?: OutputCollectionState } = {}) => {
+const setup = (opts: { collectionState?: OutputCollectionState; deferPlugin?: boolean } = {}) => {
   const container = new ControllerContainer();
   const collection = container.get(UploadCollectionController);
   const config = container.get(ConfigController);
@@ -85,7 +85,12 @@ const setup = (opts: { collectionState?: OutputCollectionState } = {}) => {
   // `ensurePluginManager`).
   const runOnAddHooks = vi.fn();
   container.bind(PluginController, () => ({ runOnAddHooks }) as unknown as PluginController);
-  container.get(PluginController);
+  // Force it into existence so `whenController` fires synchronously — UNLESS a
+  // test wants the deferred-waiter path (plugin resolved later), where it must
+  // stay unconstructed so `whenController` registers a waiter instead.
+  if (!opts.deferPlugin) {
+    container.get(PluginController);
+  }
 
   // The six derived collection keys are now written to `CollectionStateController`
   // via `set(key, value)`. Fan the writes out to per-key spies so the original
@@ -130,6 +135,7 @@ const setup = (opts: { collectionState?: OutputCollectionState } = {}) => {
 
   return {
     controller,
+    container,
     collection,
     config,
     collectionState,
@@ -174,6 +180,23 @@ describe('UploadEventsController', () => {
       expect(t.deps.validation.runCollectionValidators).toHaveBeenCalled();
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.FILE_ADDED, expect.objectContaining({ internalId: id }));
       expect(t.deps.setUploadList).toHaveBeenCalledWith([{ uid: id }]);
+    });
+
+    it('does not run onAdd hooks against a released scope when PluginController resolves after unobserve', () => {
+      // Deferred path: PluginController is unconstructed at add-time, so
+      // `whenController` registers a waiter instead of firing synchronously.
+      const t = setup({ deferPlugin: true });
+      const id = t.collection.add({ fileName: 'a.txt' });
+
+      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+      expect(t.deps.runOnAddHooks).not.toHaveBeenCalled(); // waiter pending, not fired
+
+      // Tear down, THEN resolve the plugin manager — the waiter now fires, but
+      // the `_active` guard must stop it running hooks against the released scope.
+      t.controller.unobserve();
+      t.container.get(PluginController);
+
+      expect(t.deps.runOnAddHooks).not.toHaveBeenCalled();
     });
 
     it('suppresses FILE_ADDED for a silent entry (but still runs onAdd hooks)', () => {

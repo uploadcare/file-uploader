@@ -125,8 +125,13 @@ export class UploadEventsController {
       // Plugin `onAdd` hooks live on the conditionally-bound `PluginController`
       // (bound by `ensurePluginManager`); fire now-or-when-available via the
       // container, matching the removed bridge's `whenController` port of v1's
-      // `bag.wait('pluginManager').then(…)`.
+      // `bag.wait('pluginManager').then(…)`. `PluginController` is bound at
+      // scope-attach (before any file is added), so this normally fires
+      // synchronously; the `_active` re-check guards the rare deferred case where
+      // the manager resolves only after `unobserve()`/`destroy()`, so a stale
+      // waiter can't run `onAdd` hooks against a released scope.
       containerOf(this)?.whenController(PluginController, (pluginManager) => {
+        if (!this._active) return;
         pluginManager.runOnAddHooks(entry);
       });
     }
