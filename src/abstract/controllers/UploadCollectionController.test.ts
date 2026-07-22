@@ -105,4 +105,98 @@ describe('UploadCollectionController', () => {
     vi.advanceTimersByTime(10_000);
     collection.destroy();
   });
+
+  it('readProp / publishProp throw for an unknown id', () => {
+    const collection = new UploadCollectionController();
+    expect(() => collection.readProp('ghost' as never, 'uploadProgress')).toThrow(/not found/);
+    expect(() => collection.publishProp('ghost' as never, 'uploadProgress', 1)).toThrow(/not found/);
+    collection.destroy();
+  });
+
+  it('abort removes an uploading entry and leaves a non-uploading one', () => {
+    const collection = new UploadCollectionController();
+    const uploading = collection.add({ isUploading: true });
+    const idle = collection.add({ isUploading: false });
+    vi.runOnlyPendingTimers();
+
+    collection.abort(uploading);
+    collection.abort(idle);
+
+    expect(collection.hasItem(uploading)).toBe(false); // uploading → removed
+    expect(collection.hasItem(idle)).toBe(true); // not uploading → untouched
+
+    vi.advanceTimersByTime(10_000);
+    collection.destroy();
+  });
+
+  it('abortAll aborts only the uploading entries', () => {
+    const collection = new UploadCollectionController();
+    const uploading = collection.add({ isUploading: true });
+    const idle = collection.add({ isUploading: false });
+    vi.runOnlyPendingTimers();
+
+    collection.abortAll();
+
+    expect(collection.hasItem(uploading)).toBe(false);
+    expect(collection.hasItem(idle)).toBe(true);
+
+    vi.advanceTimersByTime(10_000);
+    collection.destroy();
+  });
+
+  it('unobserve stops further collection + property notifications', () => {
+    const collection = new UploadCollectionController();
+    const collObserver = vi.fn();
+    const propObserver = vi.fn();
+    const offColl = collection.observeCollection(collObserver);
+    const offProp = collection.observeProperties(propObserver);
+
+    const id = collection.add({ uploadProgress: 0 });
+    vi.runOnlyPendingTimers();
+    collObserver.mockClear();
+    propObserver.mockClear();
+
+    offColl();
+    offProp();
+
+    collection.add({});
+    collection.publishProp(id, 'uploadProgress', 42);
+    vi.runOnlyPendingTimers();
+
+    expect(collObserver).not.toHaveBeenCalled();
+    expect(propObserver).not.toHaveBeenCalled();
+    collection.destroy();
+  });
+
+  it('re-arms the deferred-destroy timer when another entry is removed mid-window', () => {
+    const collection = new UploadCollectionController();
+    const a = collection.add({});
+    const b = collection.add({});
+    vi.advanceTimersByTime(1); // flush adds (0-delay notify), not the 10s destroy
+
+    collection.remove(a);
+    vi.advanceTimersByTime(1); // _notify flush schedules the deferred-destroy timer
+    vi.advanceTimersByTime(5_000); // partway through the 10s window
+    collection.remove(b);
+    vi.advanceTimersByTime(1); // _notify flush re-arms the destroy timer (clears the pending one)
+    expect(TypedData.getByUid(a)).not.toBeNull(); // still alive — the re-arm reset the window
+
+    vi.advanceTimersByTime(10_000); // full window from the re-arm
+    expect(TypedData.getByUid(a)).toBeNull();
+    expect(TypedData.getByUid(b)).toBeNull();
+    collection.destroy();
+  });
+
+  it('destroy() force-destroys entries still marked for deferred destroy', () => {
+    const collection = new UploadCollectionController();
+    const id = collection.add({});
+    vi.runOnlyPendingTimers();
+
+    collection.remove(id); // marks for the ~10s deferred destroy
+    vi.runOnlyPendingTimers();
+    expect(TypedData.getByUid(id)).not.toBeNull(); // still in the destroy window
+
+    collection.destroy(); // must force-destroy the marked entry now, not wait 10s
+    expect(TypedData.getByUid(id)).toBeNull();
+  });
 });
