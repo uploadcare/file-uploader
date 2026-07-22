@@ -28,6 +28,32 @@ const VALIDATION_TRIGGER_KEYS: (keyof UploadEntryData)[] = [
 ];
 
 /**
+ * The entry keys this controller must react to in
+ * `_handleCollectionPropertiesUpdate`. This is NOT just the keys it reads off the
+ * change-map (`uploadProgress`/`isUploading`/`fileInfo`/`errors`/`cdnUrl` for the
+ * per-key emits, plus {@link VALIDATION_TRIGGER_KEYS} for validation) — the
+ * handler ALSO calls `_flushOutputItems()` unconditionally on every fire, and
+ * that recomputes `getOutputCollectionState` + emits the documented `change`
+ * event. So the set must cover every key that can change the output — matching
+ * the old global `UPLOAD_WATCH_LIST` exactly, including `isValidationPending`
+ * (validation-state transitions change the output/counts) — PLUS `cdnUrlModifiers`
+ * (a `VALIDATION_TRIGGER_KEY` the old list wrongly omitted, so editor-applied
+ * modifiers never re-validated or fired `change`). Declaring it here (demand-
+ * driven) is what lets the collection drop the hardcoded constant.
+ */
+const PROPERTY_OBSERVE_KEYS: (keyof UploadEntryData)[] = [
+  'file',
+  'uploadProgress',
+  'uploadError',
+  'fileInfo',
+  'errors',
+  'cdnUrl',
+  'cdnUrlModifiers',
+  'isUploading',
+  'isValidationPending',
+];
+
+/**
  * DOM-free upload-events engine — the collection→events derivation that v1 ran
  * inline in `LitUploaderBlock` (`_handleCollectionUpdate` /
  * `_handleCollectionPropertiesUpdate` / `_flushOutputItems` /
@@ -87,7 +113,10 @@ export class UploadEventsController {
     this.unobserve();
     this._active = true;
     this._unobserveCollection = this._collection.observeCollection(this._handleCollectionUpdate);
-    this._unobserveProperties = this._collection.observeProperties(this._handleCollectionPropertiesUpdate);
+    this._unobserveProperties = this._collection.observeProperties(
+      PROPERTY_OBSERVE_KEYS,
+      this._handleCollectionPropertiesUpdate,
+    );
   }
 
   public unobserve(): void {

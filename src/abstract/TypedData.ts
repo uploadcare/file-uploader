@@ -91,6 +91,16 @@ export class TypedData<T extends Record<string, unknown>> implements ReactiveSto
     return this.#store.subscribe(listener);
   }
 
+  /**
+   * Keyed subscription: `listener` fires with the changed key on each write.
+   * Lets a consumer learn which field changed from ONE subscription — e.g.
+   * `UploadCollectionController` builds its per-prop change-map from a single
+   * `subscribeKeys` per entry instead of one `observe` per watched key.
+   */
+  public subscribeKeys(listener: (key: keyof T) => void): () => void {
+    return this.#store.subscribeKeys(listener);
+  }
+
   public observe<K extends keyof T>(
     key: K,
     listener: (value: T[K] | undefined) => void,

@@ -258,6 +258,64 @@ describe('SignalMap.getTracked', () => {
   });
 });
 
+describe('SignalMap.subscribeKeys', () => {
+  it('fires with the changed key on set, and not on a deduped no-op write', () => {
+    const m = new SignalMap<Shape>({ a: 1 });
+    const keys: (keyof Shape)[] = [];
+    m.subscribeKeys((key) => keys.push(key));
+
+    m.set('a', 2);
+    m.set('b', 'x');
+    expect(keys).toEqual(['a', 'b']);
+
+    m.set('a', 2); // Object.is dedup → no fire
+    expect(keys).toEqual(['a', 'b']);
+  });
+
+  it('fires once per changed key on setMany (skipping unchanged keys)', () => {
+    const m = new SignalMap<Shape>({ a: 1, b: 'x' });
+    const keys: (keyof Shape)[] = [];
+    m.subscribeKeys((key) => keys.push(key));
+
+    m.setMany({ a: 2, b: 'x' }); // b unchanged → only a fires
+    expect(keys).toEqual(['a']);
+  });
+
+  it('unsubscribe stops key notifications', () => {
+    const m = new SignalMap<Shape>({ a: 1 });
+    const keys: (keyof Shape)[] = [];
+    const off = m.subscribeKeys((key) => keys.push(key));
+
+    m.set('a', 2);
+    off();
+    m.set('a', 3);
+    expect(keys).toEqual(['a']);
+  });
+
+  it('isolates a throwing key listener (the write + other listeners still land)', () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const m = new SignalMap<Shape>({ a: 1 });
+    const seen: (keyof Shape)[] = [];
+    m.subscribeKeys(() => {
+      throw new Error('boom');
+    });
+    m.subscribeKeys((key) => seen.push(key));
+
+    expect(() => m.set('a', 2)).not.toThrow();
+    expect(m.get('a')).toBe(2); // write landed
+    expect(seen).toEqual(['a']); // sibling listener still fired
+  });
+
+  it('destroy() clears key listeners', () => {
+    const m = new SignalMap<Shape>({ a: 1 });
+    const keys: (keyof Shape)[] = [];
+    m.subscribeKeys((key) => keys.push(key));
+    m.destroy();
+    m.set('a', 2);
+    expect(keys).toEqual([]);
+  });
+});
+
 describe('SignalMap.setMany', () => {
   it('applies every changed key and fires ONE coalesced coarse notify', () => {
     const m = new SignalMap<{ a: number; b: number; c: number }>({ a: 0, b: 0, c: 0 });
