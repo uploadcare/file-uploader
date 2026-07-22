@@ -131,7 +131,7 @@ describe('FileUploaderInline (M-god step 6b-4 migration)', () => {
     // sub), and THAT router notify runs the recompute (history-back is now
     // available) → button visible. Visibility is router-notify driven, not a
     // reactive read of the list.
-    collection.set('uploadList', [{ uid: 'file-1' as Uid }]);
+    collection.set('uploadList', ['file-1' as Uid]);
     await settle(el);
     expect(cancelBtn(el)?.hidden).toBe(false);
 
@@ -148,7 +148,7 @@ describe('FileUploaderInline (M-god step 6b-4 migration)', () => {
     const ctxName = freshCtxName();
     const { el, collection, router } = await mount(ctxName);
     // A non-empty list navigates to `upload-list` (router notify → visible).
-    collection.set('uploadList', [{ uid: 'file-1' as Uid }]);
+    collection.set('uploadList', ['file-1' as Uid]);
     await settle(el);
     expect(cancelBtn(el)?.hidden).toBe(false);
     // Force back to start-from: this is the LAST router notify, and the list is

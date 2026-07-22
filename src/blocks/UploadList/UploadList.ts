@@ -442,8 +442,8 @@ export class UploadList extends ActivityChildBlock {
     ${topSpacer > 0 ? html`<div class="uc-list-spacer" style="height:${topSpacer}px"></div>` : ''}
     ${repeat(
       windowItems,
-      ({ uid }) => uid,
-      ({ uid }) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
+      (uid) => uid,
+      (uid) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
     )}
     ${bottomSpacer > 0 ? html`<div class="uc-list-spacer" style="height:${bottomSpacer}px"></div>` : ''}
     </div>

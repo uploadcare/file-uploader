@@ -186,6 +186,26 @@ describe('UploaderPublicApi', () => {
       expect(entry.mimeType).toBeNull();
     });
 
+    it('addFilesFromObjects batch-adds all files with their per-entry options', () => {
+      const { api, ctrl } = setup();
+      api.addFilesFromObjects([
+        { file: new File(['a'], 'a.txt', { type: 'text/plain' }), source: 'drop-area' },
+        { file: new File(['b'], 'b.png', { type: 'image/png' }), source: 'drop-area', fullPath: '/x/b.png' },
+      ]);
+      expect(ctrl.collection.size).toBe(2);
+      const ids = ctrl.collection.items();
+      expect(ctrl.collection.read(ids[0]!)?.get('fileName')).toBe('a.txt');
+      expect(ctrl.collection.read(ids[1]!)?.get('mimeType')).toBe('image/png');
+      expect(ctrl.collection.read(ids[1]!)?.get('fullPath')).toBe('/x/b.png');
+      expect(ctrl.collection.read(ids[0]!)?.get('source')).toBe('drop-area');
+    });
+
+    it('addFilesFromObjects([]) adds nothing', () => {
+      const { api, ctrl } = setup();
+      api.addFilesFromObjects([]);
+      expect(ctrl.collection.size).toBe(0);
+    });
+
     it('addFileFromUploadcareFile falls back to file.mimeType and isImage default', () => {
       const { api } = setup();
       const file = {

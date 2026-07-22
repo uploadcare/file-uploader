@@ -95,7 +95,7 @@ describe('FileUploaderMinimal (M-god step 6b-4 migration)', () => {
     expect(setActivity).not.toHaveBeenCalled();
 
     // New uploadList reference with entries → drives to the upload list.
-    collectionState.set('uploadList', [{ uid: 'a' as Uid }]);
+    collectionState.set('uploadList', ['a' as Uid]);
     await settle(el);
     expect(setActivity).toHaveBeenCalledWith(ACTIVITY_TYPES.UPLOAD_LIST);
 

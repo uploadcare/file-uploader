@@ -233,6 +233,41 @@ describe('UploadCollectionController', () => {
     collection.destroy();
   });
 
+  it('addMany inserts all entries with a single membership flush + one immediate-on-add property flush', () => {
+    const collection = new UploadCollectionController();
+    const collObserver = vi.fn();
+    const propObserver = vi.fn();
+    collection.observeCollection(collObserver);
+    collection.observeProperties(['fileInfo'], propObserver);
+
+    const uids = collection.addMany([{ fileName: 'a' }, { fileName: 'b' }, { fileInfo: { uuid: 'x' } as never }]);
+    expect(uids).toHaveLength(3);
+    expect(collection.size).toBe(3);
+
+    vi.runOnlyPendingTimers();
+    // ONE membership flush carrying all three additions.
+    expect(collObserver).toHaveBeenCalledTimes(1);
+    const added = collObserver.mock.calls[0]?.[1] as Set<unknown>;
+    expect(added.size).toBe(3);
+    // Immediate-on-add fires the property observer ONCE for the batch (not per entry).
+    expect(propObserver).toHaveBeenCalledTimes(1);
+    const change = propObserver.mock.calls[0]?.[0] as { fileInfo?: Set<unknown> };
+    expect(change.fileInfo?.size).toBe(3);
+
+    vi.advanceTimersByTime(10_000);
+    collection.destroy();
+  });
+
+  it('addMany([]) is a no-op returning []', () => {
+    const collection = new UploadCollectionController();
+    const collObserver = vi.fn();
+    collection.observeCollection(collObserver);
+    expect(collection.addMany([])).toEqual([]);
+    vi.runOnlyPendingTimers();
+    expect(collObserver).not.toHaveBeenCalled();
+    collection.destroy();
+  });
+
   it('remove() aborts the entry in-flight upload (abortController)', () => {
     const collection = new UploadCollectionController();
     const abort = vi.fn();
