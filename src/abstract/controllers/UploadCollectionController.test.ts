@@ -233,6 +233,19 @@ describe('UploadCollectionController', () => {
     collection.destroy();
   });
 
+  it('remove() aborts the entry in-flight upload (abortController)', () => {
+    const collection = new UploadCollectionController();
+    const abort = vi.fn();
+    const id = collection.add({ abortController: { abort, signal: {} } as unknown as AbortController });
+    vi.runOnlyPendingTimers();
+
+    collection.remove(id);
+    expect(abort).toHaveBeenCalledOnce();
+
+    vi.advanceTimersByTime(10_000);
+    collection.destroy();
+  });
+
   it('abortAll aborts only the uploading entries', () => {
     const collection = new UploadCollectionController();
     const uploading = collection.add({ isUploading: true });

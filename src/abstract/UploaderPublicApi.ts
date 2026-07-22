@@ -35,6 +35,7 @@ import { LocaleController } from './controllers/LocaleController';
 import { RouterController } from './controllers/RouterController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import { UploadController } from './controllers/UploadController';
+import { deriveEntryStatus } from './deriveEntryStatus';
 import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
 import { inject } from './di/inject';
 import { PluginController } from './managers/plugin';
@@ -331,15 +332,8 @@ export class UploaderPublicApi {
     const uploadEntryData = entry.values;
     const fileInfo = uploadEntryData.fileInfo as UploadcareFile | null;
 
-    const status: OutputFileEntry['status'] = uploadEntryData.isRemoved
-      ? 'removed'
-      : uploadEntryData.errors.length > 0
-        ? 'failed'
-        : uploadEntryData.fileInfo
-          ? 'success'
-          : uploadEntryData.isUploading
-            ? 'uploading'
-            : 'idle';
+    // Shared status ladder (single source with UploadList's toolbar counts).
+    const status = deriveEntryStatus(uploadEntryData);
 
     const outputItem = {
       uuid: fileInfo?.uuid ?? uploadEntryData.uuid ?? null,

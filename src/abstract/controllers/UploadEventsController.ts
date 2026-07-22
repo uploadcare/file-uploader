@@ -1,23 +1,20 @@
-import { uploadFileGroup } from '@uploadcare/upload-client';
-import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
-import type { OutputCollectionState } from '../../types';
 import { debounce } from '../../utils/debounce';
 import { applyInitialCrop } from '../applyInitialCrop';
 import { containerOf } from '../di/ControllerContainer';
-import { inject, injectOrNull } from '../di/inject';
-import { UploaderEventType } from '../EventBus';
+import { inject } from '../di/inject';
 import { PluginController } from '../managers/plugin';
 import { TypedData } from '../TypedData';
-import { UploaderPublicApi } from '../UploaderPublicApi';
 import type { UploadEntryData } from '../uploadEntrySchema';
-import { CollectionStateController } from './CollectionStateController';
 import { ConfigController } from './ConfigController';
 import type { CollectionObserver, UploadCollectionChangeMap } from './UploadCollectionController';
 import { UploadCollectionController } from './UploadCollectionController';
-import { UploadController } from './UploadController';
+import { UploadCollectionEventsController } from './UploadCollectionEventsController';
+import { UploadFileEventsController } from './UploadFileEventsController';
+import { UploadGroupController } from './UploadGroupController';
 import { ValidationController } from './ValidationController';
 
 type Unsubscribe = () => void;
+type Entry = TypedData<UploadEntryData>;
 
 const VALIDATION_TRIGGER_KEYS: (keyof UploadEntryData)[] = [
   'file',
@@ -55,50 +52,35 @@ const PROPERTY_OBSERVE_KEYS: (keyof UploadEntryData)[] = [
 
 /**
  * DOM-free upload-events engine — the collection→events derivation that v1 ran
- * inline in `LitUploaderBlock` (`_handleCollectionUpdate` /
- * `_handleCollectionPropertiesUpdate` / `_flushOutputItems` /
- * `_flushCommonUploadProgress` / `_createGroup`).
+ * inline in `LitUploaderBlock`.
  *
- * It observes the upload collection and, as entries are added/removed and their
- * properties change, drives validation, emits the documented events (via the
- * host `emit`, a pure event dispatch that reaches the EventBus; telemetry
- * observes that bus independently, not this call), maintains the derived
- * `uploadList`/`collectionState`/`commonProgress`/`groupInfo` collection state
- * (owned by `CollectionStateController`), and creates the output group.
+ * This is a thin COORDINATOR: it owns the collection observers + the active/
+ * teardown lifecycle and dispatches, in the exact order the observers dictate, to
+ * focused collaborators that own the actual side-effects:
+ * - {@link UploadFileEventsController} — per-file events (added/removed/progress/
+ *   start/success/failed/url-changed) + per-entry finalization.
+ * - {@link UploadCollectionEventsController} — collection-level derived state
+ *   (`uploadList`/`collectionState`/`commonProgress`/`groupInfo`) + collection
+ *   events (`CHANGE`/`COMMON_UPLOAD_*`).
+ * - {@link UploadGroupController} — output-group creation (`GROUP_CREATED`).
  *
- * Container-resolved (M-god step 5): controller peers (collection, config,
- * validation, upload, collection-state), the public API (output-state readers)
- * and the per-ctx `EventEmitter` are `@inject`-ed; plugin `onAdd` hooks fire
- * through the conditionally-bound `PluginController` via the container
- * (`containerOf` + `whenController`, now-or-when-available). So it runs zero-arg
- * without a DOM and is unit-testable. `observe()` is called explicitly by
+ * Validation orchestration stays with {@link ValidationController}; plugin `onAdd`
+ * hooks fire through the conditionally-bound {@link PluginController} via the
+ * container (`containerOf` + `whenController`, now-or-when-available). Everything
+ * is container-resolved and runs without a DOM. `observe()` is called by
  * `registerUploadStack` once the whole stack is resolved.
  */
 export class UploadEventsController {
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(ValidationController) private readonly _validation!: ValidationController;
-  @inject(UploadController) private readonly _upload!: UploadController;
-  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
-  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
-  // `@injectOrNull`: a teardown-time emit (released container) resolves `null` →
-  // no-op, matching the guard the removed host `emit` closure carried.
-  @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
-
-  // Guarded event dispatch — the direct successor to the host `emit` closure
-  // (`ChildBlock.emit`): pure per-ctx `EventEmitter` dispatch that reaches the
-  // bus (telemetry observes the bus independently; the DOM `CustomEvent` re-
-  // dispatch is the provider's `_bridgeBusToDom` bus subscription, unaffected).
-  // A bound arrow field so the handlers can keep destructuring `emit`;
-  // rest-forwarded so the call arity (2- vs 3-arg) reaches `EventEmitter.emit`
-  // unchanged rather than padding a trailing `undefined`.
-  private _emit = (...args: Parameters<EventEmitter['emit']>): void => {
-    this._eventEmitter?.emit(...args);
-  };
+  @inject(UploadFileEventsController) private readonly _fileEvents!: UploadFileEventsController;
+  @inject(UploadCollectionEventsController) private readonly _collectionEvents!: UploadCollectionEventsController;
+  @inject(UploadGroupController) private readonly _group!: UploadGroupController;
 
   // Active while observing (the v1 `isConnected` guard) — survives disconnect/
-  // reconnect cycles; gates the debounced flush + deferred validation that may
-  // fire after the host disconnects.
+  // reconnect cycles; gates the debounced flush + deferred validation/group that
+  // may fire after the host disconnects.
   private _active = false;
   private _unobserveCollection?: Unsubscribe;
   private _unobserveProperties?: Unsubscribe;
@@ -133,14 +115,23 @@ export class UploadEventsController {
     this.unobserve();
   }
 
+  // Plugin `onAdd` hooks live on the conditionally-bound `PluginController` (bound
+  // by `ensurePluginManager`); fire now-or-when-available via the container. It is
+  // bound at scope-attach (before any file is added), so this normally fires
+  // synchronously; the `_active` re-check guards the rare deferred case where the
+  // manager resolves only after `unobserve()`, so a stale waiter can't run hooks
+  // against a released scope.
+  private _runPluginOnAdd(entry: Entry): void {
+    containerOf(this)?.whenController(PluginController, (pluginManager) => {
+      if (!this._active) return;
+      pluginManager.runOnAddHooks(entry);
+    });
+  }
+
   private _handleCollectionUpdate: CollectionObserver = (entries, added, removed) => {
     if (!this._active) return;
-    const emit = this._emit;
-    const getOutputItem = this._api.getOutputItem.bind(this._api);
 
-    if (added.size || removed.size) {
-      this._collectionState.set('groupInfo', null);
-    }
+    this._collectionEvents.resetGroupIfMembershipChanged(added, removed);
 
     this._validation.runFileValidators(
       'add',
@@ -148,60 +139,65 @@ export class UploadEventsController {
     );
 
     for (const entry of added) {
-      if (!entry.get('silent')) {
-        emit(UploaderEventType.FILE_ADDED, getOutputItem(entry.uid));
-      }
-      // Plugin `onAdd` hooks live on the conditionally-bound `PluginController`
-      // (bound by `ensurePluginManager`); fire now-or-when-available via the
-      // container, matching the removed bridge's `whenController` port of v1's
-      // `bag.wait('pluginManager').then(…)`. `PluginController` is bound at
-      // scope-attach (before any file is added), so this normally fires
-      // synchronously; the `_active` re-check guards the rare deferred case where
-      // the manager resolves only after `unobserve()`/`destroy()`, so a stale
-      // waiter can't run `onAdd` hooks against a released scope.
-      containerOf(this)?.whenController(PluginController, (pluginManager) => {
-        if (!this._active) return;
-        pluginManager.runOnAddHooks(entry);
-      });
+      this._fileEvents.added(entry);
+      this._runPluginOnAdd(entry);
     }
 
     this._validation.runCollectionValidators();
 
     for (const entry of removed) {
-      // (`UploadController` drops removed uids from its own active batch.)
+      // The in-flight upload is already aborted by `UploadCollectionController.remove`
+      // (the single owner of that side-effect); here we only clear validation +
+      // entry state and emit `FILE_REMOVED`.
       this._validation.cleanupValidationForEntry(entry);
-      entry.get('abortController')?.abort();
-      entry.setMany({
-        isRemoved: true,
-        abortController: null,
-        isUploading: false,
-        uploadProgress: 0,
-      });
-      const thumbUrl = entry.get('thumbUrl');
-      thumbUrl && URL.revokeObjectURL(thumbUrl);
-      emit(UploaderEventType.FILE_REMOVED, getOutputItem(entry.uid));
+      this._fileEvents.finalizeRemoved(entry);
     }
 
-    this._collectionState.set(
-      'uploadList',
-      entries.map((uid) => ({ uid })),
-    );
-
-    this._flushCommonUploadProgress();
+    this._collectionEvents.setUploadList(entries);
+    this._collectionEvents.flushCommonProgress();
     this._flushOutputItems();
   };
 
   private _handleCollectionPropertiesUpdate = (changeMap: UploadCollectionChangeMap): void => {
     if (!this._active) return;
-    const collection = this._collection;
-    const config = this._config;
-    const validation = this._validation;
-    const emit = this._emit;
-    const getOutputItem = this._api.getOutputItem.bind(this._api);
-    const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
 
     this._flushOutputItems();
+    this._scheduleValidation(changeMap);
 
+    if (changeMap.uploadProgress) {
+      this._fileEvents.progress(changeMap.uploadProgress);
+      this._collectionEvents.flushCommonProgress();
+    }
+    if (changeMap.isUploading) {
+      this._fileEvents.start(changeMap.isUploading);
+    }
+    if (changeMap.fileInfo) {
+      this._fileEvents.success(changeMap.fileInfo);
+      if (this._config.get('cropPreset')) {
+        this._applyInitialCrop();
+      }
+    }
+    if (changeMap.errors) {
+      this._validation.runCollectionValidators();
+      for (const entryId of changeMap.errors) {
+        // Pair each per-file failure with a (debounced) common-failed emit, matching
+        // the original per-entry interleave.
+        if (this._fileEvents.failed(entryId)) {
+          this._collectionEvents.emitCommonFailed();
+        }
+      }
+      this._collectionEvents.emitCommonSuccessIfComplete();
+    }
+    if (changeMap.cdnUrl) {
+      this._fileEvents.urlChanged(changeMap.cdnUrl);
+      this._collectionEvents.resetGroup();
+    }
+  };
+
+  // Deferred file validation for the keys that trigger it — a tick later, since we
+  // can't mutate entry properties in the same tick. Guards `_active` (a released
+  // scope must not run validators).
+  private _scheduleValidation(changeMap: UploadCollectionChangeMap): void {
     const entriesToRunValidation = [
       ...new Set(
         Object.entries(changeMap)
@@ -209,158 +205,31 @@ export class UploadEventsController {
           .flatMap(([, ids]) => [...(ids ?? [])]),
       ),
     ];
-
-    entriesToRunValidation.length > 0 &&
-      setTimeout(() => {
-        if (!this._active) return;
-        // We can't modify entry properties in the same tick, so we need to wait a bit
-        const entriesToRunOnUpload = entriesToRunValidation.filter(
-          (entryId) =>
-            changeMap.fileInfo?.has(entryId) && !!TypedData.getByUid<UploadEntryData>(entryId)?.values.fileInfo,
-        );
-        if (entriesToRunOnUpload.length > 0) {
-          validation.runFileValidators('upload', entriesToRunOnUpload);
-        }
-        validation.runFileValidators('change', entriesToRunValidation);
-      });
-
-    if (changeMap.uploadProgress) {
-      for (const entryId of changeMap.uploadProgress) {
-        const entry = TypedData.getByUid<UploadEntryData>(entryId);
-        if (!entry) continue;
-        const { isUploading, silent } = entry.values;
-        if (isUploading && !silent) {
-          emit(UploaderEventType.FILE_UPLOAD_PROGRESS, getOutputItem(entryId));
-        }
+    if (entriesToRunValidation.length === 0) return;
+    setTimeout(() => {
+      if (!this._active) return;
+      const entriesToRunOnUpload = entriesToRunValidation.filter(
+        (entryId) =>
+          changeMap.fileInfo?.has(entryId) && !!TypedData.getByUid<UploadEntryData>(entryId)?.values.fileInfo,
+      );
+      if (entriesToRunOnUpload.length > 0) {
+        this._validation.runFileValidators('upload', entriesToRunOnUpload);
       }
-
-      this._flushCommonUploadProgress();
-    }
-    if (changeMap.isUploading) {
-      for (const entryId of changeMap.isUploading) {
-        const entry = TypedData.getByUid<UploadEntryData>(entryId);
-        if (!entry) continue;
-        const { isUploading, silent } = entry.values;
-        if (isUploading && !silent) {
-          emit(UploaderEventType.FILE_UPLOAD_START, getOutputItem(entryId));
-        }
-      }
-    }
-    if (changeMap.fileInfo) {
-      for (const entryId of changeMap.fileInfo) {
-        const entry = TypedData.getByUid<UploadEntryData>(entryId);
-        if (!entry) continue;
-        const { fileInfo, silent } = entry.values;
-        if (fileInfo && !silent) {
-          emit(UploaderEventType.FILE_UPLOAD_SUCCESS, getOutputItem(entryId));
-        }
-      }
-      if (config.get('cropPreset')) {
-        this._applyInitialCrop();
-      }
-    }
-    if (changeMap.errors) {
-      validation.runCollectionValidators();
-
-      for (const entryId of changeMap.errors) {
-        const entry = TypedData.getByUid<UploadEntryData>(entryId);
-        if (!entry) continue;
-        const { errors } = entry.values;
-        if (errors.length > 0) {
-          emit(UploaderEventType.FILE_UPLOAD_FAILED, getOutputItem(entryId));
-          emit(
-            UploaderEventType.COMMON_UPLOAD_FAILED,
-            () => getOutputCollectionState() as OutputCollectionState<'failed'>,
-            { debounce: true },
-          );
-        }
-      }
-      const loadedItems = collection.findItems((entry) => !!entry.get('fileInfo'));
-      const errorItems = collection.findItems((entry) => entry.get('errors').length > 0);
-      if (
-        collection.size > 0 &&
-        errorItems.length === 0 &&
-        collection.size === loadedItems.length &&
-        this._collectionState.get('collectionErrors').length === 0
-      ) {
-        emit(UploaderEventType.COMMON_UPLOAD_SUCCESS, getOutputCollectionState() as OutputCollectionState<'success'>);
-      }
-    }
-    if (changeMap.cdnUrl) {
-      const uids = [...changeMap.cdnUrl].filter((uid) => !!collection.read(uid)?.get('cdnUrl'));
-      uids.forEach((uid) => {
-        emit(UploaderEventType.FILE_URL_CHANGED, getOutputItem(uid));
-      });
-
-      this._collectionState.set('groupInfo', null);
-    }
-  };
-
-  private _flushOutputItems = debounce(async () => {
-    const collection = this._collection;
-    const config = this._config;
-    const emit = this._emit;
-    const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
-    // Inlined from the removed bridge's `getOutputData(container)`: the flat
-    // output list is the collection's items resolved through the public api.
-    const data = collection.items().map((uid) => this._api.getOutputItem(uid));
-    if (data.length !== collection.size) {
-      return;
-    }
-    const collectionState = getOutputCollectionState();
-    this._collectionState.set('collectionState', collectionState);
-    emit(UploaderEventType.CHANGE, () => getOutputCollectionState(), { debounce: true });
-
-    if (config.get('groupOutput') && collectionState.totalCount > 0 && collectionState.status === 'success') {
-      this._createGroup(collectionState);
-    }
-  }, 300);
-
-  private async _createGroup(collectionState: OutputCollectionState): Promise<void> {
-    const emit = this._emit;
-    const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
-    const uploadClientOptions = await this._upload.buildUploadOptions();
-    const uuidList = collectionState.allEntries.map((entry) => {
-      return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
+      this._validation.runFileValidators('change', entriesToRunValidation);
     });
-    const abortController = new AbortController();
-    const resp = await uploadFileGroup(uuidList, {
-      ...uploadClientOptions,
-      signal: abortController.signal,
-    });
-    // Bail if the controller was unobserved mid-flight (the `_active` check is
-    // new with the controller lifecycle) or the collection state moved on
-    // (mirrors v1).
-    if (!this._active || this._collectionState.get('collectionState') !== collectionState) {
-      abortController.abort();
-      return;
-    }
-    this._collectionState.set('groupInfo', resp);
-    const collectionStateWithGroup = getOutputCollectionState() as OutputCollectionState<'success', 'has-group'>;
-    emit(UploaderEventType.GROUP_CREATED, collectionStateWithGroup);
-    emit(UploaderEventType.CHANGE, () => getOutputCollectionState(), { debounce: true });
-    this._collectionState.set('collectionState', collectionStateWithGroup);
   }
 
-  private _flushCommonUploadProgress = (): void => {
-    const collection = this._collection;
-    const emit = this._emit;
-    const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
-    let commonProgress = 0;
-    const items = this._upload.uploadBatch;
-    items.forEach((id) => {
-      const uploadProgress = collection.readProp(id, 'uploadProgress');
-      if (typeof uploadProgress === 'number') {
-        commonProgress += uploadProgress;
-      }
-    });
-    const progress = items.length ? Math.round(commonProgress / items.length) : 0;
-
-    if (this._collectionState.get('commonProgress') === progress) {
-      return;
+  // Debounced: publish the derived collection state + `CHANGE`, then create the
+  // output group when configured and fully successful. Cancelled on `unobserve()`.
+  private _flushOutputItems = debounce(() => {
+    const collectionState = this._collectionEvents.flushOutput();
+    if (
+      collectionState &&
+      this._config.get('groupOutput') &&
+      collectionState.totalCount > 0 &&
+      collectionState.status === 'success'
+    ) {
+      void this._group.create(collectionState, () => this._active);
     }
-
-    this._collectionState.set('commonProgress', progress);
-    emit(UploaderEventType.COMMON_UPLOAD_PROGRESS, getOutputCollectionState() as OutputCollectionState<'uploading'>);
-  };
+  }, 300);
 }

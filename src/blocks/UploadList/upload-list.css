@@ -27,6 +27,15 @@
     display: contents;
   }
 
+  /* Virtualization spacers: hold the scroll height for the rows outside the
+     rendered window. Full-width so they force clean row breaks in the flex-wrap
+     grid (and stack as plain blocks in list mode); inert to pointer/a11y. */
+  uc-upload-list .uc-list-spacer {
+    flex: 0 0 100%;
+    width: 100%;
+    pointer-events: none;
+  }
+
   uc-upload-list .uc-toolbar {
     display: flex;
     gap: 4px;

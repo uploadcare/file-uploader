@@ -16,6 +16,11 @@ export class FileActionButton extends ChildBlock {
   @property({ type: Boolean })
   public uploading = false;
 
+  // Queued to upload (accepted, not yet started). Rendered as an indeterminate
+  // (continuously spinning) preloader so it's clear the file is waiting in queue.
+  @property({ type: Boolean })
+  public queued = false;
+
   @property({ type: Boolean })
   public failed = false;
 
@@ -50,11 +55,14 @@ export class FileActionButton extends ChildBlock {
       'uc-mini-btn': true,
       'uc-idle': this.idle,
       'uc-uploading': this.uploading,
+      'uc-queued': this.queued,
       'uc-hide-remove': this.hideRemove,
       'uc-failed': this.failed,
       'uc-success': this.success,
     });
-    const progressOffset = 100 - this._normalizedProgress;
+    // Queued → a fixed partial arc that the CSS spins (indeterminate); otherwise
+    // the determinate upload progress.
+    const progressOffset = this.queued ? 65 : 100 - this._normalizedProgress;
     const actionLabel = this.l10n(L10N_REMOVE_KEY);
 
     return html`
