@@ -8,7 +8,7 @@ import { PluginController, type PluginFileActionRegistration } from '../../abstr
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
-import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
+import type { UploadEntryKeys, UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { debounce } from '../../utils/debounce';
 import { throttle } from '../../utils/throttle';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
@@ -34,6 +34,30 @@ const FileItemState = Object.freeze({
 } as const);
 
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
+
+// Entry keys whose change re-derives the item state machine (`_calculateState`).
+// `externalUrl` is intentionally absent — it only affects the display name.
+const STATE_RECOMPUTE_KEYS: ReadonlySet<UploadEntryKeys> = new Set<UploadEntryKeys>([
+  'isQueuedForValidation',
+  'isValidationPending',
+  'uploadProgress',
+  'isQueuedForUploading',
+  'fileName',
+  'fileInfo',
+  'errors',
+  'isUploading',
+  'fileSize',
+  'mimeType',
+  'isImage',
+]);
+// Entry keys whose change re-evaluates plugin file actions.
+const PLUGIN_ACTION_KEYS: ReadonlySet<UploadEntryKeys> = new Set<UploadEntryKeys>([
+  'fileInfo',
+  'isUploading',
+  'errors',
+]);
+// Entry keys that feed the displayed item name.
+const NAME_KEYS: ReadonlySet<UploadEntryKeys> = new Set<UploadEntryKeys>(['fileName', 'externalUrl']);
 
 export class FileItem extends FileItemConfig {
   // `ConfigController`/`TelemetryManager` are always-bound `@inject` fields.
@@ -231,45 +255,25 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    this.subEntry('isQueuedForValidation', () => {
-      this._debouncedCalculateState();
+    // Seed the display name (was the immediate fire of the fileName/externalUrl
+    // observers, which `subscribeKeys` doesn't replay).
+    this._itemName = entry.get('fileName') || entry.get('externalUrl') || this.l10n('file-no-name');
+
+    // ONE keyed subscription replaces the ~15 per-key `subEntry` observes (which
+    // included duplicate `fileInfo`/`isUploading`/`errors` watches). Dispatch by
+    // the changed key to the same effects: recompute the display name, re-derive
+    // the state machine (debounced), and re-evaluate plugin actions.
+    this.subEntryKeys((key) => {
+      if (NAME_KEYS.has(key)) {
+        this._itemName = entry.get('fileName') || entry.get('externalUrl') || this.l10n('file-no-name');
+      }
+      if (STATE_RECOMPUTE_KEYS.has(key)) {
+        this._debouncedCalculateState();
+      }
+      if (PLUGIN_ACTION_KEYS.has(key)) {
+        this._updatePluginFileActions();
+      }
     });
-
-    this.subEntry('isValidationPending', () => {
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('uploadProgress', () => {
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('isQueuedForUploading', () => {
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('fileName', (name) => {
-      this._itemName = name || entry.get('externalUrl') || this.l10n('file-no-name');
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('externalUrl', (externalUrl) => {
-      this._itemName = entry.get('fileName') || externalUrl || this.l10n('file-no-name');
-    });
-
-    this.subEntry('fileInfo', () => {
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('errors', () => this._debouncedCalculateState());
-    this.subEntry('isUploading', () => this._debouncedCalculateState());
-    this.subEntry('fileSize', () => this._debouncedCalculateState());
-    this.subEntry('mimeType', () => this._debouncedCalculateState());
-    this.subEntry('isImage', () => this._debouncedCalculateState());
-
-    // Update plugin file actions when file status changes
-    this.subEntry('fileInfo', () => this._updatePluginFileActions());
-    this.subEntry('isUploading', () => this._updatePluginFileActions());
-    this.subEntry('errors', () => this._updatePluginFileActions());
 
     this._calculateState();
     this._updatePluginFileActions();
