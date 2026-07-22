@@ -304,8 +304,13 @@ export class FileItem extends FileItemConfig {
     this.onclick = () => {
       const previous = FileItem._focusedInstance;
       if (previous && previous !== this) {
+        previous._isFocused = false;
         previous.removeAttribute('focused');
       }
+      // `_isFocused` drives `.uc-inner[data-focused]` (the actual focus style);
+      // the host `[focused]` attribute is kept for compat. Both must be set —
+      // setting only the attribute left the visible highlight dead.
+      this._isFocused = true;
       this.setAttribute('focused', '');
       FileItem._focusedInstance = this;
     };

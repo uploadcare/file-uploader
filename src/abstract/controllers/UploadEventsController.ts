@@ -168,9 +168,10 @@ export class UploadEventsController {
     this._validation.runCollectionValidators();
 
     for (const entry of removed) {
-      // (`UploadController` drops removed uids from its own active batch.)
+      // (`UploadController` drops removed uids from its own active batch.) The
+      // in-flight upload is already aborted by `UploadCollectionController.remove`
+      // (the single owner of that side-effect), so this handler only clears state.
       this._validation.cleanupValidationForEntry(entry);
-      entry.get('abortController')?.abort();
       entry.setMany({
         isRemoved: true,
         abortController: null,

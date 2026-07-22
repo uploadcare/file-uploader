@@ -209,19 +209,19 @@ describe('UploadEventsController', () => {
       expect(t.deps.runOnAddHooks).toHaveBeenCalledTimes(1);
     });
 
-    it('on remove: aborts, marks removed, revokes thumbUrl, cleans validation, emits FILE_REMOVED', () => {
+    it('on remove: marks removed, clears abortController, revokes thumbUrl, cleans validation, emits FILE_REMOVED', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt', thumbUrl: 'blob:xyz' });
       const entry = t.collection.read(id) as Entry;
-      const ac = new AbortController();
-      const abortSpy = vi.spyOn(ac, 'abort');
-      entry.set('abortController', ac);
+      entry.set('abortController', new AbortController());
       const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
       t.fireCollection([], new Set(), new Set([entry]));
 
       expect(t.deps.validation.cleanupValidationForEntry).toHaveBeenCalledWith(entry);
-      expect(abortSpy).toHaveBeenCalled();
+      // Aborting the in-flight upload is owned by `UploadCollectionController.remove`
+      // now; this handler only clears state (and nulls the abortController).
+      expect(entry.get('abortController')).toBeNull();
       expect(entry.get('isRemoved')).toBe(true);
       expect(revokeSpy).toHaveBeenCalledWith('blob:xyz');
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.FILE_REMOVED, expect.objectContaining({ internalId: id }));

@@ -166,14 +166,22 @@ describe('FileItem (M-god step 6b-6 migration)', () => {
     ensureUploaderCtx(ctxName);
     const a = await mount(ctxName);
     const b = await mount(ctxName);
+    await openRenderGate(a.el);
+    await openRenderGate(b.el);
 
     a.el.click();
+    await a.el.updateComplete;
     expect(a.el.hasAttribute('focused')).toBe(true);
+    expect(inner(a.el).hasAttribute('data-focused')).toBe(true); // the visible highlight
     expect(b.el.hasAttribute('focused')).toBe(false);
 
     b.el.click();
+    await a.el.updateComplete;
+    await b.el.updateComplete;
     expect(b.el.hasAttribute('focused')).toBe(true);
+    expect(inner(b.el).hasAttribute('data-focused')).toBe(true);
     expect(a.el.hasAttribute('focused')).toBe(false); // previous focus dropped — O(1), no full sweep
+    expect(inner(a.el).hasAttribute('data-focused')).toBe(false);
   });
 
   it('wires the plugin manager via whenController once the PluginController resolves, and unsubscribes on disconnect', async () => {
