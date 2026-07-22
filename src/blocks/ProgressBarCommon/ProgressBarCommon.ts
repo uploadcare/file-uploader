@@ -46,7 +46,9 @@ export class ProgressBarCommon extends ChildBlock {
     return this.container.whenController(UploadCollectionController, (collection) => {
       this._recomputeVisible(collection);
       return [
-        collection.observeProperties(() => this._recomputeVisible(collection)),
+        // Visibility derives only from entries' `isUploading` — declare just
+        // that key so a progress/thumb/etc. mutation doesn't wake this observer.
+        collection.observeProperties(['isUploading'], () => this._recomputeVisible(collection)),
         collection.observeCollection(() => this._recomputeVisible(collection)),
       ];
     });

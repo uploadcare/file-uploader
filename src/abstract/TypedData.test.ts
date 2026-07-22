@@ -95,6 +95,19 @@ describe('TypedData (ReactiveStore)', () => {
     d.destroy();
   });
 
+  it('subscribeKeys reports the changed key on each write', () => {
+    const d = make();
+    const keys: string[] = [];
+    const off = d.subscribeKeys((key) => keys.push(String(key)));
+    d.set('a', 1);
+    d.setMany({ b: 'y' });
+    expect(keys).toEqual(['a', 'b']);
+    off();
+    d.set('a', 2);
+    expect(keys).toEqual(['a', 'b']); // unsubscribed
+    d.destroy();
+  });
+
   it('notify() forces a coarse notification with no state change', () => {
     const d = make();
     const listener = vi.fn();
