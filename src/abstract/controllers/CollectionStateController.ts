@@ -13,7 +13,7 @@ import { type ObserveOptions, SignalMap } from '../di/SignalMap';
  * `UploadController.uploadEntries` directly, not a broadcast state key.)
  */
 export type CollectionState = {
-  uploadList: { uid: Uid }[];
+  uploadList: Uid[];
   commonProgress: number;
   collectionState: OutputCollectionState | null;
   collectionErrors: OutputErrorCollection[];

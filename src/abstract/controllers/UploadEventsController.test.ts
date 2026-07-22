@@ -179,7 +179,7 @@ describe('UploadEventsController', () => {
       expect(t.deps.runOnAddHooks).toHaveBeenCalledTimes(1);
       expect(t.deps.validation.runCollectionValidators).toHaveBeenCalled();
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.FILE_ADDED, expect.objectContaining({ internalId: id }));
-      expect(t.deps.setUploadList).toHaveBeenCalledWith([{ uid: id }]);
+      expect(t.deps.setUploadList).toHaveBeenCalledWith([id]);
     });
 
     it('does not run onAdd hooks against a released scope when PluginController resolves after unobserve', () => {
@@ -244,7 +244,7 @@ describe('UploadEventsController', () => {
       t.fireCollection([id], new Set(), new Set());
 
       expect(t.deps.setGroupInfo).not.toHaveBeenCalled();
-      expect(t.deps.setUploadList).toHaveBeenCalledWith([{ uid: id }]);
+      expect(t.deps.setUploadList).toHaveBeenCalledWith([id]);
     });
 
     it('destroy() stops the controller', () => {

@@ -174,18 +174,13 @@ export class UploaderPublicApi {
     return this.getOutputItem(internalId);
   };
 
-  public addFileFromObject = (
+  // Shared entry-init builder for a local File — used by the single-add
+  // `addFileFromObject` and the batch `addFilesFromObjects`.
+  private _objectFileInit(
     file: File,
-    {
-      silent,
-      fileName,
-      source,
-      fullPath,
-    }: ApiAddFileCommonOptions & {
-      fullPath?: string;
-    } = {},
-  ): OutputFileEntry<'idle'> => {
-    const internalId = this._uploadCollection.add({
+    { silent, fileName, source, fullPath }: ApiAddFileCommonOptions & { fullPath?: string } = {},
+  ): Partial<UploadEntryData> {
+    return {
       file,
       isImage: fileIsImage(file),
       mimeType: file.type || null,
@@ -194,8 +189,32 @@ export class UploaderPublicApi {
       silent: silent ?? false,
       source: source ?? UploadSource.API,
       fullPath: fullPath ?? null,
-    });
+    };
+  }
+
+  public addFileFromObject = (
+    file: File,
+    options: ApiAddFileCommonOptions & { fullPath?: string } = {},
+  ): OutputFileEntry<'idle'> => {
+    const internalId = this._uploadCollection.add(this._objectFileInit(file, options));
     return this.getOutputItem(internalId);
+  };
+
+  /**
+   * Batch-add local `File`s in one shot. Cheaper than looping `addFileFromObject`
+   * at large counts: the collection arms its membership/property flushes ONCE for
+   * the whole batch, and it skips the per-file `getOutputItem` `OutputFileEntry`
+   * build that the single-add returns (and callers here discard).
+   */
+  public addFilesFromObjects = (
+    entries: ReadonlyArray<{ file: File } & ApiAddFileCommonOptions & { fullPath?: string }>,
+  ): void => {
+    if (entries.length === 0) {
+      return;
+    }
+    // Pass the whole entry as options — `_objectFileInit` picks only named fields
+    // (its extra `file` key is ignored), so we skip a rest-object alloc per entry.
+    this._uploadCollection.addMany(entries.map((entry) => this._objectFileInit(entry.file, entry)));
   };
 
   public addFileFromUploadcareFile = (
@@ -298,11 +317,8 @@ export class UploaderPublicApi {
         if (!fileInput.files) {
           return;
         }
-        [...fileInput.files].forEach((file) => {
-          this.addFileFromObject(file, {
-            source: options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL,
-          });
-        });
+        const source = options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL;
+        this.addFilesFromObjects([...fileInput.files].map((file) => ({ file, source })));
         // To call uploadTrigger UploadList should draw file items first.
         this._router.traverse('onFileAdd');
         fileInput.remove();

@@ -20,7 +20,7 @@ describe('CollectionStateController', () => {
     c.set('commonProgress', 42);
     expect(c.get('commonProgress')).toBe(42);
 
-    const list = [{ uid: uid('a') }];
+    const list = [uid('a')];
     c.set('uploadList', list);
     expect(c.get('uploadList')).toBe(list);
   });
@@ -52,13 +52,13 @@ describe('CollectionStateController', () => {
     const cb = vi.fn();
     c.subscribe(cb);
 
-    const list1 = [{ uid: uid('a') }];
+    const list1 = [uid('a')];
     c.set('uploadList', list1);
     expect(cb).toHaveBeenCalledTimes(1);
 
     // Mutating the stored array in place does not route through set() → no notify
     // (v1 nanostores parity).
-    c.get('uploadList').push({ uid: uid('b') });
+    c.get('uploadList').push(uid('b'));
     expect(cb).toHaveBeenCalledTimes(1);
 
     // Setting the SAME reference again is a no-op (Object.is).

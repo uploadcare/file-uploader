@@ -72,11 +72,16 @@ export class UploadCollectionController {
     this._observedKeys = keys;
   }
 
-  private _recordPropChange(key: keyof UploadEntryData, uid: Uid): void {
+  // Queue a per-prop change into the change-map WITHOUT arming the flush; returns
+  // whether it was queued (i.e. the key is observed). Split from `_recordPropChange`
+  // so a batch (the immediate-on-add loop) can arm the debounce ONCE instead of
+  // once per key — a bulk add of N files went from ~N×|observedKeys| debounce
+  // re-arms down to N.
+  private _queuePropChange(key: keyof UploadEntryData, uid: Uid): boolean {
     // Gate to the live union of observed keys — an unobserved key never enters
     // the change-map, so it can't drive a downstream tick.
     if (!this._observedKeys.has(key)) {
-      return;
+      return false;
     }
     let set = this._changeMap[key];
     if (!set) {
@@ -84,7 +89,13 @@ export class UploadCollectionController {
       this._changeMap[key] = set;
     }
     set.add(uid);
-    this._scheduleProperties();
+    return true;
+  }
+
+  private _recordPropChange(key: keyof UploadEntryData, uid: Uid): void {
+    if (this._queuePropChange(key, uid)) {
+      this._scheduleProperties();
+    }
   }
 
   private _flushProperties(): void {
@@ -160,10 +171,13 @@ export class UploadCollectionController {
     this._recomputeObservedKeys();
   }
 
-  public add(init: Partial<UploadEntryData>): Uid {
+  // Insert one entry's state + key-subscription WITHOUT arming any flush. Shared
+  // by `add`/`addMany` so a batch arms the two 0-delay timers ONCE for the whole
+  // batch instead of once per entry.
+  private _insertEntry(init: Partial<UploadEntryData>): TypedData<UploadEntryData> {
     const item = new TypedData<UploadEntryData>(initialUploadEntryData);
     item.setMany(init);
-    // Populate state BEFORE scheduling the membership tick (the flush reads
+    // Populate state BEFORE the membership tick is armed (the flush reads
     // `_added`/`_items`), and subscribe AFTER seeding so the init write doesn't
     // pollute the change-map (add is a membership event, not a property change).
     this._data.set(item.uid, item);
@@ -173,21 +187,55 @@ export class UploadCollectionController {
       item.uid,
       item.subscribeKeys((key) => this._recordPropChange(key, item.uid)),
     );
+    return item;
+  }
+
+  // Immediate-on-add (v1 parity): surface the new entry's initial observed-key
+  // state to property observers (the old per-key `observe(..., {immediate:true})`).
+  // Load-bearing for an already-uploaded entry (fileInfo set at add ⇒ fires
+  // FILE_UPLOAD_SUCCESS / drives the success collection state without an upload).
+  // Queues WITHOUT scheduling; the caller arms the flush once. Returns whether
+  // anything was queued.
+  private _queueImmediateOnAdd(item: TypedData<UploadEntryData>): boolean {
+    let queued = false;
+    for (const key of this._observedKeys) {
+      queued = this._queuePropChange(key, item.uid) || queued;
+    }
+    return queued;
+  }
+
+  public add(init: Partial<UploadEntryData>): Uid {
+    const item = this._insertEntry(init);
     // Arm membership BEFORE the immediate-on-add property fire so their 0-delay
     // ticks flush in that order (v1 parity): a consumer sees `FILE_ADDED` before
-    // any per-prop event for the new entry — notably `FILE_UPLOAD_SUCCESS` for an
-    // already-uploaded file.
+    // any per-prop event for the new entry — notably `FILE_UPLOAD_SUCCESS`.
     this._scheduleMembership();
-    // Immediate-on-add (v1 parity): surface the new entry's initial observed-key
-    // state to property observers. The old per-key `observe(..., {immediate:true})`
-    // did this — it is load-bearing for an already-uploaded entry (fileInfo set at
-    // add ⇒ fires FILE_UPLOAD_SUCCESS / drives the success collection state without
-    // an upload). A fresh entry's schema defaults pass no consumer emit guards, so
-    // this is a no-op for it.
-    for (const key of this._observedKeys) {
-      this._recordPropChange(key, item.uid);
+    if (this._queueImmediateOnAdd(item)) {
+      this._scheduleProperties();
     }
     return item.uid;
+  }
+
+  /**
+   * Batch-add: insert all entries, then arm the membership + property flushes ONCE
+   * (a per-`add` loop re-arms both 0-delay timers per file — N re-arms — and, at the
+   * public-API layer, builds a discarded `OutputFileEntry` per file). Same flush
+   * order/outcome as `add` (membership tick before the property tick).
+   */
+  public addMany(inits: Partial<UploadEntryData>[]): Uid[] {
+    if (inits.length === 0) {
+      return [];
+    }
+    const items = inits.map((init) => this._insertEntry(init));
+    this._scheduleMembership();
+    let queued = false;
+    for (const item of items) {
+      queued = this._queueImmediateOnAdd(item) || queued;
+    }
+    if (queued) {
+      this._scheduleProperties();
+    }
+    return items.map((item) => item.uid);
   }
 
   public hasItem(id: Uid): boolean {

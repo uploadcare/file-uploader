@@ -12,3 +12,6 @@ tsconfig.types.tsbuildinfo
 dist/**
 
 .playwright-mcp/
+
+# Local AI planning docs / blueprints — never commit (see session rule).
+docs/superpowers/
