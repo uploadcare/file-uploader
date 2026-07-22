@@ -1,6 +1,9 @@
 import { type Signal, signal } from '@lit-labs/signals';
 import { Listeners, type ObserveOptions } from '../host-subscription';
+import { logger } from '../logger';
 import type { ReactiveStore } from './ReactiveStore';
+
+const log = logger.scope('signal-map');
 
 // `ObserveOptions` lives with `Listeners.observe` (the shared atomic-observe
 // engine); re-exported here so existing `di/SignalMap` importers are unaffected.
@@ -42,6 +45,23 @@ export class SignalMap<T extends object> implements ReactiveStore<T> {
   // cast back at the typed `get`/`set` edges (each is keyed by its own key).
   #signals = new Map<keyof T, Signal.State<unknown>>();
   #listeners = new Listeners();
+  // Per-key change listeners (keyed channel), fired with the CHANGED key on each
+  // real write — the granular counterpart to the coarse `#listeners`. Additive:
+  // coarse `subscribe`rs (Config/Locale) are untouched. Consumers that need to
+  // know *which* key changed (e.g. `UploadCollectionController`'s change-map) use
+  // this instead of one `observe` per key.
+  #keyListeners = new Set<(key: keyof T) => void>();
+
+  /** Fire the keyed channel for `key`, isolate-and-warn (a throwing listener must not break the write). */
+  #notifyKey(key: keyof T): void {
+    for (const listener of this.#keyListeners) {
+      try {
+        listener(key);
+      } catch (err) {
+        log.warn('a key-change listener threw', err);
+      }
+    }
+  }
 
   /** Seed initial key/values into the bag without notifying (construction defaults). */
   public constructor(initial?: Readonly<Partial<T>>) {
@@ -105,6 +125,7 @@ export class SignalMap<T extends object> implements ReactiveStore<T> {
     // key stays lazy and its next `get` seeds from the now-updated bag.
     this.#signals.get(key)?.set(value);
     this.#listeners.notify();
+    this.#notifyKey(key);
   }
 
   /**
@@ -114,7 +135,7 @@ export class SignalMap<T extends object> implements ReactiveStore<T> {
    * (their own signal/`Object.is` filter); coarse `subscribe`rs fire once.
    */
   public setMany(patch: Partial<T>): void {
-    let changed = false;
+    const changedKeys: (keyof T)[] = [];
     // Consistent with `set`: an explicit `undefined` in the patch is WRITTEN
     // (clears/materializes the key), not skipped — so optional state can be
     // cleared through the batch API. `Object.keys` only yields own keys the
@@ -126,10 +147,16 @@ export class SignalMap<T extends object> implements ReactiveStore<T> {
       }
       this.#bag[key] = value;
       this.#signals.get(key)?.set(value);
-      changed = true;
+      changedKeys.push(key);
     }
-    if (changed) {
+    if (changedKeys.length > 0) {
+      // One coarse notify for the whole batch, then the keyed channel fires once
+      // per changed key — so a change-map consumer sees every key a multi-key
+      // write touched, while coarse `subscribe`rs still fire exactly once.
       this.#listeners.notify();
+      for (const key of changedKeys) {
+        this.#notifyKey(key);
+      }
     }
   }
 
@@ -149,6 +176,20 @@ export class SignalMap<T extends object> implements ReactiveStore<T> {
 
   public subscribe(listener: () => void): () => void {
     return this.#listeners.subscribe(listener);
+  }
+
+  /**
+   * Keyed subscription: `listener` fires with the CHANGED key on every real
+   * write (`set`, and once per changed key in `setMany`) — the granular
+   * counterpart to the coarse `subscribe`. Lets a consumer learn *which* key
+   * changed from a SINGLE subscription instead of one `observe` per key (e.g.
+   * `UploadCollectionController` building its per-prop change-map). Returns an
+   * unsubscriber. Fires no initial value; no `Object.is` payload dedup (the
+   * write already deduped before it fires).
+   */
+  public subscribeKeys(listener: (key: keyof T) => void): () => void {
+    this.#keyListeners.add(listener);
+    return () => this.#keyListeners.delete(listener);
   }
 
   /**
@@ -182,5 +223,6 @@ export class SignalMap<T extends object> implements ReactiveStore<T> {
     this.#signals.clear();
     this.#bag = Object.create(null);
     this.#listeners.clear();
+    this.#keyListeners.clear();
   }
 }

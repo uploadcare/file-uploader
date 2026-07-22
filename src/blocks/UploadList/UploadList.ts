@@ -260,16 +260,22 @@ export class UploadList extends ActivityChildBlock {
     );
   }
 
-  // Recompute button state on collection changes. The uploader-scope
+  // Recompute button/summary state on collection changes. The uploader-scope
   // `UploadCollectionController` resolves only once the scope attaches, so go
   // through `whenController` (now-or-when-available); its callback returns the
   // observers directly and `whenController`'s unsubscribe disposes them.
-  // TODO: could be a perf issue on many files — no need to update button state
-  // on every progress tick.
+  //
+  // The summary + buttons derive from counts/status/validation — NOT per-entry
+  // `uploadProgress` (that drives the progress bar, not this) — so we declare
+  // only the status-affecting keys. This resolves the former "perf issue on many
+  // files": progress ticks no longer wake this recompute.
   @subscription()
   protected _wireCollectionObservers(): Unsubscribe {
     return this.container.whenController(UploadCollectionController, (collection) => [
-      collection.observeProperties(this._throttledHandleCollectionUpdate),
+      collection.observeProperties(
+        ['fileInfo', 'errors', 'uploadError', 'isUploading', 'isValidationPending'],
+        this._throttledHandleCollectionUpdate,
+      ),
       collection.observeCollection(this._throttledHandleCollectionUpdate),
     ]);
   }

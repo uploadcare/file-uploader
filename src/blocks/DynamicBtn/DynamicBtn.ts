@@ -206,7 +206,13 @@ export class DynamicBtn extends ChildBlock {
   @subscription()
   protected _wireCollectionObservers(): Unsubscribe {
     return this.container.whenController(UploadCollectionController, (collection) => [
-      collection.observeProperties(this._throttledHandleCollectionUpdate),
+      // The button derives from the collection STATUS (idle/uploading/success/
+      // failed) — declare only the status-affecting keys, so per-entry progress
+      // ticks don't wake this recompute at large file counts.
+      collection.observeProperties(
+        ['fileInfo', 'errors', 'uploadError', 'isUploading'],
+        this._throttledHandleCollectionUpdate,
+      ),
       collection.observeCollection(this._throttledHandleCollectionUpdate),
     ]);
   }
