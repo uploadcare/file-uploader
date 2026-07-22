@@ -4,31 +4,15 @@ import type { Uid } from '../../lit/Uid';
 import type { ConfigType, OutputFileEntry } from '../../types';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { __resetLoggerForTests } from '../logger';
+import { PluginController } from '../managers/plugin';
 import type { Owned, PluginFileHookRegistration } from '../managers/plugin/PluginTypes';
+import { TelemetryManager } from '../managers/TelemetryManager';
+import { UploaderPublicApi } from '../UploaderPublicApi';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
 import { UploadController } from './UploadController';
-import { UploadHostBridge } from './UploadHostBridge';
-
-// A full `UploadHostBridge` with inert defaults; only the members a test cares
-// about are overridden. Inlined (not shared) so it stays out of coverage.
-const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
-  ({
-    getFileHooks: () => [],
-    getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
-    getApi: (() => ({})) as unknown as UploadHostBridge['getApi'],
-    emitCommonUploadFailed: () => {},
-    emit: () => {},
-    getOutputCollectionState: (() => ({})) as unknown as UploadHostBridge['getOutputCollectionState'],
-    getOutputData: () => [],
-    runOnAddHooks: () => {},
-    onResolverError: () => {},
-    onUploadError: () => {},
-    onValidatorError: () => {},
-    ...overrides,
-  }) satisfies UploadHostBridge;
 
 vi.mock('@uploadcare/upload-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@uploadcare/upload-client')>();
@@ -77,7 +61,6 @@ const makeOutputItem = (uid: Uid): OutputFileEntry => ({ internalId: uid }) as u
 type SetupOpts = {
   cfg?: Partial<ConfigType>;
   hooks?: readonly FileHook[];
-  withOnError?: boolean;
 };
 
 const setup = (opts: SetupOpts = {}) => {
@@ -85,18 +68,22 @@ const setup = (opts: SetupOpts = {}) => {
   const config = container.get(ConfigController);
   applyConfig(config, opts.cfg ?? {});
   const collection = container.get(UploadCollectionController);
+  // `beforeUpload` hooks come from the conditionally-bound `PluginController`
+  // (resolved via `containerOf` + `getOrNull`); the public output item comes
+  // from `UploaderPublicApi`; upload errors report to `TelemetryManager`. Bind a
+  // fake for each on the real container so `@inject` resolves them as production.
   const getFileHooks = vi.fn<() => readonly FileHook[]>(() => opts.hooks ?? []);
-  const getOutputItem = vi.fn<(uid: Uid) => OutputFileEntry>((uid) => makeOutputItem(uid));
-  const onUploadError = vi.fn<(error: unknown, context: string) => void>();
-  container.bind(UploadHostBridge, () =>
-    makeUploadHost({
-      getFileHooks,
-      getOutputItem: getOutputItem as unknown as UploadHostBridge['getOutputItem'],
-      // `withOnError: false` → an inert no-op sink, mirroring v1's "no sink
-      // provided" path.
-      onUploadError: opts.withOnError === false ? () => {} : onUploadError,
-    }),
+  container.bind(
+    PluginController,
+    () => ({ snapshot: () => ({ fileHooks: getFileHooks() }) }) as unknown as PluginController,
   );
+  // `getOrNull(PluginController)` (the controller's read path) resolves only a
+  // CONSTRUCTED instance, so force the fake into existence — the production
+  // equivalent is `ensurePluginManager`'s `container.get(PluginController)`.
+  container.get(PluginController);
+  const getOutputItem = vi.fn<(uid: Uid) => OutputFileEntry>((uid) => makeOutputItem(uid));
+  container.bind(UploaderPublicApi, () => ({ getOutputItem }) as unknown as UploaderPublicApi);
+  const onUploadError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {});
   const secureUploads = container.get(SecureUploadsController);
   const controller = container.get(UploadController);
   return { controller, config, collection, secureUploads, getFileHooks, getOutputItem, onUploadError };
@@ -472,10 +459,12 @@ describe('UploadController', () => {
       expect(onUploadError).toHaveBeenCalled();
     });
 
-    it('does not throw when no onUploadError sink is provided', async () => {
+    it('does not throw while reporting an upload error to telemetry', async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
       mockUploadFile.mockRejectedValue(new UploadcareError('bad'));
-      const { controller, collection } = setup({ withOnError: false });
+      // The telemetry error sink (`TelemetryManager.sendEventError`) is always
+      // present and never throws, so the error-report path resolves cleanly.
+      const { controller, collection } = setup();
       const id = collection.add({ file: new File(['x'], 'a.txt') });
 
       await expect(controller.uploadEntry(id)).resolves.toBeUndefined();
@@ -622,7 +611,6 @@ describe('UploadController', () => {
       } as unknown as SecureUploadsController;
       // Bind a fake secure-uploads whose token resolution rejects.
       container.bind(SecureUploadsController, () => secureUploads);
-      container.bind(UploadHostBridge, () => makeUploadHost());
       const controller = container.get(UploadController);
 
       const opts = await controller.buildUploadOptions();

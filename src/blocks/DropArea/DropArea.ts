@@ -138,7 +138,7 @@ export class DropArea extends ChildBlock {
     // never render `<uc-upload-ctx-provider>`), so it must attach the
     // uploader scope itself — same contract as v1's `LitUploaderBlock.
     // initCallback`, and the identical seam `<uc-upload-ctx-provider>` uses.
-    ensureUploaderScope(container, (type, payload, options) => this.emit(type, payload, options));
+    ensureUploaderScope(container);
 
     // Re-adoption (release-while-connected followed by re-adopt) would
     // otherwise stack a new dropzone per adoption without ever removing the

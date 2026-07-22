@@ -16,9 +16,9 @@ const log = logger.scope('controller-container');
 
 // A token constructor. Unbound tokens are built by the container with a
 // zero-arg `new Ctrl()`; a token whose value isn't a zero-arg-constructible
-// class (e.g. `UploadHostBridge`, a plain value built by `buildUploaderScopeDeps`)
-// MUST be `bind()`-ed with a factory, so its args never reach the container's
-// `new`. The `never[]` rest
+// class (e.g. `PluginManagerBridge`, a `declare`-only token whose value is built
+// by a bound factory) MUST be `bind()`-ed with a factory, so its args never
+// reach the container's `new`. The `never[]` rest
 // keeps such constructors assignable as tokens while still permitting the
 // zero-arg `new Ctrl()` on the unbound path (`never` is assignable to any arg).
 export type Ctor<T> = new (...args: never[]) => T;

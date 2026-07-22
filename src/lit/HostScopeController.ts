@@ -10,10 +10,11 @@ import type { ReactiveController, ReactiveControllerHost } from 'lit';
  * returning the matching unregister — so this controller stays agnostic of which
  * aggregator it drives. Because the aggregators are resolved from the ctx's DI
  * container (only available once adopted), the owning block creates this in
- * `controllerReady` and tears it down in `controllerReleased`; `hostConnected`
- * registers (fires immediately on `addController` since the host is already
- * connected by then) and `hostDisconnected` unregisters (idempotent, so an
- * explicit teardown followed by Lit's own disconnect callback can't double-fire).
+ * `controllerReady` and tears it down via an `addDisposer` teardown that
+ * `ChildBlock` drains on release; `hostConnected` registers (fires immediately on
+ * `addController` since the host is already connected by then) and
+ * `hostDisconnected` unregisters (idempotent, so an explicit teardown followed by
+ * Lit's own disconnect callback can't double-fire).
  */
 export class HostScopeController implements ReactiveController {
   #register: () => () => void;

@@ -8,7 +8,6 @@ import type { Token } from '../abstract/di/ControllerContainer';
 import { PluginController } from '../abstract/managers/plugin';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
-import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { ensureUploaderScope } from './ensureUploaderScope';
 
@@ -25,9 +24,9 @@ const setup = () => {
   const ctxName = `ensure-scope-test-${seq++}`;
   const container = ensureUploaderCtx(ctxName);
   created.push(ctxName);
-  const eventEmitter = container.get(EventEmitter);
-  const attach = () =>
-    ensureUploaderScope(container, (type, payload, options) => eventEmitter.emit(type, payload, options));
+  // The upload-stack controllers emit through their own `@inject`-ed per-ctx
+  // `EventEmitter`, so `ensureUploaderScope` takes no host `emit` closure.
+  const attach = () => ensureUploaderScope(container);
   return { ctxName, container, attach };
 };
 
