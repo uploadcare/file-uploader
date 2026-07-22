@@ -1,0 +1,84 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ConfigController } from '../abstract/controllers/ConfigController';
+import { UploaderRegistry } from '../abstract/UploaderRegistry';
+import { delay } from '../utils/delay';
+import { ChildBlock } from './ChildBlock';
+import { ensureUploaderCtx } from './ensureUploaderCtx';
+import { WithConfig } from './WithConfig';
+
+// A config host on a plain ChildBlock (NOT <uc-config>) — proves the capability
+// is block-agnostic. Idempotent registration.
+class ConfigHostProbe extends WithConfig(ChildBlock) {}
+ConfigHostProbe.reg('uc-config-host-probe');
+
+let seq = 0;
+const mounted: HTMLElement[] = [];
+const ctxNames: string[] = [];
+
+const freshCtxName = (): string => {
+  const name = `withconfig-spec-${seq++}`;
+  ctxNames.push(name);
+  return name;
+};
+
+afterEach(() => {
+  for (const el of mounted.splice(0)) el.remove();
+  for (const name of ctxNames.splice(0)) UploaderRegistry.dispose(name);
+  vi.restoreAllMocks();
+});
+
+const mount = async (ctxName: string): Promise<ConfigHostProbe> => {
+  ensureUploaderCtx(ctxName);
+  const el = document.createElement('uc-config-host-probe') as ConfigHostProbe;
+  el.setAttribute('ctx-name', ctxName);
+  document.body.append(el);
+  mounted.push(el);
+  await el.updateComplete;
+  await delay(0);
+  return el;
+};
+
+/** True if any console.warn call carried the given substring. */
+const warnedWith = (warn: ReturnType<typeof vi.spyOn>, substr: string): boolean =>
+  warn.mock.calls.some((call: unknown[]) =>
+    call.some((arg: unknown) => typeof arg === 'string' && arg.includes(substr)),
+  );
+
+describe('WithConfig (block-agnostic config host)', () => {
+  it('adds built-in config attributes to observedAttributes on a plain ChildBlock', () => {
+    expect(ConfigHostProbe.observedAttributes).toContain('multiple');
+    expect(ConfigHostProbe.observedAttributes).toContain('pubkey');
+  });
+
+  it('writes a config property into the ctx ConfigController from a non-<uc-config> host', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    el.pubkey = 'fromprobe';
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
+    expect(config?.get('pubkey')).toBe('fromprobe');
+  });
+
+  describe('one-config-host-per-ctx warning (Policy 2, deferred confirm)', () => {
+    it('warns (deferred, once) when two config hosts share a ctx', async () => {
+      const ctxName = freshCtxName();
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      await mount(ctxName);
+      await mount(ctxName); // second host on the SAME ctx
+      await delay(0); // let the deferred microtask re-check run
+
+      expect(warnedWith(warn, 'multiple config writers')).toBe(true);
+      expect(warnedWith(warn, ctxName)).toBe(true);
+    });
+
+    it('does not warn when a single host is swapped (old deregisters before the tick)', async () => {
+      const ctxName = freshCtxName();
+      const first = await mount(ctxName);
+      first.remove(); // disconnected → controllerReleased → unregisterWriter (sync)
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      await mount(ctxName); // replacement host
+      await delay(0);
+
+      expect(warnedWith(warn, 'multiple config writers')).toBe(false);
+    });
+  });
+});
