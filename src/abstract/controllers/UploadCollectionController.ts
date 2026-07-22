@@ -90,8 +90,25 @@ export class UploadCollectionController {
   private _flushProperties(): void {
     const changeMap = this._changeMap;
     this._changeMap = Object.create(null);
-    for (const handler of this._propertyObservers.keys()) {
-      handler({ ...changeMap });
+    const changedKeys = Object.keys(changeMap) as (keyof UploadEntryData)[];
+    for (const [handler, declared] of this._propertyObservers) {
+      // Deliver each observer ONLY its declared keys, and skip it entirely when
+      // none of them changed. This is what makes the demand-driven declaration
+      // actually scope work: a consumer that didn't declare `uploadProgress`
+      // (UploadList/DynamicBtn/ProgressBarCommon) is not woken by a progress
+      // tick, even though another observer (UploadEventsController) did declare
+      // it and put it in the change-map.
+      const scoped: UploadCollectionChangeMap = Object.create(null);
+      let any = false;
+      for (const key of changedKeys) {
+        if (declared.has(key)) {
+          scoped[key] = changeMap[key];
+          any = true;
+        }
+      }
+      if (any) {
+        handler(scoped);
+      }
     }
   }
 
@@ -156,6 +173,11 @@ export class UploadCollectionController {
       item.uid,
       item.subscribeKeys((key) => this._recordPropChange(key, item.uid)),
     );
+    // Arm membership BEFORE the immediate-on-add property fire so their 0-delay
+    // ticks flush in that order (v1 parity): a consumer sees `FILE_ADDED` before
+    // any per-prop event for the new entry — notably `FILE_UPLOAD_SUCCESS` for an
+    // already-uploaded file.
+    this._scheduleMembership();
     // Immediate-on-add (v1 parity): surface the new entry's initial observed-key
     // state to property observers. The old per-key `observe(..., {immediate:true})`
     // did this — it is load-bearing for an already-uploaded entry (fileInfo set at
@@ -165,7 +187,6 @@ export class UploadCollectionController {
     for (const key of this._observedKeys) {
       this._recordPropChange(key, item.uid);
     }
-    this._scheduleMembership();
     return item.uid;
   }
 
