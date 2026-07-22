@@ -44,6 +44,35 @@ export function buildOutputCollectionState<
   const collectionState = container.get(CollectionStateController);
   const uploadCollection = container.get(UploadCollectionController);
 
+  // Partition all entries by derived status in ONE pass (memoized), so counts,
+  // the four per-status arrays, and the status flags don't each re-filter the
+  // whole list. Was O(N × ~5) filters/scans per state; now O(N) once. The result
+  // is identical to the per-getter `.filter(status === …)` it replaces (a
+  // `removed` entry lands in no bucket, exactly as the old filters excluded it).
+  const partitionByStatus = memoize(() => {
+    const success: OutputFileEntry<'success'>[] = [];
+    const failed: OutputFileEntry<'failed'>[] = [];
+    const uploading: OutputFileEntry<'uploading'>[] = [];
+    const idle: OutputFileEntry<'idle'>[] = [];
+    for (const entry of state.allEntries) {
+      switch (entry.status) {
+        case 'success':
+          success.push(entry as OutputFileEntry<'success'>);
+          break;
+        case 'failed':
+          failed.push(entry as OutputFileEntry<'failed'>);
+          break;
+        case 'uploading':
+          uploading.push(entry as OutputFileEntry<'uploading'>);
+          break;
+        case 'idle':
+          idle.push(entry as OutputFileEntry<'idle'>);
+          break;
+      }
+    }
+    return { success, failed, uploading, idle };
+  });
+
   const getters = {
     progress: (): number => {
       return collectionState.get('commonProgress');
@@ -61,15 +90,15 @@ export function buildOutputCollectionState<
     },
 
     failedCount: (): number => {
-      return state.failedEntries.length;
+      return partitionByStatus().failed.length;
     },
 
     successCount: (): number => {
-      return state.successEntries.length;
+      return partitionByStatus().success.length;
     },
 
     uploadingCount: (): number => {
-      return state.uploadingEntries.length;
+      return partitionByStatus().uploading.length;
     },
 
     status: (): TCollectionStatus => {
@@ -81,16 +110,16 @@ export function buildOutputCollectionState<
       return (
         state.allEntries.length > 0 &&
         state.errors.length === 0 &&
-        state.successEntries.length === state.allEntries.length
+        partitionByStatus().success.length === state.allEntries.length
       );
     },
 
     isUploading: (): boolean => {
-      return state.allEntries.some((entry: OutputFileEntry) => entry.status === 'uploading');
+      return partitionByStatus().uploading.length > 0;
     },
 
     isFailed: (): boolean => {
-      return state.errors.length > 0 || state.failedEntries.length > 0;
+      return state.errors.length > 0 || partitionByStatus().failed.length > 0;
     },
 
     allEntries: (): OutputFileEntry[] => {
@@ -98,25 +127,19 @@ export function buildOutputCollectionState<
     },
 
     successEntries: (): OutputFileEntry<'success'>[] => {
-      return state.allEntries.filter(
-        (entry: OutputFileEntry) => entry.status === 'success',
-      ) as OutputFileEntry<'success'>[];
+      return partitionByStatus().success;
     },
 
     failedEntries: (): OutputFileEntry<'failed'>[] => {
-      return state.allEntries.filter(
-        (entry: OutputFileEntry) => entry.status === 'failed',
-      ) as OutputFileEntry<'failed'>[];
+      return partitionByStatus().failed;
     },
 
     uploadingEntries: (): OutputFileEntry<'uploading'>[] => {
-      return state.allEntries.filter(
-        (entry: OutputFileEntry) => entry.status === 'uploading',
-      ) as OutputFileEntry<'uploading'>[];
+      return partitionByStatus().uploading;
     },
 
     idleEntries: (): OutputFileEntry<'idle'>[] => {
-      return state.allEntries.filter((entry: OutputFileEntry) => entry.status === 'idle') as OutputFileEntry<'idle'>[];
+      return partitionByStatus().idle;
     },
   };
 
