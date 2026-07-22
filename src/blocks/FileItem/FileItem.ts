@@ -386,9 +386,20 @@ export class FileItem extends FileItemConfig {
     return super.shouldUpdate(changedProperties);
   }
 
+  // `_state` is read ~9× per render (every derived getter routes through it).
+  // Memoize it for the render pass — cleared at the top of `render()` — so the
+  // ladder + its `getTracked` reads run once. Safe because `_state` is only ever
+  // read during render (the imperative focus-sync uses `deriveFileItemState`
+  // directly), so the cache can't be observed stale.
+  private _renderStateCache: FileItemStateValue | undefined;
   private get _state(): FileItemStateValue {
+    if (this._renderStateCache !== undefined) {
+      return this._renderStateCache;
+    }
     const { entry } = this;
-    return entry ? this._deriveState((key) => entry.getTracked(key)) : FileItemState.IDLE;
+    const state = entry ? this._deriveState((key) => entry.getTracked(key)) : FileItemState.IDLE;
+    this._renderStateCache = state;
+    return state;
   }
 
   private get _isFinished(): boolean {
@@ -466,6 +477,8 @@ export class FileItem extends FileItemConfig {
   }
 
   public override render() {
+    // Fresh state per render pass — the derived getters below memoize through it.
+    this._renderStateCache = undefined;
     return html`
       <div
         class="uc-inner"

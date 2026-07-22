@@ -172,18 +172,32 @@ export class DropArea extends ChildBlock {
         const api = this._api;
         const prevSize = collection.size;
 
-        items.forEach((item) => {
-          if (item.type === 'url') {
-            api.addFileFromUrl(item.url, {
+        // Fast path for the common bulk drop (all files, no URLs): one batched add
+        // instead of a per-file loop. Fall back to the ordered per-item loop when
+        // URLs are mixed in (rare) so add order is preserved.
+        const hasUrl = items.some((item) => item.type === 'url');
+        if (!hasUrl) {
+          api.addFilesFromObjects(
+            items.map((item) => ({
+              file: (item as Extract<typeof item, { type: 'file' }>).file,
               source: UploadSource.DROP_AREA,
-            });
-          } else if (item.type === 'file') {
-            api.addFileFromObject(item.file, {
-              source: UploadSource.DROP_AREA,
-              fullPath: item.fullPath,
-            });
-          }
-        });
+              fullPath: (item as Extract<typeof item, { type: 'file' }>).fullPath,
+            })),
+          );
+        } else {
+          items.forEach((item) => {
+            if (item.type === 'url') {
+              api.addFileFromUrl(item.url, {
+                source: UploadSource.DROP_AREA,
+              });
+            } else if (item.type === 'file') {
+              api.addFileFromObject(item.file, {
+                source: UploadSource.DROP_AREA,
+                fullPath: item.fullPath,
+              });
+            }
+          });
+        }
         if (collection.size > prevSize) {
           this._router.traverse('onFileAdd');
         }

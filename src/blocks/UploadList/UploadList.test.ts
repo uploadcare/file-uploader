@@ -156,12 +156,12 @@ describe('UploadList (M-god step 6b-8 migration)', () => {
 
     expect(el.querySelectorAll('uc-file-item')).toHaveLength(0);
 
-    collectionState.set('uploadList', [{ uid: 'file-1' as Uid }, { uid: 'file-2' as Uid }]);
+    collectionState.set('uploadList', ['file-1' as Uid, 'file-2' as Uid]);
     await el.updateComplete;
     await delay(0);
     expect(el.querySelectorAll('uc-file-item')).toHaveLength(2);
 
-    collectionState.set('uploadList', [{ uid: 'file-1' as Uid }]);
+    collectionState.set('uploadList', ['file-1' as Uid]);
     await el.updateComplete;
     await delay(0);
     expect(el.querySelectorAll('uc-file-item')).toHaveLength(1);

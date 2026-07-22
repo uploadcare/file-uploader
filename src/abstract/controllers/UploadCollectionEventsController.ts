@@ -44,10 +44,9 @@ export class UploadCollectionEventsController {
   }
 
   public setUploadList(entries: Uid[]): void {
-    this._collectionState.set(
-      'uploadList',
-      entries.map((uid) => ({ uid })),
-    );
+    // Store the bare uid list (a fresh per-flush snapshot from `observeCollection`)
+    // — no `{ uid }` wrapper object per entry.
+    this._collectionState.set('uploadList', [...entries]);
   }
 
   /**
