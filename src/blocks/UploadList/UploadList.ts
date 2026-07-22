@@ -9,8 +9,8 @@ import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
+import { throttled } from '../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
-import { throttle } from '../../utils/throttle';
 import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './upload-list.css';
 import { repeat } from 'lit/directives/repeat.js';
@@ -35,9 +35,10 @@ export class UploadList extends ActivityChildBlock {
   // current container on each access, so re-adoption is safe): `ConfigController`,
   // `CollectionStateController`, `TelemetryManager`, plus `UploaderPublicApi`
   // (flow actions) and `UploadCollectionController` (clear-all). `RouterController`
-  // is inherited from `ActivityChildBlock`. The teardown-tolerant reads (the guard
-  // predicate + the throttled tick can fire after release, where an `@inject` read
-  // would throw) stay on `useOrNull`.
+  // is inherited from `ActivityChildBlock`. The throttled collection-update tick
+  // is now adoption-guarded by `@throttled` (it no-ops after release), so it
+  // reads these `@inject` fields directly; only the visibility predicate — which
+  // can also run during a teardown tick — still reads via `useOrNull`.
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
@@ -126,25 +127,23 @@ export class UploadList extends ActivityChildBlock {
     this._uploadCollection.clearAll();
   };
 
-  private _throttledHandleCollectionUpdate = throttle(() => {
-    // A trailing tick can fire after the block is released while still connected
-    // (registry unregistration race) — read null-tolerantly via `useOrNull` and
-    // bail rather than throwing uncaught in the timeout (DynamicBtn precedent).
-    const config = this.useOrNull(ConfigController);
-    if (!this.isConnected || !config) {
-      return;
-    }
+  // `@throttled` makes this adopted-guarded (a trailing tick after release —
+  // e.g. a registry-unregistration race — no-ops) and cancels the pending timer
+  // on release, so the body reads its throwing `@inject` fields directly instead
+  // of the old `useOrNull` bail. Callers keep using `this._throttledHandleCollectionUpdate`
+  // (a stable bound reference, still safe to hand to `observeCollection`).
+  @throttled(300)
+  protected _throttledHandleCollectionUpdate(): void {
     this._updateUploadsState();
 
     // The router guard (registered via `_guardNonEmpty`) decides whether the
     // empty list may stay open; ask it to re-check now that the collection changed.
-    // Null-tolerant (`useOrNull`): this trailing tick can fire after release.
-    this.useOrNull(RouterController)?.revalidate();
+    this.container.get(RouterController).revalidate();
 
-    if (!config.get('confirmUpload')) {
-      this.useOrNull(UploaderPublicApi)?.uploadAll();
+    if (!this._config.get('confirmUpload')) {
+      this._api.uploadAll();
     }
-  }, 300);
+  }
 
   private _updateUploadsState(): void {
     // Imperative derived-state recompute (writes the toolbar/button `@state`
