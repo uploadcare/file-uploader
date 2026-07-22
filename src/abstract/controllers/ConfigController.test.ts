@@ -183,4 +183,33 @@ describe('ConfigController', () => {
     expect(c.get('imgOnly')).toBe(true);
     expect(listener).toHaveBeenCalledTimes(1);
   });
+
+  describe('config-writer registry', () => {
+    it('tracks registered writers by identity and deregisters them', () => {
+      const c = new ConfigController();
+      const a = { isConnected: true };
+      const b = { isConnected: true };
+      c.registerWriter(a);
+      c.registerWriter(b);
+      expect(c.getWriters()).toHaveLength(2);
+      expect(c.getWriters()).toContain(a);
+      c.unregisterWriter(a);
+      expect(c.getWriters()).toEqual([b]);
+    });
+
+    it('registering the same host twice is idempotent (Set semantics)', () => {
+      const c = new ConfigController();
+      const a = { isConnected: true };
+      c.registerWriter(a);
+      c.registerWriter(a);
+      expect(c.getWriters()).toHaveLength(1);
+    });
+
+    it('destroy() clears the writer registry', () => {
+      const c = new ConfigController();
+      c.registerWriter({ isConnected: true });
+      c.destroy();
+      expect(c.getWriters()).toEqual([]);
+    });
+  });
 });

@@ -33,6 +33,12 @@ export class ConfigController implements ReactiveStore<ConfigType> {
   #state = new SignalMap<ConfigType & Record<string, unknown>>(initialConfig);
   #customKeys = new Set<string>();
   #customDefs = new Map<string, CustomConfigDefinition<unknown>>();
+  // Config-writer hosts registered for this ctx (one config host per ctx is the
+  // contract). Stored by identity as DOM-free `{ isConnected }` handles — this
+  // controller never reads the DOM or warns; the element/mixin layer inspects
+  // `getWriters()` and emits the multi-writer warning (keeps this class
+  // DOM-free per the controller-layering rule).
+  #writers = new Set<ConfigWriterHandle>();
 
   /** Live config object (stable reference — mutate via `set`/`setCustom`). */
   public get values(): Readonly<ConfigType> {
@@ -152,9 +158,36 @@ export class ConfigController implements ReactiveStore<ConfigType> {
     this.#state.set(name, value);
   }
 
+  // ─── Config-writer registry (one config host per ctx) ───────────────────
+
+  /** Register a config-host element as a writer for this ctx (by identity). */
+  public registerWriter(host: ConfigWriterHandle): void {
+    this.#writers.add(host);
+  }
+
+  /** Deregister a config-host element (on release / disconnect / ctx switch). */
+  public unregisterWriter(host: ConfigWriterHandle): void {
+    this.#writers.delete(host);
+  }
+
+  /** Currently-registered config-writer hosts for this ctx. */
+  public getWriters(): ConfigWriterHandle[] {
+    return [...this.#writers];
+  }
+
   public destroy(): void {
     this.#customKeys.clear();
     this.#customDefs.clear();
+    this.#writers.clear();
     this.#state.destroy();
   }
+}
+
+/**
+ * A config-writer host as seen by the {@link ConfigController} registry — the
+ * DOM-free lower bound the controller needs (identity + liveness). The mixin
+ * passes the element (`this`), which satisfies this via `Element.isConnected`.
+ */
+export interface ConfigWriterHandle {
+  readonly isConnected: boolean;
 }
