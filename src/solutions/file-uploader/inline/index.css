@@ -10,6 +10,21 @@
     flex: 1;
   }
 
+  /* When the inline uploader is given a bounded height, let the file list fill it
+     and scroll INTERNALLY (`.uc-files` becomes a real bounded scroller) instead of
+     `uc-upload-list { height: max-content }` growing the whole element to the full
+     content height (a 100k-px-tall element at thousands of files). This is also
+     what lets list virtualization engage in inline mode. Harmless when the host is
+     unsized: `height:100%` resolves to auto and the list grows with content as before. */
+  [uc-file-uploader-inline] uc-upload-list {
+    height: 100%;
+    min-height: 0;
+  }
+
+  [uc-file-uploader-inline] uc-upload-list .uc-files {
+    min-height: 0;
+  }
+
   [uc-file-uploader-inline] uc-activity-header::after {
     width: var(--uc-button-size);
     height: var(--uc-button-size);

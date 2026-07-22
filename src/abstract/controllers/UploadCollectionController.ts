@@ -72,11 +72,16 @@ export class UploadCollectionController {
     this._observedKeys = keys;
   }
 
-  private _recordPropChange(key: keyof UploadEntryData, uid: Uid): void {
+  // Queue a per-prop change into the change-map WITHOUT arming the flush; returns
+  // whether it was queued (i.e. the key is observed). Split from `_recordPropChange`
+  // so a batch (the immediate-on-add loop) can arm the debounce ONCE instead of
+  // once per key — a bulk add of N files went from ~N×|observedKeys| debounce
+  // re-arms down to N.
+  private _queuePropChange(key: keyof UploadEntryData, uid: Uid): boolean {
     // Gate to the live union of observed keys — an unobserved key never enters
     // the change-map, so it can't drive a downstream tick.
     if (!this._observedKeys.has(key)) {
-      return;
+      return false;
     }
     let set = this._changeMap[key];
     if (!set) {
@@ -84,7 +89,13 @@ export class UploadCollectionController {
       this._changeMap[key] = set;
     }
     set.add(uid);
-    this._scheduleProperties();
+    return true;
+  }
+
+  private _recordPropChange(key: keyof UploadEntryData, uid: Uid): void {
+    if (this._queuePropChange(key, uid)) {
+      this._scheduleProperties();
+    }
   }
 
   private _flushProperties(): void {
@@ -184,8 +195,12 @@ export class UploadCollectionController {
     // add ⇒ fires FILE_UPLOAD_SUCCESS / drives the success collection state without
     // an upload). A fresh entry's schema defaults pass no consumer emit guards, so
     // this is a no-op for it.
+    let queued = false;
     for (const key of this._observedKeys) {
-      this._recordPropChange(key, item.uid);
+      queued = this._queuePropChange(key, item.uid) || queued;
+    }
+    if (queued) {
+      this._scheduleProperties();
     }
     return item.uid;
   }
