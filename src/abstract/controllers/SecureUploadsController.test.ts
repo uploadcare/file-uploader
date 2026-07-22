@@ -1,11 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import type { ConfigType } from '../../types';
 import type { SecureUploadsSignatureAndExpire } from '../../types/index';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { __resetLoggerForTests } from '../logger';
+import { TelemetryManager } from '../managers/TelemetryManager';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
-import { UploadHostBridge } from './UploadHostBridge';
 
 // Apply a bag of config overrides onto a ConfigController. The key/value share
 // the same `K`, but TS can't track that correlation across the loop, so the
@@ -19,34 +19,18 @@ const applyConfig = (config: ConfigController, overrides: Partial<ConfigType>): 
   }
 };
 
-// A full `UploadHostBridge` with inert defaults; only the members a test cares
-// about are overridden. Inlined (not shared) so it stays out of coverage.
-const makeUploadHost = (overrides: Partial<UploadHostBridge> = {}): UploadHostBridge =>
-  ({
-    getFileHooks: () => [],
-    getOutputItem: ((uid: string) => ({ internalId: uid })) as unknown as UploadHostBridge['getOutputItem'],
-    getApi: (() => ({})) as unknown as UploadHostBridge['getApi'],
-    emitCommonUploadFailed: () => {},
-    emit: () => {},
-    getOutputCollectionState: (() => ({})) as unknown as UploadHostBridge['getOutputCollectionState'],
-    getOutputData: () => [],
-    runOnAddHooks: () => {},
-    onResolverError: () => {},
-    onUploadError: () => {},
-    onValidatorError: () => {},
-    ...overrides,
-  }) satisfies UploadHostBridge;
-
 describe('SecureUploadsController', () => {
   let controller: SecureUploadsController;
-  let onResolverError: Mock<(error: unknown, context: string) => void>;
+  // A resolver that throws is reported through the container-owned
+  // `TelemetryManager.sendEventError` (the never-throwing error sink) — spied so
+  // the test can assert the report without emitting real telemetry.
+  let sendEventError: MockInstance<TelemetryManager['sendEventError']>;
 
   const createController = (cfgOverrides: Partial<ConfigType> = {}) => {
     const container = new ControllerContainer();
     const config = container.get(ConfigController);
     applyConfig(config, cfgOverrides);
-    onResolverError = vi.fn<(error: unknown, context: string) => void>();
-    container.bind(UploadHostBridge, () => makeUploadHost({ onResolverError }));
+    sendEventError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {});
     controller = container.get(SecureUploadsController);
   };
 
@@ -72,13 +56,12 @@ describe('SecureUploadsController', () => {
       expect(controller).toBeInstanceOf(SecureUploadsController);
     });
 
-    it('resolves against a minimal host (inert onResolverError)', async () => {
+    it('resolves against a bare container (no telemetry override)', async () => {
       const container = new ControllerContainer();
       const config = container.get(ConfigController);
       applyConfig(config, { secureSignature: 'sig', secureExpire: '1234567890' });
-      // A bare host (inert defaults, no onResolverError override) → must still
-      // resolve without throwing.
-      container.bind(UploadHostBridge, () => makeUploadHost());
+      // No spy/override on `TelemetryManager` — the controller must still resolve
+      // and run against the real container-owned telemetry sink without throwing.
       const bare = container.get(SecureUploadsController);
 
       await expect(bare.getSecureToken()).resolves.toEqual({
@@ -301,7 +284,7 @@ describe('SecureUploadsController', () => {
         );
       });
 
-      it('should handle resolver error and report it via onResolverError, returning the previous token', async () => {
+      it('should handle resolver error and report it via TelemetryManager.sendEventError, returning the previous token', async () => {
         const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         const nowUnix = Math.floor(Date.now() / 1000);
         const validToken: SecureUploadsSignatureAndExpire = {
@@ -328,7 +311,7 @@ describe('SecureUploadsController', () => {
           'Secure signature resolving failed. Falling back to the previous one.',
           resolverError,
         );
-        expect(onResolverError).toHaveBeenCalled();
+        expect(sendEventError).toHaveBeenCalled();
       });
 
       it('should debug print when token is not set yet', async () => {

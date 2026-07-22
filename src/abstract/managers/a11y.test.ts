@@ -188,6 +188,28 @@ describe('A11y', () => {
     expect(button.classList.contains('is-pressed')).toBe(false);
   });
 
+  it('registerBlock returns a disposer that detaches the scope (same effect as unregisterBlock)', () => {
+    const a11y = track(new A11y());
+    const { scope, button } = buttonInScope();
+    const dispose = a11y.registerBlock(asNode(scope));
+
+    dispose();
+    button.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+    expect(button.classList.contains('is-pressed')).toBe(false);
+  });
+
+  it('the disposer from registerBlock after destroy() is an inert no-op', () => {
+    const a11y = track(new A11y());
+    const { scope } = buttonInScope();
+    a11y.destroy();
+
+    // Registering after destroy returns an inert no-op disposer — calling it
+    // must be safe (matching `registerBlock`'s post-destroy guard).
+    const dispose = a11y.registerBlock(asNode(scope));
+    expect(() => dispose()).not.toThrow();
+  });
+
   it('unregistering one of two scopes keeps the other armed and observable', () => {
     const a11y = track(new A11y());
     const a = buttonInScope();

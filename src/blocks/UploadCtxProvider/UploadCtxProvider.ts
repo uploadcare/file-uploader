@@ -59,21 +59,15 @@ export class UploadCtxProvider extends ChildBlock {
    * (first-write-wins + `attachUploaderScope`'s own gate), so this is a no-op
    * once a solution or a sibling provider has already attached.
    *
-   * The `attachUploaderScope` deps come from the shared `buildUploaderScopeDeps`
-   * (one source of truth with `LitUploaderBlock.initCallback`); only `emit` is
-   * host-specific. The guarded/idempotent body itself lives in
-   * `ensureUploaderScope` (`src/lit/ensureUploaderScope.ts`) — a free-function
-   * seam shared with the ported `<uc-drop-area>`, which needs the identical
-   * synchronous-attach guarantee.
+   * The guarded/idempotent body lives in `ensureUploaderScope`
+   * (`src/lit/ensureUploaderScope.ts`) — a free-function seam shared with the
+   * ported `<uc-drop-area>`, which needs the identical synchronous-attach
+   * guarantee. The upload-stack controllers now emit through their own
+   * `@inject`-ed per-ctx `EventEmitter`, so no host `emit` closure is threaded
+   * through.
    */
   private _attachUploaderScopeIfNeeded(container: ControllerContainer): void {
-    ensureUploaderScope(
-      container,
-      // Same contract as `ChildBlock.emit`: pure EventEmitter dispatch (no
-      // telemetry mirror — telemetry observes the bus independently via
-      // `TelemetryManager.init()`), guarded for teardown races.
-      (type, payload, options) => this.emit(type, payload, options),
-    );
+    ensureUploaderScope(container);
   }
 
   /**

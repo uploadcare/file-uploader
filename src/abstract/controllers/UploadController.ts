@@ -10,13 +10,16 @@ import type { Uid } from '../../lit/Uid';
 import { fileIsImage } from '../../utils/fileTypes';
 import { customUserAgent } from '../../utils/userAgent';
 import { controllerLogger } from '../controllerLogger';
+import { containerOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { lazy } from '../logger';
+import { PluginController } from '../managers/plugin';
+import { TelemetryManager } from '../managers/TelemetryManager';
+import { UploaderPublicApi } from '../UploaderPublicApi';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
-import { UploadHostBridge } from './UploadHostBridge';
 
 /**
  * DOM-free upload engine — owns the upload-client queue and the per-entry
@@ -27,19 +30,25 @@ import { UploadHostBridge } from './UploadHostBridge';
  * `AbortController`, the `beforeUpload` hook chain (with per-hook timeout +
  * isolation), upload-client option assembly, the queued `uploadFile` call,
  * progress, and the success/cancel/error write-back. Container-resolved (M-god
- * step 5): controller peers (config, collection, secure-uploads) and the
- * `UploadHostBridge` (plugin hooks, output-item resolver, telemetry sink)
- * are `@inject`-ed, so it runs zero-arg without a DOM and is unit-testable;
- * debug output goes through the per-ctx `this._log` (gated by this ctx's `debug`
- * config), not a host bridge; the
- * FileItem UI reacts to the same entry mutations through its existing per-entry
+ * step 5): controller peers (config, collection, secure-uploads), the public API
+ * (output-item resolver) and `TelemetryManager` (the never-throwing upload-error
+ * sink) are `@inject`-ed; plugin `beforeUpload` hooks are read from the
+ * conditionally-bound `PluginController` via the container (`containerOf`). So it
+ * runs zero-arg without a DOM and is unit-testable; debug output goes through the
+ * per-ctx `this._log` (gated by this ctx's `debug` config); the FileItem UI
+ * reacts to the same entry mutations through its existing per-entry
  * subscriptions.
  */
 export class UploadController {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(SecureUploadsController) private readonly _secureUploads!: SecureUploadsController;
-  @inject(UploadHostBridge) private readonly _host!: UploadHostBridge;
+  // Token thunk: `UploaderPublicApi` `@inject`s `UploadController` back, so a
+  // direct token reference here would form a value-import cycle that leaves one
+  // side `undefined` at decoration time. The thunk defers the lookup to
+  // resolution time (lazy field), breaking the cycle.
+  @inject(() => UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
 
   // Per-ctx gated logger: the verbose tier prints only when THIS ctx's `debug`
   // config is on; ctx-name + gate resolve lazily at log time via the container
@@ -151,7 +160,7 @@ export class UploadController {
   public async getMetadataFor(uid: Uid): Promise<FileFromOptions['metadata']> {
     const configValue = this._config.values.metadata || undefined;
     if (typeof configValue === 'function') {
-      return configValue(this._host.getOutputItem(uid));
+      return configValue(this._api.getOutputItem(uid));
     }
     return configValue;
   }
@@ -191,7 +200,12 @@ export class UploadController {
         let file: File | Blob | null = entry.get('file');
 
         if (file instanceof File || file instanceof Blob) {
-          const beforeUploadHooks = this._host.getFileHooks().filter((h) => h.type === 'beforeUpload');
+          // Plugin hooks live on the conditionally-bound `PluginController`
+          // (absent in an editor-only ctx, bound by `ensurePluginManager`);
+          // resolve it through the container, matching the removed bridge's
+          // `getOrNull(PluginController)?.snapshot().fileHooks ?? []`.
+          const fileHooks = containerOf(this)?.getOrNull(PluginController)?.snapshot().fileHooks ?? [];
+          const beforeUploadHooks = fileHooks.filter((h) => h.type === 'beforeUpload');
           for (const hook of beforeUploadHooks) {
             try {
               const hookPromise = hook.handler({ file, signal: abortController.signal });
@@ -287,7 +301,7 @@ export class UploadController {
       }
 
       if (!isCancelError) {
-        this._host.onUploadError(cause, 'file upload. Failed to upload file');
+        this._telemetry.sendEventError(cause, 'file upload. Failed to upload file');
       }
     }
   }

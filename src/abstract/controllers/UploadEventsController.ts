@@ -1,17 +1,20 @@
 import { uploadFileGroup } from '@uploadcare/upload-client';
+import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { OutputCollectionState } from '../../types';
 import { debounce } from '../../utils/debounce';
 import { applyInitialCrop } from '../applyInitialCrop';
-import { inject } from '../di/inject';
+import { containerOf } from '../di/ControllerContainer';
+import { inject, injectOrNull } from '../di/inject';
 import { UploaderEventType } from '../EventBus';
+import { PluginController } from '../managers/plugin';
 import { TypedData } from '../TypedData';
+import { UploaderPublicApi } from '../UploaderPublicApi';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import { CollectionStateController } from './CollectionStateController';
 import { ConfigController } from './ConfigController';
 import type { CollectionObserver, UploadCollectionChangeMap } from './UploadCollectionController';
 import { UploadCollectionController } from './UploadCollectionController';
 import { UploadController } from './UploadController';
-import { UploadHostBridge } from './UploadHostBridge';
 import { ValidationController } from './ValidationController';
 
 type Unsubscribe = () => void;
@@ -38,10 +41,12 @@ const VALIDATION_TRIGGER_KEYS: (keyof UploadEntryData)[] = [
  * (owned by `CollectionStateController`), and creates the output group.
  *
  * Container-resolved (M-god step 5): controller peers (collection, config,
- * validation, upload, collection-state) and the `UploadHostBridge` (output-state
- * readers, plugin `onAdd` hooks, the host `emit`) are `@inject`-ed, so it runs
- * zero-arg without a DOM and is unit-testable. `observe()` is called explicitly
- * by `registerUploadStack` once the whole stack is resolved.
+ * validation, upload, collection-state), the public API (output-state readers)
+ * and the per-ctx `EventEmitter` are `@inject`-ed; plugin `onAdd` hooks fire
+ * through the conditionally-bound `PluginController` via the container
+ * (`containerOf` + `whenController`, now-or-when-available). So it runs zero-arg
+ * without a DOM and is unit-testable. `observe()` is called explicitly by
+ * `registerUploadStack` once the whole stack is resolved.
  */
 export class UploadEventsController {
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
@@ -49,7 +54,21 @@ export class UploadEventsController {
   @inject(ValidationController) private readonly _validation!: ValidationController;
   @inject(UploadController) private readonly _upload!: UploadController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
-  @inject(UploadHostBridge) private readonly _host!: UploadHostBridge;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+  // `@injectOrNull`: a teardown-time emit (released container) resolves `null` →
+  // no-op, matching the guard the removed host `emit` closure carried.
+  @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
+
+  // Guarded event dispatch — the direct successor to the host `emit` closure
+  // (`ChildBlock.emit`): pure per-ctx `EventEmitter` dispatch that reaches the
+  // bus (telemetry observes the bus independently; the DOM `CustomEvent` re-
+  // dispatch is the provider's `_bridgeBusToDom` bus subscription, unaffected).
+  // A bound arrow field so the handlers can keep destructuring `emit`;
+  // rest-forwarded so the call arity (2- vs 3-arg) reaches `EventEmitter.emit`
+  // unchanged rather than padding a trailing `undefined`.
+  private _emit = (...args: Parameters<EventEmitter['emit']>): void => {
+    this._eventEmitter?.emit(...args);
+  };
 
   // Active while observing (the v1 `isConnected` guard) — survives disconnect/
   // reconnect cycles; gates the debounced flush + deferred validation that may
@@ -87,7 +106,8 @@ export class UploadEventsController {
 
   private _handleCollectionUpdate: CollectionObserver = (entries, added, removed) => {
     if (!this._active) return;
-    const { emit, getOutputItem } = this._host;
+    const emit = this._emit;
+    const getOutputItem = this._api.getOutputItem.bind(this._api);
 
     if (added.size || removed.size) {
       this._collectionState.set('groupInfo', null);
@@ -102,7 +122,18 @@ export class UploadEventsController {
       if (!entry.get('silent')) {
         emit(UploaderEventType.FILE_ADDED, getOutputItem(entry.uid));
       }
-      this._host.runOnAddHooks(entry);
+      // Plugin `onAdd` hooks live on the conditionally-bound `PluginController`
+      // (bound by `ensurePluginManager`); fire now-or-when-available via the
+      // container, matching the removed bridge's `whenController` port of v1's
+      // `bag.wait('pluginManager').then(…)`. `PluginController` is bound at
+      // scope-attach (before any file is added), so this normally fires
+      // synchronously; the `_active` re-check guards the rare deferred case where
+      // the manager resolves only after `unobserve()`/`destroy()`, so a stale
+      // waiter can't run `onAdd` hooks against a released scope.
+      containerOf(this)?.whenController(PluginController, (pluginManager) => {
+        if (!this._active) return;
+        pluginManager.runOnAddHooks(entry);
+      });
     }
 
     this._validation.runCollectionValidators();
@@ -136,7 +167,9 @@ export class UploadEventsController {
     const collection = this._collection;
     const config = this._config;
     const validation = this._validation;
-    const { emit, getOutputItem, getOutputCollectionState } = this._host;
+    const emit = this._emit;
+    const getOutputItem = this._api.getOutputItem.bind(this._api);
+    const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
 
     this._flushOutputItems();
 
@@ -237,8 +270,11 @@ export class UploadEventsController {
   private _flushOutputItems = debounce(async () => {
     const collection = this._collection;
     const config = this._config;
-    const { emit, getOutputCollectionState, getOutputData } = this._host;
-    const data = getOutputData();
+    const emit = this._emit;
+    const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
+    // Inlined from the removed bridge's `getOutputData(container)`: the flat
+    // output list is the collection's items resolved through the public api.
+    const data = collection.items().map((uid) => this._api.getOutputItem(uid));
     if (data.length !== collection.size) {
       return;
     }
@@ -252,7 +288,8 @@ export class UploadEventsController {
   }, 300);
 
   private async _createGroup(collectionState: OutputCollectionState): Promise<void> {
-    const { emit, getOutputCollectionState } = this._host;
+    const emit = this._emit;
+    const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
     const uploadClientOptions = await this._upload.buildUploadOptions();
     const uuidList = collectionState.allEntries.map((entry) => {
       return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
@@ -278,7 +315,8 @@ export class UploadEventsController {
 
   private _flushCommonUploadProgress = (): void => {
     const collection = this._collection;
-    const { emit, getOutputCollectionState } = this._host;
+    const emit = this._emit;
+    const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
     let commonProgress = 0;
     const items = this._upload.uploadBatch;
     items.forEach((id) => {

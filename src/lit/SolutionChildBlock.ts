@@ -22,27 +22,30 @@ export abstract class SolutionChildBlock extends ChildBlock {
   public static override styleAttrs = ['uc-wgt-common'];
   public static lazyPlugins: LazyPluginEntry[] | null = null;
 
-  // Per-host scope registrations with the shared per-ctx `ClipboardController`
-  // (`paste`) and `A11y` (`keydown`/`keyup`) window-listener aggregators, driven
-  // by `HostScopeController`. Created in `controllerReady` (where the container
-  // resolves the aggregators) and torn down in `controllerReleased`.
-  private _clipboardScope: HostScopeController | null = null;
-  private _a11yScope: HostScopeController | null = null;
-
   protected override controllerReady(container: ControllerContainer): void {
     super.controllerReady(container);
 
-    // Re-adoption safety (teardown-before-resubscribe): drop the previous
-    // cycle's scopes before registering new ones, so re-adoption doesn't stack.
-    this._teardownScopes();
-
+    // A single per-host `HostScopeController` registers this host's DOM scope
+    // with BOTH shared per-ctx window-listener aggregators — `ClipboardController`
+    // (`paste`) and `A11y` (`keydown`/`keyup`) — on `hostConnected`, returning
+    // one combined unregister (each aggregator hands back its own disposer). Its
+    // teardown is `addDisposer`'d so `ChildBlock` drains it on release: that
+    // covers a plain disconnect AND an in-place `ctx-name` switch (which releases
+    // while `isConnected` stays true, so Lit's own `hostDisconnected` never
+    // fires), and stops a re-adoption from stacking a second registration.
     const clipboard = container.get(ClipboardController);
-    this._clipboardScope = new HostScopeController(this, () => clipboard.registerScope(this));
-
     const a11y = container.get(A11y);
-    this._a11yScope = new HostScopeController(this, () => {
-      a11y.registerBlock(this);
-      return () => a11y.unregisterBlock(this);
+    const scope = new HostScopeController(this, () => {
+      const unregisterClipboard = clipboard.registerScope(this);
+      const unregisterA11y = a11y.registerBlock(this);
+      return () => {
+        unregisterClipboard();
+        unregisterA11y();
+      };
+    });
+    this.addDisposer(() => {
+      scope.hostDisconnected();
+      this.removeController(scope);
     });
 
     // A boot-time identity fact on the container-owned `AppInfo`, not pub/sub
@@ -56,24 +59,6 @@ export abstract class SolutionChildBlock extends ChildBlock {
       // them here triggers the loader.
       container.get(LazyPluginsController).set(entries);
     }
-  }
-
-  protected override controllerReleased(container: ControllerContainer): void {
-    super.controllerReleased(container);
-    // Drop our scopes from the shared aggregators so a detached element isn't
-    // retained until ctx teardown; `controllerReady` re-registers on re-adoption.
-    this._teardownScopes();
-  }
-
-  private _teardownScopes(): void {
-    for (const controller of [this._clipboardScope, this._a11yScope]) {
-      if (controller) {
-        controller.hostDisconnected();
-        this.removeController(controller);
-      }
-    }
-    this._clipboardScope = null;
-    this._a11yScope = null;
   }
 
   public override render() {
