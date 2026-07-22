@@ -44,12 +44,21 @@ const makeScrollEl = (opts: { clientHeight: number; itemHeight: number; hasItem?
 };
 
 let disconnectSpy: ReturnType<typeof vi.fn<() => void>>;
+// Last-created observer's callback, so a test can simulate a resize.
+let roCallback: ResizeObserverCallback | null = null;
+const fireResize = (height: number): void => {
+  roCallback?.([{ contentRect: { height } } as ResizeObserverEntry], {} as ResizeObserver);
+};
 
 beforeEach(() => {
   disconnectSpy = vi.fn<() => void>();
+  roCallback = null;
   vi.stubGlobal(
     'ResizeObserver',
     class {
+      public constructor(cb: ResizeObserverCallback) {
+        roCallback = cb;
+      }
       public observe(): void {}
       public unobserve(): void {}
       public disconnect(): void {
@@ -193,6 +202,30 @@ describe('VirtualListController', () => {
     // scroll-hang loop was rowHeight oscillating between renders).
     expect(controller.window(listOf(100)).items).toHaveLength(5);
     expect(host.updateCount).toBe(settledCount);
+  });
+
+  it('tracks viewport height via the ResizeObserver (not a per-render layout read)', () => {
+    const host = new FakeHost();
+    const firstItem = { offsetHeight: 40 };
+    const scrollEl = {
+      clientHeight: 200,
+      scrollTop: 0,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      querySelector: () => firstItem as unknown as HTMLElement,
+    } as unknown as HTMLElement;
+    const controller = new VirtualListController(host, {
+      scrollContainer: () => scrollEl,
+      itemSelector: 'x',
+      rowMetrics: (_el, item) => ({ columns: 1, rowHeight: item.offsetHeight }),
+      overscanRows: 0,
+    });
+    controller.hostUpdated(); // seeds viewport 200 on attach, latches rowHeight 40
+    expect(controller.window(listOf(100)).items).toHaveLength(5); // 200/40
+
+    // A resize is delivered through the observer, not a render-time clientHeight read.
+    fireResize(400);
+    expect(controller.window(listOf(100)).items).toHaveLength(10); // 400/40
   });
 
   it('re-measures row metrics after invalidate() (mode change / resize)', () => {

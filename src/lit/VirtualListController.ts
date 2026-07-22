@@ -138,13 +138,14 @@ export class VirtualListController implements ReactiveController {
     });
   };
 
-  // Measure geometry off the live DOM after each render and lazily wire the
-  // scroll listener + a ResizeObserver. Row metrics are measured ONCE and latched
-  // (`_measured`) — measuring them every render is circular (see the field note)
-  // and hangs. Viewport height tracks continuously (it can't feed back). A resize
-  // clears the latch so row metrics are re-measured. The measurement-driven
-  // re-render is scheduled OUTSIDE the update lifecycle (rAF) so it never trips
-  // Lit's "scheduled an update after an update completed" warning.
+  // Measure geometry after each render and lazily wire the scroll listener + a
+  // ResizeObserver. Viewport height is seeded with ONE layout read on attach and
+  // then owned by the ResizeObserver — steady-state renders do NOT read
+  // `clientHeight`, so a scroll/re-render doesn't force a layout. Row metrics are
+  // measured ONCE and latched (`_measured`) — measuring them every render is
+  // circular (see the field note) and hangs; a resize clears the latch so they
+  // re-measure. The measurement-driven re-render is scheduled OUTSIDE the update
+  // lifecycle (rAF) so it never trips Lit's change-in-update warning.
   private _measure(): void {
     const scrollEl = this._scrollContainer();
     if (!scrollEl) {
@@ -155,11 +156,13 @@ export class VirtualListController implements ReactiveController {
       this._scrollEl = scrollEl;
       this._measured = false;
       scrollEl.addEventListener('scroll', this._onScroll, { passive: true });
-      this._resizeObserver = new ResizeObserver(() => {
-        const height = scrollEl.clientHeight;
-        // A resize can change both viewport and row metrics (e.g. grid columns),
-        // so re-latch. This callback runs outside the update lifecycle → direct
-        // requestUpdate is safe.
+      // Seed viewport once; the observer owns it thereafter (no per-render read).
+      this._viewportHeight = scrollEl.clientHeight;
+      this._resizeObserver = new ResizeObserver((entries) => {
+        const height = entries[0]?.contentRect.height ?? scrollEl.clientHeight;
+        // A resize can change viewport AND row metrics (grid cell height scales
+        // with width via aspect-ratio), so re-latch. This callback runs outside
+        // the update lifecycle → direct requestUpdate is safe.
         if (height !== this._viewportHeight || this._measured) {
           this._viewportHeight = height;
           this._measured = false;
@@ -167,13 +170,6 @@ export class VirtualListController implements ReactiveController {
         }
       });
       this._resizeObserver.observe(scrollEl);
-    }
-
-    let changed = false;
-    const viewportHeight = scrollEl.clientHeight;
-    if (viewportHeight !== this._viewportHeight) {
-      this._viewportHeight = viewportHeight;
-      changed = true;
     }
 
     if (!this._measured) {
@@ -184,13 +180,9 @@ export class VirtualListController implements ReactiveController {
           this._columns = columns >= 1 ? columns : 1;
           this._rowHeight = rowHeight;
           this._measured = true;
-          changed = true;
+          this._scheduleMeasureUpdate();
         }
       }
-    }
-
-    if (changed) {
-      this._scheduleMeasureUpdate();
     }
   }
 

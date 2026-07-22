@@ -4,6 +4,7 @@ import { CollectionStateController } from '../../abstract/controllers/Collection
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { deriveEntryStatus } from '../../abstract/deriveEntryStatus';
 import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
@@ -170,6 +171,52 @@ export class UploadList extends ActivityChildBlock {
     }
   }
 
+  // Cheap toolbar summary: ONE pass over the raw collection entries computing
+  // status counts, instead of `getOutputCollectionState()` which builds a full
+  // `OutputFileEntry` object per entry (O(N) allocation) just for these numbers.
+  // Status precedence is single-sourced with `getOutputItem` via
+  // `deriveEntryStatus`. `anyValidationPending` mirrors the old
+  // `allEntries.some(isValidationPending)` (ANY entry), while
+  // `validatingBeforeUploading` counts only IDLE entries pending validation.
+  private _computeSummary(): Summary & { anyValidationPending: boolean } {
+    const collection = this._uploadCollection;
+    let succeed = 0;
+    let uploading = 0;
+    let failed = 0;
+    let validatingBeforeUploading = 0;
+    let anyValidationPending = false;
+
+    for (const id of collection.items()) {
+      const entry = collection.read(id);
+      if (!entry) {
+        continue;
+      }
+      const fields = entry.values;
+      if (fields.isValidationPending) {
+        anyValidationPending = true;
+      }
+      switch (deriveEntryStatus(fields)) {
+        case 'failed':
+          failed++;
+          break;
+        case 'success':
+          succeed++;
+          break;
+        case 'uploading':
+          uploading++;
+          break;
+        case 'idle':
+          if (fields.isValidationPending) {
+            validatingBeforeUploading++;
+          }
+          break;
+        // 'removed' entries are not counted.
+      }
+    }
+
+    return { total: collection.size, succeed, uploading, failed, validatingBeforeUploading, anyValidationPending };
+  }
+
   private _updateUploadsState(): void {
     // Imperative derived-state recompute (writes the toolbar/button `@state`
     // below), not a render read — runs only from the throttled tick after its
@@ -177,22 +224,24 @@ export class UploadList extends ActivityChildBlock {
     // Config reads use the untracked `get()` (a re-render is driven by the
     // throttled tick's config-`observe`/collection observers, not by tracking here).
     const config = this._config;
-    const collectionState = this._api.getOutputCollectionState();
-    const summary: Summary = {
-      total: collectionState.totalCount,
-      succeed: collectionState.successCount,
-      uploading: collectionState.uploadingCount,
-      failed: collectionState.failedCount,
-      validatingBeforeUploading: collectionState.idleEntries.filter((e) => e.isValidationPending).length,
-    };
-    const fitCountRestrictions = !collectionState.errors.some(
-      (err) => err.type === 'TOO_MANY_FILES' || err.type === 'TOO_FEW_FILES',
-    );
-    const tooMany = collectionState.errors.some((err) => err.type === 'TOO_MANY_FILES');
+    const { anyValidationPending, ...summary } = this._computeSummary();
+    const errors = this._collectionState.get('collectionErrors');
+
+    // One pass over the (tiny) collection-error list instead of two `.some()` scans.
+    let tooMany = false;
+    let fitCountRestrictions = true;
+    for (const err of errors) {
+      if (err.type === 'TOO_MANY_FILES') {
+        tooMany = true;
+        fitCountRestrictions = false;
+      } else if (err.type === 'TOO_FEW_FILES') {
+        fitCountRestrictions = false;
+      }
+    }
+
     const multiple = config.get('multiple');
-    const exact = collectionState.totalCount === (multiple ? config.get('multipleMax') : 1);
-    const isValidationPending = collectionState.allEntries.some((entry) => entry.isValidationPending);
-    const validationOk = summary.failed === 0 && collectionState.errors.length === 0 && !isValidationPending;
+    const exact = summary.total === (multiple ? config.get('multipleMax') : 1);
+    const validationOk = summary.failed === 0 && errors.length === 0 && !anyValidationPending;
     let uploadBtnVisible = false;
     let allDone = false;
     let doneBtnEnabled = false;
@@ -202,7 +251,7 @@ export class UploadList extends ActivityChildBlock {
       uploadBtnVisible = true;
     } else {
       allDone = true;
-      const groupOk = config.get('groupOutput') ? !!collectionState.group : true;
+      const groupOk = config.get('groupOutput') ? !!this._collectionState.get('groupInfo') : true;
       doneBtnEnabled = summary.total === summary.succeed && fitCountRestrictions && validationOk && groupOk;
     }
 
@@ -213,7 +262,20 @@ export class UploadList extends ActivityChildBlock {
     this._addMoreBtnVisible = !exact || multiple;
     this._hasFiles = summary.total > 0;
 
-    this._latestSummary = summary;
+    // Only replace the summary object when a count actually changed — a fresh
+    // object every tick would dirty `@state` and force a re-render even when the
+    // toolbar text is identical (the other fields above are primitives Lit dedups).
+    const prev = this._latestSummary;
+    if (
+      !prev ||
+      prev.total !== summary.total ||
+      prev.succeed !== summary.succeed ||
+      prev.uploading !== summary.uploading ||
+      prev.failed !== summary.failed ||
+      prev.validatingBeforeUploading !== summary.validatingBeforeUploading
+    ) {
+      this._latestSummary = summary;
+    }
   }
 
   private _getHeaderText(summary: Summary): string {
