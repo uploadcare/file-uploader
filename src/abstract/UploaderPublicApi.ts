@@ -212,7 +212,9 @@ export class UploaderPublicApi {
     if (entries.length === 0) {
       return;
     }
-    this._uploadCollection.addMany(entries.map(({ file, ...options }) => this._objectFileInit(file, options)));
+    // Pass the whole entry as options — `_objectFileInit` picks only named fields
+    // (its extra `file` key is ignored), so we skip a rest-object alloc per entry.
+    this._uploadCollection.addMany(entries.map((entry) => this._objectFileInit(entry.file, entry)));
   };
 
   public addFileFromUploadcareFile = (
