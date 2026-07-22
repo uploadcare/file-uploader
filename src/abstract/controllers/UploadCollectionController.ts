@@ -217,6 +217,10 @@ export class UploadCollectionController {
   public remove(id: Uid): void {
     const item = this.read(id);
     if (item) {
+      // Removing an entry aborts its in-flight upload — this file/upload
+      // side-effect lives here at the collection level, not in the UI. A no-op
+      // when there is no controller or the request already settled.
+      item.get('abortController')?.abort();
       this._removed.add(item);
       this._markedToDestroy.add(item);
     }

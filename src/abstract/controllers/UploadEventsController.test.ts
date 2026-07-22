@@ -209,19 +209,19 @@ describe('UploadEventsController', () => {
       expect(t.deps.runOnAddHooks).toHaveBeenCalledTimes(1);
     });
 
-    it('on remove: aborts, marks removed, revokes thumbUrl, cleans validation, emits FILE_REMOVED', () => {
+    it('on remove: marks removed, clears abortController, revokes thumbUrl, cleans validation, emits FILE_REMOVED', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt', thumbUrl: 'blob:xyz' });
       const entry = t.collection.read(id) as Entry;
-      const ac = new AbortController();
-      const abortSpy = vi.spyOn(ac, 'abort');
-      entry.set('abortController', ac);
+      entry.set('abortController', new AbortController());
       const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
       t.fireCollection([], new Set(), new Set([entry]));
 
       expect(t.deps.validation.cleanupValidationForEntry).toHaveBeenCalledWith(entry);
-      expect(abortSpy).toHaveBeenCalled();
+      // Aborting the in-flight upload is owned by `UploadCollectionController.remove`
+      // now; this handler only clears state (and nulls the abortController).
+      expect(entry.get('abortController')).toBeNull();
       expect(entry.get('isRemoved')).toBe(true);
       expect(revokeSpy).toHaveBeenCalledWith('blob:xyz');
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.FILE_REMOVED, expect.objectContaining({ internalId: id }));
@@ -338,6 +338,30 @@ describe('UploadEventsController', () => {
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.COMMON_UPLOAD_FAILED, expect.any(Function), {
         debounce: true,
       });
+    });
+
+    it('pairs FILE_UPLOAD_FAILED + COMMON_UPLOAD_FAILED per errored entry, in order (locks the interleave)', () => {
+      const t = setup();
+      const a = t.collection.add({ fileName: 'a.txt' });
+      const b = t.collection.add({ fileName: 'b.txt' });
+      t.collection.publishProp(a, 'errors', [{ type: 'X', message: 'm' }] as never);
+      t.collection.publishProp(b, 'errors', [{ type: 'Y', message: 'n' }] as never);
+
+      t.fireProperties({ errors: new Set([a, b]) });
+
+      // The documented pairing must stay per-entry (FILE then COMMON), not
+      // "all FILE_* then one COMMON_*" — a future reorder would break consumers.
+      const failedTypes = t.emit.mock.calls
+        .map((c) => c[0])
+        .filter(
+          (type) => type === UploaderEventType.FILE_UPLOAD_FAILED || type === UploaderEventType.COMMON_UPLOAD_FAILED,
+        );
+      expect(failedTypes).toEqual([
+        UploaderEventType.FILE_UPLOAD_FAILED,
+        UploaderEventType.COMMON_UPLOAD_FAILED,
+        UploaderEventType.FILE_UPLOAD_FAILED,
+        UploaderEventType.COMMON_UPLOAD_FAILED,
+      ]);
     });
 
     it('emits COMMON_UPLOAD_SUCCESS when all entries are loaded with no errors', () => {
@@ -477,6 +501,19 @@ describe('UploadEventsController', () => {
 
       expect(t.emit).not.toHaveBeenCalled();
     });
+
+    it('common-success scan tolerates a listed id whose entry cannot be read (defensive)', () => {
+      const t = setup();
+      const id = t.collection.add({ fileName: 'a.txt' });
+      // Force the defensive `!entry` branch in the common-success scan (a uid in
+      // `items()` that `read()` can't resolve — can't happen in practice).
+      vi.spyOn(t.collection, 'read').mockReturnValue(null);
+      t.emit.mockClear();
+
+      t.fireProperties({ errors: new Set([id]) });
+
+      expect(t.emit).not.toHaveBeenCalledWith(UploaderEventType.COMMON_UPLOAD_SUCCESS, expect.anything());
+    });
   });
 
   describe('output flush + group', () => {
@@ -544,6 +581,47 @@ describe('UploadEventsController', () => {
 
       expect(t.deps.setGroupInfo).not.toHaveBeenCalledWith({ uuid: 'group~1' });
       expect(t.emit).not.toHaveBeenCalledWith(UploaderEventType.GROUP_CREATED, expect.anything());
+    });
+
+    it('swallows an uploadFileGroup rejection (no unhandled rejection, no GROUP_CREATED)', async () => {
+      const state = makeState({
+        totalCount: 1,
+        status: 'success',
+        allEntries: [{ uuid: 'u1', cdnUrlModifiers: '' }] as never,
+      });
+      const t = setup({ collectionState: state });
+      t.config.set('groupOutput', true);
+      mockUploadFileGroup.mockRejectedValue(new Error('group upload failed'));
+      const id = t.collection.add({ fileName: 'a.txt' });
+
+      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+      await vi.advanceTimersByTimeAsync(300);
+
+      // groupInfo is legitimately reset to null on the membership add; the point is
+      // it was never finalized to a real group after the failed request.
+      expect(t.deps.setGroupInfo).not.toHaveBeenCalledWith(expect.objectContaining({ uuid: expect.anything() }));
+      expect(t.emit).not.toHaveBeenCalledWith(UploaderEventType.GROUP_CREATED, expect.anything());
+    });
+
+    it('does not send the group request if unobserved while building options', async () => {
+      const state = makeState({
+        totalCount: 1,
+        status: 'success',
+        allEntries: [{ uuid: 'u1', cdnUrlModifiers: '' }] as never,
+      });
+      const t = setup({ collectionState: state });
+      t.config.set('groupOutput', true);
+      const upload = t.container.get(UploadController);
+      vi.spyOn(upload, 'buildUploadOptions').mockImplementation(async () => {
+        t.controller.unobserve(); // torn down before the network call
+        return {} as never;
+      });
+      const id = t.collection.add({ fileName: 'a.txt' });
+
+      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(mockUploadFileGroup).not.toHaveBeenCalled();
     });
 
     it('aborts group creation if the collection state changed mid-flight', async () => {

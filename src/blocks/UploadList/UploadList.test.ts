@@ -7,6 +7,7 @@ import { UploadCollectionController } from '../../abstract/controllers/UploadCol
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
+import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import type { Uid } from '../../lit/Uid';
 import type { ConfigType, OutputCollectionState } from '../../types';
@@ -67,30 +68,22 @@ const makeFakeApi = (state: OutputCollectionState): { api: UploaderPublicApi; sp
   return { api: spies as unknown as UploaderPublicApi, spies };
 };
 
-const makeFakeCollection = (): { collection: UploadCollectionController; clearAll: ReturnType<typeof vi.fn> } => {
-  const clearAll = vi.fn();
-  const noop = () => () => {};
-  const collection = {
-    clearAll,
-    size: 0,
-    observeProperties: noop,
-    observeCollection: noop,
-    hasItem: () => false,
-  } as unknown as UploadCollectionController;
-  return { collection, clearAll };
-};
-
 const mount = async (
   ctxName: string,
-  opts: { state?: Partial<OutputCollectionState>; config?: Partial<ConfigType> } = {},
+  opts: {
+    entries?: Partial<UploadEntryData>[];
+    collectionErrors?: { type: string; message: string }[];
+    config?: Partial<ConfigType>;
+  } = {},
 ): Promise<{
   el: UploadList;
   config: ConfigController;
   collectionState: CollectionStateController;
+  collection: UploadCollectionController;
   router: RouterController;
   telemetry: TelemetryManager;
   spies: ApiSpies;
-  clearAll: ReturnType<typeof vi.fn>;
+  clearAll: ReturnType<typeof vi.spyOn>;
 }> => {
   ensureUploaderCtx(ctxName);
   const container = UploaderRegistry.get(ctxName);
@@ -98,24 +91,35 @@ const mount = async (
   const collectionState = container?.get(CollectionStateController);
   const router = container?.get(RouterController);
   const telemetry = container?.get(TelemetryManager);
-  if (!container || !config || !collectionState || !router || !telemetry) throw new Error('controllers not resolved');
+  // The toolbar summary is a raw single-pass count over the REAL collection now,
+  // so use the real controller + real entries (not a fake) to drive it.
+  const collection = container?.get(UploadCollectionController);
+  if (!container || !config || !collectionState || !router || !telemetry || !collection) {
+    throw new Error('controllers not resolved');
+  }
   // Config must be applied before the element adopts (the leading throttled tick
   // in `controllerReady` reads it), so set it up front.
   for (const [k, v] of Object.entries(opts.config ?? {})) {
     config.set(k as keyof ConfigType, v as ConfigType[keyof ConfigType]);
   }
-  const { api, spies } = makeFakeApi(zeroCollectionState(opts.state));
-  const { collection, clearAll } = makeFakeCollection();
-  // Bind the fakes on the container (the block reads them via `use()`).
+  for (const init of opts.entries ?? []) {
+    collection.add(init);
+  }
+  if (opts.collectionErrors) {
+    collectionState.set('collectionErrors', opts.collectionErrors as never);
+  }
+  // Fake api only for the action methods (`uploadAll`/`initFlow`/`doneFlow`) and
+  // the `_handleDone` DONE_CLICK payload — `_updateUploadsState` no longer reads it.
+  const { api, spies } = makeFakeApi(zeroCollectionState());
   container.bind(UploaderPublicApi, () => api);
-  container.bind(UploadCollectionController, () => collection);
+  const clearAll = vi.spyOn(collection, 'clearAll');
   const el = document.createElement('uc-upload-list') as UploadList;
   el.setAttribute('ctx-name', ctxName);
   document.body.append(el);
   mounted.push(el);
   await el.updateComplete;
   await delay(0);
-  return { el, config, collectionState, router, telemetry, spies, clearAll };
+  return { el, config, collectionState, collection, router, telemetry, spies, clearAll };
 };
 
 afterEach(() => {
@@ -243,7 +247,7 @@ describe('UploadList (M-god step 6b-8 migration)', () => {
     const ctxName = freshCtxName();
     const { el, spies } = await mount(ctxName, {
       config: { confirmUpload: true },
-      state: { totalCount: 2 },
+      entries: [{}, {}], // two idle entries, ready to upload
     });
 
     const uploadBtn = el.querySelector<HTMLButtonElement>('button.uc-upload-btn');
@@ -262,7 +266,7 @@ describe('UploadList (M-god step 6b-8 migration)', () => {
   it('enables the done button for a fully-succeeded collection and calls doneFlow on click', async () => {
     const ctxName = freshCtxName();
     const { el, spies } = await mount(ctxName, {
-      state: { totalCount: 1, successCount: 1 },
+      entries: [{ fileInfo: { uuid: 'srv' } as never }], // one succeeded entry
     });
 
     const doneBtn = el.querySelector<HTMLButtonElement>('button.uc-done-btn');
@@ -274,14 +278,33 @@ describe('UploadList (M-god step 6b-8 migration)', () => {
     expect(spies.doneFlow).toHaveBeenCalledOnce();
   });
 
-  it.each([
-    ['uploading', { totalCount: 1, uploadingCount: 1 }],
-    ['failed', { totalCount: 1, failedCount: 1 }],
-    ['succeed', { totalCount: 1, successCount: 1 }],
-    ['total', { totalCount: 1 }],
-  ] as const)('derives a non-empty localized header for the %s state', async (_label, state) => {
+  it('an idle entry pending validation blocks upload/done and reads as "uploading" in the header', async () => {
     const ctxName = freshCtxName();
-    const { el } = await mount(ctxName, { state });
+    const { el } = await mount(ctxName, {
+      config: { confirmUpload: true },
+      entries: [{ isValidationPending: true }], // idle + validation pending
+    });
+
+    // validatingBeforeUploading=1 (idle+validation) and anyValidationPending=true,
+    // so validationOk is false → no upload button, done disabled.
+    expect(el.querySelector<HTMLButtonElement>('button.uc-upload-btn')?.hasAttribute('hidden')).toBe(true);
+    const doneBtn = el.querySelector<HTMLButtonElement>('button.uc-done-btn');
+    expect(doneBtn?.hasAttribute('disabled')).toBe(true);
+    // The header folds validating-before-uploading into the "uploading" line.
+    expect(el.querySelector('.uc-header-text')?.textContent?.trim()).not.toBe('');
+  });
+
+  it.each([
+    ['uploading', [{ isUploading: true }]],
+    ['failed', [{ errors: [{ type: 'x', message: 'boom' } as never] }]],
+    ['succeed', [{ fileInfo: { uuid: 'srv' } as never }]],
+    ['total', [{}]],
+  ] as [
+    string,
+    Partial<UploadEntryData>[],
+  ][])('derives a non-empty localized header for the %s state', async (_label, entries) => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName, { entries });
     expect(el.querySelector('.uc-header-text')?.textContent?.trim()).not.toBe('');
   });
 
@@ -289,7 +312,7 @@ describe('UploadList (M-god step 6b-8 migration)', () => {
     const ctxName = freshCtxName();
     const { el, router, collectionState } = await mount(ctxName);
 
-    // Guard predicate: empty collection (fake size 0) + default showEmptyList=false
+    // Guard predicate: empty collection (real size 0) + default showEmptyList=false
     // -> the router refuses to make upload-list the active activity.
     router.setActivity('upload-list');
     expect(router.activity).not.toBe('upload-list');

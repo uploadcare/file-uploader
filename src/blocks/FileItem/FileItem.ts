@@ -1,16 +1,13 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { LocaleController } from '../../abstract/controllers/LocaleController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { inject, injectOrNull } from '../../abstract/di/inject';
 import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
-import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
-import { debounce } from '../../utils/debounce';
-import { throttle } from '../../utils/throttle';
+import type { UploadEntryData, UploadEntryKeys } from '../../abstract/uploadEntrySchema';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
 import { effect } from '../../lit/effect';
@@ -23,6 +20,10 @@ import '../Icon/Icon';
 import '../ProgressBar/ProgressBar';
 import './FileActionButton';
 
+// The file-item display state machine. This — and everything derived from it
+// (badge, flags, hint, progress, name, aria) — is UI/presentation logic and
+// lives in the element; only file/upload/collection *side-effects* (aborting an
+// upload, removing an entry, telemetry) belong in the controller layer.
 const FileItemState = Object.freeze({
   FINISHED: Symbol('FINISHED'),
   FAILED: Symbol('FAILED'),
@@ -35,6 +36,26 @@ const FileItemState = Object.freeze({
 
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
 
+// Entry keys the state-machine verdict (`_deriveState`) reads. A change to one of
+// these is the only trigger for the imperative focus-clear side-effect
+// (`_syncUploadingFocus`); everything else the state feeds — badge, flags, hint,
+// progress, aria, name — is a pure `getTracked` read in `render()`, so Lit
+// re-renders those on the exact keys read with no imperative mirror.
+const STATE_KEYS: ReadonlySet<UploadEntryKeys> = new Set<UploadEntryKeys>([
+  'errors',
+  'isQueuedForUploading',
+  'isQueuedForValidation',
+  'isValidationPending',
+  'isUploading',
+  'fileInfo',
+]);
+// Entry keys whose change re-evaluates plugin file actions.
+const PLUGIN_ACTION_KEYS: ReadonlySet<UploadEntryKeys> = new Set<UploadEntryKeys>([
+  'fileInfo',
+  'isUploading',
+  'errors',
+]);
+
 export class FileItem extends FileItemConfig {
   // `ConfigController`/`TelemetryManager` are always-bound `@inject` fields.
   // `UploadCollectionController` and `UploaderPublicApi` are uploader-scope-bound
@@ -46,6 +67,14 @@ export class FileItem extends FileItemConfig {
   @injectOrNull(UploadCollectionController) private readonly _collection!: UploadCollectionController | null;
   @injectOrNull(UploaderPublicApi) private readonly _api!: UploaderPublicApi | null;
 
+  // Off-screen render gate. Complements list virtualization rather than being
+  // superseded by it: virtualization caps mounted rows in the bounded/steady
+  // case, but when the list can't be windowed yet — the first render of a large
+  // bulk-populate (row geometry not measured) and unbounded/page-scroll
+  // containers — the row still mounts, and this keeps that render CHEAP (empty)
+  // until it scrolls into view. Without it, a bulk add renders every FileItem
+  // template synchronously in one frame (Thumb's own lazy observer only defers
+  // the thumbnail image, not the template), blocking the summary update.
   @state()
   private _pauseRender = true;
 
@@ -54,38 +83,10 @@ export class FileItem extends FileItemConfig {
   })
   public uid: Uid = '' as Uid;
 
-  @state()
-  private _itemName = '';
-
-  @state()
-  private _errorText = '';
-
-  @state()
-  private _hint = '';
-
-  @state()
-  private _progressValue = 0;
-
-  @state()
-  private _badgeIcon = '';
-
-  @state()
-  private _isFinished = false;
-
-  @state()
-  private _isFailed = false;
-
-  @state()
-  private _isUploading = false;
-
-  @state()
-  private _hideRemoveAction = false;
-
+  // UI focus flag (drives `[data-focused]`). Not entry-derived — set by the click
+  // handler and cleared imperatively when the entry starts uploading.
   @state()
   private _isFocused = false;
-
-  @state()
-  private _ariaLabelStatusFile = '';
 
   @state()
   private _pluginFileActions: Owned<PluginFileActionRegistration>[] = [];
@@ -95,6 +96,12 @@ export class FileItem extends FileItemConfig {
   private _pluginManager: PluginController | null = null;
 
   private _handleRemove = (): void => {
+    const collection = this._collection;
+    if (!this.uid || !collection?.hasItem(this.uid)) {
+      return;
+    }
+    // Telemetry only for a real removal — guard first, so a stale/double
+    // `uc:remove` (or an unset uid) doesn't record a phantom `remove-file`.
     this._telemetry.sendEvent({
       payload: {
         metadata: {
@@ -103,103 +110,54 @@ export class FileItem extends FileItemConfig {
         },
       },
     });
-
-    // `uploadCollection` is container-owned (M-god step 4). Read it
-    // null-tolerantly via `useOrNull`: this handler can run outside an adopted
-    // scope (teardown race), where the throwing `use()` would be unsafe.
-    const collection = this._collection;
-    if (this.uid && collection?.hasItem(this.uid)) {
-      this.entry?.get('abortController')?.abort();
-      collection.remove(this.uid);
-    }
+    // Aborting the in-flight upload is file/upload logic and lives in
+    // `UploadCollectionController.remove` — the UI just requests the removal.
+    collection.remove(this.uid);
   };
 
-  private _calculateState(): void {
+  // Single source of truth for the state-machine verdict. `read` is `getTracked`
+  // in `render()` (so `SignalWatcher` re-renders on the exact keys read) and the
+  // plain `get` in the imperative focus-sync path (no tracking off the render).
+  private _deriveState(read: <K extends UploadEntryKeys>(key: K) => UploadEntryData[K]): FileItemStateValue {
+    if (read('errors').length > 0) {
+      return FileItemState.FAILED;
+    }
+    if (read('isQueuedForUploading')) {
+      return FileItemState.QUEUED_UPLOADING;
+    }
+    if (read('isQueuedForValidation')) {
+      return FileItemState.QUEUED_VALIDATION;
+    }
+    if (read('isValidationPending')) {
+      return FileItemState.VALIDATION;
+    }
+    if (read('isUploading')) {
+      return FileItemState.UPLOADING;
+    }
+    if (read('fileInfo')) {
+      return FileItemState.FINISHED;
+    }
+    return FileItemState.IDLE;
+  }
+
+  // The one genuine side-effect the entry state drives that is NOT pure render:
+  // an item that starts uploading drops its focus. Reads imperatively (`get`), so
+  // it never tracks off a render pass.
+  private _syncUploadingFocus(): void {
     const entry = this.entry;
     if (!entry) {
       return;
     }
-
-    let state: FileItemStateValue = FileItemState.IDLE;
-
-    if (entry.get('errors').length > 0) {
-      state = FileItemState.FAILED;
-    } else if (entry.get('isQueuedForUploading')) {
-      state = FileItemState.QUEUED_UPLOADING;
-    } else if (entry.get('isQueuedForValidation')) {
-      state = FileItemState.QUEUED_VALIDATION;
-    } else if (entry.get('isValidationPending')) {
-      state = FileItemState.VALIDATION;
-    } else if (entry.get('isUploading')) {
-      state = FileItemState.UPLOADING;
-    } else if (entry.get('fileInfo')) {
-      state = FileItemState.FINISHED;
-    }
-
-    this._handleState(entry, state);
-  }
-
-  private _debouncedCalculateState = debounce(() => this._calculateState(), 100);
-
-  private _updateHintAndProgress = this.withEntry(
-    throttle((entry: UploadEntryTypedData, state?: FileItemStateValue) => {
-      // A trailing throttle tick can fire after the item unmounts / its container
-      // is released (an entry update that raced teardown). The `l10n` reads below
-      // resolve `LocaleController` off the container, which is gone by then —
-      // bail first via the null-tolerant `useOrNull`.
-      if (!this.useOrNull(LocaleController)) {
-        return;
-      }
-      const errorText = entry.get('errors')?.[0]?.message ?? '';
-      const source = entry.get('source');
-      const externalUrl = entry.get('externalUrl');
-      const isFinished = state === FileItemState.FINISHED;
-      const isQueuedForValidation = state === FileItemState.QUEUED_VALIDATION;
-      const isValidationPending = state === FileItemState.VALIDATION;
-      const fileName = entry.get('fileName');
-      let hint = '';
-
-      if (errorText) {
-        hint = '';
-      } else if (!isFinished && externalUrl && source && Object.values(ExternalUploadSource).includes(source)) {
-        hint = this.l10n('waiting-for', { source: this.l10n(`src-type-${canonicalSourceName(source)}`) });
-      }
-
-      this._hint = hint;
-      this._errorText = errorText;
-      this._progressValue = isQueuedForValidation || isValidationPending ? 0 : entry.get('uploadProgress');
-      this._ariaLabelStatusFile = fileName
-        ? this.l10n('a11y-file-item-status', {
-            fileName,
-            status: this.l10n(state?.description?.toLocaleLowerCase() ?? '').toLocaleLowerCase(),
-          })
-        : '';
-    }, 100),
-  );
-
-  private _handleState(_entry: UploadEntryTypedData, state: FileItemStateValue): void {
-    if (state === FileItemState.FAILED) {
-      this._badgeIcon = 'badge-error';
-    } else if (state === FileItemState.FINISHED) {
-      this._badgeIcon = 'badge-success';
-    }
-
-    if (state === FileItemState.UPLOADING) {
+    if (this._deriveState((key) => entry.get(key)) === FileItemState.UPLOADING) {
       this._isFocused = false;
       this.removeAttribute('focused');
+      // Also drop the static single-focus ref, otherwise re-clicking this row
+      // while it uploads hits the `previous === this` short-circuit and re-focuses
+      // it — undoing the drop-focus-on-upload rule.
+      if (FileItem._focusedInstance === this) {
+        FileItem._focusedInstance = null;
+      }
     }
-
-    this._isFailed = state === FileItemState.FAILED;
-    this._isUploading = state === FileItemState.UPLOADING;
-    this._hideRemoveAction = state === FileItemState.QUEUED_UPLOADING || state === FileItemState.UPLOADING;
-    this._isFinished = state === FileItemState.FINISHED;
-
-    this._updateHintAndProgress(state);
-  }
-
-  protected override reset(): void {
-    super.reset();
-    this._debouncedCalculateState.cancel();
   }
 
   private _observerCallback(entries: IntersectionObserverEntry[]): void {
@@ -211,6 +169,10 @@ export class FileItem extends FileItemConfig {
     if (entry.isIntersecting && !this._renderedOnce) {
       this._pauseRender = false;
       this._renderedOnce = true;
+      // One-shot: the observer's only job is to un-pause on first view. Disconnect
+      // so it stops firing on every subsequent scroll for this row's whole life
+      // (matches Thumb).
+      this._observer?.disconnect();
     }
   }
 
@@ -226,47 +188,22 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    this.subEntry('isQueuedForValidation', () => {
-      this._debouncedCalculateState();
+    // ONE keyed subscription drives only the genuine side-effects that are NOT
+    // pure render: the focus-clear-on-uploading transition and the plugin
+    // file-action recompute. Everything the row *displays* (name, badge, flags,
+    // hint, progress, aria) is a `getTracked` read in `render()`, so Lit
+    // re-renders on the exact entry keys it reads — no imperative mirror.
+    this.subEntryKeys((key) => {
+      if (STATE_KEYS.has(key)) {
+        this._syncUploadingFocus();
+      }
+      if (PLUGIN_ACTION_KEYS.has(key)) {
+        this._updatePluginFileActions();
+      }
     });
 
-    this.subEntry('isValidationPending', () => {
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('uploadProgress', () => {
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('isQueuedForUploading', () => {
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('fileName', (name) => {
-      this._itemName = name || entry.get('externalUrl') || this.l10n('file-no-name');
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('externalUrl', (externalUrl) => {
-      this._itemName = entry.get('fileName') || externalUrl || this.l10n('file-no-name');
-    });
-
-    this.subEntry('fileInfo', () => {
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('errors', () => this._debouncedCalculateState());
-    this.subEntry('isUploading', () => this._debouncedCalculateState());
-    this.subEntry('fileSize', () => this._debouncedCalculateState());
-    this.subEntry('mimeType', () => this._debouncedCalculateState());
-    this.subEntry('isImage', () => this._debouncedCalculateState());
-
-    // Update plugin file actions when file status changes
-    this.subEntry('fileInfo', () => this._updatePluginFileActions());
-    this.subEntry('isUploading', () => this._updatePluginFileActions());
-    this.subEntry('errors', () => this._updatePluginFileActions());
-
-    this._calculateState();
+    // Seed the initial side-effects (subscribeKeys does not replay current state).
+    this._syncUploadingFocus();
     this._updatePluginFileActions();
   }
 
@@ -355,12 +292,11 @@ export class FileItem extends FileItemConfig {
     }
   }
 
-  // Host `[mode]` attribute: the `uc-file-item[mode="grid"]` CSS selectors key
-  // off it, driving the grid/list box sizing, so it must be set eagerly before
-  // first paint. `beforeUpdate` fires this synchronously on adoption AND keeps
-  // firing on `filesViewMode` change even while this block's `_pauseRender`
-  // lazy-render gate holds `shouldUpdate` off (verified in effect.integration.test)
-  // — which a plain `willUpdate`+`getTracked` host-attr write could not do.
+  // Host `[mode]` attribute: the `uc-file-item[mode="grid"]` CSS selectors key off
+  // it, driving the grid/list box sizing, so it must be set eagerly before first
+  // paint. `beforeUpdate` fires this synchronously on adoption AND keeps firing on
+  // `filesViewMode` change even while `_pauseRender` holds `shouldUpdate` off —
+  // which a plain `willUpdate`+`getTracked` host-attr write could not do.
   @effect({ beforeUpdate: true })
   protected _applyMode(): void {
     this.setAttribute('mode', this._config.getTracked('filesViewMode'));
@@ -369,17 +305,30 @@ export class FileItem extends FileItemConfig {
   protected override controllerReady(): void {
     this._handleEntryId(this.uid);
 
+    // Single-focus: unfocus the previously-focused item and focus this one — O(1)
+    // per click. Replaces an O(N) sweep over every connected FileItem (which
+    // mutated `[focused]` on all rows, dirtying style for the whole list at large
+    // N) and the static `Set` of all instances (which pinned every row from GC).
     this.onclick = () => {
-      FileItem.activeInstances.forEach((inst) => {
-        if (inst === this) {
-          inst.setAttribute('focused', '');
-        } else {
-          inst.removeAttribute('focused');
-        }
-      });
+      // An uploading row does not take focus (consistent with the
+      // drop-focus-on-upload rule in `_syncUploadingFocus`) — otherwise clicking
+      // it would re-apply the highlight mid-upload.
+      const entry = this.entry;
+      if (entry && this._deriveState((key) => entry.get(key)) === FileItemState.UPLOADING) {
+        return;
+      }
+      const previous = FileItem._focusedInstance;
+      if (previous && previous !== this) {
+        previous._isFocused = false;
+        previous.removeAttribute('focused');
+      }
+      // `_isFocused` drives `.uc-inner[data-focused]` (the actual focus style);
+      // the host `[focused]` attribute is kept for compat. Both must be set —
+      // setting only the attribute left the visible highlight dead.
+      this._isFocused = true;
+      this.setAttribute('focused', '');
+      FileItem._focusedInstance = this;
     };
-
-    FileItem.activeInstances.add(this);
   }
 
   // The uploader-scope `PluginController` is bound + resolved only once an
@@ -397,14 +346,18 @@ export class FileItem extends FileItemConfig {
 
   protected override controllerReleased(): void {
     this._pluginManager = null;
-    // Adoption-scoped: `activeInstances.add(this)` runs in `controllerReady`, so
-    // drop it on release/re-adoption (and disconnect, via `_releaseController`).
-    FileItem.activeInstances.delete(this);
+    // Release the static focus reference if it points at this row, so a removed/
+    // re-adopted item isn't retained (and a later click doesn't touch a stale one).
+    if (FileItem._focusedInstance === this) {
+      FileItem._focusedInstance = null;
+    }
   }
 
   public override connectedCallback(): void {
     super.connectedCallback();
 
+    // One-shot render gate: un-pause on first view (see `_pauseRender`). The
+    // observer watches this element's own node.
     this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
       threshold: [0, 1],
     });
@@ -412,28 +365,104 @@ export class FileItem extends FileItemConfig {
   }
 
   public override disconnectedCallback(): void {
+    // `super.disconnectedCallback()` (via `_releaseController` / FileItemConfig)
+    // drops membership and calls `reset()`; also tear down this element's own
+    // IntersectionObserver.
     super.disconnectedCallback();
-
-    // `activeInstances` membership is dropped by `controllerReleased` (invoked
-    // via `super.disconnectedCallback()` → `_releaseController`). The
-    // `IntersectionObserver` observes this element's own node (created in
-    // `connectedCallback`), so it stays on the DOM disconnect; `reset()` cancels
-    // in-flight per-entry work.
     this._observer?.disconnect();
-    this.reset();
   }
 
   // The upload mechanics (queue, beforeUpload chain, progress/abort, error
-  // handling) now live in the DOM-free UploadController. This block stays the
-  // trigger; it reacts to the resulting entry mutations through its existing
-  // per-entry subscriptions (`isUploading`/`errors`/… → `_debouncedCalculateState`).
-  public static activeInstances: Set<FileItem> = new Set<FileItem>();
+  // handling) live in the DOM-free UploadController. This block reflects the
+  // resulting entry mutations through `getTracked` reads in `render()`
+  // (state/badge/progress/…) plus the keyed side-effect subscription.
+  // The currently-focused item (single-focus model — see the click handler).
+  private static _focusedInstance: FileItem | null = null;
 
   protected override shouldUpdate(changedProperties: PropertyValues<this>): boolean {
     if (this._pauseRender) {
       return false;
     }
     return super.shouldUpdate(changedProperties);
+  }
+
+  private get _state(): FileItemStateValue {
+    const { entry } = this;
+    return entry ? this._deriveState((key) => entry.getTracked(key)) : FileItemState.IDLE;
+  }
+
+  private get _isFinished(): boolean {
+    return this._state === FileItemState.FINISHED;
+  }
+
+  private get _isFailed(): boolean {
+    return this._state === FileItemState.FAILED;
+  }
+
+  private get _isUploading(): boolean {
+    return this._state === FileItemState.UPLOADING;
+  }
+
+  // Waiting in the upload queue (accepted, not yet uploading) — surfaced in the UI
+  // as an indeterminate progress indicator so it's clear the file is queued.
+  private get _isQueued(): boolean {
+    return this._state === FileItemState.QUEUED_UPLOADING;
+  }
+
+  private get _hideRemoveAction(): boolean {
+    const state = this._state;
+    return state === FileItemState.QUEUED_UPLOADING || state === FileItemState.UPLOADING;
+  }
+
+  private get _badgeIcon(): string {
+    const state = this._state;
+    return state === FileItemState.FAILED ? 'badge-error' : state === FileItemState.FINISHED ? 'badge-success' : '';
+  }
+
+  private get _errorText(): string {
+    return this.entry?.getTracked('errors')?.[0]?.message ?? '';
+  }
+
+  private get _progressValue(): number {
+    const { entry } = this;
+    if (!entry) {
+      return 0;
+    }
+    const state = this._state;
+    const isValidating = state === FileItemState.QUEUED_VALIDATION || state === FileItemState.VALIDATION;
+    return isValidating ? 0 : entry.getTracked('uploadProgress');
+  }
+
+  private get _itemName(): string {
+    const { entry } = this;
+    if (!entry) {
+      return '';
+    }
+    return entry.getTracked('fileName') || entry.getTracked('externalUrl') || this.l10n('file-no-name');
+  }
+
+  private get _hint(): string {
+    const { entry } = this;
+    if (!entry || this._errorText || this._isFinished) {
+      return '';
+    }
+    const source = entry.getTracked('source');
+    const externalUrl = entry.getTracked('externalUrl');
+    if (externalUrl && source && Object.values(ExternalUploadSource).includes(source)) {
+      return this.l10n('waiting-for', { source: this.l10n(`src-type-${canonicalSourceName(source)}`) });
+    }
+    return '';
+  }
+
+  private get _ariaLabelStatusFile(): string {
+    const fileName = this.entry?.getTracked('fileName') ?? null;
+    if (!fileName) {
+      return '';
+    }
+    return this.l10n('a11y-file-item-status', {
+      fileName,
+      status: this.l10n(this._state.description?.toLocaleLowerCase() ?? '').toLocaleLowerCase(),
+    });
   }
 
   public override render() {
@@ -447,7 +476,12 @@ export class FileItem extends FileItemConfig {
       >
         <uc-thumb .uid=${this.uid} .badgeIcon=${this._badgeIcon}></uc-thumb>
 
-        <div aria-atomic="true" aria-live="polite" class="uc-file-name-wrapper" aria-label=${this._ariaLabelStatusFile}>
+        <div
+          aria-atomic="true"
+          aria-live="polite"
+          class="uc-file-name-wrapper"
+          aria-label=${this._ariaLabelStatusFile}
+        >
           <span class="uc-file-name" ?hidden=${!this._showFileNames}>${this._itemName}</span>
           <span class="uc-file-error" ?hidden=${!this._errorText}>${this._errorText}</span>
           <span class="uc-file-hint" ?hidden=${!this._hint}>${this._hint}</span>
@@ -470,6 +504,7 @@ export class FileItem extends FileItemConfig {
           <uc-file-action-button
             @uc:remove=${this._handleRemove}
             .uploading=${this._isUploading}
+            .queued=${this._isQueued}
             .hideRemove=${this._hideRemoveAction}
             .progress=${this._progressValue}
             .failed=${this._isFailed}

@@ -42,6 +42,24 @@ export class FileItemConfig extends ChildBlock {
     })(prop, handler);
   }
 
+  /**
+   * Observe ALL of the entry's key changes through a SINGLE subscription (the
+   * entry's keyed-notify channel), dispatching by the changed key — instead of
+   * one `subEntry`/`observe` per key. `handler` runs on any changed key while
+   * connected; it reads current values off `entry` as needed. No initial fire
+   * (unlike `subEntry`'s `{immediate}`): the caller seeds initial state itself.
+   * This is the large-N win — 1 subscription per row instead of ~15.
+   */
+  protected subEntryKeys(handler: (key: UploadEntryKeys) => void): void {
+    this.withEntry((entry) => {
+      const sub = entry.subscribeKeys((key) => {
+        if (!this.isConnected) return;
+        handler(key);
+      });
+      this._entrySubs.add(sub);
+    })();
+  }
+
   protected reset(): void {
     for (const sub of this._entrySubs) {
       sub();
@@ -53,6 +71,10 @@ export class FileItemConfig extends ChildBlock {
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this._entrySubs = new Set<EntrySubscription>();
+    // Unsubscribe on disconnect — the previous `= new Set()` dropped the
+    // subscription refs WITHOUT calling them, leaking `Listeners` callbacks that
+    // kept running `select()` on every later entry write until the entry's
+    // deferred destroy (~10s). `reset()` invokes each unsubscribe first.
+    this.reset();
   }
 }
