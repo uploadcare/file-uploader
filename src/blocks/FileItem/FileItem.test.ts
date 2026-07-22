@@ -1,9 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { PluginController } from '../../abstract/managers/plugin';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
+import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
+import type { Uid } from '../../lit/Uid';
 import { delay } from '../../utils/delay';
 import { FileItem } from './FileItem';
 
@@ -52,6 +55,41 @@ const mount = async (ctxName: string): Promise<{ el: FileItem; config: ConfigCon
 
 const fileNameHidden = (el: FileItem): boolean =>
   (el.querySelector('.uc-file-name') as HTMLElement | null)?.hasAttribute('hidden') ?? true;
+
+// --- rendered-output readers (the S2 parity net keys off the DOM/props render
+// commits, not the private @state/getters, so it holds across the refactor) ---
+const inner = (el: FileItem): HTMLElement => el.querySelector('.uc-inner') as HTMLElement;
+const thumb = (el: FileItem): HTMLElement & { badgeIcon: string } =>
+  el.querySelector('uc-thumb') as HTMLElement & { badgeIcon: string };
+type ActionButton = HTMLElement & {
+  uploading: boolean;
+  hideRemove: boolean;
+  progress: number;
+  failed: boolean;
+  success: boolean;
+};
+const actionButton = (el: FileItem): ActionButton => el.querySelector('uc-file-action-button') as ActionButton;
+const fileNameText = (el: FileItem): string => el.querySelector('.uc-file-name')?.textContent ?? '';
+const errorSpan = (el: FileItem): HTMLElement => el.querySelector('.uc-file-error') as HTMLElement;
+const hintSpan = (el: FileItem): HTMLElement => el.querySelector('.uc-file-hint') as HTMLElement;
+
+const getCollection = (ctxName: string): UploadCollectionController => {
+  const collection = UploaderRegistry.get(ctxName)?.get(UploadCollectionController);
+  if (!collection) throw new Error('collection controller not resolved');
+  return collection;
+};
+
+// Add an entry, bind it to the item, and open the render gate so render() commits.
+const bindEntry = async (
+  el: FileItem,
+  collection: UploadCollectionController,
+  init: Partial<UploadEntryData>,
+): Promise<Uid> => {
+  const uid = collection.add(init);
+  el.uid = uid;
+  await openRenderGate(el);
+  return uid;
+};
 
 describe('FileItem (M-god step 6b-6 migration)', () => {
   it('resolves its always-bound dependencies via @inject fields on the element', async () => {
@@ -168,5 +206,148 @@ describe('FileItem (M-god step 6b-6 migration)', () => {
     // Disconnect tears the tracked subscription down.
     el.remove();
     expect(unsub).toHaveBeenCalledOnce();
+  });
+});
+
+// Parity net for the entry-state → rendered-output mapping (`_calculateState`/
+// `_handleState`/`_updateHintAndProgress` today; derived `getTracked` reads after
+// S2). Asserts the DOM/child-props render commits, so it survives the refactor.
+describe('FileItem entry-state rendering', () => {
+  it('IDLE entry: no status flags, empty badge, zero progress, name shown', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    await bindEntry(el, getCollection(ctxName), { fileName: 'photo.png' });
+
+    expect(inner(el).hasAttribute('data-finished')).toBe(false);
+    expect(inner(el).hasAttribute('data-failed')).toBe(false);
+    expect(inner(el).hasAttribute('data-uploading')).toBe(false);
+    expect(thumb(el).badgeIcon).toBe('');
+    expect(fileNameText(el)).toBe('photo.png');
+    expect(errorSpan(el).hasAttribute('hidden')).toBe(true);
+    expect(hintSpan(el).hasAttribute('hidden')).toBe(true);
+
+    const btn = actionButton(el);
+    expect(btn.uploading).toBe(false);
+    expect(btn.hideRemove).toBe(false);
+    expect(btn.failed).toBe(false);
+    expect(btn.success).toBe(false);
+    expect(btn.progress).toBe(0);
+  });
+
+  it('FINISHED entry (fileInfo set): success flag + success badge', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    await bindEntry(el, getCollection(ctxName), { fileName: 'photo.png', fileInfo: { uuid: 'srv' } as never });
+
+    expect(inner(el).hasAttribute('data-finished')).toBe(true);
+    expect(thumb(el).badgeIcon).toBe('badge-success');
+    expect(actionButton(el).success).toBe(true);
+  });
+
+  it('FAILED entry (errors set): failed flag, error badge, error text shown', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    await bindEntry(el, getCollection(ctxName), {
+      fileName: 'photo.png',
+      errors: [{ type: 'boom', message: 'It broke' } as never],
+    });
+
+    expect(inner(el).hasAttribute('data-failed')).toBe(true);
+    expect(thumb(el).badgeIcon).toBe('badge-error');
+    expect(actionButton(el).failed).toBe(true);
+    expect(errorSpan(el).hasAttribute('hidden')).toBe(false);
+    expect(errorSpan(el).textContent).toBe('It broke');
+    expect(hintSpan(el).hasAttribute('hidden')).toBe(true);
+  });
+
+  it('UPLOADING entry: uploading flag, hidden remove, live progress, no badge', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    await bindEntry(el, getCollection(ctxName), {
+      fileName: 'photo.png',
+      isUploading: true,
+      uploadProgress: 0.42,
+    });
+
+    expect(inner(el).hasAttribute('data-uploading')).toBe(true);
+    expect(thumb(el).badgeIcon).toBe('');
+    const btn = actionButton(el);
+    expect(btn.uploading).toBe(true);
+    expect(btn.hideRemove).toBe(true);
+    expect(btn.progress).toBe(0.42);
+  });
+
+  it('QUEUED-UPLOADING entry: remove hidden, progress NOT zeroed', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    await bindEntry(el, getCollection(ctxName), {
+      fileName: 'photo.png',
+      isQueuedForUploading: true,
+      uploadProgress: 0.3,
+    });
+
+    const btn = actionButton(el);
+    expect(btn.hideRemove).toBe(true);
+    expect(btn.uploading).toBe(false);
+    expect(btn.progress).toBe(0.3);
+  });
+
+  it('VALIDATION-pending entry: progress zeroed even with uploadProgress set', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    await bindEntry(el, getCollection(ctxName), {
+      fileName: 'photo.png',
+      isValidationPending: true,
+      uploadProgress: 0.5,
+    });
+
+    expect(actionButton(el).progress).toBe(0);
+  });
+
+  it('name falls back to the l10n placeholder when no fileName/externalUrl', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    await bindEntry(el, getCollection(ctxName), {});
+
+    expect(fileNameText(el)).toBe('No name...');
+  });
+
+  it('shows the "waiting-for" source hint for a pending external-source entry', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    await bindEntry(el, getCollection(ctxName), {
+      externalUrl: 'https://example.com/x',
+      source: 'dropbox',
+    });
+
+    expect(hintSpan(el).hasAttribute('hidden')).toBe(false);
+    expect(hintSpan(el).textContent).toBe('Waiting for Dropbox');
+  });
+
+  it('reacts to a fileName change on the bound entry', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    const collection = getCollection(ctxName);
+    const uid = await bindEntry(el, collection, { fileName: 'old.png' });
+    expect(fileNameText(el)).toBe('old.png');
+
+    collection.publishProp(uid, 'fileName', 'new.png');
+    await el.updateComplete;
+    await delay(0);
+    expect(fileNameText(el)).toBe('new.png');
+  });
+
+  it('clears focus when the bound entry transitions to uploading', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    const collection = getCollection(ctxName);
+    const uid = await bindEntry(el, collection, { fileName: 'photo.png' });
+
+    el.click();
+    expect(el.hasAttribute('focused')).toBe(true);
+
+    collection.publishProp(uid, 'isUploading', true);
+    await delay(120);
+    expect(el.hasAttribute('focused')).toBe(false);
   });
 });
