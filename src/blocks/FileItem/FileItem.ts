@@ -96,6 +96,12 @@ export class FileItem extends FileItemConfig {
   private _pluginManager: PluginController | null = null;
 
   private _handleRemove = (): void => {
+    const collection = this._collection;
+    if (!this.uid || !collection?.hasItem(this.uid)) {
+      return;
+    }
+    // Telemetry only for a real removal — guard first, so a stale/double
+    // `uc:remove` (or an unset uid) doesn't record a phantom `remove-file`.
     this._telemetry.sendEvent({
       payload: {
         metadata: {
@@ -104,13 +110,9 @@ export class FileItem extends FileItemConfig {
         },
       },
     });
-
     // Aborting the in-flight upload is file/upload logic and lives in
     // `UploadCollectionController.remove` — the UI just requests the removal.
-    const collection = this._collection;
-    if (this.uid && collection?.hasItem(this.uid)) {
-      collection.remove(this.uid);
-    }
+    collection.remove(this.uid);
   };
 
   // Single source of truth for the state-machine verdict. `read` is `getTracked`
@@ -149,6 +151,12 @@ export class FileItem extends FileItemConfig {
     if (this._deriveState((key) => entry.get(key)) === FileItemState.UPLOADING) {
       this._isFocused = false;
       this.removeAttribute('focused');
+      // Also drop the static single-focus ref, otherwise re-clicking this row
+      // while it uploads hits the `previous === this` short-circuit and re-focuses
+      // it — undoing the drop-focus-on-upload rule.
+      if (FileItem._focusedInstance === this) {
+        FileItem._focusedInstance = null;
+      }
     }
   }
 
@@ -302,6 +310,13 @@ export class FileItem extends FileItemConfig {
     // mutated `[focused]` on all rows, dirtying style for the whole list at large
     // N) and the static `Set` of all instances (which pinned every row from GC).
     this.onclick = () => {
+      // An uploading row does not take focus (consistent with the
+      // drop-focus-on-upload rule in `_syncUploadingFocus`) — otherwise clicking
+      // it would re-apply the highlight mid-upload.
+      const entry = this.entry;
+      if (entry && this._deriveState((key) => entry.get(key)) === FileItemState.UPLOADING) {
+        return;
+      }
       const previous = FileItem._focusedInstance;
       if (previous && previous !== this) {
         previous._isFocused = false;

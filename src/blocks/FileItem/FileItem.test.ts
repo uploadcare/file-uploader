@@ -372,6 +372,46 @@ describe('FileItem entry-state rendering', () => {
     expect(remove).toHaveBeenCalledWith(uid);
   });
 
+  it('does not send remove-file telemetry for a no-op removal (entry already gone)', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    const collection = getCollection(ctxName);
+    const uid = await bindEntry(el, collection, { fileName: 'photo.png' });
+    collection.remove(uid); // entry already removed — the button click is now a no-op
+    await delay(0);
+    const telemetry = UploaderRegistry.get(ctxName)?.get(TelemetryManager);
+    const sendEvent = vi.spyOn(telemetry as TelemetryManager, 'sendEvent');
+
+    el.querySelector('uc-file-action-button')?.dispatchEvent(
+      new CustomEvent('uc:remove', { bubbles: true, composed: true }),
+    );
+    expect(sendEvent).not.toHaveBeenCalled();
+  });
+
+  it('does not re-focus a row that is uploading (drop-focus-on-upload holds on re-click)', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    const collection = getCollection(ctxName);
+    const uid = await bindEntry(el, collection, { fileName: 'photo.png' });
+
+    el.click();
+    await el.updateComplete;
+    expect(inner(el).hasAttribute('data-focused')).toBe(true);
+
+    // Row starts uploading → focus dropped (host attr + inner data-focused + static ref).
+    collection.publishProp(uid, 'isUploading', true);
+    await delay(120);
+    await el.updateComplete;
+    expect(el.hasAttribute('focused')).toBe(false);
+    expect(inner(el).hasAttribute('data-focused')).toBe(false);
+
+    // Re-clicking while uploading must NOT re-apply the highlight.
+    el.click();
+    await el.updateComplete;
+    expect(el.hasAttribute('focused')).toBe(false);
+    expect(inner(el).hasAttribute('data-focused')).toBe(false);
+  });
+
   it('clears focus when the bound entry transitions to uploading', async () => {
     const ctxName = freshCtxName();
     const { el } = await mount(ctxName);

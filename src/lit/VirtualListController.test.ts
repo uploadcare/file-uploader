@@ -228,6 +228,43 @@ describe('VirtualListController', () => {
     expect(controller.window(listOf(100)).items).toHaveLength(10); // 400/40
   });
 
+  it('seeds scrollTop from the container on attach (reconnect to an already-scrolled list)', () => {
+    const host = new FakeHost();
+    const firstItem = { offsetHeight: 40 };
+    const scrollEl = {
+      clientHeight: 200,
+      scrollTop: 400, // already scrolled before the controller attaches
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      querySelector: () => firstItem as unknown as HTMLElement,
+    } as unknown as HTMLElement;
+    const controller = new VirtualListController(host, {
+      scrollContainer: () => scrollEl,
+      itemSelector: 'x',
+      rowMetrics: (_el, item) => ({ columns: 1, rowHeight: item.offsetHeight }),
+      overscanRows: 0,
+    });
+
+    controller.hostUpdated(); // attach seeds scrollTop 400 (no scroll event fired)
+    // 400 / 40 = row 10 → topPad reflects the 10 skipped rows without a scroll event.
+    expect(controller.window(listOf(100)).topPad).toBe(10 * 40);
+  });
+
+  it('clamps a negative overscanRows to 0', () => {
+    const host = new FakeHost();
+    const scrollEl = makeScrollEl({ clientHeight: 200, itemHeight: 40 });
+    const controller = new VirtualListController(host, {
+      scrollContainer: () => scrollEl,
+      itemSelector: 'x',
+      rowMetrics: (_el, item) => ({ columns: 1, rowHeight: item.offsetHeight }),
+      overscanRows: -5,
+    });
+    controller.hostUpdated();
+    const slice = controller.window(listOf(100));
+    expect(slice.topPad).toBe(0); // starts at the top
+    expect(slice.items).toHaveLength(5); // ceil(200/40), no negative overscan blowup
+  });
+
   it('re-measures row metrics after invalidate() (mode change / resize)', () => {
     const host = new FakeHost();
     const firstItem = { offsetHeight: 40 };
