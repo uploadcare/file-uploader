@@ -253,12 +253,22 @@ export class TelemetryManager {
           metadata: {
             event: 'error',
             text: `Error in ${context}`,
-            error: (error as Error).message,
+            // Non-`Error` throwables (strings, DOMException, …) have no `.message`;
+            // stringify them rather than reporting `undefined`.
+            error: error instanceof Error ? error.message : String(error),
           },
         },
       });
     } catch (err) {
-      this._log.debug('failed to report an error event to telemetry', err);
+      // The fallback log must not throw either — a host-supplied `isVerbose`
+      // predicate or a patched `console` could — or the original failure this
+      // sink exists to report becomes an unhandled rejection. Nested guard,
+      // matching the removed bridge sink's double try/catch.
+      try {
+        this._log.debug('failed to report an error event to telemetry', err);
+      } catch {
+        // Error reporting must never mask the original failure.
+      }
     }
   }
 
