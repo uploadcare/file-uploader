@@ -115,7 +115,7 @@ const setup = (opts: { collectionState?: OutputCollectionState; deferPlugin?: bo
     collectionObserver = cb;
     return () => {};
   });
-  vi.spyOn(collection, 'observeProperties').mockImplementation((cb) => {
+  vi.spyOn(collection, 'observeProperties').mockImplementation((_keys, cb) => {
     propertyObserver = cb;
     return () => {};
   });

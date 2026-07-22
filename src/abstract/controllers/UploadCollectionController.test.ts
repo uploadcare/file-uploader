@@ -27,13 +27,13 @@ describe('UploadCollectionController', () => {
     collection.destroy();
   });
 
-  it('read/readProp/publishProp work and watch-list changes notify property observers per-key', () => {
+  it('read/readProp/publishProp work and an observed key change notifies property observers per-key', () => {
     const collection = new UploadCollectionController();
     const propObserver = vi.fn();
-    collection.observeProperties(propObserver);
+    collection.observeProperties(['uploadProgress'], propObserver);
 
     const id = collection.add({ uploadProgress: 0 });
-    vi.runOnlyPendingTimers(); // flush the add's immediate watch-list fires
+    vi.runOnlyPendingTimers(); // flush the immediate-on-add fire for observed keys
     propObserver.mockClear();
 
     collection.publishProp(id, 'uploadProgress', 50);
@@ -47,17 +47,66 @@ describe('UploadCollectionController', () => {
     collection.destroy();
   });
 
-  it('does not notify property observers for non-watch-list props', () => {
+  it('immediate-on-add: surfaces the initial observed-key state of a new entry', () => {
+    // Load-bearing for already-uploaded files: an entry added with `fileInfo`
+    // set must reach the fileInfo-observing consumer on add (→ FILE_UPLOAD_SUCCESS),
+    // with no property change afterward.
+    const collection = new UploadCollectionController();
+    const propObserver = vi.fn();
+    collection.observeProperties(['fileInfo'], propObserver); // observe BEFORE add
+
+    const id = collection.add({ fileInfo: { uuid: 'srv' } as never });
+    vi.runOnlyPendingTimers();
+
+    const changeMap = (propObserver.mock.calls[0]?.[0] ?? {}) as Record<string, Set<string>>;
+    expect([...(changeMap.fileInfo ?? [])]).toContain(id);
+    collection.destroy();
+  });
+
+  it('does not notify property observers for an unobserved key', () => {
     const collection = new UploadCollectionController();
     const id = collection.add({});
     vi.runOnlyPendingTimers();
 
     const propObserver = vi.fn();
-    collection.observeProperties(propObserver);
-    collection.publishProp(id, 'thumbUrl', 'blob:x'); // thumbUrl is not in the watch-list
+    collection.observeProperties(['uploadProgress'], propObserver); // only uploadProgress observed
+    collection.publishProp(id, 'thumbUrl', 'blob:x'); // thumbUrl is not observed
     vi.runOnlyPendingTimers();
 
     expect(propObserver).not.toHaveBeenCalled();
+    collection.destroy();
+  });
+
+  it('gates the change-map to declared keys even when other keys change in the same tick', () => {
+    const collection = new UploadCollectionController();
+    const id = collection.add({});
+    vi.runOnlyPendingTimers();
+
+    const propObserver = vi.fn();
+    collection.observeProperties(['isUploading'], propObserver);
+    // Two keys change in one macrotask; only the declared one may enter the map.
+    collection.publishProp(id, 'thumbUrl', 'blob:x');
+    collection.publishProp(id, 'isUploading', true);
+    vi.runOnlyPendingTimers();
+
+    expect(propObserver).toHaveBeenCalledTimes(1);
+    const changeMap = (propObserver.mock.calls[0]?.[0] ?? {}) as Record<string, Set<string>>;
+    expect(Object.keys(changeMap)).toEqual(['isUploading']);
+    collection.destroy();
+  });
+
+  it('an observed cdnUrlModifiers change reaches the change-map (the former watch-list gap)', () => {
+    const collection = new UploadCollectionController();
+    const id = collection.add({});
+    vi.runOnlyPendingTimers();
+
+    const propObserver = vi.fn();
+    collection.observeProperties(['cdnUrlModifiers'], propObserver);
+    collection.publishProp(id, 'cdnUrlModifiers', '-/preview/');
+    vi.runOnlyPendingTimers();
+
+    const changeMap = (propObserver.mock.calls[0]?.[0] ?? {}) as Record<string, Set<string>>;
+    expect([...(changeMap.cdnUrlModifiers ?? [])]).toContain(id);
     collection.destroy();
   });
 
@@ -69,7 +118,7 @@ describe('UploadCollectionController', () => {
     collection.remove(id);
     expect(collection.hasItem(id)).toBe(false);
     expect(collection.read(id)).toBeNull(); // detached from the map immediately
-    vi.runOnlyPendingTimers(); // fires _notify, which schedules the deferred destroy
+    vi.advanceTimersByTime(1); // flush the 0-delay membership tick, not the 10s destroy
     expect(TypedData.getByUid(id)).not.toBeNull(); // entry data still readable in the window
 
     vi.advanceTimersByTime(10_000);
@@ -149,7 +198,7 @@ describe('UploadCollectionController', () => {
     const collObserver = vi.fn();
     const propObserver = vi.fn();
     const offColl = collection.observeCollection(collObserver);
-    const offProp = collection.observeProperties(propObserver);
+    const offProp = collection.observeProperties(['uploadProgress'], propObserver);
 
     const id = collection.add({ uploadProgress: 0 });
     vi.runOnlyPendingTimers();
@@ -193,7 +242,7 @@ describe('UploadCollectionController', () => {
     vi.runOnlyPendingTimers();
 
     collection.remove(id); // marks for the ~10s deferred destroy
-    vi.runOnlyPendingTimers();
+    vi.advanceTimersByTime(1); // flush membership only; the 10s destroy stays pending
     expect(TypedData.getByUid(id)).not.toBeNull(); // still in the destroy window
 
     collection.destroy(); // must force-destroy the marked entry now, not wait 10s
