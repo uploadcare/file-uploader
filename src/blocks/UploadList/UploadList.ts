@@ -59,10 +59,19 @@ export class UploadList extends ActivityChildBlock {
   public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
 
   /**
-   * Chrome variant — reflected so block CSS can key off `[chrome="compact"]`.
-   * Prefer omitting nodes over solution CSS `display: none` hacks.
+   * Chrome variant. Prefer omitting nodes over solution CSS `display: none`.
+   * Only non-default values reflect (`chrome="compact"`); default leaves the
+   * attribute off so regular/inline hosts stay free of a redundant host attr.
+   * Block CSS keys off `[chrome="compact"]`.
    */
-  @property({ reflect: true })
+  @property({
+    reflect: true,
+    converter: {
+      fromAttribute: (value: string | null): UploadListChrome => (value === 'compact' ? 'compact' : 'default'),
+      // `null` removes the attribute (Lit) when chrome is the default.
+      toAttribute: (value: UploadListChrome): string | null => (value === 'compact' ? 'compact' : null),
+    },
+  })
   public chrome: UploadListChrome = 'default';
 
   @state()
