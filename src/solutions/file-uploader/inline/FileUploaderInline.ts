@@ -12,6 +12,7 @@ import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
 import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import './index.css';
 
+import { renderInlineStartFrom } from '../layout-fragments.js';
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
 import '../../../blocks/StartFrom/StartFrom';
@@ -146,19 +147,11 @@ export class FileUploaderInline extends SolutionChildBlock {
   public override render() {
     return html`
       ${super.render()}
-      <uc-start-from>
-        <uc-drop-area with-icon clickable></uc-drop-area>
-        <uc-source-list role="list" wrap></uc-source-list>
-        <button
-          type="button"
-          class="uc-cancel-btn uc-secondary-btn"
-          @click=${this._handleCancel}
-          ?hidden=${!this._couldCancel}
-        >
-          ${this.l10n('start-from-cancel')}
-        </button>
-        <uc-copyright></uc-copyright>
-      </uc-start-from>
+      ${renderInlineStartFrom({
+        onCancel: this._handleCancel,
+        cancelLabel: this.l10n('start-from-cancel'),
+        cancelHidden: !this._couldCancel,
+      })}
       <uc-upload-list></uc-upload-list>
       <uc-plugin-activity-renderer mode="inline"></uc-plugin-activity-renderer>
     `;
