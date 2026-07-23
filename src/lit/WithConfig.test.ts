@@ -58,6 +58,38 @@ describe('WithConfig (block-agnostic config host)', () => {
     expect(config?.get('pubkey')).toBe('fromprobe');
   });
 
+  it('does not throw in debug mode when comparing circular values', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    el.debug = true;
+
+    const previous = { kind: 'metadata' } as { kind: string; self?: unknown };
+    previous.self = previous;
+    const next = { kind: 'metadata' } as { kind: string; self?: unknown };
+    next.self = next;
+
+    expect(() => {
+      Reflect.set(el, 'metadata', previous);
+      Reflect.set(el, 'metadata', next);
+    }).not.toThrow();
+  });
+
+  it('clears custom attribute mapping on release', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
+    config?.register({ name: 'pluginOption', defaultValue: '', attribute: true });
+    await delay(0);
+
+    const mappingBefore = Reflect.get(el, '_customAttrKeyMapping') as Record<string, string>;
+    expect(mappingBefore['plugin-option']).toBe('pluginOption');
+
+    el.remove();
+
+    const mappingAfter = Reflect.get(el, '_customAttrKeyMapping') as Record<string, string>;
+    expect(mappingAfter).toEqual({});
+  });
+
   describe('one-config-host-per-ctx warning (Policy 2, deferred confirm)', () => {
     it('warns (deferred, once) when two config hosts share a ctx', async () => {
       const ctxName = freshCtxName();
