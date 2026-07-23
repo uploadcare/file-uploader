@@ -86,23 +86,21 @@ describe('PluginController', () => {
       expect(onChange).toHaveBeenCalled();
     });
 
-    it('passes setup a logger scoped to the plugin (`[uc][plugin:<id>]`), also on pluginApi.logger', async () => {
+    it('exposes a logger scoped to the plugin on pluginApi.logger (`[uc][plugin:<id>]`)', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const t = setup();
-      let received: { logger?: { warn?: unknown }; pluginApi?: { logger?: unknown } } | undefined;
+      let received: { pluginApi?: { logger?: { warn?: unknown } } } | undefined;
       const plugin: UploaderPlugin = {
         id: 'my-plugin',
         setup: (params) => {
           received = params;
-          params.logger.warn('hello from plugin');
+          params.pluginApi.logger.warn('hello from plugin');
         },
       };
 
       await t.sync([plugin]);
 
-      expect(typeof received?.logger?.warn).toBe('function');
-      // Same instance on the API and the setup param (back-compat alias).
-      expect(received?.pluginApi?.logger).toBe(received?.logger);
+      expect(typeof received?.pluginApi?.logger?.warn).toBe('function');
       expect(warn).toHaveBeenCalledWith('[uc][plugin:my-plugin]', 'hello from plugin');
     });
 

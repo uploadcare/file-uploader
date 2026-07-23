@@ -184,8 +184,9 @@ export type PluginApi = {
   router: PluginRouterApi;
   /**
    * Logger pre-scoped to this plugin (`[uc][<ctx-name>][plugin:<plugin-id>]`).
-   * Same instance as {@link PluginSetupParams.logger}. Prefer this over
-   * `console.*` so plugin (and host) output is attributable and gated.
+   * `error`/`warn`/`warnOnce` always print; the verbose tier (`log`/`debug`)
+   * prints only when the uploader's `debug` config is on. Prefer this over
+   * `console.*` so plugin output is attributable and gated.
    */
   logger: Logger;
 };
@@ -198,16 +199,6 @@ export type PluginSetupResult = (() => void) | void | Promise<(() => void) | voi
 export type PluginSetupParams = {
   pluginApi: PluginApi;
   uploaderApi: PluginUploaderApi;
-  /**
-   * Same instance as {@link PluginApi.logger} — kept on setup params for
-   * back-compat. Prefer `pluginApi.logger` for new code.
-   *
-   * Pre-scoped to this plugin (`[uc][<ctx-name>][plugin:<plugin-id>]`).
-   * `error`/`warn`/`warnOnce` always print; the verbose tier (`log`/`debug`)
-   * prints only when the uploader's `debug` config is on. Prefer this over
-   * `console.*` so plugin output is attributable and gated.
-   */
-  logger: Logger;
 };
 
 export type UploaderPlugin = {

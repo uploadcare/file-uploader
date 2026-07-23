@@ -19,14 +19,15 @@ import { type ObserveOptions, SignalMap } from '../di/SignalMap';
  * finally retired).
  *
  * Custom (plugin-registered) keys live in the same signal-backed map as
- * built-ins — `register()` adds them, `getCustom`/`setCustom` access them.
+ * built-ins — `register()` adds them; `get`/`set`/`observe` accept custom
+ * string keys the same way as built-ins.
  *
  * Backed by a composed `SignalMap` (has-a, not a base class): reads auto-track
- * under a `SignalWatcher`, `set()`/`setCustom()` dedup with `Object.is` and
- * fire the map's coarse notify, and `subscribe()` fans out on any change —
- * preserving the exact `get`/`set`/`subscribe`/`values`/`notify` semantics the
- * the v1 ctx facade `*cfg/` routing depends on. The map is typed over `ConfigType`
- * intersected with a string index so runtime custom keys type cleanly.
+ * under a `SignalWatcher`, `set()` dedups with `Object.is` and fires the map's
+ * coarse notify, and `subscribe()` fans out on any change — preserving the exact
+ * `get`/`set`/`subscribe`/`values`/`notify` semantics the v1 ctx facade `*cfg/`
+ * routing depends on. The map is typed over `ConfigType` intersected with a
+ * string index so runtime custom keys type cleanly.
  */
 export class ConfigController implements ReactiveStore<ConfigType> {
   // Signal-backed store, seeded with the built-in defaults. The `Record<string,
@@ -49,7 +50,7 @@ export class ConfigController implements ReactiveStore<ConfigType> {
   // DOM-free per the controller-layering rule).
   #writers = new Set<ConfigWriterHandle>();
 
-  /** Live config object (stable reference — mutate via `set`/`setCustom`). */
+  /** Live config object (stable reference — mutate via `set`). */
   public get values(): Readonly<ConfigType> {
     return this.#state.values;
   }
@@ -195,26 +196,6 @@ export class ConfigController implements ReactiveStore<ConfigType> {
     if (changed) {
       this.#notifySchemaChange();
     }
-  }
-
-  /** @deprecated Use {@link descriptor}. Returns only DYNAMIC descriptors (not built-ins). */
-  public customDefinition(name: string): ConfigKeyDescriptor | undefined {
-    return this.#customDescriptors.get(name);
-  }
-
-  /** @deprecated Use {@link get} — custom keys are ordinary keys now. */
-  public getCustom<T = unknown>(name: string): T {
-    return this.get(name) as T;
-  }
-
-  /** @deprecated Use {@link set} — custom keys are ordinary keys now. */
-  public setCustom(name: string, value: unknown): void {
-    this.set(name, value);
-  }
-
-  /** @deprecated Use {@link observe} — custom keys are ordinary keys now. */
-  public observeCustom<T = unknown>(name: string, listener: (value: T) => void, options?: ObserveOptions): () => void {
-    return this.observe(name, listener as (value: unknown) => void, options);
   }
 
   // ─── Config-writer registry (one config host per ctx) ───────────────────

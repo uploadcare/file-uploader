@@ -220,6 +220,8 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     }
 
     private _assertSameValueDifferentReference(key: string, previousValue: unknown, nextValue: unknown) {
+      // Copilot-hardened: toComparableJson swallows circular/throwing values so a
+      // debug-only compare never surfaces from `_setValue`.
       if (this._config.values.debug) {
         const nextSerialized = toComparableJson(nextValue);
         const previousSerialized = toComparableJson(previousValue);
@@ -387,16 +389,10 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
 
             // Check if it's a custom plugin config attribute using the mapping
             if (attrName in this._customAttrKeyMapping) {
-              const key = this._customAttrKeyMapping[attrName] as string;
-              const descriptor = this._config.descriptor(key);
-
-              // Call attributeChangedCallback for custom plugin attributes (on
-              // attribute removal `newValue` is null → fall back to the default).
-              this.attributeChangedCallback(
-                attrName,
-                oldValue ?? '',
-                (newValue ?? descriptor?.defaultValue ?? '') as string,
-              );
+              // Pass raw attr strings only — never `descriptor.defaultValue` (it
+              // may be a non-string). Removal (`newValue === null`) is handled
+              // inside `attributeChangedCallback` via the live DOM attribute.
+              this.attributeChangedCallback(attrName, oldValue ?? '', newValue ?? '');
             }
           }
         }
@@ -522,20 +518,21 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     /**
      * Release counterpart of `controllerReady` (disconnect, or a scope switch
      * that drops the controller ahead of a re-adopt). Deregisters this writer and
-     * clears the custom-config bookkeeping so a subsequent `controllerReady`
-     * (re-adoption onto a different ctx) starts subscribing fresh instead of
-     * skipping names it thinks are already subscribed on a now-defunct
-     * controller's `ConfigController`. The subscriptions themselves — including
-     * the schema-change listener opened by `_setupSchemaSync` and the per-custom-key
-     * observers — are `addDisposer`-registered and already torn down by
-     * `ChildBlock._releaseController` before this hook runs. NB: `_localValues` is
-     * intentionally NOT cleared — the next adoption re-seeds against it.
+     * clears the custom-config bookkeeping (`_customConfigSubscriptions` +
+     * `_customAttrKeyMapping`) so a subsequent `controllerReady` (re-adoption
+     * onto a different ctx) starts subscribing / mapping fresh instead of
+     * treating stale attr names as custom on a now-defunct controller. The
+     * subscriptions themselves — including the schema-change listener opened by
+     * `_setupSchemaSync` and the per-custom-key observers — are `addDisposer`-
+     * registered and already torn down by `ChildBlock._releaseController` before
+     * this hook runs. NB: `_localValues` is intentionally NOT cleared — the next
+     * adoption re-seeds against it.
      */
     protected override controllerReleased(): void {
       this._writerConfig?.unregisterWriter(this);
       this._writerConfig = undefined;
-      this._customAttrKeyMapping = {};
       this._customConfigSubscriptions.clear();
+      this._customAttrKeyMapping = {};
     }
 
     public override attributeChangedCallback(name: string, oldVal: string, newVal: string) {
@@ -568,12 +565,19 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         const key = this._customAttrKeyMapping[name];
         const descriptor = key ? this._config.descriptor(key) : undefined;
         if (key && descriptor) {
-          // Skip a stale value the attribute has already moved past — the
-          // MutationObserver can batch mutations and deliver a superseded newVal.
+          // Live DOM is the source of truth (MO can deliver a superseded newVal).
           const currentAttrValue = this.getAttribute(name);
-          if (currentAttrValue && currentAttrValue !== newVal) return;
+          // Attribute removed → restore the registered default WITHOUT
+          // `fromAttribute` (defaultValue may be a non-string; fromAttribute
+          // is the attribute-string pre-parse hook).
+          if (currentAttrValue === null) {
+            this._setValue(key, descriptor.defaultValue);
+            return;
+          }
+          // Skip a stale value the attribute has already moved past.
+          if (currentAttrValue !== newVal) return;
           // Deserialize via the descriptor (identity by default; `_setValue` normalizes).
-          const val = descriptor.fromAttribute(newVal);
+          const val = descriptor.fromAttribute(currentAttrValue);
           if (this._getValue(key) === val) return;
           this._setValue(key, val);
         }
@@ -587,10 +591,10 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       // tore down every `addDisposer`'d subscription — the schema-change listener
       // AND the per-custom-key observers (each `addDisposer`'d in
       // `_syncCustomConfigs`) — and ran `controllerReleased`, which clears
-      // `_customConfigSubscriptions`. Only the MutationObserver needs manual
-      // cleanup: it observes this element's own node (per-element lifetime, created
-      // once behind an idempotency guard), so it's outside the adoption-scoped
-      // disposer engine.
+      // `_customConfigSubscriptions` + `_customAttrKeyMapping`. Only the
+      // MutationObserver needs manual cleanup: it observes this element's own node
+      // (per-element lifetime, created once behind an idempotency guard), so it's
+      // outside the adoption-scoped disposer engine.
       if (this._mutationObserver) {
         this._mutationObserver.disconnect();
         this._mutationObserver = undefined;

@@ -41,26 +41,26 @@ describe('ConfigController', () => {
     config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
 
     expect(config.hasKey('unsplashApiKey')).toBe(true);
-    expect(config.getCustom('unsplashApiKey')).toBe('default-key');
+    expect(config.get('unsplashApiKey')).toBe('default-key');
   });
 
   it('register() keeps a value that was set before registration', () => {
     const config = new ConfigController();
-    config.setCustom('unsplashApiKey', 'preset');
+    config.set('unsplashApiKey', 'preset');
 
     config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
 
-    expect(config.getCustom('unsplashApiKey')).toBe('preset');
+    expect(config.get('unsplashApiKey')).toBe('preset');
   });
 
   it('re-register is idempotent and does not clobber the current value', () => {
     const config = new ConfigController();
     config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
-    config.setCustom('unsplashApiKey', 'changed');
+    config.set('unsplashApiKey', 'changed');
 
     config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
 
-    expect(config.getCustom('unsplashApiKey')).toBe('changed');
+    expect(config.get('unsplashApiKey')).toBe('changed');
   });
 
   it('hasKey uses own-property semantics, not the prototype chain', () => {
@@ -72,7 +72,7 @@ describe('ConfigController', () => {
 
   it('does not pollute the prototype when a custom key is named __proto__', () => {
     const config = new ConfigController();
-    config.setCustom('__proto__', { polluted: true });
+    config.set('__proto__', { polluted: true });
     config.register({ name: '__proto__', defaultValue: { polluted: true } });
 
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
@@ -83,12 +83,12 @@ describe('ConfigController', () => {
     const config = new ConfigController();
     // Set then clear so an own property with value `undefined` exists — the
     // case where own-property vs `=== undefined` detection diverges.
-    config.setCustom('unsplashApiKey', 'preset');
-    config.setCustom('unsplashApiKey', undefined);
+    config.set('unsplashApiKey', 'preset');
+    config.set('unsplashApiKey', undefined);
 
     config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
 
-    expect(config.getCustom('unsplashApiKey')).toBeUndefined();
+    expect(config.get('unsplashApiKey')).toBeUndefined();
   });
 
   it('destroy() clears custom keys and listeners', () => {
@@ -101,7 +101,7 @@ describe('ConfigController', () => {
     config.destroy();
 
     expect(config.hasKey('unsplashApiKey')).toBe(false);
-    config.setCustom('unsplashApiKey', 'y');
+    config.set('unsplashApiKey', 'y');
     expect(listener).not.toHaveBeenCalled();
   });
 
@@ -113,22 +113,6 @@ describe('ConfigController', () => {
     expect(config.values.multiple).toBe(false);
   });
 
-  it('customDefinition returns the resolved descriptor for a registered key (or undefined)', () => {
-    const config = new ConfigController();
-    const normalize = (v: unknown) => String(v);
-    config.register({ name: 'unsplashApiKey', defaultValue: 'x', normalize });
-
-    // customDefinition now returns the RESOLVED descriptor (serialization
-    // defaults filled), carrying the registered name/defaultValue/normalize.
-    expect(config.customDefinition('unsplashApiKey')).toMatchObject({
-      name: 'unsplashApiKey',
-      defaultValue: 'x',
-      attribute: true,
-      normalize,
-    });
-    expect(config.customDefinition('not-registered')).toBeUndefined();
-  });
-
   describe('descriptors + schema', () => {
     it('descriptor() returns built-in descriptors, registered descriptors, and undefined for unknown', () => {
       const config = new ConfigController();
@@ -136,8 +120,14 @@ describe('ConfigController', () => {
       expect(config.descriptor('metadata')?.attribute).toBe(false); // complex built-in
       expect(config.descriptor('nope')).toBeUndefined();
 
-      config.register({ name: 'customKey', defaultValue: 'd' });
-      expect(config.descriptor('customKey')?.defaultValue).toBe('d');
+      const normalize = (v: unknown) => String(v);
+      config.register({ name: 'customKey', defaultValue: 'd', normalize });
+      expect(config.descriptor('customKey')).toMatchObject({
+        name: 'customKey',
+        defaultValue: 'd',
+        attribute: true,
+        normalize,
+      });
     });
 
     it('getCustomDescriptors() returns only the dynamically-registered descriptors', () => {
@@ -223,17 +213,17 @@ describe('ConfigController', () => {
     watcher.unwatch(c);
   });
 
-  it('setCustom does not notify when the value is unchanged', () => {
+  it('set() on a custom key does not notify when the value is unchanged', () => {
     const config = new ConfigController();
-    config.setCustom('unsplashApiKey', 'v');
+    config.set('unsplashApiKey', 'v');
 
     const listener = vi.fn();
     config.subscribe(listener);
 
-    config.setCustom('unsplashApiKey', 'v'); // unchanged → no notify
+    config.set('unsplashApiKey', 'v'); // unchanged → no notify
     expect(listener).not.toHaveBeenCalled();
 
-    config.setCustom('unsplashApiKey', 'w'); // changed → notify
+    config.set('unsplashApiKey', 'w'); // changed → notify
     expect(listener).toHaveBeenCalledTimes(1);
   });
 

@@ -61,13 +61,13 @@ describe('buildPluginApi', () => {
       const { api, config } = setup();
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       api.registry.registerConfig({ name: 'myPluginOption', defaultValue: 'a' });
-      expect(config.getCustom('myPluginOption')).toBe('a');
+      expect(config.get('myPluginOption')).toBe('a');
 
       // Re-register keeps the current value (does not reset to the default) and
       // warns that the name is already taken (first-wins).
-      config.setCustom('myPluginOption', 'b');
+      config.set('myPluginOption', 'b');
       api.registry.registerConfig({ name: 'myPluginOption', defaultValue: 'a' });
-      expect(config.getCustom('myPluginOption')).toBe('b');
+      expect(config.get('myPluginOption')).toBe('b');
       expect(warn).toHaveBeenCalledOnce();
       warn.mockRestore();
     });
@@ -78,16 +78,16 @@ describe('buildPluginApi', () => {
       api.registry.registerConfig({ name: 'dupOption', defaultValue: 'first' });
       // Second registration (same plugin API / same logger) loses; first value stays.
       api.registry.registerConfig({ name: 'dupOption', defaultValue: 'second' });
-      expect(config.getCustom('dupOption')).toBe('first');
+      expect(config.get('dupOption')).toBe('first');
       expect(warn).toHaveBeenCalledWith('[uc][plugin:test-plugin]', 'Config option "dupOption" is already registered');
       warn.mockRestore();
     });
 
     it('registerConfig preserves a value written before the plugin registered', () => {
       const { api, config } = setup();
-      config.setCustom('preSeeded', 'early');
+      config.set('preSeeded', 'early');
       api.registry.registerConfig({ name: 'preSeeded', defaultValue: 'default' });
-      expect(config.getCustom('preSeeded')).toBe('early');
+      expect(config.get('preSeeded')).toBe('early');
     });
 
     it('get reads the live value from the ConfigController', () => {
