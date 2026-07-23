@@ -79,10 +79,16 @@ const getConfigAttributeNames = (key: string): readonly string[] => {
  * stays the element throughout — behavior is identical to the previous
  * `<uc-config>` implementation.
  *
- * Attribute reactivity is **MutationObserver-only** (built-in + custom keys).
- * The mixin deliberately does NOT override `observedAttributes` /
- * `attributeChangedCallback`, so subclasses keep Lit's normal `@property`
- * attribute mapping (e.g. a host's own `mode` attribute).
+ * Attribute reactivity avoids claiming `observedAttributes` /
+ * `attributeChangedCallback` so subclasses keep Lit's normal `@property`
+ * mapping (e.g. a host's own `mode` attribute). Instead:
+ *
+ * 1. **`setAttribute` / `removeAttribute` overrides** — sync path for
+ *    programmatic changes (CKEditor-style `setAttribute` then immediate
+ *    `api.initFlow()`), and pre-adoption property stash so
+ *    `el.pubkey` is readable after `setAttribute('pubkey', …)` before connect.
+ * 2. **MutationObserver** — backup for any attr mutation that bypasses those
+ *    methods, and for custom keys whose mapping appears after the attr is set.
  *
  * It knows NOTHING about plugins or a "custom vs built-in" split: every key —
  * built-in or plugin-registered — is described by a {@link ConfigKeyDescriptor}
@@ -403,15 +409,60 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       this._setValue(key, val);
     }
 
+    /**
+     * Sync path after `setAttribute` / `removeAttribute` (and MO backup):
+     * - **Built-in, pre-adoption:** stash the raw attr string (or `undefined` on
+     *   remove) as an own data property via `Reflect.set`, matching the old
+     *   `attributeChangedCallback` contract so `el.pubkey` is readable before
+     *   connect and seed can prefer the data property.
+     * - **Built-in, post-adoption:** `_applyConfigAttributeChange` (or
+     *   `Reflect.set` through the installed accessor — same `_setValue` path).
+     * - **Custom:** only when adopted and mapped; unmapped/pre-adoption custom
+     *   attrs stay on the DOM for `_syncCustomConfigs` to pick up later.
+     */
+    private _syncConfigAttributeFromDom(attrName: string): void {
+      const builtInKey = builtinAttrKeyMapping[attrName];
+      if (builtInKey) {
+        if (this.containerOrNull) {
+          this._applyConfigAttributeChange(attrName);
+        } else {
+          const current = this.getAttribute(attrName);
+          // Same pre-adoption stash the previous ACC used: raw string or undefined.
+          Reflect.set(this, builtInKey, current === null ? undefined : current);
+        }
+        return;
+      }
+
+      if (this.containerOrNull && attrName in this._customAttrKeyMapping) {
+        this._applyConfigAttributeChange(attrName);
+      }
+    }
+
+    /**
+     * Programmatic attribute writes must update config **synchronously** —
+     * MutationObserver delivers later (microtask), which races
+     * `setAttribute('source-list', …); api.initFlow()`. Non-config attrs pass
+     * through untouched so Lit subclass properties stay free.
+     */
+    public override setAttribute(qualifiedName: string, value: string): void {
+      super.setAttribute(qualifiedName, value);
+      this._syncConfigAttributeFromDom(qualifiedName);
+    }
+
+    public override removeAttribute(qualifiedName: string): void {
+      super.removeAttribute(qualifiedName);
+      this._syncConfigAttributeFromDom(qualifiedName);
+    }
+
     private _ensureMutationObserver(): void {
       // Observes the DOM node itself (not the controller/ctx), so it must be
       // created only ONCE per element lifetime — re-adoption must not stack a
       // second observer on the same node.
       if (this._mutationObserver) return;
 
-      // Single path for ALL config attributes (built-in + dynamic custom). We do
-      // not use `observedAttributes` / `attributeChangedCallback` so subclasses
-      // keep Lit's normal `@property` attribute mapping free of config noise.
+      // Backup for attr mutations that bypass setAttribute/removeAttribute.
+      // Primary sync path is those overrides; we still do not claim
+      // `observedAttributes` so Lit subclass `@property` mapping stays free.
       this._mutationObserver = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
           if (mutation.type !== 'attributes' || !mutation.attributeName) continue;
@@ -444,8 +495,8 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
 
     /**
      * Read a built-in key's pre-existing attribute (if any). Used at seed time
-     * because config attrs are no longer stashed via `attributeChangedCallback`
-     * before adoption — MO only runs after `controllerReady`.
+     * for HTML-parsed attrs and any pre-connect write that left the attr on
+     * the element without an own data property stash.
      */
     private _readBuiltInAttribute(key: string): { has: boolean; value: unknown } {
       const descriptor = this._config.descriptor(key);
@@ -509,12 +560,13 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      * Fires on every controller adoption — the initial one and any re-adoption
      * (ctx-name switch, or ctx death + re-adopt on a v1-managed ctx). The step
      * ORDER is load-bearing: writer registration → custom configs → mutation
-     * observer (all config attrs) → change-log (BEFORE the seed, so startup
-     * values are logged) → built-in seed (reads pre-existing attributes; MO
-     * only sees post-seed mutations). Every subscription these open routes
-     * through `addDisposer`, so a re-adoption tears the previous cycle down
-     * instead of stacking a second set; the MutationObserver is host-level and
-     * guarded by an idempotency flag (not torn down on release).
+     * observer (backup for non-setAttribute paths) → change-log (BEFORE the
+     * seed, so startup values are logged) → built-in seed (reads pre-existing
+     * attributes / data-property stash from pre-connect `setAttribute`). Every
+     * subscription these open routes through `addDisposer`, so a re-adoption
+     * tears the previous cycle down instead of stacking a second set; the
+     * MutationObserver is host-level and guarded by an idempotency flag (not
+     * torn down on release).
      */
     protected override controllerReady(container: ControllerContainer): void {
       // Call super first so composable inner mixins (e.g. {@link WithApi}) still
