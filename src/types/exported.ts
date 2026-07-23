@@ -8,7 +8,7 @@ import type {
   FuncFileValidator,
 } from '../abstract/validatorTypes';
 import type { CameraMode } from '../blocks/CameraSource/CameraSource';
-import type { complexConfigKeys } from '../blocks/Config/config-keys';
+import type { ComplexConfigKey } from '../blocks/Config/config-keys';
 import type { FilesViewMode } from '../blocks/UploadList/UploadList';
 
 export {
@@ -348,7 +348,7 @@ export type ConfigType = {
   dynamicButtonViewMode: DynamicButtonMode;
   dynamicButtonShowFirstIcon: boolean;
 };
-export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
+export type ConfigComplexType = Pick<ConfigType, ComplexConfigKey>;
 export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;
 export type ConfigAttributesType = KebabCaseKeys<ConfigPlainType> & LowerCaseKeys<ConfigPlainType>;
 
