@@ -31,9 +31,28 @@ const config: any = {
     transform: [
       {
         svgo: {
+          // multipass + slightly more aggressive cleanup; icons are decorative
+          // (aria-hidden on <uc-icon>) so xmlns/dimensions can go. Keeps viewBox.
+          multipass: true,
           plugins: [
             {
               name: 'preset-default',
+              params: {
+                overrides: {
+                  // viewBox is required for scaled symbol sprites
+                  removeViewBox: false,
+                },
+              },
+            },
+            'removeDimensions',
+            'removeXMLNS',
+            {
+              name: 'cleanupNumericValues',
+              params: { floatPrecision: 1 },
+            },
+            {
+              name: 'convertPathData',
+              params: { floatPrecision: 1 },
             },
             {
               name: 'prefixIds',

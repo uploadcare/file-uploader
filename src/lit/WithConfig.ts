@@ -108,11 +108,6 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
 
     private _computationControllers: ComputedPropertyControllers = new Map();
     private _mutationObserver?: MutationObserver;
-    // Suppresses setAttribute/removeAttribute → config re-apply while we are
-    // reflecting a property/state value out to the DOM. Without this,
-    // `_setValue` → `_flushValueToAttribute` → `setAttribute` → fromAttribute
-    // re-parse loops (custom `fromAttribute` prefixes, stack overflow on seed).
-    private _suppressAttrSync = false;
     // Local cache backing the per-key DOM property accessors — the "last value
     // this element wrote/read", used to dedupe redundant writes. Deliberately
     // survives `controllerReleased` (a re-adoption re-seeds against it), so it is
@@ -168,19 +163,14 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       // Serialize once via the descriptor (null ⇒ remove the attribute) — wire
       // format is identical to the previous `String(value)` behavior.
       const serialized = descriptor.toAttribute(value);
-      // Own-flush only updates the DOM — do not re-enter attr→config sync
-      // (would re-run fromAttribute on the just-serialized string).
-      this._suppressAttrSync = true;
-      try {
-        for (const attr of getConfigAttributeNames(key)) {
-          if (serialized === null) {
-            this.removeAttribute(attr);
-          } else if (this.getAttribute(attr) !== serialized) {
-            this.setAttribute(attr, serialized);
-          }
+      // Write through the prototype so we do not re-enter our setAttribute/
+      // removeAttribute overrides (avoids fromAttribute re-parse loops).
+      for (const attr of getConfigAttributeNames(key)) {
+        if (serialized === null) {
+          Element.prototype.removeAttribute.call(this, attr);
+        } else if (this.getAttribute(attr) !== serialized) {
+          Element.prototype.setAttribute.call(this, attr, serialized);
         }
-      } finally {
-        this._suppressAttrSync = false;
       }
     }
 
@@ -416,6 +406,9 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         this._setValue(key, descriptor.defaultValue);
         return;
       }
+      // Attr already reflects current state (e.g. MO after our own toAttribute
+      // flush) — skip so transforming fromAttribute hooks do not re-parse.
+      if (descriptor.toAttribute(this._getValue(key)) === currentAttrValue) return;
       const val = descriptor.fromAttribute(currentAttrValue);
       if (this._getValue(key) === val) return;
       this._setValue(key, val);
@@ -427,8 +420,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      *   remove) as an own data property via `Reflect.set`, matching the old
      *   `attributeChangedCallback` contract so `el.pubkey` is readable before
      *   connect and seed can prefer the data property.
-     * - **Built-in, post-adoption:** `_applyConfigAttributeChange` (or
-     *   `Reflect.set` through the installed accessor — same `_setValue` path).
+     * - **Built-in, post-adoption:** `_applyConfigAttributeChange`.
      * - **Custom:** only when adopted and mapped; unmapped/pre-adoption custom
      *   attrs stay on the DOM for `_syncCustomConfigs` to pick up later.
      */
@@ -458,16 +450,12 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      */
     public override setAttribute(qualifiedName: string, value: string): void {
       super.setAttribute(qualifiedName, value);
-      if (!this._suppressAttrSync) {
-        this._syncConfigAttributeFromDom(qualifiedName);
-      }
+      this._syncConfigAttributeFromDom(qualifiedName);
     }
 
     public override removeAttribute(qualifiedName: string): void {
       super.removeAttribute(qualifiedName);
-      if (!this._suppressAttrSync) {
-        this._syncConfigAttributeFromDom(qualifiedName);
-      }
+      this._syncConfigAttributeFromDom(qualifiedName);
     }
 
     private _ensureMutationObserver(): void {
