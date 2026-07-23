@@ -1,11 +1,10 @@
+import type { ConfigKeyDescriptor } from '../abstract/config-descriptor';
 import { ConfigController } from '../abstract/controllers/ConfigController';
-import type { CustomConfigDefinition } from '../abstract/customConfigOptions';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { inject } from '../abstract/di/inject';
-import { PluginManagerBridge } from '../abstract/di/PluginManagerBridge';
 import { lazy } from '../abstract/logger';
-import type { PluginController } from '../abstract/managers/plugin';
 import { runAssertions } from '../blocks/Config/assertions';
+import { BUILTIN_DESCRIPTORS } from '../blocks/Config/builtin-descriptors';
 import {
   type ComputedPropertyControllers,
   type ConfigGetter,
@@ -13,9 +12,8 @@ import {
   computedPropertyDependencyKeys,
   computeProperty,
 } from '../blocks/Config/computed-properties';
-import { allConfigKeys, builtinAttrKeyMapping, isComplexKey, plainConfigKeys } from '../blocks/Config/config-keys';
+import { allConfigKeys, builtinAttrKeyMapping, plainConfigKeys } from '../blocks/Config/config-keys';
 import { initialConfig } from '../blocks/Config/initialConfig';
-import { normalizeConfigValue } from '../blocks/Config/normalizeConfigValue';
 import type { ConfigType } from '../types';
 import { toKebabCase } from '../utils/toKebabCase';
 import type { ChildBlock } from './ChildBlock';
@@ -73,16 +71,12 @@ const getConfigAttributeNames = (key: string): readonly string[] => {
  * type and prototype. `this` stays the element throughout — behavior is
  * identical to the previous `<uc-config>` implementation.
  *
- * The plugin-manager (custom-config registry) reads go through the editor-safe
- * `PluginManagerBridge` DI token rather than a direct `use(PluginController)`,
- * for two reasons: (1) a config host can run in config-only ctxs where no
- * uploader scope ever binds `PluginController`, so the reads must stay
- * null-/absence-tolerant (`getOrNull`/`whenController` on an unbound token stay
- * inert, where a synchronous `use(PluginController)` would throw); and (2)
- * `<uc-config>` is in the editor-alone bundle, so a value import of
- * `PluginController` here would drag it (and `PluginRegistry`) into that bundle
- * and blow its size-limit — the `declare`-only `PluginManagerBridge` keeps it out
- * while resolving to the SAME container instance.
+ * It knows NOTHING about plugins or a "custom vs built-in" split: every key —
+ * built-in or plugin-registered — is described by a {@link ConfigKeyDescriptor}
+ * read from `ConfigController.descriptor()`, and dynamic keys arrive via
+ * `ConfigController.onSchemaChange`. Plugins are just callers of
+ * `ConfigController.register`; the config layer has no `PluginManagerBridge`
+ * dependency, which also keeps `PluginController` out of the editor-alone bundle.
  */
 export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock>(
   Base: T,
@@ -112,47 +106,14 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     // already-destroyed controller is a harmless no-op.
     private _writerConfig?: ConfigController;
 
-    /**
-     * Mapping of attribute names to custom config keys for plugin-registered configs.
-     * Updated dynamically when plugins are registered or changed.
-     * Similar to builtinAttrKeyMapping but for custom configs.
-     */
+    // Attribute-name → dynamic (custom) key map, rebuilt from the controller's
+    // descriptors on every schema change. Built-in attr names live in the static
+    // `builtinAttrKeyMapping`; this only holds the dynamic ones.
     private _customAttrKeyMapping: Record<string, string> = {};
 
-    /** Set of all custom config names registered by plugins */
-    private _customConfigKeys: Set<string> = new Set();
-
-    /**
-     * Map of custom config subscriptions (config name -> unsubscribe function)
-     * Used to track and clean up subscriptions when plugins change
-     */
+    // Dynamic-key state subscriptions (key → unsubscribe), so a schema change can
+    // tear down subscriptions for keys that went away.
     private _customConfigSubscriptions: Map<string, () => void> = new Map();
-
-    /**
-     * Check if a key is a custom config (registered by plugins)
-     */
-    private _isCustomConfig(key: string): boolean {
-      return this._customConfigKeys.has(key);
-    }
-
-    /**
-     * Get the custom config definition for a key
-     */
-    private _getCustomConfigDefinition(key: string) {
-      // Read null-tolerantly via the `PluginManagerBridge` token: `getOrNull`
-      // yields `null` when no uploader scope has bound the bridge (config-only /
-      // plugin-less ctx) or when no container is adopted yet, instead of throwing.
-      // This helper is reachable with a stale `_customConfigKeys`/
-      // `_customAttrKeyMapping` — e.g. the MutationObserver forwards a custom
-      // attribute during a live `ctx-name` switch, before `attributeChangedCallback`
-      // reaches its own guard, or after a re-adoption into a ctx that has no plugin
-      // manager. (`getOrNull` — not `useOrNull` — because the bridge is a
-      // conditionally-bound token: a plain `get` on the unbound token would build a
-      // bogus zero-arg instance.)
-      const pluginManager = this.containerOrNull?.getOrNull(PluginManagerBridge)?.getPluginManager() ?? null;
-      if (!pluginManager) return undefined;
-      return pluginManager.configRegistry.get(key);
-    }
 
     /**
      * Install the DOM property accessor (getter/setter → `_getValue`/`_setValue`)
@@ -175,73 +136,55 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       });
     }
 
-    private _flushValueToAttribute(key: string, value: unknown) {
-      // Check if it's a complex built-in key
-      if (isComplexKey(key as keyof ConfigType)) {
-        return; // Complex keys can't be represented as attributes
+    private _flushValueToAttribute(key: string, descriptor: ConfigKeyDescriptor, value: unknown) {
+      // Complex keys + `attribute: false` custom keys don't reflect to attributes.
+      if (!descriptor.attribute) {
+        return;
       }
-
-      // Check if it's a custom config with attribute: false
-      if (this._isCustomConfig(key)) {
-        const config = this._getCustomConfigDefinition(key);
-        // Skip if attribute is explicitly false (default is true, so flush unless false)
-        if (config?.attribute === false) {
-          return;
-        }
-      }
-
-      // Flush the value to the DOM attributes (works for both built-in and custom configs)
+      // Serialize once via the descriptor (null ⇒ remove the attribute) — wire
+      // format is identical to the previous `String(value)` behavior.
+      const serialized = descriptor.toAttribute(value);
       for (const attr of getConfigAttributeNames(key)) {
-        if (typeof value === 'undefined' || value === null) {
+        if (serialized === null) {
           this.removeAttribute(attr);
-        } else if (this.getAttribute(attr) !== value.toString()) {
-          this.setAttribute(attr, value.toString());
+        } else if (this.getAttribute(attr) !== serialized) {
+          this.setAttribute(attr, serialized);
         }
       }
     }
 
     private _flushValueToState(key: string, value: unknown) {
-      const isCustom = this._isCustomConfig(key);
-      const configKey = key as keyof ConfigType;
-      const currentValue = isCustom ? this._config.getCustom(key) : this._config.get(configKey);
-
-      if (currentValue !== value) {
-        if (typeof value === 'undefined' || value === null) {
-          // For built-in configs, use initial value; for custom configs, keep undefined
-          const defaultValue = initialConfig[configKey];
-          const nextValue = defaultValue !== undefined ? defaultValue : value;
-          if (isCustom) {
-            this._config.setCustom(key, nextValue);
-          } else {
-            this._config.set(configKey, nextValue as ConfigType[typeof configKey]);
-          }
-        } else {
-          if (isCustom) {
-            this._config.setCustom(key, value);
-          } else {
-            this._config.set(configKey, value as ConfigType[typeof configKey]);
-          }
-        }
+      const current = this._config.get(key);
+      if (current === value) {
+        return;
+      }
+      if (value === undefined || value === null) {
+        // Reset semantics: a built-in key falls back to its `initialConfig`
+        // default; a custom key (absent from `initialConfig`) clears to the value
+        // itself (i.e. undefined/null) — preserved exactly from the pre-descriptor
+        // behavior. NB: uses `initialConfig`, NOT `descriptor.defaultValue`, so a
+        // custom key clears rather than resetting to its registered default.
+        const dflt = initialConfig[key as keyof ConfigType];
+        this._config.set(key, dflt !== undefined ? dflt : value);
+      } else {
+        this._config.set(key, value);
       }
     }
 
     private _setValue(key: string, value: unknown) {
-      const isCustom = this._isCustomConfig(key);
+      const descriptor = this._config.descriptor(key);
+      if (!descriptor) {
+        return; // unknown key — ignore (custom keys arrive via the schema signal)
+      }
 
-      // Normalize value (works for both built-in and custom configs)
+      // Normalize (built-in normalizers can't throw — they catch internally; a
+      // custom `normalize` may, so keep the previous value on throw).
       let normalizedValue: unknown;
-      if (isCustom) {
-        // For custom configs, try to get normalize function from plugin definition
-        const config = this._getCustomConfigDefinition(key);
-        try {
-          normalizedValue = config?.normalize?.(value) ?? value;
-        } catch (error) {
-          this._log.warn(`normalize() for "${key}" threw an error, keeping previous value`, error);
-          return;
-        }
-      } else {
-        // For built-in configs, use the standard normalization
-        normalizedValue = normalizeConfigValue(key as keyof ConfigType, value);
+      try {
+        normalizedValue = descriptor.normalize(value);
+      } catch (error) {
+        this._log.warn(`normalize() for "${key}" threw an error, keeping previous value`, error);
+        return;
       }
 
       const previous = this._localValues.get(key);
@@ -250,24 +193,22 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       this._assertSameValueDifferentReference(key, previous, normalizedValue);
       this._localValues.set(key, normalizedValue);
 
-      // Flush the value to the state and attribute.
-      this._flushValueToAttribute(key, normalizedValue);
+      // Flush the value to the attribute and state.
+      this._flushValueToAttribute(key, descriptor, normalizedValue);
       this._flushValueToState(key, normalizedValue);
       // NB: config-change logging is NOT done here — it's a separate observer on
       // `ConfigController` set up in `controllerReady` (`_setupChangeLog`), so it
       // catches every change (incl. non-block writers) decoupled from the setter.
 
-      // Only run assertions for built-in configs
-      if (!isCustom) {
+      // Assertions run for built-in configs only (validate the global config shape).
+      if (BUILTIN_DESCRIPTORS.has(key)) {
         runAssertions(this._config.values);
       }
     }
 
     private _getValue(key: string) {
       const local = this._localValues.get(key);
-      return (
-        local ?? (this._isCustomConfig(key) ? this._config.getCustom(key) : this._config.get(key as keyof ConfigType))
-      );
+      return local ?? this._config.get(key);
     }
 
     private _assertSameValueDifferentReference(key: string, previousValue: unknown, nextValue: unknown) {
@@ -293,22 +234,20 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      * `fromAttribute` (raw value if it throws). Returns `{ has: false }` when
      * neither is present.
      */
-    private _readPreExistingCustomValue(
-      name: string,
-      definition: CustomConfigDefinition<unknown>,
-    ): { has: boolean; value: unknown } {
+    private _readPreExistingCustomValue(descriptor: ConfigKeyDescriptor): { has: boolean; value: unknown } {
+      const name = descriptor.name;
       const existingDescriptor = Object.getOwnPropertyDescriptor(this, name);
       const isDataProperty = !!existingDescriptor && !existingDescriptor.get && !existingDescriptor.set;
       if (isDataProperty && existingDescriptor.value !== undefined) {
         return { has: true, value: existingDescriptor.value };
       }
 
-      if (definition.attribute) {
+      if (descriptor.attribute) {
         for (const attrName of getConfigAttributeNames(name)) {
           const attrValue = this.getAttribute(attrName);
           if (attrValue !== undefined && attrValue !== null) {
             try {
-              return { has: true, value: definition.fromAttribute ? definition.fromAttribute(attrValue) : attrValue };
+              return { has: true, value: descriptor.fromAttribute(attrValue) };
             } catch (error) {
               this._log.warn(`fromAttribute() for "${name}" threw an error, using raw attribute value`, error);
               return { has: true, value: attrValue };
@@ -320,25 +259,28 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       return { has: false, value: undefined };
     }
 
-    private _processCustomConfigs(pluginManager: PluginController): void {
-      const customConfigs = pluginManager.configRegistry.getAll();
+    // Sync the element's dynamic (custom) config wiring to the controller's
+    // current descriptor set — the attribute map, property accessors, and per-key
+    // subscriptions. Runs on adoption and on every schema change (a key
+    // registered/unregistered), so no plugin-manager coupling remains.
+    private _syncCustomConfigs(): void {
+      const descriptors = this._config.getCustomDescriptors();
+      const currentNames = new Set(descriptors.map((d) => d.name));
 
-      // Rebuild the custom attribute mapping and names set.
+      // Rebuild the custom attribute → key map from scratch.
       this._customAttrKeyMapping = {};
-      this._customConfigKeys = new Set(customConfigs.keys());
 
-      // Clean up subscriptions for configs that no longer exist.
+      // Drop subscriptions for keys that no longer exist.
       for (const [name, unsub] of this._customConfigSubscriptions) {
-        if (!customConfigs.has(name)) {
+        if (!currentNames.has(name)) {
           unsub();
           this._customConfigSubscriptions.delete(name);
         }
       }
 
-      for (const [name, definition] of customConfigs) {
-        // Build attribute name mappings (kebab-case and lowercase) unless the
-        // definition disables attributes (default is enabled).
-        if (definition.attribute) {
+      for (const descriptor of descriptors) {
+        const name = descriptor.name;
+        if (descriptor.attribute) {
           for (const attrName of getConfigAttributeNames(name)) {
             this._customAttrKeyMapping[attrName] = name;
           }
@@ -347,24 +289,16 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         // Read any pre-existing value BEFORE installing the accessor —
         // `_installPropertyAccessor` overwrites a pre-upgrade data property with
         // the getter/setter, which would otherwise destroy that value first.
-        const preExisting = this._readPreExistingCustomValue(name, definition);
-
-        // No separate state seeding here: `buildPluginApi`'s `registerConfig`
-        // already seeded this key on the ctx's `ConfigController` (via
-        // `ConfigController.register`) at plugin-setup time, before this
-        // definition could ever appear in `configRegistry.getAll()`. The
-        // registry lookup below is used only for adapter metadata (attribute
-        // mapping, `fromAttribute`/`normalize`), not to re-seed state.
+        // (State value was already seeded by `ConfigController.register`.)
+        const preExisting = this._readPreExistingCustomValue(descriptor);
 
         // Custom accessors are enumerable + configurable (distinct from built-ins).
         this._installPropertyAccessor(name, { enumerable: true, configurable: true });
 
-        // Subscribe to state changes (only if not already subscribed). Atomic
-        // per-key `observeCustom` — v1's `this.sub(stateKey, cb, false)` (no
-        // immediate call, only subsequent changes). `_setValue`'s early-return
-        // guard prevents circular updates.
+        // Subscribe to state changes (once) — atomic per-key observe, change-only
+        // (no immediate). `_setValue`'s early-return guard prevents circular updates.
         if (!this._customConfigSubscriptions.has(name)) {
-          const unsub = this._config.observeCustom(name, (nextValue) => this._setValue(name, nextValue));
+          const unsub = this._config.observe(name, (nextValue) => this._setValue(name, nextValue));
           this._customConfigSubscriptions.set(name, unsub);
           this.addDisposer(unsub);
         }
@@ -408,32 +342,13 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       );
     }
 
-    private _setupCustomConfigs(): void {
-      // Wait for the plugin manager via the `PluginManagerBridge` token: fires
-      // synchronously if the bridge is already resolved (uploader scope attached),
-      // else on the `ensurePluginManager` `get` that constructs it. When it isn't
-      // resolved yet, `whenController` returns a real unsubscriber — `addDisposer`'d
-      // so a re-adoption (ctx-name switch) tears down the previous ctx's pending
-      // waiter instead of leaving it to fire against the wrong controller. (A
-      // synchronous resolve returns a no-op unsub; tracking it is harmless.) In an
-      // editor-alone ctx the bridge is never bound, so this stays inert (no plugins
-      // standalone).
-      this.addDisposer(
-        this.container.whenController(PluginManagerBridge, (bridge) => {
-          const pluginManager = bridge.getPluginManager();
-          // Initial setup.
-          this._processCustomConfigs(pluginManager);
-
-          // Reload custom configs when plugins change. RETURN the unsubscriber as
-          // the waiter's teardown: `whenController`'s own unsub (the `addDisposer`'d
-          // one above) disposes it, so `ChildBlock._releaseController` tears the
-          // plugin-change listener down on release/re-adoption automatically — no
-          // manual `_pluginChangeUnsubscribe` bookkeeping and no teardown-first dance.
-          return pluginManager.onPluginsChange(() => {
-            this._processCustomConfigs(pluginManager);
-          });
-        }),
-      );
+    private _setupSchemaSync(): void {
+      // Sync dynamic config wiring now (picks up any keys already registered) and
+      // on every subsequent schema change. The controller owns the descriptor set,
+      // so this is plugin-agnostic — no `PluginManagerBridge`/`onPluginsChange`.
+      // `addDisposer`'d so a re-adoption tears the listener down and re-syncs fresh.
+      this._syncCustomConfigs();
+      this.addDisposer(this._config.onSchemaChange(() => this._syncCustomConfigs()));
     }
 
     private _ensureMutationObserver(): void {
@@ -462,10 +377,15 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
             // Check if it's a custom plugin config attribute using the mapping
             if (attrName in this._customAttrKeyMapping) {
               const key = this._customAttrKeyMapping[attrName] as string;
-              const config = this._getCustomConfigDefinition(key);
+              const descriptor = this._config.descriptor(key);
 
-              // Call attributeChangedCallback for custom plugin attributes
-              this.attributeChangedCallback(attrName, oldValue ?? '', newValue ?? config?.defaultValue ?? '');
+              // Call attributeChangedCallback for custom plugin attributes (on
+              // attribute removal `newValue` is null → fall back to the default).
+              this.attributeChangedCallback(
+                attrName,
+                oldValue ?? '',
+                (newValue ?? descriptor?.defaultValue ?? '') as string,
+              );
             }
           }
         }
@@ -534,7 +454,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      */
     protected override controllerReady(_container: ControllerContainer): void {
       this._registerAsConfigWriter();
-      this._setupCustomConfigs();
+      this._setupSchemaSync();
       this._ensureMutationObserver();
       this._setupChangeLog();
       this._seedBuiltInConfig();
@@ -595,8 +515,8 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      * (re-adoption onto a different ctx) starts subscribing fresh instead of
      * skipping names it thinks are already subscribed on a now-defunct
      * controller's `ConfigController`. The subscriptions themselves — including
-     * the plugin-change listener returned by the `_setupCustomConfigs` waiter —
-     * are `addDisposer`-registered and already torn down by
+     * the schema-change listener opened by `_setupSchemaSync` and the per-custom-key
+     * observers — are `addDisposer`-registered and already torn down by
      * `ChildBlock._releaseController` before this hook runs. NB: `_localValues` is
      * intentionally NOT cleared — the next adoption re-seeds against it.
      */
@@ -622,36 +542,29 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         // and handled on initialization.
         Reflect.set(this, builtInKey, newVal);
       } else {
-        // Handle custom config attributes (registered by plugins).
+        // Handle custom (dynamically-registered) config attributes.
         //
         // `attributeChangedCallback` can fire before this element has adopted a
-        // container — during custom-element upgrade (no ctx yet), OR on a live
-        // `ctx-name` switch (the previous container was released and the new one
-        // isn't adopted yet). Guard on `containerOrNull` (never throws) and defer
-        // when it's null: the value is on the DOM attribute and `controllerReady`
-        // → `_setupCustomConfigs` → `_processCustomConfigs` reads pre-existing
-        // attribute values on adoption (matching v1's deferral). The bridge waiter
-        // then resolves the plugin manager now-or-when-available.
-        const container = this.containerOrNull;
-        if (!container) {
+        // container (custom-element upgrade, or mid `ctx-name` switch) OR before
+        // the key's descriptor is registered. Bail in those cases — the value is
+        // on the DOM attribute, and `_syncCustomConfigs` (run on adoption and on
+        // every schema change) reads pre-existing attribute values, so a
+        // late-registered custom key still picks this up.
+        if (!this.containerOrNull) {
           return;
         }
-        container.whenController(PluginManagerBridge, (bridge) => {
-          const pluginManager = bridge.getPluginManager();
+        const key = this._customAttrKeyMapping[name];
+        const descriptor = key ? this._config.descriptor(key) : undefined;
+        if (key && descriptor) {
+          // Skip a stale value the attribute has already moved past — the
+          // MutationObserver can batch mutations and deliver a superseded newVal.
           const currentAttrValue = this.getAttribute(name);
-          if (currentAttrValue && currentAttrValue !== newVal) {
-            return;
-          }
-          const key = this._customAttrKeyMapping[name];
-          const config = key ? pluginManager.configRegistry.get(key) : undefined;
-          if (key && config) {
-            // Use fromAttribute to deserialize the value if provided
-            const val = config.fromAttribute ? config.fromAttribute(newVal) : newVal;
-            if (this._getValue(key) === val) return;
-            // Use _setValue for consistent handling (normalization happens inside _setValue)
-            this._setValue(key, val);
-          }
-        });
+          if (currentAttrValue && currentAttrValue !== newVal) return;
+          // Deserialize via the descriptor (identity by default; `_setValue` normalizes).
+          const val = descriptor.fromAttribute(newVal);
+          if (this._getValue(key) === val) return;
+          this._setValue(key, val);
+        }
       }
     }
 
@@ -659,9 +572,9 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       super.disconnectedCallback();
 
       // `super.disconnectedCallback()` (→ `ChildBlock._releaseController`) already
-      // tore down every `addDisposer`'d subscription — the plugin-change listener
-      // AND the per-custom-key `observeCustom` subs (each `addDisposer`'d in
-      // `_processCustomConfigs`) — and ran `controllerReleased`, which clears
+      // tore down every `addDisposer`'d subscription — the schema-change listener
+      // AND the per-custom-key observers (each `addDisposer`'d in
+      // `_syncCustomConfigs`) — and ran `controllerReleased`, which clears
       // `_customConfigSubscriptions`. Only the MutationObserver needs manual
       // cleanup: it observes this element's own node (per-element lifetime, created
       // once behind an idempotency guard), so it's outside the adoption-scoped

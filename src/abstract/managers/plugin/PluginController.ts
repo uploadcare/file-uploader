@@ -1,5 +1,7 @@
 import { fileIsImage } from '../../../utils/fileTypes';
 import { controllerLogger } from '../../controllerLogger';
+import { ConfigController } from '../../controllers/ConfigController';
+import { containerOf } from '../../di/ControllerContainer';
 import { Disposables } from '../../di/Disposables';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
@@ -46,8 +48,13 @@ export class PluginController {
   readonly #disposables = new Disposables();
   public readonly registry = new PluginRegistry(() => this._notifySubscribers());
 
-  public get configRegistry() {
-    return this.registry.config;
+  // Purge a plugin's registrations AND drop the config descriptors it registered
+  // on the ctx's `ConfigController` (the single source of truth for config now —
+  // there is no separate plugin config registry). `getOrNull` stays tolerant of a
+  // ctx without a resolvable ConfigController.
+  private _purgePlugin(pluginId: string): void {
+    this.registry.purge(pluginId);
+    containerOf(this)?.getOrNull(ConfigController)?.unregisterByOwner(pluginId);
   }
 
   public constructor(deps: PluginControllerDeps) {
@@ -102,7 +109,7 @@ export class PluginController {
         try {
           await this._registerPlugin(plugin);
         } catch (error) {
-          this.registry.purge(plugin.id);
+          this._purgePlugin(plugin.id);
           this._notifySubscribers();
           this._log.error(`Plugin "${plugin.id}" setup() threw an error`, error);
         }
@@ -150,7 +157,7 @@ export class PluginController {
     const registered = this._plugins.get(pluginId);
     if (!registered) return;
 
-    this.registry.purge(pluginId);
+    this._purgePlugin(pluginId);
 
     for (const unsub of registered.configSubscriptions) {
       try {

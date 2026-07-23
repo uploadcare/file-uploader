@@ -54,9 +54,12 @@ export class ConfigController implements ReactiveStore<ConfigType> {
     return this.#state.values;
   }
 
-  public get<K extends keyof ConfigType>(key: K): ConfigType[K] {
+  public get<K extends keyof ConfigType>(key: K): ConfigType[K];
+  /** Read a dynamically-registered (custom) key. */
+  public get(key: string): unknown;
+  public get(key: string): unknown {
     // Every built-in is seeded at construction, so the value is always present.
-    return this.#state.get(key) as ConfigType[K];
+    return this.#state.get(key);
   }
 
   /**
@@ -77,7 +80,10 @@ export class ConfigController implements ReactiveStore<ConfigType> {
   }
 
   /** Notifies only when the value actually changes (`Object.is` dedup). */
-  public set<K extends keyof ConfigType>(key: K, value: ConfigType[K]): void {
+  public set<K extends keyof ConfigType>(key: K, value: ConfigType[K]): void;
+  /** Write a dynamically-registered (custom) key. */
+  public set(key: string, value: unknown): void;
+  public set(key: string, value: unknown): void {
     this.#state.set(key, value);
   }
 
@@ -103,24 +109,13 @@ export class ConfigController implements ReactiveStore<ConfigType> {
     key: K,
     listener: (value: ConfigType[K]) => void,
     options?: ObserveOptions,
-  ): () => void {
+  ): () => void;
+  /** Atomic per-key subscription for a dynamically-registered (custom) key. */
+  public observe(key: string, listener: (value: unknown) => void, options?: ObserveOptions): () => void;
+  public observe(key: string, listener: (value: unknown) => void, options?: ObserveOptions): () => void {
     // Built-ins are always seeded, so the map's `| undefined` value arm never
-    // materializes for a `ConfigType` key — narrow it at this typed boundary.
-    return this.#state.observe(
-      key,
-      listener as (value: (ConfigType & Record<string, unknown>)[K] | undefined) => void,
-      options,
-    );
-  }
-
-  /**
-   * Atomic per-key subscription for a plugin-registered CUSTOM key (the
-   * `getCustom` keyspace), with the same `Object.is` dedup + optional
-   * `{ immediate }` as `observe`. Separate from `observe` because custom keys
-   * live outside the typed `ConfigType` surface.
-   */
-  public observeCustom<T = unknown>(name: string, listener: (value: T) => void, options?: ObserveOptions): () => void {
-    return this.#state.observe(name, listener as (value: unknown) => void, options);
+    // materializes for a `ConfigType` key — narrowed at the typed overload above.
+    return this.#state.observe(key, listener, options);
   }
 
   /** Coarse notify with no state change — for a re-render on a non-keyed change. */
@@ -207,12 +202,19 @@ export class ConfigController implements ReactiveStore<ConfigType> {
     return this.#customDescriptors.get(name);
   }
 
+  /** @deprecated Use {@link get} — custom keys are ordinary keys now. */
   public getCustom<T = unknown>(name: string): T {
-    return this.#state.get(name) as T;
+    return this.get(name) as T;
   }
 
+  /** @deprecated Use {@link set} — custom keys are ordinary keys now. */
   public setCustom(name: string, value: unknown): void {
-    this.#state.set(name, value);
+    this.set(name, value);
+  }
+
+  /** @deprecated Use {@link observe} — custom keys are ordinary keys now. */
+  public observeCustom<T = unknown>(name: string, listener: (value: T) => void, options?: ObserveOptions): () => void {
+    return this.observe(name, listener as (value: unknown) => void, options);
   }
 
   // ─── Config-writer registry (one config host per ctx) ───────────────────
