@@ -108,6 +108,11 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
 
     private _computationControllers: ComputedPropertyControllers = new Map();
     private _mutationObserver?: MutationObserver;
+    // Suppresses setAttribute/removeAttribute → config re-apply while we are
+    // reflecting a property/state value out to the DOM. Without this,
+    // `_setValue` → `_flushValueToAttribute` → `setAttribute` → fromAttribute
+    // re-parse loops (custom `fromAttribute` prefixes, stack overflow on seed).
+    private _suppressAttrSync = false;
     // Local cache backing the per-key DOM property accessors — the "last value
     // this element wrote/read", used to dedupe redundant writes. Deliberately
     // survives `controllerReleased` (a re-adoption re-seeds against it), so it is
@@ -163,12 +168,19 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       // Serialize once via the descriptor (null ⇒ remove the attribute) — wire
       // format is identical to the previous `String(value)` behavior.
       const serialized = descriptor.toAttribute(value);
-      for (const attr of getConfigAttributeNames(key)) {
-        if (serialized === null) {
-          this.removeAttribute(attr);
-        } else if (this.getAttribute(attr) !== serialized) {
-          this.setAttribute(attr, serialized);
+      // Own-flush only updates the DOM — do not re-enter attr→config sync
+      // (would re-run fromAttribute on the just-serialized string).
+      this._suppressAttrSync = true;
+      try {
+        for (const attr of getConfigAttributeNames(key)) {
+          if (serialized === null) {
+            this.removeAttribute(attr);
+          } else if (this.getAttribute(attr) !== serialized) {
+            this.setAttribute(attr, serialized);
+          }
         }
+      } finally {
+        this._suppressAttrSync = false;
       }
     }
 
@@ -446,12 +458,16 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      */
     public override setAttribute(qualifiedName: string, value: string): void {
       super.setAttribute(qualifiedName, value);
-      this._syncConfigAttributeFromDom(qualifiedName);
+      if (!this._suppressAttrSync) {
+        this._syncConfigAttributeFromDom(qualifiedName);
+      }
     }
 
     public override removeAttribute(qualifiedName: string): void {
       super.removeAttribute(qualifiedName);
-      this._syncConfigAttributeFromDom(qualifiedName);
+      if (!this._suppressAttrSync) {
+        this._syncConfigAttributeFromDom(qualifiedName);
+      }
     }
 
     private _ensureMutationObserver(): void {
