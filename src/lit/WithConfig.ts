@@ -42,6 +42,14 @@ const formatConfigLogValue = (value: unknown): string => {
   }
 };
 
+const toComparableJson = (value: unknown): string | undefined => {
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return undefined;
+  }
+};
+
 // The attribute names (kebab-case + lowercase, deduped) a config key maps to.
 // Cached module-wide: the names are a pure function of the key string, shared
 // across all config hosts, and read on every attribute flush — so this replaces
@@ -213,11 +221,14 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
 
     private _assertSameValueDifferentReference(key: string, previousValue: unknown, nextValue: unknown) {
       if (this._config.values.debug) {
+        const nextSerialized = toComparableJson(nextValue);
+        const previousSerialized = toComparableJson(previousValue);
         if (
           nextValue !== previousValue &&
           typeof nextValue === 'object' &&
           typeof previousValue === 'object' &&
-          JSON.stringify(nextValue) === JSON.stringify(previousValue)
+          nextSerialized !== undefined &&
+          nextSerialized === previousSerialized
         ) {
           this._log.warn(`Option "${key}" value is the same as the previous one but the reference is different`);
           this._log.warn(`You should avoid changing the reference of the object to prevent unnecessary calculations`);
@@ -523,6 +534,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     protected override controllerReleased(): void {
       this._writerConfig?.unregisterWriter(this);
       this._writerConfig = undefined;
+      this._customAttrKeyMapping = {};
       this._customConfigSubscriptions.clear();
     }
 
