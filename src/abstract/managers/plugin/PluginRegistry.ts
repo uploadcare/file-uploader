@@ -1,5 +1,4 @@
 import { debounce } from '../../../utils/debounce';
-import { type CustomConfigDefinition, CustomConfigRegistry } from '../../customConfigOptions';
 import { logger } from '../../logger';
 import type {
   Owned,
@@ -21,7 +20,6 @@ export class PluginRegistry {
   private _fileHooks: Owned<PluginFileHookRegistration>[] = [];
   private _icons: Owned<PluginIconRegistration>[] = [];
   private _l10n: Owned<PluginL10nRegistration>[] = [];
-  public readonly config = new CustomConfigRegistry();
 
   /**
    * Notify consumers (LocaleManager, SourceListController, …) that the registry
@@ -90,11 +88,6 @@ export class PluginRegistry {
     this._scheduleNotify();
   }
 
-  public addConfig<T>(pluginId: string, definition: CustomConfigDefinition<T>): void {
-    this.config.register(pluginId, definition);
-    this._scheduleNotify();
-  }
-
   public purge(pluginId: string): void {
     this._sources = this._sources.filter((item) => item.pluginId !== pluginId);
     this._activities = this._activities.filter((item) => item.pluginId !== pluginId);
@@ -102,7 +95,6 @@ export class PluginRegistry {
     this._fileHooks = this._fileHooks.filter((item) => item.pluginId !== pluginId);
     this._icons = this._icons.filter((item) => item.pluginId !== pluginId);
     this._l10n = this._l10n.filter((item) => item.pluginId !== pluginId);
-    this.config.unregisterByPlugin(pluginId);
   }
 
   public snapshot(): PluginRegistrySnapshot {

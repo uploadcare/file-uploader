@@ -5,6 +5,7 @@ import { RouterController } from '../../controllers/RouterController';
 import { UploadCollectionController } from '../../controllers/UploadCollectionController';
 import type { CustomConfig } from '../../customConfigOptions';
 import type { ControllerContainer } from '../../di/ControllerContainer';
+import { logger } from '../../logger';
 import type { PluginRegistry } from './PluginRegistry';
 import type {
   PluginActivityApi,
@@ -33,12 +34,17 @@ export function buildPluginApi(
     registerIcon: (icon) => registry.addIcon(pluginId, icon),
     registerL10n: (l10n) => registry.addL10n(pluginId, l10n),
     registerConfig: (definition) => {
-      registry.addConfig(pluginId, definition);
+      // Warn + keep the first when a custom config name is registered twice
+      // (first-registration-wins) — the check the deleted CustomConfigRegistry did.
+      if (config.customDefinition(definition.name)) {
+        logger.scope('custom-config').warn(`Config option "${definition.name}" is already registered`);
+        return;
+      }
       // Register the FULL descriptor on the ctx's `ConfigController` (the single
-      // source of truth for config descriptors) — off the `*cfg/*` facade, and
-      // no longer a partial name+default. `register` is idempotent + keeps any
-      // value written before the plugin registered (first-write-wins). Owned by
-      // `pluginId` so the descriptor is dropped if the plugin is ever removed.
+      // source of truth for config descriptors) — off the `*cfg/*` facade, and no
+      // longer a partial name+default. Owned by `pluginId` so the descriptor is
+      // dropped if the plugin is removed. Guarded so a built-in key is never
+      // overridden by a custom registration.
       if (!config.hasKey(definition.name)) {
         config.register(definition, pluginId);
       }

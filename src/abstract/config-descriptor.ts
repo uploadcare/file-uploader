@@ -37,18 +37,20 @@ const defaultToAttribute = (value: unknown): string | null =>
  * - `attribute` defaults to `true`,
  * - `normalize` defaults to identity,
  * - `toAttribute` defaults to `String()` (null ⇒ remove),
- * - `fromAttribute` defaults to `normalize` (attribute strings flow through the
- *   same coercion as property sets — the built-in behavior, where `asBoolean`
- *   etc. already parse `"true"`).
+ * - `fromAttribute` defaults to IDENTITY (the raw string passes straight to
+ *   `normalize` via the setter path — the built-in behavior, where `asBoolean`
+ *   etc. coerce `"true"`). Deserialization proper is `normalize`; `fromAttribute`
+ *   is the optional pre-parse hook for custom keys (e.g. `JSON.parse`) that runs
+ *   BEFORE `normalize`. Defaulting it to `normalize` would double-normalize
+ *   (unsafe for non-idempotent custom normalizers).
  */
 export const resolveConfigDescriptor = <T>(def: CustomConfigDefinition<T>): ConfigKeyDescriptor<T> => {
-  const normalize = def.normalize ?? ((value: unknown) => value as T);
   return {
     name: def.name,
     defaultValue: def.defaultValue,
     attribute: def.attribute ?? true,
-    normalize,
+    normalize: def.normalize ?? ((value: unknown) => value as T),
     toAttribute: def.toAttribute ?? (defaultToAttribute as (value: T) => string | null),
-    fromAttribute: def.fromAttribute ?? ((raw: string) => normalize(raw)),
+    fromAttribute: def.fromAttribute ?? ((raw: string) => raw as unknown as T),
   };
 };

@@ -1,9 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { type CustomConfigDefinition, CustomConfigRegistry } from '../../abstract/customConfigOptions';
-import { PluginManagerBridge } from '../../abstract/di/PluginManagerBridge';
+import type { CustomConfigDefinition } from '../../abstract/customConfigOptions';
 import { CTX_BADGE_STYLE, SCOPE_BADGE_STYLE, UC_BADGE_STYLE } from '../../abstract/logger';
-import type { PluginController } from '../../abstract/managers/plugin';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { delay } from '../../utils/delay';
@@ -64,8 +62,7 @@ describe('Config (<uc-config>) — M-god step 6b-5 use(ConfigController)', () =>
     // The `@inject(ConfigController)` field resolves through the container the
     // block adopted (tagged as `this[CONTAINER]`), yielding the very same
     // controller instance the ctx owns — the mechanism that replaces
-    // `static uses` + `this.use()`. (The plugin-manager reads stay on the
-    // editor-safe `PluginManagerBridge`, unaffected.)
+    // `static uses` + `this.use()`.
     expect((el as unknown as { _config: ConfigController })._config).toBe(config);
   });
 
@@ -175,9 +172,9 @@ describe('Config (<uc-config>) — M-god step 6b-5 use(ConfigController)', () =>
   });
 
   // The custom-config attribute bridge (MutationObserver + attributeChangedCallback
-  // custom path) routes through the PLUGIN MANAGER's `configRegistry` (the v1 `bag`
-  // path, no DI token) rather than `ConfigController.register`, so exercising it
-  // needs the full plugin-manager machinery. It is covered end-to-end by
+  // custom path) is now descriptor-driven off `ConfigController` — no plugin
+  // manager involved — so it's exercised directly in the additive coverage block
+  // below via `registerCustomConfigs`, and end-to-end by
   // `tests/plugins/custom-config.e2e.test.tsx`.
 });
 
@@ -316,54 +313,26 @@ describe('Config (<uc-config>) — additive coverage: plain/complex keys, reflec
 });
 
 /**
- * Minimal fake plugin manager bound via the `PluginManagerBridge` token so the
- * custom-config machinery (`_setupCustomConfigs` → `_processCustomConfigs`, the
- * MutationObserver + attributeChangedCallback custom branch) runs in a spec —
- * the same shape `ensurePluginManager` binds (`{ getPluginManager }`), but
- * backed by a real `CustomConfigRegistry` and a tiny `onPluginsChange` emitter.
+ * Register custom config descriptors on the ctx's `ConfigController` — exactly
+ * what a plugin's `registerConfig` does now (the controller is the single source
+ * of truth for config descriptors; there is no separate plugin config registry).
+ * Registering with `owner = name` lets a single key be dropped via
+ * `unregisterByOwner` in dynamic tests. Returns the `ConfigController` so tests
+ * can register/unregister more keys and observe the schema-change re-sync.
  */
-type FakePluginManager = {
-  registry: CustomConfigRegistry;
-  emitPluginsChange: () => void;
-};
-
-const bindFakePluginManager = (ctxName: string, definitions: CustomConfigDefinition[] = []): FakePluginManager => {
-  const container = ensureUploaderCtx(ctxName);
-  const config = container.get(ConfigController);
-  const registry = new CustomConfigRegistry();
+const registerCustomConfigs = (ctxName: string, definitions: CustomConfigDefinition[] = []): ConfigController => {
+  const config = controllerFor(ctxName);
   for (const def of definitions) {
-    registry.register('fake-plugin', def);
-    // `buildPluginApi`'s `registerConfig` seeds the key on the ConfigController
-    // at plugin-setup time; mirror that so `getCustom`/`observeCustom` behave.
-    config.register({ name: def.name, defaultValue: def.defaultValue });
+    config.register(def, def.name);
   }
-  const listeners = new Set<() => void>();
-  const manager = {
-    configRegistry: registry,
-    onPluginsChange: (cb: () => void): (() => void) => {
-      listeners.add(cb);
-      return () => {
-        listeners.delete(cb);
-      };
-    },
-  } as unknown as PluginController;
-  container.bind(PluginManagerBridge, () => ({ getPluginManager: () => manager }));
-  // Eagerly resolve so a `whenController(PluginManagerBridge, cb)` waiter the
-  // block registers in `controllerReady` fires synchronously.
-  container.get(PluginManagerBridge);
-  return {
-    registry,
-    emitPluginsChange: () => {
-      for (const cb of [...listeners]) cb();
-    },
-  };
+  return config;
 };
 
 describe('Config (<uc-config>) — additive coverage: custom configs (fake plugin manager)', () => {
   it('maps kebab/lowercase attrs, deserializes a pre-existing attribute via fromAttribute, and reflects', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
-    bindFakePluginManager(ctxName, [{ name: 'myOption', defaultValue: 'def', fromAttribute: (v) => `parsed:${v}` }]);
+    registerCustomConfigs(ctxName, [{ name: 'myOption', defaultValue: 'def', fromAttribute: (v) => `parsed:${v}` }]);
 
     // Pre-mount kebab-case attribute — read + deserialized on adoption.
     const el = await mount(ctxName, { 'my-option': 'hello' });
@@ -378,7 +347,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
   it('uses the raw attribute value for a custom config without fromAttribute (pre-existing and dynamic)', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
-    bindFakePluginManager(ctxName, [{ name: 'plainOpt', defaultValue: '' }]);
+    registerCustomConfigs(ctxName, [{ name: 'plainOpt', defaultValue: '' }]);
 
     // Pre-existing attribute, no fromAttribute → raw string used.
     const el = await mount(ctxName, { 'plain-opt': 'hi' });
@@ -394,7 +363,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
   it('falls back to the raw attribute value and warns when a pre-existing fromAttribute() throws', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
-    bindFakePluginManager(ctxName, [
+    registerCustomConfigs(ctxName, [
       {
         name: 'badFrom',
         defaultValue: '',
@@ -416,7 +385,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
   it('reflects an external setCustom back onto the element via observeCustom', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
-    bindFakePluginManager(ctxName, [{ name: 'myOption', defaultValue: 'def' }]);
+    registerCustomConfigs(ctxName, [{ name: 'myOption', defaultValue: 'def' }]);
     const el = await mount(ctxName);
 
     config.setCustom('myOption', 'external');
@@ -428,7 +397,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
   it('skips attribute reflection for a custom config declared attribute: false', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
-    bindFakePluginManager(ctxName, [{ name: 'noAttr', defaultValue: 'x', attribute: false }]);
+    registerCustomConfigs(ctxName, [{ name: 'noAttr', defaultValue: 'x', attribute: false }]);
     const el = await mount(ctxName);
 
     (el as unknown as Record<string, unknown>).noAttr = 'val';
@@ -440,7 +409,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
 
   it('keeps the previous value and warns when a custom normalize() throws', async () => {
     const ctxName = freshCtxName();
-    bindFakePluginManager(ctxName, [
+    registerCustomConfigs(ctxName, [
       {
         name: 'strictOpt',
         defaultValue: 0,
@@ -466,7 +435,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
   it('logs a custom value transitioning to undefined (formatConfigLogValue undefined branch)', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
-    bindFakePluginManager(ctxName, [{ name: 'myOption', defaultValue: undefined }]);
+    registerCustomConfigs(ctxName, [{ name: 'myOption', defaultValue: undefined }]);
     const el = await mount(ctxName);
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
 
@@ -479,20 +448,18 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
     expect(stringArgs(log).some((s) => s.includes('myOption: "value" → undefined'))).toBe(true);
   });
 
-  it('re-processes custom configs and cleans up removed subscriptions on plugin change', async () => {
+  it('re-syncs custom configs and cleans up removed subscriptions on a schema change', async () => {
     const ctxName = freshCtxName();
-    const config = controllerFor(ctxName);
-    const pm = bindFakePluginManager(ctxName, [
+    const config = registerCustomConfigs(ctxName, [
       { name: 'first', defaultValue: 'a' },
       { name: 'second', defaultValue: 'b' },
     ]);
     const el = await mount(ctxName);
 
-    // Register a NEW config and unregister an existing one, then fire the change.
-    pm.registry.register('fake-plugin', { name: 'third', defaultValue: 'c' });
-    config.register({ name: 'third', defaultValue: 'c' });
-    pm.registry.unregister('second');
-    pm.emitPluginsChange();
+    // Register a NEW descriptor and drop an existing one — each fires the
+    // controller's schema-change signal, which re-runs the host's _syncCustomConfigs.
+    config.register({ name: 'third', defaultValue: 'c' }, 'third');
+    config.unregisterByOwner('second');
     await delay(0);
 
     // The freshly-registered key now has a working accessor.
@@ -503,7 +470,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
   it('seeds a pre-existing data property set before adoption', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
-    bindFakePluginManager(ctxName, [{ name: 'preSet', defaultValue: 'def' }]);
+    registerCustomConfigs(ctxName, [{ name: 'preSet', defaultValue: 'def' }]);
 
     const el = document.createElement('uc-config') as Config;
     // A data property set before the element adopts a container (e.g. a
@@ -522,7 +489,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
   it('forwards a dynamically-set custom attribute through the MutationObserver + attributeChangedCallback', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
-    bindFakePluginManager(ctxName, [
+    registerCustomConfigs(ctxName, [
       { name: 'liveOpt', defaultValue: '', fromAttribute: (v) => (v ?? '').toUpperCase() },
     ]);
     const el = await mount(ctxName);
@@ -546,7 +513,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
   it('ignores a stale custom attributeChangedCallback whose value the attribute already moved past', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
-    bindFakePluginManager(ctxName, [{ name: 'liveOpt', defaultValue: 'init' }]);
+    registerCustomConfigs(ctxName, [{ name: 'liveOpt', defaultValue: 'init' }]);
     const el = await mount(ctxName);
 
     el.setAttribute('live-opt', 'current');

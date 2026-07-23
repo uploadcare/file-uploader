@@ -10,20 +10,22 @@ describe('BUILTIN_DESCRIPTORS', () => {
     expect(BUILTIN_DESCRIPTORS.get('multiple')?.defaultValue).toBe(initialConfig.multiple);
   });
 
-  it('describes a boolean key with wire-faithful serialize/deserialize', () => {
+  it('describes a boolean key with wire-faithful serialize + normalize-based deserialize', () => {
     const d = BUILTIN_DESCRIPTORS.get('multiple');
     expect(d?.attribute).toBe(true);
+    // Deserialization (string → typed) is `normalize`; `toAttribute` serializes.
     expect(d?.normalize('true')).toBe(true);
     expect(d?.toAttribute(true as never)).toBe('true');
     expect(d?.toAttribute(false as never)).toBe('false');
-    expect(d?.fromAttribute('false')).toBe(false);
+    // Built-in `fromAttribute` is the identity pre-parse hook — normalize does the coercion.
+    expect(d?.fromAttribute('false')).toBe('false');
   });
 
   it('describes a number key', () => {
     const d = BUILTIN_DESCRIPTORS.get('thumbSize');
     expect(d?.normalize('200')).toBe(200);
     expect(d?.toAttribute(200 as never)).toBe('200');
-    expect(d?.fromAttribute('200')).toBe(200);
+    expect(d?.fromAttribute('200')).toBe('200'); // identity; normalize('200') → 200
   });
 
   it('marks complex (object/function) keys as non-attribute', () => {
@@ -45,7 +47,7 @@ describe('resolveConfigDescriptor', () => {
     expect(d.attribute).toBe(true);
     expect(d.normalize('x')).toBe('x'); // identity
     expect(d.toAttribute('x')).toBe('x');
-    expect(d.fromAttribute('x')).toBe('x'); // fromAttribute defaults to normalize
+    expect(d.fromAttribute('x')).toBe('x'); // fromAttribute defaults to identity
     expect(d.toAttribute(null as never)).toBeNull();
   });
 

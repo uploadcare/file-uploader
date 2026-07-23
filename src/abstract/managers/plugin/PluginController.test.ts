@@ -359,11 +359,6 @@ describe('PluginController', () => {
       expect(t.unwatch).toHaveBeenCalled();
     });
 
-    it('exposes the config registry', () => {
-      const t = setup();
-      expect(t.controller.configRegistry).toBe(t.controller.registry.config);
-    });
-
     it('warns when a config-subscription throws during error cleanup', async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
