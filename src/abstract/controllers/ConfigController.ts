@@ -12,7 +12,7 @@ import { type ObserveOptions, SignalMap } from '../di/SignalMap';
  * In the v1 → v2 strangler this is the source of truth for the `*cfg/*` state
  * that used to live in the per-ctx store map; the v1 ctx facade routes those
  * keys here (see its `*cfg/` facade). For now it is a raw typed container:
- * value coercion (`normalizeConfigValue`), the `cdnCname`/`cameraModes`
+ * value coercion (built-in `normalize` via BUILTIN_DESCRIPTORS), the `cdnCname`/`cameraModes`
  * computed properties, and the attribute/property bridge all still live in the
  * `<uc-config>` element, so behavior is byte-identical to v1. Those concerns
  * migrate into this controller in later milestones (when `<uc-config>` is
