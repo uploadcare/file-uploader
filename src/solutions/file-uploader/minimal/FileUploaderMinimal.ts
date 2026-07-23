@@ -10,6 +10,7 @@ import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
 import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import './index.css';
+import { renderMinimalTrigger, renderModalSourcePicker } from '../layout-fragments.js';
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
 import '../../../blocks/Modal/Modal';
@@ -145,30 +146,18 @@ export class FileUploaderMinimal extends SolutionChildBlock {
   public override render() {
     return html`
       ${super.render()}
-      <uc-start-from>
-        <uc-drop-area
-          ?single=${this._singleUpload}
-          initflow
-          clickable
-          tabindex="0"
-        ><span>${this.l10n(this._buttonTextKey)}</span></uc-drop-area>
-        <uc-copyright></uc-copyright>
-      </uc-start-from>
-      <uc-upload-list></uc-upload-list>
+      ${renderMinimalTrigger({
+        single: this._singleUpload,
+        label: this.l10n(this._buttonTextKey),
+      })}
+      <uc-upload-list chrome="compact"></uc-upload-list>
 
-      <uc-modal id="start-from" strokes block-body-scrolling>
-        <uc-start-from>
-          <uc-drop-area with-icon clickable></uc-drop-area>
-          <uc-source-list role="list" wrap></uc-source-list>
-          <button
-            type="button"
-            class="uc-secondary-btn"
-            @click=${() => this._router.traverse('onCancel')}
-          >${this.l10n('start-from-cancel')}</button>
-        </uc-start-from>
-      </uc-modal>
+      ${renderModalSourcePicker({
+        onCancel: () => this._router.traverse('onCancel'),
+        cancelLabel: this.l10n('start-from-cancel'),
+      })}
 
-        <uc-plugin-activity-renderer mode="modal"></uc-plugin-activity-renderer>
+      <uc-plugin-activity-renderer mode="modal"></uc-plugin-activity-renderer>
     `;
   }
 }
