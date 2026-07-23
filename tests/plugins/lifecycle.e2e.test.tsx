@@ -31,6 +31,8 @@ describe('Plugin Registration & Lifecycle', () => {
     expect(args.pluginApi).toHaveProperty('registry');
     expect(args.pluginApi).toHaveProperty('config');
     expect(args.pluginApi).toHaveProperty('activity');
+    expect(args.pluginApi).toHaveProperty('logger');
+    expect(args).not.toHaveProperty('logger');
     expect(args.pluginApi.registry).toHaveProperty('registerSource');
     expect(args.pluginApi.registry).toHaveProperty('registerActivity');
     expect(args.pluginApi.registry).toHaveProperty('registerFileAction');

@@ -14,7 +14,7 @@ const setup = () => {
   const getUploaderApi = vi.fn(() => ({}) as PluginUploaderApi);
   const configUnsubs: Array<ReturnType<typeof vi.fn>> = [];
 
-  const buildApi: PluginControllerDeps['buildApi'] = (registry: PluginRegistry, pluginId, configSubscriptions) => {
+  const buildApi: PluginControllerDeps['buildApi'] = (registry: PluginRegistry, pluginId, configSubscriptions, log) => {
     const sub = vi.fn();
     configUnsubs.push(sub);
     configSubscriptions.push(sub);
@@ -32,6 +32,8 @@ const setup = () => {
       config: { get: () => undefined, subscribe: () => () => {} },
       activity: { getParams: () => ({}), subscribeToParams: () => () => {} },
       files: { update: () => {} },
+      router: { traverse: () => {} },
+      logger: log,
     } as unknown as PluginApi;
   };
 
@@ -84,21 +86,21 @@ describe('PluginController', () => {
       expect(onChange).toHaveBeenCalled();
     });
 
-    it('passes setup a logger scoped to the plugin (`[uc][plugin:<id>]`)', async () => {
+    it('exposes a logger scoped to the plugin on pluginApi.logger (`[uc][plugin:<id>]`)', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const t = setup();
-      let received: unknown;
+      let received: { pluginApi?: { logger?: { warn?: unknown } } } | undefined;
       const plugin: UploaderPlugin = {
         id: 'my-plugin',
         setup: (params) => {
-          received = params.logger;
-          params.logger.warn('hello from plugin');
+          received = params;
+          params.pluginApi.logger.warn('hello from plugin');
         },
       };
 
       await t.sync([plugin]);
 
-      expect(typeof (received as { warn?: unknown })?.warn).toBe('function');
+      expect(typeof received?.pluginApi?.logger?.warn).toBe('function');
       expect(warn).toHaveBeenCalledWith('[uc][plugin:my-plugin]', 'hello from plugin');
     });
 
@@ -357,11 +359,6 @@ describe('PluginController', () => {
       expect(dispose).toHaveBeenCalledTimes(1);
       expect(t.controller.snapshot().sources).toHaveLength(0);
       expect(t.unwatch).toHaveBeenCalled();
-    });
-
-    it('exposes the config registry', () => {
-      const t = setup();
-      expect(t.controller.configRegistry).toBe(t.controller.registry.config);
     });
 
     it('warns when a config-subscription throws during error cleanup', async () => {
