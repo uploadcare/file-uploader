@@ -52,6 +52,7 @@ export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploa
 export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEditor';
 export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploaderInline';
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal';
+export { Uploader, type UploaderMode } from './solutions/file-uploader/Uploader';
 
 // Types
 export * from './types/index';

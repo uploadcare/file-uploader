@@ -45,9 +45,109 @@ const warnedWith = (warn: ReturnType<typeof vi.spyOn>, substr: string): boolean 
   );
 
 describe('WithConfig (block-agnostic config host)', () => {
-  it('adds built-in config attributes to observedAttributes on a plain ChildBlock', () => {
-    expect(ConfigHostProbe.observedAttributes).toContain('multiple');
-    expect(ConfigHostProbe.observedAttributes).toContain('pubkey');
+  it('does not claim config keys on observedAttributes (leaves Lit free for subclasses)', () => {
+    // Config attrs use setAttribute overrides + MO backup, not CE observedAttributes —
+    // so a subclass `@property({ attribute: 'mode' })` keeps working.
+    expect(ConfigHostProbe.observedAttributes ?? []).not.toContain('multiple');
+    expect(ConfigHostProbe.observedAttributes ?? []).not.toContain('pubkey');
+  });
+
+  it('applies a built-in config attribute synchronously via setAttribute (no MO wait)', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    el.setAttribute('pubkey', 'from-attr');
+    // Must be immediate — integrations call api right after setAttribute.
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
+    expect(config?.get('pubkey')).toBe('from-attr');
+    expect(el.pubkey).toBe('from-attr');
+  });
+
+  it('makes a pre-connect setAttribute readable as a DOM property before adoption', () => {
+    const el = document.createElement('uc-config-host-probe') as ConfigHostProbe;
+    mounted.push(el);
+    el.setAttribute('pubkey', 'pre-connect-key');
+    // No controller yet — same contract as historical attributeChangedCallback stash.
+    expect(el.pubkey).toBe('pre-connect-key');
+  });
+
+  it('seeds a pre-connect attribute into the controller once connected', async () => {
+    const ctxName = freshCtxName();
+    const el = document.createElement('uc-config-host-probe') as ConfigHostProbe;
+    el.setAttribute('pubkey', 'pre-connect-key');
+    el.setAttribute('ctx-name', ctxName);
+    ensureUploaderCtx(ctxName);
+    document.body.append(el);
+    mounted.push(el);
+    await el.updateComplete;
+    await delay(0);
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
+    expect(config?.get('pubkey')).toBe('pre-connect-key');
+    expect(el.pubkey).toBe('pre-connect-key');
+  });
+
+  it('does not throw on setAttribute while detached after adoption (accessors installed)', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    // Accessors installed; releasing the container leaves them in place.
+    el.remove();
+    expect(() => el.setAttribute('pubkey', 'while-detached')).not.toThrow();
+    // Live attr remains for seed on re-adoption (no Reflect.set through setter).
+    expect(el.getAttribute('pubkey')).toBe('while-detached');
+
+    const ctxName2 = freshCtxName();
+    el.setAttribute('ctx-name', ctxName2);
+    ensureUploaderCtx(ctxName2);
+    document.body.append(el);
+    mounted.push(el);
+    await el.updateComplete;
+    await delay(0);
+    const config = UploaderRegistry.get(ctxName2)?.get(ConfigController);
+    expect(config?.get('pubkey')).toBe('while-detached');
+    expect(el.pubkey).toBe('while-detached');
+  });
+
+  it('applies source-list synchronously so a following read sees the new value', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    el.setAttribute('source-list', 'dropbox');
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
+    expect(config?.get('sourceList')).toBe('dropbox');
+  });
+
+  it('applies kebab-case and full-lowercase config attrs synchronously (not only camelCase)', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
+
+    // Kebab (HTML/docs style)
+    el.setAttribute('source-list', 'dropbox');
+    expect(config?.get('sourceList')).toBe('dropbox');
+
+    // Full lowercase (Vue/React attr folding / setAttribute name normalization)
+    el.setAttribute('sourcelist', 'url');
+    expect(config?.get('sourceList')).toBe('url');
+
+    // CamelCase input: HTML lowercases the name; sync path must follow
+    el.setAttribute('sourceList', 'local');
+    expect(el.getAttribute('sourcelist')).toBe('local');
+    expect(config?.get('sourceList')).toBe('local');
+  });
+
+  it('applies custom config attrs in kebab and lowercase forms synchronously', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
+    config?.register({ name: 'myPluginOpt', defaultValue: '', attribute: true });
+    await delay(0);
+
+    el.setAttribute('my-plugin-opt', 'kebab');
+    expect(config?.get('myPluginOpt')).toBe('kebab');
+
+    el.setAttribute('mypluginopt', 'lower');
+    expect(config?.get('myPluginOpt')).toBe('lower');
+
+    el.setAttribute('myPluginOpt', 'camel');
+    expect(config?.get('myPluginOpt')).toBe('camel');
   });
 
   it('writes a config property into the ctx ConfigController from a non-<uc-config> host', async () => {
