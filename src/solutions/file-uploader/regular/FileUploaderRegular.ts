@@ -7,6 +7,7 @@ import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
 import './index.css';
+import { renderModalSourcePicker } from '../layout-fragments.js';
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
 import '../../../blocks/Modal/Modal';
@@ -85,14 +86,11 @@ export class FileUploaderRegular extends SolutionChildBlock {
 
     ${this._renderButton()}
 
-  <uc-modal id="start-from" strokes block-body-scrolling>
-    <uc-start-from>
-      <uc-drop-area with-icon clickable></uc-drop-area>
-      <uc-source-list role="list" wrap></uc-source-list>
-      <button type="button" class="uc-secondary-btn" @click=${() => this._router.traverse('onCancel')}>${this.l10n('start-from-cancel')}</button>
-      <uc-copyright></uc-copyright>
-    </uc-start-from>
-  </uc-modal>
+  ${renderModalSourcePicker({
+    onCancel: () => this._router.traverse('onCancel'),
+    cancelLabel: this.l10n('start-from-cancel'),
+    copyright: true,
+  })}
 
   <uc-modal id="upload-list" strokes block-body-scrolling>
     <uc-upload-list></uc-upload-list>

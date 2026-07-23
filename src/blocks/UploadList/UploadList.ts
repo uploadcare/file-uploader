@@ -1,5 +1,5 @@
 import { html, type PropertyValues } from 'lit';
-import { state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
@@ -23,6 +23,15 @@ import '../FileItem/FileItem';
 import '../DropArea/DropArea';
 
 export type FilesViewMode = 'grid' | 'list';
+
+/**
+ * Visual chrome of the upload list. Solutions set this at composition time;
+ * default preserves the full modal-list UI (header + full toolbar).
+ *
+ * - `default` — activity header (title + close) and full toolbar
+ * - `compact` — no header; toolbar is add-more only (minimal solution)
+ */
+export type UploadListChrome = 'default' | 'compact';
 
 export type Summary = {
   total: number;
@@ -48,6 +57,22 @@ export class UploadList extends ActivityChildBlock {
   @inject(UploadCollectionController) private readonly _uploadCollection!: UploadCollectionController;
 
   public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
+
+  /**
+   * Chrome variant. Prefer omitting nodes over solution CSS `display: none`.
+   * Only non-default values reflect (`chrome="compact"`); default leaves the
+   * attribute off so regular/inline hosts stay free of a redundant host attr.
+   * Block CSS keys off `[chrome="compact"]`.
+   */
+  @property({
+    reflect: true,
+    converter: {
+      fromAttribute: (value: string | null): UploadListChrome => (value === 'compact' ? 'compact' : 'default'),
+      // `null` removes the attribute (Lit) when chrome is the default.
+      toAttribute: (value: UploadListChrome): string | null => (value === 'compact' ? 'compact' : null),
+    },
+  })
+  public chrome: UploadListChrome = 'default';
 
   @state()
   private _doneBtnVisible = false;
@@ -408,6 +433,7 @@ export class UploadList extends ActivityChildBlock {
     // `SignalWatcher`, so a collection change re-renders with no `ctx.sub`.
     const uploadList = this._collectionState.getTracked('uploadList');
     const commonErrorMessage = this._commonErrorMessage;
+    const compact = this.chrome === 'compact';
 
     // Render only the visible window (+ overscan) with top/bottom spacers holding
     // the scroll height. Unmeasured geometry → full list, no spacers (unchanged).
@@ -420,6 +446,10 @@ export class UploadList extends ActivityChildBlock {
     const topSpacer = view.topPad > 0 ? Math.max(0, view.topPad - this._rowGap) : 0;
     const bottomSpacer = view.bottomPad > 0 ? Math.max(0, view.bottomPad - this._rowGap) : 0;
     return html`
+  ${
+    compact
+      ? null
+      : html`
   <uc-activity-header>
     <span aria-live="polite" class="uc-header-text">${this._headerText}</span>
     <button
@@ -432,6 +462,8 @@ export class UploadList extends ActivityChildBlock {
       <uc-icon name="close"></uc-icon>
     </button>
   </uc-activity-header>
+`
+  }
 
   <div class="uc-no-files" ?hidden=${this._hasFiles}>
     ${this.yield('empty', html`<span>${this.l10n('no-files')}</span>`)}
@@ -465,6 +497,20 @@ export class UploadList extends ActivityChildBlock {
   </div>
 
   <div class="uc-toolbar">
+    ${
+      compact
+        ? html`
+    <button
+      type="button"
+      class="uc-add-more-btn uc-secondary-btn"
+      ?hidden=${!this._addMoreBtnVisible}
+      ?disabled=${!this._addMoreBtnEnabled}
+      @click=${this._handleAdd}
+    >
+      <uc-icon name="add"></uc-icon><span>${this.l10n('add-more')}</span>
+    </button>
+`
+        : html`
     <button type="button" class="uc-cancel-btn uc-secondary-btn" @click=${this._handleCancel}>${this.l10n('clear')}</button>
     <div class="uc-toolbar-spacer"></div>
     <button
@@ -491,6 +537,8 @@ export class UploadList extends ActivityChildBlock {
     >
       ${this.l10n('done')}
     </button>
+`
+    }
   </div>
 
   <uc-drop-area ghost></uc-drop-area>

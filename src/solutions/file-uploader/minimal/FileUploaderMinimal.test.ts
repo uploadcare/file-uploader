@@ -57,6 +57,17 @@ const settle = async (el: FileUploaderMinimal): Promise<void> => {
 const inlineDropArea = (el: FileUploaderMinimal): Element | null => el.querySelector('uc-start-from uc-drop-area');
 
 describe('FileUploaderMinimal (M-god step 6b-4 migration)', () => {
+  it('composes a compact upload list (chrome=compact) and dual start-from trees', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    const list = el.querySelector('uc-upload-list');
+    expect(list).not.toBeNull();
+    expect(list?.getAttribute('chrome')).toBe('compact');
+    // Persistent trigger + modal picker (two start-from activity mounts).
+    expect(el.querySelectorAll('uc-start-from')).toHaveLength(2);
+    expect(el.querySelector('uc-modal#start-from')).not.toBeNull();
+  });
+
   it('resolves its dependencies via @inject fields on the element', async () => {
     const ctxName = freshCtxName();
     const { el, config, router } = await mount(ctxName);
