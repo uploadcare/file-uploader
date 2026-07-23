@@ -85,6 +85,27 @@ describe('WithConfig (block-agnostic config host)', () => {
     expect(el.pubkey).toBe('pre-connect-key');
   });
 
+  it('does not throw on setAttribute while detached after adoption (accessors installed)', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    // Accessors installed; releasing the container leaves them in place.
+    el.remove();
+    expect(() => el.setAttribute('pubkey', 'while-detached')).not.toThrow();
+    // Live attr remains for seed on re-adoption (no Reflect.set through setter).
+    expect(el.getAttribute('pubkey')).toBe('while-detached');
+
+    const ctxName2 = freshCtxName();
+    el.setAttribute('ctx-name', ctxName2);
+    ensureUploaderCtx(ctxName2);
+    document.body.append(el);
+    mounted.push(el);
+    await el.updateComplete;
+    await delay(0);
+    const config = UploaderRegistry.get(ctxName2)?.get(ConfigController);
+    expect(config?.get('pubkey')).toBe('while-detached');
+    expect(el.pubkey).toBe('while-detached');
+  });
+
   it('applies source-list synchronously so a following read sees the new value', async () => {
     const ctxName = freshCtxName();
     const el = await mount(ctxName);
