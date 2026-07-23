@@ -493,6 +493,10 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     // from `initialConfig` and must be re-seeded); the accessor install is
     // one-shot (see `_builtInAccessorsInstalled`).
     private _seedBuiltInConfig(): void {
+      // First adoption installs the accessors; re-adoption skips it (they're own,
+      // non-configurable, never removed) — a per-element-lifetime optimization.
+      const installAccessors = !this._builtInAccessorsInstalled;
+
       for (const key of allConfigKeys) {
         // Initial value: a DOM property set before init (framework binding, read
         // via the pre-accessor own prop) wins, else the controller's value.
@@ -505,17 +509,17 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
           // starts from `initialConfig` regardless of the cache. Force the flush.
           this._flushValueToState(key, this._localValues.get(key));
         }
-      }
 
-      // Define the DOM property setters/getters once (used directly in userland
-      // or by framework property bindings). Own + non-configurable, never removed
-      // → safe to install a single time and skip on re-adoption.
-      if (!this._builtInAccessorsInstalled) {
-        for (const key of allConfigKeys) {
+        // Install this key's accessor RIGHT AFTER seeding it (used directly in
+        // userland or by framework property bindings) — interleaved so a
+        // synchronous config subscriber reading an already-seeded key's DOM
+        // property during this loop hits its getter, not the prototype stub.
+        if (installAccessors) {
           this._installPropertyAccessor(key);
         }
-        this._builtInAccessorsInstalled = true;
       }
+
+      this._builtInAccessorsInstalled = true;
     }
 
     /**
