@@ -130,16 +130,15 @@ export class PluginController {
 
     const configSubscriptions: Unsubscribe[] = [];
     // A logger scoped to this plugin — `[uc][<ctx-name>][plugin:<id>]`, verbose
-    // tier gated by the uploader's `debug` config. Lives on `pluginApi.logger`
-    // (and is still passed as `setup({ logger })` for back-compat) so both
-    // plugins and host paths (e.g. registerConfig override warn) share it.
+    // tier gated by the uploader's `debug` config. Exposed as `pluginApi.logger`
+    // so plugins and host paths (e.g. registerConfig override warn) share it.
     const pluginLogger = controllerLogger(this, `plugin:${plugin.id}`);
     const pluginApi = this._deps.buildApi(this.registry, plugin.id, configSubscriptions, pluginLogger);
 
     const uploaderApi = this._deps.getUploaderApi();
     let pluginDispose: Unsubscribe | undefined;
     try {
-      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi, logger: pluginApi.logger })) ?? undefined;
+      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
     } catch (error) {
       for (const unsub of configSubscriptions) {
         try {

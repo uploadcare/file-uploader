@@ -39,7 +39,7 @@ export function buildPluginApi(
       // Warn + keep the first when a custom config name is registered twice
       // (first-registration-wins). Logged on this plugin's logger so the
       // conflicting registration is attributed to the plugin that lost.
-      if (config.customDefinition(definition.name)) {
+      if (config.getCustomDescriptors().some((d) => d.name === definition.name)) {
         log.warn(`Config option "${definition.name}" is already registered`);
         return;
       }
@@ -56,18 +56,16 @@ export function buildPluginApi(
 
   const configApi: PluginConfigApi = {
     get: <TKey extends keyof (ConfigType & CustomConfig)>(configName: TKey): (ConfigType & CustomConfig)[TKey] => {
-      return config.getCustom(configName);
+      return config.get(configName as string) as (ConfigType & CustomConfig)[TKey];
     },
 
     subscribe: <TKey extends keyof (ConfigType & CustomConfig)>(
       configName: TKey,
       callback: (value: (ConfigType & CustomConfig)[TKey]) => void,
     ): (() => void) => {
-      // Immediate fire + per-key `Object.is` dedup via the atomic `observeCustom`
+      // Immediate fire + per-key `Object.is` dedup via the atomic `observe`
       // — the same semantics the `ctx.sub('*cfg/<name>', …)` facade gave.
-      const unsub = config.observeCustom<(ConfigType & CustomConfig)[TKey]>(configName, callback, {
-        immediate: true,
-      });
+      const unsub = config.observe(configName as string, callback as (value: unknown) => void, { immediate: true });
       configSubscriptions.push(unsub);
       return unsub;
     },

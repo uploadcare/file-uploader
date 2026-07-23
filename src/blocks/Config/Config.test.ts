@@ -269,12 +269,8 @@ describe('Config (<uc-config>) — additive coverage: plain/complex keys, reflec
 
       config.set('debug', true);
 
-      // Drive the change-log via an EXTERNAL config write rather than the element
-      // setter: the setter's debug-gated `_assertSameValueDifferentReference`
-      // would itself `JSON.stringify` the circular value and throw before the
-      // log observer ever runs.
-      //
       // Circular object → JSON.stringify throws, String() still works.
+      // External write: change-log uses guarded formatConfigLogValue.
       const circular: Record<string, unknown> = {};
       circular.self = circular;
       config.set('mediaRecorderOptions', circular as unknown as MediaRecorderOptions);
@@ -293,6 +289,23 @@ describe('Config (<uc-config>) — additive coverage: plain/complex keys, reflec
       const logged = stringArgs(log);
       expect(logged.some((s) => s.includes('[object Object]'))).toBe(true);
       expect(logged.some((s) => s.includes('[unserializable]'))).toBe(true);
+    });
+
+    it('does not throw from the element setter when debug-asserting a circular complex value', async () => {
+      const ctxName = freshCtxName();
+      const config = controllerFor(ctxName);
+      const el = await mount(ctxName);
+      config.set('debug', true);
+
+      const circular: Record<string, unknown> = {};
+      circular.self = circular;
+
+      // `_assertSameValueDifferentReference` must swallow JSON.stringify throws
+      // so a debug-only warning never blocks the write.
+      expect(() => {
+        el.mediaRecorderOptions = circular as unknown as MediaRecorderOptions;
+      }).not.toThrow();
+      expect(el.mediaRecorderOptions).toBe(circular);
     });
   });
 
@@ -338,7 +351,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
     const el = await mount(ctxName, { 'my-option': 'hello' });
 
     expect((el as unknown as Record<string, unknown>).myOption).toBe('parsed:hello');
-    expect(config.getCustom('myOption')).toBe('parsed:hello');
+    expect(config.get('myOption')).toBe('parsed:hello');
     // Reflected back to both attribute spellings.
     expect(el.getAttribute('my-option')).toBe('parsed:hello');
     expect(el.getAttribute('myoption')).toBe('parsed:hello');
@@ -351,13 +364,13 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
 
     // Pre-existing attribute, no fromAttribute → raw string used.
     const el = await mount(ctxName, { 'plain-opt': 'hi' });
-    expect(config.getCustom('plainOpt')).toBe('hi');
+    expect(config.get('plainOpt')).toBe('hi');
 
     // Dynamic attribute change, no fromAttribute → raw string used.
     el.setAttribute('plain-opt', 'bye');
     await delay(0);
     await delay(0);
-    expect(config.getCustom('plainOpt')).toBe('bye');
+    expect(config.get('plainOpt')).toBe('bye');
   });
 
   it('falls back to the raw attribute value and warns when a pre-existing fromAttribute() throws', async () => {
@@ -377,18 +390,18 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
     const el = await mount(ctxName, { 'bad-from': 'raw' });
 
     // fromAttribute threw during pre-existing-attribute read → raw value kept.
-    expect(config.getCustom('badFrom')).toBe('raw');
+    expect(config.get('badFrom')).toBe('raw');
     expect((el as unknown as Record<string, unknown>).badFrom).toBe('raw');
     expect(stringArgs(warn).some((s) => s.includes('threw an error, using raw attribute value'))).toBe(true);
   });
 
-  it('reflects an external setCustom back onto the element via observeCustom', async () => {
+  it('reflects an external set() of a custom key back onto the element via observe', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
     registerCustomConfigs(ctxName, [{ name: 'myOption', defaultValue: 'def' }]);
     const el = await mount(ctxName);
 
-    config.setCustom('myOption', 'external');
+    config.set('myOption', 'external');
     await delay(0);
 
     expect((el as unknown as Record<string, unknown>).myOption).toBe('external');
@@ -402,7 +415,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
 
     (el as unknown as Record<string, unknown>).noAttr = 'val';
 
-    expect(config.getCustom('noAttr')).toBe('val');
+    expect(config.get('noAttr')).toBe('val');
     expect(el.hasAttribute('no-attr')).toBe(false);
     expect(el.hasAttribute('noattr')).toBe(false);
   });
@@ -464,7 +477,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
 
     // The freshly-registered key now has a working accessor.
     (el as unknown as Record<string, unknown>).third = 'z';
-    expect(config.getCustom('third')).toBe('z');
+    expect(config.get('third')).toBe('z');
   });
 
   it('seeds a pre-existing data property set before adoption', async () => {
@@ -483,7 +496,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
     await delay(0);
 
     expect((el as unknown as Record<string, unknown>).preSet).toBe('early');
-    expect(config.getCustom('preSet')).toBe('early');
+    expect(config.get('preSet')).toBe('early');
   });
 
   it('forwards a dynamically-set custom attribute through the MutationObserver + attributeChangedCallback', async () => {
@@ -500,14 +513,14 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
     await delay(0);
     await delay(0);
 
-    expect(config.getCustom('liveOpt')).toBe('BOOM');
+    expect(config.get('liveOpt')).toBe('BOOM');
 
     // Setting the SAME value exercises the observer's `oldValue === newValue`
     // skip.
     el.setAttribute('live-opt', 'BOOM');
     await delay(0);
 
-    expect(config.getCustom('liveOpt')).toBe('BOOM');
+    expect(config.get('liveOpt')).toBe('BOOM');
   });
 
   it('ignores a stale custom attributeChangedCallback whose value the attribute already moved past', async () => {
@@ -518,13 +531,45 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
 
     el.setAttribute('live-opt', 'current');
     await delay(0);
-    expect(config.getCustom('liveOpt')).toBe('current');
+    expect(config.get('liveOpt')).toBe('current');
 
     // The DOM attribute is 'current'; a callback carrying an older value is
     // stale and must bail without writing.
     el.attributeChangedCallback('live-opt', 'current', 'stale');
     await delay(0);
 
-    expect(config.getCustom('liveOpt')).toBe('current');
+    expect(config.get('liveOpt')).toBe('current');
+  });
+
+  it('restores a non-string custom default on attribute removal without feeding it to fromAttribute', async () => {
+    const ctxName = freshCtxName();
+    const config = controllerFor(ctxName);
+    // fromAttribute accepts string | null (attr contract) — must never receive the
+    // bare numeric defaultValue from the removal path.
+    const fromAttribute = vi.fn((v: string | null) => Number(v));
+    registerCustomConfigs(ctxName, [
+      {
+        name: 'countOpt',
+        defaultValue: 0,
+        fromAttribute,
+        normalize: (v) => (typeof v === 'number' ? v : Number(v)),
+      },
+    ]);
+    const el = await mount(ctxName);
+
+    el.setAttribute('count-opt', '7');
+    await delay(0);
+    await delay(0);
+    expect(config.get('countOpt')).toBe(7);
+    fromAttribute.mockClear();
+
+    el.removeAttribute('count-opt');
+    await delay(0);
+    await delay(0);
+
+    // Default restored. Reflection may re-write the attr as `"0"` and re-enter
+    // fromAttribute with that STRING — never with the raw number `0`.
+    expect(config.get('countOpt')).toBe(0);
+    expect(fromAttribute.mock.calls.every(([v]) => typeof v === 'string' || v === null)).toBe(true);
   });
 });
