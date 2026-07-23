@@ -4,7 +4,7 @@ import { parseShrink } from '../utils/parseShrink';
 
 export const imageShrinkPlugin: UploaderPlugin = {
   id: 'image-shrink',
-  setup({ pluginApi, logger: log }) {
+  setup({ pluginApi }) {
     pluginApi.registry.registerFileHook({
       type: 'beforeUpload',
       handler: async ({ file }) => {
@@ -13,7 +13,7 @@ export const imageShrinkPlugin: UploaderPlugin = {
 
         const settings = parseShrink(imageShrink);
         if (!settings) {
-          log.warn('Image shrink settings are invalid, skipping shrinking');
+          pluginApi.logger.warn('Image shrink settings are invalid, skipping shrinking');
           return { file };
         }
 

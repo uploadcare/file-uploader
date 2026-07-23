@@ -5,6 +5,7 @@ import { RouterController } from '../../controllers/RouterController';
 import { UploadCollectionController } from '../../controllers/UploadCollectionController';
 import type { CustomConfig } from '../../customConfigOptions';
 import type { ControllerContainer } from '../../di/ControllerContainer';
+import type { Logger } from '../../logger';
 import type { PluginRegistry } from './PluginRegistry';
 import type {
   PluginActivityApi,
@@ -22,6 +23,8 @@ export function buildPluginApi(
   container: ControllerContainer,
   pluginId: string,
   configSubscriptions: (() => void)[],
+  /** Per-plugin scoped logger — also exposed as `pluginApi.logger`. */
+  log: Logger,
 ): PluginApi {
   // Router/collection resolved off the per-ctx container.
   const router = container.get(RouterController);
@@ -33,31 +36,36 @@ export function buildPluginApi(
     registerIcon: (icon) => registry.addIcon(pluginId, icon),
     registerL10n: (l10n) => registry.addL10n(pluginId, l10n),
     registerConfig: (definition) => {
-      registry.addConfig(pluginId, definition);
-      // Seed the custom config key only on first sight (M-god step 7: direct
-      // `ConfigController`, off the `*cfg/*` facade). Matches the old
-      // `!ctx.has(stateKey)` guard + `ctx.add` first-write-wins: `register` is
-      // idempotent and keeps any value written before the plugin registered.
+      // Warn + keep the first when a custom config name is registered twice
+      // (first-registration-wins). Logged on this plugin's logger so the
+      // conflicting registration is attributed to the plugin that lost.
+      if (config.getCustomDescriptors().some((d) => d.name === definition.name)) {
+        log.warn(`Config option "${definition.name}" is already registered`);
+        return;
+      }
+      // Register the FULL descriptor on the ctx's `ConfigController` (the single
+      // source of truth for config descriptors) — off the `*cfg/*` facade, and no
+      // longer a partial name+default. Owned by `pluginId` so the descriptor is
+      // dropped if the plugin is removed. Guarded so a built-in key is never
+      // overridden by a custom registration.
       if (!config.hasKey(definition.name)) {
-        config.register(definition.name, definition.defaultValue);
+        config.register(definition, pluginId);
       }
     },
   };
 
   const configApi: PluginConfigApi = {
     get: <TKey extends keyof (ConfigType & CustomConfig)>(configName: TKey): (ConfigType & CustomConfig)[TKey] => {
-      return config.getCustom(configName);
+      return config.get(configName as string) as (ConfigType & CustomConfig)[TKey];
     },
 
     subscribe: <TKey extends keyof (ConfigType & CustomConfig)>(
       configName: TKey,
       callback: (value: (ConfigType & CustomConfig)[TKey]) => void,
     ): (() => void) => {
-      // Immediate fire + per-key `Object.is` dedup via the atomic `observeCustom`
+      // Immediate fire + per-key `Object.is` dedup via the atomic `observe`
       // — the same semantics the `ctx.sub('*cfg/<name>', …)` facade gave.
-      const unsub = config.observeCustom<(ConfigType & CustomConfig)[TKey]>(configName, callback, {
-        immediate: true,
-      });
+      const unsub = config.observe(configName as string, callback as (value: unknown) => void, { immediate: true });
       configSubscriptions.push(unsub);
       return unsub;
     },
@@ -101,5 +109,12 @@ export function buildPluginApi(
     traverse: (edge) => router.traverse(edge),
   };
 
-  return { registry: registryApi, config: configApi, activity: activityApi, files: filesApi, router: routerApi };
+  return {
+    registry: registryApi,
+    config: configApi,
+    activity: activityApi,
+    files: filesApi,
+    router: routerApi,
+    logger: log,
+  };
 }

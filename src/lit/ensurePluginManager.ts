@@ -48,8 +48,8 @@ export function ensurePluginManager(container: ControllerContainer): void {
     PluginController,
     (c) =>
       new PluginController({
-        buildApi: (registry, pluginId, configSubscriptions) =>
-          buildPluginApi(registry, config, container, pluginId, configSubscriptions),
+        buildApi: (registry, pluginId, configSubscriptions, log) =>
+          buildPluginApi(registry, config, container, pluginId, configSubscriptions, log),
         getUploaderApi: () => c.get(UploaderPublicApi),
         watchPlugins: (onCompute) => {
           const loader = new LazyPluginLoader(c.get(LazyPluginsController), config, onCompute);

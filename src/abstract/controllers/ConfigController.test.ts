@@ -38,29 +38,29 @@ describe('ConfigController', () => {
     const config = new ConfigController();
     expect(config.hasKey('unsplashApiKey')).toBe(false);
 
-    config.register('unsplashApiKey', 'default-key');
+    config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
 
     expect(config.hasKey('unsplashApiKey')).toBe(true);
-    expect(config.getCustom('unsplashApiKey')).toBe('default-key');
+    expect(config.get('unsplashApiKey')).toBe('default-key');
   });
 
   it('register() keeps a value that was set before registration', () => {
     const config = new ConfigController();
-    config.setCustom('unsplashApiKey', 'preset');
+    config.set('unsplashApiKey', 'preset');
 
-    config.register('unsplashApiKey', 'default-key');
+    config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
 
-    expect(config.getCustom('unsplashApiKey')).toBe('preset');
+    expect(config.get('unsplashApiKey')).toBe('preset');
   });
 
   it('re-register is idempotent and does not clobber the current value', () => {
     const config = new ConfigController();
-    config.register('unsplashApiKey', 'default-key');
-    config.setCustom('unsplashApiKey', 'changed');
+    config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
+    config.set('unsplashApiKey', 'changed');
 
-    config.register('unsplashApiKey', 'default-key');
+    config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
 
-    expect(config.getCustom('unsplashApiKey')).toBe('changed');
+    expect(config.get('unsplashApiKey')).toBe('changed');
   });
 
   it('hasKey uses own-property semantics, not the prototype chain', () => {
@@ -72,8 +72,8 @@ describe('ConfigController', () => {
 
   it('does not pollute the prototype when a custom key is named __proto__', () => {
     const config = new ConfigController();
-    config.setCustom('__proto__', { polluted: true });
-    config.register('__proto__', { polluted: true });
+    config.set('__proto__', { polluted: true });
+    config.register({ name: '__proto__', defaultValue: { polluted: true } });
 
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
     expect(Object.hasOwn(Object.prototype, 'polluted')).toBe(false);
@@ -83,17 +83,17 @@ describe('ConfigController', () => {
     const config = new ConfigController();
     // Set then clear so an own property with value `undefined` exists — the
     // case where own-property vs `=== undefined` detection diverges.
-    config.setCustom('unsplashApiKey', 'preset');
-    config.setCustom('unsplashApiKey', undefined);
+    config.set('unsplashApiKey', 'preset');
+    config.set('unsplashApiKey', undefined);
 
-    config.register('unsplashApiKey', 'default-key');
+    config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
 
-    expect(config.getCustom('unsplashApiKey')).toBeUndefined();
+    expect(config.get('unsplashApiKey')).toBeUndefined();
   });
 
   it('destroy() clears custom keys and listeners', () => {
     const config = new ConfigController();
-    config.register('unsplashApiKey', 'x');
+    config.register({ name: 'unsplashApiKey', defaultValue: 'x' });
     // Subscribe after registering so the listener only sees post-destroy activity.
     const listener = vi.fn();
     config.subscribe(listener);
@@ -101,7 +101,7 @@ describe('ConfigController', () => {
     config.destroy();
 
     expect(config.hasKey('unsplashApiKey')).toBe(false);
-    config.setCustom('unsplashApiKey', 'y');
+    config.set('unsplashApiKey', 'y');
     expect(listener).not.toHaveBeenCalled();
   });
 
@@ -113,13 +113,66 @@ describe('ConfigController', () => {
     expect(config.values.multiple).toBe(false);
   });
 
-  it('customDefinition returns the registered definition (or undefined)', () => {
-    const config = new ConfigController();
-    const def = { name: 'unsplashApiKey', defaultValue: 'x', normalize: (v: unknown) => String(v) };
-    config.register(def);
+  describe('descriptors + schema', () => {
+    it('descriptor() returns built-in descriptors, registered descriptors, and undefined for unknown', () => {
+      const config = new ConfigController();
+      expect(config.descriptor('multiple')?.attribute).toBe(true);
+      expect(config.descriptor('metadata')?.attribute).toBe(false); // complex built-in
+      expect(config.descriptor('nope')).toBeUndefined();
 
-    expect(config.customDefinition('unsplashApiKey')).toBe(def);
-    expect(config.customDefinition('not-registered')).toBeUndefined();
+      const normalize = (v: unknown) => String(v);
+      config.register({ name: 'customKey', defaultValue: 'd', normalize });
+      expect(config.descriptor('customKey')).toMatchObject({
+        name: 'customKey',
+        defaultValue: 'd',
+        attribute: true,
+        normalize,
+      });
+    });
+
+    it('getCustomDescriptors() returns only the dynamically-registered descriptors', () => {
+      const config = new ConfigController();
+      expect(config.getCustomDescriptors()).toEqual([]);
+      config.register({ name: 'a', defaultValue: 1 });
+      config.register({ name: 'b', defaultValue: 2 });
+      expect(
+        config
+          .getCustomDescriptors()
+          .map((d) => d.name)
+          .sort(),
+      ).toEqual(['a', 'b']);
+    });
+
+    it('onSchemaChange fires on register and stops after unsubscribe', () => {
+      const config = new ConfigController();
+      const listener = vi.fn();
+      const off = config.onSchemaChange(listener);
+      config.register({ name: 'a', defaultValue: 1 });
+      expect(listener).toHaveBeenCalledTimes(1);
+      // Idempotent re-register does not fire (no schema change).
+      config.register({ name: 'a', defaultValue: 1 });
+      expect(listener).toHaveBeenCalledTimes(1);
+      off();
+      config.register({ name: 'b', defaultValue: 2 });
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
+
+    it('unregisterByOwner drops that owner’s keys and fires schema change; leaves others', () => {
+      const config = new ConfigController();
+      config.register({ name: 'a', defaultValue: 1 }, 'plugin-1');
+      config.register({ name: 'b', defaultValue: 2 }, 'plugin-2');
+      const listener = vi.fn();
+      config.onSchemaChange(listener);
+
+      config.unregisterByOwner('plugin-1');
+      expect(config.descriptor('a')).toBeUndefined();
+      expect(config.descriptor('b')?.defaultValue).toBe(2);
+      expect(listener).toHaveBeenCalledTimes(1);
+
+      // No-op when the owner has no keys — no schema-change fire.
+      config.unregisterByOwner('plugin-1');
+      expect(listener).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('notify() fires subscribers without a state change', () => {
@@ -160,17 +213,17 @@ describe('ConfigController', () => {
     watcher.unwatch(c);
   });
 
-  it('setCustom does not notify when the value is unchanged', () => {
+  it('set() on a custom key does not notify when the value is unchanged', () => {
     const config = new ConfigController();
-    config.setCustom('unsplashApiKey', 'v');
+    config.set('unsplashApiKey', 'v');
 
     const listener = vi.fn();
     config.subscribe(listener);
 
-    config.setCustom('unsplashApiKey', 'v'); // unchanged → no notify
+    config.set('unsplashApiKey', 'v'); // unchanged → no notify
     expect(listener).not.toHaveBeenCalled();
 
-    config.setCustom('unsplashApiKey', 'w'); // changed → notify
+    config.set('unsplashApiKey', 'w'); // changed → notify
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
@@ -182,5 +235,34 @@ describe('ConfigController', () => {
     expect(c.get('multiple')).toBe(true);
     expect(c.get('imgOnly')).toBe(true);
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  describe('config-writer registry', () => {
+    it('tracks registered writers by identity and deregisters them', () => {
+      const c = new ConfigController();
+      const a = { isConnected: true };
+      const b = { isConnected: true };
+      c.registerWriter(a);
+      c.registerWriter(b);
+      expect(c.getWriters()).toHaveLength(2);
+      expect(c.getWriters()).toContain(a);
+      c.unregisterWriter(a);
+      expect(c.getWriters()).toEqual([b]);
+    });
+
+    it('registering the same host twice is idempotent (Set semantics)', () => {
+      const c = new ConfigController();
+      const a = { isConnected: true };
+      c.registerWriter(a);
+      c.registerWriter(a);
+      expect(c.getWriters()).toHaveLength(1);
+    });
+
+    it('destroy() clears the writer registry', () => {
+      const c = new ConfigController();
+      c.registerWriter({ isConnected: true });
+      c.destroy();
+      expect(c.getWriters()).toEqual([]);
+    });
   });
 });

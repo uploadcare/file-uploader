@@ -1,6 +1,9 @@
 import { fileIsImage } from '../../../utils/fileTypes';
 import { controllerLogger } from '../../controllerLogger';
+import { ConfigController } from '../../controllers/ConfigController';
+import { containerOf } from '../../di/ControllerContainer';
 import { Disposables } from '../../di/Disposables';
+import type { Logger } from '../../logger';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
 import type { PluginApi, PluginRegistrySnapshot, PluginUploaderApi, UploaderPlugin } from './PluginTypes';
@@ -9,7 +12,7 @@ type Unsubscribe = () => void;
 
 export type PluginControllerDeps = {
   /** Build the per-plugin public `PluginApi` (config/activity/files bridged to the host). */
-  buildApi: (registry: PluginRegistry, pluginId: string, configSubscriptions: Unsubscribe[]) => PluginApi;
+  buildApi: (registry: PluginRegistry, pluginId: string, configSubscriptions: Unsubscribe[], log: Logger) => PluginApi;
   /** The public uploader API passed to each plugin's `setup`. */
   getUploaderApi: () => PluginUploaderApi;
   /**
@@ -46,8 +49,13 @@ export class PluginController {
   readonly #disposables = new Disposables();
   public readonly registry = new PluginRegistry(() => this._notifySubscribers());
 
-  public get configRegistry() {
-    return this.registry.config;
+  // Purge a plugin's registrations AND drop the config descriptors it registered
+  // on the ctx's `ConfigController` (the single source of truth for config now —
+  // there is no separate plugin config registry). `getOrNull` stays tolerant of a
+  // ctx without a resolvable ConfigController.
+  private _purgePlugin(pluginId: string): void {
+    this.registry.purge(pluginId);
+    containerOf(this)?.getOrNull(ConfigController)?.unregisterByOwner(pluginId);
   }
 
   public constructor(deps: PluginControllerDeps) {
@@ -102,7 +110,7 @@ export class PluginController {
         try {
           await this._registerPlugin(plugin);
         } catch (error) {
-          this.registry.purge(plugin.id);
+          this._purgePlugin(plugin.id);
           this._notifySubscribers();
           this._log.error(`Plugin "${plugin.id}" setup() threw an error`, error);
         }
@@ -121,16 +129,16 @@ export class PluginController {
     }
 
     const configSubscriptions: Unsubscribe[] = [];
-    const pluginApi = this._deps.buildApi(this.registry, plugin.id, configSubscriptions);
+    // A logger scoped to this plugin — `[uc][<ctx-name>][plugin:<id>]`, verbose
+    // tier gated by the uploader's `debug` config. Exposed as `pluginApi.logger`
+    // so plugins and host paths (e.g. registerConfig override warn) share it.
+    const pluginLogger = controllerLogger(this, `plugin:${plugin.id}`);
+    const pluginApi = this._deps.buildApi(this.registry, plugin.id, configSubscriptions, pluginLogger);
 
     const uploaderApi = this._deps.getUploaderApi();
-    // A logger scoped to this plugin — `[uc][<ctx-name>][plugin:<id>]`, verbose
-    // tier gated by the uploader's `debug` config. Handed to `setup` so plugins
-    // log through the centralized logger with attribution for free.
-    const pluginLogger = controllerLogger(this, `plugin:${plugin.id}`);
     let pluginDispose: Unsubscribe | undefined;
     try {
-      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi, logger: pluginLogger })) ?? undefined;
+      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
     } catch (error) {
       for (const unsub of configSubscriptions) {
         try {
@@ -150,7 +158,7 @@ export class PluginController {
     const registered = this._plugins.get(pluginId);
     if (!registered) return;
 
-    this.registry.purge(pluginId);
+    this._purgePlugin(pluginId);
 
     for (const unsub of registered.configSubscriptions) {
       try {

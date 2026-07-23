@@ -1,6 +1,8 @@
-import type { CustomConfigDefinition } from '../../abstract/customConfigOptions';
+import { BUILTIN_DESCRIPTORS } from '../../blocks/Config/builtin-descriptors';
 import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { ConfigType } from '../../types/exported';
+import { type ConfigKeyDescriptor, resolveConfigDescriptor } from '../config-descriptor';
+import type { CustomConfigDefinition } from '../customConfigOptions';
 import type { ReactiveStore } from '../di/ReactiveStore';
 import { type ObserveOptions, SignalMap } from '../di/SignalMap';
 
@@ -17,31 +19,48 @@ import { type ObserveOptions, SignalMap } from '../di/SignalMap';
  * finally retired).
  *
  * Custom (plugin-registered) keys live in the same signal-backed map as
- * built-ins — `register()` adds them, `getCustom`/`setCustom` access them.
+ * built-ins — `register()` adds them; `get`/`set`/`observe` accept custom
+ * string keys the same way as built-ins.
  *
  * Backed by a composed `SignalMap` (has-a, not a base class): reads auto-track
- * under a `SignalWatcher`, `set()`/`setCustom()` dedup with `Object.is` and
- * fire the map's coarse notify, and `subscribe()` fans out on any change —
- * preserving the exact `get`/`set`/`subscribe`/`values`/`notify` semantics the
- * the v1 ctx facade `*cfg/` routing depends on. The map is typed over `ConfigType`
- * intersected with a string index so runtime custom keys type cleanly.
+ * under a `SignalWatcher`, `set()` dedups with `Object.is` and fires the map's
+ * coarse notify, and `subscribe()` fans out on any change — preserving the exact
+ * `get`/`set`/`subscribe`/`values`/`notify` semantics the v1 ctx facade `*cfg/`
+ * routing depends on. The map is typed over `ConfigType` intersected with a
+ * string index so runtime custom keys type cleanly.
  */
 export class ConfigController implements ReactiveStore<ConfigType> {
   // Signal-backed store, seeded with the built-in defaults. The `Record<string,
   // unknown>` arm models the dynamic plugin-registered keyspace so custom-key
   // access needs no per-call cast.
   #state = new SignalMap<ConfigType & Record<string, unknown>>(initialConfig);
-  #customKeys = new Set<string>();
-  #customDefs = new Map<string, CustomConfigDefinition<unknown>>();
+  // Dynamically-registered (plugin) descriptors, overlaid on the shared
+  // module-level BUILTIN_DESCRIPTORS. Per-ctx. `#descriptorOwners` maps a key to
+  // the id that registered it, so `unregisterByOwner` can drop a source's keys.
+  #customDescriptors = new Map<string, ConfigKeyDescriptor>();
+  #descriptorOwners = new Map<string, string>();
+  // Fired when the descriptor SET changes (register/unregister) — the config
+  // host (WithConfig) subscribes to rebuild its attribute maps + subscriptions,
+  // replacing the old plugin-manager `onPluginsChange` coupling.
+  #schemaListeners = new Set<() => void>();
+  // Config-writer hosts registered for this ctx (one config host per ctx is the
+  // contract). Stored by identity as DOM-free `{ isConnected }` handles — this
+  // controller never reads the DOM or warns; the element/mixin layer inspects
+  // `getWriters()` and emits the multi-writer warning (keeps this class
+  // DOM-free per the controller-layering rule).
+  #writers = new Set<ConfigWriterHandle>();
 
-  /** Live config object (stable reference — mutate via `set`/`setCustom`). */
+  /** Live config object (stable reference — mutate via `set`). */
   public get values(): Readonly<ConfigType> {
     return this.#state.values;
   }
 
-  public get<K extends keyof ConfigType>(key: K): ConfigType[K] {
+  public get<K extends keyof ConfigType>(key: K): ConfigType[K];
+  /** Read a dynamically-registered (custom) key. */
+  public get(key: string): unknown;
+  public get(key: string): unknown {
     // Every built-in is seeded at construction, so the value is always present.
-    return this.#state.get(key) as ConfigType[K];
+    return this.#state.get(key);
   }
 
   /**
@@ -62,7 +81,10 @@ export class ConfigController implements ReactiveStore<ConfigType> {
   }
 
   /** Notifies only when the value actually changes (`Object.is` dedup). */
-  public set<K extends keyof ConfigType>(key: K, value: ConfigType[K]): void {
+  public set<K extends keyof ConfigType>(key: K, value: ConfigType[K]): void;
+  /** Write a dynamically-registered (custom) key. */
+  public set(key: string, value: unknown): void;
+  public set(key: string, value: unknown): void {
     this.#state.set(key, value);
   }
 
@@ -88,24 +110,13 @@ export class ConfigController implements ReactiveStore<ConfigType> {
     key: K,
     listener: (value: ConfigType[K]) => void,
     options?: ObserveOptions,
-  ): () => void {
+  ): () => void;
+  /** Atomic per-key subscription for a dynamically-registered (custom) key. */
+  public observe(key: string, listener: (value: unknown) => void, options?: ObserveOptions): () => void;
+  public observe(key: string, listener: (value: unknown) => void, options?: ObserveOptions): () => void {
     // Built-ins are always seeded, so the map's `| undefined` value arm never
-    // materializes for a `ConfigType` key — narrow it at this typed boundary.
-    return this.#state.observe(
-      key,
-      listener as (value: (ConfigType & Record<string, unknown>)[K] | undefined) => void,
-      options,
-    );
-  }
-
-  /**
-   * Atomic per-key subscription for a plugin-registered CUSTOM key (the
-   * `getCustom` keyspace), with the same `Object.is` dedup + optional
-   * `{ immediate }` as `observe`. Separate from `observe` because custom keys
-   * live outside the typed `ConfigType` surface.
-   */
-  public observeCustom<T = unknown>(name: string, listener: (value: T) => void, options?: ObserveOptions): () => void {
-    return this.#state.observe(name, listener as (value: unknown) => void, options);
+    // materializes for a `ConfigType` key — narrowed at the typed overload above.
+    return this.#state.observe(key, listener, options);
   }
 
   /** Coarse notify with no state change — for a re-render on a non-keyed change. */
@@ -115,46 +126,109 @@ export class ConfigController implements ReactiveStore<ConfigType> {
 
   /** True for any known key — a built-in default or a registered custom key. */
   public hasKey(name: string): boolean {
-    // Own-property check: `in` would walk the prototype chain and wrongly
-    // report `toString`, `constructor`, `__proto__`, etc. as known keys.
-    return Object.hasOwn(initialConfig, name) || this.#customKeys.has(name);
+    return BUILTIN_DESCRIPTORS.has(name) || this.#customDescriptors.has(name);
   }
 
-  // ─── Custom (plugin-registered) keys ───────────────────────────────────
+  // ─── Config schema (descriptors) ────────────────────────────────────────
 
-  public register<T>(nameOrDef: string | CustomConfigDefinition<T>, defaultValue?: T): void {
-    const def: CustomConfigDefinition<T> =
-      typeof nameOrDef === 'string' ? { name: nameOrDef, defaultValue: defaultValue as T } : nameOrDef;
-    if (this.#customKeys.has(def.name)) {
-      // Already registered — keep the existing value (idempotent re-register).
+  /**
+   * The resolved descriptor for ANY key — built-in or dynamically registered —
+   * or `undefined` if the key is unknown. Built-ins come from the shared
+   * `BUILTIN_DESCRIPTORS`; dynamic keys from `register`.
+   */
+  public descriptor(name: string): ConfigKeyDescriptor | undefined {
+    return this.#customDescriptors.get(name) ?? BUILTIN_DESCRIPTORS.get(name);
+  }
+
+  /** Every dynamically-registered (non-built-in) descriptor, for the config host. */
+  public getCustomDescriptors(): ConfigKeyDescriptor[] {
+    return [...this.#customDescriptors.values()];
+  }
+
+  /** Subscribe to descriptor-set changes (register/unregister). Returns an unsubscribe. */
+  public onSchemaChange(listener: () => void): () => void {
+    this.#schemaListeners.add(listener);
+    return () => this.#schemaListeners.delete(listener);
+  }
+
+  #notifySchemaChange(): void {
+    for (const listener of this.#schemaListeners) {
+      listener();
+    }
+  }
+
+  /**
+   * Register a dynamic config key from its descriptor (built-ins are always
+   * present). Idempotent — a re-register keeps the existing descriptor + value
+   * (first-registration-wins). `ownerId` lets a later `unregisterByOwner` drop
+   * every key a given source registered. Fires the schema-changed signal (and
+   * seeds the default value, keeping any value written before registration).
+   */
+  public register<T>(def: CustomConfigDefinition<T>, ownerId?: string): void {
+    if (this.#customDescriptors.has(def.name)) {
       return;
     }
-    this.#customKeys.add(def.name);
-    this.#customDefs.set(def.name, def as CustomConfigDefinition<unknown>);
-    // Keep any value set before the plugin registered (e.g. an attribute that
-    // landed first), otherwise seed the registered default. `seed` is a no-op
-    // when the key is already present, mirroring the v1 own-property check, so
-    // an explicit pre-registration write (including of `undefined`) is
-    // preserved. The single `notify()` below fires exactly once either way.
+    // Erase the value type at the registry boundary (descriptors are stored + read
+    // dynamically by string key); the descriptor's own functions handle their type.
+    this.#customDescriptors.set(def.name, resolveConfigDescriptor(def) as unknown as ConfigKeyDescriptor);
+    if (ownerId !== undefined) {
+      this.#descriptorOwners.set(def.name, ownerId);
+    }
+    // Keep any value set before registration (e.g. an attribute that landed
+    // first), otherwise seed the registered default. `seed` is a no-op when the
+    // key already has a value, so an explicit pre-registration write (including
+    // `undefined`) is preserved. The `notify()` fires exactly once either way.
     this.#state.seed(def.name, def.defaultValue);
     this.#state.notify();
+    this.#notifySchemaChange();
   }
 
-  public customDefinition(name: string): CustomConfigDefinition<unknown> | undefined {
-    return this.#customDefs.get(name);
+  /** Drop every dynamic key registered by `ownerId` (e.g. on plugin removal). */
+  public unregisterByOwner(ownerId: string): void {
+    let changed = false;
+    for (const [name, owner] of this.#descriptorOwners) {
+      if (owner === ownerId) {
+        this.#customDescriptors.delete(name);
+        this.#descriptorOwners.delete(name);
+        changed = true;
+      }
+    }
+    if (changed) {
+      this.#notifySchemaChange();
+    }
   }
 
-  public getCustom<T = unknown>(name: string): T {
-    return this.#state.get(name) as T;
+  // ─── Config-writer registry (one config host per ctx) ───────────────────
+
+  /** Register a config-host element as a writer for this ctx (by identity). */
+  public registerWriter(host: ConfigWriterHandle): void {
+    this.#writers.add(host);
   }
 
-  public setCustom(name: string, value: unknown): void {
-    this.#state.set(name, value);
+  /** Deregister a config-host element (on release / disconnect / ctx switch). */
+  public unregisterWriter(host: ConfigWriterHandle): void {
+    this.#writers.delete(host);
+  }
+
+  /** Currently-registered config-writer hosts for this ctx. */
+  public getWriters(): ConfigWriterHandle[] {
+    return [...this.#writers];
   }
 
   public destroy(): void {
-    this.#customKeys.clear();
-    this.#customDefs.clear();
+    this.#customDescriptors.clear();
+    this.#descriptorOwners.clear();
+    this.#schemaListeners.clear();
+    this.#writers.clear();
     this.#state.destroy();
   }
+}
+
+/**
+ * A config-writer host as seen by the {@link ConfigController} registry — the
+ * DOM-free lower bound the controller needs (identity + liveness). The mixin
+ * passes the element (`this`), which satisfies this via `Element.isConnected`.
+ */
+export interface ConfigWriterHandle {
+  readonly isConnected: boolean;
 }
