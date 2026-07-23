@@ -74,6 +74,7 @@ const mount = async (
     entries?: Partial<UploadEntryData>[];
     collectionErrors?: { type: string; message: string }[];
     config?: Partial<ConfigType>;
+    chrome?: UploadList['chrome'];
   } = {},
 ): Promise<{
   el: UploadList;
@@ -115,6 +116,9 @@ const mount = async (
   const clearAll = vi.spyOn(collection, 'clearAll');
   const el = document.createElement('uc-upload-list') as UploadList;
   el.setAttribute('ctx-name', ctxName);
+  if (opts.chrome) {
+    el.chrome = opts.chrome;
+  }
   document.body.append(el);
   mounted.push(el);
   await el.updateComplete;
@@ -348,5 +352,42 @@ describe('UploadList (M-god step 6b-8 migration)', () => {
     const sameGroup = collectionState.get('groupInfo');
     collectionState.set('groupInfo', sameGroup);
     expect(tick).toHaveBeenCalledTimes(1);
+  });
+
+  describe('chrome variants', () => {
+    it('default chrome reflects chrome="default" and renders full header + toolbar', async () => {
+      const ctxName = freshCtxName();
+      const { el } = await mount(ctxName);
+
+      expect(el.chrome).toBe('default');
+      expect(el.getAttribute('chrome')).toBe('default');
+      expect(el.querySelector('uc-activity-header')).not.toBeNull();
+      expect(el.querySelector('button.uc-close-btn')).not.toBeNull();
+      expect(el.querySelector('button.uc-cancel-btn')).not.toBeNull();
+      expect(el.querySelector('button.uc-upload-btn')).not.toBeNull();
+      expect(el.querySelector('button.uc-done-btn')).not.toBeNull();
+      expect(el.querySelectorAll('button.uc-add-more-btn').length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('compact chrome omits header and non-add-more toolbar actions', async () => {
+      const ctxName = freshCtxName();
+      const { el } = await mount(ctxName, { chrome: 'compact' });
+
+      expect(el.getAttribute('chrome')).toBe('compact');
+      expect(el.querySelector('uc-activity-header')).toBeNull();
+      expect(el.querySelector('button.uc-close-btn')).toBeNull();
+      expect(el.querySelector('button.uc-cancel-btn')).toBeNull();
+      expect(el.querySelector('button.uc-upload-btn')).toBeNull();
+      expect(el.querySelector('button.uc-done-btn')).toBeNull();
+      // Toolbar add-more still present (files-area add-more also exists).
+      expect(el.querySelector('button.uc-add-more-btn')).not.toBeNull();
+    });
+
+    it('compact chrome still runs add-more → initFlow', async () => {
+      const ctxName = freshCtxName();
+      const { el, spies } = await mount(ctxName, { chrome: 'compact' });
+      el.querySelector<HTMLButtonElement>('button.uc-add-more-btn')?.click();
+      expect(spies.initFlow).toHaveBeenCalledWith(true);
+    });
   });
 });
