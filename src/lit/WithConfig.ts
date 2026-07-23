@@ -516,7 +516,10 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      * instead of stacking a second set; the MutationObserver is host-level and
      * guarded by an idempotency flag (not torn down on release).
      */
-    protected override controllerReady(_container: ControllerContainer): void {
+    protected override controllerReady(container: ControllerContainer): void {
+      // Call super first so composable inner mixins (e.g. {@link WithApi}) still
+      // run their adoption setup when stacked as `WithConfig(WithApi(ChildBlock))`.
+      super.controllerReady(container);
       this._registerAsConfigWriter();
       this._setupSchemaSync();
       this._ensureMutationObserver();
