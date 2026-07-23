@@ -45,21 +45,52 @@ const warnedWith = (warn: ReturnType<typeof vi.spyOn>, substr: string): boolean 
   );
 
 describe('WithConfig (block-agnostic config host)', () => {
-  it('does not claim config keys on observedAttributes (MO-only; leaves Lit free for subclasses)', () => {
-    // Config attrs are driven by MutationObserver, not CE observedAttributes —
+  it('does not claim config keys on observedAttributes (leaves Lit free for subclasses)', () => {
+    // Config attrs use setAttribute overrides + MO backup, not CE observedAttributes —
     // so a subclass `@property({ attribute: 'mode' })` keeps working.
     expect(ConfigHostProbe.observedAttributes ?? []).not.toContain('multiple');
     expect(ConfigHostProbe.observedAttributes ?? []).not.toContain('pubkey');
   });
 
-  it('applies a built-in config attribute via MutationObserver (not attributeChangedCallback)', async () => {
+  it('applies a built-in config attribute synchronously via setAttribute (no MO wait)', async () => {
     const ctxName = freshCtxName();
     const el = await mount(ctxName);
     el.setAttribute('pubkey', 'from-attr');
-    await delay(0);
+    // Must be immediate — integrations call api right after setAttribute.
     const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
     expect(config?.get('pubkey')).toBe('from-attr');
     expect(el.pubkey).toBe('from-attr');
+  });
+
+  it('makes a pre-connect setAttribute readable as a DOM property before adoption', () => {
+    const el = document.createElement('uc-config-host-probe') as ConfigHostProbe;
+    mounted.push(el);
+    el.setAttribute('pubkey', 'pre-connect-key');
+    // No controller yet — same contract as historical attributeChangedCallback stash.
+    expect(el.pubkey).toBe('pre-connect-key');
+  });
+
+  it('seeds a pre-connect attribute into the controller once connected', async () => {
+    const ctxName = freshCtxName();
+    const el = document.createElement('uc-config-host-probe') as ConfigHostProbe;
+    el.setAttribute('pubkey', 'pre-connect-key');
+    el.setAttribute('ctx-name', ctxName);
+    ensureUploaderCtx(ctxName);
+    document.body.append(el);
+    mounted.push(el);
+    await el.updateComplete;
+    await delay(0);
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
+    expect(config?.get('pubkey')).toBe('pre-connect-key');
+    expect(el.pubkey).toBe('pre-connect-key');
+  });
+
+  it('applies source-list synchronously so a following read sees the new value', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    el.setAttribute('source-list', 'dropbox');
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
+    expect(config?.get('sourceList')).toBe('dropbox');
   });
 
   it('writes a config property into the ctx ConfigController from a non-<uc-config> host', async () => {
