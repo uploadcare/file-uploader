@@ -193,6 +193,13 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     }
 
     private _setValue(key: string, value: unknown) {
+      // Detached / not-yet-adopted with accessors already installed: never touch
+      // the controller (`@inject` would throw). happy-dom may invoke the property
+      // setter from `setAttribute`; real browsers leave the live attr for seed.
+      if (!this.containerOrNull) {
+        return;
+      }
+
       const descriptor = this._config.descriptor(key);
       if (!descriptor) {
         return; // unknown key — ignore (custom keys arrive via the schema signal)
@@ -229,6 +236,10 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
 
     private _getValue(key: string) {
       const local = this._localValues.get(key);
+      if (!this.containerOrNull) {
+        // Detached: do not resolve `@inject`/`_config` — local cache only.
+        return local;
+      }
       return local ?? this._config.get(key);
     }
 
@@ -416,11 +427,14 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
 
     /**
      * Sync path after `setAttribute` / `removeAttribute` (and MO backup):
-     * - **Built-in, pre-adoption:** stash the raw attr string (or `undefined` on
-     *   remove) as an own data property via `Reflect.set`, matching the old
-     *   `attributeChangedCallback` contract so `el.pubkey` is readable before
-     *   connect and seed can prefer the data property.
-     * - **Built-in, post-adoption:** `_applyConfigAttributeChange`.
+     * - **Built-in, adopted:** `_applyConfigAttributeChange`.
+     * - **Built-in, never adopted (no accessors yet):** stash via `Reflect.set`
+     *   as a data property so `el.pubkey` is readable before connect (historical
+     *   ACC contract). Seed prefers that stash on first adopt.
+     * - **Built-in, detached after adoption:** accessors already exist; do NOT
+     *   `Reflect.set` through them (would hit `@inject` on a released
+     *   container). Leave the live DOM attribute for `_seedBuiltInConfig` on
+     *   re-adoption.
      * - **Custom:** only when adopted and mapped; unmapped/pre-adoption custom
      *   attrs stay on the DOM for `_syncCustomConfigs` to pick up later.
      */
@@ -430,9 +444,12 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         if (this.containerOrNull) {
           this._applyConfigAttributeChange(attrName);
         } else {
-          const current = this.getAttribute(attrName);
-          // Same pre-adoption stash the previous ACC used: raw string or undefined.
-          Reflect.set(this, builtInKey, current === null ? undefined : current);
+          // Only data-property stash when accessors are not yet installed.
+          const own = Object.getOwnPropertyDescriptor(this, builtInKey);
+          if (!own?.get && !own?.set) {
+            const current = this.getAttribute(attrName);
+            Reflect.set(this, builtInKey, current === null ? undefined : current);
+          }
         }
         return;
       }

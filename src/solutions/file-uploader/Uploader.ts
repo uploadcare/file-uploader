@@ -14,10 +14,6 @@ import './inline/FileUploaderInline';
 /** Solution layout selected by the host's `mode` attribute. */
 export type UploaderMode = 'regular' | 'minimal' | 'inline';
 
-const MODES: readonly UploaderMode[] = ['regular', 'minimal', 'inline'];
-
-const isUploaderMode = (value: string): value is UploaderMode => (MODES as readonly string[]).includes(value);
-
 /**
  * Unified host that combines the three tags users used to compose by hand:
  *
@@ -46,10 +42,7 @@ export class Uploader extends WithConfig(WithApi(ChildBlock)) {
     'dynamic-button'?: boolean;
   };
 
-  /**
-   * Which solution layout to render underneath. Unknown values fall back to
-   * `regular` with a console warn (once per change).
-   */
+  /** Which solution layout to render underneath. */
   @property({ reflect: true })
   public mode: UploaderMode = 'regular';
 
@@ -70,20 +63,13 @@ export class Uploader extends WithConfig(WithApi(ChildBlock)) {
     super.connectedCallback();
   }
 
-  private _resolvedMode(): UploaderMode {
-    if (isUploaderMode(this.mode)) return this.mode;
-    this._log.warn(`Unknown mode "${this.mode}", falling back to "regular"`);
-    return 'regular';
-  }
-
   public override render() {
-    const mode = this._resolvedMode();
     // Nested solutions inherit `ctx-name` via ChildBlock's ContextProvider —
     // no need to re-set the attribute on the child.
-    if (mode === 'minimal') {
+    if (this.mode === 'minimal') {
       return html`<uc-file-uploader-minimal></uc-file-uploader-minimal>`;
     }
-    if (mode === 'inline') {
+    if (this.mode === 'inline') {
       return html`<uc-file-uploader-inline></uc-file-uploader-inline>`;
     }
     return html`

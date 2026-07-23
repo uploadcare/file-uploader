@@ -134,15 +134,4 @@ describe('Uploader (unified <uc-uploader>)', () => {
     expect(nested?.headless).toBe(true);
     expect(nested?.querySelector('uc-simple-btn')).toBeNull();
   });
-
-  it('falls back to regular and warns on an unknown mode', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const { el } = await mount({
-      'ctx-name': freshCtxName(),
-      mode: 'nope' as string,
-      pubkey: 'k',
-    });
-    expect(el.querySelector('uc-file-uploader-regular')).not.toBeNull();
-    expect(warn.mock.calls.some((c) => String(c[1] ?? c[0]).includes('Unknown mode'))).toBe(true);
-  });
 });
