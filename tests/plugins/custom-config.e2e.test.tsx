@@ -486,7 +486,11 @@ describe('Custom Config', () => {
 
     const config = page.getByTestId('uc-config').query()! as Config;
     await expect.poll(() => config.dupOption).toBe('first');
-    expect(warnSpy).toHaveBeenCalledWith('[uc][custom-config]', 'Config option "dupOption" is already registered');
+    // Attributed to the plugin that lost the first-wins race (`cfg-dup-b`).
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/\[uc].*\[plugin:cfg-dup-b]/),
+      'Config option "dupOption" is already registered',
+    );
 
     warnSpy.mockRestore();
   });

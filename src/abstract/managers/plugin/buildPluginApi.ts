@@ -5,7 +5,7 @@ import { RouterController } from '../../controllers/RouterController';
 import { UploadCollectionController } from '../../controllers/UploadCollectionController';
 import type { CustomConfig } from '../../customConfigOptions';
 import type { ControllerContainer } from '../../di/ControllerContainer';
-import { logger } from '../../logger';
+import type { Logger } from '../../logger';
 import type { PluginRegistry } from './PluginRegistry';
 import type {
   PluginActivityApi,
@@ -23,6 +23,8 @@ export function buildPluginApi(
   container: ControllerContainer,
   pluginId: string,
   configSubscriptions: (() => void)[],
+  /** Per-plugin scoped logger — also exposed as `pluginApi.logger`. */
+  log: Logger,
 ): PluginApi {
   // Router/collection resolved off the per-ctx container.
   const router = container.get(RouterController);
@@ -35,9 +37,10 @@ export function buildPluginApi(
     registerL10n: (l10n) => registry.addL10n(pluginId, l10n),
     registerConfig: (definition) => {
       // Warn + keep the first when a custom config name is registered twice
-      // (first-registration-wins) — the check the deleted CustomConfigRegistry did.
+      // (first-registration-wins). Logged on this plugin's logger so the
+      // conflicting registration is attributed to the plugin that lost.
       if (config.customDefinition(definition.name)) {
-        logger.scope('custom-config').warn(`Config option "${definition.name}" is already registered`);
+        log.warn(`Config option "${definition.name}" is already registered`);
         return;
       }
       // Register the FULL descriptor on the ctx's `ConfigController` (the single
@@ -108,5 +111,12 @@ export function buildPluginApi(
     traverse: (edge) => router.traverse(edge),
   };
 
-  return { registry: registryApi, config: configApi, activity: activityApi, files: filesApi, router: routerApi };
+  return {
+    registry: registryApi,
+    config: configApi,
+    activity: activityApi,
+    files: filesApi,
+    router: routerApi,
+    logger: log,
+  };
 }
