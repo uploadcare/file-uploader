@@ -3,6 +3,7 @@ import { controllerLogger } from '../../controllerLogger';
 import { ConfigController } from '../../controllers/ConfigController';
 import { containerOf } from '../../di/ControllerContainer';
 import { Disposables } from '../../di/Disposables';
+import type { Logger } from '../../logger';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
 import type { PluginApi, PluginRegistrySnapshot, PluginUploaderApi, UploaderPlugin } from './PluginTypes';
@@ -11,7 +12,7 @@ type Unsubscribe = () => void;
 
 export type PluginControllerDeps = {
   /** Build the per-plugin public `PluginApi` (config/activity/files bridged to the host). */
-  buildApi: (registry: PluginRegistry, pluginId: string, configSubscriptions: Unsubscribe[]) => PluginApi;
+  buildApi: (registry: PluginRegistry, pluginId: string, configSubscriptions: Unsubscribe[], log: Logger) => PluginApi;
   /** The public uploader API passed to each plugin's `setup`. */
   getUploaderApi: () => PluginUploaderApi;
   /**
@@ -128,16 +129,17 @@ export class PluginController {
     }
 
     const configSubscriptions: Unsubscribe[] = [];
-    const pluginApi = this._deps.buildApi(this.registry, plugin.id, configSubscriptions);
+    // A logger scoped to this plugin — `[uc][<ctx-name>][plugin:<id>]`, verbose
+    // tier gated by the uploader's `debug` config. Lives on `pluginApi.logger`
+    // (and is still passed as `setup({ logger })` for back-compat) so both
+    // plugins and host paths (e.g. registerConfig override warn) share it.
+    const pluginLogger = controllerLogger(this, `plugin:${plugin.id}`);
+    const pluginApi = this._deps.buildApi(this.registry, plugin.id, configSubscriptions, pluginLogger);
 
     const uploaderApi = this._deps.getUploaderApi();
-    // A logger scoped to this plugin — `[uc][<ctx-name>][plugin:<id>]`, verbose
-    // tier gated by the uploader's `debug` config. Handed to `setup` so plugins
-    // log through the centralized logger with attribution for free.
-    const pluginLogger = controllerLogger(this, `plugin:${plugin.id}`);
     let pluginDispose: Unsubscribe | undefined;
     try {
-      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi, logger: pluginLogger })) ?? undefined;
+      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi, logger: pluginApi.logger })) ?? undefined;
     } catch (error) {
       for (const unsub of configSubscriptions) {
         try {

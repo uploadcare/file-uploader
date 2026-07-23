@@ -14,7 +14,7 @@ const setup = () => {
   const getUploaderApi = vi.fn(() => ({}) as PluginUploaderApi);
   const configUnsubs: Array<ReturnType<typeof vi.fn>> = [];
 
-  const buildApi: PluginControllerDeps['buildApi'] = (registry: PluginRegistry, pluginId, configSubscriptions) => {
+  const buildApi: PluginControllerDeps['buildApi'] = (registry: PluginRegistry, pluginId, configSubscriptions, log) => {
     const sub = vi.fn();
     configUnsubs.push(sub);
     configSubscriptions.push(sub);
@@ -32,6 +32,8 @@ const setup = () => {
       config: { get: () => undefined, subscribe: () => () => {} },
       activity: { getParams: () => ({}), subscribeToParams: () => () => {} },
       files: { update: () => {} },
+      router: { traverse: () => {} },
+      logger: log,
     } as unknown as PluginApi;
   };
 
@@ -84,21 +86,23 @@ describe('PluginController', () => {
       expect(onChange).toHaveBeenCalled();
     });
 
-    it('passes setup a logger scoped to the plugin (`[uc][plugin:<id>]`)', async () => {
+    it('passes setup a logger scoped to the plugin (`[uc][plugin:<id>]`), also on pluginApi.logger', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const t = setup();
-      let received: unknown;
+      let received: { logger?: { warn?: unknown }; pluginApi?: { logger?: unknown } } | undefined;
       const plugin: UploaderPlugin = {
         id: 'my-plugin',
         setup: (params) => {
-          received = params.logger;
+          received = params;
           params.logger.warn('hello from plugin');
         },
       };
 
       await t.sync([plugin]);
 
-      expect(typeof (received as { warn?: unknown })?.warn).toBe('function');
+      expect(typeof received?.logger?.warn).toBe('function');
+      // Same instance on the API and the setup param (back-compat alias).
+      expect(received?.pluginApi?.logger).toBe(received?.logger);
       expect(warn).toHaveBeenCalledWith('[uc][plugin:my-plugin]', 'hello from plugin');
     });
 

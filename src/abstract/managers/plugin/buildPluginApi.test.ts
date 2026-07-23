@@ -3,6 +3,7 @@ import { ConfigController } from '../../controllers/ConfigController';
 import { RouterController } from '../../controllers/RouterController';
 import { UploadCollectionController } from '../../controllers/UploadCollectionController';
 import { ControllerContainer } from '../../di/ControllerContainer';
+import { logger } from '../../logger';
 import { buildPluginApi } from './buildPluginApi';
 import { PluginRegistry } from './PluginRegistry';
 
@@ -20,8 +21,10 @@ const setup = () => {
   // (was the `*cfg/*` PubSub facade).
   const config = new ConfigController();
   const configSubscriptions: (() => void)[] = [];
-  const api = buildPluginApi(registry, config, container, 'test-plugin', configSubscriptions);
-  return { api, router, config, registry, configSubscriptions, container };
+  // One scoped logger per plugin (mirrors PluginController's controllerLogger).
+  const log = logger.scope('plugin:test-plugin');
+  const api = buildPluginApi(registry, config, container, 'test-plugin', configSubscriptions, log);
+  return { api, router, config, registry, configSubscriptions, container, log };
 };
 
 describe('buildPluginApi', () => {
@@ -49,15 +52,35 @@ describe('buildPluginApi', () => {
   });
 
   describe('config api (direct ConfigController, off the *cfg/* facade)', () => {
+    it('exposes the plugin logger on pluginApi.logger', () => {
+      const { api, log } = setup();
+      expect(api.logger).toBe(log);
+    });
+
     it('registerConfig seeds a custom key on first sight, idempotent afterwards', () => {
       const { api, config } = setup();
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       api.registry.registerConfig({ name: 'myPluginOption', defaultValue: 'a' });
       expect(config.getCustom('myPluginOption')).toBe('a');
 
-      // Re-register keeps the current value (does not reset to the default).
+      // Re-register keeps the current value (does not reset to the default) and
+      // warns that the name is already taken (first-wins).
       config.setCustom('myPluginOption', 'b');
       api.registry.registerConfig({ name: 'myPluginOption', defaultValue: 'a' });
       expect(config.getCustom('myPluginOption')).toBe('b');
+      expect(warn).toHaveBeenCalledOnce();
+      warn.mockRestore();
+    });
+
+    it('registerConfig warns on this plugin logger and keeps the first when a name collides', () => {
+      const { api, config } = setup();
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      api.registry.registerConfig({ name: 'dupOption', defaultValue: 'first' });
+      // Second registration (same plugin API / same logger) loses; first value stays.
+      api.registry.registerConfig({ name: 'dupOption', defaultValue: 'second' });
+      expect(config.getCustom('dupOption')).toBe('first');
+      expect(warn).toHaveBeenCalledWith('[uc][plugin:test-plugin]', 'Config option "dupOption" is already registered');
+      warn.mockRestore();
     });
 
     it('registerConfig preserves a value written before the plugin registered', () => {
