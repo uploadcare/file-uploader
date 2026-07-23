@@ -34,12 +34,13 @@ export function buildPluginApi(
     registerL10n: (l10n) => registry.addL10n(pluginId, l10n),
     registerConfig: (definition) => {
       registry.addConfig(pluginId, definition);
-      // Seed the custom config key only on first sight (M-god step 7: direct
-      // `ConfigController`, off the `*cfg/*` facade). Matches the old
-      // `!ctx.has(stateKey)` guard + `ctx.add` first-write-wins: `register` is
-      // idempotent and keeps any value written before the plugin registered.
+      // Register the FULL descriptor on the ctx's `ConfigController` (the single
+      // source of truth for config descriptors) — off the `*cfg/*` facade, and
+      // no longer a partial name+default. `register` is idempotent + keeps any
+      // value written before the plugin registered (first-write-wins). Owned by
+      // `pluginId` so the descriptor is dropped if the plugin is ever removed.
       if (!config.hasKey(definition.name)) {
-        config.register(definition.name, definition.defaultValue);
+        config.register(definition, pluginId);
       }
     },
   };

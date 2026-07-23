@@ -1,6 +1,8 @@
-import type { CustomConfigDefinition } from '../../abstract/customConfigOptions';
+import { BUILTIN_DESCRIPTORS } from '../../blocks/Config/builtin-descriptors';
 import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { ConfigType } from '../../types/exported';
+import { type ConfigKeyDescriptor, resolveConfigDescriptor } from '../config-descriptor';
+import type { CustomConfigDefinition } from '../customConfigOptions';
 import type { ReactiveStore } from '../di/ReactiveStore';
 import { type ObserveOptions, SignalMap } from '../di/SignalMap';
 
@@ -31,8 +33,15 @@ export class ConfigController implements ReactiveStore<ConfigType> {
   // unknown>` arm models the dynamic plugin-registered keyspace so custom-key
   // access needs no per-call cast.
   #state = new SignalMap<ConfigType & Record<string, unknown>>(initialConfig);
-  #customKeys = new Set<string>();
-  #customDefs = new Map<string, CustomConfigDefinition<unknown>>();
+  // Dynamically-registered (plugin) descriptors, overlaid on the shared
+  // module-level BUILTIN_DESCRIPTORS. Per-ctx. `#descriptorOwners` maps a key to
+  // the id that registered it, so `unregisterByOwner` can drop a source's keys.
+  #customDescriptors = new Map<string, ConfigKeyDescriptor>();
+  #descriptorOwners = new Map<string, string>();
+  // Fired when the descriptor SET changes (register/unregister) — the config
+  // host (WithConfig) subscribes to rebuild its attribute maps + subscriptions,
+  // replacing the old plugin-manager `onPluginsChange` coupling.
+  #schemaListeners = new Set<() => void>();
   // Config-writer hosts registered for this ctx (one config host per ctx is the
   // contract). Stored by identity as DOM-free `{ isConnected }` handles — this
   // controller never reads the DOM or warns; the element/mixin layer inspects
@@ -121,33 +130,81 @@ export class ConfigController implements ReactiveStore<ConfigType> {
 
   /** True for any known key — a built-in default or a registered custom key. */
   public hasKey(name: string): boolean {
-    // Own-property check: `in` would walk the prototype chain and wrongly
-    // report `toString`, `constructor`, `__proto__`, etc. as known keys.
-    return Object.hasOwn(initialConfig, name) || this.#customKeys.has(name);
+    return BUILTIN_DESCRIPTORS.has(name) || this.#customDescriptors.has(name);
   }
 
-  // ─── Custom (plugin-registered) keys ───────────────────────────────────
+  // ─── Config schema (descriptors) ────────────────────────────────────────
 
-  public register<T>(nameOrDef: string | CustomConfigDefinition<T>, defaultValue?: T): void {
-    const def: CustomConfigDefinition<T> =
-      typeof nameOrDef === 'string' ? { name: nameOrDef, defaultValue: defaultValue as T } : nameOrDef;
-    if (this.#customKeys.has(def.name)) {
-      // Already registered — keep the existing value (idempotent re-register).
+  /**
+   * The resolved descriptor for ANY key — built-in or dynamically registered —
+   * or `undefined` if the key is unknown. Built-ins come from the shared
+   * `BUILTIN_DESCRIPTORS`; dynamic keys from `register`.
+   */
+  public descriptor(name: string): ConfigKeyDescriptor | undefined {
+    return this.#customDescriptors.get(name) ?? BUILTIN_DESCRIPTORS.get(name);
+  }
+
+  /** Every dynamically-registered (non-built-in) descriptor, for the config host. */
+  public getCustomDescriptors(): ConfigKeyDescriptor[] {
+    return [...this.#customDescriptors.values()];
+  }
+
+  /** Subscribe to descriptor-set changes (register/unregister). Returns an unsubscribe. */
+  public onSchemaChange(listener: () => void): () => void {
+    this.#schemaListeners.add(listener);
+    return () => this.#schemaListeners.delete(listener);
+  }
+
+  #notifySchemaChange(): void {
+    for (const listener of this.#schemaListeners) {
+      listener();
+    }
+  }
+
+  /**
+   * Register a dynamic config key from its descriptor (built-ins are always
+   * present). Idempotent — a re-register keeps the existing descriptor + value
+   * (first-registration-wins). `ownerId` lets a later `unregisterByOwner` drop
+   * every key a given source registered. Fires the schema-changed signal (and
+   * seeds the default value, keeping any value written before registration).
+   */
+  public register<T>(def: CustomConfigDefinition<T>, ownerId?: string): void {
+    if (this.#customDescriptors.has(def.name)) {
       return;
     }
-    this.#customKeys.add(def.name);
-    this.#customDefs.set(def.name, def as CustomConfigDefinition<unknown>);
-    // Keep any value set before the plugin registered (e.g. an attribute that
-    // landed first), otherwise seed the registered default. `seed` is a no-op
-    // when the key is already present, mirroring the v1 own-property check, so
-    // an explicit pre-registration write (including of `undefined`) is
-    // preserved. The single `notify()` below fires exactly once either way.
+    // Erase the value type at the registry boundary (descriptors are stored + read
+    // dynamically by string key); the descriptor's own functions handle their type.
+    this.#customDescriptors.set(def.name, resolveConfigDescriptor(def) as unknown as ConfigKeyDescriptor);
+    if (ownerId !== undefined) {
+      this.#descriptorOwners.set(def.name, ownerId);
+    }
+    // Keep any value set before registration (e.g. an attribute that landed
+    // first), otherwise seed the registered default. `seed` is a no-op when the
+    // key already has a value, so an explicit pre-registration write (including
+    // `undefined`) is preserved. The `notify()` fires exactly once either way.
     this.#state.seed(def.name, def.defaultValue);
     this.#state.notify();
+    this.#notifySchemaChange();
   }
 
-  public customDefinition(name: string): CustomConfigDefinition<unknown> | undefined {
-    return this.#customDefs.get(name);
+  /** Drop every dynamic key registered by `ownerId` (e.g. on plugin removal). */
+  public unregisterByOwner(ownerId: string): void {
+    let changed = false;
+    for (const [name, owner] of this.#descriptorOwners) {
+      if (owner === ownerId) {
+        this.#customDescriptors.delete(name);
+        this.#descriptorOwners.delete(name);
+        changed = true;
+      }
+    }
+    if (changed) {
+      this.#notifySchemaChange();
+    }
+  }
+
+  /** @deprecated Use {@link descriptor}. Returns only DYNAMIC descriptors (not built-ins). */
+  public customDefinition(name: string): ConfigKeyDescriptor | undefined {
+    return this.#customDescriptors.get(name);
   }
 
   public getCustom<T = unknown>(name: string): T {
@@ -176,8 +233,9 @@ export class ConfigController implements ReactiveStore<ConfigType> {
   }
 
   public destroy(): void {
-    this.#customKeys.clear();
-    this.#customDefs.clear();
+    this.#customDescriptors.clear();
+    this.#descriptorOwners.clear();
+    this.#schemaListeners.clear();
     this.#writers.clear();
     this.#state.destroy();
   }
