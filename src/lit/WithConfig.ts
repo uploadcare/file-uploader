@@ -447,15 +447,19 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      * MutationObserver delivers later (microtask), which races
      * `setAttribute('source-list', …); api.initFlow()`. Non-config attrs pass
      * through untouched so Lit subclass properties stay free.
+     *
+     * Attribute names are lowercased before lookup: HTML elements fold names
+     * to lowercase, and config maps are keyed by kebab-case (`source-list`)
+     * and full-lowercase (`sourcelist`) — not camelCase (`sourceList`).
      */
     public override setAttribute(qualifiedName: string, value: string): void {
       super.setAttribute(qualifiedName, value);
-      this._syncConfigAttributeFromDom(qualifiedName);
+      this._syncConfigAttributeFromDom(qualifiedName.toLowerCase());
     }
 
     public override removeAttribute(qualifiedName: string): void {
       super.removeAttribute(qualifiedName);
-      this._syncConfigAttributeFromDom(qualifiedName);
+      this._syncConfigAttributeFromDom(qualifiedName.toLowerCase());
     }
 
     private _ensureMutationObserver(): void {

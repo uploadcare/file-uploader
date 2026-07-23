@@ -93,6 +93,42 @@ describe('WithConfig (block-agnostic config host)', () => {
     expect(config?.get('sourceList')).toBe('dropbox');
   });
 
+  it('applies kebab-case and full-lowercase config attrs synchronously (not only camelCase)', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
+
+    // Kebab (HTML/docs style)
+    el.setAttribute('source-list', 'dropbox');
+    expect(config?.get('sourceList')).toBe('dropbox');
+
+    // Full lowercase (Vue/React attr folding / setAttribute name normalization)
+    el.setAttribute('sourcelist', 'url');
+    expect(config?.get('sourceList')).toBe('url');
+
+    // CamelCase input: HTML lowercases the name; sync path must follow
+    el.setAttribute('sourceList', 'local');
+    expect(el.getAttribute('sourcelist')).toBe('local');
+    expect(config?.get('sourceList')).toBe('local');
+  });
+
+  it('applies custom config attrs in kebab and lowercase forms synchronously', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
+    config?.register({ name: 'myPluginOpt', defaultValue: '', attribute: true });
+    await delay(0);
+
+    el.setAttribute('my-plugin-opt', 'kebab');
+    expect(config?.get('myPluginOpt')).toBe('kebab');
+
+    el.setAttribute('mypluginopt', 'lower');
+    expect(config?.get('myPluginOpt')).toBe('lower');
+
+    el.setAttribute('myPluginOpt', 'camel');
+    expect(config?.get('myPluginOpt')).toBe('camel');
+  });
+
   it('writes a config property into the ctx ConfigController from a non-<uc-config> host', async () => {
     const ctxName = freshCtxName();
     const el = await mount(ctxName);
