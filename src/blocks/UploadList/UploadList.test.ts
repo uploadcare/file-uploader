@@ -355,12 +355,13 @@ describe('UploadList (M-god step 6b-8 migration)', () => {
   });
 
   describe('chrome variants', () => {
-    it('default chrome reflects chrome="default" and renders full header + toolbar', async () => {
+    it('default chrome leaves the chrome attribute off and renders full header + toolbar', async () => {
       const ctxName = freshCtxName();
       const { el } = await mount(ctxName);
 
       expect(el.chrome).toBe('default');
-      expect(el.getAttribute('chrome')).toBe('default');
+      // Default does not reflect — keeps regular/inline hosts free of a redundant attr.
+      expect(el.hasAttribute('chrome')).toBe(false);
       expect(el.querySelector('uc-activity-header')).not.toBeNull();
       expect(el.querySelector('button.uc-close-btn')).not.toBeNull();
       expect(el.querySelector('button.uc-cancel-btn')).not.toBeNull();
@@ -379,14 +380,16 @@ describe('UploadList (M-god step 6b-8 migration)', () => {
       expect(el.querySelector('button.uc-cancel-btn')).toBeNull();
       expect(el.querySelector('button.uc-upload-btn')).toBeNull();
       expect(el.querySelector('button.uc-done-btn')).toBeNull();
-      // Toolbar add-more still present (files-area add-more also exists).
-      expect(el.querySelector('button.uc-add-more-btn')).not.toBeNull();
+      // List-mode compact chrome relies on the toolbar add-more (files-area is CSS-hidden).
+      expect(el.querySelector('.uc-toolbar button.uc-add-more-btn')).not.toBeNull();
     });
 
-    it('compact chrome still runs add-more → initFlow', async () => {
+    it('compact chrome still runs toolbar add-more → initFlow', async () => {
       const ctxName = freshCtxName();
       const { el, spies } = await mount(ctxName, { chrome: 'compact' });
-      el.querySelector<HTMLButtonElement>('button.uc-add-more-btn')?.click();
+      const toolbarAddMore = el.querySelector<HTMLButtonElement>('.uc-toolbar button.uc-add-more-btn');
+      expect(toolbarAddMore).not.toBeNull();
+      toolbarAddMore?.click();
       expect(spies.initFlow).toHaveBeenCalledWith(true);
     });
   });
