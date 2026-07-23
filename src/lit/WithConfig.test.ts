@@ -45,9 +45,21 @@ const warnedWith = (warn: ReturnType<typeof vi.spyOn>, substr: string): boolean 
   );
 
 describe('WithConfig (block-agnostic config host)', () => {
-  it('adds built-in config attributes to observedAttributes on a plain ChildBlock', () => {
-    expect(ConfigHostProbe.observedAttributes).toContain('multiple');
-    expect(ConfigHostProbe.observedAttributes).toContain('pubkey');
+  it('does not claim config keys on observedAttributes (MO-only; leaves Lit free for subclasses)', () => {
+    // Config attrs are driven by MutationObserver, not CE observedAttributes —
+    // so a subclass `@property({ attribute: 'mode' })` keeps working.
+    expect(ConfigHostProbe.observedAttributes ?? []).not.toContain('multiple');
+    expect(ConfigHostProbe.observedAttributes ?? []).not.toContain('pubkey');
+  });
+
+  it('applies a built-in config attribute via MutationObserver (not attributeChangedCallback)', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    el.setAttribute('pubkey', 'from-attr');
+    await delay(0);
+    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
+    expect(config?.get('pubkey')).toBe('from-attr');
+    expect(el.pubkey).toBe('from-attr');
   });
 
   it('writes a config property into the ctx ConfigController from a non-<uc-config> host', async () => {

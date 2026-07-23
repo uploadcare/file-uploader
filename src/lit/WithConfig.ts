@@ -74,10 +74,15 @@ const getConfigAttributeNames = (key: string): readonly string[] => {
  * reflects external controller changes back onto its attributes/properties.
  *
  * It is class-level (not a bare reactive controller) so it can contribute the
- * auto-inferred config type surface (`ConfigHost`, derived from `ConfigType`),
- * `static observedAttributes`, and the property accessors onto the host's own
- * type and prototype. `this` stays the element throughout — behavior is
- * identical to the previous `<uc-config>` implementation.
+ * auto-inferred config type surface (`ConfigHost`, derived from `ConfigType`)
+ * and the property accessors onto the host's own type and prototype. `this`
+ * stays the element throughout — behavior is identical to the previous
+ * `<uc-config>` implementation.
+ *
+ * Attribute reactivity is **MutationObserver-only** (built-in + custom keys).
+ * The mixin deliberately does NOT override `observedAttributes` /
+ * `attributeChangedCallback`, so subclasses keep Lit's normal `@property`
+ * attribute mapping (e.g. a host's own `mode` attribute).
  *
  * It knows NOTHING about plugins or a "custom vs built-in" split: every key —
  * built-in or plugin-registered — is described by a {@link ConfigKeyDescriptor}
@@ -364,36 +369,58 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       this.addDisposer(this._config.onSchemaChange(() => this._syncCustomConfigs()));
     }
 
+    /**
+     * Apply a live DOM attribute change for a config key (built-in or custom).
+     * Always re-reads `getAttribute` so batched/stale MutationObserver deliveries
+     * cannot write a superseded value. No-ops when the host is not adopted
+     * (attr changes during release are ignored; seed re-reads on next adopt).
+     */
+    private _applyConfigAttributeChange(attrName: string): void {
+      if (!this.containerOrNull) return;
+
+      const builtInKey = builtinAttrKeyMapping[attrName];
+      if (builtInKey) {
+        const current = this.getAttribute(attrName);
+        // Removal → undefined → `_flushValueToState` resets to initialConfig.
+        // Present → raw attr string; the property setter / `_setValue` normalizes.
+        this._setValue(builtInKey, current === null ? undefined : current);
+        return;
+      }
+
+      const key = this._customAttrKeyMapping[attrName];
+      const descriptor = key ? this._config.descriptor(key) : undefined;
+      if (!key || !descriptor) return;
+
+      const currentAttrValue = this.getAttribute(attrName);
+      // Attribute removed → restore the registered default WITHOUT `fromAttribute`
+      // (defaultValue may be a non-string; fromAttribute is the string pre-parse).
+      if (currentAttrValue === null) {
+        this._setValue(key, descriptor.defaultValue);
+        return;
+      }
+      const val = descriptor.fromAttribute(currentAttrValue);
+      if (this._getValue(key) === val) return;
+      this._setValue(key, val);
+    }
+
     private _ensureMutationObserver(): void {
       // Observes the DOM node itself (not the controller/ctx), so it must be
       // created only ONCE per element lifetime — re-adoption must not stack a
       // second observer on the same node.
       if (this._mutationObserver) return;
 
-      // Detects dynamic attribute changes for custom config attributes that can't
-      // be statically declared in `observedAttributes`. Built-in attributes are
-      // already handled by the native `attributeChangedCallback` mechanism.
+      // Single path for ALL config attributes (built-in + dynamic custom). We do
+      // not use `observedAttributes` / `attributeChangedCallback` so subclasses
+      // keep Lit's normal `@property` attribute mapping free of config noise.
       this._mutationObserver = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
-          if (mutation.type === 'attributes' && mutation.attributeName) {
-            const attrName = mutation.attributeName;
-            const oldValue = mutation.oldValue;
-            const newValue = this.getAttribute(attrName);
-
-            // Skip if value hasn't actually changed
-            if (oldValue === newValue) continue;
-
-            // Skip built-in config attributes - they're handled by observedAttributes
-            const isBuiltInAttr = attrName in builtinAttrKeyMapping;
-            if (isBuiltInAttr) continue;
-
-            // Check if it's a custom plugin config attribute using the mapping
-            if (attrName in this._customAttrKeyMapping) {
-              // Pass raw attr strings only — never `descriptor.defaultValue` (it
-              // may be a non-string). Removal (`newValue === null`) is handled
-              // inside `attributeChangedCallback` via the live DOM attribute.
-              this.attributeChangedCallback(attrName, oldValue ?? '', newValue ?? '');
-            }
+          if (mutation.type !== 'attributes' || !mutation.attributeName) continue;
+          const attrName = mutation.attributeName;
+          // Cheap no-op when the attr didn't actually change (set to same value).
+          if (mutation.oldValue === this.getAttribute(attrName)) continue;
+          // Only react to config attrs (built-in mapping or dynamic custom map).
+          if (attrName in builtinAttrKeyMapping || attrName in this._customAttrKeyMapping) {
+            this._applyConfigAttributeChange(attrName);
           }
         }
       });
@@ -415,6 +442,27 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       this._maybeWarnMultipleWriters(config);
     }
 
+    /**
+     * Read a built-in key's pre-existing attribute (if any). Used at seed time
+     * because config attrs are no longer stashed via `attributeChangedCallback`
+     * before adoption — MO only runs after `controllerReady`.
+     */
+    private _readBuiltInAttribute(key: string): { has: boolean; value: unknown } {
+      const descriptor = this._config.descriptor(key);
+      if (!descriptor?.attribute) return { has: false, value: undefined };
+      for (const attrName of getConfigAttributeNames(key)) {
+        if (!this.hasAttribute(attrName)) continue;
+        const raw = this.getAttribute(attrName) as string;
+        try {
+          return { has: true, value: descriptor.fromAttribute(raw) };
+        } catch (error) {
+          this._log.warn(`fromAttribute() for "${key}" threw an error, using raw attribute value`, error);
+          return { has: true, value: raw };
+        }
+      }
+      return { has: false, value: undefined };
+    }
+
     // Seed built-in config from the DOM on every adoption, then install the DOM
     // property accessors once. The seed runs every time (a re-adopted ctx starts
     // from `initialConfig` and must be re-seeded); the accessor install is
@@ -425,9 +473,17 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       const installAccessors = !this._builtInAccessorsInstalled;
 
       for (const key of allConfigKeys) {
-        // Initial value: a DOM property set before init (framework binding, read
-        // via the pre-accessor own prop) wins, else the controller's value.
-        const initialValue = Reflect.get(this, key) ?? this._config.get(key);
+        // Priority: pre-upgrade own data property (framework binding) → live
+        // attribute (HTML / setAttribute before adopt) → existing prop / controller.
+        const own = Object.getOwnPropertyDescriptor(this, key);
+        const isDataProperty = !!own && !own.get && !own.set && own.value !== undefined;
+        const fromAttr = isDataProperty ? { has: false, value: undefined } : this._readBuiltInAttribute(key);
+        const initialValue = isDataProperty
+          ? own.value
+          : fromAttr.has
+            ? fromAttr.value
+            : (Reflect.get(this, key) ?? this._config.get(key));
+
         if (initialValue !== initialConfig[key]) {
           this._setValue(key, initialValue);
           // `_setValue`'s no-op guard (skip when the local cache already equals
@@ -453,11 +509,12 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      * Fires on every controller adoption — the initial one and any re-adoption
      * (ctx-name switch, or ctx death + re-adopt on a v1-managed ctx). The step
      * ORDER is load-bearing: writer registration → custom configs → mutation
-     * observer → change-log (BEFORE the seed, so startup values are logged) →
-     * built-in seed. Every subscription these open routes through `addDisposer`,
-     * so a re-adoption tears the previous cycle down instead of stacking a second
-     * set; the plugin-change listener and MutationObserver are host/DOM-level and
-     * guarded independently (teardown-on-release and an idempotency guard).
+     * observer (all config attrs) → change-log (BEFORE the seed, so startup
+     * values are logged) → built-in seed (reads pre-existing attributes; MO
+     * only sees post-seed mutations). Every subscription these open routes
+     * through `addDisposer`, so a re-adoption tears the previous cycle down
+     * instead of stacking a second set; the MutationObserver is host-level and
+     * guarded by an idempotency flag (not torn down on release).
      */
     protected override controllerReady(_container: ControllerContainer): void {
       this._registerAsConfigWriter();
@@ -535,55 +592,6 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       this._customAttrKeyMapping = {};
     }
 
-    public override attributeChangedCallback(name: string, oldVal: string, newVal: string) {
-      super.attributeChangedCallback(name, oldVal, newVal);
-
-      if (oldVal === newVal) return;
-
-      const builtInKey = builtinAttrKeyMapping[name];
-
-      // Handle built-in config attributes
-      if (builtInKey) {
-        // attributeChangedCallback could be called before the controller is adopted
-        // so we set the DOM property instead of calling this._setValue.
-        // If the block was initialized, the value will be handled by the setter.
-        // If the block was not initialized, the value will be set to the DOM property
-        // and handled on initialization.
-        Reflect.set(this, builtInKey, newVal);
-      } else {
-        // Handle custom (dynamically-registered) config attributes.
-        //
-        // `attributeChangedCallback` can fire before this element has adopted a
-        // container (custom-element upgrade, or mid `ctx-name` switch) OR before
-        // the key's descriptor is registered. Bail in those cases — the value is
-        // on the DOM attribute, and `_syncCustomConfigs` (run on adoption and on
-        // every schema change) reads pre-existing attribute values, so a
-        // late-registered custom key still picks this up.
-        if (!this.containerOrNull) {
-          return;
-        }
-        const key = this._customAttrKeyMapping[name];
-        const descriptor = key ? this._config.descriptor(key) : undefined;
-        if (key && descriptor) {
-          // Live DOM is the source of truth (MO can deliver a superseded newVal).
-          const currentAttrValue = this.getAttribute(name);
-          // Attribute removed → restore the registered default WITHOUT
-          // `fromAttribute` (defaultValue may be a non-string; fromAttribute
-          // is the attribute-string pre-parse hook).
-          if (currentAttrValue === null) {
-            this._setValue(key, descriptor.defaultValue);
-            return;
-          }
-          // Skip a stale value the attribute has already moved past.
-          if (currentAttrValue !== newVal) return;
-          // Deserialize via the descriptor (identity by default; `_setValue` normalizes).
-          const val = descriptor.fromAttribute(currentAttrValue);
-          if (this._getValue(key) === val) return;
-          this._setValue(key, val);
-        }
-      }
-    }
-
     public override disconnectedCallback(): void {
       super.disconnectedCallback();
 
@@ -599,15 +607,6 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         this._mutationObserver.disconnect();
         this._mutationObserver = undefined;
       }
-    }
-
-    public static get observedAttributes(): string[] {
-      const inherited = (Base as unknown as { observedAttributes?: readonly string[] }).observedAttributes ?? [];
-      const builtInAttrs = Object.keys(builtinAttrKeyMapping);
-
-      // Note: Custom config attributes cannot be statically determined here
-      // since they're registered at runtime. They're handled via mutation observer instead.
-      return [...inherited, ...builtInAttrs];
     }
   }
 

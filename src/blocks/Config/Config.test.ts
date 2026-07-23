@@ -80,7 +80,7 @@ describe('Config (<uc-config>) — M-god step 6b-5 use(ConfigController)', () =>
     expect(el.pubkey).toBe('demopublickey');
   });
 
-  it('writes an attribute change (attributeChangedCallback) into that controller', async () => {
+  it('writes an attribute change (MutationObserver) into that controller', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
 
@@ -309,15 +309,14 @@ describe('Config (<uc-config>) — additive coverage: plain/complex keys, reflec
     });
   });
 
-  it('short-circuits attributeChangedCallback when the value is unchanged', async () => {
+  it('short-circuits MutationObserver when the attribute value is unchanged', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
     const el = await mount(ctxName);
 
     el.setAttribute('multiple', 'false');
     await delay(0);
-    // Set the SAME value again — attributeChangedCallback's `oldVal === newVal`
-    // guard returns early.
+    // Set the SAME value again — MO's oldValue === getAttribute skip is a no-op.
     el.setAttribute('multiple', 'false');
     await delay(0);
 
@@ -499,7 +498,7 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
     expect(config.get('preSet')).toBe('early');
   });
 
-  it('forwards a dynamically-set custom attribute through the MutationObserver + attributeChangedCallback', async () => {
+  it('forwards a dynamically-set custom attribute through the MutationObserver', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
     registerCustomConfigs(ctxName, [
@@ -507,23 +506,21 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
     ]);
     const el = await mount(ctxName);
 
-    // Not a statically-observed attribute → handled by the MutationObserver,
-    // which routes into the custom branch of attributeChangedCallback.
+    // Custom attrs are MO-driven (no observedAttributes entry).
     el.setAttribute('live-opt', 'boom');
     await delay(0);
     await delay(0);
 
     expect(config.get('liveOpt')).toBe('BOOM');
 
-    // Setting the SAME value exercises the observer's `oldValue === newValue`
-    // skip.
+    // Setting the SAME value exercises the observer's no-op when unchanged.
     el.setAttribute('live-opt', 'BOOM');
     await delay(0);
 
     expect(config.get('liveOpt')).toBe('BOOM');
   });
 
-  it('ignores a stale custom attributeChangedCallback whose value the attribute already moved past', async () => {
+  it('applies the live DOM attribute value (MO re-reads getAttribute; no stale newVal)', async () => {
     const ctxName = freshCtxName();
     const config = controllerFor(ctxName);
     registerCustomConfigs(ctxName, [{ name: 'liveOpt', defaultValue: 'init' }]);
@@ -533,11 +530,10 @@ describe('Config (<uc-config>) — additive coverage: custom configs (fake plugi
     await delay(0);
     expect(config.get('liveOpt')).toBe('current');
 
-    // The DOM attribute is 'current'; a callback carrying an older value is
-    // stale and must bail without writing.
-    el.attributeChangedCallback('live-opt', 'current', 'stale');
+    // Handler always re-reads getAttribute — writing the same live value again
+    // is a no-op; a superseded mutation cannot clobber a newer attr.
+    el.setAttribute('live-opt', 'current');
     await delay(0);
-
     expect(config.get('liveOpt')).toBe('current');
   });
 
