@@ -1,3 +1,9 @@
+## [1.32.1](https://github.com/uploadcare/file-uploader/compare/v1.32.0...v1.32.1) (2026-07-24)
+
+
+### Bug Fixes
+
+* use location.ancestorOrigins to detect top-level origin ([91d39cd](https://github.com/uploadcare/file-uploader/commit/91d39cd353422955020c287d5a32c9baacbab647))
 # [1.32.0](https://github.com/uploadcare/file-uploader/compare/v1.31.2...v1.32.0) (2026-07-13)
 
 
