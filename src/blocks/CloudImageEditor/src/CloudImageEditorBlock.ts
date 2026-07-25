@@ -127,7 +127,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   })
   public testMode?: boolean;
 
-  /** Own `ctx-name` attribute — mirrors `SymbioteCompatMixin`'s `_ctxNameAttr`. */
+  /** Own `ctx-name` attribute — wins over the inherited `ctxNameContext` value. */
   @property({ type: String, attribute: 'ctx-name', reflect: true })
   public ctxName: string | null = null;
 
