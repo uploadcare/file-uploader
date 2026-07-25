@@ -233,11 +233,10 @@ export abstract class EditorBlock extends EditorBlockBase {
 
   /**
    * Per-key reactive subscription to a single cross-cutting controller state
-   * key — mirrors `ChildBlock.subConfigValue`. `subscribeEditor` above is
-   * coarse (fires on ANY controller state change, for "re-render on
-   * anything"); many descendants instead have per-key imperative reactions
-   * (the old shared-ctx `this.sub('*tabId', ...)`, etc.) that must NOT fire on
-   * unrelated changes — this filters the coarse notifications down to one key
+   * key. `subscribeEditor` above is coarse (fires on ANY controller state
+   * change, for "re-render on anything"); many descendants instead have
+   * per-key imperative reactions that must NOT fire on unrelated changes —
+   * this filters the coarse notifications down to one key
    * via `Object.is` dedup, firing `cb` immediately with the current value and
    * again only when that key's value actually changes.
    *

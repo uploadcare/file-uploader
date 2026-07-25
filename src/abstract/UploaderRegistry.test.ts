@@ -325,10 +325,8 @@ describe('UploaderRegistry', () => {
     UploaderRegistry.unregister(name, second);
   });
 
-  // M-god step 9a: the container lifecycle (create + cache + eager
-  // Config -> Router -> Telemetry init + dispose) was folded here out of
-  // `PubSubCompat._resolveContainer`/`deleteCtx`, so it is now covered directly
-  // against the registry — independent of any `PubSubCompat`/nanostores map.
+  // The registry owns the container lifecycle: create + cache + eager
+  // Config -> Router -> Telemetry init + dispose. Covered directly against it.
   describe('ensure / dispose (container lifecycle)', () => {
     it('ensure creates and caches one container per ctx-name', () => {
       const name = uniqueName();
