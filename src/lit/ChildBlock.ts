@@ -36,12 +36,12 @@ const ChildBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitE
 const isCustomElement = (el: Element): boolean => el.tagName?.includes('-') ?? false;
 
 /**
- * Base class for blocks ported off `SymbioteCompatMixin` (M9). Resolves the
- * per-ctx `ControllerContainer` by ctx-name — from the element's own
- * `ctx-name` attribute or, when absent, from the nearest v1 ancestor's
- * `ctxNameContext` provider — via `UploaderRegistry.whenAvailable`, which
- * fires synchronously when a container is already registered and again
- * across a remount, so subclasses re-adopt without losing bindings. If the
+ * Base class for uploader blocks. Resolves the per-ctx `ControllerContainer`
+ * by ctx-name — from the element's own `ctx-name` attribute or, when absent,
+ * from the nearest ancestor's `ctxNameContext` provider — via
+ * `UploaderRegistry.whenAvailable`, which fires synchronously when a container
+ * is already registered and again across a remount, so subclasses re-adopt
+ * without losing bindings. If the
  * ctx dies while this block stays connected (the last consumer elsewhere
  * disconnected and tore the ctx down), the registry notifies with `null` and
  * the block releases its container — closing the render gate — rather than
@@ -238,9 +238,8 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
-    // Re-provide the effective ctx-name downward so v1 children nested under
-    // a ported block keep resolving their ctx exactly as they would under a
-    // v1 parent.
+    // Re-provide the effective ctx-name downward so descendants without their
+    // own `ctx-name` attribute resolve this block's ctx.
     const effective = this.effectiveCtxName;
     if (effective) {
       if (!this._ctxNameProvider) {
@@ -329,8 +328,8 @@ export abstract class ChildBlock extends ChildBlockBase {
     // closed (willUpdate never runs then) — react to it here, where Lit
     // calls in even for gated updates.
     if (changed.has('ctxName')) this._watchRegistry();
-    // v1 parity: SymbioteCompatMixin gates rendering until the ctx is
-    // initialized; here the gate is container adoption.
+    // The render gate: nothing renders until a container is adopted, so
+    // subclasses can read controllers unconditionally in `render()`.
     if (!this._container) {
       return false;
     }
