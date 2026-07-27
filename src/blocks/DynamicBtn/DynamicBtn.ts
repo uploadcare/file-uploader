@@ -22,7 +22,7 @@ import '../FileItem/FileActionButton';
 import './NoWrapModeDynamicBtn';
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 
-export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact';
+export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact' | null;
 
 type SourceSplit = {
   main: SourceButtonConfig | null;
@@ -30,7 +30,7 @@ type SourceSplit = {
 };
 
 const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: DynamicButtonMode): SourceSplit => {
-  if (mode === 'compact' || sources.length === 0) {
+  if (mode === 'compact' || mode === null || sources.length === 0) {
     return {
       main: null,
       remain: sources,
@@ -43,7 +43,7 @@ const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: DynamicBut
   };
 };
 
-const iconsBasedOnMode: Record<Exclude<DynamicButtonMode, 'toolbar'>, string> = {
+const iconsBasedOnMode: Record<Exclude<DynamicButtonMode, 'toolbar' | null>, string> = {
   compact: 'paperclip',
   menu: 'arrow-dropdown',
   auto: 'arrow-dropdown',
@@ -96,6 +96,13 @@ export class DynamicBtn extends LitUploaderBlock {
 
   private get isCollapsedMode() {
     return this._mode === 'compact';
+  }
+
+  /**
+   *
+   */
+  private get isPlainMode() {
+    return this._mode === null;
   }
 
   private get shouldShowPrimaryAction(): boolean {
@@ -220,7 +227,7 @@ export class DynamicBtn extends LitUploaderBlock {
   }
 
   private _getDropdownIconName(): string {
-    return iconsBasedOnMode[this._mode as Exclude<DynamicButtonMode, 'toolbar'>] ?? 'arrow-dropdown';
+    return iconsBasedOnMode[this._mode as Exclude<DynamicButtonMode, 'toolbar' | null>] ?? 'arrow-dropdown';
   }
 
   private _clearAllEntries() {
@@ -313,9 +320,9 @@ export class DynamicBtn extends LitUploaderBlock {
       <uc-drop-area .disabled=${!this.dropzone}>
         <div class=${this._getInnerClassMap()}>
           ${cache(this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null)}
-          ${cache(this.shouldShowInline ? this._renderInline() : null)}
-          ${cache(this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null)}
-          ${cache(this.shouldShowDropdown ? this._renderDropdown() : null)}
+          ${cache(!this.isPlainMode && this.shouldShowInline ? this._renderInline() : null)}
+          ${cache(!this.isPlainMode && this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null)}
+          ${cache(!this.isPlainMode && this.shouldShowDropdown ? this._renderDropdown() : null)}
           ${cache(this.shouldShowAbortAction || this.hasCollectionEntries ? this._renderAbortAction() : null)}
           ${cache(this._renderVisualDropArea())}
         </div>
