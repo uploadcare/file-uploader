@@ -1,0 +1,59 @@
+import {
+  type CdnOperation,
+  parseCdnUrl,
+  parseOperations,
+  serializeCdnUrl,
+  serializeOperations,
+} from '@uploadcare/cdn-url';
+
+const isNonEmptyString = (value: unknown): value is string => typeof value === 'string' && !!value;
+
+/** Strip a leading `-/` or `/` and a trailing `/` from one loose fragment. */
+const trimDelimiters = (fragment: string): string => {
+  let str = fragment.trim();
+  if (str.startsWith('-/')) {
+    str = str.slice(2);
+  } else if (str.startsWith('/')) {
+    str = str.slice(1);
+  }
+  return str.endsWith('/') ? str.slice(0, -1) : str;
+};
+
+/**
+ * Turn loose modifier fragments into structured operations. Config values and DOM
+ * attributes arrive as strings — `'resize/100x'`, `'-/sharp/10/'`, or a whole
+ * chain like `'format/auto/-/progressive/yes'` — and this is the single place
+ * where they become `CdnOperation[]`.
+ *
+ * Non-string and empty fragments are dropped, so callers can pass a possibly-null
+ * config value straight through without guarding it.
+ *
+ * @throws TypeError when a fragment is not a valid operation chain.
+ */
+export const operationsFromModifiers = (...fragments: unknown[]): CdnOperation[] => {
+  const joined = fragments.filter(isNonEmptyString).map(trimDelimiters).filter(Boolean).join('/-/');
+  // `parseOperations` requires the leading `-/` that trimming removed.
+  return joined ? parseOperations(`-/${joined}/`) : [];
+};
+
+/**
+ * Serialise operations to their `-/…/` wire form. Needed because
+ * `cdnUrlModifiers` is a documented public field and the editor's `ApplyResult`
+ * carries strings.
+ */
+export const modifiersFromOperations = (operations: readonly CdnOperation[]): string => serializeOperations(operations);
+
+/**
+ * Append operations after any the URL already carries, preserving addressing,
+ * filename, conversion path and — for a delivery-proxy URL — the embedded source.
+ *
+ * @throws TypeError when `url` is not a CDN URL.
+ */
+export const withOperations = (url: string, operations: readonly CdnOperation[]): string => {
+  const parsed = parseCdnUrl(url);
+  if (parsed.kind === 'group') {
+    // Group roots address a whole group and carry no operations.
+    return serializeCdnUrl(parsed);
+  }
+  return serializeCdnUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
+};
