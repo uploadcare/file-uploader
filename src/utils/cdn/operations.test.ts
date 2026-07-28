@@ -40,6 +40,17 @@ describe('operationsFromModifiers', () => {
     expect(operationsFromModifiers(undefined, '')).toEqual([]);
   });
 
+  it('returns nothing for a whitespace-only fragment', () => {
+    expect(operationsFromModifiers('   ')).toEqual([]);
+  });
+
+  it('joins a wire-form fragment with a bare one, as `Thumb` does', () => {
+    expect(operationsFromModifiers('-/crop/x/', 'stretch/off')).toEqual([
+      { name: 'crop', params: ['x'] },
+      { name: 'stretch', params: ['off'] },
+    ]);
+  });
+
   it('keeps internal @-prefixed operations verbatim', () => {
     expect(operationsFromModifiers('@clib/uc-img/1.0/uc-img')).toEqual([
       { name: '@clib', params: ['uc-img', '1.0', 'uc-img'] },

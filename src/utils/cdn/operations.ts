@@ -2,33 +2,21 @@ import { type CdnOperation, parseFileUrl, parseOperations, serializeCdnUrl } fro
 
 const isNonEmptyString = (value: unknown): value is string => typeof value === 'string' && !!value;
 
-/** Strip a leading `-/` or `/` and a trailing `/` from one loose fragment. */
-const trimDelimiters = (fragment: string): string => {
-  let str = fragment.trim();
-  if (str.startsWith('-/')) {
-    str = str.slice(2);
-  } else if (str.startsWith('/')) {
-    str = str.slice(1);
-  }
-  return str.endsWith('/') ? str.slice(0, -1) : str;
-};
-
 /**
  * Turn loose modifier fragments into structured operations. Config values and DOM
  * attributes arrive as strings — `'resize/100x'`, `'-/sharp/10/'`, or a whole
  * chain like `'format/auto/-/progressive/yes'` — and this is the single place
- * where they become `CdnOperation[]`.
+ * where they become `CdnOperation[]`. `parseOperations` tolerates all of those
+ * loose shapes itself, so each fragment is parsed on its own and the results are
+ * concatenated — no normalisation needed here.
  *
  * Non-string and empty fragments are dropped, so callers can pass a possibly-null
  * config value straight through without guarding it.
  *
  * @throws TypeError when a fragment is not a valid operation chain.
  */
-export const operationsFromModifiers = (...fragments: unknown[]): CdnOperation[] => {
-  const joined = fragments.filter(isNonEmptyString).map(trimDelimiters).filter(Boolean).join('/-/');
-  // `parseOperations` requires the leading `-/` that trimming removed.
-  return joined ? parseOperations(`-/${joined}/`) : [];
-};
+export const operationsFromModifiers = (...fragments: unknown[]): CdnOperation[] =>
+  fragments.filter(isNonEmptyString).flatMap(parseOperations);
 
 /**
  * Append operations after any the URL already carries, preserving addressing,
