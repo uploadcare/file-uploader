@@ -113,4 +113,17 @@ describe('resolveSecureDeliveryProxyUrl', () => {
     expect(errorSpy).not.toHaveBeenCalled();
     expect(onResolverError).not.toHaveBeenCalled();
   });
+
+  it('falls back to the unproxied url when the url cannot be parsed', async () => {
+    const resolver = vi.fn();
+
+    const result = await resolveSecureDeliveryProxyUrl(
+      { secureDeliveryProxy: '', secureDeliveryProxyUrlResolver: resolver },
+      () => {},
+      'https://cdn.example.com/not-a-cdn-url',
+    );
+
+    expect(result).toBe('https://cdn.example.com/not-a-cdn-url');
+    expect(resolver).not.toHaveBeenCalled();
+  });
 });
