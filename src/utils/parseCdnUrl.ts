@@ -1,6 +1,6 @@
-import { parseCdnUrl as parseCdnUrlStructure, serializeOperations } from '@uploadcare/cdn-url';
 import { logger } from '../abstract/logger';
 import { DEFAULT_CDN_CNAME } from '../blocks/Config/initialConfig';
+import { modifiersFromOperations, parseFileUrl } from './cdn';
 
 const log = logger.scope('parse-cdn-url');
 
@@ -41,21 +41,21 @@ export const parseCdnUrl = ({ url, cdnBase }: ParseCdnUrlOptions): ParseCdnUrlRe
     return null;
   }
 
-  let parsed: ReturnType<typeof parseCdnUrlStructure>;
+  let parsed: ReturnType<typeof parseFileUrl>;
   try {
-    parsed = parseCdnUrlStructure(url);
+    parsed = parseFileUrl(url);
   } catch (err) {
     log.warn('Not a CDN URL', err);
     return null;
   }
 
-  if (parsed.kind !== 'file' || parsed.conversion) {
+  if (parsed.conversion) {
     return null;
   }
 
   return {
     uuid: parsed.uuid,
-    cdnUrlModifiers: serializeOperations(parsed.operations),
+    cdnUrlModifiers: modifiersFromOperations(parsed.operations),
     filename: parsed.filename,
   };
 };

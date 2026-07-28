@@ -1,6 +1,6 @@
 import type { UploadcareFile } from '@uploadcare/upload-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createCdnUrl } from '../utils/cdn-utils';
+import { operationsFromModifiers, withOperations } from '../utils/cdn';
 import { applyInitialCrop } from './applyInitialCrop';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 
@@ -61,7 +61,7 @@ describe('applyInitialCrop', () => {
     expect(cdnUrlModifiers).toContain('-/preview/');
     // 800x600 at a 4:3 aspect ratio is already 4:3 — full-frame centered crop.
     expect(cdnUrlModifiers).toContain('crop/800x600/0,0');
-    expect(entry?.get('cdnUrl')).toBe(createCdnUrl(cdnUrl, cdnUrlModifiers ?? undefined));
+    expect(entry?.get('cdnUrl')).toBe(withOperations(cdnUrl, operationsFromModifiers(cdnUrlModifiers ?? undefined)));
   });
 
   it('skips entries that already have /crop/ in cdnUrlModifiers (values unchanged)', () => {

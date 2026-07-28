@@ -1,6 +1,7 @@
 import { type ColorPreview, TabId, type TabIdValue } from '../../blocks/CloudImageEditor/src/toolbar-constants';
 import type { CropAspectRatio, LoadingOperations, Transformations } from '../../blocks/CloudImageEditor/src/types';
 import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../types';
+import { DEFAULT_CDN_ORIGIN } from '../../utils/cdn';
 import { StateController } from './StateController';
 
 /**
@@ -21,7 +22,7 @@ export type EditorConfig = {
 
 /** Built-in fallback config — the lowest precedence tier (below own props and the transitional ctx read). */
 export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
-  cdnCname: 'https://ucarecdn.com',
+  cdnCname: DEFAULT_CDN_ORIGIN,
   secureDeliveryProxy: undefined,
   secureDeliveryProxyUrlResolver: undefined,
   cloudImageEditorMaskHref: undefined,
