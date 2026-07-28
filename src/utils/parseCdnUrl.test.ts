@@ -88,4 +88,40 @@ describe('parseCdnUrl', () => {
       filename: null,
     });
   });
+
+  it('should keep multiple operations and a multi-parameter operation intact', () => {
+    expect(
+      parseCdnUrl({
+        url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/-/crop/640x480/10,20/-/preview/x.jpg',
+        cdnBase: 'https://cdn.example.com',
+      }),
+    ).toEqual({
+      uuid: '12345678-1234-5678-1234-567812345678',
+      cdnUrlModifiers: '-/crop/640x480/10,20/-/preview/',
+      filename: 'x.jpg',
+    });
+  });
+
+  /**
+   * These shapes parse fine as CDN URLs but cannot become an upload entry —
+   * `ParseCdnUrlResult` has nowhere to put a group id, a remote source or a
+   * conversion prefix, and dropping either silently would corrupt the entry.
+   * They were rejected before this module used `@uploadcare/cdn-url` too, so
+   * `addFileFromCdnUrl` keeps throwing `Invalid CDN URL` for them.
+   */
+  it.each([
+    ['a group root', 'https://cdn.example.com/12345678-1234-5678-1234-567812345678~2/'],
+    ['a group element', 'https://cdn.example.com/12345678-1234-5678-1234-567812345678~2/nth/0/x.jpg'],
+    ['a conversion result', 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/video/-/quality/best/'],
+  ])('should return null for %s', (_label, url) => {
+    expect(parseCdnUrl({ url, cdnBase: 'https://cdn.example.com' })).toBe(null);
+  });
+
+  it.each([
+    ['no uuid', 'https://cdn.example.com/'],
+    ['a segment that is not a uuid', 'https://cdn.example.com/not-a-uuid/x.jpg'],
+    ['unexpected path segments', 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/extra/segments/x.jpg'],
+  ])('should return null for %s rather than throwing', (_label, url) => {
+    expect(parseCdnUrl({ url, cdnBase: 'https://cdn.example.com' })).toBe(null);
+  });
 });
