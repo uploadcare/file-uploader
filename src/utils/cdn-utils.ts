@@ -78,7 +78,7 @@ export const joinCdnOperations = (...operations: unknown[]): string =>
  *
  * @throws TypeError when a fragment is not a valid operation chain.
  */
-const operationsFromFragments = (...fragments: unknown[]): CdnOperation[] => {
+export const createCdnOperations = (...fragments: unknown[]): CdnOperation[] => {
   const joined = joinCdnOperations(...fragments);
   // `parseOperations` requires the leading `-/` that `joinCdnOperations` strips.
   return joined ? parseOperations(`-/${joined}/`) : [];
@@ -89,7 +89,7 @@ const operationsFromFragments = (...fragments: unknown[]): CdnOperation[] => {
  * and trailing `/`
  */
 export const createCdnUrlModifiers = (...cdnOperations: unknown[]): string =>
-  serializeOperations(operationsFromFragments(...cdnOperations));
+  serializeOperations(createCdnOperations(...cdnOperations));
 
 /**
  * Extract filename, or the whole embedded source URL for a delivery-proxy URL.

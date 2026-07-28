@@ -1,5 +1,7 @@
+import { parseCdnUrl, serializeCdnUrl } from '@uploadcare/cdn-url';
+import { defaultProxyEndpoint } from '@uploadcare/cdn-url/proxy';
 import { logger } from '../../abstract/logger';
-import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
+import { createCdnOperations } from '../../utils/cdn-utils.js';
 import { stringToArray } from '../../utils/stringToArray';
 import { applyTemplateData } from '../../utils/template-utils';
 import { uniqueArray } from '../../utils/uniqueArray';
@@ -75,7 +77,10 @@ export class ImgBase extends ImgConfig {
     return size;
   }
 
-  private _getCdnModifiers(size?: string | null, blur?: string | null): string {
+  private _getCdnOperationFragments(
+    size?: string | null,
+    blur?: string | null,
+  ): (string | number | boolean | null | undefined)[] {
     const params: ParseableParams = {
       format: this._getTypedCssValue('format'),
       quality: this._getTypedCssValue('quality'),
@@ -85,7 +90,7 @@ export class ImgBase extends ImgConfig {
       analytics: this.analyticsParams(),
     };
 
-    return createCdnUrlModifiers(...parseObjectToString(params));
+    return parseObjectToString(params);
   }
 
   private _getTypedCssValue(key: string): string | number | boolean | null | undefined {
@@ -124,32 +129,42 @@ export class ImgBase extends ImgConfig {
   }
 
   private _buildCdnUrl(size: string | null, blur: string | null, src: string): string | undefined {
-    const cdnModifiers = this._getCdnModifiers(size, blur);
-    const cdnCnameRaw = this.$$('cdn-cname') as string | undefined;
-    const cdnCname = cdnCnameRaw;
+    const operations = createCdnOperations(...this._getCdnOperationFragments(size, blur));
+    const cdnCname = this.$$('cdn-cname') as string | undefined;
 
-    if (src.startsWith(String(cdnCnameRaw))) {
-      return createCdnUrl(src, cdnModifiers);
+    // A src already on the configured cname is a CDN URL in its own right: parse
+    // it and append, so operations it already carries survive.
+    if (cdnCname && src.startsWith(cdnCname)) {
+      const parsed = parseCdnUrl(src);
+      if (parsed.kind === 'group') {
+        return src;
+      }
+      return serializeCdnUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
     }
 
     const uuid = this.$$('uuid') as string | undefined;
-
-    if (cdnCname && uuid) {
-      return this._proxyUrl(createCdnUrl(createOriginalUrl(cdnCname, uuid), cdnModifiers));
-    }
-
     if (uuid) {
-      return this._proxyUrl(createCdnUrl(createOriginalUrl(cdnCname as string, uuid), cdnModifiers));
+      // `cdn-cname` carries a default, so a blank one means it was blanked on
+      // purpose — `new URL('')` throws and the caller degrades, which is what the
+      // previous implementation did by accident.
+      const url = serializeCdnUrl({ origin: new URL(cdnCname as string).origin, uuid, operations });
+      // `serializeCdnUrl` builds without validating — it is `parseCdnUrl` that
+      // knows the UUID grammar. Parsing the result back keeps a garbage `uuid`
+      // attribute degrading to "no image" instead of emitting a URL that 404s.
+      parseCdnUrl(url);
+      return this._proxyUrl(url);
     }
 
     const proxyCname = this.$$('proxy-cname') as string | undefined;
     if (proxyCname) {
-      return this._proxyUrl(createCdnUrl(proxyCname, cdnModifiers, this._fmtAbs(src)));
+      return this._proxyUrl(serializeCdnUrl({ origin: proxyCname, sourceUrl: this._fmtAbs(src), operations }));
     }
 
     const pubkey = this.$$('pubkey') as string | undefined;
     if (pubkey) {
-      return this._proxyUrl(createCdnUrl(`https://${pubkey}.ucr.io/`, cdnModifiers, this._fmtAbs(src)));
+      return this._proxyUrl(
+        serializeCdnUrl({ origin: defaultProxyEndpoint(pubkey), sourceUrl: this._fmtAbs(src), operations }),
+      );
     }
 
     return undefined;
