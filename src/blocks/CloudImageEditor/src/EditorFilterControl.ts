@@ -3,12 +3,10 @@ import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../env';
-import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
-import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transformationUtils.js';
+import { editorPreviewUrl } from './lib/editorUrls';
 import type { Transformations } from './types';
 
 import './EditorIcon';
@@ -119,16 +117,12 @@ export class EditorFilterControl extends EditorButtonControl {
             amount: filterValue,
           }
         : undefined;
-    return createCdnUrl(
-      this._originalUrl,
-      createCdnUrlModifiers(
-        COMMON_OPERATIONS,
-        transformationsToOperations(transformations),
-        `quality/${quality}`,
-        `scale_crop/${size}x${size}/center`,
-        `@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/uc-cloud-image-editor/`,
-      ),
-    );
+    return editorPreviewUrl({
+      originalUrl: this._originalUrl,
+      transformations,
+      quality,
+      sizeOperation: `scale_crop/${size}x${size}/center`,
+    });
   }
 
   private async _observerCallback(entries: IntersectionObserverEntry[], observer: IntersectionObserver): Promise<void> {
