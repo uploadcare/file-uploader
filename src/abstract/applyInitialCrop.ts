@@ -1,7 +1,8 @@
+import { crop, preview } from '@uploadcare/cdn-url/ops';
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import type { ConfigType } from '../types';
-import { operationsFromModifiers, serializeOperations, withOperations } from '../utils/cdn';
+import { serializeOperations, withOperations } from '../utils/cdn';
 import type { UploadCollectionController } from './controllers/UploadCollectionController';
 import { logger } from './logger';
 
@@ -44,8 +45,8 @@ export function applyInitialCrop(collection: UploadCollectionController, cropPre
         ? aspectRatioPreset.width / aspectRatioPreset.height
         : 1;
 
-    const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
-    const operations = operationsFromModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`, 'preview');
+    const cropFrame = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
+    const operations = [crop(cropFrame.width, cropFrame.height, { x: cropFrame.x, y: cropFrame.y }), preview()];
     const cdnUrl = entry.get('cdnUrl');
     if (!cdnUrl) {
       log.warn('Failed to get cdnUrl for entry', entry.uid);

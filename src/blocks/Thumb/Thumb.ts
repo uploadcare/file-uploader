@@ -1,3 +1,4 @@
+import { scaleCrop, stretch } from '@uploadcare/cdn-url/ops';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
@@ -95,11 +96,11 @@ export class Thumb extends FileItemConfig {
         serializeCdnUrl({
           origin: new URL(this._config.get('cdnCname')).origin,
           uuid,
-          operations: operationsFromModifiers(
-            entry.get('cdnUrlModifiers'),
-            'stretch/off',
-            `scale_crop/${size}x${size}/center`,
-          ),
+          operations: [
+            ...operationsFromModifiers(entry.get('cdnUrlModifiers')),
+            stretch('off'),
+            scaleCrop(size, size, { align: 'center' }),
+          ],
         }),
       );
 
