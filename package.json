@@ -214,5 +214,14 @@
       "path": "web/uc-img.min.js",
       "limit": "10 KB"
     }
-  ]
+  ],
+  "tsd": {
+    "compilerOptions": {
+      "paths": {
+        "@uploadcare/cdn-url/ops": [
+          "./node_modules/@uploadcare/cdn-url/dist/types/ops.d.ts"
+        ]
+      }
+    }
+  }
 }
