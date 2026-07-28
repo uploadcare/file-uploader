@@ -94,7 +94,7 @@ const config = {
 
   plugins: [],
 
-  dynamicButtonViewMode: 'auto',
+  dynamicButtonViewMode: 'plain',
   dynamicButtonShowFirstIcon: true,
 } satisfies ConfigType;
 

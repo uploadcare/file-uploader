@@ -13,6 +13,8 @@ import '../Thumb/Thumb';
 export class PrimaryAction extends LitUploaderBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-primary-action'];
 
+  private static readonly DEFAULT_ICON = 'upload';
+
   private static readonly SOURCE_TEXT_CONFIG: Record<string, { action: string }> = {
     [UploadSource.LOCAL]: { action: 'upload-from' },
     [UploadSource.URL]: { action: 'upload-from' },
@@ -79,6 +81,10 @@ export class PrimaryAction extends LitUploaderBlock {
       return headerText;
     }
 
+    if (!this.source) {
+      return this.l10n(this._isMultiple ? 'upload-files' : 'upload-file');
+    }
+
     return this._getSourceLabelText();
   }
 
@@ -127,7 +133,12 @@ export class PrimaryAction extends LitUploaderBlock {
       return;
     }
 
-    void this.source?.onClick();
+    if (!this.source) {
+      this.api.initFlow();
+      return;
+    }
+
+    void this.source.onClick();
   }
 
   private _renderThumbnail() {
@@ -141,7 +152,7 @@ export class PrimaryAction extends LitUploaderBlock {
       return null;
     }
 
-    const iconName = this.source?.icon;
+    const iconName = this.source?.icon ?? PrimaryAction.DEFAULT_ICON;
     return this.showIcon && iconName ? html`<uc-icon .name=${iconName}></uc-icon>` : null;
   }
 
