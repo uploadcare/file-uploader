@@ -1,3 +1,9 @@
+# [1.33.0](https://github.com/uploadcare/file-uploader/compare/v1.32.1...v1.33.0) (2026-07-28)
+
+
+### Features
+
+* **dynamic-btn:** add null (plain) view mode with default icon ([#1061](https://github.com/uploadcare/file-uploader/issues/1061)) ([a82dd0e](https://github.com/uploadcare/file-uploader/commit/a82dd0e68e10e169f2af1ca98ef57b4a9bbd9713))
 ## [1.32.1](https://github.com/uploadcare/file-uploader/compare/v1.32.0...v1.32.1) (2026-07-24)
 
 
