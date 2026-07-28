@@ -1,7 +1,7 @@
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import type { ConfigType } from '../types';
-import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils';
+import { modifiersFromOperations, operationsFromModifiers, withOperations } from '../utils/cdn';
 import type { UploadCollectionController } from './controllers/UploadCollectionController';
 import { logger } from './logger';
 
@@ -45,15 +45,15 @@ export function applyInitialCrop(collection: UploadCollectionController, cropPre
         : 1;
 
     const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
-    const cdnUrlModifiers = createCdnUrlModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`, 'preview');
+    const operations = operationsFromModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`, 'preview');
     const cdnUrl = entry.get('cdnUrl');
     if (!cdnUrl) {
       log.warn('Failed to get cdnUrl for entry', entry.uid);
       continue;
     }
     entry.setMany({
-      cdnUrlModifiers,
-      cdnUrl: createCdnUrl(cdnUrl, cdnUrlModifiers),
+      cdnUrlModifiers: modifiersFromOperations(operations),
+      cdnUrl: withOperations(cdnUrl, operations),
     });
   }
 }
