@@ -197,28 +197,6 @@ const OPERATION_PROCESSORS: OperationProcessorMap = Object.freeze({
   },
 });
 
-const MODELLED_OPERATION_NAMES: ReadonlySet<string> = new Set(SUPPORTED_OPERATIONS_ORDERED);
-
-/**
- * Operations the editor cannot model, kept so they survive an edit. Applying a
- * transformation rebuilds the URL from the bare original plus what the editor
- * knows, so anything not carried here is erased — a watermark `overlay`, a
- * pipeline's `resize`, a `format` chosen upstream.
- *
- * `preview` is excluded: the editor appends its own on every Apply, so keeping
- * an incoming one would accumulate duplicates across edits.
- *
- * An operation the editor *does* model but cannot parse (crop by aspect ratio,
- * percentage or alignment keyword) is NOT passthrough — it is still dropped,
- * because the crop UI has no way to represent it. That is a separate gap.
- */
-export function extractPassthroughOperations(operations: string[]): string[] {
-  return operations.filter((operation) => {
-    const name = operation.split('/')[0] ?? '';
-    return name !== 'preview' && !MODELLED_OPERATION_NAMES.has(name);
-  });
-}
-
 export function operationsToTransformations(operations: string[]): Transformations {
   const transformations: Partial<Record<keyof Transformations, unknown>> = {};
   for (const operation of operations) {

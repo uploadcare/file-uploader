@@ -27,7 +27,7 @@ import { classNames } from './lib/classNames.js';
 import { editorAppliedUrl } from './lib/editorUrls';
 import { getClosestAspectRatio, parseCropPreset } from './lib/parseCropPreset.js';
 import { parseTabs } from './lib/parseTabs.js';
-import { extractPassthroughOperations, operationsToTransformations } from './lib/transformationUtils.js';
+import { operationsToTransformations } from './lib/transformationUtils.js';
 import svgIconsSprite from './svg-sprite';
 import { ALL_TABS, TabId } from './toolbar-constants.js';
 import type { ApplyResult, CropPresetList, ImageSize, Transformations } from './types';
@@ -449,13 +449,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       this._log.warn('Original URL is null, cannot apply transformations');
       return;
     }
-    const passthrough = this._editorController.get('*editorPassthroughOperations');
-    // Appended after the editor's own operations rather than restored to their
-    // original positions: order matters to the CDN for a few pairs (`stretch`
-    // applies to a following resize, `main_colors` must be last), so this
-    // preserves presence, not placement — enforced by `editorAppliedUrl` composing
-    // the operation list once for both `cdnUrl` and `cdnUrlModifiers`.
-    const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, passthrough });
+    const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations });
 
     const eventData: ApplyResult = {
       originalUrl,
@@ -798,7 +792,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       const operations = this._stringifyOperations(parsed.operations);
       editorController.set('*originalUrl', originalUrl);
       editorController.set('*editorTransformations', operationsToTransformations(operations) as Transformations);
-      editorController.set('*editorPassthroughOperations', extractPassthroughOperations(operations));
     } else if (this.uuid) {
       const cdnCname = editorController.getConfig('cdnCname');
       const originalUrl = serializeCdnUrl({ origin: new URL(cdnCname).origin, uuid: this.uuid as string });
@@ -808,9 +801,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       editorController.set('*originalUrl', originalUrl);
       if (Object.keys(editorController.get('*editorTransformations')).length > 0) {
         editorController.set('*editorTransformations', {});
-      }
-      if (editorController.get('*editorPassthroughOperations').length > 0) {
-        editorController.set('*editorPassthroughOperations', []);
       }
     } else {
       throw new Error('No UUID nor CDN URL provided');
@@ -885,8 +875,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         return;
       }
       const originalUrl = editorController.get('*originalUrl') as string;
-      const passthrough = editorController.get('*editorPassthroughOperations');
-      const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, passthrough });
+      const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations });
 
       const eventData: ApplyResult = {
         originalUrl,
