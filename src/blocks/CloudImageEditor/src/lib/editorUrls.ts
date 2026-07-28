@@ -1,5 +1,5 @@
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
-import { modifiersFromOperations, operationsFromModifiers, withOperations } from '../../../../utils/cdn';
+import { operationsFromModifiers, serializeOperations, withOperations } from '../../../../utils/cdn';
 import type { Transformations } from '../types';
 import { COMMON_OPERATIONS, transformationsToOperations } from './transformationUtils';
 
@@ -59,6 +59,6 @@ export function editorAppliedUrl({
   const operations = operationsFromModifiers(transformationsToOperations(transformations), ...passthrough, 'preview');
   return {
     cdnUrl: withOperations(originalUrl, operations),
-    cdnUrlModifiers: modifiersFromOperations(operations),
+    cdnUrlModifiers: serializeOperations(operations),
   };
 }

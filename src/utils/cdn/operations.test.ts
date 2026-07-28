@@ -1,6 +1,6 @@
-import { parseFileUrl } from '@uploadcare/cdn-url';
+import { parseFileUrl, serializeOperations } from '@uploadcare/cdn-url';
 import { describe, expect, it } from 'vitest';
-import { modifiersFromOperations, operationsFromModifiers, withOperations } from './operations';
+import { operationsFromModifiers, withOperations } from './operations';
 
 const UUID = 'c2499162-eb07-4b93-b31e-94a89a47e858';
 const PROXY = 'https://domain.ucr.io:8080';
@@ -51,19 +51,19 @@ describe('operationsFromModifiers', () => {
   });
 });
 
-describe('modifiersFromOperations', () => {
+describe('serializeOperations', () => {
   it('serialises to the `-/…/` wire form', () => {
-    expect(modifiersFromOperations([{ name: 'resize', params: ['100x'] }])).toBe('-/resize/100x/');
+    expect(serializeOperations([{ name: 'resize', params: ['100x'] }])).toBe('-/resize/100x/');
   });
 
   it('returns an empty string for no operations', () => {
-    expect(modifiersFromOperations([])).toBe('');
+    expect(serializeOperations([])).toBe('');
   });
 
   it('round-trips with operationsFromModifiers', () => {
     const modifiers = '-/crop/640x480/10,20/-/preview/';
 
-    expect(modifiersFromOperations(operationsFromModifiers(modifiers))).toBe(modifiers);
+    expect(serializeOperations(operationsFromModifiers(modifiers))).toBe(modifiers);
   });
 });
 

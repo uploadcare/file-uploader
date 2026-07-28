@@ -1,7 +1,7 @@
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import type { ConfigType } from '../types';
-import { modifiersFromOperations, operationsFromModifiers, withOperations } from '../utils/cdn';
+import { operationsFromModifiers, serializeOperations, withOperations } from '../utils/cdn';
 import type { UploadCollectionController } from './controllers/UploadCollectionController';
 import { logger } from './logger';
 
@@ -59,7 +59,7 @@ export function applyInitialCrop(collection: UploadCollectionController, cropPre
       continue;
     }
     entry.setMany({
-      cdnUrlModifiers: modifiersFromOperations(operations),
+      cdnUrlModifiers: serializeOperations(operations),
       cdnUrl: croppedCdnUrl,
     });
   }

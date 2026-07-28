@@ -1,6 +1,6 @@
 import { logger } from '../abstract/logger';
 import { DEFAULT_CDN_CNAME } from '../blocks/Config/initialConfig';
-import { modifiersFromOperations, parseFileUrl } from './cdn';
+import { parseFileUrl, serializeOperations } from './cdn';
 
 const log = logger.scope('parse-cdn-url');
 
@@ -63,7 +63,7 @@ export const parseCdnUrl = ({ url, cdnBase }: ParseCdnUrlOptions): ParseCdnUrlRe
 
   return {
     uuid: parsed.uuid,
-    cdnUrlModifiers: modifiersFromOperations(parsed.operations),
+    cdnUrlModifiers: serializeOperations(parsed.operations),
     filename: parsed.filename,
   };
 };

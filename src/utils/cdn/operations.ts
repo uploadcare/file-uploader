@@ -1,10 +1,4 @@
-import {
-  type CdnOperation,
-  parseFileUrl,
-  parseOperations,
-  serializeCdnUrl,
-  serializeOperations,
-} from '@uploadcare/cdn-url';
+import { type CdnOperation, parseFileUrl, parseOperations, serializeCdnUrl } from '@uploadcare/cdn-url';
 
 const isNonEmptyString = (value: unknown): value is string => typeof value === 'string' && !!value;
 
@@ -35,13 +29,6 @@ export const operationsFromModifiers = (...fragments: unknown[]): CdnOperation[]
   // `parseOperations` requires the leading `-/` that trimming removed.
   return joined ? parseOperations(`-/${joined}/`) : [];
 };
-
-/**
- * Serialise operations to their `-/…/` wire form. Needed because
- * `cdnUrlModifiers` is a documented public field and the editor's `ApplyResult`
- * carries strings.
- */
-export const modifiersFromOperations = (operations: readonly CdnOperation[]): string => serializeOperations(operations);
 
 /**
  * Append operations after any the URL already carries, preserving addressing,

@@ -16,6 +16,12 @@
  * the editor's `updateImage`, `addFileFromCdnUrl`) degrade as they do for any
  * other unusable URL.
  */
-export { type CdnOperation, parseCdnUrl, parseFileUrl, serializeCdnUrl } from '@uploadcare/cdn-url';
-export { modifiersFromOperations, operationsFromModifiers, withOperations } from './operations';
+export {
+  type CdnOperation,
+  parseCdnUrl,
+  parseFileUrl,
+  serializeCdnUrl,
+  serializeOperations,
+} from '@uploadcare/cdn-url';
+export { operationsFromModifiers, withOperations } from './operations';
 export { DEFAULT_CDN_ORIGIN, deliveryProxyOrigin } from './origin';

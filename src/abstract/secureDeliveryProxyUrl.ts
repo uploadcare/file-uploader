@@ -1,5 +1,5 @@
 import type { ConfigType } from '../types';
-import { modifiersFromOperations, parseFileUrl } from '../utils/cdn';
+import { parseFileUrl, serializeOperations } from '../utils/cdn';
 import { applyTemplateData } from '../utils/template-utils';
 import { logger } from './logger';
 
@@ -30,7 +30,7 @@ export async function resolveSecureDeliveryProxyUrl(
 
       return await config.secureDeliveryProxyUrlResolver(url, {
         uuid: parsed.uuid,
-        cdnUrlModifiers: modifiersFromOperations(parsed.operations),
+        cdnUrlModifiers: serializeOperations(parsed.operations),
         fileName: parsed.filename ?? '',
       });
     } catch (err) {
