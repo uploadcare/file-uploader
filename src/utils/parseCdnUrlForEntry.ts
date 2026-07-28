@@ -2,14 +2,14 @@ import { logger } from '../abstract/logger';
 import { DEFAULT_CDN_CNAME } from '../blocks/Config/initialConfig';
 import { parseFileUrl, serializeOperations } from './cdn';
 
-const log = logger.scope('parse-cdn-url');
+const log = logger.scope('parse-cdn-url-for-entry');
 
-type ParseCdnUrlOptions = {
+type ParseCdnUrlForEntryOptions = {
   url: string;
   cdnBase: string;
 };
 
-type ParseCdnUrlResult = {
+type EntryFieldsFromCdnUrl = {
   uuid: string;
   cdnUrlModifiers: string;
   filename: string | null;
@@ -20,6 +20,10 @@ type ParseCdnUrlResult = {
  * `addFileFromCdnUrl`, which turns a `null` here into `Error('Invalid CDN URL')`,
  * so every rejection path must keep returning `null` rather than throwing.
  *
+ * Named for the entry rather than the parse because the library already exports a
+ * `parseCdnUrl`, and that one is the general structural parser — this is the
+ * narrower, policy-bearing wrapper that only `addFileFromCdnUrl` wants.
+ *
  * The host policy is ours, not the library's: `@uploadcare/cdn-url` is
  * origin-agnostic, while this accepts a URL on the configured `cdnBase` **or** on
  * the default `ucarecdn.com` — a project that has moved to a custom cname can
@@ -28,11 +32,11 @@ type ParseCdnUrlResult = {
  *
  * Only plain single-file URLs are accepted. Group URLs, delivery-proxy URLs and
  * conversion results (`/:uuid/video/…`) parse fine but have no representation in
- * an upload entry — `ParseCdnUrlResult` has nowhere to put a group id, a remote
+ * an upload entry — `EntryFieldsFromCdnUrl` has nowhere to put a group id, a remote
  * source or a conversion prefix, and silently dropping either would corrupt the
  * entry. They were rejected before this module used the library, and still are.
  */
-export const parseCdnUrl = ({ url, cdnBase }: ParseCdnUrlOptions): ParseCdnUrlResult | null => {
+export const parseCdnUrlForEntry = ({ url, cdnBase }: ParseCdnUrlForEntryOptions): EntryFieldsFromCdnUrl | null => {
   let parsed: ReturnType<typeof parseFileUrl>;
   let urlHost: string;
   let cdnBaseUrlObj: URL;

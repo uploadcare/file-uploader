@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { parseCdnUrl } from './parseCdnUrl';
+import { parseCdnUrlForEntry } from './parseCdnUrlForEntry';
 
-describe('parseCdnUrl', () => {
+describe('parseCdnUrlForEntry', () => {
   it('should should work', () => {
     expect(
-      parseCdnUrl({
+      parseCdnUrlForEntry({
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
         cdnBase: 'https://cdn.example.com',
       }),
@@ -17,7 +17,7 @@ describe('parseCdnUrl', () => {
 
   it('should parse filename', () => {
     expect(
-      parseCdnUrl({
+      parseCdnUrlForEntry({
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/bar.jpg',
         cdnBase: 'https://cdn.example.com',
       }),
@@ -30,7 +30,7 @@ describe('parseCdnUrl', () => {
 
   it('should parse cdn url modifiers', () => {
     expect(
-      parseCdnUrl({
+      parseCdnUrlForEntry({
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/-/foo/bar/baz.jpg',
         cdnBase: 'https://cdn.example.com',
       }),
@@ -43,7 +43,7 @@ describe('parseCdnUrl', () => {
 
   it('should return null if cdn base is different', () => {
     expect(
-      parseCdnUrl({
+      parseCdnUrlForEntry({
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
         cdnBase: 'https://cdn2.example.com',
       }),
@@ -52,7 +52,7 @@ describe('parseCdnUrl', () => {
 
   it('should strip slashes from the end cdn base before comparing', () => {
     expect(
-      parseCdnUrl({
+      parseCdnUrlForEntry({
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
         cdnBase: 'https://cdn.example.com/',
       }),
@@ -65,7 +65,7 @@ describe('parseCdnUrl', () => {
 
   it('should not compare the protocol', () => {
     expect(
-      parseCdnUrl({
+      parseCdnUrlForEntry({
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
         cdnBase: 'http://cdn.example.com',
       }),
@@ -78,7 +78,7 @@ describe('parseCdnUrl', () => {
 
   it('should fallback to ucarecdn.com if cdnBase is not matched', () => {
     expect(
-      parseCdnUrl({
+      parseCdnUrlForEntry({
         url: 'https://ucarecdn.com/12345678-1234-5678-1234-567812345678/',
         cdnBase: 'https://cdn.example.com',
       }),
@@ -91,7 +91,7 @@ describe('parseCdnUrl', () => {
 
   it('should keep multiple operations and a multi-parameter operation intact', () => {
     expect(
-      parseCdnUrl({
+      parseCdnUrlForEntry({
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/-/crop/640x480/10,20/-/preview/x.jpg',
         cdnBase: 'https://cdn.example.com',
       }),
@@ -114,7 +114,7 @@ describe('parseCdnUrl', () => {
     ['a group element', 'https://cdn.example.com/12345678-1234-5678-1234-567812345678~2/nth/0/x.jpg'],
     ['a conversion result', 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/video/-/quality/best/'],
   ])('should return null for %s', (_label, url) => {
-    expect(parseCdnUrl({ url, cdnBase: 'https://cdn.example.com' })).toBe(null);
+    expect(parseCdnUrlForEntry({ url, cdnBase: 'https://cdn.example.com' })).toBe(null);
   });
 
   it.each([
@@ -122,16 +122,16 @@ describe('parseCdnUrl', () => {
     ['a segment that is not a uuid', 'https://cdn.example.com/not-a-uuid/x.jpg'],
     ['unexpected path segments', 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/extra/segments/x.jpg'],
   ])('should return null for %s rather than throwing', (_label, url) => {
-    expect(parseCdnUrl({ url, cdnBase: 'https://cdn.example.com' })).toBe(null);
+    expect(parseCdnUrlForEntry({ url, cdnBase: 'https://cdn.example.com' })).toBe(null);
   });
 
   it('should return null rather than throw for a malformed (unparseable) url', () => {
-    expect(parseCdnUrl({ url: 'not a url', cdnBase: 'https://cdn.example.com' })).toBe(null);
+    expect(parseCdnUrlForEntry({ url: 'not a url', cdnBase: 'https://cdn.example.com' })).toBe(null);
   });
 
   it('should return null rather than throw when cdnBase itself is malformed', () => {
     expect(
-      parseCdnUrl({
+      parseCdnUrlForEntry({
         url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
         cdnBase: 'not a url',
       }),
