@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { Transformations } from '../types';
 import {
   COMMON_OPERATIONS,
+  extractPassthroughOperations,
   OPERATIONS_DEFAULTS,
   operationsToTransformations,
   transformationsToOperations,
@@ -229,5 +230,35 @@ describe('round-trip', () => {
 
     // `brightness: 0` never reached the URL, so it cannot come back.
     expect(operationsToTransformations(toBareOperations(transformations))).toEqual({ contrast: 25 });
+  });
+});
+
+describe('extractPassthroughOperations', () => {
+  it('keeps operations the editor cannot model, so an edit does not erase them', () => {
+    expect(
+      extractPassthroughOperations(['resize/300x', 'brightness/50', 'overlay/wm-uuid', 'format/webp', '@clib/x/1.0']),
+    ).toEqual(['resize/300x', 'overlay/wm-uuid', 'format/webp', '@clib/x/1.0']);
+  });
+
+  it('keeps nothing when every operation is modelled', () => {
+    expect(extractPassthroughOperations(['brightness/50', 'crop/640x480/10,20', 'mirror'])).toEqual([]);
+  });
+
+  it("drops the editor's own preview marker, which Apply re-appends", () => {
+    // Otherwise every open/apply cycle would stack another `preview`.
+    expect(extractPassthroughOperations(['preview', 'preview/800x600', 'blur/20'])).toEqual(['blur/20']);
+  });
+
+  it('does not treat an unparseable crop as passthrough', () => {
+    // `crop` IS modelled; the editor UI simply cannot represent aspect-ratio,
+    // percentage or alignment-keyword crops, so those stay dropped. Separate gap.
+    expect(extractPassthroughOperations(['crop/1:1/center'])).toEqual([]);
+  });
+
+  it('is the complement of what the reader models', () => {
+    const operations = ['resize/300x', 'brightness/50', 'stretch/off'];
+
+    expect(operationsToTransformations(operations)).toEqual({ brightness: 50 });
+    expect(extractPassthroughOperations(operations)).toEqual(['resize/300x', 'stretch/off']);
   });
 });
