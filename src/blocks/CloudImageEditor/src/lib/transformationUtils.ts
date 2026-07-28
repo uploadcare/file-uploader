@@ -1,6 +1,24 @@
-import { FILTER_NAMES, type FilterName } from '@uploadcare/cdn-url/ops';
+import { type CdnOperation, serializeOperations } from '@uploadcare/cdn-url';
+import {
+  brightness,
+  contrast,
+  crop,
+  enhance,
+  exposure,
+  FILTER_NAMES,
+  type FilterName,
+  filter,
+  flip,
+  format,
+  gamma,
+  mirror,
+  progressive,
+  rotate,
+  saturation,
+  vibrance,
+  warmth,
+} from '@uploadcare/cdn-url/ops';
 import { logger } from '../../../../abstract/logger';
-import { joinCdnOperations } from '../../../../utils/cdn-utils.js';
 import { stringToArray } from '../../../../utils/stringToArray.js';
 import type { Transformations } from '../types';
 
@@ -40,47 +58,74 @@ const SUPPORTED_OPERATIONS_ORDERED = [
   'crop',
 ] as const satisfies readonly (keyof Transformations)[];
 
-function transformationToStr<T extends keyof Transformations>(operation: T, options: Transformations[T]): string {
-  if (typeof options === 'number') {
-    const value = options;
-    return OPERATIONS_DEFAULTS[operation] !== value ? `${operation}/${value}` : '';
-  }
+/**
+ * One typed operation creator per transformation. Using the library's creators
+ * instead of hand-formatting strings means the CDN's own grammar decides how a
+ * value is written — `crop` takes an `Alignment` object rather than a
+ * `"x,y"` string we assemble, `progressive` knows it serialises to `yes`.
+ * Verified byte-identical to the previous hand-built output.
+ */
+const OPERATION_WRITERS = {
+  enhance: (value: number) => enhance(value),
+  brightness: (value: number) => brightness(value),
+  exposure: (value: number) => exposure(value),
+  gamma: (value: number) => gamma(value),
+  contrast: (value: number) => contrast(value),
+  saturation: (value: number) => saturation(value),
+  vibrance: (value: number) => vibrance(value),
+  warmth: (value: number) => warmth(value),
+  filter: ({ name, amount }: NonNullable<Transformations['filter']>) => filter(name, amount),
+  mirror: () => mirror(),
+  flip: () => flip(),
+  rotate: (value: number) => rotate(value),
+  crop: ({ dimensions, coords }: NonNullable<Transformations['crop']>) =>
+    crop(dimensions[0], dimensions[1], { x: coords[0], y: coords[1] }),
+} satisfies { [K in (typeof SUPPORTED_OPERATIONS_ORDERED)[number]]: (value: never) => CdnOperation };
 
-  if (typeof options === 'boolean') {
-    const value = options;
-    return OPERATIONS_DEFAULTS[operation] !== value ? `${operation}` : '';
+/** Whether a value carries information, i.e. differs from the operation's default. */
+function isMeaningful<T extends keyof Transformations>(operation: T, value: Transformations[T]): boolean {
+  if (value === undefined || value === null) {
+    return false;
   }
-
-  if (operation === 'filter' && options) {
-    const { name, amount } = options as NonNullable<Transformations['filter']>;
-    if (OPERATIONS_DEFAULTS.filter === amount) {
-      return '';
-    }
-    return `${operation}/${name}/${amount}`;
+  if (operation === 'filter') {
+    // A filter at its default amount contributes nothing.
+    return (value as NonNullable<Transformations['filter']>).amount !== OPERATIONS_DEFAULTS.filter;
   }
-
-  if (operation === 'crop' && options) {
-    const { dimensions, coords } = options as NonNullable<Transformations['crop']>;
-    return `${operation}/${dimensions.join('x')}/${coords.join(',')}`;
+  if (operation === 'crop') {
+    return true;
   }
-
-  return '';
+  return OPERATIONS_DEFAULTS[operation] !== value;
 }
 
+/**
+ * Serialise transformations into a `-/…/` operations string, in the editor's
+ * fixed order. Values equal to their default are omitted — a deliberate
+ * "don't bloat the URL" policy, and the reason an explicit `brightness/0` does
+ * not survive a round-trip.
+ */
 export function transformationsToOperations(transformations: Transformations): string {
-  return joinCdnOperations(
-    ...SUPPORTED_OPERATIONS_ORDERED.filter(
-      (operation) => typeof transformations[operation] !== 'undefined' && transformations[operation] !== null,
-    )
-      .map((operation) => {
-        const options = transformations[operation];
-        return transformationToStr(operation, options);
-      })
-      .filter((str) => !!str),
-  );
+  const operations: CdnOperation[] = [];
+  for (const operation of SUPPORTED_OPERATIONS_ORDERED) {
+    const value = transformations[operation];
+    if (!isMeaningful(operation, value)) {
+      continue;
+    }
+    const write = OPERATION_WRITERS[operation] as (value: Transformations[typeof operation]) => CdnOperation;
+    try {
+      operations.push(write(value));
+    } catch (err) {
+      // The typed creators validate (ranges, shapes), which the old string
+      // formatting did not — a value the CDN would reject is dropped with a
+      // warning rather than written into a URL.
+      log.warn(`Skipping unserialisable "${operation}" transformation.`, err);
+    }
+  }
+
+  return serializeOperations(operations);
 }
 
-export const COMMON_OPERATIONS = joinCdnOperations('format/auto', 'progressive/yes');
+/** Applied to every editor-generated URL. */
+export const COMMON_OPERATIONS = serializeOperations([format('auto'), progressive(true)]);
 
 const asNumber = ([value]: [unknown]) => (typeof value !== 'undefined' ? Number(value) : undefined);
 const asBoolean = () => true;

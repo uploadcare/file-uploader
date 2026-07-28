@@ -20,31 +20,39 @@ import {
  * being indistinguishable from "unset". When the fix lands, exactly those
  * assertions should flip, and the diff should say so out loud.
  */
+/**
+ * `transformationsToOperations` emits the library's wire form (`-/a/-/b/`) while
+ * the reader takes bare `name/param` chunks — which is what `extractOperations`
+ * hands it in production. Strip the wrapper to round-trip in a test.
+ */
+const toBareOperations = (transformations: Transformations): string[] =>
+  transformationsToOperations(transformations).replace(/^-\//, '').replace(/\/$/, '').split('/-/');
+
 describe('transformationsToOperations', () => {
   it('emits nothing for empty transformations', () => {
     expect(transformationsToOperations({})).toBe('');
   });
 
   it('serialises a number operation as `name/value`', () => {
-    expect(transformationsToOperations({ brightness: 50 })).toBe('brightness/50');
+    expect(transformationsToOperations({ brightness: 50 })).toBe('-/brightness/50/');
   });
 
   it('serialises a true boolean operation as a bare name, no value', () => {
-    expect(transformationsToOperations({ mirror: true })).toBe('mirror');
+    expect(transformationsToOperations({ mirror: true })).toBe('-/mirror/');
   });
 
   it('serialises filter as `filter/name/amount`', () => {
-    expect(transformationsToOperations({ filter: { name: 'adaris', amount: 70 } })).toBe('filter/adaris/70');
+    expect(transformationsToOperations({ filter: { name: 'adaris', amount: 70 } })).toBe('-/filter/adaris/70/');
   });
 
   it('serialises crop as `crop/WxH/x,y`', () => {
     expect(transformationsToOperations({ crop: { dimensions: [640, 480], coords: [10, 20] } })).toBe(
-      'crop/640x480/10,20',
+      '-/crop/640x480/10,20/',
     );
   });
 
   it('joins multiple operations with the `/-/` delimiter', () => {
-    expect(transformationsToOperations({ brightness: 50, contrast: 20 })).toBe('brightness/50/-/contrast/20');
+    expect(transformationsToOperations({ brightness: 50, contrast: 20 })).toBe('-/brightness/50/-/contrast/20/');
   });
 
   it('emits operations in its own fixed order, not the order of the input object', () => {
@@ -55,13 +63,13 @@ describe('transformationsToOperations', () => {
       enhance: 30,
     };
 
-    expect(transformationsToOperations(transformations)).toBe('enhance/30/-/rotate/90/-/crop/100x100/0,0');
+    expect(transformationsToOperations(transformations)).toBe('-/enhance/30/-/rotate/90/-/crop/100x100/0,0/');
   });
 
   it('skips keys that are undefined or null', () => {
     const transformations = { brightness: undefined, contrast: null, saturation: 10 } as unknown as Transformations;
 
-    expect(transformationsToOperations(transformations)).toBe('saturation/10');
+    expect(transformationsToOperations(transformations)).toBe('-/saturation/10/');
   });
 
   // PRE-FIX: a value that happens to equal its default is elided, so an
@@ -102,7 +110,7 @@ describe('transformationsToOperations', () => {
 
 describe('COMMON_OPERATIONS', () => {
   it('is the fixed pair every editor URL carries', () => {
-    expect(COMMON_OPERATIONS).toBe('format/auto/-/progressive/yes');
+    expect(COMMON_OPERATIONS).toBe('-/format/auto/-/progressive/yes/');
   });
 });
 
@@ -213,17 +221,13 @@ describe('round-trip', () => {
       crop: { dimensions: [640, 480], coords: [10, 20] },
     };
 
-    const operations = transformationsToOperations(transformations).split('/-/');
-
-    expect(operationsToTransformations(operations)).toEqual(transformations);
+    expect(operationsToTransformations(toBareOperations(transformations))).toEqual(transformations);
   });
 
   it('PRE-FIX: loses a default-valued operation across the round-trip', () => {
     const transformations: Transformations = { brightness: 0, contrast: 25 };
 
-    const operations = transformationsToOperations(transformations).split('/-/');
-
     // `brightness: 0` never reached the URL, so it cannot come back.
-    expect(operationsToTransformations(operations)).toEqual({ contrast: 25 });
+    expect(operationsToTransformations(toBareOperations(transformations))).toEqual({ contrast: 25 });
   });
 });
