@@ -33,27 +33,23 @@ type ParseCdnUrlResult = {
  * entry. They were rejected before this module used the library, and still are.
  */
 export const parseCdnUrl = ({ url, cdnBase }: ParseCdnUrlOptions): ParseCdnUrlResult | null => {
+  let parsed: ReturnType<typeof parseFileUrl>;
+  let urlHost: string;
   let cdnBaseUrlObj: URL;
   let fallbackCdnBaseUrlObj: URL;
-  let urlObj: URL;
-  try {
-    cdnBaseUrlObj = new URL(cdnBase);
-    fallbackCdnBaseUrlObj = new URL(DEFAULT_CDN_CNAME);
-    urlObj = new URL(url);
-  } catch (err) {
-    log.warn('Not a CDN URL', err);
-    return null;
-  }
-
-  if (cdnBaseUrlObj.host !== urlObj.host && fallbackCdnBaseUrlObj.host !== urlObj.host) {
-    return null;
-  }
-
-  let parsed: ReturnType<typeof parseFileUrl>;
   try {
     parsed = parseFileUrl(url);
+    // `parsed.origin` is already the host the URL was parsed from — reuse it
+    // instead of re-parsing `url` a second time just to read its host.
+    urlHost = new URL(parsed.origin).host;
+    cdnBaseUrlObj = new URL(cdnBase);
+    fallbackCdnBaseUrlObj = new URL(DEFAULT_CDN_CNAME);
   } catch (err) {
     log.warn('Not a CDN URL', err);
+    return null;
+  }
+
+  if (cdnBaseUrlObj.host !== urlHost && fallbackCdnBaseUrlObj.host !== urlHost) {
     return null;
   }
 
