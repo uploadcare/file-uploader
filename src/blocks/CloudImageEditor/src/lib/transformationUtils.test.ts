@@ -1,9 +1,21 @@
+import {
+  blur,
+  brightness,
+  contrast,
+  enhance,
+  mirror as mirrorOp,
+  overlay,
+  preview,
+  resize,
+  rotate,
+  stretch,
+} from '@uploadcare/cdn-url/ops';
 import { describe, expect, it } from 'vitest';
-import { serializeOperations } from '../../../../utils/cdn';
+import { type CdnOperation, operationsFromModifiers, serializeOperations } from '../../../../utils/cdn';
 import type { Transformations } from '../types';
 import {
   COMMON_OPERATIONS,
-  extractPassthroughOperations,
+  mergeTransformationsIntoOperations,
   OPERATIONS_DEFAULTS,
   operationsToTransformations,
   transformationsToOperations,
@@ -23,13 +35,17 @@ import {
  * assertions should flip, and the diff should say so out loud.
  */
 /**
- * `transformationsToOperations` now returns `CdnOperation[]`. The reader takes
- * bare `name/param` chunks — which is what `extractOperations` hands it in
- * production. Serialise to the wire form and strip the wrapper to round-trip
- * in a test.
+ * Both `transformationsToOperations` and `operationsToTransformations` work
+ * with structured `CdnOperation[]`. To exercise a genuine round-trip through
+ * the wire format (as production does via `parseFileUrl`), serialise to a URL
+ * fragment and parse it back rather than passing the structured list straight
+ * through.
  */
-const toBareOperations = (transformations: Transformations): string[] =>
-  serializeOperations(transformationsToOperations(transformations)).replace(/^-\//, '').replace(/\/$/, '').split('/-/');
+const toOperations = (transformations: Transformations): CdnOperation[] =>
+  operationsFromModifiers(serializeOperations(transformationsToOperations(transformations)));
+
+/** Build bare `CdnOperation`s from `name/param/param` fragments, for reader tests. */
+const ops = (...fragments: string[]): CdnOperation[] => operationsFromModifiers(...fragments);
 
 describe('transformationsToOperations', () => {
   it('emits nothing for empty transformations', () => {
@@ -129,24 +145,24 @@ describe('operationsToTransformations', () => {
   });
 
   it('parses number operations, coercing the value', () => {
-    expect(operationsToTransformations(['brightness/50', 'rotate/90'])).toEqual({ brightness: 50, rotate: 90 });
+    expect(operationsToTransformations(ops('brightness/50', 'rotate/90'))).toEqual({ brightness: 50, rotate: 90 });
   });
 
   it('parses a valueless boolean operation as true', () => {
-    expect(operationsToTransformations(['mirror', 'flip'])).toEqual({ mirror: true, flip: true });
+    expect(operationsToTransformations(ops('mirror', 'flip'))).toEqual({ mirror: true, flip: true });
   });
 
   it('parses a boolean operation as true even when it carries a value', () => {
     // `asBoolean` ignores its arguments entirely.
-    expect(operationsToTransformations(['mirror/anything'])).toEqual({ mirror: true });
+    expect(operationsToTransformations(ops('mirror/anything'))).toEqual({ mirror: true });
   });
 
   it('parses filter with its amount', () => {
-    expect(operationsToTransformations(['filter/adaris/70'])).toEqual({ filter: { name: 'adaris', amount: 70 } });
+    expect(operationsToTransformations(ops('filter/adaris/70'))).toEqual({ filter: { name: 'adaris', amount: 70 } });
   });
 
   it('defaults a filter with no amount to 100', () => {
-    expect(operationsToTransformations(['filter/adaris'])).toEqual({ filter: { name: 'adaris', amount: 100 } });
+    expect(operationsToTransformations(ops('filter/adaris'))).toEqual({ filter: { name: 'adaris', amount: 100 } });
   });
 
   /**
@@ -156,25 +172,25 @@ describe('operationsToTransformations', () => {
    * like unsupported crop syntax instead of being typed as something it isn't.
    */
   it('skips a filter whose name the CDN does not offer', () => {
-    expect(operationsToTransformations(['filter/notarealfilter/50'])).toEqual({});
+    expect(operationsToTransformations(ops('filter/notarealfilter/50'))).toEqual({});
   });
 
   it('keeps parsing later operations after skipping an unknown filter', () => {
-    expect(operationsToTransformations(['filter/notarealfilter/50', 'brightness/50'])).toEqual({ brightness: 50 });
+    expect(operationsToTransformations(ops('filter/notarealfilter/50', 'brightness/50'))).toEqual({ brightness: 50 });
   });
 
   it('parses a pixel crop into dimensions and coords', () => {
-    expect(operationsToTransformations(['crop/640x480/10,20'])).toEqual({
+    expect(operationsToTransformations(ops('crop/640x480/10,20'))).toEqual({
       crop: { dimensions: [640, 480], coords: [10, 20] },
     });
   });
 
   it('yields undefined for a number operation with no value', () => {
-    expect(operationsToTransformations(['brightness'])).toEqual({ brightness: undefined });
+    expect(operationsToTransformations(ops('brightness'))).toEqual({ brightness: undefined });
   });
 
   it('lets a later occurrence of the same operation win', () => {
-    expect(operationsToTransformations(['brightness/10', 'brightness/90'])).toEqual({ brightness: 90 });
+    expect(operationsToTransformations(ops('brightness/10', 'brightness/90'))).toEqual({ brightness: 90 });
   });
 
   // The crop parser deliberately rejects syntax the editor UI cannot represent;
@@ -185,11 +201,11 @@ describe('operationsToTransformations', () => {
     ['alignment-preset crop', 'crop/640x480/center'],
     ['malformed crop', 'crop/nonsense'],
   ])('skips %s rather than throwing', (_label, operation) => {
-    expect(operationsToTransformations([operation])).toEqual({});
+    expect(operationsToTransformations(ops(operation))).toEqual({});
   });
 
   it('keeps parsing later operations after skipping an unsupported crop', () => {
-    expect(operationsToTransformations(['crop/1:1/center', 'brightness/50'])).toEqual({ brightness: 50 });
+    expect(operationsToTransformations(ops('crop/1:1/center', 'brightness/50'))).toEqual({ brightness: 50 });
   });
 
   // PRE-FIX: this is the silent data loss. Any operation the editor does not
@@ -204,11 +220,11 @@ describe('operationsToTransformations', () => {
     ['preview', 'preview/800x600'],
     ['an internal @-operation', '@clib/uc-img/1.0'],
   ])('PRE-FIX: silently drops the unmodelled operation %s', (_label, operation) => {
-    expect(operationsToTransformations([operation])).toEqual({});
+    expect(operationsToTransformations(ops(operation))).toEqual({});
   });
 
   it('PRE-FIX: drops unmodelled operations even when mixed with modelled ones', () => {
-    expect(operationsToTransformations(['format/auto', 'brightness/50', 'blur/20'])).toEqual({ brightness: 50 });
+    expect(operationsToTransformations(ops('format/auto', 'brightness/50', 'blur/20'))).toEqual({ brightness: 50 });
   });
 });
 
@@ -230,43 +246,132 @@ describe('round-trip', () => {
       crop: { dimensions: [640, 480], coords: [10, 20] },
     };
 
-    expect(operationsToTransformations(toBareOperations(transformations))).toEqual(transformations);
+    expect(operationsToTransformations(toOperations(transformations))).toEqual(transformations);
   });
 
   it('PRE-FIX: loses a default-valued operation across the round-trip', () => {
     const transformations: Transformations = { brightness: 0, contrast: 25 };
 
     // `brightness: 0` never reached the URL, so it cannot come back.
-    expect(operationsToTransformations(toBareOperations(transformations))).toEqual({ contrast: 25 });
+    expect(operationsToTransformations(toOperations(transformations))).toEqual({ contrast: 25 });
   });
 });
 
-describe('extractPassthroughOperations', () => {
-  it('keeps operations the editor cannot model, so an edit does not erase them', () => {
-    expect(
-      extractPassthroughOperations(['resize/300x', 'brightness/50', 'overlay/wm-uuid', 'format/webp', '@clib/x/1.0']),
-    ).toEqual(['resize/300x', 'overlay/wm-uuid', 'format/webp', '@clib/x/1.0']);
+describe('mergeTransformationsIntoOperations', () => {
+  it('produces just the modelled operations plus a trailing preview for a source with no operations', () => {
+    // Must stay byte-identical to the pre-refactor `[...modelled, preview()]` —
+    // the common case (a fresh source URL) must not change at all.
+    expect(mergeTransformationsIntoOperations([], { brightness: 50, rotate: 90 })).toEqual([
+      ...transformationsToOperations({ brightness: 50, rotate: 90 }),
+      preview(),
+    ]);
   });
 
-  it('keeps nothing when every operation is modelled', () => {
-    expect(extractPassthroughOperations(['brightness/50', 'crop/640x480/10,20', 'mirror'])).toEqual([]);
+  it('replaces a modelled operation in its existing position when still set', () => {
+    const source = [blur(20), brightness(10), contrast(5)];
+
+    expect(mergeTransformationsIntoOperations(source, { brightness: 90, contrast: 5 })).toEqual([
+      blur(20),
+      brightness(90),
+      contrast(5),
+      preview(),
+    ]);
   });
 
-  it("drops the editor's own preview marker, which Apply re-appends", () => {
-    // Otherwise every open/apply cycle would stack another `preview`.
-    expect(extractPassthroughOperations(['preview', 'preview/800x600', 'blur/20'])).toEqual(['blur/20']);
+  it('removes a modelled operation whose value has gone back to its default', () => {
+    // The new test the brief calls out: a modelled operation present in the
+    // source disappears entirely (not left as an empty slot) once its value
+    // reverts to the default `isMeaningful` would omit.
+    const source = [brightness(50), contrast(10)];
+
+    expect(mergeTransformationsIntoOperations(source, { brightness: 0, contrast: 10 })).toEqual([
+      contrast(10),
+      preview(),
+    ]);
   });
 
-  it('does not treat an unparseable crop as passthrough', () => {
-    // `crop` IS modelled; the editor UI simply cannot represent aspect-ratio,
-    // percentage or alignment-keyword crops, so those stay dropped. Separate gap.
-    expect(extractPassthroughOperations(['crop/1:1/center'])).toEqual([]);
+  it('appends a newly-set modelled operation absent from source, in canonical order', () => {
+    const source = [blur(20)];
+
+    // `enhance` sorts before `rotate` in SUPPORTED_OPERATIONS_ORDERED.
+    expect(mergeTransformationsIntoOperations(source, { rotate: 90, enhance: 30 })).toEqual([
+      blur(20),
+      enhance(30),
+      rotate(90),
+      preview(),
+    ]);
   });
 
-  it('is the complement of what the reader models', () => {
-    const operations = ['resize/300x', 'brightness/50', 'stretch/off'];
+  it('keeps an unmodelled operation verbatim, in place, interleaved with modelled ones', () => {
+    // The other new test the brief calls out: placement of an unmodelled
+    // operation sitting *between* modelled ones must survive, not just its
+    // presence.
+    const source = [brightness(50), blur(20), contrast(10)];
 
-    expect(operationsToTransformations(operations)).toEqual({ brightness: 50 });
-    expect(extractPassthroughOperations(operations)).toEqual(['resize/300x', 'stretch/off']);
+    expect(mergeTransformationsIntoOperations(source, { brightness: 50, contrast: 10 })).toEqual([
+      brightness(50),
+      blur(20),
+      contrast(10),
+      preview(),
+    ]);
+  });
+
+  it('keeps an operation the editor does not model in place, brief example', () => {
+    // `-/blur/20/-/brightness/50/` now applies as `-/blur/20/-/brightness/50/-/preview/`,
+    // not `-/brightness/50/-/blur/20/-/preview/` (the old append-at-the-end order).
+    const source = operationsFromModifiers('-/blur/20/-/brightness/50/');
+
+    expect(mergeTransformationsIntoOperations(source, { brightness: 50 })).toEqual([
+      blur(20),
+      brightness(50),
+      preview(),
+    ]);
+  });
+
+  it('drops every preview in source and appends exactly one at the end', () => {
+    const source = [preview(), brightness(50), preview(1000, 400)];
+
+    expect(mergeTransformationsIntoOperations(source, { brightness: 50 })).toEqual([brightness(50), preview()]);
+  });
+
+  it('keeps the position of the last occurrence of a repeated modelled operation and drops earlier ones', () => {
+    // Matches `operationsToTransformations`, where a later occurrence wins on
+    // read — so the position that survives on write is the one whose value
+    // was actually read.
+    const source = [brightness(10), blur(20), brightness(90)];
+
+    expect(mergeTransformationsIntoOperations(source, { brightness: 90 })).toEqual([
+      blur(20),
+      brightness(90),
+      preview(),
+    ]);
+  });
+
+  it('keeps an unmodelled operation in place even when the transformations are empty', () => {
+    const source = [overlay('wm-uuid'), resize({ width: 300 })];
+
+    expect(mergeTransformationsIntoOperations(source, {})).toEqual([
+      overlay('wm-uuid'),
+      resize({ width: 300 }),
+      preview(),
+    ]);
+  });
+
+  it('mixes replace-in-place, removal, append and passthrough together', () => {
+    const source = [stretch('off'), brightness(10), overlay('wm-uuid'), contrast(5), preview()];
+
+    expect(mergeTransformationsIntoOperations(source, { brightness: 90, rotate: 180 })).toEqual([
+      stretch('off'),
+      brightness(90),
+      overlay('wm-uuid'),
+      rotate(180),
+      preview(),
+    ]);
+  });
+
+  it('a source whose value equals the mirror op is still replaced verbatim when re-set', () => {
+    const source = [mirrorOp()];
+
+    expect(mergeTransformationsIntoOperations(source, { mirror: true })).toEqual([mirrorOp(), preview()]);
   });
 });

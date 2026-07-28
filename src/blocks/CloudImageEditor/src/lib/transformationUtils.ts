@@ -11,6 +11,7 @@ import {
   format,
   gamma,
   mirror,
+  preview,
   progressive,
   rotate,
   saturation,
@@ -199,30 +200,10 @@ const OPERATION_PROCESSORS: OperationProcessorMap = Object.freeze({
 
 const MODELLED_OPERATION_NAMES: ReadonlySet<string> = new Set(SUPPORTED_OPERATIONS_ORDERED);
 
-/**
- * Operations the editor cannot model, kept so they survive an edit. Applying a
- * transformation rebuilds the URL from the bare original plus what the editor
- * knows, so anything not carried here is erased — a watermark `overlay`, a
- * pipeline's `resize`, a `format` chosen upstream.
- *
- * `preview` is excluded: the editor appends its own on every Apply, so keeping
- * an incoming one would accumulate duplicates across edits.
- *
- * An operation the editor *does* model but cannot parse (crop by aspect ratio,
- * percentage or alignment keyword) is NOT passthrough — it is still dropped,
- * because the crop UI has no way to represent it. That is a separate gap.
- */
-export function extractPassthroughOperations(operations: string[]): string[] {
-  return operations.filter((operation) => {
-    const name = operation.split('/')[0] ?? '';
-    return name !== 'preview' && !MODELLED_OPERATION_NAMES.has(name);
-  });
-}
-
-export function operationsToTransformations(operations: string[]): Transformations {
+export function operationsToTransformations(operations: readonly CdnOperation[]): Transformations {
   const transformations: Partial<Record<keyof Transformations, unknown>> = {};
   for (const operation of operations) {
-    const [name, ...args] = operation.split('/');
+    const { name, params: args } = operation;
     if (!name || !SUPPORTED_OPERATIONS_ORDERED.includes(name as keyof Transformations)) {
       continue;
     }
@@ -236,7 +217,7 @@ export function operationsToTransformations(operations: string[]): Transformatio
     } catch (err) {
       log.warn(
         [
-          `Failed to parse URL operation "${operation}". It will be ignored.`,
+          `Failed to parse URL operation "${name}". It will be ignored.`,
           err instanceof Error ? `Error message: "${err.message}"` : err,
           'If you need this functionality, please feel free to open an issue at https://github.com/uploadcare/blocks/issues/new',
         ].join('\n'),
@@ -245,4 +226,75 @@ export function operationsToTransformations(operations: string[]): Transformatio
   }
 
   return transformations as Transformations;
+}
+
+/**
+ * Edit the source URL's operations in place rather than rebuilding the list
+ * from scratch and appending what the editor cannot model. Placement matters
+ * to the CDN for some pairs (`stretch` applies to a *following* resize), so an
+ * operation the editor does not model stays exactly where the source had it.
+ *
+ * Rules:
+ * - A modelled operation present in `source` and still meaningful in
+ *   `transformations` is replaced in its existing slot with what the
+ *   corresponding creator produces for the current value.
+ * - A modelled operation present in `source` but no longer meaningful (unset,
+ *   or equal to its default — see `isMeaningful`) is removed; its slot
+ *   disappears rather than being left empty.
+ * - A modelled operation that is meaningful in `transformations` but absent
+ *   from `source` is appended after the last source operation, in the
+ *   editor's canonical `SUPPORTED_OPERATIONS_ORDERED` order relative to other
+ *   newly-added ones.
+ * - An operation the editor does not model is kept verbatim, in place.
+ * - Every `preview` in `source` is dropped, and exactly one `preview()` is
+ *   appended last, so an open/apply cycle never stacks markers.
+ * - A modelled operation appearing more than once in `source` keeps the
+ *   position of its *last* occurrence; earlier occurrences are dropped. That
+ *   matches `operationsToTransformations`, where a later occurrence overwrites
+ *   an earlier one, so reading and writing agree on which occurrence wins.
+ */
+export function mergeTransformationsIntoOperations(
+  source: readonly CdnOperation[],
+  transformations: Transformations,
+): CdnOperation[] {
+  const modelled = transformationsToOperations(transformations);
+  const modelledByName = new Map(modelled.map((operation) => [operation.name, operation]));
+
+  const lastModelledIndexByName = new Map<string, number>();
+  source.forEach((operation, index) => {
+    if (MODELLED_OPERATION_NAMES.has(operation.name)) {
+      lastModelledIndexByName.set(operation.name, index);
+    }
+  });
+
+  const placedNames = new Set<string>();
+  const merged: CdnOperation[] = [];
+  source.forEach((operation, index) => {
+    if (operation.name === 'preview') {
+      return;
+    }
+    if (!MODELLED_OPERATION_NAMES.has(operation.name)) {
+      merged.push(operation);
+      return;
+    }
+    // An earlier occurrence of a repeated modelled operation: its slot is
+    // dropped, only the last occurrence's position survives.
+    if (lastModelledIndexByName.get(operation.name) !== index) {
+      return;
+    }
+    const replacement = modelledByName.get(operation.name);
+    if (replacement) {
+      merged.push(replacement);
+      placedNames.add(operation.name);
+    }
+  });
+
+  for (const operation of modelled) {
+    if (!placedNames.has(operation.name)) {
+      merged.push(operation);
+    }
+  }
+
+  merged.push(preview());
+  return merged;
 }

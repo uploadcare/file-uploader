@@ -1,8 +1,12 @@
-import { preview, type Quality, quality as qualityOp, rawOp } from '@uploadcare/cdn-url/ops';
+import { type Quality, quality as qualityOp, rawOp } from '@uploadcare/cdn-url/ops';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
-import { type CdnOperation, operationsFromModifiers, serializeOperations, withOperations } from '../../../../utils/cdn';
+import { type CdnOperation, serializeOperations, withOperations } from '../../../../utils/cdn';
 import type { Transformations } from '../types';
-import { COMMON_OPERATIONS, transformationsToOperations } from './transformationUtils';
+import {
+  COMMON_OPERATIONS,
+  mergeTransformationsIntoOperations,
+  transformationsToOperations,
+} from './transformationUtils';
 
 const ANALYTICS = rawOp('@clib', PACKAGE_NAME, PACKAGE_VERSION, 'uc-cloud-image-editor');
 
@@ -36,9 +40,12 @@ export function editorPreviewUrl({
 /**
  * The URL the editor commits on Apply, and emits on the live change event.
  *
- * `passthrough` holds operations the editor cannot model, appended after the
- * recomputed ones — presence is preserved, placement is not (order matters to the
- * CDN for a few pairs, e.g. `stretch` applies to a following resize).
+ * `sourceOperations` is the full operation list the source URL carried,
+ * unfiltered. Rather than rebuilding the list from the modelled transformations
+ * and appending whatever the editor cannot model, `mergeTransformationsIntoOperations`
+ * edits that list in place — an operation the editor does not model keeps its
+ * original position, which matters to the CDN for a few pairs (e.g. `stretch`
+ * applies to a following resize).
  *
  * Returns `cdnUrlModifiers` alongside `cdnUrl` — both are public fields on the
  * documented `apply`/`change` events (`ApplyResult`), so the operation list is
@@ -48,17 +55,13 @@ export function editorPreviewUrl({
 export function editorAppliedUrl({
   originalUrl,
   transformations,
-  passthrough,
+  sourceOperations,
 }: {
   originalUrl: string;
   transformations: Transformations;
-  passthrough: readonly string[];
+  sourceOperations: readonly CdnOperation[];
 }): { cdnUrl: string; cdnUrlModifiers: string } {
-  const operations = [
-    ...transformationsToOperations(transformations),
-    ...operationsFromModifiers(...passthrough),
-    preview(),
-  ];
+  const operations = mergeTransformationsIntoOperations(sourceOperations, transformations);
   return {
     cdnUrl: withOperations(originalUrl, operations),
     cdnUrlModifiers: serializeOperations(operations),
