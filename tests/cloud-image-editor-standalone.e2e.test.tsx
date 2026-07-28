@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import '../types/jsx';
 
@@ -33,5 +33,34 @@ describe('Cloud Image Editor — standalone (no <uc-config>)', () => {
     // Bundled English locale resolves (the interpolated tuning a11y name).
     await userEvent.click(page.getByRole('tab', { name: /tuning/i }));
     await expect.element(page.getByRole('option', { name: /Brightness/i })).toBeVisible();
+  });
+
+  it('warns and opens without transformations when cdn-url addresses a group rather than a single file', async () => {
+    // `parseFileUrl` (used by `updateImage`'s read path) throws for anything
+    // that isn't a single stored file — a group URL here — and the editor's
+    // local catch must turn that into a warning, not an unhandled rejection,
+    // while still rendering (no transformations applied).
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    try {
+      page.render(
+        <uc-cloud-image-editor
+          cdn-url="https://ucarecdn.com/f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f~3/"
+          cdn-cname="https://ucarecdn.com/"
+          test-mode
+        ></uc-cloud-image-editor>,
+      );
+
+      await expect.element(page.getByTestId('uc-cloud-image-editor')).toBeVisible();
+
+      await expect.poll(() => warnSpy.mock.calls.length).toBeGreaterThan(0);
+      expect(warnSpy).toHaveBeenCalledWith(
+        '[uc][cloud-image-editor]',
+        'Failed to parse CDN URL, opening editor without transformations',
+        expect.any(Error),
+      );
+    } finally {
+      warnSpy.mockRestore();
+    }
   });
 });

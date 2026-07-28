@@ -1,5 +1,5 @@
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
-import { operationsFromModifiers, withOperations } from '../../../../utils/cdn';
+import { modifiersFromOperations, operationsFromModifiers, withOperations } from '../../../../utils/cdn';
 import type { Transformations } from '../types';
 import { COMMON_OPERATIONS, transformationsToOperations } from './transformationUtils';
 
@@ -41,6 +41,11 @@ export function editorPreviewUrl({
  * `passthrough` holds operations the editor cannot model, appended after the
  * recomputed ones — presence is preserved, placement is not (order matters to the
  * CDN for a few pairs, e.g. `stretch` applies to a following resize).
+ *
+ * Returns `cdnUrlModifiers` alongside `cdnUrl` — both are public fields on the
+ * documented `apply`/`change` events (`ApplyResult`), so the operation list is
+ * composed once here rather than separately at each call site, where it could
+ * silently diverge from the URL.
  */
 export function editorAppliedUrl({
   originalUrl,
@@ -50,9 +55,10 @@ export function editorAppliedUrl({
   originalUrl: string;
   transformations: Transformations;
   passthrough: readonly string[];
-}): string {
-  return withOperations(
-    originalUrl,
-    operationsFromModifiers(transformationsToOperations(transformations), ...passthrough, 'preview'),
-  );
+}): { cdnUrl: string; cdnUrlModifiers: string } {
+  const operations = operationsFromModifiers(transformationsToOperations(transformations), ...passthrough, 'preview');
+  return {
+    cdnUrl: withOperations(originalUrl, operations),
+    cdnUrlModifiers: modifiersFromOperations(operations),
+  };
 }

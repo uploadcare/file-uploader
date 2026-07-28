@@ -16,13 +16,7 @@ import { ctxNameContext } from '../../../lit/ctx-name-context';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types';
-import {
-  modifiersFromOperations,
-  operationsFromModifiers,
-  parseFileUrl,
-  serializeCdnUrl,
-  withOperations,
-} from '../../../utils/cdn';
+import { operationsFromModifiers, parseFileUrl, serializeCdnUrl, withOperations } from '../../../utils/cdn';
 import { serializeCsv } from '../../../utils/comma-separated';
 import { debounce } from '../../../utils/debounce.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
@@ -33,11 +27,7 @@ import { classNames } from './lib/classNames.js';
 import { editorAppliedUrl } from './lib/editorUrls';
 import { getClosestAspectRatio, parseCropPreset } from './lib/parseCropPreset.js';
 import { parseTabs } from './lib/parseTabs.js';
-import {
-  extractPassthroughOperations,
-  operationsToTransformations,
-  transformationsToOperations,
-} from './lib/transformationUtils.js';
+import { extractPassthroughOperations, operationsToTransformations } from './lib/transformationUtils.js';
 import svgIconsSprite from './svg-sprite';
 import { ALL_TABS, TabId } from './toolbar-constants.js';
 import type { ApplyResult, CropPresetList, ImageSize, Transformations } from './types';
@@ -460,14 +450,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       return;
     }
     const passthrough = this._editorController.get('*editorPassthroughOperations');
-    const cdnUrl = editorAppliedUrl({ originalUrl, transformations, passthrough });
     // Appended after the editor's own operations rather than restored to their
     // original positions: order matters to the CDN for a few pairs (`stretch`
     // applies to a following resize, `main_colors` must be last), so this
-    // preserves presence, not placement.
-    const cdnUrlModifiers = modifiersFromOperations(
-      operationsFromModifiers(transformationsToOperations(transformations), ...passthrough, 'preview'),
-    );
+    // preserves presence, not placement — enforced by `editorAppliedUrl` composing
+    // the operation list once for both `cdnUrl` and `cdnUrlModifiers`.
+    const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, passthrough });
 
     const eventData: ApplyResult = {
       originalUrl,
@@ -752,7 +740,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     if (this.cdnUrl) {
       try {
         // Throws for anything that is not a single stored file; this lifecycle
-        // path tolerates a missing crop, so it just leaves `closest` unset.
+        // path tolerates a missing crop, so it just leaves `closest` at null.
         const parsed = parseFileUrl(this.cdnUrl);
         const operations = parsed.operations.map((operation) => [operation.name, ...operation.params].join('/'));
         const transformations = operationsToTransformations(operations) as Transformations;
@@ -761,8 +749,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
           const [w, h] = transformations.crop.dimensions;
           closest = getClosestAspectRatio(w, h, list, 0.1);
         }
-      } catch {
-        closest = null;
+      } catch (err) {
+        this._log.debug('Failed to parse CDN URL while syncing the crop preset state', err);
       }
     }
 
@@ -788,10 +776,17 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     if (this.cdnUrl) {
       const cdnUrlValue = this.cdnUrl as string;
+      // `parseFileUrl` throws for anything that is not a single stored file
+      // (a group or delivery-proxy URL); caught locally so a bad `cdn-url`
+      // warns and opens the editor without transformations instead of
+      // throwing into the `void this.updateImage()` callers.
+      let parsed: ReturnType<typeof parseFileUrl> | undefined;
       try {
-        // Throws for anything that is not a single stored file; the caller's catch
-        // warns and opens without transformations.
-        const parsed = parseFileUrl(cdnUrlValue);
+        parsed = parseFileUrl(cdnUrlValue);
+      } catch (err) {
+        this._log.warn('Failed to parse CDN URL, opening editor without transformations', err);
+      }
+      if (parsed) {
         const originalUrl = serializeCdnUrl({ origin: parsed.origin, uuid: parsed.uuid });
         if (originalUrl === editorController.get('*originalUrl')) {
           return;
@@ -800,8 +795,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         editorController.set('*originalUrl', originalUrl);
         editorController.set('*editorTransformations', operationsToTransformations(operations) as Transformations);
         editorController.set('*editorPassthroughOperations', extractPassthroughOperations(operations));
-      } catch (err) {
-        this._log.warn('Failed to parse CDN URL, opening editor without transformations', { error: err });
       }
     } else if (this.uuid) {
       const cdnCname = editorController.getConfig('cdnCname');
@@ -890,10 +883,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       }
       const originalUrl = editorController.get('*originalUrl') as string;
       const passthrough = editorController.get('*editorPassthroughOperations');
-      const cdnUrl = editorAppliedUrl({ originalUrl, transformations, passthrough });
-      const cdnUrlModifiers = modifiersFromOperations(
-        operationsFromModifiers(transformationsToOperations(transformations), ...passthrough, 'preview'),
-      );
+      const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, passthrough });
 
       const eventData: ApplyResult = {
         originalUrl,
