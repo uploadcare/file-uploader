@@ -8,5 +8,5 @@
  * helper, and origin policy.
  */
 export { type CdnOperation, type ParsedCdnUrl, parseCdnUrl, serializeCdnUrl } from '@uploadcare/cdn-url';
-export { modifiersFromOperations, operationsFromModifiers, withOperations } from './operations';
+export { modifiersFromOperations, operationsFromModifiers, parseFileUrl, withOperations } from './operations';
 export { DEFAULT_CDN_ORIGIN, deliveryProxyOrigin } from './origin';

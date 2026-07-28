@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { modifiersFromOperations, operationsFromModifiers, withOperations } from './operations';
+import { modifiersFromOperations, operationsFromModifiers, parseFileUrl, withOperations } from './operations';
 
 const UUID = 'c2499162-eb07-4b93-b31e-94a89a47e858';
 const PROXY = 'https://domain.ucr.io:8080';
@@ -103,5 +103,31 @@ describe('withOperations', () => {
 
   it('throws for a base that is not a CDN url', () => {
     expect(() => withOperations('https://ucarecdn.com/', [{ name: 'preview', params: [] }])).toThrow(TypeError);
+  });
+});
+
+describe('parseFileUrl', () => {
+  it('narrows a single-file url', () => {
+    const parsed = parseFileUrl(`https://ucarecdn.com/${UUID}/-/resize/100x/photo.jpg`);
+
+    expect(parsed.uuid).toBe(UUID);
+    expect(parsed.filename).toBe('photo.jpg');
+    expect(parsed.operations).toEqual([{ name: 'resize', params: ['100x'] }]);
+  });
+
+  it('accepts a conversion result, which is still a single file', () => {
+    expect(parseFileUrl(`https://ucarecdn.com/${UUID}/video/-/quality/best/`).conversion).toBe('video');
+  });
+
+  it.each([
+    ['a group root', `https://ucarecdn.com/${UUID}~2/`],
+    ['a group element', `https://ucarecdn.com/${UUID}~2/nth/0/x.jpg`],
+    ['a delivery-proxy url', `${PROXY}/${SOURCE}`],
+  ])('rejects %s, which addresses no single stored file', (_label, url) => {
+    expect(() => parseFileUrl(url)).toThrow(TypeError);
+  });
+
+  it('rejects something that is not a cdn url at all', () => {
+    expect(() => parseFileUrl('https://ucarecdn.com/')).toThrow(TypeError);
   });
 });
