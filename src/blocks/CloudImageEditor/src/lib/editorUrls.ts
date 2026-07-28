@@ -14,8 +14,11 @@ const ANALYTICS = rawOp('@clib', PACKAGE_NAME, PACKAGE_VERSION, 'uc-cloud-image-
  * The URL the editor renders while the user is still editing: everything the
  * viewer and the filter thumbnails need, sized by the caller.
  *
- * Note this does NOT carry passthrough operations, matching the behaviour of the
- * previous implementation — a known gap recorded in the design doc.
+ * Built from the transformations alone, so unlike the applied URL it does **not**
+ * carry the operations the editor cannot model: a watermarked source previews
+ * without its watermark, then keeps it on Apply. A known asymmetry, recorded in the
+ * design doc — closing it would change every filter-thumbnail fetch, so it is its
+ * own change.
  */
 export function editorPreviewUrl({
   originalUrl,

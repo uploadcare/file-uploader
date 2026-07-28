@@ -217,7 +217,9 @@ export function operationsToTransformations(operations: readonly CdnOperation[])
     } catch (err) {
       log.warn(
         [
-          `Failed to parse URL operation "${name}". It will be ignored.`,
+          // Include the params: `crop` alone doesn't say which syntax was rejected,
+          // and an unrepresentable crop is the most common reason to land here.
+          `Failed to parse URL operation "${[name, ...args].join('/')}". It will be ignored.`,
           err instanceof Error ? `Error message: "${err.message}"` : err,
           'If you need this functionality, please feel free to open an issue at https://github.com/uploadcare/blocks/issues/new',
         ].join('\n'),

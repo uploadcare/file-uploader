@@ -2,6 +2,7 @@ import {
   blur,
   brightness,
   contrast,
+  crop as cropOp,
   enhance,
   mirror as mirrorOp,
   overlay,
@@ -29,10 +30,15 @@ import {
  * what the code does today — including the quirks — rather than what it ideally
  * would do.
  *
- * Two of those quirks are slated to change and are labelled `PRE-FIX` where they
- * appear: unmodelled operations being dropped, and a value equal to its default
- * being indistinguishable from "unset". When the fix lands, exactly those
- * assertions should flip, and the diff should say so out loud.
+ * One quirk remains labelled `PRE-FIX` where it appears: a value equal to its
+ * default is indistinguishable from "unset", so an explicitly-set `brightness: 0`
+ * never reaches the URL. When that is fixed, exactly those assertions should flip,
+ * and the diff should say so out loud.
+ *
+ * The other former `PRE-FIX` quirk — an unmodelled operation being lost across an
+ * edit — is fixed: `mergeTransformationsIntoOperations` edits the source operation
+ * list rather than rebuilding it, so such an operation keeps its place. The reader
+ * still does not model it, which is not the same thing as losing it.
  */
 /**
  * Both `transformationsToOperations` and `operationsToTransformations` work
@@ -208,9 +214,12 @@ describe('operationsToTransformations', () => {
     expect(operationsToTransformations(ops('crop/1:1/center', 'brightness/50'))).toEqual({ brightness: 50 });
   });
 
-  // PRE-FIX: this is the silent data loss. Any operation the editor does not
-  // model is discarded on read, and because Apply rebuilds the URL from
-  // `Transformations` alone, it never comes back.
+  // An operation the editor does not model is absent from `Transformations` — the
+  // reader only knows the operations the UI can represent. This is no longer data
+  // loss: Apply merges the current transformations into the source operation list
+  // rather than rebuilding from `Transformations`, so an unmodelled operation
+  // survives an edit in its original position (see
+  // `mergeTransformationsIntoOperations` below).
   it.each([
     ['resize', 'resize/300x'],
     ['format', 'format/auto'],
@@ -219,7 +228,7 @@ describe('operationsToTransformations', () => {
     ['blur', 'blur/20'],
     ['preview', 'preview/800x600'],
     ['an internal @-operation', '@clib/uc-img/1.0'],
-  ])('PRE-FIX: silently drops the unmodelled operation %s', (_label, operation) => {
+  ])('does not model the operation %s, so it is absent from Transformations', (_label, operation) => {
     expect(operationsToTransformations(ops(operation))).toEqual({});
   });
 
@@ -369,9 +378,44 @@ describe('mergeTransformationsIntoOperations', () => {
     ]);
   });
 
-  it('a source whose value equals the mirror op is still replaced verbatim when re-set', () => {
+  it('is idempotent for a valueless boolean that is still set', () => {
+    // `mirror` carries no params, so replace-in-place and keep-in-place are
+    // indistinguishable in the output by construction — this pins that re-applying
+    // an unchanged boolean neither duplicates nor drops it, which is all the
+    // operation's shape allows a test to check.
     const source = [mirrorOp()];
 
     expect(mergeTransformationsIntoOperations(source, { mirror: true })).toEqual([mirrorOp(), preview()]);
+  });
+
+  // The editor models `crop` but its UI cannot represent an aspect-ratio,
+  // percentage or alignment-keyword crop, so the reader skips those with a warning
+  // and they are absent from `Transformations`. They are therefore NOT passthrough:
+  // the merge drops them, exactly as the pre-refactor mechanism did. The suite that
+  // used to pin this went with `extractPassthroughOperations`, so it is pinned here.
+  it.each([
+    ['aspect-ratio crop', 'crop/1:1/center'],
+    ['percentage crop', 'crop/50p50p/10p,10p'],
+    ['alignment-preset crop', 'crop/640x480/center'],
+  ])('drops the modelled-but-unrepresentable %s rather than preserving it', (_label, operation) => {
+    const source = [...ops(operation), overlay('wm-uuid')];
+
+    // The crop's slot disappears; the genuinely unmodelled overlay keeps its place.
+    expect(mergeTransformationsIntoOperations(source, {})).toEqual([overlay('wm-uuid'), preview()]);
+  });
+
+  it('replaces an unrepresentable crop with the one the user drew', () => {
+    const source = [...ops('crop/1:1/center'), overlay('wm-uuid')];
+    const drawn = { crop: { dimensions: [640, 480], coords: [10, 20] } } as const satisfies Transformations;
+
+    // The drawn crop takes the source crop's slot, not the end of the list: placement
+    // is keyed on the operation *name*, so a `crop` the reader could not parse still
+    // reserves the position its replacement inherits. Worth pinning — it means the
+    // user's crop lands where their URL had one, rather than after a watermark.
+    expect(mergeTransformationsIntoOperations(source, drawn)).toEqual([
+      cropOp(640, 480, { x: 10, y: 20 }),
+      overlay('wm-uuid'),
+      preview(),
+    ]);
   });
 });
