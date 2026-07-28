@@ -6,22 +6,16 @@
  * Reading and writing a URL keep the library's names, which are already the right
  * words. Only the pieces that are ours are added: the two string edges, an append
  * helper, and origin policy.
- */
-export { type CdnOperation, parseCdnUrl, serializeCdnUrl } from '@uploadcare/cdn-url';
-
-import { parseFileUrl as _parseFileUrl } from '@uploadcare/cdn-url';
-
-/**
- * Parse a URL that must address a single stored file, narrowing the result so
- * callers read `uuid`/`operations`/`filename` without discriminating on `kind`.
  *
+ * `parseFileUrl` is the one worth a word: it narrows to a single stored file, so
+ * callers read `uuid`/`operations`/`filename` without discriminating on `kind`.
  * Most of this codebase only ever handles single-file URLs — a thumbnail, an
- * editor source, an upload entry. Branching over group and delivery-proxy kinds
- * at those call sites invents behaviour for inputs that should not arrive; this
- * fails loudly instead, and callers that already catch (`<uc-img>` URL building,
+ * editor source, an upload entry — and branching over group and delivery-proxy
+ * kinds at those call sites invents behaviour for inputs that should not arrive.
+ * It throws instead, and the callers that already catch (`<uc-img>` URL building,
  * the editor's `updateImage`, `addFileFromCdnUrl`) degrade as they do for any
  * other unusable URL.
  */
-export const parseFileUrl = _parseFileUrl;
+export { type CdnOperation, parseCdnUrl, parseFileUrl, serializeCdnUrl } from '@uploadcare/cdn-url';
 export { modifiersFromOperations, operationsFromModifiers, withOperations } from './operations';
 export { DEFAULT_CDN_ORIGIN, deliveryProxyOrigin } from './origin';
