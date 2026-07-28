@@ -53,6 +53,8 @@ export type CloudImageEditorControllerState = {
   '*loadingOperations': LoadingOperations;
   '*networkProblems': boolean;
   '*editorTransformations': Transformations;
+  /** Operations from the incoming URL that the editor cannot model; re-emitted on Apply. */
+  '*editorPassthroughOperations': string[];
   '*currentAspectRatio': CropAspectRatio | null;
   '*tabId': TabIdValue;
   '*colorPreview': ColorPreview;
@@ -64,6 +66,7 @@ function createDefaultState(): CloudImageEditorControllerState {
     '*loadingOperations': new Map(),
     '*networkProblems': false,
     '*editorTransformations': {},
+    '*editorPassthroughOperations': [],
     '*currentAspectRatio': null,
     '*tabId': TabId.CROP,
     '*colorPreview': null,

@@ -40,14 +40,27 @@ describe('editorPreviewUrl', () => {
 
 describe('editorAppliedUrl', () => {
   it('appends the preview marker after the transformations', () => {
-    expect(editorAppliedUrl({ originalUrl: ORIGINAL, transformations: { rotate: 90 } })).toEqual({
+    expect(editorAppliedUrl({ originalUrl: ORIGINAL, transformations: { rotate: 90 }, passthrough: [] })).toEqual({
       cdnUrl: `https://ucarecdn.com/${UUID}/-/rotate/90/-/preview/`,
       cdnUrlModifiers: '-/rotate/90/-/preview/',
     });
   });
 
+  it('re-emits carried operations between the transformations and the preview marker', () => {
+    expect(
+      editorAppliedUrl({
+        originalUrl: ORIGINAL,
+        transformations: { rotate: 90 },
+        passthrough: ['blur/20', 'overlay/wm-uuid'],
+      }),
+    ).toEqual({
+      cdnUrl: `https://ucarecdn.com/${UUID}/-/rotate/90/-/blur/20/-/overlay/wm-uuid/-/preview/`,
+      cdnUrlModifiers: '-/rotate/90/-/blur/20/-/overlay/wm-uuid/-/preview/',
+    });
+  });
+
   it('produces just the preview marker when nothing is set', () => {
-    expect(editorAppliedUrl({ originalUrl: ORIGINAL, transformations: {} })).toEqual({
+    expect(editorAppliedUrl({ originalUrl: ORIGINAL, transformations: {}, passthrough: [] })).toEqual({
       cdnUrl: `https://ucarecdn.com/${UUID}/-/preview/`,
       cdnUrlModifiers: '-/preview/',
     });
