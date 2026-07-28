@@ -29,6 +29,8 @@ type UrlBaseAccess = {
 };
 
 const ANALYTICS = '-/@clib/test/1.0/uc-img/';
+/** A real UUID: the library validates the grammar, so placeholders are rejected. */
+const UUID = 'c2499162-eb07-4b93-b31e-94a89a47e858';
 
 /** Config as `ImgConfig` would hold it: declared defaults, `''` for the rest. */
 const withDefaults = (config: Record<string, unknown>): Record<string, unknown> => ({
@@ -80,19 +82,19 @@ describe('_getUrlBase — passthrough sources', () => {
 
 describe('_getUrlBase — CDN branches', () => {
   it('appends modifiers to a src that already sits on the configured cname', () => {
-    const el = makeImg({ src: 'https://cdn.example.com/abc-uuid/', 'cdn-cname': 'https://cdn.example.com' });
+    const el = makeImg({ src: `https://cdn.example.com/${UUID}/`, 'cdn-cname': 'https://cdn.example.com' });
 
-    expect(el._getUrlBase()).toBe(`https://cdn.example.com/abc-uuid/${ANALYTICS}`);
+    expect(el._getUrlBase()).toBe(`https://cdn.example.com/${UUID}/${ANALYTICS}`);
   });
 
   it('builds from cname + uuid', () => {
-    const el = makeImg({ src: '', 'cdn-cname': 'https://cdn.example.com', uuid: 'abc-uuid' });
+    const el = makeImg({ src: '', 'cdn-cname': 'https://cdn.example.com', uuid: UUID });
 
-    expect(el._getUrlBase()).toBe(`https://cdn.example.com/abc-uuid/${ANALYTICS}`);
+    expect(el._getUrlBase()).toBe(`https://cdn.example.com/${UUID}/${ANALYTICS}`);
   });
 
   it('falls back to the default cname when only a uuid is set', () => {
-    expect(makeImg({ src: '', uuid: 'abc-uuid' })._getUrlBase()).toBe(`https://ucarecdn.com/abc-uuid/${ANALYTICS}`);
+    expect(makeImg({ src: '', uuid: UUID })._getUrlBase()).toBe(`https://ucarecdn.com/${UUID}/${ANALYTICS}`);
   });
 
   it('embeds an absolute src behind a proxy cname', () => {
@@ -111,19 +113,34 @@ describe('_getUrlBase — CDN branches', () => {
     const el = makeImg({
       src: 'https://example.com/a.png',
       'cdn-cname': 'https://cdn.example.com',
-      uuid: 'abc-uuid',
+      uuid: UUID,
       'proxy-cname': 'https://proxy.example.com',
       pubkey: 'mypub',
     });
 
-    expect(el._getUrlBase()).toBe(`https://cdn.example.com/abc-uuid/${ANALYTICS}`);
+    expect(el._getUrlBase()).toBe(`https://cdn.example.com/${UUID}/${ANALYTICS}`);
   });
 
-  // Only reachable by explicitly blanking the cname, since PROPS_MAP defaults it.
-  it('PRE-FIX: throws when the cname is explicitly emptied and only a uuid is set', () => {
-    const el = makeImg({ src: '', uuid: 'abc-uuid', 'cdn-cname': '' });
+  // CHANGED (was: threw `TypeError: Invalid URL` out of the render path). Only
+  // reachable by explicitly blanking the cname, since PROPS_MAP defaults it.
+  it('degrades to no URL when the cname is explicitly emptied', () => {
+    const el = makeImg({ src: '', uuid: UUID, 'cdn-cname': '' });
 
-    expect(() => el._getUrlBase()).toThrow(TypeError);
+    expect(el._getUrlBase()).toBeUndefined();
+  });
+
+  it('degrades to no URL for a uuid that is not a real UUID', () => {
+    // The library validates the UUID grammar; the old string concatenation would
+    // have produced a URL that merely 404s.
+    const el = makeImg({ src: '', uuid: 'not-a-uuid', 'cdn-cname': 'https://cdn.example.com' });
+
+    expect(el._getUrlBase()).toBeUndefined();
+  });
+
+  it('degrades to no URL for an unparseable cdn-operations attribute', () => {
+    const el = makeImg({ src: '', uuid: UUID, 'cdn-cname': 'https://cdn.example.com', 'cdn-operations': '-/-/' });
+
+    expect(el._getUrlBase()).toBeUndefined();
   });
 });
 
@@ -132,61 +149,61 @@ describe('_getUrlBase — modifiers', () => {
     const el = makeImg({
       src: '',
       'cdn-cname': 'https://cdn.example.com',
-      uuid: 'abc-uuid',
+      uuid: UUID,
       format: 'webp',
       quality: 'smart',
       'cdn-operations': '-/sharp/10/',
     });
 
     expect(el._getUrlBase('800x', '10')).toBe(
-      `https://cdn.example.com/abc-uuid/-/format/webp/-/quality/smart/-/resize/800x/-/blur/10/-/sharp/10/${ANALYTICS}`,
+      `https://cdn.example.com/${UUID}/-/format/webp/-/quality/smart/-/resize/800x/-/blur/10/-/sharp/10/${ANALYTICS}`,
     );
   });
 
   it('omits unset config rather than emitting empty operations', () => {
-    const el = makeImg({ src: '', 'cdn-cname': 'https://cdn.example.com', uuid: 'abc-uuid' });
+    const el = makeImg({ src: '', 'cdn-cname': 'https://cdn.example.com', uuid: UUID });
 
-    expect(el._getUrlBase()).toBe(`https://cdn.example.com/abc-uuid/${ANALYTICS}`);
+    expect(el._getUrlBase()).toBe(`https://cdn.example.com/${UUID}/${ANALYTICS}`);
   });
 
   it(`clamps a breakpoint above MAX_WIDTH (${MAX_WIDTH})`, () => {
-    const el = makeImg({ src: '', 'cdn-cname': 'https://c.example.com', uuid: 'u' });
+    const el = makeImg({ src: '', 'cdn-cname': 'https://c.example.com', uuid: UUID });
 
-    expect(el._getUrlBase('4000x')).toBe(`https://c.example.com/u/-/resize/${MAX_WIDTH}x/${ANALYTICS}`);
+    expect(el._getUrlBase('4000x')).toBe(`https://c.example.com/${UUID}/-/resize/${MAX_WIDTH}x/${ANALYTICS}`);
   });
 
   it(`clamps a jpeg breakpoint at the higher MAX_WIDTH_JPG (${MAX_WIDTH_JPG})`, () => {
-    const el = makeImg({ src: '', 'cdn-cname': 'https://c.example.com', uuid: 'u', format: 'jpeg' });
+    const el = makeImg({ src: '', 'cdn-cname': 'https://c.example.com', uuid: UUID, format: 'jpeg' });
 
     expect(el._getUrlBase('6000x')).toBe(
-      `https://c.example.com/u/-/format/jpeg/-/resize/${MAX_WIDTH_JPG}x/${ANALYTICS}`,
+      `https://c.example.com/${UUID}/-/format/jpeg/-/resize/${MAX_WIDTH_JPG}x/${ANALYTICS}`,
     );
   });
 
   it('drops a size with no unit', () => {
-    const el = makeImg({ src: '', 'cdn-cname': 'https://c.example.com', uuid: 'u' });
+    const el = makeImg({ src: '', 'cdn-cname': 'https://c.example.com', uuid: UUID });
 
-    expect(el._getUrlBase('800')).toBe(`https://c.example.com/u/${ANALYTICS}`);
+    expect(el._getUrlBase('800')).toBe(`https://c.example.com/${UUID}/${ANALYTICS}`);
   });
 
   // `parseObjectToString` filters `undefined` and `''` but not `null`, so a
   // caller passing an explicit null blur puts the literal in the URL.
   it('PRE-FIX: emits blur/null when blur is passed as null', () => {
-    const el = makeImg({ src: '', 'cdn-cname': 'https://c.example.com', uuid: 'u' });
+    const el = makeImg({ src: '', 'cdn-cname': 'https://c.example.com', uuid: UUID });
 
-    expect(el._getUrlBase('', null)).toBe(`https://c.example.com/u/-/blur/null/${ANALYTICS}`);
+    expect(el._getUrlBase('', null)).toBe(`https://c.example.com/${UUID}/-/blur/null/${ANALYTICS}`);
   });
 });
 
 describe('the consumers that compose _getUrlBase output', () => {
-  const base = { src: '', 'cdn-cname': 'https://c.example.com', uuid: 'u' };
+  const base = { src: '', 'cdn-cname': 'https://c.example.com', uuid: UUID };
 
   it('_getSrc delegates with no size or blur', () => {
-    expect(makeImg(base)._getSrc()).toBe(`https://c.example.com/u/${ANALYTICS}`);
+    expect(makeImg(base)._getSrc()).toBe(`https://c.example.com/${UUID}/${ANALYTICS}`);
   });
 
   it('_srcUrlPreview asks for a 100px blurred preview', () => {
-    expect(makeImg(base)._srcUrlPreview).toBe(`https://c.example.com/u/-/resize/100x/-/blur/100/${ANALYTICS}`);
+    expect(makeImg(base)._srcUrlPreview).toBe(`https://c.example.com/${UUID}/-/resize/100x/-/blur/100/${ANALYTICS}`);
   });
 
   it('_getSrcset emits one entry per breakpoint plus a hi-res entry, deduplicating overlaps', () => {
@@ -198,9 +215,9 @@ describe('the consumers that compose _getUrlBase output', () => {
 
     expect(el._getSrcset()).toBe(
       [
-        `https://c.example.com/u/-/resize/200x/${ANALYTICS} 200w`,
-        `https://c.example.com/u/-/resize/400x/${ANALYTICS} 400w`,
-        `https://c.example.com/u/-/resize/800x/${ANALYTICS} 800w`,
+        `https://c.example.com/${UUID}/-/resize/200x/${ANALYTICS} 200w`,
+        `https://c.example.com/${UUID}/-/resize/400x/${ANALYTICS} 400w`,
+        `https://c.example.com/${UUID}/-/resize/800x/${ANALYTICS} 800w`,
       ].join(),
     );
   });
@@ -210,9 +227,9 @@ describe('the consumers that compose _getUrlBase output', () => {
 
     expect(el._getSrcset()).toBe(
       [
-        `https://c.example.com/u/-/resize/200x/${ANALYTICS} 200w`,
-        `https://c.example.com/u/-/resize/400x/${ANALYTICS} 400w`,
-        `https://c.example.com/u/-/resize/600x/${ANALYTICS} 600w`,
+        `https://c.example.com/${UUID}/-/resize/200x/${ANALYTICS} 200w`,
+        `https://c.example.com/${UUID}/-/resize/400x/${ANALYTICS} 400w`,
+        `https://c.example.com/${UUID}/-/resize/600x/${ANALYTICS} 600w`,
       ].join(),
     );
   });
@@ -226,8 +243,8 @@ describe('the consumers that compose _getUrlBase output', () => {
 
     expect(el._getSrcset()).toBe(
       [
-        `https://c.example.com/u/-/resize/300x/${ANALYTICS} 1x`,
-        `https://c.example.com/u/-/resize/600x/${ANALYTICS} 2x`,
+        `https://c.example.com/${UUID}/-/resize/300x/${ANALYTICS} 1x`,
+        `https://c.example.com/${UUID}/-/resize/600x/${ANALYTICS} 2x`,
       ].join(),
     );
   });
@@ -235,7 +252,7 @@ describe('the consumers that compose _getUrlBase output', () => {
   it('_getSrcset drops hi-res entries when hi-res-support is off', () => {
     const el = makeImg({ ...base, breakpoints: '200', 'hi-res-support': '' });
 
-    expect(el._getSrcset()).toBe(`https://c.example.com/u/-/resize/200x/${ANALYTICS} 200w`);
+    expect(el._getSrcset()).toBe(`https://c.example.com/${UUID}/-/resize/200x/${ANALYTICS} 200w`);
   });
 });
 
@@ -244,23 +261,23 @@ describe('_getUrlBase — secure delivery proxy', () => {
     const el = makeImg({
       src: '',
       'cdn-cname': 'https://cdn.example.com',
-      uuid: 'abc-uuid',
+      uuid: UUID,
       'secure-delivery-proxy': 'https://proxy.test/?url={{previewUrl}}',
     });
 
     expect(el._getUrlBase()).toBe(
-      `https://proxy.test/?url=${encodeURIComponent(`https://cdn.example.com/abc-uuid/${ANALYTICS}`)}`,
+      `https://proxy.test/?url=${encodeURIComponent(`https://cdn.example.com/${UUID}/${ANALYTICS}`)}`,
     );
   });
 
   it('does not wrap a src that already sits on the cname', () => {
     // The matching-cname branch returns before `_proxyUrl` is reached.
     const el = makeImg({
-      src: 'https://cdn.example.com/abc-uuid/',
+      src: `https://cdn.example.com/${UUID}/`,
       'cdn-cname': 'https://cdn.example.com',
       'secure-delivery-proxy': 'https://proxy.test/?url={{previewUrl}}',
     });
 
-    expect(el._getUrlBase()).toBe(`https://cdn.example.com/abc-uuid/${ANALYTICS}`);
+    expect(el._getUrlBase()).toBe(`https://cdn.example.com/${UUID}/${ANALYTICS}`);
   });
 });

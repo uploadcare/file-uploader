@@ -1,3 +1,4 @@
+import { logger } from '../../abstract/logger';
 import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
 import { stringToArray } from '../../utils/stringToArray';
 import { applyTemplateData } from '../../utils/template-utils';
@@ -13,6 +14,8 @@ import {
 } from './configurations';
 import { ImgConfig } from './ImgConfig';
 import { type ParseableParams, parseObjectToString } from './utils/parseObjectToString';
+
+const log = logger.scope('img');
 
 type ImgType = (typeof ImgTypeEnum)[keyof typeof ImgTypeEnum];
 
@@ -106,6 +109,21 @@ export class ImgBase extends ImgConfig {
       return this._proxyUrl(src);
     }
 
+    try {
+      return this._buildCdnUrl(size, blur, src);
+    } catch (err) {
+      // `@uploadcare/cdn-url` rejects anything that is not a real CDN URL — a
+      // malformed `uuid`, a blanked `cdn-cname`, an unparseable `cdn-operations`
+      // attribute. This is user-supplied config reaching a render path, so it
+      // degrades to "no image" with a warning rather than throwing out of
+      // rendering (the previous string-concatenating implementation would have
+      // produced a broken URL instead, which failed just as silently).
+      log.warn('Failed to build a CDN URL from the configured attributes', err);
+      return undefined;
+    }
+  }
+
+  private _buildCdnUrl(size: string | null, blur: string | null, src: string): string | undefined {
     const cdnModifiers = this._getCdnModifiers(size, blur);
     const cdnCnameRaw = this.$$('cdn-cname') as string | undefined;
     const cdnCname = cdnCnameRaw;

@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { resolveSecureDeliveryProxyUrl, type SecureDeliveryProxyConfig } from './secureDeliveryProxyUrl';
 
-const cdnUrl = 'https://ucarecdn.com/uuid-1234/-/crop/100x100/100,100/-/preview/300x300/photo.jpg';
+const cdnUrl =
+  'https://ucarecdn.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/crop/100x100/100,100/-/preview/300x300/photo.jpg';
 
 describe('resolveSecureDeliveryProxyUrl', () => {
   let warnSpy: ReturnType<typeof vi.spyOn>;
@@ -59,7 +60,7 @@ describe('resolveSecureDeliveryProxyUrl', () => {
     await resolveSecureDeliveryProxyUrl(config, onResolverError, cdnUrl);
 
     expect(resolver).toHaveBeenCalledExactlyOnceWith(cdnUrl, {
-      uuid: 'uuid-1234',
+      uuid: 'c2499162-eb07-4b93-b31e-94a89a47e858',
       cdnUrlModifiers: '-/crop/100x100/100,100/-/preview/300x300/',
       fileName: 'photo.jpg',
     });
