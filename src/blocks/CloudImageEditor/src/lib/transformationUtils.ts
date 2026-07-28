@@ -1,3 +1,4 @@
+import { FILTER_NAMES, type FilterName } from '@uploadcare/cdn-url/ops';
 import { logger } from '../../../../abstract/logger';
 import { joinCdnOperations } from '../../../../utils/cdn-utils.js';
 import { stringToArray } from '../../../../utils/stringToArray.js';
@@ -83,10 +84,23 @@ export const COMMON_OPERATIONS = joinCdnOperations('format/auto', 'progressive/y
 
 const asNumber = ([value]: [unknown]) => (typeof value !== 'undefined' ? Number(value) : undefined);
 const asBoolean = () => true;
-const asFilter = ([name, amount]: [string, unknown]) => ({
-  name,
-  amount: typeof amount !== 'undefined' ? Number(amount) : 100,
-});
+const isFilterName = (value: string): value is FilterName => (FILTER_NAMES as readonly string[]).includes(value);
+
+/**
+ * A filter name comes off a URL, so it is untrusted: validate it against the
+ * CDN's own list rather than typing it as a `FilterName` we haven't checked.
+ * An unrecognised name is rejected the same way unsupported crop syntax is —
+ * the caller logs and skips the operation.
+ */
+const asFilter = ([name, amount]: [string, unknown]) => {
+  if (!isFilterName(name)) {
+    throw new Error(`Unknown filter "${name}".`);
+  }
+  return {
+    name,
+    amount: typeof amount !== 'undefined' ? Number(amount) : 100,
+  };
+};
 
 /**
  * Docs: https://uploadcare.com/docs/transformations/image/resize-crop/#operation-crop We don't support percentages and

@@ -56,7 +56,8 @@ export type ColorOperationConfigKey = ColorOperation | 'filter';
 export type ColorPreview = {
   operation: ColorOperationConfigKey;
   value?: number;
-  filter?: string;
+  /** A real CDN filter preset — the slider maps its "original" pseudo-filter to undefined. */
+  filter?: FilterName;
 } | null;
 
 const NUMERIC_OPERATION_DEFAULTS = OPERATIONS_DEFAULTS as Record<ColorOperationConfigKey, number>;
