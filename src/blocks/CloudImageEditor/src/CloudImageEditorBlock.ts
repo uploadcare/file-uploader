@@ -1,4 +1,5 @@
 import { ContextConsumer, ContextProvider } from '@lit/context';
+import { json as jsonOp } from '@uploadcare/cdn-url/ops';
 import { html, LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
@@ -16,7 +17,7 @@ import { ctxNameContext } from '../../../lit/ctx-name-context';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types';
-import { operationsFromModifiers, parseFileUrl, serializeCdnUrl, withOperations } from '../../../utils/cdn';
+import { parseFileUrl, serializeCdnUrl, withOperations } from '../../../utils/cdn';
 import { serializeCsv } from '../../../utils/comma-separated';
 import { debounce } from '../../../utils/debounce.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
@@ -821,7 +822,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     try {
       const originalUrlValue = editorController.get('*originalUrl') as string;
-      const cdnUrl = await this.proxyUrl(withOperations(originalUrlValue, operationsFromModifiers('json')));
+      const cdnUrl = await this.proxyUrl(withOperations(originalUrlValue, [jsonOp()]));
       const json = (await fetch(cdnUrl).then((response) => response.json())) as { width: number; height: number };
 
       if (!this.isConnected) {

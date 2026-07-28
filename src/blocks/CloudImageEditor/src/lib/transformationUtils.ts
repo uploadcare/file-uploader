@@ -18,7 +18,7 @@ import {
   warmth,
 } from '@uploadcare/cdn-url/ops';
 import { logger } from '../../../../abstract/logger';
-import { type CdnOperation, serializeOperations } from '../../../../utils/cdn';
+import type { CdnOperation } from '../../../../utils/cdn';
 import { stringToArray } from '../../../../utils/stringToArray.js';
 import type { Transformations } from '../types';
 
@@ -98,12 +98,12 @@ function isMeaningful<T extends keyof Transformations>(operation: T, value: Tran
 }
 
 /**
- * Serialise transformations into a `-/…/` operations string, in the editor's
- * fixed order. Values equal to their default are omitted — a deliberate
- * "don't bloat the URL" policy, and the reason an explicit `brightness/0` does
- * not survive a round-trip.
+ * Build transformations into operations, in the editor's fixed order. Values
+ * equal to their default are omitted — a deliberate "don't bloat the URL"
+ * policy, and the reason an explicit `brightness/0` does not survive a
+ * round-trip.
  */
-export function transformationsToOperations(transformations: Transformations): string {
+export function transformationsToOperations(transformations: Transformations): CdnOperation[] {
   const operations: CdnOperation[] = [];
   for (const operation of SUPPORTED_OPERATIONS_ORDERED) {
     const value = transformations[operation];
@@ -121,11 +121,11 @@ export function transformationsToOperations(transformations: Transformations): s
     }
   }
 
-  return serializeOperations(operations);
+  return operations;
 }
 
 /** Applied to every editor-generated URL. */
-export const COMMON_OPERATIONS = serializeOperations([format('auto'), progressive(true)]);
+export const COMMON_OPERATIONS: CdnOperation[] = [format('auto'), progressive(true)];
 
 const asNumber = ([value]: [unknown]) => (typeof value !== 'undefined' ? Number(value) : undefined);
 const asBoolean = () => true;

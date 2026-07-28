@@ -1,3 +1,4 @@
+import { resize, stretch } from '@uploadcare/cdn-url/ops';
 import { describe, expect, it } from 'vitest';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
 import type { Transformations } from '../types';
@@ -15,7 +16,7 @@ describe('editorPreviewUrl', () => {
       editorPreviewUrl({
         originalUrl: ORIGINAL,
         transformations,
-        sizeOperation: 'stretch/off/-/resize/800x',
+        sizeOperations: [stretch('off'), resize({ width: 800 })],
         quality: 'normal',
       }),
     ).toBe(
@@ -28,7 +29,7 @@ describe('editorPreviewUrl', () => {
       editorPreviewUrl({
         originalUrl: ORIGINAL,
         transformations: { brightness: 0 },
-        sizeOperation: 'resize/100x',
+        sizeOperations: [resize({ width: 100 })],
         quality: 'lightest',
       }),
     ).toBe(

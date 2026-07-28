@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { serializeOperations } from '../../../../utils/cdn';
 import type { Transformations } from '../types';
 import {
   COMMON_OPERATIONS,
@@ -27,38 +28,43 @@ import {
  * accepted, permanent behaviour.
  */
 /**
- * `transformationsToOperations` emits the library's wire form (`-/a/-/b/`) while
- * the reader takes bare `name/param` chunks — which is what `extractOperations`
- * hands it in production. Strip the wrapper to round-trip in a test.
+ * `transformationsToOperations` now returns `CdnOperation[]`. The reader takes
+ * bare `name/param` chunks — which is what `extractOperations` hands it in
+ * production. Serialise to the wire form and strip the wrapper to round-trip
+ * in a test.
  */
 const toBareOperations = (transformations: Transformations): string[] =>
-  transformationsToOperations(transformations).replace(/^-\//, '').replace(/\/$/, '').split('/-/');
+  serializeOperations(transformationsToOperations(transformations)).replace(/^-\//, '').replace(/\/$/, '').split('/-/');
 
 describe('transformationsToOperations', () => {
   it('emits nothing for empty transformations', () => {
-    expect(transformationsToOperations({})).toBe('');
+    expect(serializeOperations(transformationsToOperations({}))).toBe('');
   });
 
   it('serialises a number operation as `name/value`', () => {
-    expect(transformationsToOperations({ brightness: 50 })).toBe('-/brightness/50/');
+    expect(serializeOperations(transformationsToOperations({ brightness: 50 }))).toBe('-/brightness/50/');
   });
 
   it('serialises a true boolean operation as a bare name, no value', () => {
-    expect(transformationsToOperations({ mirror: true })).toBe('-/mirror/');
+    expect(serializeOperations(transformationsToOperations({ mirror: true }))).toBe('-/mirror/');
   });
 
   it('serialises filter as `filter/name/amount`', () => {
-    expect(transformationsToOperations({ filter: { name: 'adaris', amount: 70 } })).toBe('-/filter/adaris/70/');
-  });
-
-  it('serialises crop as `crop/WxH/x,y`', () => {
-    expect(transformationsToOperations({ crop: { dimensions: [640, 480], coords: [10, 20] } })).toBe(
-      '-/crop/640x480/10,20/',
+    expect(serializeOperations(transformationsToOperations({ filter: { name: 'adaris', amount: 70 } }))).toBe(
+      '-/filter/adaris/70/',
     );
   });
 
+  it('serialises crop as `crop/WxH/x,y`', () => {
+    expect(
+      serializeOperations(transformationsToOperations({ crop: { dimensions: [640, 480], coords: [10, 20] } })),
+    ).toBe('-/crop/640x480/10,20/');
+  });
+
   it('joins multiple operations with the `/-/` delimiter', () => {
-    expect(transformationsToOperations({ brightness: 50, contrast: 20 })).toBe('-/brightness/50/-/contrast/20/');
+    expect(serializeOperations(transformationsToOperations({ brightness: 50, contrast: 20 }))).toBe(
+      '-/brightness/50/-/contrast/20/',
+    );
   });
 
   it('emits operations in its own fixed order, not the order of the input object', () => {
@@ -69,13 +75,15 @@ describe('transformationsToOperations', () => {
       enhance: 30,
     };
 
-    expect(transformationsToOperations(transformations)).toBe('-/enhance/30/-/rotate/90/-/crop/100x100/0,0/');
+    expect(serializeOperations(transformationsToOperations(transformations))).toBe(
+      '-/enhance/30/-/rotate/90/-/crop/100x100/0,0/',
+    );
   });
 
   it('skips keys that are undefined or null', () => {
     const transformations = { brightness: undefined, contrast: null, saturation: 10 } as unknown as Transformations;
 
-    expect(transformationsToOperations(transformations)).toBe('-/saturation/10/');
+    expect(serializeOperations(transformationsToOperations(transformations))).toBe('-/saturation/10/');
   });
 
   // PRE-FIX: a value that happens to equal its default is elided, so an
@@ -93,15 +101,15 @@ describe('transformationsToOperations', () => {
     ['rotate', 0],
   ] as const)('PRE-FIX: drops %s when the value equals its default (%s)', (operation, value) => {
     expect(OPERATIONS_DEFAULTS[operation]).toBe(value);
-    expect(transformationsToOperations({ [operation]: value })).toBe('');
+    expect(serializeOperations(transformationsToOperations({ [operation]: value }))).toBe('');
   });
 
   it('PRE-FIX: drops a false boolean, matching its default', () => {
-    expect(transformationsToOperations({ mirror: false, flip: false })).toBe('');
+    expect(serializeOperations(transformationsToOperations({ mirror: false, flip: false }))).toBe('');
   });
 
   it('PRE-FIX: drops filter entirely when its amount equals the default (0)', () => {
-    expect(transformationsToOperations({ filter: { name: 'adaris', amount: 0 } })).toBe('');
+    expect(serializeOperations(transformationsToOperations({ filter: { name: 'adaris', amount: 0 } }))).toBe('');
   });
 
   it('emits nothing for a value whose shape it cannot serialise', () => {
@@ -110,13 +118,13 @@ describe('transformationsToOperations', () => {
     // rebuilt implementation must stay equally quiet rather than emit garbage).
     const transformations = { rotate: {} } as unknown as Transformations;
 
-    expect(transformationsToOperations(transformations)).toBe('');
+    expect(serializeOperations(transformationsToOperations(transformations))).toBe('');
   });
 });
 
 describe('COMMON_OPERATIONS', () => {
   it('is the fixed pair every editor URL carries', () => {
-    expect(COMMON_OPERATIONS).toBe('-/format/auto/-/progressive/yes/');
+    expect(serializeOperations(COMMON_OPERATIONS)).toBe('-/format/auto/-/progressive/yes/');
   });
 });
 

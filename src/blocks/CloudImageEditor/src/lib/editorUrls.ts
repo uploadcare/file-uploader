@@ -1,9 +1,10 @@
+import { preview, type Quality, quality as qualityOp, rawOp } from '@uploadcare/cdn-url/ops';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
-import { operationsFromModifiers, serializeOperations, withOperations } from '../../../../utils/cdn';
+import { type CdnOperation, serializeOperations, withOperations } from '../../../../utils/cdn';
 import type { Transformations } from '../types';
 import { COMMON_OPERATIONS, transformationsToOperations } from './transformationUtils';
 
-const ANALYTICS = `@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/uc-cloud-image-editor/`;
+const ANALYTICS = rawOp('@clib', PACKAGE_NAME, PACKAGE_VERSION, 'uc-cloud-image-editor');
 
 /**
  * The URL the editor renders while the user is still editing: everything the
@@ -12,24 +13,21 @@ const ANALYTICS = `@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/uc-cloud-image-edito
 export function editorPreviewUrl({
   originalUrl,
   transformations,
-  sizeOperation,
+  sizeOperations,
   quality,
 }: {
   originalUrl: string;
   transformations: Transformations;
-  sizeOperation: string;
-  quality: string;
+  sizeOperations: readonly CdnOperation[];
+  quality: Quality;
 }): string {
-  return withOperations(
-    originalUrl,
-    operationsFromModifiers(
-      COMMON_OPERATIONS,
-      transformationsToOperations(transformations),
-      `quality/${quality}`,
-      sizeOperation,
-      ANALYTICS,
-    ),
-  );
+  return withOperations(originalUrl, [
+    ...COMMON_OPERATIONS,
+    ...transformationsToOperations(transformations),
+    qualityOp(quality),
+    ...sizeOperations,
+    ANALYTICS,
+  ]);
 }
 
 /**
@@ -47,7 +45,7 @@ export function editorAppliedUrl({
   originalUrl: string;
   transformations: Transformations;
 }): { cdnUrl: string; cdnUrlModifiers: string } {
-  const operations = operationsFromModifiers(transformationsToOperations(transformations), 'preview');
+  const operations = [...transformationsToOperations(transformations), preview()];
   return {
     cdnUrl: withOperations(originalUrl, operations),
     cdnUrlModifiers: serializeOperations(operations),

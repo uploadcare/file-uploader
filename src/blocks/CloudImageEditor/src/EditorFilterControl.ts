@@ -1,3 +1,4 @@
+import { scaleCrop } from '@uploadcare/cdn-url/ops';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
@@ -121,7 +122,7 @@ export class EditorFilterControl extends EditorButtonControl {
       originalUrl: this._originalUrl,
       transformations,
       quality,
-      sizeOperation: `scale_crop/${size}x${size}/center`,
+      sizeOperations: [scaleCrop(size, size, { align: 'center' })],
     });
   }
 
