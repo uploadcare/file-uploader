@@ -124,4 +124,17 @@ describe('parseCdnUrl', () => {
   ])('should return null for %s rather than throwing', (_label, url) => {
     expect(parseCdnUrl({ url, cdnBase: 'https://cdn.example.com' })).toBe(null);
   });
+
+  it('should return null rather than throw for a malformed (unparseable) url', () => {
+    expect(parseCdnUrl({ url: 'not a url', cdnBase: 'https://cdn.example.com' })).toBe(null);
+  });
+
+  it('should return null rather than throw when cdnBase itself is malformed', () => {
+    expect(
+      parseCdnUrl({
+        url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
+        cdnBase: 'not a url',
+      }),
+    ).toBe(null);
+  });
 });

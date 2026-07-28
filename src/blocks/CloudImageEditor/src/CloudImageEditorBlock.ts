@@ -733,6 +733,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     this._tabList = parseTabs(tabsValue);
   }
 
+  private _stringifyOperations(operations: ReturnType<typeof parseFileUrl>['operations']): string[] {
+    return operations.map((operation) => [operation.name, ...operation.params].join('/'));
+  }
+
   private _syncCropPresetState(): void {
     const list = parseCropPreset(this.cropPreset ?? '') as CropPresetList;
     let closest: CropPresetList[number] | null = null;
@@ -742,7 +746,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         // Throws for anything that is not a single stored file; this lifecycle
         // path tolerates a missing crop, so it just leaves `closest` at null.
         const parsed = parseFileUrl(this.cdnUrl);
-        const operations = parsed.operations.map((operation) => [operation.name, ...operation.params].join('/'));
+        const operations = this._stringifyOperations(parsed.operations);
         const transformations = operationsToTransformations(operations) as Transformations;
 
         if (Array.isArray(transformations?.crop?.dimensions)) {
@@ -780,22 +784,21 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       // (a group or delivery-proxy URL); caught locally so a bad `cdn-url`
       // warns and opens the editor without transformations instead of
       // throwing into the `void this.updateImage()` callers.
-      let parsed: ReturnType<typeof parseFileUrl> | undefined;
+      let parsed: ReturnType<typeof parseFileUrl>;
       try {
         parsed = parseFileUrl(cdnUrlValue);
       } catch (err) {
         this._log.warn('Failed to parse CDN URL, opening editor without transformations', err);
+        return;
       }
-      if (parsed) {
-        const originalUrl = serializeCdnUrl({ origin: parsed.origin, uuid: parsed.uuid });
-        if (originalUrl === editorController.get('*originalUrl')) {
-          return;
-        }
-        const operations = parsed.operations.map((operation) => [operation.name, ...operation.params].join('/'));
-        editorController.set('*originalUrl', originalUrl);
-        editorController.set('*editorTransformations', operationsToTransformations(operations) as Transformations);
-        editorController.set('*editorPassthroughOperations', extractPassthroughOperations(operations));
+      const originalUrl = serializeCdnUrl({ origin: parsed.origin, uuid: parsed.uuid });
+      if (originalUrl === editorController.get('*originalUrl')) {
+        return;
       }
+      const operations = this._stringifyOperations(parsed.operations);
+      editorController.set('*originalUrl', originalUrl);
+      editorController.set('*editorTransformations', operationsToTransformations(operations) as Transformations);
+      editorController.set('*editorPassthroughOperations', extractPassthroughOperations(operations));
     } else if (this.uuid) {
       const cdnCname = editorController.getConfig('cdnCname');
       const originalUrl = serializeCdnUrl({ origin: new URL(cdnCname).origin, uuid: this.uuid as string });

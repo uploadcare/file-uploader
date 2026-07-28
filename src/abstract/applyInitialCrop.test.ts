@@ -1,6 +1,5 @@
 import type { UploadcareFile } from '@uploadcare/upload-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { operationsFromModifiers, withOperations } from '../utils/cdn';
 import { applyInitialCrop } from './applyInitialCrop';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 
@@ -56,12 +55,14 @@ describe('applyInitialCrop', () => {
     applyInitialCrop(collection, '4:3');
 
     const entry = collection.read(id);
-    const cdnUrlModifiers = entry?.get('cdnUrlModifiers');
-    expect(cdnUrlModifiers).toContain('crop/');
-    expect(cdnUrlModifiers).toContain('-/preview/');
-    // 800x600 at a 4:3 aspect ratio is already 4:3 — full-frame centered crop.
-    expect(cdnUrlModifiers).toContain('crop/800x600/0,0');
-    expect(entry?.get('cdnUrl')).toBe(withOperations(cdnUrl, operationsFromModifiers(cdnUrlModifiers ?? undefined)));
+    // Literal expected strings (not computed via `withOperations`/
+    // `operationsFromModifiers` — the functions under migration — so this
+    // test can actually detect a change in what they produce). 800x600 at a
+    // 4:3 aspect ratio is already 4:3 — full-frame centered crop.
+    expect(entry?.get('cdnUrlModifiers')).toBe('-/crop/800x600/0,0/-/preview/');
+    expect(entry?.get('cdnUrl')).toBe(
+      'https://cdn.example.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/crop/800x600/0,0/-/preview/',
+    );
   });
 
   it('skips entries that already have /crop/ in cdnUrlModifiers (values unchanged)', () => {

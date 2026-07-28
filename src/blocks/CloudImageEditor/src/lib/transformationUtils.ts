@@ -1,4 +1,3 @@
-import { type CdnOperation, serializeOperations } from '@uploadcare/cdn-url';
 import {
   brightness,
   contrast,
@@ -19,6 +18,7 @@ import {
   warmth,
 } from '@uploadcare/cdn-url/ops';
 import { logger } from '../../../../abstract/logger';
+import { type CdnOperation, modifiersFromOperations } from '../../../../utils/cdn';
 import { stringToArray } from '../../../../utils/stringToArray.js';
 import type { Transformations } from '../types';
 
@@ -121,11 +121,11 @@ export function transformationsToOperations(transformations: Transformations): s
     }
   }
 
-  return serializeOperations(operations);
+  return modifiersFromOperations(operations);
 }
 
 /** Applied to every editor-generated URL. */
-export const COMMON_OPERATIONS = serializeOperations([format('auto'), progressive(true)]);
+export const COMMON_OPERATIONS = modifiersFromOperations([format('auto'), progressive(true)]);
 
 const asNumber = ([value]: [unknown]) => (typeof value !== 'undefined' ? Number(value) : undefined);
 const asBoolean = () => true;

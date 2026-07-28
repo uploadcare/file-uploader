@@ -63,4 +63,56 @@ describe('Cloud Image Editor — standalone (no <uc-config>)', () => {
       warnSpy.mockRestore();
     }
   });
+
+  it('does not half-update against the previous image when cdn-url becomes unparseable', async () => {
+    // Regression test: `updateImage` used to fall through past the
+    // `parseFileUrl` catch (no `return`) into the block that re-reads
+    // `*originalUrl` — still the *previous* image's URL — and refetches its
+    // image info. A rejected `cdn-url` must make `updateImage` a no-op
+    // against the previous image's state, not a partial update.
+    const goodCdnUrl = 'https://ucarecdn.com/f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f/';
+    const groupCdnUrl = 'https://ucarecdn.com/f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f~3/';
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    try {
+      page.render(
+        <uc-cloud-image-editor
+          cdn-url={goodCdnUrl}
+          cdn-cname="https://ucarecdn.com/"
+          test-mode
+        ></uc-cloud-image-editor>,
+      );
+
+      const el = document.querySelector('uc-cloud-image-editor')!;
+
+      await expect.element(page.getByTestId('uc-cloud-image-editor')).toBeVisible();
+      await expect.poll(() => document.querySelector('uc-editor-image-cropper')?.className).toMatch(/uc-active_from_/);
+
+      // The only network read `updateImage` performs for a resolved image is
+      // the JSON image-info fetch; install the spy only once the good image
+      // has already settled, so it exclusively observes what happens after
+      // the bad `cdn-url` is applied.
+      const fetchSpy = vi.spyOn(window, 'fetch');
+
+      el.setAttribute('cdn-url', groupCdnUrl);
+
+      await expect.poll(() => warnSpy.mock.calls.length).toBeGreaterThan(0);
+      expect(warnSpy).toHaveBeenCalledWith(
+        '[uc][cloud-image-editor]',
+        'Failed to parse CDN URL, opening editor without transformations',
+        expect.any(Error),
+      );
+
+      // Give any regressive fall-through a tick to run before asserting its
+      // absence.
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(fetchSpy).not.toHaveBeenCalled();
+
+      // The cropper never lost its image size (no null -> value reactivation
+      // against the previous image).
+      expect(document.querySelector('uc-editor-image-cropper')?.className).toMatch(/uc-active_from_/);
+    } finally {
+      warnSpy.mockRestore();
+    }
+  });
 });

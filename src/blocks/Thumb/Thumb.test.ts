@@ -92,7 +92,11 @@ describe('Thumb (M-god step 6b-6 migration)', () => {
     // configured).
     const proxyUrl = vi.spyOn(el as unknown as { proxyUrl(url: string): Promise<string> }, 'proxyUrl');
 
-    // UUID must be real: `parseCdnUrl` validates the grammar.
+    // The uuid isn't validated: `_generateThumbnail` builds the url with
+    // `serializeCdnUrl`, which doesn't re-parse it, so a non-uuid string would
+    // still produce a garbage-but-plausible url rather than throw (the preload
+    // would just fail over to the blob/CSS thumb). A real uuid is used here
+    // only so the built url matches what production traffic looks like.
     const uuid = 'c2499162-eb07-4b93-b31e-94a89a47e858';
     const uid = collection.add({
       fileInfo: { uuid } as never,

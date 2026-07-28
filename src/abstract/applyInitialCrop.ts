@@ -51,9 +51,16 @@ export function applyInitialCrop(collection: UploadCollectionController, cropPre
       log.warn('Failed to get cdnUrl for entry', entry.uid);
       continue;
     }
+    let croppedCdnUrl: string;
+    try {
+      croppedCdnUrl = withOperations(cdnUrl, operations);
+    } catch (err) {
+      log.warn('Failed to apply crop operations to cdnUrl for entry', entry.uid, err);
+      continue;
+    }
     entry.setMany({
       cdnUrlModifiers: modifiersFromOperations(operations),
-      cdnUrl: withOperations(cdnUrl, operations),
+      cdnUrl: croppedCdnUrl,
     });
   }
 }

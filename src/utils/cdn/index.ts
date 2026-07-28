@@ -7,6 +7,10 @@
  * words. Only the pieces that are ours are added: the two string edges, an append
  * helper, and origin policy.
  */
+export { type CdnOperation, parseCdnUrl, serializeCdnUrl } from '@uploadcare/cdn-url';
+
+import { parseFileUrl as _parseFileUrl } from '@uploadcare/cdn-url';
+
 /**
  * Parse a URL that must address a single stored file, narrowing the result so
  * callers read `uuid`/`operations`/`filename` without discriminating on `kind`.
@@ -18,6 +22,6 @@
  * the editor's `updateImage`, `addFileFromCdnUrl`) degrade as they do for any
  * other unusable URL.
  */
-export { type CdnOperation, type ParsedCdnUrl, parseCdnUrl, parseFileUrl, serializeCdnUrl } from '@uploadcare/cdn-url';
+export const parseFileUrl = _parseFileUrl;
 export { modifiersFromOperations, operationsFromModifiers, withOperations } from './operations';
 export { DEFAULT_CDN_ORIGIN, deliveryProxyOrigin } from './origin';

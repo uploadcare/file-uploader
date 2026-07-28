@@ -33,9 +33,17 @@ type ParseCdnUrlResult = {
  * entry. They were rejected before this module used the library, and still are.
  */
 export const parseCdnUrl = ({ url, cdnBase }: ParseCdnUrlOptions): ParseCdnUrlResult | null => {
-  const cdnBaseUrlObj = new URL(cdnBase);
-  const fallbackCdnBaseUrlObj = new URL(DEFAULT_CDN_CNAME);
-  const urlObj = new URL(url);
+  let cdnBaseUrlObj: URL;
+  let fallbackCdnBaseUrlObj: URL;
+  let urlObj: URL;
+  try {
+    cdnBaseUrlObj = new URL(cdnBase);
+    fallbackCdnBaseUrlObj = new URL(DEFAULT_CDN_CNAME);
+    urlObj = new URL(url);
+  } catch (err) {
+    log.warn('Not a CDN URL', err);
+    return null;
+  }
 
   if (cdnBaseUrlObj.host !== urlObj.host && fallbackCdnBaseUrlObj.host !== urlObj.host) {
     return null;
