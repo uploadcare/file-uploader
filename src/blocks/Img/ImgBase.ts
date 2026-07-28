@@ -1,7 +1,5 @@
-import { parseCdnUrl, serializeCdnUrl } from '@uploadcare/cdn-url';
-import { defaultProxyEndpoint } from '@uploadcare/cdn-url/proxy';
 import { logger } from '../../abstract/logger';
-import { createCdnOperations } from '../../utils/cdn-utils.js';
+import { deliveryProxyOrigin, operationsFromModifiers, parseCdnUrl, serializeCdnUrl } from '../../utils/cdn';
 import { stringToArray } from '../../utils/stringToArray';
 import { applyTemplateData } from '../../utils/template-utils';
 import { uniqueArray } from '../../utils/uniqueArray';
@@ -129,7 +127,7 @@ export class ImgBase extends ImgConfig {
   }
 
   private _buildCdnUrl(size: string | null, blur: string | null, src: string): string | undefined {
-    const operations = createCdnOperations(...this._getCdnOperationFragments(size, blur));
+    const operations = operationsFromModifiers(...this._getCdnOperationFragments(size, blur));
     const cdnCname = this.$$('cdn-cname') as string | undefined;
 
     // A src already on the configured cname is a CDN URL in its own right: parse
@@ -163,7 +161,7 @@ export class ImgBase extends ImgConfig {
     const pubkey = this.$$('pubkey') as string | undefined;
     if (pubkey) {
       return this._proxyUrl(
-        serializeCdnUrl({ origin: defaultProxyEndpoint(pubkey), sourceUrl: this._fmtAbs(src), operations }),
+        serializeCdnUrl({ origin: deliveryProxyOrigin(pubkey), sourceUrl: this._fmtAbs(src), operations }),
       );
     }
 
