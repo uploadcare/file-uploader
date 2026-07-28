@@ -1,5 +1,6 @@
+import { parseFileUrl } from '@uploadcare/cdn-url';
 import { describe, expect, it } from 'vitest';
-import { modifiersFromOperations, operationsFromModifiers, parseFileUrl, withOperations } from './operations';
+import { modifiersFromOperations, operationsFromModifiers, withOperations } from './operations';
 
 const UUID = 'c2499162-eb07-4b93-b31e-94a89a47e858';
 const PROXY = 'https://domain.ucr.io:8080';
@@ -85,9 +86,9 @@ describe('withOperations', () => {
     ).toBe(`https://ucarecdn.com/${UUID}/video/-/resize/100x/-/quality/best/`);
   });
 
-  it('keeps the embedded source of a proxy url', () => {
-    expect(withOperations(`${PROXY}/-/resize/10x/${SOURCE}`, [{ name: 'preview', params: [] }])).toBe(
-      `${PROXY}/-/resize/10x/-/preview/${SOURCE}`,
+  it('throws for a proxy url, which is not a single-file url', () => {
+    expect(() => withOperations(`${PROXY}/-/resize/10x/${SOURCE}`, [{ name: 'preview', params: [] }])).toThrow(
+      TypeError,
     );
   });
 
@@ -95,9 +96,9 @@ describe('withOperations', () => {
     expect(withOperations(`https://ucarecdn.com/${UUID}/`, [])).toBe(`https://ucarecdn.com/${UUID}/`);
   });
 
-  it('leaves a group root alone, since group roots carry no operations', () => {
-    expect(withOperations(`https://ucarecdn.com/${UUID}~2/`, [{ name: 'preview', params: [] }])).toBe(
-      `https://ucarecdn.com/${UUID}~2/`,
+  it('throws for a group root, which is not a single-file url', () => {
+    expect(() => withOperations(`https://ucarecdn.com/${UUID}~2/`, [{ name: 'preview', params: [] }])).toThrow(
+      TypeError,
     );
   });
 

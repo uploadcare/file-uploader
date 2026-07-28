@@ -1,7 +1,6 @@
 import {
   type CdnOperation,
-  type ParsedFileUrl,
-  parseCdnUrl,
+  parseFileUrl,
   parseOperations,
   serializeCdnUrl,
   serializeOperations,
@@ -46,37 +45,11 @@ export const modifiersFromOperations = (operations: readonly CdnOperation[]): st
 
 /**
  * Append operations after any the URL already carries, preserving addressing,
- * filename, conversion path and — for a delivery-proxy URL — the embedded source.
+ * filename and conversion path.
  *
- * @throws TypeError when `url` is not a CDN URL.
+ * @throws TypeError when `url` is not a single-file CDN URL.
  */
 export const withOperations = (url: string, operations: readonly CdnOperation[]): string => {
-  const parsed = parseCdnUrl(url);
-  if (parsed.kind === 'group') {
-    // Group roots address a whole group and carry no operations.
-    return serializeCdnUrl(parsed);
-  }
+  const parsed = parseFileUrl(url);
   return serializeCdnUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
-};
-
-/**
- * Parse a URL that must address a single stored file, narrowing the result so
- * callers read `uuid`/`operations`/`filename` without discriminating on `kind`.
- *
- * Most of this codebase only ever handles single-file URLs — a thumbnail, an
- * editor source, an upload entry. Branching over group and delivery-proxy kinds
- * at those call sites invents behaviour for inputs that should not arrive; this
- * fails loudly instead, and callers that already catch (`<uc-img>` URL building,
- * the editor's `updateImage`, `addFileFromCdnUrl`) degrade as they do for any
- * other unusable URL.
- *
- * @throws TypeError when the URL is not a CDN URL, or addresses a group or a
- * delivery-proxy source rather than a single file.
- */
-export const parseFileUrl = (url: string): ParsedFileUrl => {
-  const parsed = parseCdnUrl(url);
-  if (parsed.kind !== 'file') {
-    throw new TypeError(`Expected a single-file CDN URL, got a ${parsed.kind} URL: "${url}"`);
-  }
-  return parsed;
 };
