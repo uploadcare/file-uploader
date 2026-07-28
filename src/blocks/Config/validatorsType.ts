@@ -125,7 +125,7 @@ const asFilesViewMode = (value: unknown): FilesViewMode => {
 
 const asDynamicButtonViewMode = (value: unknown): DynamicButtonMode => {
   const strValue = asString(value);
-  if (['auto', 'menu', 'toolbar', 'compact', null].includes(strValue)) {
+  if (['auto', 'menu', 'toolbar', 'compact', 'plain'].includes(strValue)) {
     return strValue as DynamicButtonMode;
   }
   throw new Error(`Invalid value: "${strValue}"`);

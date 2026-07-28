@@ -22,7 +22,7 @@ import '../FileItem/FileActionButton';
 import './NoWrapModeDynamicBtn';
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 
-export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact' | null;
+export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact' | 'plain';
 
 type SourceSplit = {
   main: SourceButtonConfig | null;
@@ -30,7 +30,7 @@ type SourceSplit = {
 };
 
 const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: DynamicButtonMode): SourceSplit => {
-  if (mode === 'compact' || mode === null || sources.length === 0) {
+  if (mode === 'compact' || mode === 'plain' || sources.length === 0) {
     return {
       main: null,
       remain: sources,
@@ -43,7 +43,7 @@ const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: DynamicBut
   };
 };
 
-const iconsBasedOnMode: Record<Exclude<DynamicButtonMode, 'toolbar' | null>, string> = {
+const iconsBasedOnMode: Record<Exclude<DynamicButtonMode, 'toolbar' | 'plain'>, string> = {
   compact: 'paperclip',
   menu: 'arrow-dropdown',
   auto: 'arrow-dropdown',
@@ -102,7 +102,7 @@ export class DynamicBtn extends LitUploaderBlock {
    *
    */
   private get isPlainMode() {
-    return this._mode === null;
+    return this._mode === 'plain';
   }
 
   private get shouldShowPrimaryAction(): boolean {
@@ -227,7 +227,7 @@ export class DynamicBtn extends LitUploaderBlock {
   }
 
   private _getDropdownIconName(): string {
-    return iconsBasedOnMode[this._mode as Exclude<DynamicButtonMode, 'toolbar' | null>] ?? 'arrow-dropdown';
+    return iconsBasedOnMode[this._mode as Exclude<DynamicButtonMode, 'toolbar' | 'plain'>] ?? 'arrow-dropdown';
   }
 
   private _clearAllEntries() {
