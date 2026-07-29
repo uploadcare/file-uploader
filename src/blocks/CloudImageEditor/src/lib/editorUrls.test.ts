@@ -17,6 +17,7 @@ describe('editorPreviewUrl', () => {
       editorPreviewUrl({
         originalUrl: ORIGINAL,
         transformations,
+        sourceOperations: [],
         sizeOperations: [stretch('off'), resize({ width: 800 })],
         quality: 'normal',
       }),
@@ -30,12 +31,55 @@ describe('editorPreviewUrl', () => {
       editorPreviewUrl({
         originalUrl: ORIGINAL,
         transformations: { brightness: 0 },
+        sourceOperations: [],
         sizeOperations: [resize({ width: 100 })],
         quality: 'lightest',
       }),
     ).toBe(
       `https://ucarecdn.com/${UUID}/-/format/auto/-/progressive/yes/-/quality/lightest/-/resize/100x/-/${ANALYTICS}`,
     );
+  });
+
+  it('renders the operations the editor cannot model, so a watermark is visible while editing', () => {
+    const url = editorPreviewUrl({
+      originalUrl: `https://ucarecdn.com/${UUID}/`,
+      transformations: { brightness: 50 },
+      sourceOperations: operationsFromModifiers('overlay/wm-uuid'),
+      sizeOperations: [stretch('off'), resize({ width: 800 })],
+      quality: 'normal',
+    });
+
+    expect(url).toBe(
+      `https://ucarecdn.com/${UUID}/-/format/auto/-/progressive/yes/-/overlay/wm-uuid/-/brightness/50/` +
+        `-/quality/normal/-/stretch/off/-/resize/800x/-/@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/uc-cloud-image-editor/`,
+    );
+  });
+
+  it('drops the source analytics marker so the preview carries only the editor own', () => {
+    const url = editorPreviewUrl({
+      originalUrl: `https://ucarecdn.com/${UUID}/`,
+      transformations: {},
+      sourceOperations: operationsFromModifiers(`@clib/uc-img/1.0/uc-img`, 'overlay/wm-uuid'),
+      sizeOperations: [],
+      quality: 'normal',
+    });
+
+    expect(url).not.toContain('uc-img');
+    expect(url).toContain('overlay/wm-uuid');
+  });
+
+  it('agrees with the applied url on every operation except their trailing ones', () => {
+    const args = {
+      originalUrl: `https://ucarecdn.com/${UUID}/`,
+      transformations: { brightness: 50, crop: { dimensions: [640, 480], coords: [10, 20] } } as Transformations,
+      sourceOperations: operationsFromModifiers('overlay/wm-uuid', 'blur/20'),
+    };
+    const preview = editorPreviewUrl({ ...args, sizeOperations: [], quality: 'normal' });
+    const { cdnUrl: applied } = editorAppliedUrl(args);
+
+    const shared = '-/overlay/wm-uuid/-/blur/20/-/brightness/50/-/crop/640x480/10,20/';
+    expect(preview).toContain(shared);
+    expect(applied).toContain(shared);
   });
 });
 

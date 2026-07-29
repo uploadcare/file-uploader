@@ -361,7 +361,7 @@ export class EditorImageFader extends EditorBlock {
 
     // do not use getBoundingClientRect because scale transform affects it
     const width = this.offsetWidth;
-    return controller.proxyUrl(viewerImageSrc(url, width, transformations));
+    return controller.proxyUrl(viewerImageSrc(url, width, transformations, controller.get('*sourceOperations')));
   }
 
   private async _constructKeypoint(

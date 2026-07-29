@@ -2,38 +2,39 @@ import { preview, type Quality, quality as qualityOp, rawOp } from '@uploadcare/
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
 import { type CdnOperation, serializeOperations, withOperations } from '../../../../utils/cdn';
 import type { Transformations } from '../types';
-import {
-  COMMON_OPERATIONS,
-  mergeTransformationsIntoOperations,
-  transformationsToOperations,
-} from './transformationUtils';
+import { COMMON_OPERATIONS, mergeTransformationsIntoOperations } from './transformationUtils';
 
 const ANALYTICS = rawOp('@clib', PACKAGE_NAME, PACKAGE_VERSION, 'uc-cloud-image-editor');
 
 /**
  * The URL the editor renders while the user is still editing: everything the
- * viewer and the filter thumbnails need, sized by the caller.
+ * viewer, the fader and the filter thumbnails need, sized by the caller.
  *
- * Built from the transformations alone, so unlike the applied URL it does **not**
- * carry the operations the editor cannot model: a watermarked source previews
- * without its watermark, then keeps it on Apply. A known asymmetry, recorded in the
- * design doc — closing it would change every filter-thumbnail fetch, so it is its
- * own change.
+ * Composed from the same merge as the applied URL, so what the user sees is what
+ * Apply commits — a watermarked source previews watermarked. The two differ only in
+ * their trailing operations: a preview carries quality, sizing and the editor's
+ * analytics marker; the applied URL carries the `preview` marker.
  */
 export function editorPreviewUrl({
   originalUrl,
   transformations,
+  sourceOperations,
   sizeOperations,
   quality,
 }: {
   originalUrl: string;
   transformations: Transformations;
+  sourceOperations: readonly CdnOperation[];
   sizeOperations: readonly CdnOperation[];
   quality: Quality;
 }): string {
+  // The source's own analytics marker identifies whatever produced that URL; on a
+  // preview the editor's marker is the truthful one, so drop the source's rather
+  // than emitting two.
+  const source = sourceOperations.filter((operation) => operation.name !== ANALYTICS.name);
   return withOperations(originalUrl, [
     ...COMMON_OPERATIONS,
-    ...transformationsToOperations(transformations),
+    ...mergeTransformationsIntoOperations(source, transformations),
     qualityOp(quality),
     ...sizeOperations,
     ANALYTICS,
