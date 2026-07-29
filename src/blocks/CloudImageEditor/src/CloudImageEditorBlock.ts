@@ -28,7 +28,7 @@ import { classNames } from './lib/classNames.js';
 import { editorAppliedUrl } from './lib/editorUrls';
 import { getClosestAspectRatio, parseCropPreset } from './lib/parseCropPreset.js';
 import { parseTabs } from './lib/parseTabs.js';
-import { operationsToTransformations } from './lib/transformationUtils.js';
+import { operationsToTransformations, preservedOperations } from './lib/transformationUtils.js';
 import svgIconsSprite from './svg-sprite';
 import { ALL_TABS, TabId } from './toolbar-constants.js';
 import type { ApplyResult, CropPresetList, ImageSize, Transformations } from './types';
@@ -825,7 +825,13 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     try {
       const originalUrlValue = editorController.get('*originalUrl') as string;
-      const cdnUrl = await this.proxyUrl(withOperations(originalUrlValue, [jsonOp()]));
+      // The crop is emitted after everything preserved, so its coordinates are
+      // interpreted against the image as those operations leave it — measure there,
+      // not on the bare original, or a preserved `resize` desynchronises the crop
+      // overlay from what the user drags.
+      const cdnUrl = await this.proxyUrl(
+        withOperations(originalUrlValue, [...preservedOperations(editorController.get('*sourceOperations')), jsonOp()]),
+      );
       const json = (await fetch(cdnUrl).then((response) => response.json())) as { width: number; height: number };
 
       if (!this.isConnected) {
