@@ -1,5 +1,12 @@
 import { logger } from '../../abstract/logger';
-import { deliveryProxyOrigin, operationsFromModifiers, parseCdnUrl, serializeCdnUrl } from '../../utils/cdn';
+import {
+  deliveryProxyOrigin,
+  isProxyUrl,
+  operationsFromModifiers,
+  parseFileUrl,
+  parseProxyUrl,
+  serializeCdnUrl,
+} from '../../utils/cdn';
 import { stringToArray } from '../../utils/stringToArray';
 import { applyTemplateData } from '../../utils/template-utils';
 import { uniqueArray } from '../../utils/uniqueArray';
@@ -132,11 +139,12 @@ export class ImgBase extends ImgConfig {
 
     // A src already on the configured cname is a CDN URL in its own right: parse
     // it and append, so operations it already carries survive.
+    //
+    // `<uc-img>` renders a single stored file or a proxied remote source. Parsing
+    // only those two kinds keeps the group parsers out of the bundle entirely —
+    // this element has the tightest size budget in the repo.
     if (cdnCname && src.startsWith(cdnCname)) {
-      const parsed = parseCdnUrl(src);
-      if (parsed.kind === 'group') {
-        return src;
-      }
+      const parsed = isProxyUrl(src) ? parseProxyUrl(src) : parseFileUrl(src);
       return serializeCdnUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
     }
 
@@ -146,10 +154,10 @@ export class ImgBase extends ImgConfig {
       // purpose — `new URL('')` throws and the caller degrades, which is what the
       // previous implementation did by accident.
       const url = serializeCdnUrl({ origin: new URL(cdnCname as string).origin, uuid, operations });
-      // `serializeCdnUrl` builds without validating — it is `parseCdnUrl` that
+      // `serializeCdnUrl` builds without validating — it is `parseFileUrl` that
       // knows the UUID grammar. Parsing the result back keeps a garbage `uuid`
       // attribute degrading to "no image" instead of emitting a URL that 404s.
-      parseCdnUrl(url);
+      parseFileUrl(url);
       return this._proxyUrl(url);
     }
 

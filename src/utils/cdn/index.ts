@@ -18,8 +18,10 @@
  */
 export {
   type CdnOperation,
+  isProxyUrl,
   parseCdnUrl,
   parseFileUrl,
+  parseProxyUrl,
   serializeCdnUrl,
   serializeOperations,
 } from '@uploadcare/cdn-url';
