@@ -1,4 +1,4 @@
-import { html } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { cache } from 'lit/directives/cache.js';
 import { SourceListController } from '../../abstract/controllers';
@@ -77,6 +77,9 @@ export class DynamicBtn extends LitUploaderBlock {
 
   @state()
   private _progress = 0;
+
+  @state()
+  private _dropdownIconName = 'arrow-dropdown';
 
   private get isIdle() {
     return this._status === 'idle';
@@ -214,6 +217,7 @@ export class DynamicBtn extends LitUploaderBlock {
     }
     this._unregisterAfterFileAddHook?.();
     super.disconnectedCallback();
+    this._dropdownIconName = 'arrow-dropdown';
   }
 
   private _renderInline() {
@@ -226,8 +230,13 @@ export class DynamicBtn extends LitUploaderBlock {
     `;
   }
 
-  private _getDropdownIconName(): string {
-    return iconsBasedOnMode[this._mode as Exclude<DynamicButtonMode, 'toolbar' | 'plain'>] ?? 'arrow-dropdown';
+  protected override willUpdate(_changedProperties: PropertyValues): void {
+    super.willUpdate(_changedProperties);
+
+    if (_changedProperties.has('_mode')) {
+      this._dropdownIconName =
+        iconsBasedOnMode[this._mode as Exclude<DynamicButtonMode, 'toolbar' | 'plain'>] ?? 'arrow-dropdown';
+    }
   }
 
   private _clearAllEntries() {
@@ -260,7 +269,7 @@ export class DynamicBtn extends LitUploaderBlock {
 
   private _renderDropdown() {
     return html` <uc-drop-down>
-      <uc-icon content-for="dd-header-button" name=${this._getDropdownIconName()}></uc-icon>
+      <uc-icon content-for="dd-header-button" name=${this._dropdownIconName}></uc-icon>
       <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
         ${this._mainAndRemainSources?.remain?.map(
           (source) => html`<uc-source-btn role="menuitem" .source=${source}></uc-source-btn>`,

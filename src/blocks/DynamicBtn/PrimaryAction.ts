@@ -152,7 +152,11 @@ export class PrimaryAction extends LitUploaderBlock {
       return null;
     }
 
-    const iconName = this.source?.icon ?? PrimaryAction.DEFAULT_ICON;
+    if (!this.source) {
+      return html`<uc-icon .name=${PrimaryAction.DEFAULT_ICON}></uc-icon>`;
+    }
+
+    const iconName = this.source?.icon;
     return this.showIcon && iconName ? html`<uc-icon .name=${iconName}></uc-icon>` : null;
   }
 
