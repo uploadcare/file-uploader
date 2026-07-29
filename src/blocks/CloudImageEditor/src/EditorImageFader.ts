@@ -1,3 +1,4 @@
+import type { FilterName } from '@uploadcare/cdn-url/ops';
 import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
@@ -24,14 +25,14 @@ type Keypoint = {
 
 type ImageSrcOptions = {
   url?: string;
-  filter?: string;
+  filter?: FilterName;
   operation?: OperationKey;
   value?: number;
 };
 
 type DebouncedKeypointHandler = ((
   operation: OperationKey,
-  filter: string | undefined,
+  filter: FilterName | undefined,
   value: number,
 ) => Promise<void>) & {
   cancel: () => void;
@@ -90,7 +91,7 @@ export class EditorImageFader extends EditorBlock {
   private _isActive = false;
   private _hidden = true;
   private _operation: OperationKey | 'initial' = 'initial';
-  private _filter: string | undefined;
+  private _filter: FilterName | undefined;
   private _value?: number;
   private _transformations: Transformations = {};
   private _keypoints: Keypoint[] = [];
@@ -360,7 +361,7 @@ export class EditorImageFader extends EditorBlock {
 
     // do not use getBoundingClientRect because scale transform affects it
     const width = this.offsetWidth;
-    return controller.proxyUrl(viewerImageSrc(url, width, transformations));
+    return controller.proxyUrl(viewerImageSrc(url, width, transformations, controller.get('*sourceOperations')));
   }
 
   private async _constructKeypoint(
@@ -381,7 +382,7 @@ export class EditorImageFader extends EditorBlock {
   /**
    * Check if current operation and filter equals passed ones
    */
-  private _isSame(operation: string | undefined, filter: string | undefined): boolean {
+  private _isSame(operation: string | undefined, filter: FilterName | undefined): boolean {
     return this._operation === operation && this._filter === filter;
   }
 
@@ -502,7 +503,7 @@ export class EditorImageFader extends EditorBlock {
     value,
   }: {
     url: string;
-    filter?: string;
+    filter?: FilterName;
     operation?: OperationKey;
     value?: number;
   }): Promise<void> {
@@ -580,7 +581,7 @@ export class EditorImageFader extends EditorBlock {
     url: string;
     operation?: OperationKey;
     value?: number;
-    filter?: string;
+    filter?: FilterName;
     fromViewer?: boolean;
   }): Promise<void> {
     this._isActive = true;

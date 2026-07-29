@@ -1,5 +1,5 @@
 import type { ConfigType } from '../types';
-import { extractCdnUrlModifiers, extractFilename, extractUuid } from '../utils/cdn-utils';
+import { parseFileUrl, serializeOperations } from '../utils/cdn';
 import { applyTemplateData } from '../utils/template-utils';
 import { logger } from './logger';
 
@@ -24,10 +24,14 @@ export async function resolveSecureDeliveryProxyUrl(
   }
   if (config.secureDeliveryProxyUrlResolver) {
     try {
+      // This call site only ever handles a stored file's URL; anything else is
+      // unusable here and lands in the catch below.
+      const parsed = parseFileUrl(url);
+
       return await config.secureDeliveryProxyUrlResolver(url, {
-        uuid: extractUuid(url),
-        cdnUrlModifiers: extractCdnUrlModifiers(url),
-        fileName: extractFilename(url),
+        uuid: parsed.uuid,
+        cdnUrlModifiers: serializeOperations(parsed.operations),
+        fileName: parsed.filename ?? '',
       });
     } catch (err) {
       log.error('Failed to resolve secure delivery proxy URL. Falling back to the default URL.', err);

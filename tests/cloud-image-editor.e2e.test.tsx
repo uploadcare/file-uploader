@@ -172,6 +172,55 @@ describe('Cloud Image Editor', () => {
     await expect.poll(faderClass, { timeout: 5000 }).toMatch(/uc-active_from_/);
   });
 
+  it('renders a preserved operation in the viewer and a filter thumbnail', async () => {
+    // Regression guard (render-preserved-operations Task 3): the crop is now
+    // emitted after everything the source carries but the editor can't model
+    // (`preservedOperations`), and previews render those operations too — so
+    // the user sees the same image the crop will land on. A crop-drag
+    // assertion would be flaky (documented render race under full parallel
+    // load), so pin the observable mechanism instead: a preserved `blur/20`
+    // (no uuid needed, unlike `overlay`) must show up in both the viewer and
+    // a filter thumbnail's requested src.
+    cleanup();
+
+    const ctxName = `test-${Math.random().toString(36).slice(2)}`;
+    page.render(
+      <>
+        <uc-cloud-image-editor
+          crop-preset="1:1, 16:9, 4:3, 3:4, 9:16"
+          cdn-url="https://ucarecdn.com/f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f/-/blur/20/"
+          ctx-name={ctxName}
+        ></uc-cloud-image-editor>
+        <uc-config
+          cdn-cname="https://ucarecdn.com/"
+          qualityInsights={false}
+          ctx-name={ctxName}
+          pubkey="demopublickey"
+          testMode
+        ></uc-config>
+      </>,
+    );
+
+    await expect.element(page.getByTestId('uc-cloud-image-editor')).toBeVisible();
+
+    // Enter a non-crop tab to activate the viewer (fader). Same tag-based
+    // lookup as the test above — the fader has no `data-testid` (it renders
+    // before `testMode` config propagates).
+    await userEvent.click(page.getByRole('tab', { name: /filters/i }));
+    const faderClass = () => document.querySelector('uc-editor-image-fader')?.className ?? '';
+    await expect.poll(faderClass, { timeout: 5000 }).toMatch(/uc-active_from_/);
+
+    const viewerImage = () => document.querySelector('uc-editor-image-fader img')?.getAttribute('src') ?? '';
+    await expect.poll(viewerImage, { timeout: 5000 }).toContain('blur/20');
+
+    // `filterIds[0]` is the "Original" pseudo-filter (no preview computed for
+    // it), so the first real filter thumbnail is index 1.
+    const thumbnail = page.getByTestId('uc-editor-filter-control').nth(1);
+    await expect.element(thumbnail).toBeVisible();
+    const thumbnailPreviewStyle = () => thumbnail.element().querySelector('.uc-preview')?.getAttribute('style') ?? '';
+    await expect.poll(thumbnailPreviewStyle, { timeout: 5000 }).toContain('blur/20');
+  });
+
   it('should log timeout without unhandled rejection when container size stays zero', async () => {
     cleanup();
 

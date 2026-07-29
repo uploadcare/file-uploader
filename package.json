@@ -161,6 +161,7 @@
   "dependencies": {
     "@lit-labs/signals": "^0.3.0",
     "@lit/context": "^1.1.6",
+    "@uploadcare/cdn-url": "6.20.0-alpha.6",
     "@uploadcare/cname-prefix": "^6.18.4",
     "@uploadcare/image-shrink": "^6.18.4",
     "@uploadcare/quality-insights": "^6.18.4",
@@ -213,5 +214,14 @@
       "path": "web/uc-img.min.js",
       "limit": "10 KB"
     }
-  ]
+  ],
+  "tsd": {
+    "compilerOptions": {
+      "paths": {
+        "@uploadcare/cdn-url/ops": [
+          "./node_modules/@uploadcare/cdn-url/dist/types/ops.d.ts"
+        ]
+      }
+    }
+  }
 }

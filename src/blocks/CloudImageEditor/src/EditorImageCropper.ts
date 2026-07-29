@@ -573,7 +573,9 @@ export class EditorImageCropper extends EditorBlock {
       flip: undefined,
       mirror: undefined,
     };
-    const src = await controller.proxyUrl(viewerImageSrc(originalUrl, width, transformations));
+    const src = await controller.proxyUrl(
+      viewerImageSrc(originalUrl, width, transformations, controller.get('*sourceOperations')),
+    );
     const { promise, cancel, image } = preloadImage(src);
 
     const stop = this._handleImageLoading(controller, src);

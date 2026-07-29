@@ -7,18 +7,49 @@
 
 ---
 
+## 0. Status — 2026-07-30
+
+The migration is **effectively complete on `feat/v2-migration`** (integration PR
+#1048 → `main`, ~50 commits ahead). Sections 2–9 are kept for the historical
+record; where they describe machinery, read them as *what the plan was*, not
+what the code is. The deltas that matter:
+
+| Plan says | Reality |
+|-----------|---------|
+| M0–M9 sequenced ahead | **Done.** The v1 engine is gone: no `PubSubCompat`, `SymbioteCompatMixin`, `SharedState`, `LitBlock`, `LitActivityBlock`, `ModalManager`, `CTX.ts`, `$` proxy, `*`-keys, or nanostores. State lives in the per-ctx `ControllerContainer` + `@lit-labs/signals`. |
+| M10 = deferred `<uc-uploader>` plus `uc-uploader-regular\|minimal\|inline` preset tags | **Shipped differently (#1056):** one `<uc-uploader mode="regular\|minimal\|inline">` host (`src/solutions/file-uploader/Uploader.ts`). No preset tags; `<uc-file-uploader-*>` stay real solutions, now sharing `layout-fragments.ts` + `<uc-upload-list chrome="…">` (#1057). |
+| M11 = delete undocumented internals | **Done except one item:** `CssDataMixin` + `--cfg-*` reads survive in `src/blocks/Img/` (`CssDataMixin.ts`, `ImgConfig.ts`), deliberately left in place. Everything else on the M11 list is already absent from `src/`. |
+| Facade router (§3) keeps both engines alive per domain | Gone — there is no facade left to delete. |
+
+**Debt found while auditing M11 — since fixed.** `trimFilename` in
+`src/utils/cdn-utils.ts` stripped the filename with a substring `replace`, removing
+the *first* matching occurrence rather than the trailing segment, so it mangled any
+CDN path whose last segment repeated earlier (`/a/a` → `//a`). `createCdnUrl` papered
+over only the leading-`//` case, and `extractCdnUrlModifiers` / `extractOperations`
+inherited the bad path.
+
+That whole module is gone. CDN URLs are built and read through
+`@uploadcare/cdn-url` behind `src/utils/cdn` (see AGENTS.md → "CDN URLs"), which
+retires the bug by construction: structural parsing has no substring surgery to get
+wrong. Two smaller ones went with it — `secureDeliveryProxyUrl` parsed the same URL
+three times, and `parseCdnUrl` called `new URL()` outside its `try`, so
+`addFileFromCdnUrl('not a url')` threw a raw `TypeError` instead of the documented
+`Error('Invalid CDN URL')`.
+
+---
+
 ## 1. Goal & decisions
 
 | Decision | Choice |
 |----------|--------|
 | **End-state** | **Full v2, incrementally.** Reach the complete v2 architecture (single composable `<uc-uploader>` tag, central router, no compat shim). Documented public API kept working via compat shims until a future **major** release, then dropped. |
 | **Core mechanism** | **Strangler facade.** `UploaderController` becomes the real state engine; v1's `$` / `cfg` / `sub` / `pub` are reduced to a thin facade that delegates to controllers, flipped **one domain at a time**. Blocks stay unchanged until their domain migrates. |
-| **Single `<uc-uploader>` tag** | **Deferred** to a late milestone (M10). Early milestones decouple internals under the existing tags. |
+| **Single `<uc-uploader>` tag** | Was **deferred** to M10; landed as a `mode`-attribute host rather than preset tags — see §0. |
 | **Green gate** | **e2e green every milestone** (plus app typecheck, specs, build). The 24 e2e tests exercise the documented contract — they are the strangler's safety net. |
 | **What we may break** | Anything **undocumented**: the `$` proxy, `*`-prefixed keys, internal managers, `--cfg-*` CSS vars, `static template` setter, nanostores. |
 | **What we must NOT break** | The documented contract (§4) until the future major. |
 
-**Repo facts (verified on `main`, commit `bea13694`):**
+**Repo facts as of the plan's start (verified on `main`, commit `bea13694`) — historical:**
 - Single package: root `package.json` = `@uploadcare/file-uploader`, **no** workspaces. Canonical source = root `src/` (376 tracked files), root `tests/`.
 - The working-tree `packages/` directory is **untracked stray cruft** from a `feat/monorepo` checkout (0 tracked files, not gitignored). Safe to `rm -rf packages/`. This plan targets root `src/` only.
 - Runtime is already **Lit + nanostores** — Symbiote is gone; `SymbioteCompatMixin` is just a nanostores-backed compat shim. So this is a state-engine + routing migration, **not** a framework rewrite.
@@ -26,7 +57,7 @@
 
 ---
 
-## 2. The two engines
+## 2. The two engines *(historical — the v1 engine no longer exists)*
 
 **v1 engine — `PubSub` (`src/lit/PubSubCompat.ts`)**
 One nanostores `MapStore` per `ctx-name`, reached via the `$` proxy and `sub`/`pub`/`read`/`add` in `SymbioteCompatMixin`. Flat string keys: `*cfg/<key>`, `*currentActivity`, `*history`, `*uploadList`, `*l10n/<key>`, plus singleton-instance keys (`*blocksRegistry`, `*pluginManager`, `*eventEmitter`, `*validationManager`, …). `ctx-name` propagates through the DOM tree via `@lit/context`.
@@ -36,7 +67,7 @@ Structured sub-controllers (`config`, `router`, `locale`, `validation`, `collect
 
 ---
 
-## 3. The facade mechanism (built once, in M0)
+## 3. The facade mechanism (built once, in M0) *(historical — fully removed)*
 
 `PubSub` gains a **per-key-namespace router**:
 
@@ -70,10 +101,10 @@ Source: `fern-docs/fern/pages/file-uploader/*`.
 Run, in order — all must pass before the milestone is "done":
 
 1. `npm run tsc:app`
-2. `npm run test:specs` (239 unit specs)
+2. `npm run test:specs` (120 files / 1272 tests as of 2026-07-25; was 239 tests when this plan was written)
 3. `npm run test:locales`
 4. `npm run build:svg-sprites && npm run build:lib` — **prerequisite for e2e** (the `bundles.e2e` test reads `web/` artifacts; a clean tree has none)
-5. `npm run test:e2e` (24 files / 187 tests, browser)
+5. `npm run test:e2e` (54 files as of 2026-07-25; was 24 files / 187 tests when this plan was written)
 6. `npm run build` (incl. `test:attw`, `test:publint`, `lint:size`) at milestone boundaries
 7. `npm run lint`
 
@@ -91,20 +122,20 @@ Run, in order — all must pass before the milestone is "done":
 
 ## 6. Milestone sequence (dependency-ordered)
 
-| # | Milestone | Domain / keys facaded | Documented contract held | Risk |
-|---|-----------|-----------------------|--------------------------|------|
-| **M0** | Foundations & safety net | — (no behavior change) | all | low |
-| **M1** | Config | `cfg`, `*cfg/*` | `<uc-config>` 55 attrs/props + attr⇄prop reactivity | med |
-| **M2** | Locale | `*l10n/*`, `l10n()` | `defineLocale`, `localeName`, `localeDefinitionOverride` | low |
-| **M3** | Collection + Validation | `*uploadList`, per-entry state | `addFileFrom*`, `removeAll*`, `getOutputItem`, `getOutputCollectionState`, validators | **high** |
-| **M4** | Upload + Secure uploads | `*uploadQueue`, progress | `uploadAll`, secure-upload resolvers | med |
-| **M5** | Events | `*eventEmitter` | 19 provider events, `EventType`, `api.on()` | med |
-| **M6** | Plugins + Sources | `*pluginManager`, `*lazyPlugins` | plugin API + built-in plugin IDs | high |
-| **M7** | Router (the swap) | `*currentActivity`, `*history`, `ModalManager` | `setCurrentActivity`, `setModalState`, `initFlow`, `doneFlow`, `historyBack`, activity/modal events | **high** |
-| **M8** | Clipboard + Telemetry | remaining singletons | `pasteScope`, `qualityInsights` | low |
-| **M9** | UI adapter base classes | — (port blocks off `$`) | every tag's rendered behavior | high |
-| **M10** | Single `<uc-uploader>` tag + presets *(deferred)* | — (additive new tags) | v1 tags become shims | med |
-| **M11** | Remove undocumented internals | delete facade + shim | documented tags survive as shims to future major | med |
+| # | Milestone | Domain / keys facaded | Documented contract held | Risk | Status |
+|---|-----------|-----------------------|--------------------------|------|--------|
+| **M0** | Foundations & safety net | — (no behavior change) | all | low | done |
+| **M1** | Config | `cfg`, `*cfg/*` | `<uc-config>` 55 attrs/props + attr⇄prop reactivity | med | done |
+| **M2** | Locale | `*l10n/*`, `l10n()` | `defineLocale`, `localeName`, `localeDefinitionOverride` | low | done |
+| **M3** | Collection + Validation | `*uploadList`, per-entry state | `addFileFrom*`, `removeAll*`, `getOutputItem`, `getOutputCollectionState`, validators | **high** | done |
+| **M4** | Upload + Secure uploads | `*uploadQueue`, progress | `uploadAll`, secure-upload resolvers | med | done |
+| **M5** | Events | `*eventEmitter` | 19 provider events, `EventType`, `api.on()` | med | done |
+| **M6** | Plugins + Sources | `*pluginManager`, `*lazyPlugins` | plugin API + built-in plugin IDs | high | done |
+| **M7** | Router (the swap) | `*currentActivity`, `*history`, `ModalManager` | `setCurrentActivity`, `setModalState`, `initFlow`, `doneFlow`, `historyBack`, activity/modal events | **high** | done |
+| **M8** | Clipboard + Telemetry | remaining singletons | `pasteScope`, `qualityInsights` | low | done |
+| **M9** | UI adapter base classes | — (port blocks off `$`) | every tag's rendered behavior | high | done |
+| **M10** | Single `<uc-uploader>` tag + presets | — (additive new tags) | v1 tags become shims | med | **shipped as `mode` attr, no preset tags (§0)** |
+| **M11** | Remove undocumented internals | delete facade + shim | documented tags survive as shims to future major | med | **done except `Img`'s `CssDataMixin`/`--cfg-*` (§0)** |
 
 > End of **M8**: `PubSub` holds zero independent state — internal architecture is fully v2. M9–M11 peel away the v1 element layer itself.
 
@@ -160,46 +191,52 @@ v2's dual-slot `RouterController` (`activity` background + `modal` foreground, `
 Introduce `Uploader.ts` (ContextProvider + `bindConfigToElement` + `bindEventBusToElement`, owner element) and `ChildBlock.ts` (ContextConsumer / `UploaderRegistry` resolution). Port inner blocks **block-by-block** off `LitBlock`/`SymbioteCompatMixin` to `ChildBlock`, reading controllers directly instead of `this.$`. Remove each block's `$` usage as it migrates. Group ports (e.g. by activity) so each is independently gated.
 **Exit (per group):** full gate. Final: no block reads via `$`.
 
-### M10 — Single composable `<uc-uploader>` tag + presets *(deferred)*
-Additive `<uc-uploader>` base + `<uc-uploader-regular|minimal|inline>` presets (`styleAttrs`, `navigationSlotFor`, `renderLayout()`). Existing `<uc-file-uploader-*>` reduced to thin compat shims. Initially undocumented; document in a later step. Named-slot override model (`yield`/`content-for`).
-**Exit:** new-tag e2e added + green; existing-tag e2e still green; full gate.
+### M10 — Single composable `<uc-uploader>` tag *(shipped, reshaped)*
+**Planned:** additive `<uc-uploader>` base + `<uc-uploader-regular|minimal|inline>` presets (`styleAttrs`, `navigationSlotFor`, `renderLayout()`), with `<uc-file-uploader-*>` reduced to thin compat shims and a named-slot override model (`yield`/`content-for`).
 
-### M11 — Remove undocumented internals
-Delete `SymbioteCompatMixin`, `PubSubCompat`, the facade adapters, nanostores dependency, `CssDataMixin`, `--cfg-*`, `static template` setter, `LitUploaderBlock.extSrcList/sourceTypes`, `<uc-config>`/`<uc-upload-ctx-provider>` internals not needed by shims. **Documented tags remain as compat shims** until a future major explicitly drops them (out of scope here).
-**Exit:** full gate; bundle-size reduction confirmed via `lint:size`.
+**Shipped instead (#1056, #1057):** a single `<uc-uploader mode="regular|minimal|inline">` host (`src/solutions/file-uploader/Uploader.ts`) that mounts the existing solution for the requested mode. No preset tags, no slot-override model, and `<uc-file-uploader-*>` were **not** demoted to shims — they remain the real solutions. Sharing happens at two seams instead: pure template helpers in `src/solutions/file-uploader/layout-fragments.ts` and a `chrome="default|compact"` property on `<uc-upload-list>`. Design notes: `docs/superpowers/specs/2026-07-23-solution-layout-chrome-design.md`.
+
+**Exit (met):** `<uc-uploader>` specs + existing-tag e2e green; full gate.
+
+### M11 — Remove undocumented internals *(done, one exception)*
+Removed: `SymbioteCompatMixin`, `PubSubCompat`, `SharedState`, `LitBlock`/`LitActivityBlock`, `CTX.ts`, `ModalManager`, the facade adapters, the nanostores dependency, the `$` proxy and `*`-prefixed keys, the `static template` setter, `LitUploaderBlock.extSrcList/sourceTypes`.
+
+**Still present, by choice:** `CssDataMixin` + `--cfg-*` reads in `src/blocks/Img/` (`CssDataMixin.ts`, `ImgConfig.ts`) — `<uc-img>` keeps its CSS-var config path for now.
+
+**Documented tags remain as compat shims** until a future major explicitly drops them (out of scope here).
 
 ---
 
 ## 8. Key reference files
 
-**v1 (root `src/`):**
-- `src/lit/PubSubCompat.ts` — state atom; where the facade router is added (M0).
-- `src/lit/SymbioteCompatMixin.ts` — `$`/`sub`/`pub`, ctx-name propagation; retired in M9/M11.
-- `src/lit/SharedState.ts` — full key inventory (the migration checklist).
-- `src/lit/LitBlock.ts` — manager bootstrap, `cfg` proxy; decomposed across M1–M8.
-- `src/lit/LitActivityBlock.ts` + `src/abstract/managers/ModalManager.ts` — routing, replaced in M7.
-- `src/abstract/UploaderPublicApi.ts` — documented JS API; re-pointed at controllers.
-- `src/abstract/CTX.ts` — `init$` factories (initial state shape).
-- `src/blocks/Config/Config.ts` — config element; re-expressed in M1.
-- `src/blocks/UploadCtxProvider/EventEmitter.ts` — event contract; M5.
-- `src/abstract/managers/plugin/*` — plugin system; M6.
-- `src/solutions/file-uploader/{regular,minimal,inline}/*` — solution composition; M7/M10.
+**Deleted during the migration** (listed here only so old references resolve):
+`src/lit/PubSubCompat.ts`, `src/lit/SymbioteCompatMixin.ts`,
+`src/lit/SharedState.ts`, `src/lit/LitBlock.ts`, `src/lit/LitActivityBlock.ts`,
+`src/abstract/managers/ModalManager.ts`, `src/abstract/CTX.ts`.
 
-**v2 reference (worktree `/tmp/v2-spike-explore/src/`, branch `worktree-v2-spike`):**
-- `abstract/host-subscription.ts` — `Listeners` primitive.
-- `abstract/controllers/UploaderController.ts` — controller tree + `install()`.
-- `abstract/controllers/{Config,Router,Locale,Validation,UploadCollection,Upload,PluginRegistry,Sources,Clipboard}Controller.ts`.
-- `abstract/EventBus.ts`, `abstract/UploaderApi.ts`, `abstract/UploaderRegistry.ts`.
-- `abstract/ui-adapters.ts`, `abstract/Uploader.ts`, `abstract/ChildBlock.ts`.
-- `abstract/plugin.ts`, `abstract/plugin-api-bridge.ts`.
-- `solutions/file-uploader/regular/{UploaderRegular,FileUploaderRegular}.ts` — preset + compat-shim patterns.
+**Current (root `src/`):**
+- `src/abstract/di/ControllerContainer.ts` — per-ctx DI container; the ownership/teardown unit.
+- `src/abstract/UploaderRegistry.ts` — ctx-name → container registry + lifecycle.
+- `src/abstract/host-subscription.ts` — `Listeners` primitive.
+- `src/abstract/controllers/*` — the DOM-free controller tree (`Config`, `Router`, `Locale`, `Validation`, `UploadCollection`, `Upload*`, `SecureUploads`, `SourceList`, `LazyPlugins`, `Clipboard`, `CloudImageEditor`, `State`, …).
+- `src/abstract/EventBus.ts` + `src/blocks/UploadCtxProvider/EventEmitter.ts` — internal bus and the documented DOM event contract.
+- `src/abstract/UploaderPublicApi.ts` — documented JS API, `@inject` facade over controllers.
+- `src/lit/ChildBlock.ts` (+ `ActivityChildBlock`, `SolutionChildBlock`, `WithApi`, `WithConfig`) — element/adapter layer.
+- `src/blocks/Config/Config.ts` — `<uc-config>` element over `ConfigController`'s descriptor registry.
+- `src/abstract/managers/plugin/*` — plugin system.
+- `src/solutions/file-uploader/` — `Uploader.ts` (`mode` host), `layout-fragments.ts`, `{regular,minimal,inline}/*`.
 
 ---
 
 ## 9. Open risks & notes
 
-- **Per-entry PubSub contexts (M3)** are the trickiest facade mapping — budget extra time.
-- **Router swap (M7)** is the one non-incremental step within a milestone; it stands or falls on e2e coverage of the regular/minimal/inline flows.
-- **e2e flake** (cloud-image-editor crop-frame) must be stabilized in M0 or it erodes trust in the gate.
-- **`packages/` stray dir** — remove before starting to avoid path confusion.
-- **Future major** (dropping documented tags / shims) is explicitly **out of scope** for this plan; this plan stops at "internals fully v2 + single tag available + undocumented internals gone."
+**Resolved:** the per-entry PubSub facade mapping (M3), the router swap (M7),
+and the `packages/` stray dir are all behind us. The cloud-image-editor
+crop-frame e2e flake is contained by `retry: 1` on the e2e project (see
+`AGENTS.md`), not fixed — a genuine regression still fails both attempts.
+
+**Still open:**
+- **Landing `feat/v2-migration` → `main`** (PR #1048) is now the dominant risk: ~50 commits and a large diff sitting unmerged.
+- **`Img`'s `CssDataMixin`/`--cfg-*`** is the one deliberate M11 leftover (§0).
+- **CDN URLs are now `@uploadcare/cdn-url`** behind `src/utils/cdn` (§0), which retired `cdn-utils.ts` and its `trimFilename` bug. The dependency is pinned to a `6.20.0-alpha.*` and must reach a stable version before any release.
+- **Future major** (dropping documented tags / shims) remains **out of scope**; this plan stops at "internals fully v2 + single tag available + undocumented internals gone."

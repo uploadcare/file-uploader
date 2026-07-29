@@ -1,6 +1,5 @@
 import type { UploadcareFile } from '@uploadcare/upload-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createCdnUrl } from '../utils/cdn-utils';
 import { applyInitialCrop } from './applyInitialCrop';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 
@@ -22,7 +21,7 @@ describe('applyInitialCrop', () => {
   });
 
   it('is a no-op when cropPreset is empty or fully invalid — eligible entries stay uncropped', () => {
-    const cdnUrl = 'https://cdn.example.com/uuid/';
+    const cdnUrl = 'https://cdn.example.com/c2499162-eb07-4b93-b31e-94a89a47e858/';
     const id = collection.add({
       isImage: true,
       fileInfo: fileInfo(800, 600),
@@ -45,7 +44,7 @@ describe('applyInitialCrop', () => {
   });
 
   it('applies a centered crop modifier + rewritten cdnUrl to an image entry without an existing crop modifier', () => {
-    const cdnUrl = 'https://cdn.example.com/uuid/';
+    const cdnUrl = 'https://cdn.example.com/c2499162-eb07-4b93-b31e-94a89a47e858/';
     const id = collection.add({
       isImage: true,
       fileInfo: fileInfo(800, 600),
@@ -56,16 +55,18 @@ describe('applyInitialCrop', () => {
     applyInitialCrop(collection, '4:3');
 
     const entry = collection.read(id);
-    const cdnUrlModifiers = entry?.get('cdnUrlModifiers');
-    expect(cdnUrlModifiers).toContain('crop/');
-    expect(cdnUrlModifiers).toContain('-/preview/');
-    // 800x600 at a 4:3 aspect ratio is already 4:3 — full-frame centered crop.
-    expect(cdnUrlModifiers).toContain('crop/800x600/0,0');
-    expect(entry?.get('cdnUrl')).toBe(createCdnUrl(cdnUrl, cdnUrlModifiers ?? undefined));
+    // Literal expected strings (not computed via `withOperations`/
+    // `operationsFromModifiers` — the functions under migration — so this
+    // test can actually detect a change in what they produce). 800x600 at a
+    // 4:3 aspect ratio is already 4:3 — full-frame centered crop.
+    expect(entry?.get('cdnUrlModifiers')).toBe('-/crop/800x600/0,0/-/preview/');
+    expect(entry?.get('cdnUrl')).toBe(
+      'https://cdn.example.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/crop/800x600/0,0/-/preview/',
+    );
   });
 
   it('skips entries that already have /crop/ in cdnUrlModifiers (values unchanged)', () => {
-    const cdnUrl = 'https://cdn.example.com/uuid/';
+    const cdnUrl = 'https://cdn.example.com/c2499162-eb07-4b93-b31e-94a89a47e858/';
     const existingModifiers = '-/crop/100x100/0,0/';
     const id = collection.add({
       isImage: true,
@@ -85,13 +86,13 @@ describe('applyInitialCrop', () => {
     const nonImageId = collection.add({
       isImage: false,
       fileInfo: fileInfo(800, 600),
-      cdnUrl: 'https://cdn.example.com/a/',
+      cdnUrl: 'https://cdn.example.com/a1b2c3d4-5e6f-4a7b-8c9d-0e1f2a3b4c5d/',
       cdnUrlModifiers: null,
     });
     const noFileInfoId = collection.add({
       isImage: true,
       fileInfo: null,
-      cdnUrl: 'https://cdn.example.com/b/',
+      cdnUrl: 'https://cdn.example.com/b7c8d9e0-1f2a-4b3c-8d4e-5f6a7b8c9d0e/',
       cdnUrlModifiers: null,
     });
 
@@ -106,7 +107,7 @@ describe('applyInitialCrop', () => {
     const id = collection.add({
       isImage: true,
       fileInfo: {} as UploadcareFile,
-      cdnUrl: 'https://cdn.example.com/uuid/',
+      cdnUrl: 'https://cdn.example.com/c2499162-eb07-4b93-b31e-94a89a47e858/',
       cdnUrlModifiers: null,
     });
 
@@ -138,7 +139,7 @@ describe('applyInitialCrop', () => {
   });
 
   it('falls back to a 1:1 aspect ratio when the preset lacks numeric width/height (square crop for a square source)', () => {
-    const cdnUrl = 'https://cdn.example.com/uuid/';
+    const cdnUrl = 'https://cdn.example.com/c2499162-eb07-4b93-b31e-94a89a47e858/';
     const id = collection.add({
       isImage: true,
       fileInfo: fileInfo(500, 500),
