@@ -1,3 +1,9 @@
+## [1.33.1](https://github.com/uploadcare/file-uploader/compare/v1.33.0...v1.33.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* **dynamic-btn:** compute dropdown icon in willUpdate and refine plain mode ([#1065](https://github.com/uploadcare/file-uploader/issues/1065)) ([f2c6b91](https://github.com/uploadcare/file-uploader/commit/f2c6b91af2e6ed2d58e9afa06009d8511b006594))
 # [1.33.0](https://github.com/uploadcare/file-uploader/compare/v1.32.1...v1.33.0) (2026-07-28)
 
 
