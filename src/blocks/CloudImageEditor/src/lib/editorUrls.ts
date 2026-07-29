@@ -1,4 +1,4 @@
-import { type Quality, quality as qualityOp, rawOp } from '@uploadcare/cdn-url/ops';
+import { preview, type Quality, quality as qualityOp, rawOp } from '@uploadcare/cdn-url/ops';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
 import { type CdnOperation, serializeOperations, withOperations } from '../../../../utils/cdn';
 import type { Transformations } from '../types';
@@ -64,7 +64,7 @@ export function editorAppliedUrl({
   transformations: Transformations;
   sourceOperations: readonly CdnOperation[];
 }): { cdnUrl: string; cdnUrlModifiers: string } {
-  const operations = mergeTransformationsIntoOperations(sourceOperations, transformations);
+  const operations = [...mergeTransformationsIntoOperations(sourceOperations, transformations), preview()];
   return {
     cdnUrl: withOperations(originalUrl, operations),
     cdnUrlModifiers: serializeOperations(operations),

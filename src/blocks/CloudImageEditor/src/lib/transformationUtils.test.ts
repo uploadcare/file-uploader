@@ -19,6 +19,7 @@ import {
   mergeTransformationsIntoOperations,
   OPERATIONS_DEFAULTS,
   operationsToTransformations,
+  preservedOperations,
   transformationsToOperations,
 } from './transformationUtils';
 
@@ -267,13 +268,12 @@ describe('round-trip', () => {
 });
 
 describe('mergeTransformationsIntoOperations', () => {
-  it('produces just the modelled operations plus a trailing preview for a source with no operations', () => {
-    // Must stay byte-identical to the pre-refactor `[...modelled, preview()]` —
-    // the common case (a fresh source URL) must not change at all.
-    expect(mergeTransformationsIntoOperations([], { brightness: 50, rotate: 90 })).toEqual([
-      ...transformationsToOperations({ brightness: 50, rotate: 90 }),
-      preview(),
-    ]);
+  it('produces just the modelled operations for a source with no operations', () => {
+    // CHANGED: no longer appends `preview()` — that marker now belongs to
+    // `editorAppliedUrl`, so the merge itself stays a pure operation list.
+    expect(mergeTransformationsIntoOperations([], { brightness: 50, rotate: 90 })).toEqual(
+      transformationsToOperations({ brightness: 50, rotate: 90 }),
+    );
   });
 
   it('replaces a modelled operation in its existing position when still set', () => {
@@ -283,7 +283,6 @@ describe('mergeTransformationsIntoOperations', () => {
       blur(20),
       brightness(90),
       contrast(5),
-      preview(),
     ]);
   });
 
@@ -293,21 +292,18 @@ describe('mergeTransformationsIntoOperations', () => {
     // reverts to the default `isMeaningful` would omit.
     const source = [brightness(50), contrast(10)];
 
-    expect(mergeTransformationsIntoOperations(source, { brightness: 0, contrast: 10 })).toEqual([
-      contrast(10),
-      preview(),
-    ]);
+    expect(mergeTransformationsIntoOperations(source, { brightness: 0, contrast: 10 })).toEqual([contrast(10)]);
   });
 
   it('appends a newly-set modelled operation absent from source, in canonical order', () => {
     const source = [blur(20)];
 
-    // `enhance` sorts before `rotate` in SUPPORTED_OPERATIONS_ORDERED.
+    // `enhance` sorts before `rotate` in SUPPORTED_OPERATIONS_ORDERED, and
+    // `rotate` is a geometry operation so it lands last regardless.
     expect(mergeTransformationsIntoOperations(source, { rotate: 90, enhance: 30 })).toEqual([
       blur(20),
       enhance(30),
       rotate(90),
-      preview(),
     ]);
   });
 
@@ -321,26 +317,23 @@ describe('mergeTransformationsIntoOperations', () => {
       brightness(50),
       blur(20),
       contrast(10),
-      preview(),
     ]);
   });
 
   it('keeps an operation the editor does not model in place, brief example', () => {
-    // `-/blur/20/-/brightness/50/` now applies as `-/blur/20/-/brightness/50/-/preview/`,
-    // not `-/brightness/50/-/blur/20/-/preview/` (the old append-at-the-end order).
+    // `-/blur/20/-/brightness/50/` now applies as `-/blur/20/-/brightness/50/`,
+    // not `-/brightness/50/-/blur/20/` (the old append-at-the-end order).
     const source = operationsFromModifiers('-/blur/20/-/brightness/50/');
 
-    expect(mergeTransformationsIntoOperations(source, { brightness: 50 })).toEqual([
-      blur(20),
-      brightness(50),
-      preview(),
-    ]);
+    expect(mergeTransformationsIntoOperations(source, { brightness: 50 })).toEqual([blur(20), brightness(50)]);
   });
 
-  it('drops every preview in source and appends exactly one at the end', () => {
+  it('drops every preview in source and does not add a new one', () => {
+    // CHANGED: the merge no longer owns the `preview` marker at all — see
+    // `editorAppliedUrl` for where it is appended now.
     const source = [preview(), brightness(50), preview(1000, 400)];
 
-    expect(mergeTransformationsIntoOperations(source, { brightness: 50 })).toEqual([brightness(50), preview()]);
+    expect(mergeTransformationsIntoOperations(source, { brightness: 50 })).toEqual([brightness(50)]);
   });
 
   it('keeps the position of the last occurrence of a repeated modelled operation and drops earlier ones', () => {
@@ -349,21 +342,13 @@ describe('mergeTransformationsIntoOperations', () => {
     // was actually read.
     const source = [brightness(10), blur(20), brightness(90)];
 
-    expect(mergeTransformationsIntoOperations(source, { brightness: 90 })).toEqual([
-      blur(20),
-      brightness(90),
-      preview(),
-    ]);
+    expect(mergeTransformationsIntoOperations(source, { brightness: 90 })).toEqual([blur(20), brightness(90)]);
   });
 
   it('keeps an unmodelled operation in place even when the transformations are empty', () => {
     const source = [overlay('wm-uuid'), resize({ width: 300 })];
 
-    expect(mergeTransformationsIntoOperations(source, {})).toEqual([
-      overlay('wm-uuid'),
-      resize({ width: 300 }),
-      preview(),
-    ]);
+    expect(mergeTransformationsIntoOperations(source, {})).toEqual([overlay('wm-uuid'), resize({ width: 300 })]);
   });
 
   it('mixes replace-in-place, removal, append and passthrough together', () => {
@@ -374,7 +359,6 @@ describe('mergeTransformationsIntoOperations', () => {
       brightness(90),
       overlay('wm-uuid'),
       rotate(180),
-      preview(),
     ]);
   });
 
@@ -385,7 +369,7 @@ describe('mergeTransformationsIntoOperations', () => {
     // operation's shape allows a test to check.
     const source = [mirrorOp()];
 
-    expect(mergeTransformationsIntoOperations(source, { mirror: true })).toEqual([mirrorOp(), preview()]);
+    expect(mergeTransformationsIntoOperations(source, { mirror: true })).toEqual([mirrorOp()]);
   });
 
   // The editor models `crop` but its UI cannot represent an aspect-ratio,
@@ -401,21 +385,70 @@ describe('mergeTransformationsIntoOperations', () => {
     const source = [...ops(operation), overlay('wm-uuid')];
 
     // The crop's slot disappears; the genuinely unmodelled overlay keeps its place.
-    expect(mergeTransformationsIntoOperations(source, {})).toEqual([overlay('wm-uuid'), preview()]);
+    expect(mergeTransformationsIntoOperations(source, {})).toEqual([overlay('wm-uuid')]);
   });
 
   it('replaces an unrepresentable crop with the one the user drew', () => {
     const source = [...ops('crop/1:1/center'), overlay('wm-uuid')];
     const drawn = { crop: { dimensions: [640, 480], coords: [10, 20] } } as const satisfies Transformations;
 
-    // The drawn crop takes the source crop's slot, not the end of the list: placement
-    // is keyed on the operation *name*, so a `crop` the reader could not parse still
-    // reserves the position its replacement inherits. Worth pinning — it means the
-    // user's crop lands where their URL had one, rather than after a watermark.
+    // CHANGED: the crop is now emitted after everything preserved, so its
+    // coordinates are interpreted in the same space `_imageSize` measures.
     expect(mergeTransformationsIntoOperations(source, drawn)).toEqual([
-      cropOp(640, 480, { x: 10, y: 20 }),
       overlay('wm-uuid'),
-      preview(),
+      cropOp(640, 480, { x: 10, y: 20 }),
     ]);
+  });
+
+  it('appends geometry operations after preserved ones, whatever the source order', () => {
+    const source = [cropOp(100, 100, { x: 0, y: 0 }), overlay('wm-uuid'), blur(20)];
+
+    // `crop` came first in the source; it now lands last, so its coordinates are
+    // interpreted after the overlay and blur rather than before them.
+    expect(mergeTransformationsIntoOperations(source, { crop: { dimensions: [640, 480], coords: [10, 20] } })).toEqual([
+      overlay('wm-uuid'),
+      blur(20),
+      cropOp(640, 480, { x: 10, y: 20 }),
+    ]);
+  });
+
+  it('keeps appearance operations in their source position', () => {
+    const source = [overlay('wm-uuid'), brightness(10), blur(20)];
+
+    expect(mergeTransformationsIntoOperations(source, { brightness: 90 })).toEqual([
+      overlay('wm-uuid'),
+      brightness(90),
+      blur(20),
+    ]);
+  });
+
+  it('orders several geometry operations by the editor canonical order', () => {
+    expect(
+      mergeTransformationsIntoOperations([], {
+        rotate: 90,
+        mirror: true,
+        crop: { dimensions: [10, 10], coords: [0, 0] },
+      }),
+    ).toEqual([mirrorOp(), rotate(90), cropOp(10, 10, { x: 0, y: 0 })]);
+  });
+
+  it('no longer appends a preview marker — that belongs to the applied url', () => {
+    expect(mergeTransformationsIntoOperations([], { brightness: 50 })).toEqual([brightness(50)]);
+  });
+
+  it('drops the source preview marker so apply cycles do not stack them', () => {
+    expect(mergeTransformationsIntoOperations([preview(), overlay('wm-uuid')], {})).toEqual([overlay('wm-uuid')]);
+  });
+});
+
+describe('preservedOperations', () => {
+  it('keeps only what the editor cannot model, dropping its own preview marker', () => {
+    const source = [overlay('wm-uuid'), brightness(50), resize({ width: 300 }), preview(), cropOp(10, 10)];
+
+    expect(preservedOperations(source)).toEqual([overlay('wm-uuid'), resize({ width: 300 })]);
+  });
+
+  it('returns an empty list for a source with nothing preserved', () => {
+    expect(preservedOperations([brightness(50), cropOp(10, 10)])).toEqual([]);
   });
 });
