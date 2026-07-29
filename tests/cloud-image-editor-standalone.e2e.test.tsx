@@ -59,6 +59,13 @@ describe('Cloud Image Editor — standalone (no <uc-config>)', () => {
         'Failed to parse CDN URL, opening editor without transformations',
         expect.any(Error),
       );
+
+      // "Opens without transformations" has to mean a usable editor, not a shell.
+      // The toolbar and cropper render behind `_isInitialized`, which only
+      // `_scheduleInitialization()` sets — and that sits at the tail of
+      // `updateImage`, past this catch. Asserting the root alone missed a fresh
+      // mount rendering no controls at all.
+      await expect.element(page.getByTestId('uc-editor-toolbar')).toBeVisible();
     } finally {
       warnSpy.mockRestore();
     }

@@ -197,7 +197,10 @@ describe('operationsToTransformations', () => {
   });
 
   it('yields undefined for a number operation with no value', () => {
-    expect(operationsToTransformations(ops(unsafeOperation('brightness')))).toEqual({ brightness: undefined });
+    // `toStrictEqual`, not `toEqual`: the latter ignores undefined-valued keys, so
+    // it would pass just as happily against `{}` — and "the key is present holding
+    // undefined" is the whole claim here.
+    expect(operationsToTransformations(ops(unsafeOperation('brightness')))).toStrictEqual({ brightness: undefined });
   });
 
   it('lets a later occurrence of the same operation win', () => {

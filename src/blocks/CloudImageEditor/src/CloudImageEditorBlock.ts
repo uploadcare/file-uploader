@@ -783,6 +783,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         parsed = parseFileUrl(cdnUrlValue);
       } catch (err) {
         this._log.warn('Failed to parse CDN URL, opening editor without transformations', err);
+        // Still initialize before bailing: `_scheduleInitialization` is the only
+        // thing that sets `_isInitialized`, and it gates the cropper and toolbar.
+        // Returning past it left a fresh mount with an unusable shell — rendered
+        // root, no controls — rather than an editor "without transformations".
+        // Idempotent, so the already-initialized path is unaffected.
+        this._scheduleInitialization();
         return;
       }
       const originalUrl = serializeFileUrl({ origin: parsed.origin, uuid: parsed.uuid });
