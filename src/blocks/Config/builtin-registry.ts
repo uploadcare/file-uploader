@@ -11,6 +11,7 @@
 import { type ConfigKeyDescriptor, resolveConfigDescriptor } from '../../abstract/config-descriptor';
 import { logger } from '../../abstract/logger';
 import type { ConfigType } from '../../types';
+import { DEFAULT_CDN_ORIGIN } from '../../utils/cdn';
 import { serializeCsv } from '../../utils/comma-separated';
 import { ALL_TABS } from '../CloudImageEditor/src/toolbar-constants';
 import {
@@ -32,7 +33,7 @@ import {
 
 const log = logger.scope('normalize-config-value');
 
-export const DEFAULT_CDN_CNAME = 'https://ucarecdn.com';
+export const DEFAULT_CDN_CNAME = DEFAULT_CDN_ORIGIN;
 export const DEFAULT_BASE_URL = 'https://upload.uploadcare.com';
 export const DEFAULT_SOCIAL_BASE_URL = 'https://social.uploadcare.com';
 export const DEFAULT_PREFIXED_CDN_BASE_DOMAIN = 'https://ucarecd.net';

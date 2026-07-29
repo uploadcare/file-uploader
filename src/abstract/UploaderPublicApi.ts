@@ -25,7 +25,7 @@ import {
   IMAGE_ACCEPT_LIST,
   mergeFileTypes,
 } from '../utils/fileTypes';
-import { parseCdnUrl } from '../utils/parseCdnUrl';
+import { parseCdnUrlForEntry } from '../utils/parseCdnUrlForEntry';
 import { stringToArray } from '../utils/stringToArray';
 import { UploadSource } from '../utils/UploadSource';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
@@ -156,7 +156,7 @@ export class UploaderPublicApi {
     cdnUrl: string,
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'idle'> => {
-    const parsedCdnUrl = parseCdnUrl({
+    const parsedCdnUrl = parseCdnUrlForEntry({
       url: cdnUrl,
       cdnBase: this.cfg.cdnCname,
     });

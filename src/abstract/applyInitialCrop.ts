@@ -1,7 +1,7 @@
 import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
 import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import type { ConfigType } from '../types';
-import { createCdnUrl, createCdnUrlModifiers } from '../utils/cdn-utils';
+import { modifiers, operationsFromModifiers, serializeOperations, withOperations } from '../utils/cdn';
 import type { UploadCollectionController } from './controllers/UploadCollectionController';
 import { logger } from './logger';
 
@@ -44,16 +44,25 @@ export function applyInitialCrop(collection: UploadCollectionController, cropPre
         ? aspectRatioPreset.width / aspectRatioPreset.height
         : 1;
 
-    const crop = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
-    const cdnUrlModifiers = createCdnUrlModifiers(`crop/${crop.width}x${crop.height}/${crop.x},${crop.y}`, 'preview');
+    const cropFrame = calculateMaxCenteredCropFrame(width, height, expectedAspectRatio);
+    const operations = operationsFromModifiers(
+      modifiers(`crop/${cropFrame.width}x${cropFrame.height}/${cropFrame.x},${cropFrame.y}`, 'preview'),
+    );
     const cdnUrl = entry.get('cdnUrl');
     if (!cdnUrl) {
       log.warn('Failed to get cdnUrl for entry', entry.uid);
       continue;
     }
+    let croppedCdnUrl: string;
+    try {
+      croppedCdnUrl = withOperations(cdnUrl, operations);
+    } catch (err) {
+      log.warn('Failed to apply crop operations to cdnUrl for entry', entry.uid, err);
+      continue;
+    }
     entry.setMany({
-      cdnUrlModifiers,
-      cdnUrl: createCdnUrl(cdnUrl, cdnUrlModifiers),
+      cdnUrlModifiers: serializeOperations(operations),
+      cdnUrl: croppedCdnUrl,
     });
   }
 }

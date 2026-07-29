@@ -16,13 +16,7 @@ import { ctxNameContext } from '../../../lit/ctx-name-context';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types';
-import {
-  createCdnUrl,
-  createCdnUrlModifiers,
-  createOriginalUrl,
-  extractOperations,
-  extractUuid,
-} from '../../../utils/cdn-utils';
+import { parseFileUrl, serializeFileUrl } from '../../../utils/cdn';
 import { serializeCsv } from '../../../utils/comma-separated';
 import { debounce } from '../../../utils/debounce.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
@@ -30,9 +24,10 @@ import { subscribeUploaderConfigCompat } from './editor-config-compat';
 import { cloudImageEditorContext } from './editor-context';
 import { type EditorL10n, resolveEditorL10n } from './editor-locale';
 import { classNames } from './lib/classNames.js';
+import { editorAppliedUrl, editorImageInfoUrl } from './lib/editorUrls';
 import { getClosestAspectRatio, parseCropPreset } from './lib/parseCropPreset.js';
 import { parseTabs } from './lib/parseTabs.js';
-import { operationsToTransformations, transformationsToOperations } from './lib/transformationUtils.js';
+import { operationsToTransformations } from './lib/transformationUtils.js';
 import svgIconsSprite from './svg-sprite';
 import { ALL_TABS, TabId } from './toolbar-constants.js';
 import type { ApplyResult, CropPresetList, ImageSize, Transformations } from './types';
@@ -454,8 +449,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       this._log.warn('Original URL is null, cannot apply transformations');
       return;
     }
-    const cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
-    const cdnUrl = createCdnUrl(originalUrl, cdnUrlModifiers);
+    const sourceOperations = this._editorController.get('*sourceOperations');
+    // Edited in place rather than rebuilt: an operation the editor cannot model
+    // keeps its original position, which matters to the CDN for a few pairs
+    // (`stretch` applies to a following resize) — enforced by `editorAppliedUrl`
+    // composing the operation list once for both `cdnUrl` and `cdnUrlModifiers`.
+    const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, sourceOperations });
 
     const eventData: ApplyResult = {
       originalUrl,
@@ -738,12 +737,18 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     let closest: CropPresetList[number] | null = null;
 
     if (this.cdnUrl) {
-      const operations = extractOperations(this.cdnUrl);
-      const transformations = operationsToTransformations(operations) as Transformations;
+      try {
+        // Throws for anything that is not a single stored file; this lifecycle
+        // path tolerates a missing crop, so it just leaves `closest` at null.
+        const parsed = parseFileUrl(this.cdnUrl);
+        const transformations = operationsToTransformations(parsed.operations) as Transformations;
 
-      if (Array.isArray(transformations?.crop?.dimensions)) {
-        const [w, h] = transformations.crop.dimensions;
-        closest = getClosestAspectRatio(w, h, list, 0.1);
+        if (Array.isArray(transformations?.crop?.dimensions)) {
+          const [w, h] = transformations.crop.dimensions;
+          closest = getClosestAspectRatio(w, h, list, 0.1);
+        }
+      } catch (err) {
+        this._log.debug('Failed to parse CDN URL while syncing the crop preset state', err);
       }
     }
 
@@ -769,24 +774,42 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     if (this.cdnUrl) {
       const cdnUrlValue = this.cdnUrl as string;
-      const uuid = extractUuid(cdnUrlValue);
-      const originalUrl = createOriginalUrl(cdnUrlValue, uuid);
+      // `parseFileUrl` throws for anything that is not a single stored file
+      // (a group or delivery-proxy URL); caught locally so a bad `cdn-url`
+      // warns and opens the editor without transformations instead of
+      // throwing into the `void this.updateImage()` callers.
+      let parsed: ReturnType<typeof parseFileUrl>;
+      try {
+        parsed = parseFileUrl(cdnUrlValue);
+      } catch (err) {
+        this._log.warn('Failed to parse CDN URL, opening editor without transformations', err);
+        // Still initialize before bailing: `_scheduleInitialization` is the only
+        // thing that sets `_isInitialized`, and it gates the cropper and toolbar.
+        // Returning past it left a fresh mount with an unusable shell — rendered
+        // root, no controls — rather than an editor "without transformations".
+        // Idempotent, so the already-initialized path is unaffected.
+        this._scheduleInitialization();
+        return;
+      }
+      const originalUrl = serializeFileUrl({ origin: parsed.origin, uuid: parsed.uuid });
       if (originalUrl === editorController.get('*originalUrl')) {
         return;
       }
       editorController.set('*originalUrl', originalUrl);
-      const operations = extractOperations(cdnUrlValue);
-      const transformations = operationsToTransformations(operations) as Transformations;
-      editorController.set('*editorTransformations', transformations);
+      editorController.set('*editorTransformations', operationsToTransformations(parsed.operations) as Transformations);
+      editorController.set('*sourceOperations', parsed.operations);
     } else if (this.uuid) {
       const cdnCname = editorController.getConfig('cdnCname');
-      const originalUrl = createOriginalUrl(cdnCname, this.uuid as string);
+      const originalUrl = serializeFileUrl({ origin: new URL(cdnCname).origin, uuid: this.uuid as string });
       if (originalUrl === editorController.get('*originalUrl')) {
         return;
       }
       editorController.set('*originalUrl', originalUrl);
       if (Object.keys(editorController.get('*editorTransformations')).length > 0) {
         editorController.set('*editorTransformations', {});
+      }
+      if (editorController.get('*sourceOperations').length > 0) {
+        editorController.set('*sourceOperations', []);
       }
     } else {
       throw new Error('No UUID nor CDN URL provided');
@@ -807,7 +830,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     try {
       const originalUrlValue = editorController.get('*originalUrl') as string;
-      const cdnUrl = await this.proxyUrl(createCdnUrl(originalUrlValue, createCdnUrlModifiers('json')));
+      const cdnUrl = await this.proxyUrl(
+        editorImageInfoUrl(originalUrlValue, editorController.get('*sourceOperations')),
+      );
       const json = (await fetch(cdnUrl).then((response) => response.json())) as { width: number; height: number };
 
       if (!this.isConnected) {
@@ -861,8 +886,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         return;
       }
       const originalUrl = editorController.get('*originalUrl') as string;
-      const cdnUrlModifiers = createCdnUrlModifiers(transformationsToOperations(transformations), 'preview');
-      const cdnUrl = createCdnUrl(originalUrl, cdnUrlModifiers);
+      const sourceOperations = editorController.get('*sourceOperations');
+      const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, sourceOperations });
 
       const eventData: ApplyResult = {
         originalUrl,

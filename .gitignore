@@ -15,3 +15,12 @@ dist/**
 
 # Local AI planning docs / blueprints — never commit (see session rule).
 docs/superpowers/
+
+# Coding-agent scratch space. Listed here, not only in a personal global gitignore,
+# because the tooling reads *this* file: biome resolves ignores through
+# `vcs.useIgnoreFile`, and vitest's `./**` test globs need the same exclusion (see
+# `AGENT_SCRATCH` in vitest.config.ts). `.claude/worktrees/<branch>/` holds a full
+# second checkout, so without this a nested biome.json breaks `npm run lint` and a
+# second copy of every spec joins the suite.
+.claude/
+.superpowers/

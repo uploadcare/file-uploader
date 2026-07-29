@@ -1,3 +1,4 @@
+import { FILTER_NAMES, type FilterName } from '@uploadcare/cdn-url/ops';
 import { OPERATIONS_DEFAULTS } from './lib/transformationUtils.js';
 
 export const TabId = Object.freeze({
@@ -23,50 +24,17 @@ export const ALL_COLOR_OPERATIONS = Object.freeze([
 
 export type ColorOperation = (typeof ALL_COLOR_OPERATIONS)[number];
 
-export const ALL_FILTERS = Object.freeze([
-  'adaris',
-  'briaril',
-  'calarel',
-  'carris',
-  'cynarel',
-  'cyren',
-  'elmet',
-  'elonni',
-  'enzana',
-  'erydark',
-  'fenralan',
-  'ferand',
-  'galen',
-  'gavin',
-  'gethriel',
-  'iorill',
-  'iothari',
-  'iselva',
-  'jadis',
-  'lavra',
-  'misiara',
-  'namala',
-  'nerion',
-  'nethari',
-  'pamaya',
-  'sarnar',
-  'sedis',
-  'sewen',
-  'sorahel',
-  'sorlen',
-  'tarian',
-  'thellassan',
-  'varriel',
-  'varven',
-  'vevera',
-  'virkas',
-  'yedis',
-  'yllara',
-  'zatvel',
-  'zevcen',
-] as const);
+/**
+ * The CDN's filter presets, sourced from `@uploadcare/cdn-url` rather than
+ * duplicated here — the previous hand-maintained list was byte-identical to
+ * `FILTER_NAMES` (40 names, same order), so keeping our own copy only risked
+ * drifting from the CDN as presets are added or renamed.
+ *
+ * Each name still needs a label in `editor-locale.ts` to render in the toolbar.
+ */
+export const ALL_FILTERS = FILTER_NAMES;
 
-export type FilterId = (typeof ALL_FILTERS)[number];
+export type FilterId = FilterName;
 
 export const ALL_CROP_OPERATIONS = Object.freeze(['rotate', 'mirror', 'flip'] as const);
 
@@ -88,7 +56,8 @@ export type ColorOperationConfigKey = ColorOperation | 'filter';
 export type ColorPreview = {
   operation: ColorOperationConfigKey;
   value?: number;
-  filter?: string;
+  /** A real CDN filter preset — the slider maps its "original" pseudo-filter to undefined. */
+  filter?: FilterName;
 } | null;
 
 const NUMERIC_OPERATION_DEFAULTS = OPERATIONS_DEFAULTS as Record<ColorOperationConfigKey, number>;

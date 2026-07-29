@@ -169,6 +169,11 @@ describe('UploaderPublicApi', () => {
       expect(() => api.addFileFromCdnUrl('https://example.com/not-a-cdn-url')).toThrow('Invalid CDN URL');
     });
 
+    it('addFileFromCdnUrl throws Invalid CDN URL on a malformed (unparseable) url', () => {
+      const { api } = setup();
+      expect(() => api.addFileFromCdnUrl('not a url')).toThrow(new Error('Invalid CDN URL'));
+    });
+
     it('addFileFromObject adds a file, deriving name/size/mime', () => {
       const { api } = setup();
       const file = new File(['hello'], 'hello.txt', { type: 'text/plain' });

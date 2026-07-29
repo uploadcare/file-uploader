@@ -57,11 +57,21 @@ npx playwright install chromium   # one-time: required for e2e (browser tests)
 ```bash
 npm run tsc:app && \
 npm run build && \
+npm run test:types && \
+npm run tsc && \
 npm run test:specs && \
 npm run test:locales && \
 npm run test:e2e && \
 npm run lint
 ```
+
+`test:types` (tsd against `dist/index.d.ts`) and the full `tsc` (all four
+projects, not just `tsc:app`) both run in CI and both need the build output, so
+they belong after `build`. `tsc:app` alone will not catch a type error that only
+`tsconfig.test.json` / `tsconfig.e2e-test.json` / `tsconfig.node.json` sees, and
+neither will catch what `tsd` sees: tsd type-checks the **published** `.d.ts`
+under its own compiler options, so a public type that only resolves under
+`bundler` module resolution passes every `tsc` project and still fails CI.
 
 Pre-commit (husky + lint-staged) runs `biome check --write` on staged
 `*.{ts,js,cjs,tsx}`. The husky "DEPRECATED" warning on commit is benign.
@@ -153,6 +163,52 @@ Symbiote and the v1 state layer (`@symbiotejs/symbiote`, `nanostores`,
 `LitBlock`/`LitUploaderBlock` hierarchy, and the monolithic `UploaderController`)
 are **all gone** — the per-ctx `ControllerContainer` + `@lit-labs/signals` are
 the state mechanism.
+
+---
+
+## CDN URLs
+
+Every CDN URL is built and read through **`@uploadcare/cdn-url`**. The v1 string
+helpers (`cdn-utils.ts`: `createCdnUrl`, `extractUuid`, `trimFilename`, …) are gone —
+they did regex surgery, returned best-effort garbage for input they didn't understand,
+and one of them corrupted any path whose last segment recurred earlier.
+
+- **`src/utils/cdn` is the only import path.** Never import `@uploadcare/cdn-url`
+  directly outside that directory. The exception is `@uploadcare/cdn-url/ops`, which
+  is operation *constants and types* (`FILTER_NAMES`, `FilterName`, `Quality`) rather
+  than URL machinery — the editor's filter list needs it at runtime, and the types
+  cost nothing.
+- **`parseCdnUrl` / `serializeCdnUrl` are deliberately not re-exported.** Nothing
+  needs the kind-dispatching pair, and every bundle measured smaller once the last
+  consumer moved to `parseFileUrl` / `serializeFileUrl`. Re-export them only alongside
+  a call site that genuinely handles more than one URL kind.
+- **Build what you author, parse what the user supplies.** Operations the code writes
+  itself are typed literals (`modifiers('format/auto', \`resize/${size}x\`)`, the
+  `OperationLiteral` union). Values arriving from users — `<uc-img>`'s
+  `format`/`quality`/`resize`/`blur`/`cdn-operations` from CSS custom properties and
+  attributes, a stored `cdnUrlModifiers` — stay strings and go through
+  `operationsFromModifiers`, which parses. Do **not** route user input through the
+  `/ops` creators: their validation is `__DEV__`-gated, so a valid-but-unknown CDN
+  value throws in the dev build and passes in production.
+- **`unsafeOperation` is the one sanctioned cast.** The literal union cannot express a
+  uuid (`overlay/<uuid>`) or an `@`-prefixed internal directive (`@clib`), so those go
+  through it rather than a hand-written `as`.
+- **The tiny URL API (`tinyParse`/`tinyBuild`) is not used here, on purpose.**
+  Measured: putting `withOperations` on it took the editor bundle 49.14 → 49.38 KB
+  brotli, because `parseFileUrl`/`serializeFileUrl` stay in every bundle for the
+  upload-entry parse, the editor's read path and `<uc-img>`'s src handling — so tiny
+  is added weight, not a replacement. Going tiny-only would recover ~0.5 KB and cost
+  the uuid validation behind `addFileFromCdnUrl`'s documented error, the kind
+  discrimination the editor and `<uc-img>` degrade on, and `CdnOperation` itself,
+  which the editor's merge needs because it matches operations by name. Re-measure
+  before revisiting.
+- **Bundle budgets are tight and `size-limit` runs inside `npm run build`.** The
+  editor sits near 49.2 KB of 50, the IIFE near 98.6 of 100, `<uc-img>` near 8.9 of
+  10. Treat ~100 B as build-to-build variance and do not quote a single run to tighter
+  precision. If a change crosses a limit, that is a decision to raise the budget or
+  trim, not something to work around.
+- **The dependency is pinned to an alpha** (`6.20.0-alpha.*`, exact, no caret). It
+  must not reach a published release as-is — a stable version has to land first.
 
 ---
 
