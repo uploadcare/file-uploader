@@ -110,4 +110,39 @@ describe('Thumb (M-god step 6b-6 migration)', () => {
 
     expect(proxyUrl).toHaveBeenCalledWith(`https://ucarecdn.com/${uuid}/-/stretch/off/-/scale_crop/76x76/center/`);
   });
+
+  it('degrades instead of rejecting when the entry carries unparseable modifiers', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    const container = UploaderRegistry.get(ctxName);
+    const collection = container?.get(UploadCollectionController);
+    if (!collection || !container) throw new Error('controllers not resolved');
+
+    const sendEventError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {});
+    const proxyUrl = vi.spyOn(el as unknown as { proxyUrl(url: string): Promise<string> }, 'proxyUrl');
+
+    // `cdnUrlModifiers` is writable by plugins (`buildPluginApi`), so it can hold
+    // anything. `-` is a modifier prefix with no operation name after it, which
+    // `parseOperations` rejects. Thumbnail generation is fire-and-forget, so an
+    // escaping throw would be an unhandled rejection with no thumbnail at all.
+    const uuid = 'c2499162-eb07-4b93-b31e-94a89a47e858';
+    const uid = collection.add({
+      fileInfo: { uuid } as never,
+      isImage: true,
+      uuid,
+      cdnUrlModifiers: '-',
+    });
+    el.uid = uid as Uid;
+    await el.updateComplete;
+    await delay(0);
+
+    expect(proxyUrl).not.toHaveBeenCalled();
+    expect(sendEventError).toHaveBeenCalledWith(
+      expect.any(Error),
+      'thumbnail generation. Failed to build a CDN thumbnail URL',
+    );
+    // The fall-through ran to completion: no `file` on this entry, so the block
+    // reaches the SVG placeholder rather than stopping at the failed URL build.
+    expect(collection.readProp(uid, 'thumbUrl')).toMatch(/^blob:/);
+  });
 });

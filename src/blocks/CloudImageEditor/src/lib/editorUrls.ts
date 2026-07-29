@@ -32,6 +32,16 @@ const PREVIEW_MARKER_OPERATIONS = operationsFromModifiers(modifiers('preview'));
  *
  * The editor's own modelled transformations are excluded — the cropper accounts for
  * its own `rotate` itself, and the rest do not change geometry.
+ *
+ * Known limitation: this is only the right space for a `crop` read back out of the
+ * source URL when that `crop` already sat after every size-changing operation the
+ * source carried. It does for anything this editor produced (it emits geometry
+ * last), but a hand-authored `-/crop/500x500/0,0/-/resize/300x/` means "crop the
+ * original, then resize" — re-emitted after the `resize` its coordinates address a
+ * smaller image, so the restored crop box is wrong. Fixing it properly means
+ * rescaling the imported coordinates by whatever the preserved operations do to the
+ * geometry, which needs per-operation sizing rules (`resize`, `scale_crop`,
+ * `stretch`, …) rather than one measurement.
  */
 export function editorImageInfoUrl(originalUrl: string, sourceOperations: readonly CdnOperation[]): string {
   return withOperations(originalUrl, [...preservedOperations(sourceOperations), ...JSON_OPERATIONS]);

@@ -91,43 +91,57 @@ export class Thumb extends FileItemConfig {
     const size = this._calculateThumbSize(force);
 
     if (fileInfo && isImage && uuid) {
-      const thumbUrl = await this.proxyUrl(
-        serializeFileUrl({
+      let cdnThumbUrl: string | undefined;
+      try {
+        cdnThumbUrl = serializeFileUrl({
           origin: new URL(this._config.get('cdnCname')).origin,
           uuid,
           operations: [
             ...operationsFromModifiers(entry.get('cdnUrlModifiers')),
             ...operationsFromModifiers(modifiers('stretch/off', `scale_crop/${size}x${size}/center`)),
           ],
-        }),
-      );
-
-      if (currentThumbUrl === thumbUrl) {
-        return;
+        });
+      } catch (err) {
+        // Both inputs here can be malformed: `cdnUrlModifiers` is writable by
+        // plugins (`buildPluginApi`) and `cdnCname` is user config. Thumbnail
+        // generation runs fire-and-forget (`_debouncedGenerateThumb`, plus the
+        // forced call on resize), so a throw would escape as an unhandled
+        // rejection and leave no thumbnail at all. Fall through to the
+        // local-file/placeholder path below — where a broken CDN URL used to
+        // land anyway, via its preload failure.
+        this._telemetry.sendEventError(err, 'thumbnail generation. Failed to build a CDN thumbnail URL');
       }
 
-      const { promise } = preloadImage(thumbUrl);
+      if (cdnThumbUrl) {
+        const thumbUrl = await this.proxyUrl(cdnThumbUrl);
 
-      promise
-        .then(() => {
-          entry.set('thumbUrl', thumbUrl);
-          currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
-        })
-        .catch(async () => {
-          if (currentThumbUrl?.startsWith('blob:')) return;
-          try {
-            const file = entry.get('file');
-            if (!file) return;
-            const blobThumbUrl = await generateThumb(file, size);
-            entry.set('thumbUrl', blobThumbUrl);
-          } catch (err) {
-            this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
-            const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-            entry.set('thumbUrl', fileCssBg(color));
-          }
-        });
+        if (currentThumbUrl === thumbUrl) {
+          return;
+        }
 
-      return;
+        const { promise } = preloadImage(thumbUrl);
+
+        promise
+          .then(() => {
+            entry.set('thumbUrl', thumbUrl);
+            currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
+          })
+          .catch(async () => {
+            if (currentThumbUrl?.startsWith('blob:')) return;
+            try {
+              const file = entry.get('file');
+              if (!file) return;
+              const blobThumbUrl = await generateThumb(file, size);
+              entry.set('thumbUrl', blobThumbUrl);
+            } catch (err) {
+              this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
+              const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
+              entry.set('thumbUrl', fileCssBg(color));
+            }
+          });
+
+        return;
+      }
     }
 
     if (entry.get('thumbUrl')) {
