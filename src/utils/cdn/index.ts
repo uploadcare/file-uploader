@@ -7,6 +7,12 @@
  * words. Only the pieces that are ours are added: the two string edges, an append
  * helper, and origin policy.
  *
+ * The kind-dispatching `parseCdnUrl`/`serializeCdnUrl` are deliberately **not**
+ * re-exported. Nothing here needs them, and every bundle measured smaller once the
+ * last consumer moved off them — leaving them reachable just invites the dispatch
+ * back in by reflex. Import them here again only with a call site that genuinely
+ * handles more than one URL kind.
+ *
  * `parseFileUrl` is the one worth a word: it narrows to a single stored file, so
  * callers read `uuid`/`operations`/`filename` without discriminating on `kind`.
  * Most of this codebase only ever handles single-file URLs — a thumbnail, an
@@ -21,10 +27,8 @@ export {
   isProxyUrl,
   modifiers,
   type OperationLiteral,
-  parseCdnUrl,
   parseFileUrl,
   parseProxyUrl,
-  serializeCdnUrl,
   serializeFileUrl,
   serializeOperations,
   serializeProxyUrl,
