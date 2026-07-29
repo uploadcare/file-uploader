@@ -11,9 +11,11 @@ const ANALYTICS = rawOp('@clib', PACKAGE_NAME, PACKAGE_VERSION, 'uc-cloud-image-
  * viewer, the fader and the filter thumbnails need, sized by the caller.
  *
  * Composed from the same merge as the applied URL, so what the user sees is what
- * Apply commits — a watermarked source previews watermarked. The two differ only in
- * their trailing operations: a preview carries quality, sizing and the editor's
- * analytics marker; the applied URL carries the `preview` marker.
+ * Apply commits — a watermarked source previews watermarked. The merged section is
+ * identical in both; around it they differ, and deliberately so. A preview is a
+ * viewing concern: it leads with `COMMON_OPERATIONS` and trails with quality, the
+ * caller's sizing and the editor's analytics marker, none of which belong in a
+ * stored result. The applied URL carries only the `preview` marker.
  */
 export function editorPreviewUrl({
   originalUrl,
