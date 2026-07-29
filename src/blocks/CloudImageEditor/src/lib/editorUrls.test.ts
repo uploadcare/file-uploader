@@ -1,13 +1,15 @@
-import { resize, stretch } from '@uploadcare/cdn-url/ops';
 import { describe, expect, it } from 'vitest';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
-import { operationsFromModifiers } from '../../../../utils/cdn';
+import { type CdnOperation, modifiers, type OperationLiteral, operationsFromModifiers } from '../../../../utils/cdn';
 import type { Transformations } from '../types';
 import { editorAppliedUrl, editorImageInfoUrl, editorPreviewUrl } from './editorUrls';
 
 const UUID = 'c2499162-eb07-4b93-b31e-94a89a47e858';
 const ORIGINAL = `https://ucarecdn.com/${UUID}/`;
 const ANALYTICS = `@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/uc-cloud-image-editor/`;
+
+/** Size operations as typed literals, matching how production authors them. */
+const ops = (...fragments: OperationLiteral[]): CdnOperation[] => operationsFromModifiers(modifiers(...fragments));
 
 describe('editorPreviewUrl', () => {
   it('composes common operations, transformations, quality, sizing and analytics in that order', () => {
@@ -18,7 +20,7 @@ describe('editorPreviewUrl', () => {
         originalUrl: ORIGINAL,
         transformations,
         sourceOperations: [],
-        sizeOperations: [stretch('off'), resize({ width: 800 })],
+        sizeOperations: ops('stretch/off', 'resize/800x'),
         quality: 'normal',
       }),
     ).toBe(
@@ -32,7 +34,7 @@ describe('editorPreviewUrl', () => {
         originalUrl: ORIGINAL,
         transformations: { brightness: 0 },
         sourceOperations: [],
-        sizeOperations: [resize({ width: 100 })],
+        sizeOperations: ops('resize/100x'),
         quality: 'lightest',
       }),
     ).toBe(
@@ -45,7 +47,7 @@ describe('editorPreviewUrl', () => {
       originalUrl: `https://ucarecdn.com/${UUID}/`,
       transformations: { brightness: 50 },
       sourceOperations: operationsFromModifiers('overlay/wm-uuid'),
-      sizeOperations: [stretch('off'), resize({ width: 800 })],
+      sizeOperations: ops('stretch/off', 'resize/800x'),
       quality: 'normal',
     });
 
