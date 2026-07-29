@@ -199,8 +199,14 @@ const OPERATION_PROCESSORS: OperationProcessorMap = Object.freeze({
 
 const MODELLED_OPERATION_NAMES: ReadonlySet<string> = new Set(SUPPORTED_OPERATIONS_ORDERED);
 
-/** The transformations that change geometry — the tail of the canonical order. */
-const GEOMETRY_OPERATION_NAMES: ReadonlySet<string> = new Set(['mirror', 'flip', 'rotate', 'crop']);
+/**
+ * The transformations that change geometry. Listed explicitly rather than derived
+ * from `SUPPORTED_OPERATIONS_ORDERED`'s tail: they happen to sit there today, but a
+ * new appearance operation appended to that list would silently join this set.
+ * `satisfies` makes the compiler reject a name that is not a real transformation.
+ */
+const GEOMETRY_OPERATIONS = ['mirror', 'flip', 'rotate', 'crop'] as const satisfies readonly (keyof Transformations)[];
+const GEOMETRY_OPERATION_NAMES: ReadonlySet<string> = new Set(GEOMETRY_OPERATIONS);
 
 export function operationsToTransformations(operations: readonly CdnOperation[]): Transformations {
   const transformations: Partial<Record<keyof Transformations, unknown>> = {};
