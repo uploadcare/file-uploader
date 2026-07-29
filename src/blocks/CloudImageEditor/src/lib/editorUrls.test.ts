@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
 import { operationsFromModifiers } from '../../../../utils/cdn';
 import type { Transformations } from '../types';
-import { editorAppliedUrl, editorPreviewUrl } from './editorUrls';
+import { editorAppliedUrl, editorImageInfoUrl, editorPreviewUrl } from './editorUrls';
 
 const UUID = 'c2499162-eb07-4b93-b31e-94a89a47e858';
 const ORIGINAL = `https://ucarecdn.com/${UUID}/`;
@@ -134,5 +134,44 @@ describe('editorAppliedUrl', () => {
       cdnUrl: `https://ucarecdn.com/${UUID}/-/blur/20/-/brightness/50/-/preview/`,
       cdnUrlModifiers: '-/blur/20/-/brightness/50/-/preview/',
     });
+  });
+});
+
+/**
+ * These pin the coordinate space the cropper measures in. The editor's `crop` is
+ * emitted after everything the source preserved, so the dimensions must be read
+ * after those same operations — measuring the bare original would desynchronise the
+ * crop overlay from the box the user drags whenever a source carries a `resize`.
+ */
+describe('editorImageInfoUrl', () => {
+  it('measures the bare original when the source preserved nothing', () => {
+    // The common case, and the one every pre-existing test covers: unchanged.
+    expect(editorImageInfoUrl(ORIGINAL, [])).toBe(`https://ucarecdn.com/${UUID}/-/json/`);
+  });
+
+  it('measures after a preserved geometry operation, which is the whole point', () => {
+    expect(editorImageInfoUrl(ORIGINAL, operationsFromModifiers('resize/300x'))).toBe(
+      `https://ucarecdn.com/${UUID}/-/resize/300x/-/json/`,
+    );
+  });
+
+  it('keeps every preserved operation, in source order', () => {
+    expect(editorImageInfoUrl(ORIGINAL, operationsFromModifiers('overlay/wm-uuid', 'resize/300x', 'blur/20'))).toBe(
+      `https://ucarecdn.com/${UUID}/-/overlay/wm-uuid/-/resize/300x/-/blur/20/-/json/`,
+    );
+  });
+
+  it('excludes the modelled transformations', () => {
+    // `crop` is what is being measured *for*, and the cropper accounts for its own
+    // `rotate`; including either would make the measurement circular.
+    expect(
+      editorImageInfoUrl(ORIGINAL, operationsFromModifiers('crop/100x100/0,0', 'rotate/90', 'brightness/50')),
+    ).toBe(`https://ucarecdn.com/${UUID}/-/json/`);
+  });
+
+  it("excludes the editor's own preview marker", () => {
+    expect(editorImageInfoUrl(ORIGINAL, operationsFromModifiers('preview', 'blur/20'))).toBe(
+      `https://ucarecdn.com/${UUID}/-/blur/20/-/json/`,
+    );
   });
 });

@@ -1,10 +1,25 @@
-import { preview, type Quality, quality as qualityOp, rawOp } from '@uploadcare/cdn-url/ops';
+import { json as jsonOp, preview, type Quality, quality as qualityOp, rawOp } from '@uploadcare/cdn-url/ops';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
 import { type CdnOperation, serializeOperations, withOperations } from '../../../../utils/cdn';
 import type { Transformations } from '../types';
-import { COMMON_OPERATIONS, mergeTransformationsIntoOperations } from './transformationUtils';
+import { COMMON_OPERATIONS, mergeTransformationsIntoOperations, preservedOperations } from './transformationUtils';
 
 const ANALYTICS = rawOp('@clib', PACKAGE_NAME, PACKAGE_VERSION, 'uc-cloud-image-editor');
+
+/**
+ * The URL whose `/json` reports the dimensions the cropper measures in.
+ *
+ * Not the bare original: the editor's `crop` is emitted after everything the source
+ * preserved, so its coordinates are interpreted against the image as those operations
+ * leave it. Measure anywhere else and a preserved `resize` desynchronises the crop
+ * overlay from the box the user drags.
+ *
+ * The editor's own modelled transformations are excluded — the cropper accounts for
+ * its own `rotate` itself, and the rest do not change geometry.
+ */
+export function editorImageInfoUrl(originalUrl: string, sourceOperations: readonly CdnOperation[]): string {
+  return withOperations(originalUrl, [...preservedOperations(sourceOperations), jsonOp()]);
+}
 
 /**
  * The URL the editor renders while the user is still editing: everything the

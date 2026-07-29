@@ -1,5 +1,4 @@
 import { ContextConsumer, ContextProvider } from '@lit/context';
-import { json as jsonOp } from '@uploadcare/cdn-url/ops';
 import { html, LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
@@ -17,7 +16,7 @@ import { ctxNameContext } from '../../../lit/ctx-name-context';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types';
-import { parseFileUrl, serializeCdnUrl, withOperations } from '../../../utils/cdn';
+import { parseFileUrl, serializeCdnUrl } from '../../../utils/cdn';
 import { serializeCsv } from '../../../utils/comma-separated';
 import { debounce } from '../../../utils/debounce.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
@@ -25,10 +24,10 @@ import { subscribeUploaderConfigCompat } from './editor-config-compat';
 import { cloudImageEditorContext } from './editor-context';
 import { type EditorL10n, resolveEditorL10n } from './editor-locale';
 import { classNames } from './lib/classNames.js';
-import { editorAppliedUrl } from './lib/editorUrls';
+import { editorAppliedUrl, editorImageInfoUrl } from './lib/editorUrls';
 import { getClosestAspectRatio, parseCropPreset } from './lib/parseCropPreset.js';
 import { parseTabs } from './lib/parseTabs.js';
-import { operationsToTransformations, preservedOperations } from './lib/transformationUtils.js';
+import { operationsToTransformations } from './lib/transformationUtils.js';
 import svgIconsSprite from './svg-sprite';
 import { ALL_TABS, TabId } from './toolbar-constants.js';
 import type { ApplyResult, CropPresetList, ImageSize, Transformations } from './types';
@@ -825,12 +824,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     try {
       const originalUrlValue = editorController.get('*originalUrl') as string;
-      // The crop is emitted after everything preserved, so its coordinates are
-      // interpreted against the image as those operations leave it — measure there,
-      // not on the bare original, or a preserved `resize` desynchronises the crop
-      // overlay from what the user drags.
       const cdnUrl = await this.proxyUrl(
-        withOperations(originalUrlValue, [...preservedOperations(editorController.get('*sourceOperations')), jsonOp()]),
+        editorImageInfoUrl(originalUrlValue, editorController.get('*sourceOperations')),
       );
       const json = (await fetch(cdnUrl).then((response) => response.json())) as { width: number; height: number };
 
