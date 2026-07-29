@@ -1,8 +1,7 @@
-import { rawOp } from '@uploadcare/cdn-url/ops';
 import { LitElement } from 'lit';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env.js';
 import { RegisterableElementMixin } from '../../lit/RegisterableElementMixin.js';
-import { serializeOperations } from '../../utils/cdn';
+import { modifiers, operationsFromModifiers, serializeOperations, unsafeOperation } from '../../utils/cdn';
 import { CssDataMixin } from './CssDataMixin.js';
 import { CSS_PREF } from './configurations.js';
 import { PROPS_MAP } from './props-map.js';
@@ -72,9 +71,11 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
     // fragments, which must stay parsed strings — see AGENTS.md scope note).
     // Threading a `CdnOperation` through it would mean restructuring that
     // pipeline, so the operation is still authored structurally here — via
-    // the library's `rawOp` escape hatch for the internal `@clib` directive —
-    // and serialised at this boundary.
-    return serializeOperations([rawOp('@clib', PACKAGE_NAME, PACKAGE_VERSION, 'uc-img')]);
+    // `unsafeOperation`, the escape hatch for the internal `@clib` directive
+    // `OperationLiteral` cannot express — and serialised at this boundary.
+    return serializeOperations(
+      operationsFromModifiers(modifiers(unsafeOperation(`@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/uc-img`))),
+    );
   }
 
   protected initAttributes(el: HTMLElement): void {

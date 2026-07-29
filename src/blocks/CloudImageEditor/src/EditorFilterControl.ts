@@ -1,9 +1,9 @@
-import { scaleCrop } from '@uploadcare/cdn-url/ops';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { styleMap } from 'lit/directives/style-map.js';
+import { modifiers, operationsFromModifiers } from '../../../utils/cdn';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
@@ -123,7 +123,7 @@ export class EditorFilterControl extends EditorButtonControl {
       transformations,
       sourceOperations: this.editorController.get('*sourceOperations'),
       quality,
-      sizeOperations: [scaleCrop(size, size, { align: 'center' })],
+      sizeOperations: operationsFromModifiers(modifiers(`scale_crop/${size}x${size}/center`)),
     });
   }
 

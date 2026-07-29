@@ -1,10 +1,26 @@
-import { json as jsonOp, preview, type Quality, quality as qualityOp, rawOp } from '@uploadcare/cdn-url/ops';
+import type { Quality } from '@uploadcare/cdn-url/ops';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
-import { type CdnOperation, serializeOperations, withOperations } from '../../../../utils/cdn';
+import {
+  type CdnOperation,
+  modifiers,
+  operationsFromModifiers,
+  serializeOperations,
+  unsafeOperation,
+  withOperations,
+} from '../../../../utils/cdn';
 import type { Transformations } from '../types';
 import { COMMON_OPERATIONS, mergeTransformationsIntoOperations, preservedOperations } from './transformationUtils';
 
-const ANALYTICS = rawOp('@clib', PACKAGE_NAME, PACKAGE_VERSION, 'uc-cloud-image-editor');
+// The union in `OperationLiteral` cannot express an `@`-prefixed internal
+// directive, so this is the one site that reaches for `unsafeOperation`.
+// Parsed once via `operationsFromModifiers` so the rest of this file keeps
+// working with `CdnOperation[]`, the shape the merge and `withOperations` need.
+const ANALYTICS_OPERATION_NAME = '@clib';
+const ANALYTICS_OPERATIONS = operationsFromModifiers(
+  modifiers(unsafeOperation(`@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/uc-cloud-image-editor`)),
+);
+const JSON_OPERATIONS = operationsFromModifiers(modifiers('json'));
+const PREVIEW_MARKER_OPERATIONS = operationsFromModifiers(modifiers('preview'));
 
 /**
  * The URL whose `/json` reports the dimensions the cropper measures in.
@@ -18,7 +34,7 @@ const ANALYTICS = rawOp('@clib', PACKAGE_NAME, PACKAGE_VERSION, 'uc-cloud-image-
  * its own `rotate` itself, and the rest do not change geometry.
  */
 export function editorImageInfoUrl(originalUrl: string, sourceOperations: readonly CdnOperation[]): string {
-  return withOperations(originalUrl, [...preservedOperations(sourceOperations), jsonOp()]);
+  return withOperations(originalUrl, [...preservedOperations(sourceOperations), ...JSON_OPERATIONS]);
 }
 
 /**
@@ -48,13 +64,13 @@ export function editorPreviewUrl({
   // The source's own analytics marker identifies whatever produced that URL; on a
   // preview the editor's marker is the truthful one, so drop the source's rather
   // than emitting two.
-  const source = sourceOperations.filter((operation) => operation.name !== ANALYTICS.name);
+  const source = sourceOperations.filter((operation) => operation.name !== ANALYTICS_OPERATION_NAME);
   return withOperations(originalUrl, [
     ...COMMON_OPERATIONS,
     ...mergeTransformationsIntoOperations(source, transformations),
-    qualityOp(quality),
+    ...operationsFromModifiers(modifiers(`quality/${quality}`)),
     ...sizeOperations,
-    ANALYTICS,
+    ...ANALYTICS_OPERATIONS,
   ]);
 }
 
@@ -82,7 +98,10 @@ export function editorAppliedUrl({
   transformations: Transformations;
   sourceOperations: readonly CdnOperation[];
 }): { cdnUrl: string; cdnUrlModifiers: string } {
-  const operations = [...mergeTransformationsIntoOperations(sourceOperations, transformations), preview()];
+  const operations = [
+    ...mergeTransformationsIntoOperations(sourceOperations, transformations),
+    ...PREVIEW_MARKER_OPERATIONS,
+  ];
   return {
     cdnUrl: withOperations(originalUrl, operations),
     cdnUrlModifiers: serializeOperations(operations),

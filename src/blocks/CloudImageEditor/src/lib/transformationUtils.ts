@@ -1,24 +1,6 @@
-import {
-  brightness,
-  contrast,
-  crop,
-  enhance,
-  exposure,
-  FILTER_NAMES,
-  type FilterName,
-  filter,
-  flip,
-  format,
-  gamma,
-  mirror,
-  progressive,
-  rotate,
-  saturation,
-  vibrance,
-  warmth,
-} from '@uploadcare/cdn-url/ops';
+import { FILTER_NAMES, type FilterName } from '@uploadcare/cdn-url/ops';
 import { logger } from '../../../../abstract/logger';
-import type { CdnOperation } from '../../../../utils/cdn';
+import { type CdnOperation, modifiers, type OperationLiteral, operationsFromModifiers } from '../../../../utils/cdn';
 import { stringToArray } from '../../../../utils/stringToArray.js';
 import type { Transformations } from '../types';
 
@@ -59,28 +41,32 @@ const SUPPORTED_OPERATIONS_ORDERED = [
 ] as const satisfies readonly (keyof Transformations)[];
 
 /**
- * One typed operation creator per transformation. Using the library's creators
- * instead of hand-formatting strings means the CDN's own grammar decides how a
- * value is written — `crop` takes an `Alignment` object rather than a
- * `"x,y"` string we assemble, `progressive` knows it serialises to `yes`.
- * Verified byte-identical to the previous hand-built output.
+ * One typed operation literal per transformation. Each writer authors the
+ * CDN's own grammar directly — `crop/640x480/10,20`, `filter/adaris/50` — as a
+ * template literal typed against `OperationLiteral`. The `satisfies` clause
+ * below is the typo guard: it fails the build if a writer produces a string
+ * the union does not accept, which is what the previous per-operation
+ * creators validated at runtime (`__DEV__`-only, so production shipped the
+ * checking machinery without the checks). What is lost by moving off the
+ * creators is dev-only numeric range checking (e.g. `brightness(500)`
+ * throwing); `isMeaningful` above still keeps malformed shapes out.
  */
 const OPERATION_WRITERS = {
-  enhance: (value: number) => enhance(value),
-  brightness: (value: number) => brightness(value),
-  exposure: (value: number) => exposure(value),
-  gamma: (value: number) => gamma(value),
-  contrast: (value: number) => contrast(value),
-  saturation: (value: number) => saturation(value),
-  vibrance: (value: number) => vibrance(value),
-  warmth: (value: number) => warmth(value),
-  filter: ({ name, amount }: NonNullable<Transformations['filter']>) => filter(name, amount),
-  mirror: () => mirror(),
-  flip: () => flip(),
-  rotate: (value: number) => rotate(value),
+  enhance: (value: number) => `enhance/${value}` as const,
+  brightness: (value: number) => `brightness/${value}` as const,
+  exposure: (value: number) => `exposure/${value}` as const,
+  gamma: (value: number) => `gamma/${value}` as const,
+  contrast: (value: number) => `contrast/${value}` as const,
+  saturation: (value: number) => `saturation/${value}` as const,
+  vibrance: (value: number) => `vibrance/${value}` as const,
+  warmth: (value: number) => `warmth/${value}` as const,
+  filter: ({ name, amount }: NonNullable<Transformations['filter']>) => `filter/${name}/${amount}` as const,
+  mirror: () => 'mirror' as const,
+  flip: () => 'flip' as const,
+  rotate: (value: number) => `rotate/${value}` as const,
   crop: ({ dimensions, coords }: NonNullable<Transformations['crop']>) =>
-    crop(dimensions[0], dimensions[1], { x: coords[0], y: coords[1] }),
-} satisfies { [K in (typeof SUPPORTED_OPERATIONS_ORDERED)[number]]: (value: never) => CdnOperation };
+    `crop/${dimensions[0]}x${dimensions[1]}/${coords[0]},${coords[1]}` as const,
+} satisfies { [K in (typeof SUPPORTED_OPERATIONS_ORDERED)[number]]: (value: never) => OperationLiteral };
 
 /** Whether a value carries information, i.e. differs from the operation's default. */
 function isMeaningful<T extends keyof Transformations>(operation: T, value: Transformations[T]): boolean {
@@ -94,6 +80,14 @@ function isMeaningful<T extends keyof Transformations>(operation: T, value: Tran
   if (operation === 'crop') {
     return true;
   }
+  // Defensive fallthrough: malformed state (e.g. an object where a number is
+  // expected) cannot be serialised by a template literal — a literal cannot
+  // throw the way the previous creator-based writer did — so a type mismatch
+  // with the operation's own default is treated the same as "absent" and
+  // dropped quietly rather than written into a URL.
+  if (typeof value !== typeof OPERATIONS_DEFAULTS[operation]) {
+    return false;
+  }
   return OPERATIONS_DEFAULTS[operation] !== value;
 }
 
@@ -104,28 +98,27 @@ function isMeaningful<T extends keyof Transformations>(operation: T, value: Tran
  * round-trip.
  */
 export function transformationsToOperations(transformations: Transformations): CdnOperation[] {
-  const operations: CdnOperation[] = [];
+  const literals: OperationLiteral[] = [];
   for (const operation of SUPPORTED_OPERATIONS_ORDERED) {
     const value = transformations[operation];
     if (!isMeaningful(operation, value)) {
       continue;
     }
-    const write = OPERATION_WRITERS[operation] as (value: Transformations[typeof operation]) => CdnOperation;
-    try {
-      operations.push(write(value));
-    } catch (err) {
-      // The typed creators validate (ranges, shapes), which the old string
-      // formatting did not — a value the CDN would reject is dropped with a
-      // warning rather than written into a URL.
-      log.warn(`Skipping unserialisable "${operation}" transformation.`, err);
-    }
+    const write = OPERATION_WRITERS[operation] as (value: Transformations[typeof operation]) => OperationLiteral;
+    literals.push(write(value));
   }
 
-  return operations;
+  // A template literal cannot throw the way a creator could, so there is
+  // nothing left here to catch — `isMeaningful` is what keeps a malformed
+  // value from reaching a writer. The parse below is not circular: it is the
+  // same `operationsFromModifiers` that already turns loose user strings into
+  // `CdnOperation[]` elsewhere, and `parseOperations` is in this bundle
+  // regardless — the merge below needs structure, not a string.
+  return operationsFromModifiers(modifiers(...literals));
 }
 
 /** Applied to every editor-generated URL. */
-export const COMMON_OPERATIONS: CdnOperation[] = [format('auto'), progressive(true)];
+export const COMMON_OPERATIONS: CdnOperation[] = operationsFromModifiers(modifiers('format/auto', 'progressive/yes'));
 
 const asNumber = ([value]: [unknown]) => (typeof value !== 'undefined' ? Number(value) : undefined);
 const asBoolean = () => true;

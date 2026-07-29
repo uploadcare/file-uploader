@@ -19,6 +19,8 @@
 export {
   type CdnOperation,
   isProxyUrl,
+  modifiers,
+  type OperationLiteral,
   parseCdnUrl,
   parseFileUrl,
   parseProxyUrl,
@@ -26,6 +28,7 @@ export {
   serializeFileUrl,
   serializeOperations,
   serializeProxyUrl,
+  unsafeOperation,
 } from '@uploadcare/cdn-url';
 export { operationsFromModifiers, withOperations } from './operations';
 export { DEFAULT_CDN_ORIGIN, deliveryProxyOrigin } from './origin';

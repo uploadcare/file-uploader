@@ -1,4 +1,3 @@
-import { scaleCrop, stretch } from '@uploadcare/cdn-url/ops';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
@@ -6,7 +5,7 @@ import { UploadCollectionController } from '../../abstract/controllers/UploadCol
 import { inject, injectOrNull } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { effect } from '../../lit/effect';
-import { operationsFromModifiers, serializeFileUrl } from '../../utils/cdn';
+import { modifiers, operationsFromModifiers, serializeFileUrl } from '../../utils/cdn';
 import { debounce } from '../../utils/debounce';
 import { preloadImage } from '../../utils/preloadImage';
 import { generateThumb } from '../../utils/resizeImage';
@@ -98,8 +97,7 @@ export class Thumb extends FileItemConfig {
           uuid,
           operations: [
             ...operationsFromModifiers(entry.get('cdnUrlModifiers')),
-            stretch('off'),
-            scaleCrop(size, size, { align: 'center' }),
+            ...operationsFromModifiers(modifiers('stretch/off', `scale_crop/${size}x${size}/center`)),
           ],
         }),
       );
