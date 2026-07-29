@@ -25,14 +25,14 @@
 export {
   type CdnOperation,
   isProxyUrl,
-  modifiers,
-  type OperationLiteral,
   parseFileUrl,
   parseProxyUrl,
   serializeFileUrl,
   serializeOperations,
   serializeProxyUrl,
-  unsafeOperation,
 } from '@uploadcare/cdn-url';
+// The typed-literal API lives on the `/tiny` entry as of 6.20.0-alpha.5 — it moved
+// off the root entry there, alongside the string-surgery url helpers.
+export { modifiers, type OperationLiteral, unsafeOperation } from '@uploadcare/cdn-url/tiny';
 export { operationsFromModifiers, withOperations } from './operations';
 export { DEFAULT_CDN_ORIGIN, deliveryProxyOrigin } from './origin';
