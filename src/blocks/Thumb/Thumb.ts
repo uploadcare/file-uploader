@@ -6,7 +6,7 @@ import { UploadCollectionController } from '../../abstract/controllers/UploadCol
 import { inject, injectOrNull } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { effect } from '../../lit/effect';
-import { operationsFromModifiers, serializeCdnUrl } from '../../utils/cdn';
+import { operationsFromModifiers, serializeFileUrl } from '../../utils/cdn';
 import { debounce } from '../../utils/debounce';
 import { preloadImage } from '../../utils/preloadImage';
 import { generateThumb } from '../../utils/resizeImage';
@@ -93,7 +93,7 @@ export class Thumb extends FileItemConfig {
 
     if (fileInfo && isImage && uuid) {
       const thumbUrl = await this.proxyUrl(
-        serializeCdnUrl({
+        serializeFileUrl({
           origin: new URL(this._config.get('cdnCname')).origin,
           uuid,
           operations: [

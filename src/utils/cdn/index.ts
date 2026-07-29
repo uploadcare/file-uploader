@@ -23,7 +23,9 @@ export {
   parseFileUrl,
   parseProxyUrl,
   serializeCdnUrl,
+  serializeFileUrl,
   serializeOperations,
+  serializeProxyUrl,
 } from '@uploadcare/cdn-url';
 export { operationsFromModifiers, withOperations } from './operations';
 export { DEFAULT_CDN_ORIGIN, deliveryProxyOrigin } from './origin';

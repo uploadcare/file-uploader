@@ -16,7 +16,7 @@ import { ctxNameContext } from '../../../lit/ctx-name-context';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types';
-import { parseFileUrl, serializeCdnUrl } from '../../../utils/cdn';
+import { parseFileUrl, serializeFileUrl } from '../../../utils/cdn';
 import { serializeCsv } from '../../../utils/comma-separated';
 import { debounce } from '../../../utils/debounce.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
@@ -785,7 +785,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         this._log.warn('Failed to parse CDN URL, opening editor without transformations', err);
         return;
       }
-      const originalUrl = serializeCdnUrl({ origin: parsed.origin, uuid: parsed.uuid });
+      const originalUrl = serializeFileUrl({ origin: parsed.origin, uuid: parsed.uuid });
       if (originalUrl === editorController.get('*originalUrl')) {
         return;
       }
@@ -794,7 +794,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       editorController.set('*sourceOperations', parsed.operations);
     } else if (this.uuid) {
       const cdnCname = editorController.getConfig('cdnCname');
-      const originalUrl = serializeCdnUrl({ origin: new URL(cdnCname).origin, uuid: this.uuid as string });
+      const originalUrl = serializeFileUrl({ origin: new URL(cdnCname).origin, uuid: this.uuid as string });
       if (originalUrl === editorController.get('*originalUrl')) {
         return;
       }

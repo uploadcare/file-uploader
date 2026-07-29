@@ -5,7 +5,8 @@ import {
   operationsFromModifiers,
   parseFileUrl,
   parseProxyUrl,
-  serializeCdnUrl,
+  serializeFileUrl,
+  serializeProxyUrl,
 } from '../../utils/cdn';
 import { stringToArray } from '../../utils/stringToArray';
 import { applyTemplateData } from '../../utils/template-utils';
@@ -144,8 +145,12 @@ export class ImgBase extends ImgConfig {
     // only those two kinds keeps the group parsers out of the bundle entirely —
     // this element has the tightest size budget in the repo.
     if (cdnCname && src.startsWith(cdnCname)) {
-      const parsed = isProxyUrl(src) ? parseProxyUrl(src) : parseFileUrl(src);
-      return serializeCdnUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
+      if (isProxyUrl(src)) {
+        const parsed = parseProxyUrl(src);
+        return serializeProxyUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
+      }
+      const parsed = parseFileUrl(src);
+      return serializeFileUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
     }
 
     const uuid = this.$$('uuid') as string | undefined;
@@ -153,8 +158,8 @@ export class ImgBase extends ImgConfig {
       // `cdn-cname` carries a default, so a blank one means it was blanked on
       // purpose — `new URL('')` throws and the caller degrades, which is what the
       // previous implementation did by accident.
-      const url = serializeCdnUrl({ origin: new URL(cdnCname as string).origin, uuid, operations });
-      // `serializeCdnUrl` builds without validating — it is `parseFileUrl` that
+      const url = serializeFileUrl({ origin: new URL(cdnCname as string).origin, uuid, operations });
+      // `serializeFileUrl` builds without validating — it is `parseFileUrl` that
       // knows the UUID grammar. Parsing the result back keeps a garbage `uuid`
       // attribute degrading to "no image" instead of emitting a URL that 404s.
       parseFileUrl(url);
@@ -163,13 +168,13 @@ export class ImgBase extends ImgConfig {
 
     const proxyCname = this.$$('proxy-cname') as string | undefined;
     if (proxyCname) {
-      return this._proxyUrl(serializeCdnUrl({ origin: proxyCname, sourceUrl: this._fmtAbs(src), operations }));
+      return this._proxyUrl(serializeProxyUrl({ origin: proxyCname, sourceUrl: this._fmtAbs(src), operations }));
     }
 
     const pubkey = this.$$('pubkey') as string | undefined;
     if (pubkey) {
       return this._proxyUrl(
-        serializeCdnUrl({ origin: deliveryProxyOrigin(pubkey), sourceUrl: this._fmtAbs(src), operations }),
+        serializeProxyUrl({ origin: deliveryProxyOrigin(pubkey), sourceUrl: this._fmtAbs(src), operations }),
       );
     }
 

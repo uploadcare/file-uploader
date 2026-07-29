@@ -1,4 +1,4 @@
-import { type CdnOperation, parseFileUrl, parseOperations, serializeCdnUrl } from '@uploadcare/cdn-url';
+import { type CdnOperation, parseFileUrl, parseOperations, serializeFileUrl } from '@uploadcare/cdn-url';
 
 const isNonEmptyString = (value: unknown): value is string => typeof value === 'string' && !!value;
 
@@ -26,5 +26,5 @@ export const operationsFromModifiers = (...fragments: unknown[]): CdnOperation[]
  */
 export const withOperations = (url: string, operations: readonly CdnOperation[]): string => {
   const parsed = parseFileUrl(url);
-  return serializeCdnUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
+  return serializeFileUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
 };
