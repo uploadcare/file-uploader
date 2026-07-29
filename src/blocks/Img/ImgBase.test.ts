@@ -97,6 +97,30 @@ describe('_getUrlBase — CDN branches', () => {
     expect(makeImg({ src: '', uuid: UUID })._getUrlBase()).toBe(`https://ucarecdn.com/${UUID}/${ANALYTICS}`);
   });
 
+  /**
+   * A `cdn-cname` carrying a path is reduced to its origin, and that is why
+   * `_getUrlBase` runs the cname through `new URL(...).origin` rather than passing
+   * it to `serializeFileUrl` raw.
+   *
+   * It looks redundant — `serializeFileUrl` trims a trailing slash on its own, and
+   * it happily *keeps* a path prefix. But the CDN file-URL grammar has no room for
+   * one: the uuid must be the first path segment, so `parseFileUrl` rejects
+   * `https://cdn.example.com/prefix/<uuid>/`, and this method parses what it builds.
+   * Pass the cname through and a prefixed cname renders no image at all instead of
+   * rendering from the origin.
+   */
+  it('reduces a path-carrying cname to its origin', () => {
+    const el = makeImg({ src: '', uuid: UUID, 'cdn-cname': 'https://cdn.example.com/prefix' });
+
+    expect(el._getUrlBase()).toBe(`https://cdn.example.com/${UUID}/${ANALYTICS}`);
+  });
+
+  it('tolerates a trailing slash on the configured cname', () => {
+    const el = makeImg({ src: '', uuid: UUID, 'cdn-cname': 'https://cdn.example.com/' });
+
+    expect(el._getUrlBase()).toBe(`https://cdn.example.com/${UUID}/${ANALYTICS}`);
+  });
+
   it('embeds an absolute src behind a proxy cname', () => {
     const el = makeImg({ src: 'https://example.com/a.png', 'proxy-cname': 'https://proxy.example.com' });
 

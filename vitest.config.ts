@@ -1,7 +1,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { playwright } from '@vitest/browser-playwright';
-import { configDefaults, defineConfig } from 'vitest/config';
+import { defineConfig } from 'vitest/config';
 import { commands } from './tests/utils/commands';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -10,15 +10,6 @@ const alias = {
   '@': resolve(__dirname, 'src'),
   '~': __dirname,
 };
-
-/**
- * Both projects glob `./**` for tests, which also reaches agent scratch space —
- * `.claude/worktrees/<branch>/` holds a full second checkout when a coding agent
- * works in a git worktree, so its copy of every spec gets collected too. That
- * silently doubles the suite and reports failures from an unrelated branch as if
- * they were ours. Vitest's default excludes cover `node_modules`/`dist` but not this.
- */
-const AGENT_SCRATCH = ['**/.claude/**', '**/.superpowers/**'];
 
 export default defineConfig({
   resolve: {
@@ -51,8 +42,11 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'specs',
-          include: ['./specs/npm/*.test.ts', './**/*.test.{ts,js}'],
-          exclude: [...configDefaults.exclude, ...AGENT_SCRATCH],
+          // Rooted at the directories tests actually live in, not `./**`. A
+          // repo-wide glob also collected `.claude/worktrees/<branch>/` — a full
+          // second checkout when an agent works in a git worktree — which doubled
+          // the suite and surfaced an unrelated branch's failures as ours.
+          include: ['./specs/npm/*.test.ts', './src/**/*.test.{ts,js}'],
           environment: 'happy-dom',
         },
       },
@@ -60,8 +54,9 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'e2e',
-          include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
-          exclude: [...configDefaults.exclude, ...AGENT_SCRATCH],
+          // Browser e2e lives only under `tests/` — see the note on the specs
+          // project for why this is rooted rather than `./**`.
+          include: ['./tests/**/*.e2e.test.{ts,tsx}'],
           // Browser e2e tests can flake under full parallel load (e.g. the
           // cloud-image-editor `uc-crop-frame` locator loses a render race
           // that passes reliably in isolation). Retry once so a transient
