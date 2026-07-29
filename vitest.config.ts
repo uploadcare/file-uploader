@@ -1,7 +1,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { playwright } from '@vitest/browser-playwright';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 import { commands } from './tests/utils/commands';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -10,6 +10,15 @@ const alias = {
   '@': resolve(__dirname, 'src'),
   '~': __dirname,
 };
+
+/**
+ * Both projects glob `./**` for tests, which also reaches agent scratch space —
+ * `.claude/worktrees/<branch>/` holds a full second checkout when a coding agent
+ * works in a git worktree, so its copy of every spec gets collected too. That
+ * silently doubles the suite and reports failures from an unrelated branch as if
+ * they were ours. Vitest's default excludes cover `node_modules`/`dist` but not this.
+ */
+const AGENT_SCRATCH = ['**/.claude/**', '**/.superpowers/**'];
 
 export default defineConfig({
   resolve: {
@@ -43,6 +52,7 @@ export default defineConfig({
         test: {
           name: 'specs',
           include: ['./specs/npm/*.test.ts', './**/*.test.{ts,js}'],
+          exclude: [...configDefaults.exclude, ...AGENT_SCRATCH],
           environment: 'happy-dom',
         },
       },
@@ -51,6 +61,7 @@ export default defineConfig({
         test: {
           name: 'e2e',
           include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
+          exclude: [...configDefaults.exclude, ...AGENT_SCRATCH],
           // Browser e2e tests can flake under full parallel load (e.g. the
           // cloud-image-editor `uc-crop-frame` locator loses a render race
           // that passes reliably in isolation). Retry once so a transient
