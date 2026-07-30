@@ -1,13 +1,7 @@
+import { type CdnOperation, modifiers, serializeOperations, unsafeOperation } from '@uploadcare/cdn-url';
 import type { Quality } from '@uploadcare/cdn-url/ops';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
-import {
-  type CdnOperation,
-  modifiers,
-  operationsFromModifiers,
-  serializeOperations,
-  unsafeOperation,
-  withOperations,
-} from '../../../../utils/cdn';
+import { operationsFromModifiers, withOperations } from '../../../../utils/cdn/operations';
 import type { Transformations } from '../types';
 import { COMMON_OPERATIONS, mergeTransformationsIntoOperations, preservedOperations } from './transformationUtils';
 

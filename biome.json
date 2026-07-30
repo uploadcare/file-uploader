@@ -34,7 +34,18 @@
           }
         },
         "useImportType": "error",
-        "useExportType": "error"
+        "useExportType": "error",
+        "noRestrictedImports": {
+          "level": "error",
+          "options": {
+            "paths": {
+              "@uploadcare/cdn-url": {
+                "importNames": ["parseCdnUrl", "serializeCdnUrl"],
+                "message": "Use the per-kind parseFileUrl/parseProxyUrl + serializeFileUrl/serializeProxyUrl instead. Every bundle measured smaller once the last consumer moved off the kind-dispatching pair. Lift this only alongside a call site that genuinely handles more than one URL kind."
+              }
+            }
+          }
+        }
       },
       "correctness": {
         "noUnusedVariables": "error",

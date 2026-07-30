@@ -11,7 +11,7 @@
 import { type ConfigKeyDescriptor, resolveConfigDescriptor } from '../../abstract/config-descriptor';
 import { logger } from '../../abstract/logger';
 import type { ConfigType } from '../../types';
-import { DEFAULT_CDN_ORIGIN } from '../../utils/cdn';
+import { DEFAULT_CDN_ORIGIN } from '../../utils/cdn/origin';
 import { serializeCsv } from '../../utils/comma-separated';
 import { ALL_TABS } from '../CloudImageEditor/src/toolbar-constants';
 import {

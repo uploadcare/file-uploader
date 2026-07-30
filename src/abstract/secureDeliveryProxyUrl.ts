@@ -1,5 +1,5 @@
+import { parseFileUrl, serializeOperations } from '@uploadcare/cdn-url';
 import type { ConfigType } from '../types';
-import { parseFileUrl, serializeOperations } from '../utils/cdn';
 import { applyTemplateData } from '../utils/template-utils';
 import { logger } from './logger';
 
