@@ -1,6 +1,7 @@
+import { type CdnOperation, modifiers, type OperationLiteral } from '@uploadcare/cdn-url';
 import { describe, expect, it } from 'vitest';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
-import { type CdnOperation, modifiers, type OperationLiteral, operationsFromModifiers } from '../../../../utils/cdn';
+import { operationsFromModifiers } from '../../../../utils/cdn/operations';
 import type { Transformations } from '../types';
 import { editorAppliedUrl, editorImageInfoUrl, editorPreviewUrl } from './editorUrls';
 

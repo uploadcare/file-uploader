@@ -1,4 +1,4 @@
-import { DEFAULT_CDN_ORIGIN } from '../../utils/cdn';
+import { DEFAULT_CDN_ORIGIN } from '../../utils/cdn/origin';
 
 export const PROPS_MAP = Object.freeze({
   'dev-mode': {},

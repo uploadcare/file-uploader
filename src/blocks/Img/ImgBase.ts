@@ -1,13 +1,7 @@
+import { isProxyUrl, parseFileUrl, parseProxyUrl, serializeFileUrl, serializeProxyUrl } from '@uploadcare/cdn-url';
 import { logger } from '../../abstract/logger';
-import {
-  deliveryProxyOrigin,
-  isProxyUrl,
-  operationsFromModifiers,
-  parseFileUrl,
-  parseProxyUrl,
-  serializeFileUrl,
-  serializeProxyUrl,
-} from '../../utils/cdn';
+import { operationsFromModifiers } from '../../utils/cdn/operations';
+import { deliveryProxyOrigin } from '../../utils/cdn/origin';
 import { stringToArray } from '../../utils/stringToArray';
 import { applyTemplateData } from '../../utils/template-utils';
 import { uniqueArray } from '../../utils/uniqueArray';

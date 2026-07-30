@@ -1,6 +1,7 @@
+import { type CdnOperation, modifiers, type OperationLiteral } from '@uploadcare/cdn-url';
 import { FILTER_NAMES, type FilterName } from '@uploadcare/cdn-url/ops';
 import { logger } from '../../../../abstract/logger';
-import { type CdnOperation, modifiers, type OperationLiteral, operationsFromModifiers } from '../../../../utils/cdn';
+import { operationsFromModifiers } from '../../../../utils/cdn/operations';
 import { stringToArray } from '../../../../utils/stringToArray.js';
 import type { Transformations } from '../types';
 

@@ -1,12 +1,12 @@
-import { describe, expect, it } from 'vitest';
 import {
   type CdnOperation,
   modifiers,
   type OperationLiteral,
-  operationsFromModifiers,
   serializeOperations,
   unsafeOperation,
-} from '../../../../utils/cdn';
+} from '@uploadcare/cdn-url';
+import { describe, expect, it } from 'vitest';
+import { operationsFromModifiers } from '../../../../utils/cdn/operations';
 import type { Transformations } from '../types';
 import {
   COMMON_OPERATIONS,

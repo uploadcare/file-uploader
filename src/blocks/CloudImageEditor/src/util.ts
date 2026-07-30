@@ -1,4 +1,5 @@
-import { type CdnOperation, modifiers, operationsFromModifiers } from '../../../utils/cdn';
+import { type CdnOperation, modifiers } from '@uploadcare/cdn-url';
+import { operationsFromModifiers } from '../../../utils/cdn/operations';
 import { editorPreviewUrl } from './lib/editorUrls';
 import type { Transformations } from './types';
 
