@@ -1,7 +1,8 @@
+import type { CdnOperation } from '@uploadcare/cdn-url';
 import { type ColorPreview, TabId, type TabIdValue } from '../../blocks/CloudImageEditor/src/toolbar-constants';
 import type { CropAspectRatio, LoadingOperations, Transformations } from '../../blocks/CloudImageEditor/src/types';
 import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../types';
-import { type CdnOperation, DEFAULT_CDN_ORIGIN } from '../../utils/cdn';
+import { DEFAULT_CDN_ORIGIN } from '../../utils/cdn/origin';
 import { StateController } from './StateController';
 
 /**

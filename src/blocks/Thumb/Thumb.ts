@@ -1,3 +1,4 @@
+import { modifiers, serializeFileUrl } from '@uploadcare/cdn-url';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
@@ -5,7 +6,7 @@ import { UploadCollectionController } from '../../abstract/controllers/UploadCol
 import { inject, injectOrNull } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { effect } from '../../lit/effect';
-import { modifiers, operationsFromModifiers, serializeFileUrl } from '../../utils/cdn';
+import { operationsFromModifiers } from '../../utils/cdn/operations';
 import { debounce } from '../../utils/debounce';
 import { preloadImage } from '../../utils/preloadImage';
 import { generateThumb } from '../../utils/resizeImage';

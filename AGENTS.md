@@ -173,15 +173,28 @@ helpers (`cdn-utils.ts`: `createCdnUrl`, `extractUuid`, `trimFilename`, …) are
 they did regex surgery, returned best-effort garbage for input they didn't understand,
 and one of them corrupted any path whose last segment recurred earlier.
 
-- **`src/utils/cdn` is the only import path.** Never import `@uploadcare/cdn-url`
-  directly outside that directory. The exception is `@uploadcare/cdn-url/ops`, which
-  is operation *constants and types* (`FILTER_NAMES`, `FilterName`, `Quality`) rather
-  than URL machinery — the editor's filter list needs it at runtime, and the types
-  cost nothing.
-- **`parseCdnUrl` / `serializeCdnUrl` are deliberately not re-exported.** Nothing
-  needs the kind-dispatching pair, and every bundle measured smaller once the last
-  consumer moved to `parseFileUrl` / `serializeFileUrl`. Re-export them only alongside
-  a call site that genuinely handles more than one URL kind.
+- **Import library names from `@uploadcare/cdn-url` directly.** There is no re-export
+  barrel: `src/utils/cdn/` holds only what is ours — `operations.ts`
+  (`operationsFromModifiers`, `withOperations`) and `origin.ts` (`DEFAULT_CDN_ORIGIN`,
+  `deliveryProxyOrigin`) — and everything else (`parseFileUrl`, `serializeFileUrl`,
+  `modifiers`, `serializeOperations`, …) comes from the package. A barrel that just
+  renamed the import path bought nothing and hid which library surface is actually in
+  use. `@uploadcare/cdn-url/ops` is the sibling entry for operation *constants and
+  types* (`FILTER_NAMES`, `FilterName`, `Quality`) — the editor's filter list needs it
+  at runtime.
+- **`parseCdnUrl` / `serializeCdnUrl` are banned by lint,** not by omission from a
+  barrel — `biome.json`'s `style/noRestrictedImports` names them. Nothing needs the
+  kind-dispatching pair, and every bundle measured smaller once the last consumer moved
+  to `parseFileUrl` / `serializeFileUrl`. Lift the rule only alongside a call site that
+  genuinely handles more than one URL kind.
+- **`parseFileUrl` throws for anything that is not a single stored file** — a group,
+  a group element, a delivery-proxy URL, a non-CDN URL. That is deliberate: most call
+  sites here only ever handle single-file URLs (a thumbnail, an editor source, an
+  upload entry), and discriminating on `kind` at those sites invents behaviour for
+  input that should not arrive. The boundaries that can receive user input catch and
+  degrade instead — `ImgBase._getUrlBase`, the editor's `updateImage`,
+  `parseCdnUrlForEntry`, `secureDeliveryProxyUrl`, `Thumb._generateThumbnail`,
+  `applyInitialCrop`. Adding a new call site means deciding which of those it is.
 - **Build what you author, parse what the user supplies.** Operations the code writes
   itself are typed literals (`modifiers('format/auto', \`resize/${size}x\`)`, the
   `OperationLiteral` union). Values arriving from users — `<uc-img>`'s

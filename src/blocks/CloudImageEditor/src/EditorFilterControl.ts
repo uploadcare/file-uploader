@@ -1,9 +1,10 @@
+import { modifiers } from '@uploadcare/cdn-url';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { modifiers, operationsFromModifiers } from '../../../utils/cdn';
+import { operationsFromModifiers } from '../../../utils/cdn/operations';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';

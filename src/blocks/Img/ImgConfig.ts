@@ -1,7 +1,8 @@
+import { modifiers, serializeOperations, unsafeOperation } from '@uploadcare/cdn-url';
 import { LitElement } from 'lit';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env.js';
 import { RegisterableElementMixin } from '../../lit/RegisterableElementMixin.js';
-import { modifiers, operationsFromModifiers, serializeOperations, unsafeOperation } from '../../utils/cdn';
+import { operationsFromModifiers } from '../../utils/cdn/operations';
 import { CssDataMixin } from './CssDataMixin.js';
 import { CSS_PREF } from './configurations.js';
 import { PROPS_MAP } from './props-map.js';

@@ -1,6 +1,6 @@
+import { parseFileUrl, serializeOperations } from '@uploadcare/cdn-url';
 import { logger } from '../abstract/logger';
 import { DEFAULT_CDN_CNAME } from '../blocks/Config/initialConfig';
-import { parseFileUrl, serializeOperations } from './cdn';
 
 const log = logger.scope('parse-cdn-url-for-entry');
 
