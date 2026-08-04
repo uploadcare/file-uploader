@@ -1,5 +1,5 @@
 import type { PasteScope } from '../abstract/controllers/ClipboardController';
-import type { LocaleDefinition } from '../abstract/localeRegistry';
+import type { CustomLocaleDefinition, LocaleDefinition } from '../abstract/localeRegistry';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
 import type {
   FileValidator,
@@ -14,22 +14,29 @@ import type { FilesViewMode } from '../blocks/UploadList/UploadList';
 export {
   type Metadata,
   NetworkError,
+  type Tags,
   UploadcareError,
   UploadcareFile,
   UploadcareGroup,
   UploadError,
 } from '@uploadcare/upload-client';
 
-import type { Metadata, NetworkError, UploadcareFile, UploadcareGroup, UploadError } from '@uploadcare/upload-client';
+import type {
+  Metadata,
+  NetworkError,
+  Tags,
+  UploadcareFile,
+  UploadcareGroup,
+  UploadError,
+} from '@uploadcare/upload-client';
 import type { SourceTypes } from '../utils/UploadSource';
 
-export type { FuncFileValidator, FuncCollectionValidator, FileValidator, FileValidatorDescriptor };
 export type { UploaderPlugin } from '../abstract/managers/plugin';
 export type { ApiAddFileCommonOptions, UploaderPublicApi } from '../abstract/UploaderPublicApi';
-
-export type { SourceTypes };
+export type { FileValidator, FileValidatorDescriptor, FuncCollectionValidator, FuncFileValidator, SourceTypes };
 export type MetadataCallback = (fileEntry: OutputFileEntry) => Promise<Metadata> | Metadata;
-export type LocaleDefinitionOverride = Record<string, Partial<LocaleDefinition>>;
+export type TagsCallback = (fileEntry: OutputFileEntry) => Promise<Tags> | Tags;
+export type LocaleDefinitionOverride = Record<string, Partial<LocaleDefinition & CustomLocaleDefinition>>;
 export type SecureDeliveryProxyUrlResolver = (
   previewUrl: string,
   urlParts: { uuid: string; cdnUrlModifiers: string; fileName: string },
@@ -250,6 +257,10 @@ export type ConfigType = {
    */
   metadata: Metadata | MetadataCallback | null;
   /**
+   * Tags for the file.
+   */
+  tags: Tags | TagsCallback | null;
+  /**
    * Override locale definitions.
    */
   localeDefinitionOverride: LocaleDefinitionOverride | null;
@@ -439,6 +450,7 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
   isImage: boolean;
   mimeType: string;
   metadata: Metadata | null;
+  tags: Tags | null;
 
   file: File | Blob | null;
   externalUrl: string | null;
@@ -572,5 +584,5 @@ export type OutputCollectionState<
 import type { DynamicButtonMode } from '../blocks/DynamicBtn/DynamicBtn';
 import { type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 
-export { EventType };
 export type { EventPayload };
+export { EventType };

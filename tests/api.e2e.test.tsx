@@ -123,6 +123,73 @@ describe('API', () => {
     expect(uploadStartHandler).not.toHaveBeenCalled();
   }, 30_000);
 
+  it('replaceFile swaps a file in place: keeps position, new internalId, re-validates, fires natural add/remove events', async () => {
+    // Three genuine, distinct already-uploaded files.
+    const fileA = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
+    const fileB = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
+    const fileC = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
+
+    const config = page.getByTestId('uc-config').query()! as Config;
+
+    // An `upload`-time validator runs once per uploaded file and is then skipped
+    // on later changes. Seeing it run for the replacement proves the new entry
+    // gets a fresh validation cycle (the whole point of remove + add).
+    const uploadValidated: string[] = [];
+    config.fileValidators = [
+      {
+        runOn: 'upload',
+        validator: (entry) => {
+          if (entry.uuid) uploadValidated.push(entry.uuid);
+          return undefined;
+        },
+      },
+    ];
+
+    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
+    const api = uploadCtxProvider.api;
+
+    const addedHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
+    const removedHandler = vi.fn<(e: CustomEvent<EventPayload['file-removed']>) => void>();
+    const successHandler = vi.fn<(e: CustomEvent<EventPayload['file-upload-success']>) => void>();
+    uploadCtxProvider.addEventListener('file-added', addedHandler);
+    uploadCtxProvider.addEventListener('file-removed', removedHandler);
+    uploadCtxProvider.addEventListener('file-upload-success', successHandler);
+
+    // Two entries; we'll replace the FIRST and assert it stays first.
+    const entryA = api.addFileFromUploadcareFile(fileA);
+    api.addFileFromUploadcareFile(fileC);
+    await vi.waitFor(() => expect(uploadValidated).toContain(fileA.uuid));
+    const order = () => api.getOutputCollectionState().allEntries.map((e) => e.uuid);
+    expect(order()).toEqual([fileA.uuid, fileC.uuid]);
+
+    const replaced = api.replaceFile(entryA.internalId, fileB, {
+      source: 'ai-replace',
+      fileName: 'renamed.png',
+    });
+
+    // The replacement is a NEW entry (new internalId) carrying fileB.
+    expect(replaced.uuid).toBe(fileB.uuid);
+    expect(replaced.internalId).not.toBe(entryA.internalId);
+    // The `source` and `fileName` options are honored (the latter overriding the
+    // uploaded file's own name in the output).
+    expect(replaced.source).toBe('ai-replace');
+    expect(replaced.name).toBe('renamed.png');
+
+    // It kept fileA's position — still first, fileC still second.
+    expect(order()).toEqual([fileB.uuid, fileC.uuid]);
+
+    // Natural events fired: the old entry was removed, the new one added and
+    // reported as a completed upload (the replacement is already uploaded).
+    await vi.waitFor(() => {
+      expect(removedHandler.mock.calls.some((c) => c[0].detail.internalId === entryA.internalId)).toBe(true);
+      expect(addedHandler.mock.calls.some((c) => c[0].detail.uuid === fileB.uuid)).toBe(true);
+      expect(successHandler.mock.calls.some((c) => c[0].detail.uuid === fileB.uuid)).toBe(true);
+    });
+
+    // The replacement ran the upload-time validator — a fresh validation cycle.
+    await vi.waitFor(() => expect(uploadValidated).toContain(fileB.uuid));
+  }, 30_000);
+
   it('should not duplicate events after uploader add/removal', async () => {
     for (let i = 0; i < 5; i++) {
       const uploader = page.getByTestId('uc-file-uploader-regular').query()!;

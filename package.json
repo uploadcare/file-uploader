@@ -1,6 +1,6 @@
 {
   "name": "@uploadcare/file-uploader",
-  "version": "1.31.1",
+  "version": "1.33.1",
   "description": "Building blocks for Uploadcare products integration",
   "keywords": [
     "web components",
@@ -162,10 +162,10 @@
     "@lit-labs/signals": "^0.3.0",
     "@lit/context": "^1.1.6",
     "@uploadcare/cdn-url": "6.20.0-alpha.6",
-    "@uploadcare/cname-prefix": "^6.18.4",
-    "@uploadcare/image-shrink": "^6.18.4",
-    "@uploadcare/quality-insights": "^6.18.4",
-    "@uploadcare/upload-client": "^6.18.4",
+    "@uploadcare/cname-prefix": "^6.19.0",
+    "@uploadcare/image-shrink": "^6.19.0",
+    "@uploadcare/quality-insights": "^6.19.0",
+    "@uploadcare/upload-client": "^6.19.0",
     "keyux": "^0.11.3",
     "lit": "^3.3.2"
   },

@@ -13,7 +13,8 @@ describe('BUILTIN_REGISTRY', () => {
   it('derives complexConfigKeys from attribute:false registry entries', () => {
     expect(complexConfigKeys).toContain('metadata');
     expect(complexConfigKeys).toContain('mediaRecorderOptions');
-    expect(complexConfigKeys).toHaveLength(9);
+    expect(complexConfigKeys).toContain('tags');
+    expect(complexConfigKeys).toHaveLength(10);
     for (const key of complexConfigKeys) {
       expect(BUILTIN_REGISTRY[key].attribute).toBe(false);
     }

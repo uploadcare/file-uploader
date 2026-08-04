@@ -1,3 +1,34 @@
+## [1.33.1](https://github.com/uploadcare/file-uploader/compare/v1.33.0...v1.33.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* **dynamic-btn:** compute dropdown icon in willUpdate and refine plain mode ([#1065](https://github.com/uploadcare/file-uploader/issues/1065)) ([f2c6b91](https://github.com/uploadcare/file-uploader/commit/f2c6b91af2e6ed2d58e9afa06009d8511b006594))
+# [1.33.0](https://github.com/uploadcare/file-uploader/compare/v1.32.1...v1.33.0) (2026-07-28)
+
+
+### Features
+
+* **dynamic-btn:** added `plain` view mode with default icon ([#1061](https://github.com/uploadcare/file-uploader/issues/1061)) ([a82dd0e](https://github.com/uploadcare/file-uploader/commit/a82dd0e68e10e169f2af1ca98ef57b4a9bbd9713))
+## [1.32.1](https://github.com/uploadcare/file-uploader/compare/v1.32.0...v1.32.1) (2026-07-24)
+
+
+### Bug Fixes
+
+* use location.ancestorOrigins to detect top-level origin ([91d39cd](https://github.com/uploadcare/file-uploader/commit/91d39cd353422955020c287d5a32c9baacbab647))
+# [1.32.0](https://github.com/uploadcare/file-uploader/compare/v1.31.2...v1.32.0) (2026-07-13)
+
+
+### Features
+
+* **config:** add tags option for file uploads ([#998](https://github.com/uploadcare/file-uploader/issues/998)) ([586d5e0](https://github.com/uploadcare/file-uploader/commit/586d5e0332932088dd4734bfa6ec7585f4dbffd3)). See the [documentation](https://uploadcare.com/docs/file-uploader/options/#tags) for details.
+## [1.31.2](https://github.com/uploadcare/file-uploader/compare/v1.31.1...v1.31.2) (2026-07-07)
+
+### Internal features
+
+* **api:** add `replaceFile` method — swap a file in place via remove + add at position ([bb739bb](https://github.com/uploadcare/file-uploader/commit/bb739bb9))
+* **types:** expose augmentable CustomLocaleDefinition for locale overrides ([04ff43b](https://github.com/uploadcare/file-uploader/commit/04ff43b7))
+
 ## [1.31.1](https://github.com/uploadcare/file-uploader/compare/v1.31.0...v1.31.1) (2026-06-08)
 
 

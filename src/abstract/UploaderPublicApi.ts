@@ -40,7 +40,7 @@ import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
 import { inject } from './di/inject';
 import { PluginController } from './managers/plugin';
 import { TypedData } from './TypedData';
-import type { UploadEntryData } from './uploadEntrySchema';
+import { type UploadEntryData, uploadcareFileToEntryData } from './uploadEntrySchema';
 
 export type ApiAddFileCommonOptions = {
   silent?: boolean;
@@ -222,18 +222,61 @@ export class UploaderPublicApi {
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'success'> => {
     const internalId = this._uploadCollection.add({
-      fileInfo: file,
-      uuid: file.uuid,
-      cdnUrl: file.cdnUrl,
-      fileName: fileName ?? file.originalFilename,
-      fileSize: file.size,
-      isImage: file.isImage ?? false,
-      mimeType: file.contentInfo?.mime?.mime ?? file.mimeType,
-      uploadProgress: 100,
+      ...uploadcareFileToEntryData(file),
+      // A caller-supplied name takes precedence over the file's own.
+      fileName: fileName ?? file.originalFilename ?? null,
       silent: silent ?? false,
       source: source ?? UploadSource.API,
     });
     return this.getOutputItem(internalId);
+  };
+
+  /**
+   * Replace an existing entry with an already-uploaded Uploadcare file, keeping
+   * its position in the list. The original entry is removed and a fresh one is
+   * added in its place, so the replacement goes through the full add pipeline
+   * (validators, events) like any newly added file.
+   *
+   * The original entry's `source`, `metadata`, `fullPath` and `silent` are
+   * preserved by default; `silent`, `fileName` and `source` can be overridden
+   * via `options`.
+   *
+   * Returns the new entry. Note: it has a NEW `internalId` — use the returned
+   * entry to reference the replacement going forward.
+   */
+  public replaceFile = (
+    internalId: string,
+    file: UploadcareFile,
+    { silent, fileName, source }: ApiAddFileCommonOptions = {},
+  ): OutputFileEntry<'success'> => {
+    const oldId = internalId as Uid;
+    const collection = this._uploadCollection;
+    const index = collection.items().indexOf(oldId);
+    const oldEntry = collection.read(oldId);
+    if (index === -1 || !oldEntry) {
+      throw new Error(`File with internalId ${internalId} not found`);
+    }
+    // Carry over the original entry's context so the replacement keeps its
+    // identity within the session; everything file-specific comes from `file`.
+    const preserved = {
+      source: oldEntry.get('source'),
+      metadata: oldEntry.get('metadata'),
+      fullPath: oldEntry.get('fullPath'),
+      silent: oldEntry.get('silent'),
+    };
+    collection.remove(oldId);
+    const newId = collection.add(
+      {
+        ...uploadcareFileToEntryData(file),
+        fileName: fileName ?? file.originalFilename ?? null,
+        silent: silent ?? preserved.silent,
+        source: source ?? preserved.source ?? UploadSource.API,
+        metadata: preserved.metadata,
+        fullPath: preserved.fullPath,
+      },
+      { index },
+    );
+    return this.getOutputItem<'success'>(newId);
   };
 
   public removeFileByInternalId = (internalId: string): void => {
@@ -354,7 +397,9 @@ export class UploaderPublicApi {
     const outputItem = {
       uuid: fileInfo?.uuid ?? uploadEntryData.uuid ?? null,
       internalId: entryId,
-      name: fileInfo?.originalFilename ?? uploadEntryData.fileName,
+      // An explicit entry `fileName` (e.g. a caller-supplied name on add/replace)
+      // wins over the uploaded file's own name; otherwise fall back to it.
+      name: uploadEntryData.fileName ?? fileInfo?.originalFilename ?? null,
       size: fileInfo?.size ?? uploadEntryData.fileSize,
       isImage: fileInfo?.isImage ?? uploadEntryData.isImage,
       mimeType: fileInfo?.mimeType ?? uploadEntryData.mimeType,
@@ -366,6 +411,7 @@ export class UploaderPublicApi {
       uploadProgress: uploadEntryData.uploadProgress,
       fileInfo: fileInfo ?? null,
       metadata: uploadEntryData.metadata ?? fileInfo?.metadata ?? null,
+      tags: uploadEntryData.tags ?? fileInfo?.tags ?? null,
       isSuccess: status === 'success',
       isUploading: status === 'uploading',
       isFailed: status === 'failed',

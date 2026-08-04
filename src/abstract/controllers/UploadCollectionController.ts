@@ -174,14 +174,25 @@ export class UploadCollectionController {
   // Insert one entry's state + key-subscription WITHOUT arming any flush. Shared
   // by `add`/`addMany` so a batch arms the two 0-delay timers ONCE for the whole
   // batch instead of once per entry.
-  private _insertEntry(init: Partial<UploadEntryData>): TypedData<UploadEntryData> {
+  private _insertEntry(init: Partial<UploadEntryData>, index?: number): TypedData<UploadEntryData> {
     const item = new TypedData<UploadEntryData>(initialUploadEntryData);
     item.setMany(init);
     // Populate state BEFORE the membership tick is armed (the flush reads
     // `_added`/`_items`), and subscribe AFTER seeding so the init write doesn't
     // pollute the change-map (add is a membership event, not a property change).
     this._data.set(item.uid, item);
-    this._items.add(item.uid);
+    if (index === undefined) {
+      this._items.add(item.uid);
+    } else {
+      // Insert at a specific position by rebuilding the insertion-ordered set.
+      // Used by `replaceFile` to keep a replaced file in place. Clamp to a valid
+      // range so a stray (negative / non-finite / out-of-bounds) index can't
+      // trigger splice's count-from-the-end behaviour or misorder items.
+      const ids = [...this._items];
+      const at = Math.min(Math.max(Math.trunc(index) || 0, 0), ids.length);
+      ids.splice(at, 0, item.uid);
+      this._items = new Set(ids);
+    }
     this._added.add(item);
     this._entrySubs.set(
       item.uid,
@@ -204,8 +215,8 @@ export class UploadCollectionController {
     return queued;
   }
 
-  public add(init: Partial<UploadEntryData>): Uid {
-    const item = this._insertEntry(init);
+  public add(init: Partial<UploadEntryData>, options: { index?: number } = {}): Uid {
+    const item = this._insertEntry(init, options.index);
     // Arm membership BEFORE the immediate-on-add property fire so their 0-delay
     // ticks flush in that order (v1 parity): a consumer sees `FILE_ADDED` before
     // any per-prop event for the new entry — notably `FILE_UPLOAD_SUCCESS`.

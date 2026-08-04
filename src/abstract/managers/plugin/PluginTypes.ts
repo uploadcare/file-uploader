@@ -153,6 +153,9 @@ export type PluginFilesApi = {
   /**
    * Update mutable properties of a file entry by its internalId.
    * `fileSize` is recalculated automatically when `file` is provided.
+   *
+   * Other file operations (add / remove / `replaceFile`) live on the public
+   * uploader API, which plugins receive as `uploaderApi` in `setup`.
    */
   update: (internalId: string, changes: PluginFileEntryUpdate) => void;
 };

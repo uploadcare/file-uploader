@@ -6,6 +6,23 @@ const log = logger.scope('locale-registry');
 export type LocaleDefinition = typeof en;
 export type LocaleDefinitionResolver = () => Promise<LocaleDefinition>;
 
+/**
+ * Interface for TypeScript module augmentation.
+ * Plugins should extend this interface to add their own locale string keys, so
+ * `localeDefinitionOverride` is typed for them instead of a loose record.
+ *
+ * @example
+ * ```typescript
+ * declare module '@uploadcare/file-uploader' {
+ *   interface CustomLocaleDefinition {
+ *     'my-plugin-title': string;
+ *   }
+ * }
+ * ```
+ */
+// biome-ignore lint/suspicious/noEmptyInterface: This interface is meant to be augmented by plugins
+export interface CustomLocaleDefinition {}
+
 const localeRegistry: Map<string, LocaleDefinition> = new Map();
 const localeResolvers: Map<string, LocaleDefinitionResolver> = new Map();
 

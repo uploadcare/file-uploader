@@ -3,6 +3,7 @@ import { property } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject } from '../../abstract/di/inject';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
@@ -18,6 +19,9 @@ export class PrimaryAction extends ChildBlock {
 
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(RouterController) private readonly _router!: RouterController;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+
+  private static readonly DEFAULT_ICON = 'upload';
 
   private static readonly SOURCE_TEXT_CONFIG: Record<string, { action: string }> = {
     [UploadSource.LOCAL]: { action: 'upload-from' },
@@ -79,6 +83,10 @@ export class PrimaryAction extends ChildBlock {
       return headerText;
     }
 
+    if (!this.source) {
+      return this.l10n(this._isMultiple ? 'upload-files' : 'upload-file');
+    }
+
     return this._getSourceLabelText();
   }
 
@@ -126,7 +134,12 @@ export class PrimaryAction extends ChildBlock {
       return;
     }
 
-    void this.source?.onClick();
+    if (!this.source) {
+      this._api.initFlow();
+      return;
+    }
+
+    void this.source.onClick();
   }
 
   private _renderThumbnail() {
@@ -138,6 +151,10 @@ export class PrimaryAction extends ChildBlock {
 
     if (this._isMultiple && this.hasMultipleEntries) {
       return null;
+    }
+
+    if (!this.source) {
+      return html`<uc-icon .name=${PrimaryAction.DEFAULT_ICON}></uc-icon>`;
     }
 
     const iconName = this.source?.icon;
