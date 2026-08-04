@@ -29,6 +29,7 @@ import {
   asPasteScope,
   asStore,
   asString,
+  asTags,
 } from './validatorsType';
 
 const log = logger.scope('normalize-config-value');
@@ -112,6 +113,7 @@ export const BUILTIN_REGISTRY = {
   localeName: { default: 'en', coerce: asString },
 
   metadata: { default: null, coerce: asMetadata, attribute: false },
+  tags: { default: null, coerce: asTags, attribute: false },
   secureUploadsExpireThreshold: { default: 10 * 60 * 1000, coerce: asNumber },
   localeDefinitionOverride: { default: null, coerce: asObject, attribute: false },
   secureUploadsSignatureResolver: { default: null, coerce: asFunction, attribute: false },

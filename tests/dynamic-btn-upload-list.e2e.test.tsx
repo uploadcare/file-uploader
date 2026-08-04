@@ -12,7 +12,13 @@ beforeEach(() => {
   page.render(
     <>
       <uc-file-uploader-regular dynamic-button ctx-name={ctxName}></uc-file-uploader-regular>
-      <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+      <uc-config
+        dynamicButtonViewMode="auto"
+        qualityInsights={false}
+        ctx-name={ctxName}
+        pubkey="demopublickey"
+        testMode
+      ></uc-config>
     </>,
   );
 });

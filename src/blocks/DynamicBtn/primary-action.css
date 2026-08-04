@@ -1,9 +1,11 @@
 @layer uc.components {
   :where([uc-primary-action]) {
     position: relative;
+    width: 100%;
   }
 
   :where([uc-primary-action] button) {
+    width: 100%;
     background-color: transparent;
     color: var(--uc-foreground);
   }

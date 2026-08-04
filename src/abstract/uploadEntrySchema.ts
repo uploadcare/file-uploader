@@ -1,4 +1,4 @@
-import type { Metadata, UploadcareFile } from '@uploadcare/upload-client';
+import type { Metadata, Tags, UploadcareFile } from '@uploadcare/upload-client';
 import type { OutputErrorFile } from '../types/index';
 import type { TypedData } from './TypedData';
 
@@ -23,6 +23,7 @@ export interface UploadEntryData extends Record<string, unknown> {
   source: string | null;
   fullPath: string | null;
   metadata: Metadata | null;
+  tags: Tags | null;
   errors: OutputErrorFile[];
   uploadError: Error | null;
   isRemoved: boolean;
@@ -52,6 +53,7 @@ export const initialUploadEntryData: UploadEntryData = {
   source: null,
   fullPath: null,
   metadata: null,
+  tags: null,
   errors: [],
   uploadError: null,
   isRemoved: false,
@@ -59,6 +61,30 @@ export const initialUploadEntryData: UploadEntryData = {
   isValidationPending: false,
   isQueuedForValidation: false,
 };
+
+/**
+ * Maps an already-uploaded Uploadcare file to the entry fields derived from its
+ * uuid (cdnUrl, fileInfo, name, size, image flag, mime type). Shared by
+ * `addFileFromUploadcareFile` and `replaceFileFromUploadcareFile` so the two
+ * derivations cannot drift apart.
+ */
+export function uploadcareFileToEntryData(
+  file: UploadcareFile,
+): Pick<
+  UploadEntryData,
+  'fileInfo' | 'uuid' | 'cdnUrl' | 'fileName' | 'fileSize' | 'isImage' | 'mimeType' | 'uploadProgress'
+> {
+  return {
+    fileInfo: file,
+    uuid: file.uuid,
+    cdnUrl: file.cdnUrl,
+    fileName: file.originalFilename ?? null,
+    fileSize: file.size,
+    isImage: file.isImage ?? false,
+    mimeType: file.contentInfo?.mime?.mime ?? file.mimeType ?? null,
+    uploadProgress: 100,
+  };
+}
 
 export type UploadEntryTypedData = TypedData<UploadEntryData>;
 

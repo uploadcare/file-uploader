@@ -5,6 +5,7 @@
   }
 
   :where([uc-simple-btn]) button {
+    width: 100%;
     height: auto;
     gap: 0.5em;
     padding: var(--uc-simple-btn-padding);

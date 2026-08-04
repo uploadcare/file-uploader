@@ -165,6 +165,15 @@ export class UploadController {
     return configValue;
   }
 
+  /** Resolve the documented `tags` config (static value or per-entry callback). */
+  public async getTagsFor(uid: Uid): Promise<FileFromOptions['tags']> {
+    const configValue = this._config.values.tags || undefined;
+    if (typeof configValue === 'function') {
+      return configValue(this._api.getOutputItem(uid));
+    }
+    return configValue;
+  }
+
   public async uploadEntry(uid: Uid): Promise<void> {
     const entry = this._collection.read(uid);
     if (!entry) {
@@ -245,6 +254,7 @@ export class UploadController {
           },
           signal: abortController.signal,
           metadata: await this.getMetadataFor(uid),
+          tags: await this.getTagsFor(uid),
         };
         // Redact the signing credential from debug output — never print
         // `secureSignature` to the console. Lazy so the redacted copy is only

@@ -30,7 +30,7 @@ import '../FileItem/FileActionButton';
 import './NoWrapModeDynamicBtn';
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 
-export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact';
+export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact' | 'plain';
 
 type SourceSplit = {
   main: SourceButtonConfig | null;
@@ -38,7 +38,7 @@ type SourceSplit = {
 };
 
 const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: DynamicButtonMode): SourceSplit => {
-  if (mode === 'compact' || sources.length === 0) {
+  if (mode === 'compact' || mode === 'plain' || sources.length === 0) {
     return {
       main: null,
       remain: sources,
@@ -51,7 +51,7 @@ const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: DynamicBut
   };
 };
 
-const iconsBasedOnMode: Record<Exclude<DynamicButtonMode, 'toolbar'>, string> = {
+const iconsBasedOnMode: Record<Exclude<DynamicButtonMode, 'toolbar' | 'plain'>, string> = {
   compact: 'paperclip',
   menu: 'arrow-dropdown',
   auto: 'arrow-dropdown',
@@ -107,6 +107,13 @@ export class DynamicBtn extends ChildBlock {
     return this._collectionState.getTracked('commonProgress');
   }
 
+  // v1 derived this into a `@state` from `willUpdate` on a `_mode` @state change;
+  // here `_mode` is a tracked getter, so a plain derived getter re-evaluates on
+  // the same re-render and there is no mirror to keep in sync.
+  private get _dropdownIconName(): string {
+    return iconsBasedOnMode[this._mode as Exclude<DynamicButtonMode, 'toolbar' | 'plain'>] ?? 'arrow-dropdown';
+  }
+
   private get isIdle() {
     return this._status === 'idle';
   }
@@ -125,6 +132,13 @@ export class DynamicBtn extends ChildBlock {
 
   private get isCollapsedMode() {
     return this._mode === 'compact';
+  }
+
+  /**
+   *
+   */
+  private get isPlainMode() {
+    return this._mode === 'plain';
   }
 
   private get shouldShowPrimaryAction(): boolean {
@@ -245,10 +259,6 @@ export class DynamicBtn extends ChildBlock {
     `;
   }
 
-  private _getDropdownIconName(): string {
-    return iconsBasedOnMode[this._mode as Exclude<DynamicButtonMode, 'toolbar'>] ?? 'arrow-dropdown';
-  }
-
   private _clearAllEntries() {
     this._uploadCollection?.clearAll();
   }
@@ -281,7 +291,7 @@ export class DynamicBtn extends ChildBlock {
 
   private _renderDropdown() {
     return html` <uc-drop-down>
-      <uc-icon content-for="dd-header-button" name=${this._getDropdownIconName()}></uc-icon>
+      <uc-icon content-for="dd-header-button" name=${this._dropdownIconName}></uc-icon>
       <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
         ${this._mainAndRemainSources?.remain?.map(
           (source) => html`<uc-source-btn role="menuitem" .source=${source}></uc-source-btn>`,
@@ -357,9 +367,9 @@ export class DynamicBtn extends ChildBlock {
       <uc-drop-area .disabled=${!this.dropzone}>
         <div class=${this._getInnerClassMap()}>
           ${cache(this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null)}
-          ${cache(this.shouldShowInline ? this._renderInline() : null)}
-          ${cache(this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null)}
-          ${cache(this.shouldShowDropdown ? this._renderDropdown() : null)}
+          ${cache(!this.isPlainMode && this.shouldShowInline ? this._renderInline() : null)}
+          ${cache(!this.isPlainMode && this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null)}
+          ${cache(!this.isPlainMode && this.shouldShowDropdown ? this._renderDropdown() : null)}
           ${cache(this.shouldShowAbortAction || this.hasCollectionEntries ? this._renderAbortAction() : null)}
           ${cache(this._renderVisualDropArea())}
         </div>

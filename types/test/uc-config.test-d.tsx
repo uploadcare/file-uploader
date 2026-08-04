@@ -73,6 +73,16 @@ import React, { createRef, useRef } from 'react';
   }
 };
 
+// allow to pass tags
+() => {
+  const ref = useRef<Config | null>(null);
+  if (ref.current) {
+    const config = ref.current;
+    config.tags = ['cat'];
+    config.tags = () => ['cat'];
+  }
+};
+
 // allow to pass validators
 () => {
   const ref = useRef<Config | null>(null);
