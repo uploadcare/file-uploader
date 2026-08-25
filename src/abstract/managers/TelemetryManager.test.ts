@@ -75,6 +75,19 @@ describe('TelemetryManager', () => {
     expect(sendEventMock).not.toHaveBeenCalled();
   });
 
+  it('drops events queued before an opt-out lands (config element upgrades after the emitter)', async () => {
+    // Real-world shape: `qualityInsights` defaults to `true`, and
+    // `defineComponents` upgrades e.g. `uc-cloud-image-editor` several tags
+    // ahead of `uc-config`, so a block can connect and emit its startup burst
+    // while the explicit `quality-insights="false"` is still unapplied. The
+    // queue flushes after that, so the send must re-check.
+    const { manager, setConfig } = setup();
+    manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
+    setConfig('qualityInsights', false);
+    await flush();
+    expect(sendEventMock).not.toHaveBeenCalled();
+  });
+
   it('sends the init event with app/session/config metadata once enabled', async () => {
     const { manager, enable } = setup({ solution: 'uc-file-uploader-regular', activity: 'start-from' });
     enable();
@@ -277,6 +290,9 @@ describe('TelemetryManager', () => {
     router.setActivity('start-from' as ActivityId);
     // setActivity emitted ACTIVITY_CHANGE → the observer already sent it; drop
     // that so the assertion below inspects only our explicit MODAL_OPEN send.
+    // Flush first: a send resolves its enabled-check on a microtask, so the
+    // delivery lands after this statement rather than during `setActivity`.
+    await flush();
     sendEventMock.mockClear();
     vi.setSystemTime(1_700_000_002_000); // distinct payload for the dedup check
     manager.sendEvent({ eventType: EventType.MODAL_OPEN });
@@ -352,7 +368,8 @@ describe('TelemetryManager', () => {
       // Still inside the debounce window — must not have fired yet.
       expect(sendEventMock).not.toHaveBeenCalled();
 
-      vi.advanceTimersByTime(20);
+      // `…Async` so the send's microtask-deferred enabled-check settles too.
+      await vi.advanceTimersByTimeAsync(20);
 
       expect(sendEventMock).toHaveBeenCalledTimes(1);
       const payload = sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>;
@@ -369,7 +386,7 @@ describe('TelemetryManager', () => {
       emitter.emit(EventType.MODAL_OPEN, { modalId: 'start-from' } as never, { debounce: true });
       emitter.emit(EventType.MODAL_OPEN, { modalId: 'start-from' } as never, { debounce: true });
 
-      vi.advanceTimersByTime(20);
+      await vi.advanceTimersByTimeAsync(20);
 
       // Collapsed by EventBus.emitDebounced (later emit resets the pending
       // timer) — telemetry sees one delivery, not two.

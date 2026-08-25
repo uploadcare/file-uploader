@@ -232,6 +232,19 @@ export class TelemetryManager {
     }
 
     this._queue.add(async () => {
+      // Yield once, then RE-CHECK: `Queue` runs a task synchronously while below
+      // its concurrency limit, and a startup event can be emitted from inside
+      // `UploaderRegistry.ensure()` — which `<uc-config>` itself triggers, from
+      // its own adoption, BEFORE `_seedBuiltInConfig` has applied its attributes.
+      // At that instant `qualityInsights` still reads its `true` default, so
+      // without this yield an explicit `quality-insights="false"` page still
+      // ships its whole startup burst (verified: 5 events on the standalone
+      // editor demo). One microtask lands after the seed; the opt-out is then
+      // visible and the event is dropped instead of sent.
+      await Promise.resolve();
+      if (!this._isEnabled) {
+        return;
+      }
       this._lastPayload = payload;
       await this._telemetryInstance.sendEvent(payload);
     });
