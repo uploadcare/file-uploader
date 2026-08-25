@@ -29,6 +29,11 @@ import { subscription, type Unsubscribe } from './subscription';
 const formatConfigLogValue = (value: unknown): string => {
   if (value === undefined) return 'undefined';
   if (typeof value === 'function') return 'ƒ';
+  // `JSON.stringify` renders a function element as `null`, so an array of
+  // validators logs as `[null, null]`. Map the elements first.
+  if (Array.isArray(value) && value.some((item) => typeof item === 'function')) {
+    return `[${value.map(formatConfigLogValue).join(', ')}]`;
+  }
   try {
     return JSON.stringify(value) ?? String(value);
   } catch {
