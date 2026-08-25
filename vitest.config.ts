@@ -46,7 +46,7 @@ export default defineConfig({
           // repo-wide glob also collected `.claude/worktrees/<branch>/` — a full
           // second checkout when an agent works in a git worktree — which doubled
           // the suite and surfaced an unrelated branch's failures as ours.
-          include: ['./specs/npm/*.test.ts', './src/**/*.test.{ts,js}'],
+          include: ['./specs/*/*.test.ts', './src/**/*.test.{ts,js}'],
           environment: 'happy-dom',
         },
       },
