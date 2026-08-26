@@ -1,3 +1,9 @@
+## [1.33.2](https://github.com/uploadcare/file-uploader/compare/v1.33.1...v1.33.2) (2026-08-26)
+
+
+### Bug Fixes
+
+* **modal:** keep an activity that a closing modal doesn't own ([#1073](https://github.com/uploadcare/file-uploader/issues/1073)) ([c95ea8e](https://github.com/uploadcare/file-uploader/commit/c95ea8ee3fee5f8d067a97b240c042177d0942ff))
 ## [1.33.1](https://github.com/uploadcare/file-uploader/compare/v1.33.0...v1.33.1) (2026-07-29)
 
 
