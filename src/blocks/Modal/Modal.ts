@@ -36,7 +36,12 @@ export class Modal extends LitBlock {
 
     if (!this.modalManager?.hasActiveModals) {
       document.body.style.overflow = '';
-      this.$['*currentActivity'] = null;
+      // Only drop the activity if it's still ours: the dialog also closes as a
+      // consequence of navigating elsewhere (e.g. to the inline upload list),
+      // and blanking it then would undo that navigation.
+      if (this.$['*currentActivity'] === this.id) {
+        this.$['*currentActivity'] = null;
+      }
     }
   };
 
