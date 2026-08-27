@@ -175,10 +175,12 @@ describe('@throttled / @debounced edge cases', () => {
     host.handler('b');
     host.handler('c');
 
-    // With 0ms, throttle still only fires leading edge in practice
-    expect(host.calls).toContain('a');
+    // Leading call fires immediately
+    expect(host.calls).toEqual(['a']);
+
+    // Trailing call (last invocation 'c') scheduled for next tick
     vi.advanceTimersByTime(0);
-    // Trailing edge behavior depends on throttle/debounce implementation
+    expect(host.calls).toEqual(['a', 'c']);
   });
 
   it('multiple rate-limited methods on same host are tracked separately', () => {

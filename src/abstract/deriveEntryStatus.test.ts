@@ -66,13 +66,13 @@ describe('deriveEntryStatus edge cases', () => {
   });
 
   it('removed status takes precedence over all other states', () => {
-    const maxlyConflicted = fields({
+    const maximallyConflicted = fields({
       isRemoved: true,
       errors: [err],
       fileInfo,
       isUploading: true,
     });
-    expect(deriveEntryStatus(maxlyConflicted)).toBe('removed');
+    expect(deriveEntryStatus(maximallyConflicted)).toBe('removed');
   });
 
   it('returns correct status for transitioning entry states', () => {

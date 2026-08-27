@@ -153,11 +153,9 @@ describe('resolveSecureDeliveryProxyUrl', () => {
 
       const result = await resolveSecureDeliveryProxyUrl(config, onResolverError, urlWithSpecialChars);
 
-      // URL should be double-encoded (once by encodeURIComponent, once by template substitution)
-      expect(result).toContain('proxy.example.com');
-      expect(result).toContain('ucarecdn.com');
-      // Verify no double-encoding by checking the format is valid
-      expect(() => new URL(result)).not.toThrow();
+      // encodeURIComponent encodes the URL once for safe template substitution
+      const expectedEncodedUrl = encodeURIComponent(urlWithSpecialChars);
+      expect(result).toBe(`https://proxy.example.com/?secure=${expectedEncodedUrl}`);
     });
 
     it('handles URLs with unicode characters in filename', async () => {

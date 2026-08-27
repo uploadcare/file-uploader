@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import { ControllerContainer } from '../abstract/di/ControllerContainer';
-import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { getOutputData } from './getOutputData';
 
 /**
@@ -11,12 +10,10 @@ import { getOutputData } from './getOutputData';
 describe('getOutputData', () => {
   let container: ControllerContainer;
   let collection: UploadCollectionController;
-  let _api: UploaderPublicApi;
 
   beforeEach(() => {
     container = new ControllerContainer();
     collection = container.get(UploadCollectionController);
-    _api = container.get(UploaderPublicApi);
   });
 
   afterEach(() => {
