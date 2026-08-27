@@ -190,6 +190,9 @@ export class ConfigController implements ReactiveStore<ConfigType> {
       if (owner === ownerId) {
         this.#customDescriptors.delete(name);
         this.#descriptorOwners.delete(name);
+        // Note: we leave the value in the signal map; it won't be accessed
+        // since the descriptor is removed, and future re-registrations of the same
+        // key will overwrite the orphaned value.
         changed = true;
       }
     }
