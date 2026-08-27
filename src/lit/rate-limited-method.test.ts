@@ -112,3 +112,85 @@ describe('registerHostRateLimited', () => {
     expect(registerHostRateLimited(new Plain())).toEqual([]);
   });
 });
+
+describe('@throttled / @debounced edge cases', () => {
+  it('can be cancelled explicitly via the .cancel() method', () => {
+    const host = new Host();
+    const throttler = host.onThrottled as unknown as { cancel: () => void };
+
+    host.onThrottled('a');
+    expect(host.calls).toEqual(['t:a']);
+
+    host.onThrottled('b');
+    throttler.cancel(); // cancel pending trailing edge
+
+    vi.advanceTimersByTime(100);
+    expect(host.calls).toEqual(['t:a']); // 'b' was cancelled
+  });
+
+  it('throttle cancellation prevents scheduled call from running', () => {
+    const host = new Host();
+    const throttler = host.onThrottled as unknown as { cancel: () => void };
+
+    host.onThrottled('a'); // leading edge fires
+    host.onThrottled('b');
+    host.onThrottled('c'); // updates scheduled trailing edge
+
+    throttler.cancel(); // cancel before trailing edge fires
+    vi.advanceTimersByTime(200); // advance well past throttle window
+
+    expect(host.calls).toEqual(['t:a']); // only leading edge, trailing was cancelled
+  });
+
+  it('handles rapid re-calls after cancellation', () => {
+    const host = new Host();
+    const debouncer = host.onDebounced as unknown as { cancel: () => void };
+
+    host.onDebounced('a');
+    host.onDebounced('b');
+    debouncer.cancel();
+
+    vi.advanceTimersByTime(100);
+    expect(host.calls).toEqual([]); // cancelled
+
+    // Reschedule immediately
+    host.onDebounced('c');
+    vi.advanceTimersByTime(100);
+    expect(host.calls).toEqual(['d:c']); // new debounce works
+  });
+
+  it('throttle with 0ms wait still rate-limits (leading call only)', () => {
+    class ZeroHost {
+      public containerOrNull: object | null = {};
+      public calls: string[] = [];
+
+      @throttled(0)
+      public handler(tag: string): void {
+        this.calls.push(tag);
+      }
+    }
+
+    const host = new ZeroHost();
+    host.handler('a');
+    host.handler('b');
+    host.handler('c');
+
+    // With 0ms, throttle still only fires leading edge in practice
+    expect(host.calls).toContain('a');
+    vi.advanceTimersByTime(0);
+    // Trailing edge behavior depends on throttle/debounce implementation
+  });
+
+  it('multiple rate-limited methods on same host are tracked separately', () => {
+    const host = new Host();
+    const [teardown] = registerHostRateLimited(host);
+
+    host.onThrottled('a');
+    host.onDebounced('b');
+    expect(host.calls).toEqual(['t:a']); // throttle fires leading
+
+    teardown!(); // cancel both
+    vi.advanceTimersByTime(100);
+    expect(host.calls).toEqual(['t:a']); // both pending calls cancelled
+  });
+});

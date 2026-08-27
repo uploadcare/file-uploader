@@ -53,6 +53,15 @@ export class ProgressBar extends ChildBlock {
     this._progressValue = this._normalizeProgressValue(this.value);
     this._updateProgressValueStyle();
     this._fakeProgressLineRef.value?.addEventListener('animationiteration', this._handleFakeProgressAnimation);
+
+    // Set initial ARIA attributes
+    const fakeProgress = this.querySelector('.uc-fake-progress');
+    if (fakeProgress) {
+      fakeProgress.setAttribute('role', 'progressbar');
+      fakeProgress.setAttribute('aria-valuenow', this._progressValue.toString());
+      fakeProgress.setAttribute('aria-valuemin', '0');
+      fakeProgress.setAttribute('aria-valuemax', '100');
+    }
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
@@ -80,6 +89,17 @@ export class ProgressBar extends ChildBlock {
         this._progressValue = this._normalizeProgressValue(this.value);
       }
     }
+
+    // Update ARIA attributes after any progress value change
+    if (changedProperties.has('value') || changedProperties.has('visible')) {
+      const fakeProgress = this.querySelector('.uc-fake-progress');
+      if (fakeProgress) {
+        fakeProgress.setAttribute('aria-valuenow', this._progressValue.toString());
+        fakeProgress.setAttribute('role', 'progressbar');
+        fakeProgress.setAttribute('aria-valuemin', '0');
+        fakeProgress.setAttribute('aria-valuemax', '100');
+      }
+    }
   }
 
   public override disconnectedCallback(): void {
@@ -89,6 +109,11 @@ export class ProgressBar extends ChildBlock {
 
   private _normalizeProgressValue(value: number): number {
     if (!Number.isFinite(value)) {
+      // Positive infinity → clamp to 100
+      if (value === Infinity) {
+        return 100;
+      }
+      // Negative infinity or NaN → return 0
       return 0;
     }
     return Math.min(100, Math.max(0, value));
