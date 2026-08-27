@@ -301,6 +301,11 @@ export class ControllerContainer {
         // rest of the disposal chain (mirrors EventBus/Listeners fan-out).
         log.warn(`${Ctrl.name}.destroy() threw`, err);
       }
+      // Clear the CONTAINER tag after destroy to signal disposed state and prevent
+      // @inject from accessing stale container references in post-disposal closures.
+      if (inst && typeof inst === 'object' && CONTAINER in inst) {
+        delete (inst as Destroyable & { [CONTAINER]?: ControllerContainer })[CONTAINER];
+      }
     }
     this.#instances.clear();
     this.#order = [];
