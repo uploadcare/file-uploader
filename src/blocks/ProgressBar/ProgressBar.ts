@@ -45,6 +45,14 @@ export class ProgressBar extends ChildBlock {
     if (this.visible) {
       this._updateProgressValueStyle();
     }
+    // Also update ARIA attributes to prevent staleness after re-adoption
+    const fakeProgress = this.querySelector('.uc-fake-progress');
+    if (fakeProgress) {
+      fakeProgress.setAttribute('role', 'progressbar');
+      fakeProgress.setAttribute('aria-valuenow', this._progressValue.toString());
+      fakeProgress.setAttribute('aria-valuemin', '0');
+      fakeProgress.setAttribute('aria-valuemax', '100');
+    }
   }
 
   protected override firstUpdated(changedProperties: PropertyValues<this>): void {
