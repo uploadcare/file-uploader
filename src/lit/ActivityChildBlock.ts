@@ -32,6 +32,7 @@ export class ActivityChildBlock extends ChildBlock {
   private _unreportActivityMounted?: () => void;
 
   protected override controllerReady(_container: ControllerContainer): void {
+    super.controllerReady(_container);
     this.requestUpdate();
     if (!this.activityType) {
       return;
