@@ -49,6 +49,7 @@ export class SecureUploadsController {
             this._secureToken = null;
           } else if (!result.secureSignature || !result.secureExpire) {
             this._log.error('Secure signature resolver returned an invalid result:', result);
+            this._secureToken = null;
           } else {
             this._log.debug('Secure signature resolved:', { ...result, secureSignature: '[redacted]' });
             this._log.debug(
