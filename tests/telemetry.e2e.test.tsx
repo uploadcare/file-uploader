@@ -264,11 +264,9 @@ describe('Telemetry: cloud image editor', () => {
     await userEvent.click(page.getByRole('option', { name: /Brightness/i }));
     const action = await waitForType('action-event');
 
-    // `operation` is read from `*operationTooltip`, which still holds the pre-click value — so it reports the stale
-    // tooltip rather than the operation just picked. Pinned as current behaviour, not an endorsement of it.
     expect(action.payload.metadata).toMatchObject({
       tab_id: 'tuning',
-      operation: { filter: 'filter', value: 0 },
+      operation: { filter: 'brightness', value: 0 },
     });
   });
 });

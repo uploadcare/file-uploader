@@ -3,7 +3,6 @@ import { EditorButtonControl } from './EditorButtonControl.js';
 import type { ColorOperation } from './toolbar-constants';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
 import type { Transformations } from './types';
-import { parseFilterValue } from './utils/parseFilterValue.js';
 
 export class EditorOperationControl extends EditorButtonControl {
   private _operation: ColorOperation | '' = '';
@@ -65,6 +64,19 @@ export class EditorOperationControl extends EditorButtonControl {
       this.active = isActive;
     });
   }
+  /**
+   * What the slider tooltip will show for this operation. Read from the transformations rather than from
+   * `*operationTooltip`, which the slider only writes in its `updated()` lifecycle — a render after this click.
+   */
+  private _currentOperationValue(): { filter: string; value: number } | null {
+    if (!this._operation) {
+      return null;
+    }
+    const transformations = this.$['*editorTransformations'] as Transformations;
+    const value = transformations[this._operation] ?? COLOR_OPERATIONS_CONFIG[this._operation].zero;
+    return { filter: this._operation, value };
+  }
+
   protected override onClick(e: MouseEvent) {
     const slider = this.$['*sliderEl'] as { setOperation: (operation: ColorOperation | '') => void } | undefined;
     slider?.setOperation(this._operation);
@@ -72,7 +84,7 @@ export class EditorOperationControl extends EditorButtonControl {
     this.$['*currentOperation'] = this._operation;
 
     this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
-      operation: parseFilterValue(this.$['*operationTooltip']),
+      operation: this._currentOperationValue(),
     });
   }
 }

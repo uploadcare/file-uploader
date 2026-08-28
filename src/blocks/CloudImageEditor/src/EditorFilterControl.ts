@@ -10,7 +10,6 @@ import { EditorButtonControl } from './EditorButtonControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
 import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transformationUtils.js';
 import type { Transformations } from './types';
-import { parseFilterValue } from './utils/parseFilterValue.js';
 
 import '../../Icon/Icon';
 
@@ -59,6 +58,18 @@ export class EditorFilterControl extends EditorButtonControl {
     }
   }
 
+  /**
+   * What the slider tooltip will show for this filter. Read from the transformations rather than from
+   * `*operationTooltip`, which the slider only writes in its `updated()` lifecycle — a render after this click.
+   */
+  private _currentFilterValue(): { filter: string; value: number } | null {
+    if (!this._filter) {
+      return null;
+    }
+    const transformations = this.$['*editorTransformations'] as Transformations;
+    return { filter: this._filter, value: transformations.filter?.amount ?? 0 };
+  }
+
   public override onClick(e: MouseEvent) {
     if (!this.active) {
       const slider = this.$['*sliderEl'] as { setOperation: (op: string, filter: string) => void; apply: () => void };
@@ -71,7 +82,7 @@ export class EditorFilterControl extends EditorButtonControl {
     }
 
     this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
-      operation: parseFilterValue(this.$['*operationTooltip']),
+      operation: this._currentFilterValue(),
     });
 
     this.$['*currentFilter'] = this._filter;
