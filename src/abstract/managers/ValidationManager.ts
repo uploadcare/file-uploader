@@ -122,6 +122,9 @@ export class ValidationManager extends SharedInstance {
     }
   }
 
+  /** Last collection verdict reported, so an unchanged one is not re-reported. */
+  private _reportedCollectionErrors = '[]';
+
   public runCollectionValidators(): void {
     if (this._isDestroyed) return;
 
@@ -150,7 +153,13 @@ export class ValidationManager extends SharedInstance {
 
     this._ctx.pub('*collectionErrors', errors);
 
-    if (errors.length > 0) {
+    // Collection validators re-run on every collection update. Failing is a transition, so an unchanged verdict is
+    // not re-reported. `payload` is left out of the comparison — it snapshots state that moves on every run.
+    const signature = JSON.stringify(errors.map(({ type, message }) => [type, message]));
+    const hasChanged = signature !== this._reportedCollectionErrors;
+    this._reportedCollectionErrors = signature;
+
+    if (errors.length > 0 && hasChanged) {
       this._sharedInstancesBag.eventEmitter.emit(
         EventType.COMMON_UPLOAD_FAILED,
         () => api.getOutputCollectionState() as OutputCollectionState<'failed'>,

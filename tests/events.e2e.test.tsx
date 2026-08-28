@@ -139,15 +139,8 @@ describe('Events: upload lifecycle', () => {
     await recorder.waitFor('common-upload-failed');
     await delay(SETTLE_MS);
 
-    // The failure pair fires twice: once from the `add` validators and once from the `change` validators that run in
-    // the next tick. Pinned as-is — this is current behaviour, not an endorsement of it.
-    expect(recorder.typesExcluding(CHANGE)).toEqual([
-      'file-added',
-      'file-upload-failed',
-      'common-upload-failed',
-      'file-upload-failed',
-      'common-upload-failed',
-    ]);
+    // The `change` validators run again in the next tick and reach the same verdict, which must not re-report it.
+    expect(recorder.typesExcluding(CHANGE)).toEqual(['file-added', 'file-upload-failed', 'common-upload-failed']);
     expect(recorder.detailsOf('file-upload-failed')[0].errors[0].type).toBe('FILE_SIZE_EXCEEDED');
     expect(recorder.detailsOf(CHANGE).at(-1)).toMatchObject({ status: 'failed', failedCount: 1 });
   });

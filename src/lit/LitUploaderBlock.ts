@@ -184,6 +184,9 @@ export class LitUploaderBlock extends LitActivityBlock {
     }
   }, 300);
 
+  /** Last error verdict reported per entry, so an unchanged one is not re-reported. Keyed by entry uid. */
+  private _reportedErrors = new Map<Uid, string>();
+
   private _handleCollectionUpdate: TypedCollectionObserverHandler<UploadEntryData> = (entries, added, removed) => {
     if (!this.isConnected) return;
     if (added.size || removed.size) {
@@ -217,6 +220,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       });
       const thumbUrl = entry?.getValue('thumbUrl');
       thumbUrl && URL.revokeObjectURL(thumbUrl);
+      this._reportedErrors.delete(entry.uid);
       this.emit(EventType.FILE_REMOVED, this.api.getOutputItem(entry.uid));
     }
 
@@ -296,13 +300,18 @@ export class LitUploaderBlock extends LitActivityBlock {
         const ctx = PubSub.getCtx<UploadEntryData>(entryId);
         if (!ctx) continue;
         const { errors } = ctx.store;
+        // Validators re-run on `add`, `upload` and `change` and write a fresh array each time, so the same verdict
+        // arrives repeatedly. Failing is a transition — report it only when the verdict itself changes.
+        // Identity is the verdict itself. `payload.entry` is a snapshot of the entry at validation time, which
+        // differs on every run — including the errors just reported — so it cannot be part of the comparison.
+        const signature = JSON.stringify(errors.map(({ type, message }) => [type, message]));
+        if (this._reportedErrors.get(entryId) === signature) continue;
+        this._reportedErrors.set(entryId, signature);
+
+        // `common-upload-failed` is not emitted here: any failed file also produces a collection error, so the
+        // collection validators report the collection's transition — from one place.
         if (errors.length > 0) {
           this.emit(EventType.FILE_UPLOAD_FAILED, this.api.getOutputItem(entryId));
-          this.emit(
-            EventType.COMMON_UPLOAD_FAILED,
-            () => this.api.getOutputCollectionState() as OutputCollectionState<'failed'>,
-            { debounce: true },
-          );
         }
       }
       const loadedItems = uploadCollection.findItems((entry) => {
