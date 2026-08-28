@@ -16,6 +16,13 @@ type TelemetryState = TelemetryRequest & {
   eventTimestamp: number;
   location: string;
 };
+/** The parts of an event that must be captured when it happens, not when it is sent. */
+type EventContext = {
+  timestamp: number;
+  activity: string | null;
+  solution: string | null;
+};
+
 type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config'>> & {
   modalId?: string;
   eventType: CommonEventType;
@@ -44,24 +51,16 @@ export class TelemetryManager extends SharedInstance {
     for (const key of Object.keys(this._config) as (keyof ConfigType)[]) {
       this.addSub(
         this._ctx.sub(sharedConfigKey(key), (value) => {
-          if (!this._isEnabled) {
-            return;
-          }
-          if (this._initialized && this._config[key] !== value) {
+          const isChanged = this._config[key] !== value;
+          this._setConfig(key, value);
+
+          if (this._isEnabled && this._initialized && isChanged) {
             this.sendEvent({
               eventType: InternalEventType.CHANGE_CONFIG,
             });
           }
-
-          this._setConfig(key, value);
         }),
       );
-    }
-  }
-
-  private _init(type: CommonEventType | undefined): void {
-    if (type === InternalEventType.INIT_SOLUTION && !this._initialized) {
-      this._initialized = true;
     }
   }
 
@@ -73,7 +72,14 @@ export class TelemetryManager extends SharedInstance {
     this._config[key] = value;
   }
 
-  private _formattingPayload(body: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config'>>): TelemetryState {
+  /**
+   * Builds the wire payload. Called when the event is sent rather than when it is raised, so that config-derived
+   * fields (`config`, `projectPubkey`) reflect the config as delivered; `occurredAt` carries what must not drift.
+   */
+  private _formattingPayload(
+    body: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config'>>,
+    occurredAt: EventContext,
+  ): TelemetryState {
     const payload = (body.payload ? { ...body.payload } : {}) as Record<string, unknown>;
     if (payload.activity) {
       payload.activity = undefined;
@@ -81,7 +87,7 @@ export class TelemetryManager extends SharedInstance {
 
     const result: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config'>> = { ...body };
     if (body.eventType === InternalEventType.INIT_SOLUTION || body.eventType === InternalEventType.CHANGE_CONFIG) {
-      result.config = this._config as TelemetryState['config'];
+      result.config = { ...this._config } as TelemetryState['config'];
     }
 
     return {
@@ -90,12 +96,12 @@ export class TelemetryManager extends SharedInstance {
       appVersion: PACKAGE_VERSION,
       appName: PACKAGE_NAME,
       sessionId: this._sessionId,
-      component: this._solution,
-      activity: this._activity,
+      component: occurredAt.solution,
+      activity: occurredAt.activity,
       projectPubkey: this._config.pubkey,
       userAgent: navigator.userAgent,
       eventType: result.eventType,
-      eventTimestamp: this._timestamp,
+      eventTimestamp: occurredAt.timestamp,
 
       payload: {
         location: this._location,
@@ -128,28 +134,46 @@ export class TelemetryManager extends SharedInstance {
     if (!this._isEnabled) {
       return;
     }
-    const payload = this._formattingPayload({
-      eventType: body.eventType,
-      payload: body.payload,
-      config: body.config,
-    });
 
-    this._init(body.eventType);
-
-    const hasExcludedEvents = this._excludedEvents(body.eventType);
-    if (hasExcludedEvents) {
+    if (this._excludedEvents(body.eventType)) {
       return;
     }
 
-    const hasDataSame = this._lastPayload && this._checkObj(this._lastPayload, payload);
-    if (hasDataSame) {
+    // Stamped now, formatted when the event is actually sent — see `_formattingPayload`.
+    const occurredAt: EventContext = {
+      timestamp: this._timestamp,
+      activity: this._activity,
+      solution: this._solution,
+    };
+
+    const enqueue = () => {
+      this._queue.add(async () => {
+        const payload = this._formattingPayload(
+          { eventType: body.eventType, payload: body.payload, config: body.config },
+          occurredAt,
+        );
+
+        if (this._lastPayload && this._checkObj(this._lastPayload, payload)) {
+          return;
+        }
+
+        this._lastPayload = payload;
+        if (body.eventType === InternalEventType.INIT_SOLUTION) {
+          this._initialized = true;
+        }
+        await this._telemetryInstance.sendEvent(payload);
+      });
+    };
+
+    if (body.eventType === InternalEventType.INIT_SOLUTION) {
+      // A solution block inits before <uc-config> has published its attributes, so the config this event exists to
+      // report is only complete once the current task ends. Everything else waits on `_initialized`, so nothing is
+      // sent ahead of it.
+      setTimeout(enqueue);
       return;
     }
 
-    this._queue.add(async () => {
-      this._lastPayload = payload;
-      await this._telemetryInstance.sendEvent(payload);
-    });
+    enqueue();
   }
 
   public sendEventError(error: unknown, context = 'unknown'): void {

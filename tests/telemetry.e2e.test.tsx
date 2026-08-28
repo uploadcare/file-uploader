@@ -95,9 +95,12 @@ describe('Telemetry: session', () => {
     expect(init.component).toBe('uc-file-uploader-regular');
     expect(init.payload.location).toBe(location.origin);
     expect(init.config).toMatchObject({ pubkey: 'demopublickey', test_mode: true, quality_insights: true });
-    // The top-level pubkey is still empty at init time — the config has not reached TelemetryManager yet. Pinned as
-    // current behaviour, not an endorsement of it.
-    expect(init.project_pubkey).toBe('');
+    expect(init.project_pubkey).toBe('demopublickey');
+
+    // The config arriving is not a config change: nothing is reported until init-solution has gone out.
+    await delay(SETTLE_MS);
+    expect(types()[0]).toBe('init-solution');
+    expect(bodiesOf('change-config')).toHaveLength(0);
   });
 
   it('sends change-config when a config value changes after init', async () => {
