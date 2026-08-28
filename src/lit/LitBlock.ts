@@ -60,13 +60,6 @@ export class LitBlock extends LitBlockBase {
     }
 
     eventEmitter.emit(type, payload, options);
-
-    const resolvedPayload = typeof payload === 'function' ? payload() : payload;
-
-    this.telemetryManager.sendEvent({
-      eventType: type,
-      payload: (resolvedPayload ?? undefined) as Record<string, unknown> | undefined,
-    });
   }
 
   public hasBlockInCtx(callback: (block: LitBlock) => boolean): boolean {

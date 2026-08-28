@@ -105,6 +105,11 @@ export class EventEmitter extends SharedInstance {
       }
     }
 
+    this._sharedInstancesBag.telemetryManager.sendEvent({
+      eventType: type,
+      payload: (payload ?? undefined) as Record<string, unknown> | undefined,
+    });
+
     this._debugPrint?.(() => {
       const copyPayload = !!payload && typeof payload === 'object' ? { ...payload } : payload;
       return [`event "${type}"`, copyPayload];

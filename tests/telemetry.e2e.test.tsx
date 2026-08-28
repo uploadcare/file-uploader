@@ -134,9 +134,14 @@ describe('Telemetry: upload lifecycle', () => {
     await waitForType('common-upload-success');
     await delay(SETTLE_MS);
 
-    // No `common-upload-start`: `uploadAll()` emits it straight through the EventEmitter, bypassing `LitBlock.emit`
-    // and therefore telemetry.
-    expect(types()).toEqual(['file-url-changed', 'common-upload-success']);
+    // Two starts: this uploadAll() and the upload list's own, which runs a tick later while the entry still looks
+    // pending. Pinned as current behaviour, not an endorsement of it.
+    expect(types()).toEqual([
+      'common-upload-start',
+      'common-upload-start',
+      'file-url-changed',
+      'common-upload-success',
+    ]);
 
     // TelemetryManager._excludedEvents — reporting any of these would be a regression.
     for (const excluded of [
