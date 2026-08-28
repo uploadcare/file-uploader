@@ -225,3 +225,74 @@ describe('Events: UI interaction', () => {
     expect(recorder.detailsOf('modal-close')[0]).toEqual({ modalId: 'upload-list', hasActiveModals: false });
   });
 });
+
+describe('Events: sources', () => {
+  /** Picks a source button out of the start-from list by its registered id. */
+  const clickSource = async (sourceId: string) => {
+    await page.getByText('Upload files', { exact: true }).click();
+    await expect.element(page.getByTestId('uc-start-from')).toBeVisible();
+    const button = await vi.waitFor(() => {
+      const found = document.querySelector<HTMLButtonElement>(`uc-source-btn[data-source-id="${sourceId}"] button`);
+      if (!found) throw new Error(`Source button "${sourceId}" was not rendered`);
+      return found;
+    }, WAIT);
+    button.click();
+  };
+
+  const WAIT = { timeout: 20_000, interval: 50 };
+
+  it('fires file-added with the camera source after a shot is accepted', { timeout: 60_000 }, async () => {
+    await clickSource('camera');
+    // The fake media device comes from the chromium launch flags in vitest.config.ts.
+    const shot = page.getByTestId('uc-camera-source--shot');
+    await expect.element(shot).toBeVisible();
+    recorder.clear();
+
+    await shot.click();
+    const accept = page.getByTestId('uc-camera-source--accept');
+    await expect.element(accept).toBeVisible();
+    await accept.click();
+
+    const added = await recorder.waitFor('file-added');
+    expect(added.source).toBe('camera');
+    expect(added.status).toBe('idle');
+    expect(added.name).toContain('camera');
+  });
+
+  it('fires file-added for every file picked in an external source', { timeout: 60_000 }, async () => {
+    await clickSource('dropbox');
+    const iframe = await vi.waitFor(() => {
+      const found = document.querySelector('uc-external-source iframe');
+      if (!found) throw new Error('External source iframe was not mounted');
+      return found as HTMLIFrameElement;
+    }, WAIT);
+    recorder.clear();
+
+    // Drive the remote picker through its message bridge instead of the real social app.
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        source: iframe.contentWindow,
+        data: {
+          type: 'selected-files-change',
+          total: 1,
+          selectedCount: 1,
+          isReady: true,
+          isMultipleMode: true,
+          selectedFiles: [{ obj_type: 'selected_file', url: TEST_IMAGE_URL, filename: 'from-dropbox.jpg' }],
+        },
+      }),
+    );
+
+    const doneBtn = await vi.waitFor(() => {
+      const found = document.querySelector<HTMLButtonElement>('uc-external-source .uc-done-btn');
+      if (!found || found.hidden || found.disabled) throw new Error('Done button is not clickable');
+      return found;
+    }, WAIT);
+    doneBtn.click();
+
+    const added = await recorder.waitFor('file-added');
+    expect(added.source).toBe('dropbox');
+    expect(added.externalUrl).toBe(TEST_IMAGE_URL);
+    expect(added.name).toBe('from-dropbox.jpg');
+  });
+});

@@ -39,6 +39,7 @@ let config: Config;
 const types = () => sent.map((body) => body.event_type);
 const bodiesOf = (type: string) => sent.filter((body) => body.event_type === type);
 const bodiesWithAction = (event: string) => sent.filter((body) => body.payload.metadata?.event === event);
+const actionEvents = () => bodiesOf('action-event').map((body) => body.payload.metadata?.event);
 const waitForType = (type: string) =>
   vi.waitFor(() => {
     const found = bodiesOf(type)[0];
@@ -269,6 +270,71 @@ describe('Telemetry: cloud image editor', () => {
     expect(action.payload.metadata).toMatchObject({
       tab_id: 'tuning',
       operation: { filter: 'filter', value: 0 },
+    });
+  });
+});
+
+describe('Telemetry: sources', () => {
+  const WAIT = { timeout: 20_000, interval: 50 };
+
+  /** Picks a source button out of the start-from list by its registered id. */
+  const clickSource = async (sourceId: string) => {
+    await page.getByText('Upload files', { exact: true }).click();
+    await expect.element(page.getByTestId('uc-start-from')).toBeVisible();
+    const button = await vi.waitFor(() => {
+      const found = document.querySelector<HTMLButtonElement>(`uc-source-btn[data-source-id="${sourceId}"] button`);
+      if (!found) throw new Error(`Source button "${sourceId}" was not rendered`);
+      return found;
+    }, WAIT);
+    button.click();
+  };
+
+  it('reports an action-event carrying the source id when a source is picked', async () => {
+    await waitForType('init-solution');
+    sent = [];
+
+    await clickSource('dropbox');
+    const action = await waitForType('action-event');
+
+    // SourceBtn puts the id straight on the payload, not inside `metadata`.
+    expect(action.payload.source_id).toBe('dropbox');
+  });
+
+  it('reports the camera action events in order', { timeout: 60_000 }, async () => {
+    await clickSource('camera');
+    const shot = page.getByTestId('uc-camera-source--shot');
+    await expect.element(shot).toBeVisible();
+    sent = [];
+
+    await page.getByTestId('uc-camera-source--tab-video').click();
+    await page.getByTestId('uc-camera-source--tab-photo').click();
+    await shot.click();
+
+    const accept = page.getByTestId('uc-camera-source--accept');
+    await expect.element(accept).toBeVisible();
+    const retake = document.querySelector<HTMLButtonElement>('uc-camera-source .uc-camera-actions .uc-secondary-btn')!;
+    retake.click();
+
+    await shot.click();
+    await expect.element(accept).toBeVisible();
+    await accept.click();
+
+    await vi.waitFor(() => expect(actionEvents()).toContain('accept-camera'), WAIT);
+    // Every shot reports twice: `shot-camera` from the button handler, then `start-camera` from the shared camera
+    // action dispatcher it calls.
+    expect(actionEvents()).toEqual([
+      'camera-tab-switch',
+      'camera-tab-switch',
+      'shot-camera',
+      'start-camera',
+      'retake-camera',
+      'shot-camera',
+      'start-camera',
+      'accept-camera',
+    ]);
+    expect(bodiesWithAction('camera-tab-switch')[0].payload.metadata).toMatchObject({
+      tab_id: 'video',
+      node: 'UC-CAMERA-SOURCE',
     });
   });
 });
