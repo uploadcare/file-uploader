@@ -16,6 +16,7 @@ import { throttle } from '../../utils/throttle';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
 import type { Uid } from '../../lit/Uid';
+import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import { FileItemConfig } from './FileItemConfig';
 
 import '../Thumb/Thumb';
@@ -94,6 +95,7 @@ export class FileItem extends FileItemConfig {
 
   private _handleRemove = (): void => {
     this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
           event: 'remove-file',
@@ -317,6 +319,7 @@ export class FileItem extends FileItemConfig {
     }
 
     this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
           event: action.id,

@@ -18,7 +18,7 @@ type TelemetryState = TelemetryRequest & {
 };
 type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config'>> & {
   modalId?: string;
-  eventType?: CommonEventType;
+  eventType: CommonEventType;
 };
 
 export class TelemetryManager extends SharedInstance {
@@ -94,7 +94,7 @@ export class TelemetryManager extends SharedInstance {
       activity: this._activity,
       projectPubkey: this._config.pubkey,
       userAgent: navigator.userAgent,
-      eventType: result.eventType ?? '',
+      eventType: result.eventType,
       eventTimestamp: this._timestamp,
 
       payload: {
