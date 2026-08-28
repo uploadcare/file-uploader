@@ -157,7 +157,7 @@ describe('Events: upload lifecycle', () => {
     await delay(SETTLE_MS);
 
     // group-created is excluded from the ordered comparison: creating the group is a separate network call, so it can
-    // land either side of common-upload-success.
+    // land either side of common-upload-success. That it fires exactly once is asserted below.
     expect(recorder.typesExcluding(CHANGE, 'group-created')).toEqual([
       'file-added',
       'common-upload-start',
@@ -168,6 +168,7 @@ describe('Events: upload lifecycle', () => {
       'file-url-changed',
       'common-upload-success',
     ]);
+    expect(recorder.detailsOf('group-created')).toHaveLength(1);
     expect(recorder.detailsOf('group-created')[0].group?.cdnUrl).toBeTruthy();
   });
 });

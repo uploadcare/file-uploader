@@ -179,7 +179,14 @@ export class LitUploaderBlock extends LitActivityBlock {
       debounce: true,
     });
 
-    if (this.cfg.groupOutput && collectionState.totalCount > 0 && collectionState.status === 'success') {
+    // `*groupInfo` is cleared whenever a cdnUrl changes, which is what asks for a new group. Without checking it, any
+    // later flush in a success state — the post-upload validator run, say — would build the same group again.
+    if (
+      this.cfg.groupOutput &&
+      collectionState.totalCount > 0 &&
+      collectionState.status === 'success' &&
+      !this.$['*groupInfo']
+    ) {
       this._createGroup(collectionState);
     }
   }, 300);
