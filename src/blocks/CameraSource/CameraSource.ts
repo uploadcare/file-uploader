@@ -152,19 +152,22 @@ export class CameraSource extends LitUploaderBlock {
   @state()
   private _mutableClassButton = 'uc-shot-btn uc-camera-action';
 
-  private _chooseActionWithCamera = () => {
+  private _reportCameraAction(event: string): void {
     this.telemetryManager.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
-          event: 'start-camera',
+          event,
           node: this.tagName,
           tabId: this._activeTab,
         },
       },
     });
+  }
 
+  private _chooseActionWithCamera = () => {
     if (this._activeTab === CameraSourceTypes.PHOTO) {
+      this._reportCameraAction('shot-camera');
       this._shot();
     }
 
@@ -174,6 +177,7 @@ export class CameraSource extends LitUploaderBlock {
         return;
       }
 
+      this._reportCameraAction('start-camera');
       this._startRecording();
     }
   };
@@ -201,16 +205,6 @@ export class CameraSource extends LitUploaderBlock {
   };
 
   private _handleStartCamera = (): void => {
-    this.telemetryManager.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'shot-camera',
-          node: this.tagName,
-          tabId: this._activeTab,
-        },
-      },
-    });
     this._chooseActionWithCamera();
   };
 
@@ -223,30 +217,12 @@ export class CameraSource extends LitUploaderBlock {
   };
 
   private _handleRetake = (): void => {
-    this.telemetryManager.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'retake-camera',
-          node: this.tagName,
-          tabId: this._activeTab,
-        },
-      },
-    });
+    this._reportCameraAction('retake-camera');
     this._retake();
   };
 
   private _handleAccept = (): void => {
-    this.telemetryManager.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'accept-camera',
-          node: this.tagName,
-          tabId: this._activeTab,
-        },
-      },
-    });
+    this._reportCameraAction('accept-camera');
     this._accept();
   };
 
@@ -371,16 +347,7 @@ export class CameraSource extends LitUploaderBlock {
     this._mediaRecorder?.stop();
     this.classList.remove('uc-recording');
 
-    this.telemetryManager.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'stop-camera',
-          node: this.tagName,
-          tabId: this._activeTab,
-        },
-      },
-    });
+    this._reportCameraAction('stop-camera');
   };
 
   /** This method is used to toggle recording pause/resume */

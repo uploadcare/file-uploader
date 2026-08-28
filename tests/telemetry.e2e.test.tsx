@@ -319,16 +319,13 @@ describe('Telemetry: sources', () => {
     await accept.click();
 
     await vi.waitFor(() => expect(actionEvents()).toContain('accept-camera'), WAIT);
-    // Every shot reports twice: `shot-camera` from the button handler, then `start-camera` from the shared camera
-    // action dispatcher it calls.
+    // One event per user action. On the video tab the same button reports `start-camera` / `stop-camera` instead.
     expect(actionEvents()).toEqual([
       'camera-tab-switch',
       'camera-tab-switch',
       'shot-camera',
-      'start-camera',
       'retake-camera',
       'shot-camera',
-      'start-camera',
       'accept-camera',
     ]);
     expect(bodiesWithAction('camera-tab-switch')[0].payload.metadata).toMatchObject({
