@@ -1,0 +1,228 @@
+import { type Signal, signal } from '@lit-labs/signals';
+import { Listeners, type ObserveOptions } from '../host-subscription';
+import { logger } from '../logger';
+import type { ReactiveStore } from './ReactiveStore';
+
+const log = logger.scope('signal-map');
+
+// `ObserveOptions` lives with `Listeners.observe` (the shared atomic-observe
+// engine); re-exported here so existing `di/SignalMap` importers are unaffected.
+export type { ObserveOptions };
+
+/**
+ * DOM-free reactive key/value store for controllers with a DYNAMIC keyspace —
+ * `ConfigController` (~55 built-ins plus plugin-registered keys) and
+ * `LocaleController` (arbitrary locale strings). It is the has-a counterpart to
+ * the per-static-field `@signalState` decorator (which can't model a keyspace
+ * that grows at runtime).
+ *
+ * A null-prototype `#bag` is the authoritative store — it holds every value,
+ * defines key presence, and is returned live by `values` (byte-for-byte with
+ * the `StateController._state` reference this replaces, so a consumer that
+ * captured `config.values` once still observes later writes). Writes dedup with
+ * `Object.is` and, on a real change, fire a COARSE `Listeners` notify (any-key
+ * granularity) — the exact contract the v1 per-key derived subscriptions and
+ * `ChildBlock.subConfigValue` lean on. No `lit`, no DOM.
+ *
+ * Reactive layer: `signal(key)` lazily materializes a per-key
+ * `@lit-labs/signals` `Signal.State` (seeded from the bag, kept in sync by
+ * `set`), so a future `SignalWatcher` consumer can auto-track a specific key.
+ * The plain `get(key)` deliberately reads the bag directly rather than routing
+ * every access through `Signal.State.get()` — config is on an extremely hot
+ * read path (every `api.cfg` lookup, every render), and no `SignalWatcher`
+ * consumer exists yet, so per-read signal overhead would be a pure regression
+ * (it measurably destabilizes the parallel e2e suite). Reads migrate to
+ * `signal(key)` when the first reactive consumer lands.
+ *
+ * The bag is null-proto and keys live by their string name, so a plugin/locale
+ * key named `__proto__` is an ordinary own property, never a prototype write.
+ */
+export class SignalMap<T extends object> implements ReactiveStore<T> {
+  // Authoritative value + presence store, and the live view returned by `values`.
+  #bag: T = Object.create(null);
+  // Lazily-populated per-key signals (created on first `get`), kept in sync with
+  // `#bag` on write. Stored as `Signal.State<unknown>` — an erasure boundary,
+  // cast back at the typed `get`/`set` edges (each is keyed by its own key).
+  #signals = new Map<keyof T, Signal.State<unknown>>();
+  #listeners = new Listeners();
+  // Per-key change listeners (keyed channel), fired with the CHANGED key on each
+  // real write — the granular counterpart to the coarse `#listeners`. Additive:
+  // coarse `subscribe`rs (Config/Locale) are untouched. Consumers that need to
+  // know *which* key changed (e.g. `UploadCollectionController`'s change-map) use
+  // this instead of one `observe` per key.
+  #keyListeners = new Set<(key: keyof T) => void>();
+
+  /** Fire the keyed channel for `key`, isolate-and-warn (a throwing listener must not break the write). */
+  #notifyKey(key: keyof T): void {
+    for (const listener of this.#keyListeners) {
+      try {
+        listener(key);
+      } catch (err) {
+        log.warn('a key-change listener threw', err);
+      }
+    }
+  }
+
+  /** Seed initial key/values into the bag without notifying (construction defaults). */
+  public constructor(initial?: Readonly<Partial<T>>) {
+    if (initial) {
+      for (const key of Object.keys(initial) as (keyof T)[]) {
+        this.#bag[key] = initial[key] as T[keyof T];
+      }
+    }
+  }
+
+  /**
+   * Fast, non-tracking read from the bag. Returns `undefined` for a key that was
+   * never seeded or set (byte-for-byte with `StateController.get` /
+   * `LocaleController.get`). Use `signal(key).get()` when reactive tracking is
+   * needed.
+   */
+  public get<K extends keyof T>(key: K): T[K] | undefined {
+    return Object.hasOwn(this.#bag, key) ? this.#bag[key] : undefined;
+  }
+
+  /**
+   * The per-key reactive signal (lazily materialized from the bag, kept in sync
+   * by `set`). Reading it under a `SignalWatcher` auto-tracks that key. Present
+   * for the forward migration; the compat read path uses the plain `get`.
+   */
+  public signal<K extends keyof T>(key: K): Signal.State<T[K] | undefined> {
+    let s = this.#signals.get(key);
+    if (!s) {
+      s = signal<unknown>(Object.hasOwn(this.#bag, key) ? this.#bag[key] : undefined);
+      this.#signals.set(key, s);
+    }
+    return s as Signal.State<T[K] | undefined>;
+  }
+
+  /**
+   * Trackable read — the `ReactiveStore` counterpart to `get`. Reads through the
+   * per-key signal, so under a `SignalWatcher` it auto-tracks `key`. The facades'
+   * hand-rolled `signal(key).get()` wrappers collapse to this.
+   */
+  public getTracked<K extends keyof T>(key: K): T[K] | undefined {
+    return this.signal(key).get();
+  }
+
+  public has(key: keyof T): boolean {
+    return Object.hasOwn(this.#bag, key);
+  }
+
+  /** `Object.is` dedup; on a real change, updates the bag (+ any live signal) then coarse-notifies. */
+  public set<K extends keyof T>(key: K, value: T[K]): void {
+    // Dedup only when the key already EXISTS with an equal value. An absent key
+    // must never be treated as a present `undefined`: otherwise `set(key,
+    // undefined)` would no-op and never materialize the key, so a caller like
+    // `ConfigController.register` could not replace an explicit pre-registration
+    // `undefined` write. `Object.is` dedup is byte-for-byte with the v1
+    // `StateController.set` / `LocaleController.set` semantics.
+    if (Object.hasOwn(this.#bag, key) && Object.is(this.#bag[key], value)) {
+      return;
+    }
+    this.#bag[key] = value;
+    // Only push into the signal if it was already materialized; an untouched
+    // key stays lazy and its next `get` seeds from the now-updated bag.
+    this.#signals.get(key)?.set(value);
+    this.#listeners.notify();
+    this.#notifyKey(key);
+  }
+
+  /**
+   * Batch set: apply each changed key (`Object.is` dedup, updating the bag + any
+   * materialized signal), then fire exactly ONE coarse notify if anything changed.
+   * Per-key `getTracked`/`observe` consumers still fire only for their changed key
+   * (their own signal/`Object.is` filter); coarse `subscribe`rs fire once.
+   */
+  public setMany(patch: Partial<T>): void {
+    const changedKeys: (keyof T)[] = [];
+    // Consistent with `set`: an explicit `undefined` in the patch is WRITTEN
+    // (clears/materializes the key), not skipped — so optional state can be
+    // cleared through the batch API. `Object.keys` only yields own keys the
+    // caller put in `patch`.
+    for (const key of Object.keys(patch) as (keyof T)[]) {
+      const value = patch[key] as T[keyof T];
+      if (Object.hasOwn(this.#bag, key) && Object.is(this.#bag[key], value)) {
+        continue;
+      }
+      this.#bag[key] = value;
+      this.#signals.get(key)?.set(value);
+      changedKeys.push(key);
+    }
+    if (changedKeys.length > 0) {
+      // One coarse notify for the whole batch, then the keyed channel fires once
+      // per changed key — so a change-map consumer sees every key a multi-key
+      // write touched, while coarse `subscribe`rs still fire exactly once.
+      this.#listeners.notify();
+      for (const key of changedKeys) {
+        this.#notifyKey(key);
+      }
+    }
+  }
+
+  /**
+   * Seed a key into the bag WITHOUT notifying, only if absent — for a
+   * default-seeding caller (`ConfigController.register`) that fires its own
+   * single coarse notify after.
+   */
+  public seed<K extends keyof T>(key: K, value: T[K]): void {
+    if (!Object.hasOwn(this.#bag, key)) {
+      this.#bag[key] = value;
+      // Keep an already-materialized signal in lockstep with the bag, same as `set` —
+      // otherwise a `signal(key)` consumer created before this key is seeded would go stale.
+      this.#signals.get(key)?.set(value);
+    }
+  }
+
+  public subscribe(listener: () => void): () => void {
+    return this.#listeners.subscribe(listener);
+  }
+
+  /**
+   * Keyed subscription: `listener` fires with the CHANGED key on every real
+   * write (`set`, and once per changed key in `setMany`) — the granular
+   * counterpart to the coarse `subscribe`. Lets a consumer learn *which* key
+   * changed from a SINGLE subscription instead of one `observe` per key (e.g.
+   * `UploadCollectionController` building its per-prop change-map). Returns an
+   * unsubscriber. Fires no initial value; no `Object.is` payload dedup (the
+   * write already deduped before it fires).
+   */
+  public subscribeKeys(listener: (key: keyof T) => void): () => void {
+    this.#keyListeners.add(listener);
+    return () => this.#keyListeners.delete(listener);
+  }
+
+  /**
+   * Atomic per-key subscription: filters the coarse notify down to ONE key,
+   * invoking `listener` with the new value only when that key actually changes
+   * (`Object.is` dedup). Pass `{ immediate: true }` to also fire the listener
+   * once with the current value on subscribe. Returns an unsubscriber.
+   */
+  public observe<K extends keyof T>(
+    key: K,
+    listener: (value: T[K] | undefined) => void,
+    options?: ObserveOptions,
+  ): () => void {
+    return this.#listeners.observe(() => this.get(key), listener, options);
+  }
+
+  /** Coarse notify with no state change — for a keyed store's owner to force it. */
+  public notify(): void {
+    this.#listeners.notify();
+  }
+
+  /**
+   * The live value bag (a stable reference, mutated in place on write) — matches
+   * the v1 `StateController._state` semantics exactly.
+   */
+  public get values(): T {
+    return this.#bag;
+  }
+
+  public destroy(): void {
+    this.#signals.clear();
+    this.#bag = Object.create(null);
+    this.#listeners.clear();
+    this.#keyListeners.clear();
+  }
+}

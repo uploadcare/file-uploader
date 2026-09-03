@@ -31,6 +31,8 @@ describe('Plugin Registration & Lifecycle', () => {
     expect(args.pluginApi).toHaveProperty('registry');
     expect(args.pluginApi).toHaveProperty('config');
     expect(args.pluginApi).toHaveProperty('activity');
+    expect(args.pluginApi).toHaveProperty('logger');
+    expect(args).not.toHaveProperty('logger');
     expect(args.pluginApi.registry).toHaveProperty('registerSource');
     expect(args.pluginApi.registry).toHaveProperty('registerActivity');
     expect(args.pluginApi.registry).toHaveProperty('registerFileAction');
@@ -206,7 +208,7 @@ describe('Plugin Registration & Lifecycle', () => {
     const plugin1 = createTestPlugin({ id: 'dup-id', setup: setup1 });
     const plugin2 = createTestPlugin({ id: 'dup-id', setup: setup2 });
 
-    await renderUploader([plugin1, plugin2]);
+    const { ctxName } = await renderUploader([plugin1, plugin2]);
 
     await vi.waitFor(() => {
       expect(setup1).toHaveBeenCalledOnce();
@@ -214,8 +216,8 @@ describe('Plugin Registration & Lifecycle', () => {
 
     // Second plugin with same id should be skipped with a warning
     expect(setup2).not.toHaveBeenCalled();
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"dup-id"'));
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('duplicate'));
+    expect(warnSpy).toHaveBeenCalledWith(`[uc][${ctxName}][plugin-manager]`, expect.stringContaining('"dup-id"'));
+    expect(warnSpy).toHaveBeenCalledWith(`[uc][${ctxName}][plugin-manager]`, expect.stringContaining('duplicate'));
 
     warnSpy.mockRestore();
   });
@@ -230,10 +232,14 @@ describe('Plugin Registration & Lifecycle', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    const { ctxName } = await renderUploader([plugin]);
 
     await vi.waitFor(() => {
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"setup-throws"'), expect.any(Error));
+      expect(errorSpy).toHaveBeenCalledWith(
+        `[uc][${ctxName}][plugin-manager]`,
+        expect.stringContaining('"setup-throws"'),
+        expect.any(Error),
+      );
     });
 
     errorSpy.mockRestore();
@@ -250,10 +256,14 @@ describe('Plugin Registration & Lifecycle', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    const { ctxName } = await renderUploader([plugin]);
 
     await vi.waitFor(() => {
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"async-setup-rejects"'), expect.any(Error));
+      expect(errorSpy).toHaveBeenCalledWith(
+        `[uc][${ctxName}][plugin-manager]`,
+        expect.stringContaining('"async-setup-rejects"'),
+        expect.any(Error),
+      );
     });
 
     errorSpy.mockRestore();
@@ -265,10 +275,10 @@ describe('Plugin Registration & Lifecycle', () => {
     const setupFn = vi.fn();
     const pluginWithoutId = { setup: setupFn } as unknown as UploaderPlugin;
 
-    await renderUploader([pluginWithoutId]);
+    const { ctxName } = await renderUploader([pluginWithoutId]);
 
     await vi.waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"id"'));
+      expect(warnSpy).toHaveBeenCalledWith(`[uc][${ctxName}][plugin-manager]`, expect.stringContaining('"id"'));
     });
 
     // setup() should not be called since the plugin was skipped

@@ -1,19 +1,32 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitBlock } from '../../../lit/LitBlock';
-import type { EditorImageFader } from './EditorImageFader';
+import { EditorBlock } from './editor-context';
 import type { ColorOperation, FilterId } from './toolbar-constants';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants';
 import type { Transformations } from './types';
 
 import './elements/slider/SliderUi';
 
-type SliderOperation = ColorOperation | 'filter';
-type SliderFilter = FilterId | typeof FAKE_ORIGINAL_FILTER;
+export type SliderOperation = ColorOperation | 'filter';
+export type SliderFilter = FilterId | typeof FAKE_ORIGINAL_FILTER;
 
 export const FAKE_ORIGINAL_FILTER = 'original';
 
-export class EditorSlider extends LitBlock {
+/** Bubbles up on every tooltip recompute — `EditorToolbar` owns the toolbar-local `operationTooltip` state and displays it in the top overlay. */
+export class SliderTooltipChangeEvent extends Event {
+  public static readonly eventName = 'uc-internal:slider-tooltip-change';
+  public constructor(public readonly tooltip: string) {
+    super(SliderTooltipChangeEvent.eventName, { bubbles: true, composed: true });
+  }
+}
+
+declare global {
+  interface HTMLElementEventMap {
+    [SliderTooltipChangeEvent.eventName]: SliderTooltipChangeEvent;
+  }
+}
+
+export class EditorSlider extends EditorBlock {
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
   public state = {
@@ -28,10 +41,19 @@ export class EditorSlider extends LitBlock {
     zero: 0,
   };
 
+  /** The live, uncommitted preview intent for the fader (see `*colorPreview`). `null` clears it. */
+  private _publishPreview(value: number | undefined): void {
+    this.editorController.set('*colorPreview', {
+      operation: this.state.operation,
+      value: this.state.filter === FAKE_ORIGINAL_FILTER ? undefined : value,
+      filter: this.state.filter === FAKE_ORIGINAL_FILTER ? undefined : this.state.filter,
+    });
+  }
+
   private _handleInput = (e: CustomEvent<{ value: number }>): void => {
     const { value } = e.detail;
-    const fader = this.$['*faderEl'] as EditorImageFader | undefined;
-    fader?.set(value);
+    // Was `fader.set(value)`; the fader reacts to `*colorPreview` now.
+    this._publishPreview(value);
     this.state = { ...this.state, value };
   };
 
@@ -40,17 +62,9 @@ export class EditorSlider extends LitBlock {
 
     this._initializeValues();
 
-    const fader = this.$['*faderEl'] as EditorImageFader | undefined;
-    const originalUrl = this.state.originalUrl || (this.$['*originalUrl'] as string | undefined);
-    if (fader && originalUrl) {
-      fader.activate({
-        url: originalUrl,
-        operation: this.state.operation,
-        value: this.state.filter === FAKE_ORIGINAL_FILTER ? undefined : this.state.value,
-        filter: this.state.filter === FAKE_ORIGINAL_FILTER ? undefined : this.state.filter,
-        fromViewer: false,
-      });
-    }
+    // Was `fader.activate({...})`; publish the preview and let the fader react
+    // (an operation/filter change rebuilds its keypoints — see EditorImageFader).
+    this._publishPreview(this.state.value);
   }
 
   private _initializeValues(): void {
@@ -60,7 +74,7 @@ export class EditorSlider extends LitBlock {
 
     this.state = { ...this.state, min, max, zero };
 
-    const editorTransformations = this.$['*editorTransformations'] as Transformations;
+    const editorTransformations = this.editorController.get('*editorTransformations');
     const transformation = editorTransformations[operation];
 
     if (operation === 'filter') {
@@ -79,7 +93,7 @@ export class EditorSlider extends LitBlock {
   }
 
   public apply(): void {
-    const editorTransformations = this.$['*editorTransformations'] as Transformations;
+    const editorTransformations = this.editorController.get('*editorTransformations');
     const transformations: Transformations = { ...editorTransformations };
 
     if (this.state.operation === 'filter') {
@@ -92,18 +106,21 @@ export class EditorSlider extends LitBlock {
       transformations[this.state.operation] = this.state.value as Transformations[typeof this.state.operation];
     }
 
-    this.$['*editorTransformations'] = transformations;
+    this.editorController.set('*editorTransformations', transformations);
+    // Committed — clear the live preview so the fader shows the committed result.
+    this.editorController.set('*colorPreview', null);
   }
 
   public cancel(): void {
-    const fader = this.$['*faderEl'] as EditorImageFader | undefined;
-    fader?.deactivate({ hide: false });
+    // Was `fader.deactivate({ hide: false })`; clearing the preview returns the
+    // fader to the committed viewer (see EditorImageFader).
+    this.editorController.set('*colorPreview', null);
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public constructor() {
+    super();
 
-    this.sub('*originalUrl', (originalUrl: string | null) => {
+    this.subEditorKey('*originalUrl', (originalUrl: string | null) => {
       if (!originalUrl) {
         return;
       }
@@ -116,7 +133,7 @@ export class EditorSlider extends LitBlock {
 
     if (changedProperties.has('state')) {
       const tooltip = `${this.state.filter ?? this.state.operation} ${this.state.value}`;
-      this.$['*operationTooltip'] = tooltip;
+      this.dispatchEvent(new SliderTooltipChangeEvent(tooltip));
     }
   }
 
@@ -128,7 +145,7 @@ export class EditorSlider extends LitBlock {
         .max=${this.state.max}
         .defaultValue=${this.state.defaultValue}
         .zero=${this.state.zero}
-        @slider-input=${this._handleInput}
+        @uc-internal:slider-input=${this._handleInput}
       ></uc-slider-ui>
     `;
   }

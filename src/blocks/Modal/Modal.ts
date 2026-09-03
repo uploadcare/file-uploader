@@ -1,19 +1,24 @@
-import { html } from 'lit';
-import type { ModalCb, ModalId } from '../../abstract/managers/ModalManager';
-import { ModalEvents } from '../../abstract/managers/ModalManager';
-import { LitBlock } from '../../lit/LitBlock';
-import { EventType } from '../UploadCtxProvider/EventEmitter';
+import { html, type PropertyValues } from 'lit';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
+import { inject, injectOrNull } from '../../abstract/di/inject';
+import { ChildBlock } from '../../lit/ChildBlock';
 import './modal.css';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import type { RegisteredActivityType } from '../../lit/LitActivityBlock';
+import type { RegisteredActivityType } from '../../lit/activity-constants';
+import { getScrollLock } from '../../utils/scroll-lock';
 
-let LAST_ACTIVE_MODAL_ID: ModalId | null = null;
-
-export class Modal extends LitBlock {
+export class Modal extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
 
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @injectOrNull(RouterController) private readonly _router!: RouterController | null;
+
   private _mouseDownTarget: EventTarget | null | undefined;
+
+  /** Idempotent release for our acquisition of the shared body scroll lock. */
+  private _releaseScrollLock: (() => void) | null = null;
 
   /** WARNING: Do not rename/change this, it's used in dashboard */
   protected dialogEl = createRef<HTMLDialogElement>();
@@ -32,17 +37,26 @@ export class Modal extends LitBlock {
 
   /** WARNING: Do not rename/change this, it's used in dashboard */
   protected closeDialog = (): void => {
-    this.modalManager?.close(this.id as RegisteredActivityType);
-
-    if (!this.modalManager?.hasActiveModals) {
-      document.body.style.overflow = '';
-      // Only drop the activity if it's still ours: the dialog also closes as a
-      // consequence of navigating elsewhere (e.g. to the inline upload list),
-      // and blanking it then would undo that navigation.
-      if (this.$['*currentActivity'] === this.id) {
-        this.$['*currentActivity'] = null;
-      }
+    // The native <dialog> "close" event is dispatched from a queued task and
+    // can land after this block's ctx was torn down (deferred destroyCtx once
+    // the last block disconnects) — there is no router to notify then, and
+    // nothing left to close. `_router` is `@injectOrNull` (not `@inject`): it
+    // reads `null` once the container is released, exactly the post-teardown
+    // race this guard exists to absorb, rather than throwing.
+    const router = this._router;
+    if (!router) {
+      return;
     }
+    // Only close when *this* modal is the one currently in the foreground slot.
+    // `hide()` fires the native `<dialog>` "close" event even when we hid this
+    // modal programmatically to switch to another — without this guard that
+    // stale close would tear down the modal we just navigated to.
+    if (router.modal !== (this.id as RegisteredActivityType)) {
+      return;
+    }
+    // Close the foreground modal slot; the router owns the close transition
+    // (and the `modal-close` event).
+    router.closeModal();
   };
 
   private _handleDialogClose = (): void => {
@@ -60,28 +74,28 @@ export class Modal extends LitBlock {
     }
   };
 
-  public async show(): Promise<void> {
+  protected async show(): Promise<void> {
     await this.updateComplete;
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       showModal?: () => void;
     };
+    // Idempotent + null-safe (matching `hide()`): `subRouter` fires on every
+    // change, but `showModal()` throws on an already-open dialog, and the ref
+    // may be cleared by a teardown racing this async method.
+    if (!dialog || dialog.open) return;
     if (typeof dialog.showModal === 'function') {
       this.setAttribute('aria-modal', 'true');
       dialog.showModal();
     } else {
       dialog.setAttribute('open', '');
     }
-
-    if (this.cfg.modalScrollLock) {
-      document.body.style.overflow = 'hidden';
-    }
   }
 
-  public hide(): void {
+  protected hide(): void {
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       close?: () => void;
     };
-    if (!dialog) return;
+    if (!dialog || !dialog.open) return;
     if (typeof dialog.close === 'function') {
       this.setAttribute('aria-modal', 'false');
       dialog.close();
@@ -90,65 +104,54 @@ export class Modal extends LitBlock {
     }
   }
 
-  private _handleModalOpen = ({ id }: Parameters<ModalCb>[0]): void => {
-    if (id === this.id) {
-      LAST_ACTIVE_MODAL_ID = id;
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+
+    // Host CSS attribute: `:where([uc-modal])[strokes] > dialog::backdrop` keys
+    // off `strokes` ON THE HOST, so drive it there from the tracked config
+    // signal (the Copyright `willUpdate` + `getTracked` recipe). Reading
+    // `modalBackdropStrokes` via `getTracked` auto-tracks under `SignalWatcher`,
+    // so a config change re-runs this update and re-toggles the attribute —
+    // matching the reactivity of the v1 `subConfigValue('modalBackdropStrokes')`
+    // it replaces. `strokes` is not a signal, so toggling it schedules no
+    // further update.
+    this.toggleAttribute('strokes', !!this._config.getTracked('modalBackdropStrokes'));
+
+    // Show when the router's foreground modal slot is this modal's id; hide
+    // otherwise. `router.modal` is a tracked signal (M-god step 6b-3), so a
+    // modal-open/close transition re-runs this update and drives the imperative
+    // `<dialog>` side-effects below — replacing the v1 `subRouter` subscription
+    // with no effective-activity dedup (a modal opening on the id that's already
+    // the background activity still transitions the modal slot, so it still shows).
+    //
+    // The scroll lock follows *router* state, not dialog state — a native
+    // Esc-close reaches here with the <dialog> already closed (so `hide()`
+    // early-returns), and the lock must release regardless. The shared
+    // refcount keeps the body locked across modal-to-modal swaps and across
+    // other uploader instances on the same page. `modalScrollLock` is read
+    // untracked (v1 read it fresh inside the router callback, not as its own
+    // reactive trigger) — the router-slot signal is what re-runs this.
+    const isForeground = this._router?.modal === (this.id as RegisteredActivityType);
+    if (isForeground && this._config.get('modalScrollLock')) {
+      this._releaseScrollLock ??= getScrollLock(document).acquire();
+    } else {
+      this._releaseScrollLock?.();
+      this._releaseScrollLock = null;
+    }
+    if (isForeground) {
       this.show();
-      this.emit(EventType.MODAL_OPEN, { modalId: id }, { debounce: true });
     } else {
       this.hide();
     }
-  };
-
-  private _handleModalClose = ({ id }: Parameters<ModalCb>[0]): void => {
-    if (id === this.id) {
-      this.hide();
-      this.emit(
-        EventType.MODAL_CLOSE,
-        { modalId: id, hasActiveModals: this.modalManager?.hasActiveModals },
-        { debounce: true },
-      );
-    }
-  };
-
-  private _handleModalCloseAll = (_data: Parameters<ModalCb>[0]): void => {
-    this.hide();
-
-    if (LAST_ACTIVE_MODAL_ID === this.id) {
-      this.emit(
-        EventType.MODAL_CLOSE,
-        { modalId: LAST_ACTIVE_MODAL_ID, hasActiveModals: this.modalManager?.hasActiveModals },
-        { debounce: true },
-      );
-    }
-  };
-
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.modalManager?.registerModal(this.id as RegisteredActivityType, this);
-
-    this.subConfigValue('modalBackdropStrokes', (val: boolean) => {
-      if (val) {
-        this.setAttribute('strokes', '');
-      } else {
-        this.removeAttribute('strokes');
-      }
-    });
-
-    this.modalManager?.subscribe(ModalEvents.OPEN, this._handleModalOpen);
-    this.modalManager?.subscribe(ModalEvents.CLOSE, this._handleModalClose);
-    this.modalManager?.subscribe(ModalEvents.CLOSE_ALL, this._handleModalCloseAll);
   }
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    document.body.style.overflow = '';
+    // Release only our own acquisition (idempotent) — never clobber
+    // `body.style.overflow` while another holder still has it locked.
+    this._releaseScrollLock?.();
+    this._releaseScrollLock = null;
     this._mouseDownTarget = undefined;
-
-    this.modalManager?.unsubscribe(ModalEvents.OPEN, this._handleModalOpen);
-    this.modalManager?.unsubscribe(ModalEvents.CLOSE, this._handleModalClose);
-    this.modalManager?.unsubscribe(ModalEvents.CLOSE_ALL, this._handleModalCloseAll);
   }
 
   private _handleDialogRef(dialog: Element | undefined): void {

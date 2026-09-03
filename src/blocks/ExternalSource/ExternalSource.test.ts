@@ -1,0 +1,78 @@
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { UploaderRegistry } from '../../abstract/UploaderRegistry';
+import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
+import { ExternalSource } from './ExternalSource';
+
+// Idempotent (same path as defineComponents(UC)).
+ExternalSource.reg('uc-external-source');
+
+let seq = 0;
+const mounted: HTMLElement[] = [];
+const ctxNames: string[] = [];
+
+const freshCtxName = (): string => {
+  const name = `external-source-spec-${seq++}`;
+  ctxNames.push(name);
+  return name;
+};
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  for (const el of mounted.splice(0)) el.remove();
+  for (const name of ctxNames.splice(0)) {
+    UploaderRegistry.dispose(name);
+  }
+});
+
+const mount = async (ctxName: string): Promise<{ el: ExternalSource; router: RouterController }> => {
+  ensureUploaderCtx(ctxName);
+  const router = UploaderRegistry.get(ctxName)?.get(RouterController);
+  if (!router) throw new Error('router controller not resolved');
+  const el = document.createElement('uc-external-source') as ExternalSource;
+  el.setAttribute('ctx-name', ctxName);
+  document.body.append(el);
+  mounted.push(el);
+  await el.updateComplete;
+  return { el, router };
+};
+
+describe('ExternalSource (M-god step 6b-2 migration)', () => {
+  it('resolves its ConfigController + RouterController + UploaderPublicApi dependencies via @inject fields', async () => {
+    // The deferred mount in controllerReady reads router params for the (absent)
+    // externalSourceType and console.errors then bails — silence it here.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    const container = UploaderRegistry.get(ctxName);
+    expect(container).toBeDefined();
+
+    // The `@inject` fields resolve through the container the block adopted
+    // (tagged as `this[CONTAINER]`), yielding the very same instances the ctx
+    // owns — the mechanism that replaces `static uses` + `this.use()`.
+    const injected = el as unknown as {
+      _config: ConfigController;
+      _router: RouterController;
+      _api: UploaderPublicApi;
+    };
+    expect(injected._config).toBe(container?.get(ConfigController));
+    expect(injected._router).toBe(container?.get(RouterController));
+    expect(injected._api).toBe(container?.get(UploaderPublicApi));
+  });
+
+  it('routes the close button through the container-resolved RouterController (use())', async () => {
+    // The deferred mount in controllerReady reads router params for the (absent)
+    // externalSourceType and console.errors then bails — silence it here so the
+    // test asserts only the close-button routing.
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const ctxName = freshCtxName();
+    const { el, router } = await mount(ctxName);
+    const spy = vi.spyOn(router, 'traverse').mockImplementation(() => {});
+
+    (el.querySelector('.uc-close-btn') as HTMLButtonElement).click();
+
+    expect(spy).toHaveBeenCalledWith('onClose');
+  });
+});

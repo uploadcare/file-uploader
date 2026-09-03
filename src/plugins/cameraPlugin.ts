@@ -1,5 +1,5 @@
 import { defineComponents } from '../abstract/defineComponents';
-import type { UploaderPlugin } from '../abstract/managers/plugin';
+import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import { CameraSource } from '../blocks/CameraSource/CameraSource';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { browserFeatures } from '../utils/browser-info';
@@ -24,8 +24,7 @@ export const cameraPlugin: UploaderPlugin = {
         return modes.length ? modes.map((mode) => `mobile-${mode}-camera`) : ['mobile-photo-camera'];
       },
       onSelect: () => {
-        uploaderApi.setCurrentActivity(ACTIVITY_TYPES.CAMERA);
-        uploaderApi.setModalState(true);
+        uploaderApi.navigate(ACTIVITY_TYPES.CAMERA);
       },
     });
 

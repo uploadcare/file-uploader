@@ -1,78 +1,164 @@
-import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
 import { default as en } from '../../locales/file-uploader/en';
+import { controllerLogger } from '../controllerLogger';
+import { ConfigController } from '../controllers/ConfigController';
+import { LocaleController } from '../controllers/LocaleController';
+import { Disposables } from '../di/Disposables';
+import { inject } from '../di/inject';
 import { type LocaleDefinition, resolveLocaleDefinition } from '../localeRegistry';
-import { sharedConfigKey } from '../sharedConfigKey';
+import type { PluginController } from './plugin';
 
 export const localeStateKey = <T extends keyof LocaleDefinition>(key: T): `*l10n/${T}` => `*l10n/${key}`;
 export const DEFAULT_LOCALE = 'en';
 
-export class LocaleManager extends SharedInstance {
+/**
+ * DOM-free locale orchestration: reads/writes the `ConfigController`/
+ * `LocaleController` directly. Container-resolved with a zero-arg ctor,
+ * `@inject`-ing both controllers instead of taking them in a deps object.
+ *
+ * Construction itself is side-effect-free — `ensureUploaderCtx` resolves this
+ * eagerly (`container.get(LocaleManager)`) the moment a ctx's container is
+ * created, including from contexts that never mount a block (e.g. a bare
+ * per-upload-entry ctx, or a unit test exercising the config controller
+ * alone). Seeding the `en` dictionary and wiring the config subscriptions as
+ * part of the constructor would leak locale state into every such scope.
+ * Instead {@link activate} — the real construction-time work — is called
+ * explicitly by `ensureUploaderCtx` the moment a ctx's container exists (on
+ * every path, including the pre-element one with no block mounted), and again
+ * by `ensurePluginManager` to re-couple the real plugin manager. It also takes
+ * the plugin-manager coupling (`onPluginsChange`/`snapshot`, for plugin-supplied
+ * `registerL10n` dictionaries): `PluginController` isn't resolved by
+ * `ensureUploaderCtx` (it's bound later by `ensurePluginManager`), so
+ * `activate` accepts a nullable plugin manager and re-couples idempotently
+ * when `ensurePluginManager` later activates it with the real one.
+ */
+export class LocaleManager {
+  // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
+  // (resolved lazily at log time via the container that built this instance).
+  private readonly _log = controllerLogger(this, 'locale-manager');
+  /** v2 config source of truth — `localeName`/`localeDefinitionOverride` reads + subscriptions. */
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  /** v2 locale string store — where the resolved dictionary is written. */
+  @inject(LocaleController) private readonly _locale!: LocaleController;
   private _localeName = '';
+  private _activated = false;
+  private _destroyed = false;
+  readonly #disposables = new Disposables();
+  private _pluginManager: Pick<PluginController, 'onPluginsChange' | 'snapshot'> | null = null;
+  /** The live plugin-manager unsubscribe, run on re-wire; also registered in `#disposables`. */
+  private _pluginManagerUnsub?: () => void;
+  /** Unregisters {@link _pluginManagerUnsub} from `#disposables` (without running it) on re-wire. */
+  private _cancelPluginManagerReg?: () => void;
 
-  public constructor(sharedInstancesBag: SharedInstancesBag) {
-    super(sharedInstancesBag);
+  /**
+   * Run the v1 construction-time work: seed the `en` defaults, wire the
+   * plugin-manager coupling, and subscribe to `localeName`/
+   * `localeDefinitionOverride`. Idempotent — the plugin-manager coupling is
+   * always re-wired (harmless: unsub-then-resub) but the one-time seeding +
+   * subscriptions only run once, so calling this again (e.g. a second block
+   * sharing the ctx) is safe.
+   */
+  public activate(pluginManager: Pick<PluginController, 'onPluginsChange' | 'snapshot'> | null): void {
+    // Re-wire the plugin-manager coupling: run the previous unsubscribe (detach
+    // the old manager's `onPluginsChange`) and un-register it from `#disposables`
+    // so `destroy()`'s `run()` won't double-invoke a stale unsub.
+    try {
+      this._pluginManagerUnsub?.();
+    } catch (err) {
+      // Isolate-and-warn: a throwing detach of the old manager's
+      // `onPluginsChange` must not abort re-wiring (matching `destroy()`'s
+      // `#disposables.run()` teardown convention), or the manager would be left
+      // half re-wired with the new coupling never established.
+      this._log.warn('LocaleManager: previous plugin-manager unsubscribe threw', err);
+    }
+    this._cancelPluginManagerReg?.();
+    this._pluginManagerUnsub = undefined;
+    this._cancelPluginManagerReg = undefined;
+    this._pluginManager = pluginManager;
+    if (pluginManager?.onPluginsChange) {
+      this._pluginManagerUnsub = pluginManager.onPluginsChange(() => {
+        if (this._localeName) {
+          this._applyPluginLocales(this._localeName);
+        }
+      });
+      this._cancelPluginManagerReg = this.#disposables.add(this._pluginManagerUnsub);
+    }
+
+    if (this._activated) {
+      return;
+    }
+    this._activated = true;
 
     for (const [key, value] of Object.entries(en) as [keyof LocaleDefinition, string][]) {
-      const noTranslation = this._ctx.has(localeStateKey(key)) ? !this._ctx.read(localeStateKey(key)) : true;
-      this._ctx.add(localeStateKey(key), value, noTranslation);
+      const noTranslation = this._locale.has(key) ? !this._locale.get(key) : true;
+      this._setLocale(key, value, noTranslation);
     }
 
-    const pluginManager = sharedInstancesBag.pluginManager;
-    if (pluginManager?.onPluginsChange) {
-      this.addSub(
-        pluginManager.onPluginsChange(() => {
-          if (this._localeName) {
-            this._applyPluginLocales(this._localeName);
+    this.#disposables.add(
+      this._config.observe(
+        'localeName',
+        async (localeName) => {
+          if (!localeName) {
+            return;
           }
-        }),
-      );
-    }
+          this._localeName = localeName;
+          const definition = await resolveLocaleDefinition(localeName);
+          // Uniform staleness guard: `resolveLocaleDefinition` always crosses a
+          // microtask boundary — even for the `en` default — so a rapid
+          // second `localeName` change in the same tick can settle this
+          // continuation after `_localeName` has already moved on. Applying it
+          // then would clobber the newer locale's dictionary with the stale
+          // one's. Bail uniformly (no `en`-only carve-out) and also bail if
+          // the manager was torn down while this resolution was in flight.
+          if (this._destroyed || this._localeName !== localeName) {
+            return;
+          }
+          this._applyPluginLocales(localeName);
 
-    this.addSub(
-      this._ctx.sub(sharedConfigKey('localeName'), async (localeName) => {
-        if (!localeName) {
-          return;
-        }
-        this._localeName = localeName;
-        const definition = await resolveLocaleDefinition(localeName);
-        if (localeName !== DEFAULT_LOCALE && this._localeName !== localeName) {
-          return;
-        }
-        this._applyPluginLocales(localeName);
-
-        this._applyOverrides(localeName, definition);
-      }),
+          this._applyOverrides(localeName, definition);
+        },
+        { immediate: true },
+      ),
     );
 
-    this.addSub(
-      this._ctx.sub(sharedConfigKey('localeDefinitionOverride'), (localeDefinitionOverride) => {
-        if (!localeDefinitionOverride) {
-          return;
-        }
-        const definition = localeDefinitionOverride[this._localeName];
-        if (!definition) {
-          return;
-        }
-        this._applyOverrides(this._localeName, definition);
-      }),
+    this.#disposables.add(
+      this._config.observe(
+        'localeDefinitionOverride',
+        (localeDefinitionOverride) => {
+          if (!localeDefinitionOverride) {
+            return;
+          }
+          const definition = localeDefinitionOverride[this._localeName];
+          if (!definition) {
+            return;
+          }
+          this._applyOverrides(this._localeName, definition);
+        },
+        { immediate: true },
+      ),
     );
   }
 
+  private _setLocale(key: string, value: string, rewrite: boolean): void {
+    if (!this._locale.has(key) || rewrite) {
+      this._locale.set(key, value);
+    }
+  }
+
   private _applyOverrides(localeName: string, definition: Partial<LocaleDefinition>): void {
-    const overrides = this._cfg.localeDefinitionOverride?.[localeName];
+    const overrides = this._config.get('localeDefinitionOverride')?.[localeName];
     for (const [key, value] of Object.entries(definition) as [keyof LocaleDefinition, string][]) {
       const overriddenValue = overrides?.[key];
-      this._ctx.add(localeStateKey(key), overriddenValue ?? value, true);
+      this._setLocale(key, overriddenValue ?? value, true);
     }
   }
 
   private _applyPluginLocales(localeName: string): void {
-    const pluginManager = this._sharedInstancesBag.pluginManager;
-    if (!pluginManager) {
+    const manager = this._pluginManager;
+    if (!manager) {
       return;
     }
 
-    const snapshot = pluginManager.snapshot();
+    const snapshot = manager.snapshot();
     for (const entry of snapshot.l10n) {
       const { pluginId: _pluginId, ...locales } = entry as unknown as Record<string, Partial<LocaleDefinition>> & {
         pluginId?: string;
@@ -87,8 +173,17 @@ export class LocaleManager extends SharedInstance {
         if (value === undefined) {
           continue;
         }
-        this._ctx.add(localeStateKey(key), value, true);
+        this._setLocale(key, value, true);
       }
     }
+  }
+
+  public destroy(): void {
+    this._destroyed = true;
+    // `#disposables` holds the plugin-manager unsub (if wired) alongside the two
+    // config subscriptions, so `run()` tears down all three (isolate-and-warn).
+    this._pluginManagerUnsub = undefined;
+    this._cancelPluginManagerReg = undefined;
+    this.#disposables.run();
   }
 }

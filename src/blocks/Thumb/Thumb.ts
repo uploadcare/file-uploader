@@ -1,13 +1,21 @@
+import { modifiers, serializeFileUrl } from '@uploadcare/cdn-url';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { inject, injectOrNull } from '../../abstract/di/inject';
+import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { effect } from '../../lit/effect';
+import { operationsFromModifiers } from '../../utils/cdn/operations';
 import { debounce } from '../../utils/debounce';
 import { preloadImage } from '../../utils/preloadImage';
 import { generateThumb } from '../../utils/resizeImage';
 import { FileItemConfig } from '../FileItem/FileItemConfig';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds';
 import './thumb.css';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { Uid } from '../../lit/Uid';
+import type { ConfigType } from '../../types';
 import { TRANSPARENT_PIXEL_SRC } from '../../utils/transparentPixelSrc';
 
 import '../Icon/Icon';
@@ -21,6 +29,18 @@ type PendingThumbUpdate = {
 };
 
 export class Thumb extends FileItemConfig {
+  // All config/telemetry reads here are imperative side-effects of thumbnail
+  // generation (not render reads), so they read the always-bound
+  // `ConfigController`/`TelemetryManager` `@inject` fields imperatively
+  // (`.get()` / method calls). The thumb image itself renders from the per-entry
+  // `thumbUrl` observer, which has no DI token and stays on the v1 `subEntry`
+  // path (step 8). `UploadCollectionController` is the entry source for
+  // `_bindToEntry`, read null-tolerantly via `@injectOrNull` (a thumb can render
+  // outside an uploader scope, where it resolves `null`).
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  @injectOrNull(UploadCollectionController) private readonly _collection!: UploadCollectionController | null;
+
   @property({ type: String })
   public badgeIcon = '';
 
@@ -38,7 +58,7 @@ export class Thumb extends FileItemConfig {
 
   private _isIntersecting = false;
 
-  private _firstViewMode = this.cfg.filesViewMode;
+  private _firstViewMode: ConfigType['filesViewMode'] | undefined;
 
   private _observer?: IntersectionObserver;
 
@@ -52,7 +72,7 @@ export class Thumb extends FileItemConfig {
     let size = Math.max(
       parseInt(String(this?._thumbRect?.height || 0), 10),
       parseInt(String(this?._thumbRect?.width || 0), 10),
-      this.cfg.thumbSize,
+      this._config.get('thumbSize'),
     );
 
     if (window.devicePixelRatio > 1) {
@@ -64,66 +84,84 @@ export class Thumb extends FileItemConfig {
 
   // biome-ignore lint/style/noInferrableTypes: Here the type is needed because `_withEntry` could not infer it correctly
   private _generateThumbnail = this.withEntry(async (entry, force: boolean = false) => {
-    const fileInfo = entry.getValue('fileInfo');
-    const isImage = entry.getValue('isImage');
-    const uuid = entry.getValue('uuid');
-    const currentThumbUrl = entry.getValue('thumbUrl');
+    const fileInfo = entry.get('fileInfo');
+    const isImage = entry.get('isImage');
+    const uuid = entry.get('uuid');
+    const currentThumbUrl = entry.get('thumbUrl');
 
     const size = this._calculateThumbSize(force);
 
     if (fileInfo && isImage && uuid) {
-      const thumbUrl = await this.proxyUrl(
-        createCdnUrl(
-          createOriginalUrl(this.cfg.cdnCname, uuid),
-          createCdnUrlModifiers(entry.getValue('cdnUrlModifiers'), `stretch/off`, `scale_crop/${size}x${size}/center`),
-        ),
-      );
-
-      if (currentThumbUrl === thumbUrl) {
-        return;
+      let cdnThumbUrl: string | undefined;
+      try {
+        cdnThumbUrl = serializeFileUrl({
+          origin: new URL(this._config.get('cdnCname')).origin,
+          uuid,
+          operations: [
+            ...operationsFromModifiers(entry.get('cdnUrlModifiers')),
+            ...operationsFromModifiers(modifiers('stretch/off', `scale_crop/${size}x${size}/center`)),
+          ],
+        });
+      } catch (err) {
+        // Both inputs here can be malformed: `cdnUrlModifiers` is writable by
+        // plugins (`buildPluginApi`) and `cdnCname` is user config. Thumbnail
+        // generation runs fire-and-forget (`_debouncedGenerateThumb`, plus the
+        // forced call on resize), so a throw would escape as an unhandled
+        // rejection and leave no thumbnail at all. Fall through to the
+        // local-file/placeholder path below — where a broken CDN URL used to
+        // land anyway, via its preload failure.
+        this._telemetry.sendEventError(err, 'thumbnail generation. Failed to build a CDN thumbnail URL');
       }
 
-      const { promise } = preloadImage(thumbUrl);
+      if (cdnThumbUrl) {
+        const thumbUrl = await this.proxyUrl(cdnThumbUrl);
 
-      promise
-        .then(() => {
-          entry.setValue('thumbUrl', thumbUrl);
-          currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
-        })
-        .catch(async () => {
-          if (currentThumbUrl?.startsWith('blob:')) return;
-          try {
-            const file = entry.getValue('file');
-            if (!file) return;
-            const blobThumbUrl = await generateThumb(file, size);
-            entry.setValue('thumbUrl', blobThumbUrl);
-          } catch (err) {
-            this.telemetryManager.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
-            const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-            entry.setValue('thumbUrl', fileCssBg(color));
-          }
-        });
+        if (currentThumbUrl === thumbUrl) {
+          return;
+        }
 
+        const { promise } = preloadImage(thumbUrl);
+
+        promise
+          .then(() => {
+            entry.set('thumbUrl', thumbUrl);
+            currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
+          })
+          .catch(async () => {
+            if (currentThumbUrl?.startsWith('blob:')) return;
+            try {
+              const file = entry.get('file');
+              if (!file) return;
+              const blobThumbUrl = await generateThumb(file, size);
+              entry.set('thumbUrl', blobThumbUrl);
+            } catch (err) {
+              this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
+              const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
+              entry.set('thumbUrl', fileCssBg(color));
+            }
+          });
+
+        return;
+      }
+    }
+
+    if (entry.get('thumbUrl')) {
       return;
     }
 
-    if (entry.getValue('thumbUrl')) {
-      return;
-    }
-
-    const file = entry.getValue('file');
+    const file = entry.get('file');
     if (file?.type.includes('image')) {
       try {
         const thumbUrl = await generateThumb(file, size);
-        entry.setValue('thumbUrl', thumbUrl);
+        entry.set('thumbUrl', thumbUrl);
       } catch (err) {
-        this.telemetryManager.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
+        this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
         const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-        entry.setValue('thumbUrl', fileCssBg(color));
+        entry.set('thumbUrl', fileCssBg(color));
       }
     } else {
       const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-      entry.setValue('thumbUrl', fileCssBg(color));
+      entry.set('thumbUrl', fileCssBg(color));
     }
   });
 
@@ -234,7 +272,7 @@ export class Thumb extends FileItemConfig {
         if (error instanceof DOMException && error.name === 'AbortError') {
           return;
         }
-        console.warn('[Thumb] Failed to decode thumbnail image', error);
+        this._log.warn('Failed to decode thumbnail image', error);
       });
   }
 
@@ -303,8 +341,21 @@ export class Thumb extends FileItemConfig {
       return;
     }
 
-    const entry = this.uploadCollection?.read(id);
-    if (!entry || entry === this.entry) {
+    // The uploader-scope controllers exist only once an uploader block
+    // initializes this ctx — a thumb rendered outside that scope (e.g. an
+    // isolated composition, or a teardown-time tick after release) has no
+    // collection and therefore no entry; `useOrNull` returns null there.
+    const entry = this._collection?.read(id);
+    if (!entry) {
+      // The uid no longer resolves (entry removed, scope lost, or uid swapped
+      // to an unknown id) — drop the previous entry's subscriptions and image
+      // instead of keeping a stale thumb alive.
+      if (this.entry) {
+        this.reset();
+      }
+      return;
+    }
+    if (entry === this.entry) {
       return;
     }
 
@@ -330,17 +381,24 @@ export class Thumb extends FileItemConfig {
     this._requestThumbGeneration(true);
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  protected override controllerReady(_container: ControllerContainer): void {
+    this._firstViewMode ??= this._config.get('filesViewMode');
+    this._bindToEntry();
+  }
 
-    this.subConfigValue('filesViewMode', (viewMode) => {
-      if (viewMode === 'grid' && !this._renderedGridOnce) {
-        if (this._firstViewMode === 'list') {
-          this._requestThumbGeneration(true);
-        }
-        this._renderedGridOnce = true;
+  // Side effect (not a render read): a one-time thumb regeneration on the first
+  // list->grid switch so the higher grid resolution is fetched. `beforeUpdate`
+  // fires eagerly and synchronously on adoption — matching the former eager
+  // `subConfigValue` fire, and after `controllerReady` sets `_firstViewMode` —
+  // then again whenever `filesViewMode` changes.
+  @effect({ beforeUpdate: true })
+  protected _regenerateThumbOnGridSwitch(): void {
+    if (this._config.getTracked('filesViewMode') === 'grid' && !this._renderedGridOnce) {
+      if (this._firstViewMode === 'list') {
+        this._requestThumbGeneration(true);
       }
-    });
+      this._renderedGridOnce = true;
+    }
   }
 
   public override connectedCallback(): void {

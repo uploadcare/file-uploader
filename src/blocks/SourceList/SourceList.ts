@@ -2,12 +2,17 @@ import type { PropertyValues } from 'lit';
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { SourceListController } from '../../abstract/controllers';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../SourceBtn/SourceBtn';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 
-export class SourceList extends LitUploaderBlock {
+export class SourceList extends ChildBlock {
+  @inject(ConfigController) private readonly _config!: ConfigController;
+
   @state()
   private _sources: SourceButtonConfig[] = [];
 
@@ -17,22 +22,44 @@ export class SourceList extends LitUploaderBlock {
   @property({ type: Boolean, attribute: 'wrap', noAccessor: true })
   public wrap = false;
 
-  public override initCallback(): void {
-    super.initCallback();
+  private _sourceListController: SourceListController | null = null;
 
-    new SourceListController(this, {
-      ctx: this._sharedInstancesBag.ctx,
-      sharedInstancesBag: this._sharedInstancesBag,
+  protected override controllerReady(container: ControllerContainer): void {
+    // Re-adoption (release-while-connected followed by re-adopt) would otherwise
+    // stack a new SourceListController per adoption without ever removing the
+    // previous one — tear down the old instance's subscriptions first.
+    this._teardownSourceListController();
+
+    this._sourceListController = new SourceListController(this, {
+      config: this._config,
+      container,
       onSourcesChange: (sources) => {
         this._sources = sources;
       },
     });
   }
 
+  protected override controllerReleased(): void {
+    this._teardownSourceListController();
+  }
+
+  private _teardownSourceListController(): void {
+    if (!this._sourceListController) {
+      return;
+    }
+    this._sourceListController.hostDisconnected();
+    this.removeController(this._sourceListController);
+    this._sourceListController = null;
+  }
+
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
-    if (this.cfg.sourceListWrap) {
+    // Imperative `updated()` read (host inline-style side-effect) — `get()`, not
+    // the tracked `getTracked()`: v1 re-evaluated this only on re-render (driven
+    // by `_sources`), not as its own reactive trigger, so keep it untracked to
+    // preserve behavior exactly.
+    if (this._config.get('sourceListWrap')) {
       this.style.removeProperty('display');
     } else {
       this.style.display = 'contents';

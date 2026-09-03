@@ -3,9 +3,9 @@ import type { PropertyValues } from 'lit';
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../lit/LitBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 
-export class ProgressBar extends LitBlock {
+export class ProgressBar extends ChildBlock {
   @property({ type: Boolean, noAccessor: true })
   public hasFileName = false;
 
@@ -34,6 +34,18 @@ export class ProgressBar extends LitBlock {
       fakeProgressLine.classList.add('uc-fake-progress--hidden');
     }
   };
+
+  protected override controllerReady(): void {
+    // Pre-adoption property writes never reach `updated` (gated cycles clear
+    // changed-properties) — re-derive the visibility class and progress state
+    // from current values on adoption, mirroring `firstUpdated` (which only
+    // fires once ever, so re-adoptions must re-sync here).
+    this.classList.toggle('uc-progress-bar--hidden', !this.visible);
+    this._progressValue = this._normalizeProgressValue(this.value);
+    if (this.visible) {
+      this._updateProgressValueStyle();
+    }
+  }
 
   protected override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);

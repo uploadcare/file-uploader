@@ -1,5 +1,5 @@
 import { debounce } from '../../../utils/debounce';
-import { type CustomConfigDefinition, CustomConfigRegistry } from '../../customConfigOptions';
+import { logger } from '../../logger';
 import type {
   Owned,
   PluginActivityRegistration,
@@ -11,6 +11,8 @@ import type {
   PluginSourceRegistration,
 } from './PluginTypes';
 
+const log = logger.scope('plugin-registry');
+
 export class PluginRegistry {
   private _sources: Owned<PluginSourceRegistration>[] = [];
   private _activities: Owned<PluginActivityRegistration>[] = [];
@@ -18,7 +20,6 @@ export class PluginRegistry {
   private _fileHooks: Owned<PluginFileHookRegistration>[] = [];
   private _icons: Owned<PluginIconRegistration>[] = [];
   private _l10n: Owned<PluginL10nRegistration>[] = [];
-  public readonly config = new CustomConfigRegistry();
 
   /**
    * Notify consumers (LocaleManager, SourceListController, …) that the registry
@@ -46,8 +47,8 @@ export class PluginRegistry {
   public addSource(pluginId: string, item: PluginSourceRegistration): void {
     const existing = this._sources.find((s) => s.id === item.id);
     if (existing) {
-      console.warn(
-        `[Plugin "${pluginId}"] Source with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
+      log.warn(
+        `Plugin "${pluginId}" Source with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
       );
       return;
     }
@@ -58,8 +59,8 @@ export class PluginRegistry {
   public addActivity(pluginId: string, item: PluginActivityRegistration): void {
     const existing = this._activities.find((a) => a.id === item.id);
     if (existing) {
-      console.warn(
-        `[Plugin "${pluginId}"] Activity with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
+      log.warn(
+        `Plugin "${pluginId}" Activity with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
       );
       return;
     }
@@ -87,11 +88,6 @@ export class PluginRegistry {
     this._scheduleNotify();
   }
 
-  public addConfig<T>(pluginId: string, definition: CustomConfigDefinition<T>): void {
-    this.config.register(pluginId, definition);
-    this._scheduleNotify();
-  }
-
   public purge(pluginId: string): void {
     this._sources = this._sources.filter((item) => item.pluginId !== pluginId);
     this._activities = this._activities.filter((item) => item.pluginId !== pluginId);
@@ -99,7 +95,6 @@ export class PluginRegistry {
     this._fileHooks = this._fileHooks.filter((item) => item.pluginId !== pluginId);
     this._icons = this._icons.filter((item) => item.pluginId !== pluginId);
     this._l10n = this._l10n.filter((item) => item.pluginId !== pluginId);
-    this.config.unregisterByPlugin(pluginId);
   }
 
   public snapshot(): PluginRegistrySnapshot {

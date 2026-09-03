@@ -2,85 +2,87 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
+import type { RouterController } from '../../abstract/controllers/RouterController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { Owned, PluginActivityRegistration, PluginRenderDispose } from '../../abstract/managers/plugin';
-import { type ActivityType, LitActivityBlock } from '../../lit/LitActivityBlock';
-import { LitBlock } from '../../lit/LitBlock';
+import { PluginController } from '../../abstract/managers/plugin';
+import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
+import type { ActivityType } from '../../lit/activity-constants';
+import { ChildBlock } from '../../lit/ChildBlock';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import '../Modal/Modal';
 import './uc-plugin-activity-host.css';
 
-export class PluginActivityHost extends LitActivityBlock {
+export class PluginActivityHost extends ActivityChildBlock {
   @property({ attribute: false })
   public registration!: Owned<PluginActivityRegistration>;
 
   private _dispose?: PluginRenderDispose;
   private _containerRef = createRef<HTMLDivElement>();
+  private _isMounted = false;
 
-  public override initCallback(): void {
+  /** Test-only public surface (`plugin-activity-host.e2e.test.tsx`) mirroring v1's `LitBlock.router` getter. */
+  public get router(): RouterController {
+    return this._router;
+  }
+
+  protected override controllerReady(container: ControllerContainer): void {
     this.activityType = (this.registration?.id as ActivityType) ?? null;
-    this._ensureRegistered();
-    super.initCallback();
+    super.controllerReady(container);
   }
 
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
-    super.willUpdate(changedProperties);
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed); // reflects [active] for the current slot
 
-    if (changedProperties.has('registration')) {
-      this._ensureRegistered();
-      if (this.isActivityActive) {
-        this._disposeActivity();
-        this._renderActivity();
+    // Keep activityType in sync if the registration arrives/changes late.
+    const id = (this.registration?.id as ActivityType) ?? null;
+    if (id !== this.activityType) {
+      this.activityType = id;
+      if (id) {
+        this.setAttribute('activity', id);
       }
+      // Move the mounted-activity signal from the stale id to the new one so
+      // API waits (navigate/setModalState) find this host under its current
+      // activityType right away, rather than after the next render cycle.
+      this.reportActivityMounted();
+    }
+
+    // Own the plugin's render()/dispose() lifecycle: mount when this activity
+    // becomes the current one, tear down when navigation moves away.
+    const active = this.isActivityActive;
+    if (active && !this._isMounted) {
+      this._mount();
+    } else if (!active && this._isMounted) {
+      this._unmount();
     }
   }
 
-  private _ensureRegistered(): void {
-    if (!this.registration) {
-      return;
-    }
-
-    if (this._isActivityRegistered()) {
-      return;
-    }
-
-    this.registerActivity(this.activityType ?? '', {
-      onActivate: () => this._renderActivity(),
-      onDeactivate: () => this._disposeActivity(),
-    });
-  }
-
-  private async _renderActivity(): Promise<void> {
-    await this.updateComplete;
+  private _mount(): void {
     const container = this._containerRef.value;
     if (!container || !this.registration) {
       return;
     }
-
-    this._disposeActivity();
-
-    const activityParams = this.$['*currentActivityParams'];
     try {
-      this._dispose = this.registration.render(container, activityParams) ?? undefined;
+      this._dispose = this.registration.render(container, this._router.params) ?? undefined;
+      this._isMounted = true;
     } catch (error) {
-      console.error(`[Plugin "${this.registration.pluginId}"] Activity render() threw an error`, error);
+      this._log.error(`Plugin "${this.registration.pluginId}" Activity render() threw an error`, error);
     }
   }
 
-  private _disposeActivity(): void {
-    const container = this._containerRef.value;
-    if (container) {
-      try {
-        this._dispose?.();
-      } catch (error) {
-        console.error(`[Plugin "${this.registration?.pluginId}"] Activity dispose threw an error`, error);
-      }
-      this._dispose = undefined;
-
-      container.replaceChildren();
+  private _unmount(): void {
+    try {
+      this._dispose?.();
+    } catch (error) {
+      this._log.error(`Plugin "${this.registration?.pluginId}" Activity dispose threw an error`, error);
     }
+    this._dispose = undefined;
+    this._containerRef.value?.replaceChildren();
+    this._isMounted = false;
   }
 
   public override disconnectedCallback(): void {
-    this._disposeActivity();
+    this._unmount();
     super.disconnectedCallback();
   }
 
@@ -89,40 +91,47 @@ export class PluginActivityHost extends LitActivityBlock {
   }
 }
 
-export class PluginActivityRenderer extends LitBlock {
+export class PluginActivityRenderer extends ChildBlock {
   @property({ type: String })
   public mode: 'modal' | 'inline' = 'modal';
 
   @state()
   private _activities: Owned<PluginActivityRegistration>[] = [];
 
-  private _unsubscribePlugins?: () => void;
+  // Transiently null until the container resolves the `PluginController`
+  // (`whenController`) — render falls back to an empty activity list meanwhile
+  // (Icon/FileItem precedent). M-god step 8c: `PluginController` is
+  // container-owned (bound by `ensurePluginManager`), but its binding is
+  // CONDITIONAL — it exists only once an uploader scope attaches
+  // (`ensureUploaderScope`), which may be after this block's `controllerReady`
+  // fires (or never, in a bare ctx — see the "renders an empty activity list"
+  // spec). A synchronous `use(PluginController)` would throw on an unresolved
+  // token; `whenController` fires now if resolved, else on first resolution,
+  // yielding the SAME container instance — the now-or-when-available successor
+  // to `bag.when('pluginManager')`.
+  private _pluginManager: PluginController | null = null;
 
-  public override initCallback(): void {
-    super.initCallback();
+  @subscription()
+  protected _wirePluginActivities(): Unsubscribe {
+    return this.container.whenController(PluginController, (pluginManager) => {
+      this._pluginManager = pluginManager;
+      this._syncActivities();
+      return pluginManager.onPluginsChange(() => this._syncActivities());
+    });
+  }
 
-    const pluginManager = this._sharedInstancesBag.pluginManager;
-    if (pluginManager?.onPluginsChange) {
-      this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._syncActivities());
-    }
-
-    this._syncActivities();
+  protected override controllerReleased(): void {
+    this._pluginManager = null;
   }
 
   private _syncActivities(): void {
-    const pluginManager = this._sharedInstancesBag.pluginManager;
+    const pluginManager = this._pluginManager;
     if (!pluginManager) {
       this._activities = [];
       return;
     }
 
     this._activities = pluginManager.snapshot().activities;
-  }
-
-  public override disconnectedCallback(): void {
-    this._unsubscribePlugins?.();
-    this._unsubscribePlugins = undefined;
-    super.disconnectedCallback();
   }
 
   public override render() {

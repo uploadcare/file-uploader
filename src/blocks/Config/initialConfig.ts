@@ -1,101 +1,11 @@
-import type { ConfigType } from '../../types/exported';
-import { serializeCsv } from '../../utils/comma-separated';
-import { ALL_TABS } from '../CloudImageEditor/src/toolbar-constants';
-
-export const DEFAULT_CDN_CNAME = 'https://ucarecdn.com';
-export const DEFAULT_BASE_URL = 'https://upload.uploadcare.com';
-export const DEFAULT_SOCIAL_BASE_URL = 'https://social.uploadcare.com';
-export const DEFAULT_PREFIXED_CDN_BASE_DOMAIN = 'https://ucarecd.net';
-
-const config = {
-  pubkey: '',
-  multiple: true,
-  multipleMin: 0,
-  multipleMax: Number.MAX_SAFE_INTEGER,
-
-  confirmUpload: false,
-  imgOnly: false,
-  accept: '',
-  externalSourcesPreferredTypes: '',
-  externalSourcesEmbedCss: '',
-  store: 'auto',
-  cameraMirror: false,
-  cameraCapture: '',
-  sourceList: 'local, url, camera, dropbox, gdrive',
-  topLevelOrigin: '',
-  maxLocalFileSizeBytes: 0,
-  thumbSize: 76,
-  showEmptyList: false,
-  useLocalImageEditor: false,
-  removeCopyright: false,
-  cropPreset: '',
-  imageShrink: '',
-
-  modalScrollLock: true,
-  modalBackdropStrokes: false,
-
-  sourceListWrap: true,
-
-  remoteTabSessionKey: '',
-  cdnCname: DEFAULT_CDN_CNAME,
-  cdnCnamePrefixed: DEFAULT_PREFIXED_CDN_BASE_DOMAIN,
-  baseUrl: DEFAULT_BASE_URL,
-  socialBaseUrl: DEFAULT_SOCIAL_BASE_URL,
-  secureSignature: '',
-  secureExpire: '',
-  secureDeliveryProxy: '',
-  retryThrottledRequestMaxTimes: 3,
-  retryNetworkErrorMaxTimes: 3,
-  multipartMinFileSize: 26214400,
-  multipartChunkSize: 5242880,
-  maxConcurrentRequests: 10,
-  multipartMaxConcurrentRequests: 4,
-  multipartMaxAttempts: 3,
-  checkForUrlDuplicates: false,
-  saveUrlForRecurrentUploads: false,
-
-  groupOutput: false,
-  userAgentIntegration: '',
-  debug: false,
-
-  metadata: null,
-  tags: null,
-  localeName: 'en',
-  localeDefinitionOverride: null,
-  secureUploadsExpireThreshold: 10 * 60 * 1000,
-  secureUploadsSignatureResolver: null,
-  secureDeliveryProxyUrlResolver: null,
-  iconHrefResolver: null,
-  fileValidators: [],
-  collectionValidators: [],
-  validationTimeout: 15 * 1000,
-  validationConcurrency: 100,
-
-  cameraModes: 'photo, video',
-  defaultCameraMode: null,
-  enableAudioRecording: true,
-  enableVideoRecording: null,
-  maxVideoRecordingDuration: null,
-  mediaRecorderOptions: null,
-
-  filesViewMode: 'list',
-  gridShowFileNames: false,
-
-  // Cloud Image Editor options (used by cloudImageEditorPlugin)
-  useCloudImageEditor: true,
-  cloudImageEditorAutoOpen: false,
-  cloudImageEditorTabs: serializeCsv(ALL_TABS),
-  cloudImageEditorMaskHref: null,
-
-  testMode: false,
-
-  qualityInsights: true,
-  pasteScope: 'local',
-
-  plugins: [],
-
-  dynamicButtonViewMode: 'plain',
-  dynamicButtonShowFirstIcon: true,
-} satisfies ConfigType;
-
-export const initialConfig: Readonly<ConfigType> = Object.freeze(config);
+/**
+ * Built-in config defaults — derived from {@link BUILTIN_REGISTRY}.
+ * Import this module for the frozen defaults object and CDN URL constants.
+ */
+export {
+  DEFAULT_BASE_URL,
+  DEFAULT_CDN_CNAME,
+  DEFAULT_PREFIXED_CDN_BASE_DOMAIN,
+  DEFAULT_SOCIAL_BASE_URL,
+  initialConfig,
+} from './builtin-registry';

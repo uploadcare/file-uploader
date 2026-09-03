@@ -274,7 +274,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    const { ctxName } = await renderUploader([plugin]);
     const config = page.getByTestId('uc-config').query()! as Config;
 
     await expect.poll(() => config.throwingNormOption).toBe('safe');
@@ -282,7 +282,11 @@ describe('Custom Config', () => {
     config.throwingNormOption = 'bad';
 
     await vi.waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('normalize()'), expect.any(Error));
+      expect(warnSpy).toHaveBeenCalledWith(
+        `[uc][${ctxName}][config]`,
+        expect.stringContaining('normalize()'),
+        expect.any(Error),
+      );
     });
 
     // Value should remain unchanged
@@ -482,9 +486,41 @@ describe('Custom Config', () => {
 
     const config = page.getByTestId('uc-config').query()! as Config;
     await expect.poll(() => config.dupOption).toBe('first');
-    expect(warnSpy).toHaveBeenCalledWith('[CustomConfig] Config option "dupOption" is already registered');
+    // Attributed to the plugin that lost the first-wins race (`cfg-dup-b`).
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/\[uc].*\[plugin:cfg-dup-b]/),
+      'Config option "dupOption" is already registered',
+    );
 
     warnSpy.mockRestore();
+  });
+
+  it('re-adopting <uc-config> into a plugin-less ctx does not throw when a now-stale custom-config setter is written (pluginManagerOrNull guard)', async () => {
+    const plugin = createTestPlugin({
+      id: 'cfg-readopt',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerConfig({ name: 'readoptOption', defaultValue: 'a' });
+      },
+    });
+    const { config } = await renderUploader([plugin]);
+    await expect.poll(() => config.readoptOption).toBe('a');
+
+    // Re-adopt the `<uc-config>` alone into a brand-new, plugin-less ctx (the
+    // solution/provider stay on the original ctx). `*pluginManager` is absent
+    // there, but the `readoptOption` accessor defined during the original
+    // adoption survives on the instance and `_customConfigKeys` stays stale
+    // (the new ctx never runs `_processCustomConfigs`). Writing the property
+    // therefore routes `_setValue` -> `_getCustomConfigDefinition`, which reads
+    // the plugin manager: before the fix `bag.pluginManager` threw
+    // synchronously here; `pluginManagerOrNull` returns null so the write is a
+    // tolerated no-op.
+    const ctxNameB = getCtxName();
+    config.setAttribute('ctx-name', ctxNameB);
+    await config.updateComplete;
+
+    expect(() => {
+      config.readoptOption = 'b';
+    }).not.toThrow();
   });
 });
 
@@ -506,5 +542,6 @@ declare module '@/types/index' {
     preAssignedProp: string;
     lateAssignedProp: string;
     preAttrOption: string;
+    readoptOption: string;
   }
 }

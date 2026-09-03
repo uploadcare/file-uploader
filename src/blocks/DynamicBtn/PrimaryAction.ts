@@ -1,6 +1,10 @@
 import { html } from 'lit';
-import { property, state } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { property } from 'lit/decorators.js';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
+import { inject } from '../../abstract/di/inject';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
 import { UploadSource } from '../../utils/UploadSource';
@@ -10,8 +14,12 @@ import './primary-action.css';
 import '../Icon/Icon';
 import '../Thumb/Thumb';
 
-export class PrimaryAction extends LitUploaderBlock {
+export class PrimaryAction extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-primary-action'];
+
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(RouterController) private readonly _router!: RouterController;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   private static readonly DEFAULT_ICON = 'upload';
 
@@ -29,22 +37,16 @@ export class PrimaryAction extends LitUploaderBlock {
   @property({ type: Object })
   public entries!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
 
-  @state()
-  private showIcon = false;
+  // Config-derived render inputs read through the tracked signal path: reading
+  // them in `render()`/`_renderThumbnail()` auto-tracks the key under
+  // `SignalWatcher`, so a later `set()` re-renders — replacing the v1
+  // `subConfigValue` subscriptions that mirrored these into `@state`.
+  private get showIcon(): boolean {
+    return this._config.getTracked('dynamicButtonShowFirstIcon');
+  }
 
-  @state()
-  private _isMultiple = false;
-
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.subConfigValue('dynamicButtonShowFirstIcon', (value) => {
-      this.showIcon = value;
-    });
-
-    this.subConfigValue('multiple', (value) => {
-      this._isMultiple = value;
-    });
+  private get _isMultiple(): boolean {
+    return this._config.getTracked('multiple');
   }
 
   private get hasEntries(): boolean {
@@ -128,13 +130,12 @@ export class PrimaryAction extends LitUploaderBlock {
 
   private _handleClick() {
     if (this.hasEntries) {
-      this._sharedInstancesBag.ctx.pub('*currentActivity', 'upload-list');
-      this._sharedInstancesBag.modalManager?.open('upload-list');
+      this._router.navigate('upload-list');
       return;
     }
 
     if (!this.source) {
-      this.api.initFlow();
+      this._api.initFlow();
       return;
     }
 

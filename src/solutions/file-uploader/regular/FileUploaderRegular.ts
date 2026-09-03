@@ -1,8 +1,13 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
+import { RouterController } from '../../../abstract/controllers/RouterController';
+import type { ControllerContainer } from '../../../abstract/di/ControllerContainer';
+import { inject } from '../../../abstract/di/inject';
+import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
+import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
 import './index.css';
+import { renderModalSourcePicker } from '../layout-fragments.js';
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
 import '../../../blocks/Modal/Modal';
@@ -16,12 +21,15 @@ import '../../../blocks/SimpleBtn/SimpleBtn';
 import '../../../blocks/DynamicBtn/DynamicBtn';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
-type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
-interface FileUploaderRegularInitState extends BaseInitState {}
-
-export class FileUploaderRegular extends LitSolutionBlock {
+export class FileUploaderRegular extends SolutionChildBlock {
   public static override lazyPlugins = fileUploaderLazyPlugins;
 
+  @inject(RouterController) private readonly _router!: RouterController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+
+  // Type-only: feeds the JSX attribute typing (`ReflectAttributes` in
+  // `types/jsx.d.ts` reads `attributesMeta`). Kept on the ChildBlock port —
+  // the documented attribute surface, same as the merged `Config` port.
   public declare attributesMeta: {
     headless?: boolean;
     'dynamic-button'?: boolean;
@@ -35,18 +43,14 @@ export class FileUploaderRegular extends LitSolutionBlock {
   @property({ attribute: 'dynamic-button', type: Boolean })
   public dynamicButton = false;
 
-  public constructor() {
-    super();
+  protected override controllerReady(container: ControllerContainer): void {
+    super.controllerReady(container);
 
-    this.init$ = {
-      ...this.init$,
-    } as FileUploaderRegularInitState;
-  }
+    // Regular renders every activity inside a `<uc-modal>`, so all navigation
+    // targets the foreground (modal) slot.
+    this._router.navigationStrategy = () => 'foreground';
 
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.telemetryManager.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
   }
@@ -82,14 +86,11 @@ export class FileUploaderRegular extends LitSolutionBlock {
 
     ${this._renderButton()}
 
-  <uc-modal id="start-from" strokes block-body-scrolling>
-    <uc-start-from>
-      <uc-drop-area with-icon clickable></uc-drop-area>
-      <uc-source-list role="list" wrap></uc-source-list>
-      <button type="button" class="uc-secondary-btn" @click=${this.$['*historyBack']}>${this.l10n('start-from-cancel')}</button>
-      <uc-copyright></uc-copyright>
-    </uc-start-from>
-  </uc-modal>
+  ${renderModalSourcePicker({
+    onCancel: () => this._router.traverse('onCancel'),
+    cancelLabel: this.l10n('start-from-cancel'),
+    copyright: true,
+  })}
 
   <uc-modal id="upload-list" strokes block-body-scrolling>
     <uc-upload-list></uc-upload-list>

@@ -3,14 +3,13 @@ import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import { LitBlock } from '../../../../../lit/LitBlock';
-
-import '../../../../Icon/Icon';
 import type { AriaRole } from '../../../../../types/dom';
+import { EditorBlock } from '../../editor-context';
+import '../../EditorIcon';
 
 type Theme = string | null;
 
-export class BtnUi extends LitBlock {
+export class BtnUi extends EditorBlock {
   @property({ type: String })
   public text = '';
 
@@ -91,14 +90,14 @@ export class BtnUi extends LitBlock {
         type="button"
         role=${ifDefined(this.ariaRole || undefined)}
         aria-controls=${ifDefined(this.ariaControls || undefined)}
-        aria-label=${ifDefined(this.l10n(this.titleProp))}
-        title=${ifDefined(this.l10n(this.titleProp))}
+        aria-label=${ifDefined(this.l10nSafe(this.titleProp))}
+        title=${ifDefined(this.l10nSafe(this.titleProp))}
       >
-        <uc-icon
+        <uc-editor-icon
           class=${classMap(this._iconClassMap)}
           name=${ifDefined(this.icon || undefined)}
           ?hidden=${this._computedIconHidden}
-        ></uc-icon>
+        ></uc-editor-icon>
         <div class="uc-text">${this.text}</div>
       </button>
     `;

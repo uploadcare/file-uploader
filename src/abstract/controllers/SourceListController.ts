@@ -1,57 +1,84 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import type { SourceButtonConfig } from '../../blocks/SourceBtn/SourceBtn';
-import type { PubSub } from '../../lit/PubSubCompat';
-import type { SharedState } from '../../lit/SharedState';
-import type { SharedInstancesBag } from '../../lit/shared-instances';
 import { stringToArray } from '../../utils/stringToArray';
-import type { PluginSourceRegistration } from '../managers/plugin';
-import { sharedConfigKey } from '../sharedConfigKey';
+import type { ControllerContainer } from '../di/ControllerContainer';
+import { Disposables } from '../di/Disposables';
+import { PluginController, type PluginSourceRegistration } from '../managers/plugin';
+import type { ConfigController } from './ConfigController';
 
 export type SourceListControllerOptions = {
-  ctx: PubSub<SharedState>;
-  sharedInstancesBag: SharedInstancesBag;
+  config: ConfigController;
+  container: ControllerContainer;
   onSourcesChange: (sources: SourceButtonConfig[]) => void;
 };
 
 export class SourceListController implements ReactiveController {
   private _rawSourceList: string[] = [];
-  private _unsubscribePlugins?: () => void;
-  private _unsubscribeConfig?: () => void;
-  private _ctx: PubSub<SharedState>;
-  private _sharedInstancesBag: SharedInstancesBag;
+  // One teardown registry for every subscription this controller opens (config
+  // key, plugin-manager availability, and plugin-change), drained in one
+  // isolate-and-warn pass on `hostDisconnected` — no per-subscription
+  // `_unsubscribe*` bookkeeping.
+  private _disposables = new Disposables();
+  private _config: ConfigController;
+  private _container: ControllerContainer;
   private _onSourcesChange: (sources: SourceButtonConfig[]) => void;
 
   public constructor(host: ReactiveControllerHost, options: SourceListControllerOptions) {
-    this._ctx = options.ctx;
-    this._sharedInstancesBag = options.sharedInstancesBag;
+    this._config = options.config;
+    this._container = options.container;
     this._onSourcesChange = options.onSourcesChange;
     host.addController(this);
   }
 
   public hostConnected(): void {
-    this._unsubscribeConfig = this._ctx.sub(sharedConfigKey('sourceList'), (val: string) => {
-      this._rawSourceList = stringToArray(val);
-      this._updateSources();
-    });
+    // Read the `sourceList` config key directly off the `ConfigController`
+    // (M-god step 7: off the `*cfg/*` facade). Atomic per-key `observe` with
+    // `{ immediate: true }` fires once with the current value then on every
+    // actual change of this key — the same immediate-then-deduped per-key
+    // semantics the `ctx.sub('*cfg/sourceList', …)` facade subscription provided.
+    this._disposables.add(
+      this._config.observe(
+        'sourceList',
+        (val) => {
+          this._rawSourceList = stringToArray(val);
+          this._updateSources();
+        },
+        { immediate: true },
+      ),
+    );
 
-    const pluginManager = this._sharedInstancesBag.pluginManager;
-    if (pluginManager?.onPluginsChange) {
-      this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._updateSources());
-    }
+    // `PluginController` is bound + resolved lazily by `ensureUploaderScope` /
+    // `ensurePluginManager` and isn't guaranteed to exist yet at hostConnected
+    // time — a `ChildBlock`-only composition (a ported solution root with no
+    // uploader block having attached yet) can adopt this controller before that
+    // registration lands. `container.whenController` fires immediately if it's
+    // already constructed, else waits and fires once on the first `get()` — the
+    // cross-token analogue of the former `bag.when('pluginManager', …)`. Re-run
+    // `_updateSources` either way so plugin-provided sources (e.g. camera) show
+    // up once the plugin manager becomes available.
+    this._disposables.add(
+      this._container.whenController(PluginController, (pluginManager) => {
+        this._disposables.add(pluginManager.onPluginsChange(() => this._updateSources()));
+        this._updateSources();
+      }),
+    );
 
     this._updateSources();
   }
 
   public hostDisconnected(): void {
-    this._unsubscribePlugins?.();
-    this._unsubscribePlugins = undefined;
-
-    this._unsubscribeConfig?.();
-    this._unsubscribeConfig = undefined;
+    // Drains the config, plugin-manager-availability, and plugin-change
+    // teardowns in one pass. Draining the `whenController` teardown also cancels
+    // a still-pending availability callback, so it never subscribes post-disconnect.
+    this._disposables.run();
   }
 
   private _updateSources(): void {
-    const pluginManager = this._sharedInstancesBag.pluginManager;
+    // `getOrNull` returns the `PluginController` only if already constructed on
+    // this container (never `new`-ing it), matching the former
+    // `bag.pluginManagerOrNull` null-tolerant read for a config-only/plugin-less
+    // scope.
+    const pluginManager = this._container.getOrNull(PluginController);
     const pluginSources = pluginManager?.snapshot().sources ?? [];
     const pluginSourceById = new Map(pluginSources.map((source) => [source.id, source]));
 

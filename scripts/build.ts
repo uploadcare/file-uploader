@@ -46,8 +46,20 @@ async function build(buildItem: BuildItem) {
     format: buildItem.format,
     skipNodeModulesBundle: true,
     esbuildOptions(options) {
-      options.conditions = ['browser'];
-      options.mainFields = ['exports'];
+      // `production` pins the prod build of deps that ship both (dev builds carry
+      // extra dev-time warnings). Without it, resolution only lands on prod by
+      // falling through to the bare `import`/`default` entry — correct today, but
+      // it depends on a dep's `exports` key order rather than on our intent, and
+      // any dep declaring `development` before a bare fallback would hand us the
+      // dev build. Vite still resolves `development` when serving, so `npm run dev`
+      // keeps the friendlier builds.
+      options.conditions = ['browser', 'production'];
+      // `exports` first (modern packages resolve via conditions), then the
+      // classic `module`/`main` fallback for deps that ship no `exports` map —
+      // e.g. `signal-polyfill` (ESM, `main`-only), pulled in via `SignalMap`.
+      // Packages that DO declare `exports` are unaffected (esbuild ignores
+      // mainFields when an `exports` condition matches).
+      options.mainFields = ['exports', 'module', 'main'];
       options.platform = 'browser';
       options.legalComments = 'linked';
       options.logOverride = { 'ignored-bare-import': 'silent' };

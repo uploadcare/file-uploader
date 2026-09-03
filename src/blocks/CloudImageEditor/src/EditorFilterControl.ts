@@ -1,18 +1,42 @@
+import { modifiers } from '@uploadcare/cdn-url';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../env';
-import { createCdnUrl, createCdnUrlModifiers } from '../../../utils/cdn-utils.js';
+import { operationsFromModifiers } from '../../../utils/cdn/operations';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
-import { COMMON_OPERATIONS, transformationsToOperations } from './lib/transformationUtils.js';
+import { editorPreviewUrl } from './lib/editorUrls';
 import type { Transformations } from './types';
-import { parseFilterValue } from './utils/parseFilterValue.js';
 
-import '../../Icon/Icon';
+import './EditorIcon';
+
+/**
+ * Bubbles up to `EditorToolbar`, which owns the toolbar-local `currentFilter`/
+ * `showSlider` state and the slider ref. `active`/`isOriginal` are threaded
+ * through so the toolbar can reproduce the old "apply immediately vs. open
+ * slider to adjust" branch without needing them back as props.
+ */
+export class FilterSelectEvent extends Event {
+  public static readonly eventName = 'uc-internal:filter-select';
+  public constructor(
+    public readonly operation: 'filter',
+    public readonly filter: string,
+    public readonly active: boolean,
+    public readonly isOriginal: boolean,
+    public readonly originalEvent: MouseEvent,
+  ) {
+    super(FilterSelectEvent.eventName, { bubbles: true, composed: true });
+  }
+}
+
+declare global {
+  interface HTMLElementEventMap {
+    [FilterSelectEvent.eventName]: FilterSelectEvent;
+  }
+}
 
 export class EditorFilterControl extends EditorButtonControl {
   private _operation = '';
@@ -37,6 +61,21 @@ export class EditorFilterControl extends EditorButtonControl {
   @state()
   private _iconSize = 20;
 
+  /**
+   * Toolbar-local `currentFilter`, received as a reactive prop (replaces the
+   * old shared-ctx `this.sub('*currentFilter', ...)`) — `EditorToolbar` is
+   * the sole owner of this key now.
+   */
+  @property({ attribute: false })
+  public currentFilter = FAKE_ORIGINAL_FILTER;
+
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+    if (changedProperties.has('currentFilter') || changedProperties.has('filter')) {
+      this.active = !!(this.currentFilter && this.currentFilter === this._filter);
+    }
+  }
+
   @property({ type: String })
   public get filter(): string {
     return this._filter;
@@ -60,21 +99,7 @@ export class EditorFilterControl extends EditorButtonControl {
   }
 
   public override onClick(e: MouseEvent) {
-    if (!this.active) {
-      const slider = this.$['*sliderEl'] as { setOperation: (op: string, filter: string) => void; apply: () => void };
-      slider.setOperation(this._operation, this._filter);
-      slider.apply();
-    } else if (!this.isOriginal) {
-      const slider = this.$['*sliderEl'] as { setOperation: (op: string, filter: string) => void };
-      slider.setOperation(this._operation, this._filter);
-      this.$['*showSlider'] = true;
-    }
-
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
-      operation: parseFilterValue(this.$['*operationTooltip']),
-    });
-
-    this.$['*currentFilter'] = this._filter;
+    this.dispatchEvent(new FilterSelectEvent('filter', this._filter, this.active, this.isOriginal, e));
   }
 
   private _previewSrc(): string {
@@ -85,7 +110,7 @@ export class EditorFilterControl extends EditorButtonControl {
     const quality = dpr >= 2 ? 'lightest' : 'normal';
     const filterValue = 100;
 
-    const transformations = { ...(this.$['*editorTransformations'] as Transformations) };
+    const transformations: Transformations = { ...this.editorController.get('*editorTransformations') };
     // @ts-expect-error FIXME: fix this
     transformations[this._operation] =
       this._filter !== FAKE_ORIGINAL_FILTER
@@ -94,16 +119,13 @@ export class EditorFilterControl extends EditorButtonControl {
             amount: filterValue,
           }
         : undefined;
-    return createCdnUrl(
-      this._originalUrl,
-      createCdnUrlModifiers(
-        COMMON_OPERATIONS,
-        transformationsToOperations(transformations),
-        `quality/${quality}`,
-        `scale_crop/${size}x${size}/center`,
-        `@clib/${PACKAGE_NAME}/${PACKAGE_VERSION}/uc-cloud-image-editor/`,
-      ),
-    );
+    return editorPreviewUrl({
+      originalUrl: this._originalUrl,
+      transformations,
+      sourceOperations: this.editorController.get('*sourceOperations'),
+      quality,
+      sizeOperations: operationsFromModifiers(modifiers(`scale_crop/${size}x${size}/center`)),
+    });
   }
 
   private async _observerCallback(entries: IntersectionObserverEntry[], observer: IntersectionObserver): Promise<void> {
@@ -115,17 +137,16 @@ export class EditorFilterControl extends EditorButtonControl {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public constructor() {
+    super();
 
-    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
-      threshold: [0, 1],
-    });
-
-    const originalUrl = this.$['*originalUrl'] as string;
-    this._originalUrl = originalUrl ?? '';
-
-    this.sub('*originalUrl', (nextUrl: string | null) => {
+    // Cross-cutting reactions — fine to wire once in the constructor
+    // (`onEditorAttach`/`subEditorKey` re-run on every editor-controller
+    // (re)attach); the `isConnected`-gated one-time setup below (observer
+    // creation, initial observe/schedule, label init) needs the `filter`
+    // property (set via template binding) already applied, so it stays in
+    // `connectedCallback` — same timing the old `initCallback` relied on.
+    this.subEditorKey('*originalUrl', (nextUrl: string | null) => {
       this._originalUrl = nextUrl ?? '';
       if (!this.isOriginal && this._originalUrl && this.isConnected && !this._previewImage) {
         this._observer?.observe(this);
@@ -133,20 +154,7 @@ export class EditorFilterControl extends EditorButtonControl {
       }
     });
 
-    if (!this.isOriginal) {
-      this._observer?.observe(this);
-      this._schedulePreviewVisibilityCheck();
-    }
-
-    if (this._filter) {
-      this._updateFilterLabels(this._filter);
-    }
-
-    this.sub('*currentFilter', (currentFilter: string) => {
-      this.active = !!(currentFilter && currentFilter === this._filter);
-    });
-
-    this.sub('*networkProblems', async (networkProblems: boolean) => {
+    this.subEditorKey('*networkProblems', async (networkProblems: boolean) => {
       if (networkProblems) {
         return;
       }
@@ -156,6 +164,35 @@ export class EditorFilterControl extends EditorButtonControl {
         this._schedulePreviewVisibilityCheck();
       }
     });
+
+    // The `filter` prop is typically set (by `EditorToolbar`'s template
+    // binding) before the editor context finishes resolving, so the one-shot
+    // `_updateFilterLabels` call from the property setter/`connectedCallback`
+    // can run with no controller yet (`l10nSafe` falling back to the raw
+    // key). Redo it once the controller actually attaches so the real l10n
+    // label lands.
+    this.onEditorAttach(() => {
+      if (this._filter) {
+        this._updateFilterLabels(this._filter);
+      }
+    });
+  }
+
+  public override connectedCallback(): void {
+    super.connectedCallback();
+
+    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+      threshold: [0, 1],
+    });
+
+    if (!this.isOriginal) {
+      this._observer.observe(this);
+      this._schedulePreviewVisibilityCheck();
+    }
+
+    if (this._filter) {
+      this._updateFilterLabels(this._filter);
+    }
   }
 
   public override disconnectedCallback(): void {
@@ -184,7 +221,7 @@ export class EditorFilterControl extends EditorButtonControl {
       return;
     }
 
-    const label = this.l10n('a11y-cloud-editor-apply-filter', {
+    const label = this.l10nSafe('a11y-cloud-editor-apply-filter', {
       name: filterName.toLowerCase(),
     });
     this.titleProp = label;
@@ -207,10 +244,10 @@ export class EditorFilterControl extends EditorButtonControl {
     const requestId = ++this._lastPreviewRequestId;
     let src = '';
     try {
-      src = await this.proxyUrl(this._previewSrc());
+      src = await this.editorController.proxyUrl(this._previewSrc());
     } catch (err) {
-      this.$['*networkProblems'] = true;
-      console.error('Failed to resolve preview URL', { error: err });
+      this.editorController.set('*networkProblems', true);
+      this._log.error('Failed to resolve preview URL', { error: err });
       return;
     }
 
@@ -234,8 +271,8 @@ export class EditorFilterControl extends EditorButtonControl {
       this._clearPreviewVisibilityChecks();
       (observer ?? this._observer)?.unobserve(this);
     } catch (err) {
-      this.$['*networkProblems'] = true;
-      console.error('Failed to load image', { error: err });
+      this.editorController.set('*networkProblems', true);
+      this._log.error('Failed to load image', { error: err });
       this._schedulePreviewVisibilityCheck();
     } finally {
       if (this._lastPreviewRequestId === requestId) {
@@ -250,7 +287,7 @@ export class EditorFilterControl extends EditorButtonControl {
       this._previewImage ||
       this._previewLoaded ||
       this.isOriginal ||
-      this.$['*networkProblems']
+      this.editorController.get('*networkProblems')
     ) {
       this._clearPreviewVisibilityChecks();
       return;
@@ -319,11 +356,11 @@ export class EditorFilterControl extends EditorButtonControl {
         @click=${clickHandler}
       >
         <div class="uc-preview" ?data-loaded=${this._previewLoaded} style=${styleMap(previewStyles)}></div>
-        <uc-icon
+        <uc-editor-icon
           class=${classMap({ 'uc-original-icon': this.isOriginal })}
           name=${this.icon}
           style=${styleMap(iconStyles)}
-        ></uc-icon>
+        ></uc-editor-icon>
       </button>
     `;
   }

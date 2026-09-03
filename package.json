@@ -12,7 +12,6 @@
     "image editing",
     "image size",
     "cloud image editor",
-    "symbiote.js",
     "upload api client",
     "building blocks",
     "blocks",
@@ -160,14 +159,15 @@
   "author": "Uploadcare Inc.",
   "license": "MIT",
   "dependencies": {
+    "@lit-labs/signals": "^0.3.0",
     "@lit/context": "^1.1.6",
+    "@uploadcare/cdn-url": "6.20.0-alpha.6",
     "@uploadcare/cname-prefix": "^6.19.0",
     "@uploadcare/image-shrink": "^6.19.0",
     "@uploadcare/quality-insights": "^6.19.0",
     "@uploadcare/upload-client": "^6.19.0",
     "keyux": "^0.11.3",
-    "lit": "^3.3.2",
-    "nanostores": "^1.1.1"
+    "lit": "^3.3.2"
   },
   "size-limit": [
     {
@@ -214,5 +214,14 @@
       "path": "web/uc-img.min.js",
       "limit": "10 KB"
     }
-  ]
+  ],
+  "tsd": {
+    "compilerOptions": {
+      "paths": {
+        "@uploadcare/cdn-url/ops": [
+          "./node_modules/@uploadcare/cdn-url/dist/types/ops.d.ts"
+        ]
+      }
+    }
+  }
 }

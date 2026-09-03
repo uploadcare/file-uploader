@@ -1,8 +1,8 @@
 import { html } from 'lit';
-import { LitBlock } from '../../lit/LitBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 import './spinner.css';
 
-export class Spinner extends LitBlock {
+export class Spinner extends ChildBlock {
   public override render() {
     return html` <div class="uc-spinner"></div> `;
   }

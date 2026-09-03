@@ -1,8 +1,11 @@
 import { getPrefixedCdnBaseAsync, isPrefixedCdnBase } from '@uploadcare/cname-prefix/async';
+import { logger } from '../../abstract/logger';
 import type { ConfigType } from '../../types/index';
 import { deserializeCsv, serializeCsv } from '../../utils/comma-separated';
 import { isPromiseLike } from '../../utils/isPromiseLike';
 import { DEFAULT_CDN_CNAME } from './initialConfig';
+
+const log = logger.scope('computed-properties');
 
 type ConfigKey = keyof ConfigType;
 type ConfigValue<TKey extends ConfigKey> = ConfigType[TKey];
@@ -86,8 +89,20 @@ const COMPUTED_PROPERTIES = [
   }),
 ];
 
-type ConfigSetter = <TSetValue extends ConfigKey>(key: TSetValue, value: ConfigValue<TSetValue>) => void;
-type ConfigGetter = <TGetValue extends ConfigKey>(key: TGetValue) => ConfigValue<TGetValue>;
+/**
+ * Union of every config key that any computed property depends on. Changing a
+ * key NOT in this set can never affect a computed value — `computeProperty`
+ * no-ops for it (no `computed.deps.includes(key)` matches) — so a config host
+ * only needs to observe THESE keys to keep computed properties current, not all
+ * ~55 config keys. Derived from `COMPUTED_PROPERTIES` so it stays correct as
+ * computeds are added or their deps change.
+ */
+export const computedPropertyDependencyKeys: ReadonlySet<ConfigKey> = new Set(
+  COMPUTED_PROPERTIES.flatMap((computed) => computed.deps),
+);
+
+export type ConfigSetter = <TSetValue extends ConfigKey>(key: TSetValue, value: ConfigValue<TSetValue>) => void;
+export type ConfigGetter = <TGetValue extends ConfigKey>(key: TGetValue) => ConfigValue<TGetValue>;
 
 type ComputePropertyOptions<TKey extends ConfigKey> = {
   key: TKey;
@@ -126,7 +141,7 @@ export const computeProperty = <TKey extends ConfigKey>({
       if (computationControllers.get(computed.fn) === abortController) {
         computationControllers.delete(computed.fn);
       }
-      console.error(`Failed to compute value for "${computed.key}"`, error);
+      log.error(`Failed to compute value for "${computed.key}"`, error);
       return;
     }
     if (isPromiseLike(result)) {
@@ -141,7 +156,7 @@ export const computeProperty = <TKey extends ConfigKey>({
           if (abortController.signal.aborted) {
             return;
           }
-          console.error(`Failed to compute value for "${computed.key}"`, error);
+          log.error(`Failed to compute value for "${computed.key}"`, error);
         })
         .finally(() => {
           if (computationControllers.get(computed.fn) === abortController) {

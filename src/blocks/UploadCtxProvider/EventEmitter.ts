@@ -1,8 +1,5 @@
-import type { ModalId } from '../../abstract/managers/ModalManager';
-import type { ActivityType } from '../../lit/LitActivityBlock';
-import type { LitBlock } from '../../lit/LitBlock';
-import { SharedInstance } from '../../lit/shared-instances';
-import type { OutputCollectionState, OutputFileEntry } from '../../types';
+import { inject } from '../../abstract/di/inject';
+import { EventBus, type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../../abstract/EventBus';
 
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
 
@@ -13,137 +10,58 @@ export const InternalEventType = Object.freeze({
   ERROR_EVENT: 'error-event',
 } as const);
 
-export const EventType = Object.freeze({
-  FILE_ADDED: 'file-added',
-  FILE_REMOVED: 'file-removed',
-  FILE_UPLOAD_START: 'file-upload-start',
-  FILE_UPLOAD_PROGRESS: 'file-upload-progress',
-  FILE_UPLOAD_SUCCESS: 'file-upload-success',
-  FILE_UPLOAD_FAILED: 'file-upload-failed',
-  FILE_URL_CHANGED: 'file-url-changed',
-
-  MODAL_OPEN: 'modal-open',
-  MODAL_CLOSE: 'modal-close',
-  DONE_CLICK: 'done-click',
-  UPLOAD_CLICK: 'upload-click',
-  ACTIVITY_CHANGE: 'activity-change',
-
-  COMMON_UPLOAD_START: 'common-upload-start',
-  COMMON_UPLOAD_PROGRESS: 'common-upload-progress',
-  COMMON_UPLOAD_SUCCESS: 'common-upload-success',
-  COMMON_UPLOAD_FAILED: 'common-upload-failed',
-
-  CHANGE: 'change',
-  GROUP_CREATED: 'group-created',
-} as const);
-
-export type EventKey = (typeof EventType)[keyof typeof EventType];
-
 export type InternalEventKey = (typeof InternalEventType)[keyof typeof InternalEventType];
 
-export type EventPayload = {
-  [EventType.FILE_ADDED]: OutputFileEntry<'idle'>;
-  [EventType.FILE_REMOVED]: OutputFileEntry<'removed'>;
-  [EventType.FILE_UPLOAD_START]: OutputFileEntry<'uploading'>;
-  [EventType.FILE_UPLOAD_PROGRESS]: OutputFileEntry<'uploading'>;
-  [EventType.FILE_UPLOAD_SUCCESS]: OutputFileEntry<'success'>;
-  [EventType.FILE_UPLOAD_FAILED]: OutputFileEntry<'failed'>;
-  [EventType.FILE_URL_CHANGED]: OutputFileEntry<'success'>;
-  [EventType.MODAL_OPEN]: { modalId: ModalId };
-  [EventType.MODAL_CLOSE]: {
-    modalId: ModalId;
-    hasActiveModals: boolean;
-  };
-  [EventType.ACTIVITY_CHANGE]: {
-    activity: ActivityType;
-  };
-  [EventType.UPLOAD_CLICK]: undefined;
-  [EventType.DONE_CLICK]: OutputCollectionState;
-  [EventType.COMMON_UPLOAD_START]: OutputCollectionState<'uploading'>;
-  [EventType.COMMON_UPLOAD_PROGRESS]: OutputCollectionState<'uploading'>;
-  [EventType.COMMON_UPLOAD_SUCCESS]: OutputCollectionState<'success'>;
-  [EventType.COMMON_UPLOAD_FAILED]: OutputCollectionState<'failed'>;
-  [EventType.CHANGE]: OutputCollectionState;
-  [EventType.GROUP_CREATED]: OutputCollectionState<'success', 'has-group'>;
-};
+/**
+ * The documented event surface lives in `EventBus`
+ * (`UploaderEventType`/`UploaderEventPayload`) — the single source of truth. It
+ * is re-exported here under the public `EventType`/`EventPayload`/`EventKey`
+ * names so the documented contract and the bus the facade delegates to cannot
+ * drift apart.
+ */
+export { UploaderEventType as EventType };
+export type { UploaderEventKey as EventKey, UploaderEventPayload as EventPayload };
 
-export class EventEmitter extends SharedInstance {
-  private _timeoutStore: Map<string, number> = new Map();
-  private _targets: Set<LitBlock> = new Set();
-  private _listeners: Map<string, Set<(payload: unknown) => void>> = new Map();
+/**
+ * Facade over the per-ctx DOM-free `EventBus`.
+ *
+ * `on`/`emit` delegate to the bus; the DOM `CustomEvent` dispatch lives in the
+ * `@subscription() _bridgeBusToDom` on `<uc-upload-ctx-provider>`. The public
+ * surface (event types, debounce, payload thunks, `api.on`) is unchanged — only
+ * the storage/dispatch moved behind the bus.
+ *
+ * Container-resolved with a zero-arg ctor, `@inject`-ing the per-ctx
+ * `EventBus`; `container.get(EventEmitter)` yields the single per-ctx
+ * instance. This facade stays PURE dispatch — no telemetry. `destroy()` is a
+ * no-op — the facade itself holds no subscriptions to unwind; it exists so
+ * the container can treat all its owned managers uniformly.
+ */
+export class EventEmitter {
+  @inject(EventBus) private readonly _bus!: EventBus;
 
-  public bindTarget(target: LitBlock) {
-    this._targets.add(target);
-    return () => {
-      this._targets.delete(target);
-    };
+  public on<T extends UploaderEventKey>(type: T, handler: (payload: UploaderEventPayload[T]) => void): () => void {
+    return this._bus.on(type, handler);
   }
 
-  public on<T extends EventKey>(type: T, handler: (payload: EventPayload[T]) => void): () => void {
-    let listeners = this._listeners.get(type);
-    if (!listeners) {
-      listeners = new Set();
-      this._listeners.set(type, listeners);
-    }
-    listeners.add(handler as (payload: unknown) => void);
-    return () => this._listeners.get(type)?.delete(handler as (payload: unknown) => void);
-  }
-
-  private _dispatch<T extends EventKey>(type: T, payload?: EventPayload[T]): void {
-    for (const target of this._targets) {
-      target.dispatchEvent(
-        new CustomEvent(type, {
-          detail: payload,
-        }),
-      );
-    }
-
-    const listeners = this._listeners.get(type);
-    if (listeners) {
-      for (const handler of listeners) {
-        handler(payload);
-      }
-    }
-
-    this._debugPrint?.(() => {
-      const copyPayload = !!payload && typeof payload === 'object' ? { ...payload } : payload;
-      return [`event "${type}"`, copyPayload];
-    });
-  }
-
-  public emit<T extends EventKey, TDebounce extends boolean | number | undefined = undefined>(
+  public emit<T extends UploaderEventKey>(
     type: T,
-    payload?: TDebounce extends false | undefined ? EventPayload[T] : () => EventPayload[T],
-    options: { debounce?: TDebounce } = {},
+    payload?: UploaderEventPayload[T] | (() => UploaderEventPayload[T]),
+    options: { debounce?: boolean | number } = {},
   ): void {
     const { debounce } = options;
+    // A value or a thunk is accepted on either path (the runtime resolves
+    // both); the single `as` bridges the optional `payload?` to the required
+    // payload for events whose payload isn't `undefined`.
+    const resolve = () => (typeof payload === 'function' ? payload() : payload) as UploaderEventPayload[T];
     if (typeof debounce !== 'number' && !debounce) {
-      this._dispatch(type, typeof payload === 'function' ? payload() : (payload as EventPayload[T]));
+      this._bus.emit(type, resolve());
       return;
     }
-
-    if (this._timeoutStore.has(type)) {
-      window.clearTimeout(this._timeoutStore.get(type));
-    }
     const timeout = typeof debounce === 'number' ? debounce : DEFAULT_DEBOUNCE_TIMEOUT;
-    const timeoutId = window.setTimeout(() => {
-      try {
-        const data = typeof payload === 'function' ? payload() : (payload as EventPayload[T]);
-        this._dispatch(type, data);
-        this._timeoutStore.delete(type);
-      } catch (error) {
-        this._debugPrint?.(() => `Error while getting payload for event "${type}"`, error);
-      }
-    }, timeout);
-    this._timeoutStore.set(type, timeoutId);
+    this._bus.emitDebounced(type, resolve, timeout);
   }
 
-  public override destroy(): void {
-    for (const timeoutId of this._timeoutStore.values()) {
-      window.clearTimeout(timeoutId);
-    }
-
-    this._targets.clear();
-    this._listeners.clear();
+  public destroy(): void {
+    // No-op: the facade holds no subscriptions of its own.
   }
 }

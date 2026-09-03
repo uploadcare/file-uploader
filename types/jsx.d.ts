@@ -3,9 +3,12 @@
 type LitElement = import('lit').LitElement;
 type UploadCtxProvider = import('../dist/index.ts').UploadCtxProvider;
 type Config = import('../dist/index.ts').Config;
+type Copyright = import('../dist/index.ts').Copyright;
+type Thumb = import('../dist/index.ts').Thumb;
 type FileUploaderInline = import('../dist/index.ts').FileUploaderInline;
 type FileUploaderRegular = import('../dist/index.ts').FileUploaderRegular;
 type FileUploaderMinimal = import('../dist/index.ts').FileUploaderMinimal;
+type Uploader = import('../dist/index.ts').Uploader;
 type BtnUi = import('../dist/index.ts').BtnUi;
 type LineLoaderUi = import('../dist/index.ts').LineLoaderUi;
 type PresenceToggle = import('../dist/index.ts').PresenceToggle;
@@ -24,6 +27,7 @@ type EditorToolbar = import('../dist/index.ts').EditorToolbar;
 type Icon = import('../dist/index.ts').Icon;
 type Img = import('../dist/index.ts').Img;
 type SimpleBtn = import('../dist/index.ts').SimpleBtn;
+type Spinner = import('../dist/index.ts').Spinner;
 type StartFrom = import('../dist/index.ts').StartFrom;
 type DropArea = import('../dist/index.ts').DropArea;
 type SourceBtn = import('../dist/index.ts').SourceBtn;
@@ -39,6 +43,9 @@ type ExternalSource = import('../dist/index.ts').ExternalSource;
 type CloudImageEditorActivity = import('../dist/index.ts').CloudImageEditorActivity;
 type FormInput = import('../dist/index.ts').FormInput;
 type CloudImageEditorBlock = import('../dist/index.ts').CloudImageEditorBlock;
+type PrimaryAction = import('../dist/index.ts').PrimaryAction;
+type DropDown = import('../dist/index.ts').DropDown;
+type Select = import('../dist/index.ts').Select;
 
 type CommonHtmlAttributes<T> = Partial<
   Pick<React.HTMLAttributes<T>, 'id' | 'children' | 'hidden'> & { class: React.HTMLAttributes<T>['className'] }
@@ -66,13 +73,16 @@ declare namespace JSX {
     'uc-presence-toggle': CustomElement<PresenceToggle>;
     'uc-slider-ui': CustomElement<SliderUi>;
     'uc-icon': CustomElement<Icon>;
+    'uc-copyright': CustomElement<Copyright>;
     'uc-img': CustomElement<Img> & React.DetailedHTMLProps<React.ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>;
     'uc-simple-btn': CustomElement<SimpleBtn>;
+    'uc-spinner': CustomElement<Spinner>;
     'uc-start-from': CustomElement<StartFrom>;
     'uc-drop-area': CustomElement<DropArea>;
     'uc-source-btn': CustomElement<SourceBtn>;
     'uc-source-list': CustomElement<SourceList>;
     'uc-file-item': CustomElement<FileItem>;
+    'uc-thumb': CustomElement<Thumb>;
     'uc-modal': CustomElement<Modal>;
     'uc-upload-list': CustomElement<UploadList>;
     'uc-url-source': CustomElement<UrlSource>;
@@ -87,7 +97,11 @@ declare namespace JSX {
     'uc-file-uploader-regular': CustomElement<FileUploaderRegular>;
     'uc-file-uploader-minimal': CustomElement<FileUploaderMinimal>;
     'uc-file-uploader-inline': CustomElement<FileUploaderInline>;
+    'uc-uploader': CustomElement<Uploader>;
     'uc-upload-ctx-provider': CustomElement<UploadCtxProvider>;
     'uc-config': CustomElement<Config>;
+    'uc-primary-action': CustomElement<PrimaryAction>;
+    'uc-drop-down': CustomElement<DropDown>;
+    'uc-select': CustomElement<Select>;
   }
 }

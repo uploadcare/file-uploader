@@ -1,5 +1,5 @@
 import { defineComponents } from '../abstract/defineComponents';
-import type { UploaderPlugin } from '../abstract/managers/plugin';
+import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import { UrlSource } from '../blocks/UrlSource/UrlSource';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 
@@ -24,8 +24,7 @@ export const urlSourcePlugin: UploaderPlugin = {
       label: 'src-type-from-url',
       icon: 'url',
       onSelect: () => {
-        uploaderApi.setCurrentActivity(ACTIVITY_TYPES.URL);
-        uploaderApi.setModalState(true);
+        uploaderApi.navigate(ACTIVITY_TYPES.URL);
       },
     });
   },

@@ -1,5 +1,4 @@
 import { getOutputData } from '../lit/getOutputData';
-import type { SharedInstancesBag } from '../lit/shared-instances';
 import type {
   GroupFlag,
   OutputCollectionState,
@@ -9,7 +8,12 @@ import type {
   UploadcareGroup,
 } from '../types/index';
 import { memoize } from '../utils/memoize';
-import { warnOnce } from '../utils/warnOnce';
+import { CollectionStateController } from './controllers/CollectionStateController';
+import { UploadCollectionController } from './controllers/UploadCollectionController';
+import type { ControllerContainer } from './di/ControllerContainer';
+import { logger } from './logger';
+
+const log = logger.scope('output-collection-state');
 
 function createAsyncAssertWrapper(warning: string) {
   let isAsync = false;
@@ -20,7 +24,7 @@ function createAsyncAssertWrapper(warning: string) {
   const withAssert = <TArgs extends unknown[], TReturn, T extends (...args: TArgs) => TReturn>(fn: T): T => {
     return ((...args) => {
       if (isAsync) {
-        warnOnce(warning);
+        log.warnOnce(warning);
       }
       return fn(...args);
     }) as T;
@@ -32,36 +36,69 @@ function createAsyncAssertWrapper(warning: string) {
 export function buildOutputCollectionState<
   TCollectionStatus extends OutputCollectionStatus,
   TGroupFlag extends GroupFlag = 'maybe-has-group',
->(bag: SharedInstancesBag): OutputCollectionState<TCollectionStatus, TGroupFlag> {
+>(container: ControllerContainer): OutputCollectionState<TCollectionStatus, TGroupFlag> {
   const state = {} as OutputCollectionState<TCollectionStatus, TGroupFlag>;
-  const ctx = bag.ctx;
+  // Derived collection keys read straight off the controllers.
+  // `CollectionStateController` owns `*commonProgress`/`*collectionErrors`/
+  // `*groupInfo` (the same instance the v1 ctx facade routes those keys through).
+  const collectionState = container.get(CollectionStateController);
+  const uploadCollection = container.get(UploadCollectionController);
+
+  // Partition all entries by derived status in ONE pass (memoized), so counts,
+  // the four per-status arrays, and the status flags don't each re-filter the
+  // whole list. Was O(N × ~5) filters/scans per state; now O(N) once. The result
+  // is identical to the per-getter `.filter(status === …)` it replaces (a
+  // `removed` entry lands in no bucket, exactly as the old filters excluded it).
+  const partitionByStatus = memoize(() => {
+    const success: OutputFileEntry<'success'>[] = [];
+    const failed: OutputFileEntry<'failed'>[] = [];
+    const uploading: OutputFileEntry<'uploading'>[] = [];
+    const idle: OutputFileEntry<'idle'>[] = [];
+    for (const entry of state.allEntries) {
+      switch (entry.status) {
+        case 'success':
+          success.push(entry as OutputFileEntry<'success'>);
+          break;
+        case 'failed':
+          failed.push(entry as OutputFileEntry<'failed'>);
+          break;
+        case 'uploading':
+          uploading.push(entry as OutputFileEntry<'uploading'>);
+          break;
+        case 'idle':
+          idle.push(entry as OutputFileEntry<'idle'>);
+          break;
+      }
+    }
+    return { success, failed, uploading, idle };
+  });
 
   const getters = {
     progress: (): number => {
-      return ctx.read('*commonProgress');
+      return collectionState.get('commonProgress');
     },
     errors: (): OutputErrorCollection[] => {
-      return ctx.read('*collectionErrors');
+      return collectionState.get('collectionErrors');
     },
 
     group: (): UploadcareGroup | null => {
-      return ctx.read('*groupInfo');
+      return collectionState.get('groupInfo');
     },
 
     totalCount: (): number => {
-      return bag.uploadCollection.size;
+      return uploadCollection.size;
     },
 
     failedCount: (): number => {
-      return state.failedEntries.length;
+      return partitionByStatus().failed.length;
     },
 
     successCount: (): number => {
-      return state.successEntries.length;
+      return partitionByStatus().success.length;
     },
 
     uploadingCount: (): number => {
-      return state.uploadingEntries.length;
+      return partitionByStatus().uploading.length;
     },
 
     status: (): TCollectionStatus => {
@@ -73,42 +110,36 @@ export function buildOutputCollectionState<
       return (
         state.allEntries.length > 0 &&
         state.errors.length === 0 &&
-        state.successEntries.length === state.allEntries.length
+        partitionByStatus().success.length === state.allEntries.length
       );
     },
 
     isUploading: (): boolean => {
-      return state.allEntries.some((entry: OutputFileEntry) => entry.status === 'uploading');
+      return partitionByStatus().uploading.length > 0;
     },
 
     isFailed: (): boolean => {
-      return state.errors.length > 0 || state.failedEntries.length > 0;
+      return state.errors.length > 0 || partitionByStatus().failed.length > 0;
     },
 
     allEntries: (): OutputFileEntry[] => {
-      return getOutputData(bag);
+      return getOutputData(container);
     },
 
     successEntries: (): OutputFileEntry<'success'>[] => {
-      return state.allEntries.filter(
-        (entry: OutputFileEntry) => entry.status === 'success',
-      ) as OutputFileEntry<'success'>[];
+      return partitionByStatus().success;
     },
 
     failedEntries: (): OutputFileEntry<'failed'>[] => {
-      return state.allEntries.filter(
-        (entry: OutputFileEntry) => entry.status === 'failed',
-      ) as OutputFileEntry<'failed'>[];
+      return partitionByStatus().failed;
     },
 
     uploadingEntries: (): OutputFileEntry<'uploading'>[] => {
-      return state.allEntries.filter(
-        (entry: OutputFileEntry) => entry.status === 'uploading',
-      ) as OutputFileEntry<'uploading'>[];
+      return partitionByStatus().uploading;
     },
 
     idleEntries: (): OutputFileEntry<'idle'>[] => {
-      return state.allEntries.filter((entry: OutputFileEntry) => entry.status === 'idle') as OutputFileEntry<'idle'>[];
+      return partitionByStatus().idle;
     },
   };
 

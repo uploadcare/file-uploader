@@ -1,4 +1,4 @@
-const DEFAULT_CDN_BASE = 'https://ucarecdn.com';
+import { DEFAULT_CDN_ORIGIN } from '../../utils/cdn/origin';
 
 export const PROPS_MAP = Object.freeze({
   'dev-mode': {},
@@ -15,7 +15,7 @@ export const PROPS_MAP = Object.freeze({
     // '200, 300, 400'
   },
   'cdn-cname': {
-    default: DEFAULT_CDN_BASE,
+    default: DEFAULT_CDN_ORIGIN,
   },
   'proxy-cname': {},
   'secure-delivery-proxy': {},

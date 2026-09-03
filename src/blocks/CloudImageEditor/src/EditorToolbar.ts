@@ -1,16 +1,21 @@
 import type { PropertyValues, TemplateResult } from 'lit';
 import { html, nothing } from 'lit';
-import { state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import type { Ref } from 'lit/directives/ref.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { when } from 'lit/directives/when.js';
-import { LitBlock } from '../../../lit/LitBlock';
 import { debounce } from '../../../utils/debounce';
 import { batchPreloadImages } from '../../../utils/preloadImage';
-import type { EditorImageCropper } from './EditorImageCropper';
-import type { EditorImageFader } from './EditorImageFader';
-import { type EditorSlider, FAKE_ORIGINAL_FILTER } from './EditorSlider';
+import type { FilterSelectEvent } from './EditorFilterControl';
+import type { OperationSelectEvent } from './EditorOperationControl';
+import {
+  type EditorSlider,
+  FAKE_ORIGINAL_FILTER,
+  type SliderFilter,
+  type SliderTooltipChangeEvent,
+} from './EditorSlider';
+import { EditorBlock } from './editor-context';
 import {
   ALL_COLOR_OPERATIONS,
   ALL_CROP_OPERATIONS,
@@ -21,7 +26,7 @@ import {
   type CropOperation,
   TabId,
 } from './toolbar-constants';
-import type { CropAspectRatio, Transformations } from './types';
+import type { CropAspectRatio, CropPresetList, ImageSize, Transformations } from './types';
 import { viewerImageSrc } from './util';
 import { parseFilterValue } from './utils/parseFilterValue';
 
@@ -37,7 +42,7 @@ import './EditorSlider';
 
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
-export class EditorToolbar extends LitBlock {
+export class EditorToolbar extends EditorBlock {
   @state()
   private _showLoader = false;
 
@@ -52,9 +57,20 @@ export class EditorToolbar extends LitBlock {
   @state()
   private _showTabToggles = true;
 
-  // This is public because it's used in the updated lifecycle to assign to the shared state.
-  @state()
+  // Passed in from the root (`<uc-cloud-image-editor>`) as plain Lit props —
+  // root → single child, not controller state (see the "State scoping principle").
+  @property({ attribute: false })
   public tabList: readonly TabIdValue[] = [...ALL_TABS];
+
+  @property({ attribute: false })
+  public cropPresetList: CropPresetList = [];
+
+  @property({ attribute: false })
+  public imageSize: ImageSize | null = null;
+
+  /** The editor's image container, passed from the root — measured for image preloading. */
+  @property({ attribute: false })
+  public imageContainer: HTMLElement | null = null;
 
   // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
@@ -68,6 +84,26 @@ export class EditorToolbar extends LitBlock {
 
   @state()
   private _operationTooltip: string | null = null;
+
+  // Toolbar-subtree-local state (M12 "State scoping principle") — only this
+  // element + its descendant controls/slider read these, so they live as
+  // plain Lit state instead of the cross-cutting editor controller. Passed
+  // down to descendants as reactive props where they need to read them
+  // (`_currentFilter` -> `EditorFilterControl.currentFilter`); descendants
+  // report changes back up via bubbling custom events (`FilterSelectEvent`,
+  // `OperationSelectEvent`, `ShowAspectRatioListEvent`,
+  // `SliderTooltipChangeEvent`) instead of the old shared-ctx cross-writes.
+  @state()
+  private _currentFilter: string = FAKE_ORIGINAL_FILTER;
+
+  @state()
+  private _currentOperation: ColorOperation | '' | null = null;
+
+  @state()
+  private _showListAspectRatio = false;
+
+  @state()
+  private _showSlider = false;
 
   private _tabIndicatorOffset = 0;
   private _tabIndicatorWidth = 0;
@@ -94,26 +130,33 @@ export class EditorToolbar extends LitBlock {
   }, 500);
 
   private readonly _updateInfoTooltip = debounce(() => {
-    const transformations = this.$['*editorTransformations'];
-    const currentOperation = this.$['*currentOperation'] as keyof typeof COLOR_OPERATIONS_CONFIG | null;
+    // Debounced at 0ms: the timer can still fire once after this element has
+    // disconnected (and the editor context has released its controller) —
+    // bail out rather than throwing.
+    const controller = this.editorControllerOrNull;
+    if (!controller) {
+      return;
+    }
+    const transformations = controller.get('*editorTransformations');
+    const currentOperation = this._currentOperation as keyof typeof COLOR_OPERATIONS_CONFIG | null;
     let text = '';
     let visible = false;
 
-    if (this.$['*tabId'] === TabId.FILTERS) {
+    if (controller.get('*tabId') === TabId.FILTERS) {
       visible = true;
-      if (this.$['*currentFilter'] && transformations?.filter?.name === this.$['*currentFilter']) {
+      if (this._currentFilter && transformations?.filter?.name === this._currentFilter) {
         const value = transformations?.filter?.amount || 100;
-        text = `${this.$['*currentFilter']} ${value}`;
+        text = `${this._currentFilter} ${value}`;
       } else {
-        text = this.l10n(FAKE_ORIGINAL_FILTER);
+        text = controller.l10n(FAKE_ORIGINAL_FILTER);
       }
-    } else if (this.showSubToolbar && this.$['*tabId'] === TabId.TUNING && currentOperation) {
+    } else if (this.showSubToolbar && controller.get('*tabId') === TabId.TUNING && currentOperation) {
       visible = true;
       const value = transformations?.[currentOperation] || COLOR_OPERATIONS_CONFIG[currentOperation].zero;
-      text = `${this.l10n(currentOperation)} ${value}`;
+      text = `${controller.l10n(currentOperation)} ${value}`;
     }
     if (visible) {
-      this.$['*operationTooltip'] = text;
+      this._operationTooltip = text;
     }
     this._tooltipVisible = visible;
   }, 0);
@@ -138,42 +181,58 @@ export class EditorToolbar extends LitBlock {
     visible: 'uc-tab-toggles--visible',
   };
 
-  public override init$: Record<string, unknown> = {
-    ...this.init$,
-    '*sliderEl': null,
-    '*showSlider': false,
-    '*showListAspectRatio': false,
-    '*currentFilter': FAKE_ORIGINAL_FILTER,
-    '*currentOperation': null,
-    '*operationTooltip': null,
-  };
+  /** Sets the toolbar-local `showSlider`/sub-toolbar-visibility state, deriving `showMainToolbar`/`showSubToolbar`/`_useSliderPanel` exactly as the old `sub('*showSlider', ...)` reaction did. */
+  private _setShowSlider(show: boolean): void {
+    if (Object.is(this._showSlider, show)) {
+      return;
+    }
+    this._showSlider = show;
+    if (show) {
+      this.showSubToolbar = true;
+      this.showMainToolbar = false;
+      this._useSliderPanel = true;
+    } else if (!this._showListAspectRatio) {
+      this.showSubToolbar = false;
+      this.showMainToolbar = true;
+    }
+  }
+
+  /** Sets the toolbar-local `showListAspectRatio` state — mirrors the old `sub('*showListAspectRatio', ...)` reaction. */
+  private _setShowListAspectRatio(show: boolean): void {
+    if (Object.is(this._showListAspectRatio, show)) {
+      return;
+    }
+    this._showListAspectRatio = show;
+    if (show) {
+      this.showSubToolbar = true;
+      this.showMainToolbar = false;
+      this._useSliderPanel = false;
+    } else if (!this._showSlider) {
+      this.showSubToolbar = false;
+      this.showMainToolbar = true;
+    }
+  }
 
   private _onSliderClose(): void {
-    this.$['*showSlider'] = false;
+    this._setShowSlider(false);
 
-    if (this.$['*tabId'] === TabId.CROP) {
-      this.$['*showListAspectRatio'] = false;
+    if (this.editorController.get('*tabId') === TabId.CROP) {
+      this._setShowListAspectRatio(false);
     }
 
-    if (this.$['*tabId'] === TabId.TUNING) {
+    if (this.editorController.get('*tabId') === TabId.TUNING) {
       this._tooltipVisible = false;
     }
   }
 
-  private _activateTab(
-    id: TabIdValue,
-    { fromViewer = false, force = false }: { fromViewer?: boolean; force?: boolean } = {},
-  ): void {
-    if (this.$['*tabId'] !== id) {
-      this.$['*tabId'] = id;
+  private _activateTab(id: TabIdValue, { force = false }: { force?: boolean } = {}): void {
+    if (this.editorController.get('*tabId') !== id) {
+      this.editorController.set('*tabId', id);
     }
-    this._applyTabState(id, { fromViewer, force });
+    this._applyTabState(id, { force });
   }
 
-  private _applyTabState(
-    id: TabIdValue,
-    { fromViewer, force = false }: { fromViewer: boolean; force?: boolean },
-  ): void {
+  private _applyTabState(id: TabIdValue, { force = false }: { force?: boolean } = {}): void {
     if (!force && this.activeTab === id) {
       this._syncTabIndicator();
       return;
@@ -181,23 +240,10 @@ export class EditorToolbar extends LitBlock {
 
     this.activeTab = id;
 
-    const faderEl = this.$['*faderEl'] as EditorImageFader | undefined;
-    const cropperEl = this.$['*cropperEl'] as EditorImageCropper | undefined;
-
-    if (id === TabId.CROP) {
-      faderEl?.deactivate();
-      const imageSize = this.$['*imageSize'] as { width: number; height: number } | undefined;
-      if (imageSize) {
-        cropperEl?.activate(this.$['*imageSize'] as { width: number; height: number }, { fromViewer });
-      }
-    } else {
-      faderEl?.activate({
-        url: this.$['*originalUrl'] as string,
-        fromViewer,
-      });
-      cropperEl?.deactivate();
-    }
-
+    // The cropper and fader both self-activate/deactivate from controller state
+    // (`*tabId`/`*originalUrl`/`*colorPreview`) + their `imageSize` prop — see
+    // `EditorImageCropper` / `EditorImageFader`. The toolbar only owns the tab
+    // UI now.
     for (const tabId of ALL_TABS) {
       const isCurrentTab = tabId === id;
       const toggleRef = this.tabToggleRefs[tabId];
@@ -283,7 +329,9 @@ export class EditorToolbar extends LitBlock {
   }
 
   private _renderFreeformControl(): TemplateResult {
-    return html`<uc-editor-freeform-button-control></uc-editor-freeform-button-control>`;
+    return html`<uc-editor-freeform-button-control
+      @uc-internal:show-aspect-ratio-list=${this._handleShowAspectRatioList}
+    ></uc-editor-freeform-button-control>`;
   }
 
   private _renderAspectRatioControl(preset: CropAspectRatio): TemplateResult {
@@ -295,11 +343,18 @@ export class EditorToolbar extends LitBlock {
   }
 
   private _renderFilterControl(filterId: string): TemplateResult {
-    return html`<uc-editor-filter-control .filter=${filterId}></uc-editor-filter-control>`;
+    return html`<uc-editor-filter-control
+      .filter=${filterId}
+      .currentFilter=${this._currentFilter}
+      @uc-internal:filter-select=${this._handleFilterSelect}
+    ></uc-editor-filter-control>`;
   }
 
   private _renderOperationControl(operation: ColorOperation | ''): TemplateResult {
-    return html`<uc-editor-operation-control .operation=${operation}></uc-editor-operation-control>`;
+    return html`<uc-editor-operation-control
+      .operation=${operation}
+      @uc-internal:operation-select=${this._handleOperationSelect}
+    ></uc-editor-operation-control>`;
   }
 
   private _renderAspectRatioList(): TemplateResult[] {
@@ -310,9 +365,20 @@ export class EditorToolbar extends LitBlock {
   }
 
   private async _preloadEditedImage(): Promise<void> {
-    if (this.$['*imgContainerEl'] && this.$['*originalUrl']) {
-      const width = this.$['*imgContainerEl'].offsetWidth;
-      const src = await this.proxyUrl(viewerImageSrc(this.$['*originalUrl'], width, this.$['*editorTransformations']));
+    const originalUrl = this.editorController.get('*originalUrl');
+    // Preload at the rendered viewer width, measured from the image container
+    // the root passes down as a prop (UI-layer plumbing, not a controller state
+    // ref). Skip if it isn't laid out yet (width 0).
+    const width = this.imageContainer?.offsetWidth ?? 0;
+    if (originalUrl && width > 0) {
+      const src = await this.editorController.proxyUrl(
+        viewerImageSrc(
+          originalUrl,
+          width,
+          this.editorController.get('*editorTransformations'),
+          this.editorController.get('*sourceOperations'),
+        ),
+      );
       this._cancelPreload?.();
       const { cancel } = batchPreloadImages([src]);
 
@@ -323,53 +389,27 @@ export class EditorToolbar extends LitBlock {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public constructor() {
+    super();
 
-    const initialCropPresets = this.$['*cropPresetList'] ?? [];
-    this._cropPresets = [...initialCropPresets];
-    this.sub('*cropPresetList', (cropPresetList) => {
-      this._cropPresets = [...(cropPresetList ?? [])];
-    });
-
-    this.sub('*imageSize', (imageSize) => {
-      if (imageSize) {
-        setTimeout(() => {
-          this._activateTab(this.$['*tabId'], { fromViewer: true });
-        }, 0);
-      }
-    });
-
-    this.sub('*editorTransformations', (editorTransformations) => {
+    this.subEditorKey('*editorTransformations', (editorTransformations) => {
       const appliedFilter = editorTransformations?.filter?.name;
-      if (this.$['*currentFilter'] !== appliedFilter) {
-        this.$['*currentFilter'] = appliedFilter ?? '';
+      if (this._currentFilter !== appliedFilter) {
+        this._currentFilter = appliedFilter ?? '';
       }
-    });
-
-    this.sub('*currentFilter', () => {
       this._updateInfoTooltip();
-    });
-
-    this.sub('*currentOperation', () => {
-      this._updateInfoTooltip();
-    });
-
-    this.sub('*tabId', (tabId) => {
-      this._applyTabState(tabId, { fromViewer: false, force: true });
-      this._updateInfoTooltip();
-    });
-
-    this.sub('*originalUrl', () => {
-      this.$['*faderEl']?.deactivate();
-    });
-
-    this.sub('*editorTransformations', (transformations) => {
       this._preloadEditedImage();
-      this.$['*faderEl']?.setTransformations(transformations);
+      // The fader reacts to `*editorTransformations` itself now.
     });
 
-    this.sub('*loadingOperations', (loadingOperations) => {
+    this.subEditorKey('*tabId', (tabId) => {
+      this._applyTabState(tabId, { force: true });
+      this._updateInfoTooltip();
+    });
+
+    // The fader self-deactivates on `*originalUrl` change (see EditorImageFader).
+
+    this.subEditorKey('*loadingOperations', (loadingOperations) => {
       let anyLoading = false;
       for (const [, mapping] of loadingOperations.entries()) {
         if (anyLoading) {
@@ -385,48 +425,9 @@ export class EditorToolbar extends LitBlock {
       this._debouncedShowLoader(anyLoading);
     });
 
-    this.sub('*showSlider', (showSlider) => {
-      if (showSlider) {
-        this.showSubToolbar = true;
-        this.showMainToolbar = false;
-        this._useSliderPanel = true;
-      } else if (!this.$['*showListAspectRatio']) {
-        this.showSubToolbar = false;
-        this.showMainToolbar = true;
-      }
+    this.onEditorAttach(() => {
+      this._updateInfoTooltip();
     });
-
-    this.sub('*showListAspectRatio', (show) => {
-      if (show) {
-        this.showSubToolbar = true;
-        this.showMainToolbar = false;
-        this._useSliderPanel = false;
-      } else if (!this.$['*showSlider']) {
-        this.showSubToolbar = false;
-        this.showMainToolbar = true;
-      }
-    });
-
-    this.sub('*tabList', (tabList) => {
-      this.tabList = tabList;
-      this._showTabToggles = tabList.length > 1;
-
-      if (!tabList.includes(this.$['*tabId']) && tabList.length > 0) {
-        const [firstTab] = tabList;
-        if (firstTab) {
-          this._activateTab(firstTab, { fromViewer: false });
-        }
-        return;
-      }
-
-      this._syncTabIndicator();
-    });
-
-    this.sub('*operationTooltip', (tooltip: string | null) => {
-      this._operationTooltip = tooltip;
-    });
-
-    this._updateInfoTooltip();
   }
 
   public override connectedCallback(): void {
@@ -436,20 +437,51 @@ export class EditorToolbar extends LitBlock {
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
-    this._assignSharedElements();
 
     this._syncTabIndicator();
+  }
+
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+
+    // Pure derived state from the root-passed props — compute in `willUpdate` so
+    // it folds into the current render (no follow-up update scheduled).
+    if (changedProperties.has('cropPresetList')) {
+      this._cropPresets = [...(this.cropPresetList ?? [])];
+    }
+    if (changedProperties.has('tabList')) {
+      this._showTabToggles = this.tabList.length > 1;
+    }
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
-    if (changedProperties.has('activeTab') || changedProperties.has('tabList')) {
-      this.updateComplete.then(() => this._syncTabIndicator());
+    // Side effects reacting to the root-passed props (formerly `subEditorKey`
+    // subscriptions on the controller) — same transitions → same effects.
+    if (changedProperties.has('tabList')) {
+      const ctrl = this.editorControllerOrNull;
+      if (ctrl && this.tabList.length > 0 && !this.tabList.includes(ctrl.get('*tabId'))) {
+        const [firstTab] = this.tabList;
+        if (firstTab) {
+          this._activateTab(firstTab);
+        }
+      }
     }
 
-    if (changedProperties.has('showSubToolbar') || changedProperties.has('showMainToolbar')) {
-      this._assignSharedElements();
+    if (changedProperties.has('imageSize') && this.imageSize) {
+      setTimeout(() => {
+        // Guard the deferred callback: the editor may be torn down within this
+        // macrotask (apply/cancel, router nav), nulling the adopted controller.
+        const ctrl = this.editorControllerOrNull;
+        if (ctrl) {
+          this._activateTab(ctrl.get('*tabId'));
+        }
+      }, 0);
+    }
+
+    if (changedProperties.has('activeTab') || changedProperties.has('tabList')) {
+      this.updateComplete.then(() => this._syncTabIndicator());
     }
   }
 
@@ -457,38 +489,35 @@ export class EditorToolbar extends LitBlock {
     window.removeEventListener('resize', this._handleWindowResize);
     super.disconnectedCallback();
 
-    this.$['*showSlider'] = false;
-    this.$['*showListAspectRatio'] = false;
-  }
-
-  private _assignSharedElements(): void {
-    const slider = this._sliderRef.value;
-    if (slider) {
-      this.$['*sliderEl'] = slider;
-    }
+    this._setShowSlider(false);
+    this._setShowListAspectRatio(false);
   }
 
   private readonly _handleCancel = (e: MouseEvent): void => {
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
       action: 'cancel',
     });
     this._cancelPreload?.();
-    const onCancel = this.$['*on.cancel'] as (() => void) | undefined;
-    onCancel?.();
+    this.dispatchEvent(new CustomEvent('uc-internal:cancel', { bubbles: true, composed: true }));
   };
 
   private readonly _handleApply = (e: MouseEvent): void => {
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
       action: 'apply',
     });
-    const onApply = this.$['*on.apply'] as ((transformations: Transformations) => void) | undefined;
-    onApply?.(this.$['*editorTransformations'] as Transformations);
+    this.dispatchEvent(
+      new CustomEvent<Transformations>('uc-internal:apply', {
+        detail: this.editorController.get('*editorTransformations'),
+        bubbles: true,
+        composed: true,
+      }),
+    );
   };
 
   private readonly _handleApplySlider = (e: MouseEvent): void => {
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
       action: 'apply-slider',
-      operation: parseFilterValue(this.$['*operationTooltip']),
+      operation: parseFilterValue(this._operationTooltip),
     });
     const slider = this._sliderRef.value;
     slider?.apply();
@@ -496,7 +525,7 @@ export class EditorToolbar extends LitBlock {
   };
 
   private readonly _handleCancelSlider = (e: MouseEvent): void => {
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
+    this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
       action: 'cancel-slider',
     });
     const slider = this._sliderRef.value;
@@ -510,8 +539,58 @@ export class EditorToolbar extends LitBlock {
     if (!id) {
       return;
     }
-    this.telemetryManager.sendEventCloudImageEditor(e, id);
-    this._activateTab(id, { fromViewer: false });
+    this.editorController.telemetry.sendEventCloudImageEditor(e, id);
+    this._activateTab(id);
+  };
+
+  /** `EditorFilterControl`'s reported selection — replaces the old cross-writes to `*sliderEl`/`*showSlider`/`*currentFilter`/`*tabId`-scoped telemetry. */
+  private readonly _handleFilterSelect = (e: FilterSelectEvent): void => {
+    const { operation, filter, active, isOriginal, originalEvent } = e;
+    // `EditorFilterControl.filter` is always a valid `FilterId`/`FAKE_ORIGINAL_FILTER`
+    // (bound from `ALL_FILTERS`/`FAKE_ORIGINAL_FILTER` in `_renderFilterTabControls`);
+    // narrowing here rather than widening `EditorSlider.setOperation`'s signature.
+    const sliderFilter = filter as SliderFilter;
+
+    if (!active) {
+      this._sliderRef.value?.setOperation(operation, sliderFilter);
+      this._sliderRef.value?.apply();
+    } else if (!isOriginal) {
+      this._sliderRef.value?.setOperation(operation, sliderFilter);
+      this._setShowSlider(true);
+    }
+
+    this.editorController.telemetry.sendEventCloudImageEditor(originalEvent, this.editorController.get('*tabId'), {
+      operation: parseFilterValue(this._operationTooltip),
+    });
+
+    this._currentFilter = filter;
+    this._updateInfoTooltip();
+  };
+
+  /** `EditorOperationControl`'s reported selection — replaces the old cross-writes to `*sliderEl`/`*showSlider`/`*currentOperation`. */
+  private readonly _handleOperationSelect = (e: OperationSelectEvent): void => {
+    // `EditorOperationControl.operation` is only ever '' in its unset default
+    // (never actually clicked in that state, mirroring the old code's own
+    // loosely-typed `*sliderEl` cast at this same boundary).
+    this._sliderRef.value?.setOperation(e.operation as ColorOperation);
+    this._setShowSlider(true);
+    this._currentOperation = e.operation;
+
+    this.editorController.telemetry.sendEventCloudImageEditor(e.originalEvent, this.editorController.get('*tabId'), {
+      operation: parseFilterValue(this._operationTooltip),
+    });
+
+    this._updateInfoTooltip();
+  };
+
+  /** `EditorFreeformButtonControl`'s reported click — replaces the old `$['*showListAspectRatio'] = true` cross-write. */
+  private readonly _handleShowAspectRatioList = (): void => {
+    this._setShowListAspectRatio(true);
+  };
+
+  /** `EditorSlider`'s reported live tooltip recompute — replaces the old `$['*operationTooltip'] = tooltip` cross-write. */
+  private readonly _handleSliderTooltipChange = (e: SliderTooltipChangeEvent): void => {
+    this._operationTooltip = e.tooltip;
   };
 
   private _renderTabToggle(id: TabIdValue) {
@@ -587,7 +666,7 @@ export class EditorToolbar extends LitBlock {
               class="uc-tab-toggles"
               .visible=${this._showTabToggles}
               .styles=${this._tabTogglesStyles}
-              @initial-render=${() => this._syncTabIndicator()}
+              @uc-internal:initial-render=${() => this._syncTabIndicator()}
             >
               <div
                 class="uc-tab-toggles_indicator"
@@ -607,7 +686,10 @@ export class EditorToolbar extends LitBlock {
         </uc-presence-toggle>
         <uc-presence-toggle class="uc-sub-toolbar" .visible=${this.showSubToolbar} .styles=${this._subBottomToolbarStyles}>
           <div class="uc-slider" ?hidden=${!this._useSliderPanel}>
-            <uc-editor-slider ${ref(this._sliderRef)}></uc-editor-slider>
+            <uc-editor-slider
+              ${ref(this._sliderRef)}
+              @uc-internal:slider-tooltip-change=${this._handleSliderTooltipChange}
+            ></uc-editor-slider>
           </div>
 
           <div class="uc-list-aspect-ratio-container" ?hidden=${this._useSliderPanel || !showAspectRatioList}>
@@ -618,8 +700,16 @@ export class EditorToolbar extends LitBlock {
             }
           </div>
           <div class="uc-controls-row">
-            <uc-btn-ui theme="secondary" @click=${this._handleCancelSlider} text=${this.l10n('cancel')}></uc-btn-ui>
-            <uc-btn-ui theme="primary" @click=${this._handleApplySlider} text=${this.l10n('apply')}></uc-btn-ui>
+            <uc-btn-ui
+              theme="secondary"
+              @click=${this._handleCancelSlider}
+              text=${this.l10nSafe('cancel')}
+            ></uc-btn-ui>
+            <uc-btn-ui
+              theme="primary"
+              @click=${this._handleApplySlider}
+              text=${this.l10nSafe('apply')}
+            ></uc-btn-ui>
           </div>
         </uc-presence-toggle>
       </div>

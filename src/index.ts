@@ -1,23 +1,13 @@
 /** biome-ignore-all assist/source/organizeImports: Order should be pretty */
 import './blocks/themes/uc-basic/index.css';
 
-// Symbiote.js
-export { PubSub as Data } from './lit/PubSubCompat';
-export { BaseComponent } from './lit/BaseComponent';
 export { UID } from './utils/UID';
 
 // Utils:
 export { defineComponents } from './abstract/defineComponents';
 export { loadFileUploaderFrom } from './abstract/loadFileUploaderFrom';
 export { defineLocale } from './abstract/localeRegistry';
-export { ModalEvents, type ModalId } from './abstract/managers/ModalManager';
 export { toKebabCase } from './utils/toKebabCase';
-
-// Abstract:
-export { LitBlock as Block } from './lit/LitBlock';
-export { LitSolutionBlock as SolutionBlock } from './lit/LitSolutionBlock';
-export { LitUploaderBlock as UploaderBlock } from './lit/LitUploaderBlock';
-export { LitActivityBlock as ActivityBlock } from './lit/LitActivityBlock';
 
 // Shared:
 export { Icon } from './blocks/Icon/Icon';
@@ -62,6 +52,7 @@ export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploa
 export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEditor';
 export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploaderInline';
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal';
+export { Uploader, type UploaderMode } from './solutions/file-uploader/Uploader';
 
 // Types
 export * from './types/index';
