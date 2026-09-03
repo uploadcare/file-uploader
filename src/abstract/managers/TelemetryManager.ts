@@ -83,6 +83,14 @@ export class TelemetryManager {
   private _lastPayload: TelemetryState | null = null;
   private readonly _queue: Queue = new Queue(10);
   readonly #disposables = new Disposables();
+  /**
+   * Set by `destroy()`. The queued `sendEvent` task resumes on a microtask that
+   * can land AFTER the owning container disposed this instance — at which point
+   * the container has cleared its `CONTAINER` tag and every `@inject` getter
+   * throws. Guarding on this flag (rather than catching) also stops a disposed
+   * uploader from shipping a trailing event.
+   */
+  #destroyed = false;
 
   /**
    * Container lifecycle hook — runs after the container has tagged + cached this
@@ -209,6 +217,9 @@ export class TelemetryManager {
   }
 
   public sendEvent(body: TelemetryEventBody): void {
+    if (this.#destroyed) {
+      return;
+    }
     if (!this._isEnabled) {
       return;
     }
@@ -242,7 +253,9 @@ export class TelemetryManager {
       // editor demo). One microtask lands after the seed; the opt-out is then
       // visible and the event is dropped instead of sent.
       await Promise.resolve();
-      if (!this._isEnabled) {
+      // The container may have disposed us during that yield; bail before
+      // touching any `@inject` field (see `#destroyed`).
+      if (this.#destroyed || !this._isEnabled) {
         return;
       }
       this._lastPayload = payload;
@@ -333,6 +346,9 @@ export class TelemetryManager {
   }
 
   public destroy(): void {
+    // Flip BEFORE the teardowns run: any already-queued `sendEvent` task must
+    // see the disposed state when its microtask resumes.
+    this.#destroyed = true;
     // Runs the config-subscription and bus-observer teardowns. Detaching the bus
     // observer is safe even if the container already disposed the EventBus (its
     // `destroy()` cleared listeners): the returned unsubscribe is an idempotent

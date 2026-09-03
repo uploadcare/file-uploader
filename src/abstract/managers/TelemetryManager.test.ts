@@ -464,6 +464,23 @@ describe('TelemetryManager', () => {
 
       expect(sendEventMock).not.toHaveBeenCalled();
     });
+
+    it('an in-flight queued send survives container disposal without an unhandled rejection', async () => {
+      // `sendEvent` enqueues a task that yields one microtask before re-reading
+      // `qualityInsights`. If the container disposes during that yield it clears
+      // the instance's CONTAINER tag, so every `@inject` getter throws — and the
+      // queued task's rejection is floating, which fails the whole vitest run.
+      const { manager, enable, container } = setup();
+      enable();
+
+      manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
+      container.dispose(); // synchronous: lands before the queued task resumes
+
+      await expect(flush()).resolves.toBeUndefined();
+      expect(() => manager.sendEvent({ eventType: EventType.UPLOAD_CLICK })).not.toThrow();
+      await flush();
+      expect(sendEventMock).not.toHaveBeenCalled();
+    });
   });
 
   it('dedupes payloads that differ only in key order', async () => {
