@@ -50,6 +50,19 @@ describe('File uploader minimal', () => {
       await expect.element(uploadList).toBeVisible();
     });
 
+    it('should show the upload list after a file is picked from the device dialog', async () => {
+      await page.getByText('Choose files', { exact: true }).click();
+      await page.getByText('From device', { exact: true }).click();
+
+      // openSystemDialog() appends a hidden input and clicks it; the native dialog
+      // never opens under test, so feed the input directly to fire its change handler.
+      const fileInput = page.elementLocator(document.querySelector('[uploadcare-file-input]')!);
+      await userEvent.upload(fileInput, new File(['regression'], 'regression.txt', { type: 'text/plain' }));
+
+      await expect.element(page.getByTestId('uc-upload-list')).toBeVisible();
+      await expect.element(page.getByTestId('uc-file-item')).toBeVisible();
+    });
+
     it('should open cloud image editor modal on edit button click', async () => {
       const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
       const api = ctxProvider.getAPI();
