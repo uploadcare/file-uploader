@@ -94,16 +94,8 @@ describe('Telemetry: session', () => {
     expect(init.app_name).toBe('blocks');
     expect(init.component).toBe('uc-file-uploader-regular');
     expect(init.payload.location).toBe(location.origin);
-    expect(init.config).toMatchObject({ quality_insights: true });
-    // `init-solution` goes out before `<uc-config>`'s values reach the ConfigController, so both the top-level pubkey
-    // and the config snapshot still hold defaults. The effective config follows in `change-config`. Pinned as current
-    // behaviour, not an endorsement of it.
-    expect(init.config).toMatchObject({ pubkey: '', test_mode: false });
-    expect(init.project_pubkey).toBe('');
-
-    const changed = await waitForType('change-config');
-    expect(changed.config).toMatchObject({ pubkey: 'demopublickey' });
-    expect(changed.project_pubkey).toBe('demopublickey');
+    expect(init.config).toMatchObject({ pubkey: 'demopublickey', test_mode: true, quality_insights: true });
+    expect(init.project_pubkey).toBe('demopublickey');
   });
 
   it('sends change-config when a config value changes after init', async () => {
@@ -139,7 +131,8 @@ describe('Telemetry: upload lifecycle', () => {
 
     // `uploadAll()` emits `common-upload-start` straight through the EventEmitter; the EventBus observer telemetry
     // subscribes to sees it anyway (the old per-emit mirror did not) — see TelemetryManager's class comment.
-    // De-duplicated: a repeated `common-upload-success` is reported twice often enough to make an exact match flaky.
+    // De-duplicated: CI has reported `common-upload-success` twice under load (not reproducible locally, and the
+    // public event fires once), which an exact match would turn into a flake.
     expect([...new Set(types())]).toEqual(['common-upload-start', 'file-url-changed', 'common-upload-success']);
 
     // TelemetryManager._excludedEvents — reporting any of these would be a regression.

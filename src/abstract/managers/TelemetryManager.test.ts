@@ -250,6 +250,33 @@ describe('TelemetryManager', () => {
     expect(sendEventMock).toHaveBeenCalledTimes(1);
   });
 
+  it('builds the payload at send time, so config seeded after the emit still lands in it', async () => {
+    const { manager, enable, setConfig } = setup();
+    enable();
+
+    // Mirrors the real startup order: the solution block sends `init-solution` from `controllerReady`, a task before
+    // `<uc-config>` has seeded its attributes.
+    manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
+    setConfig('pubkey', 'demopublickey');
+    await flush();
+
+    expect(sendEventMock.mock.calls[0]?.[0].config).toMatchObject({ pubkey: 'demopublickey' });
+    expect(sendEventMock.mock.calls[0]?.[0].projectPubkey).toBe('demopublickey');
+  });
+
+  it('skips a change-config whose config already shipped with the event ahead of it', async () => {
+    const { manager, enable, setConfig } = setup();
+    enable();
+
+    manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
+    // The seed both lands in `init-solution` above and triggers its own `change-config`, which then carries nothing new.
+    setConfig('pubkey', 'demopublickey');
+    await flush();
+
+    expect(sendEventMock).toHaveBeenCalledTimes(1);
+    expect(sendEventMock.mock.calls[0]?.[0].eventType).toBe(InternalEventType.INIT_SOLUTION);
+  });
+
   it('sends again when the payload differs (new timestamp)', async () => {
     const { manager, enable } = setup();
     enable();
