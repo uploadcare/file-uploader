@@ -26,6 +26,8 @@ export type RenderedUploader = {
   config: Config;
   provider: UploadCtxProvider;
   api: ReturnType<UploadCtxProvider['getAPI']>;
+  /** The solution element. Blocks inside it carry no `ctx-name`, so it is the only way to scope a query to this ctx. */
+  root: HTMLElement;
 };
 
 /**
@@ -60,7 +62,8 @@ export async function renderSolution(
   await delay(0);
 
   const provider = inCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
-  return { ctxName, config, provider, api: provider.getAPI() };
+  const root = inCtx<HTMLElement>(Solution, ctxName);
+  return { ctxName, config, provider, api: provider.getAPI(), root };
 }
 
 /** The one element of `tag` belonging to `ctxName`. Throws rather than returning null, so a typo fails loudly. */
@@ -72,7 +75,34 @@ export function inCtx<T extends Element>(tag: string, ctxName: string): T {
   return element;
 }
 
-/** Asserts the activity block is the active one — the `active` attribute is what CSS and the router both key off. */
-export async function expectActivity(tag: `uc-${string}`, ctxName: string): Promise<void> {
-  await expect.poll(() => inCtx(tag, ctxName).hasAttribute('active')).toBe(true);
+/**
+ * Asserts which activity is on screen, by activity id rather than by tag.
+ *
+ * `LitActivityBlock.initCallback` stamps `activity="<id>"` on every activity host and `_activate()` adds `active`, so
+ * `[activity="url"][active]` is the one signal that works for both kinds of activity. Tags do not: `start-from` and
+ * `upload-list` are their own elements, while `url`, `camera`, `external` and `cloud-image-edit` come from lazy
+ * plugins and live inside a generic `<uc-plugin-activity-host>` — `<uc-url-source>` itself is a plain
+ * `LitUploaderBlock` and never becomes active.
+ *
+ * This is the honest "is it really showing" check; `api.getCurrentActivity()` stays correct while the DOM is broken.
+ *
+ * Scoped to `root` because activity hosts live inside the solution's template and carry no `ctx-name` of their own —
+ * only the tags an integrator writes by hand have one.
+ */
+export async function expectActivity(root: HTMLElement, activityId: string): Promise<void> {
+  await expect.poll(() => root.querySelector(`[activity="${activityId}"]`)?.hasAttribute('active') ?? false).toBe(true);
+}
+
+/**
+ * Asserts a modal is really on screen, not merely selected in state.
+ *
+ * `<uc-modal>` renders a light-DOM `<dialog>` and calls `showModal()` on it, so `dialog.open` is the honest signal.
+ * Every `uc-modal` shares one `data-testid` (it is derived from the tag name), so the id is the only discriminator.
+ */
+export async function expectModal(root: HTMLElement, id: string, state: 'open' | 'closed'): Promise<void> {
+  await expect.poll(() => modalDialog(root, id)?.open ?? false).toBe(state === 'open');
+}
+
+export function modalDialog(root: HTMLElement, id: string): HTMLDialogElement | null {
+  return root.querySelector(`uc-modal[id="${id}"] dialog`);
 }
