@@ -109,18 +109,20 @@ export class ProgressBar extends ChildBlock {
     this.style.setProperty('--l-progress-value', this._progressValue.toString());
   }
 
+  /** `role`/`aria-valuemin`/`aria-valuemax` are static (see `render`); only the current value moves. */
   private _syncFakeProgressAria(): void {
-    const fakeProgress = this._fakeProgressLineRef.value;
-    if (!fakeProgress) return;
-    fakeProgress.setAttribute('role', 'progressbar');
-    fakeProgress.setAttribute('aria-valuenow', this._progressValue.toString());
-    fakeProgress.setAttribute('aria-valuemin', '0');
-    fakeProgress.setAttribute('aria-valuemax', '100');
+    this._fakeProgressLineRef.value?.setAttribute('aria-valuenow', this._progressValue.toString());
   }
 
   public override render() {
     return html`
-      <div ${ref(this._fakeProgressLineRef)} class="uc-fake-progress"></div>
+      <div
+        ${ref(this._fakeProgressLineRef)}
+        class="uc-fake-progress"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      ></div>
       <div class="uc-progress"></div>
     `;
   }
