@@ -1,0 +1,559 @@
+{
+  "_source": "Transcribed from ~/workspace/fern-docs/fern/pages/file-uploader/{options,events,api,styling}.mdx",
+  "_why": "The documented public API lives in a different repo, so the contract is checked in here and the parity specs in this directory assert the implementation still matches it.",
+  "_regenerate": "node scripts/extract-public-surface.mjs <path-to-fern-docs> — then re-apply knownMissing/knownMismatch by hand.",
+  "knownMissing": {
+    "methods": {
+      "navigate": "Documented in api.mdx as 'New in v1.34'; absent from UploaderPublicApi. package.json is 1.33.2, so either the docs are ahead of the release or it landed only on a v2 branch. Needs a human decision — do not add a shim to make a test pass."
+    },
+    "activityTypes": {
+      "details": "Listed in the documented ActivityType union for navigate(); absent from ACTIVITY_TYPES in src/lit/activity-constants.ts."
+    }
+  },
+  "knownMismatch": {
+    "multipleMax": {
+      "documented": 0,
+      "actual": 9007199254740991,
+      "note": "Docs say `0` — 'means no limit'; initialConfig.ts:14 uses Number.MAX_SAFE_INTEGER. Both behave as no-limit (validateMultiple treats 0 as falsy), so only the documented literal is wrong."
+    },
+    "retryThrottledRequestMaxTimes": {
+      "documented": 10,
+      "actual": 3,
+      "note": "Docs say `10`; initialConfig.ts:47 is `3`. A real behavioural difference from what the docs promise."
+    },
+    "enableVideoRecording": {
+      "documented": true,
+      "actual": null,
+      "note": "Docs say `true`; initialConfig.ts:77 is `null`. The option is deprecated in favour of `cameraModes`, and `null` reads as 'unset, derive from cameraModes' — a tri-state the docs do not describe."
+    },
+    "cdnCname": {
+      "documented": "https://:subdomain.ucarecd.net",
+      "actual": "https://ucarecdn.com",
+      "note": "Not a bug: the docs give the *resolved* CNAME for new accounts, which is computed asynchronously from the pubkey (Config/computed-properties.ts). initialConfig.ts holds the pre-resolution literal. Resolution itself is covered by tests/config.e2e.test.tsx."
+    }
+  },
+  "options": {
+    "pubkey": {
+      "attribute": "pubkey",
+      "type": "string",
+      "documented": null
+    },
+    "multiple": {
+      "attribute": "multiple",
+      "type": "boolean",
+      "documented": "true",
+      "value": true
+    },
+    "multipleMin": {
+      "attribute": "multiple-min",
+      "type": "number",
+      "documented": "0",
+      "value": 0
+    },
+    "multipleMax": {
+      "attribute": "multiple-max",
+      "type": "number",
+      "documented": "0",
+      "value": 0
+    },
+    "confirmUpload": {
+      "attribute": "confirm-upload",
+      "type": "boolean",
+      "documented": "false",
+      "value": false
+    },
+    "imageShrink": {
+      "attribute": "image-shrink",
+      "type": "string",
+      "documented": "''",
+      "value": ""
+    },
+    "imgOnly": {
+      "attribute": "img-only",
+      "type": "boolean",
+      "documented": "false",
+      "value": false
+    },
+    "accept": {
+      "attribute": "accept",
+      "type": "string",
+      "documented": "''",
+      "value": ""
+    },
+    "externalSourcesPreferredTypes": {
+      "attribute": "external-sources-preferred-types",
+      "type": "comma separated string",
+      "documented": "''",
+      "value": ""
+    },
+    "store": {
+      "attribute": "store",
+      "type": "boolean | 'auto'",
+      "documented": "'auto'",
+      "value": "auto"
+    },
+    "cameraMirror": {
+      "attribute": "camera-mirror",
+      "type": "boolean",
+      "documented": "false",
+      "value": false
+    },
+    "cameraCapture": {
+      "attribute": "camera-capture",
+      "type": "\"user\" | \"environment\" | \"\"",
+      "documented": "\"\"",
+      "value": ""
+    },
+    "sourceList": {
+      "attribute": "source-list",
+      "type": "comma separated string",
+      "documented": "'local, url, camera, dropbox, gdrive'",
+      "value": "local, url, camera, dropbox, gdrive"
+    },
+    "topLevelOrigin": {
+      "attribute": "top-level-origin",
+      "type": "string",
+      "documented": "''",
+      "value": ""
+    },
+    "maxLocalFileSizeBytes": {
+      "attribute": "max-local-file-size-bytes",
+      "type": "number",
+      "documented": "0",
+      "value": 0
+    },
+    "thumbSize": {
+      "attribute": "thumb-size",
+      "type": "number",
+      "documented": "76",
+      "value": 76
+    },
+    "showEmptyList": {
+      "attribute": "show-empty-list",
+      "type": "boolean",
+      "documented": "false",
+      "value": false
+    },
+    "useCloudImageEditor": {
+      "attribute": "use-cloud-image-editor",
+      "type": "boolean",
+      "documented": "true",
+      "value": true
+    },
+    "cloudImageEditorTabs": {
+      "attribute": "cloud-image-editor-tabs",
+      "type": "comma separated string",
+      "documented": "'crop,tuning,filters'",
+      "value": "crop,tuning,filters"
+    },
+    "cropPreset": {
+      "attribute": "crop-preset",
+      "type": "comma separated string",
+      "documented": "''",
+      "value": ""
+    },
+    "remoteTabSessionKey": {
+      "attribute": "remote-tab-session-key",
+      "type": "string",
+      "documented": "''",
+      "value": ""
+    },
+    "cdnCname": {
+      "attribute": "cdn-cname",
+      "type": "string",
+      "documented": "'https://:subdomain.ucarecd.net'",
+      "value": "https://:subdomain.ucarecd.net"
+    },
+    "baseUrl": {
+      "attribute": "base-url",
+      "type": "string",
+      "documented": "'https://upload.uploadcare.com'",
+      "value": "https://upload.uploadcare.com"
+    },
+    "socialBaseUrl": {
+      "attribute": "social-base-url",
+      "type": "string",
+      "documented": "'https://social.uploadcare.com'",
+      "value": "https://social.uploadcare.com"
+    },
+    "secureSignature": {
+      "attribute": "secure-signature",
+      "type": "string",
+      "documented": "''",
+      "value": ""
+    },
+    "secureExpire": {
+      "attribute": "secure-expire",
+      "type": "string",
+      "documented": "''",
+      "value": ""
+    },
+    "secureUploadsSignatureResolver": {
+      "attribute": null,
+      "type": "() => Promise<{ secureSignature: string; secureExpire: string } | null>",
+      "documented": "null",
+      "value": null
+    },
+    "secureUploadsExpireThreshold": {
+      "attribute": "secure-uploads-expire-threshold",
+      "type": "number",
+      "documented": "10 * 60 * 1000"
+    },
+    "secureDeliveryProxy": {
+      "attribute": "secure-delivery-proxy",
+      "type": "string",
+      "documented": "''",
+      "value": ""
+    },
+    "secureDeliveryProxyUrlResolver": {
+      "attribute": null,
+      "type": null,
+      "documented": "null",
+      "value": null
+    },
+    "groupOutput": {
+      "attribute": "group-output",
+      "type": "boolean",
+      "documented": "false",
+      "value": false
+    },
+    "retryThrottledRequestMaxTimes": {
+      "attribute": "retry-throttled-request-max-times",
+      "type": "number",
+      "documented": "10",
+      "value": 10
+    },
+    "retryNetworkErrorMaxTimes": {
+      "attribute": "retry-network-error-max-times",
+      "type": "number",
+      "documented": "3",
+      "value": 3
+    },
+    "multipartMinFileSize": {
+      "attribute": "multipart-min-file-size",
+      "type": "number",
+      "documented": "26214400",
+      "value": 26214400
+    },
+    "multipartChunkSize": {
+      "attribute": "multipart-chunk-size",
+      "type": "number",
+      "documented": "5242880",
+      "value": 5242880
+    },
+    "maxConcurrentRequests": {
+      "attribute": "max-concurrent-requests",
+      "type": "number",
+      "documented": "10",
+      "value": 10
+    },
+    "multipartMaxConcurrentRequests": {
+      "attribute": "multipart-max-concurrent-requests",
+      "type": "number",
+      "documented": "4",
+      "value": 4
+    },
+    "multipartMaxAttempts": {
+      "attribute": "multipart-max-attempts",
+      "type": "number",
+      "documented": "3",
+      "value": 3
+    },
+    "checkForUrlDuplicates": {
+      "attribute": "check-for-url-duplicates",
+      "type": "boolean",
+      "documented": "false",
+      "value": false
+    },
+    "saveUrlForRecurrentUploads": {
+      "attribute": "save-url-for-recurrent-uploads",
+      "type": "boolean",
+      "documented": "false",
+      "value": false
+    },
+    "metadata": {
+      "attribute": null,
+      "type": "Record<string, string> | ((fileEntry: OutputFileEntry) => Promise<Record<string, string>> | Record<string, string>) | null",
+      "documented": "null",
+      "value": null
+    },
+    "tags": {
+      "attribute": null,
+      "type": "string[] | ((fileEntry: OutputFileEntry) => Promise<string[]> | string[]) | null",
+      "documented": "null",
+      "value": null
+    },
+    "removeCopyright": {
+      "attribute": "remove-copyright",
+      "type": "boolean",
+      "documented": "false",
+      "value": false
+    },
+    "debug": {
+      "attribute": "debug",
+      "type": "boolean",
+      "documented": "false",
+      "value": false
+    },
+    "localeName": {
+      "attribute": "locale-name",
+      "type": "string",
+      "documented": "\"en\""
+    },
+    "localeDefinitionOverride": {
+      "attribute": null,
+      "type": "Record<string, Record<string, string>>",
+      "documented": "{}"
+    },
+    "iconHrefResolver": {
+      "attribute": null,
+      "type": "(iconName: string) => (string | undefined)",
+      "documented": "null",
+      "value": null
+    },
+    "fileValidators": {
+      "attribute": null,
+      "type": "Array<(outputFile: OutputFileEntry, ctx: UploaderPublicApi) => CustomValidatorError>",
+      "documented": "[]"
+    },
+    "validationTimeout": {
+      "attribute": "validation-timeout",
+      "type": "number",
+      "documented": "15000",
+      "value": 15000
+    },
+    "validationConcurrency": {
+      "attribute": "validation-concurrency",
+      "type": "number",
+      "documented": "100",
+      "value": 100
+    },
+    "collectionValidators": {
+      "attribute": null,
+      "type": "Array<(outputFile: OutputCollectionState, ctx: UploaderPublicApi) => CustomValidatorError>",
+      "documented": "[]"
+    },
+    "enableAudioRecording": {
+      "attribute": "enable-audio-recording",
+      "type": "boolean",
+      "documented": "true",
+      "value": true
+    },
+    "enableVideoRecording": {
+      "attribute": "enable-video-recording",
+      "type": "boolean",
+      "documented": "true",
+      "value": true
+    },
+    "maxVideoRecordingDuration": {
+      "attribute": "max-video-recording-duration",
+      "type": "number",
+      "documented": "null",
+      "value": null
+    },
+    "cloudImageEditorMaskHref": {
+      "attribute": "cloud-image-editor-mask-href",
+      "type": "string",
+      "documented": "null",
+      "value": null
+    },
+    "cameraModes": {
+      "attribute": "camera-modes",
+      "type": "comma separated string",
+      "documented": "'photo, video'",
+      "value": "photo, video"
+    },
+    "defaultCameraMode": {
+      "attribute": "default-camera-mode",
+      "type": "string | null",
+      "documented": "null",
+      "value": null
+    },
+    "filesViewMode": {
+      "attribute": "files-view-mode",
+      "type": null,
+      "documented": "'list'",
+      "value": "list"
+    },
+    "gridShowFileNames": {
+      "attribute": "grid-show-file-names",
+      "type": "boolean",
+      "documented": "false",
+      "value": false
+    },
+    "cloudImageEditorAutoOpen": {
+      "attribute": "cloud-image-editor-auto-open",
+      "type": "boolean",
+      "documented": "false",
+      "value": false
+    },
+    "qualityInsights": {
+      "attribute": "quality-insights",
+      "type": "boolean",
+      "documented": "true",
+      "value": true
+    },
+    "pasteScope": {
+      "attribute": "paste-scope",
+      "type": "local | global | false",
+      "documented": "local"
+    },
+    "dynamicButtonViewMode": {
+      "attribute": "dynamic-button-view-mode",
+      "type": "auto | menu | toolbar | compact",
+      "documented": "auto"
+    },
+    "dynamicButtonShowFirstIcon": {
+      "attribute": "dynamic-button-show-first-icon",
+      "type": "boolean",
+      "documented": "true",
+      "value": true
+    }
+  },
+  "events": [
+    "file-added",
+    "file-removed",
+    "file-upload-start",
+    "file-upload-progress",
+    "file-upload-success",
+    "file-upload-failed",
+    "file-url-changed",
+    "modal-open",
+    "modal-close",
+    "done-click",
+    "upload-click",
+    "activity-change",
+    "common-upload-start",
+    "common-upload-progress",
+    "common-upload-success",
+    "common-upload-failed",
+    "change",
+    "group-created"
+  ],
+  "methods": [
+    {
+      "name": "getOutputItem",
+      "signature": "getOutputItem(internalId: string)"
+    },
+    {
+      "name": "getOutputCollectionState",
+      "signature": "getOutputCollectionState()"
+    },
+    {
+      "name": "uploadAll",
+      "signature": "uploadAll()"
+    },
+    {
+      "name": "addFileFromObject",
+      "signature": "addFileFromObject(file: File | Blob, options?: { silent?: boolean; fileName?: string; })"
+    },
+    {
+      "name": "addFileFromUuid",
+      "signature": "addFileFromUuid(uuid: string, options?: { silent?: boolean; fileName?: string; })"
+    },
+    {
+      "name": "addFileFromUrl",
+      "signature": "addFileFromUrl(url: string, options?: { silent?: boolean; fileName?: string; })"
+    },
+    {
+      "name": "addFileFromCdnUrl",
+      "signature": "addFileFromCdnUrl(cdnUrl: string, options?: { silent?: boolean; fileName?: string; })"
+    },
+    {
+      "name": "removeFileByInternalId",
+      "signature": "removeFileByInternalId(internalId: string)"
+    },
+    {
+      "name": "removeAllFiles",
+      "signature": "removeAllFiles()"
+    },
+    {
+      "name": "initFlow",
+      "signature": "initFlow()"
+    },
+    {
+      "name": "doneFlow",
+      "signature": "doneFlow()"
+    },
+    {
+      "name": "navigate",
+      "signature": "navigate(activityType: ActivityType, params: ActivityParams<typeof activityType> = {})"
+    },
+    {
+      "name": "setCurrentActivity",
+      "signature": "setCurrentActivity(activityType: ActivityType, params: ActivityParams<typeof activityType> = {})"
+    },
+    {
+      "name": "historyBack",
+      "signature": "historyBack()"
+    },
+    {
+      "name": "setModalState",
+      "signature": "setModalState(opened: boolean)"
+    },
+    {
+      "name": "on",
+      "signature": "on(type: EventType, handler: (payload)"
+    }
+  ],
+  "cssVars": [
+    "--uc-background-dark",
+    "--uc-background-light",
+    "--uc-border-dark",
+    "--uc-border-light",
+    "--uc-button-size",
+    "--uc-destructive-dark",
+    "--uc-destructive-foreground-dark",
+    "--uc-destructive-foreground-light",
+    "--uc-destructive-light",
+    "--uc-dialog-max-height",
+    "--uc-dialog-max-width",
+    "--uc-dialog-shadow-dark",
+    "--uc-dialog-shadow-light",
+    "--uc-dialog-width",
+    "--uc-font-family",
+    "--uc-font-size",
+    "--uc-foreground-dark",
+    "--uc-foreground-light",
+    "--uc-grid-aspect-ratio",
+    "--uc-grid-col",
+    "--uc-grid-gap",
+    "--uc-grid-preview-image-height",
+    "--uc-line-height",
+    "--uc-muted-dark",
+    "--uc-muted-foreground-dark",
+    "--uc-muted-foreground-light",
+    "--uc-muted-light",
+    "--uc-padding",
+    "--uc-preview-size",
+    "--uc-primary-dark",
+    "--uc-primary-foreground-dark",
+    "--uc-primary-foreground-light",
+    "--uc-primary-hover-dark",
+    "--uc-primary-hover-light",
+    "--uc-primary-light",
+    "--uc-primary-oklch-dark",
+    "--uc-primary-oklch-light",
+    "--uc-primary-rgb-dark",
+    "--uc-primary-rgb-light",
+    "--uc-primary-transparent-dark",
+    "--uc-primary-transparent-light",
+    "--uc-radius",
+    "--uc-secondary-dark",
+    "--uc-secondary-foreground-dark",
+    "--uc-secondary-foreground-light",
+    "--uc-secondary-hover-dark",
+    "--uc-secondary-hover-light",
+    "--uc-secondary-light",
+    "--uc-simple-btn-dark",
+    "--uc-simple-btn-font-family",
+    "--uc-simple-btn-font-size",
+    "--uc-simple-btn-foreground-dark",
+    "--uc-simple-btn-foreground-light",
+    "--uc-simple-btn-hover-dark",
+    "--uc-simple-btn-hover-light",
+    "--uc-simple-btn-light",
+    "--uc-simple-btn-padding",
+    "--uc-transition"
+  ]
+}
