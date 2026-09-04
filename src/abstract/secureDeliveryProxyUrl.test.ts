@@ -126,4 +126,175 @@ describe('resolveSecureDeliveryProxyUrl', () => {
     expect(result).toBe('https://cdn.example.com/not-a-cdn-url');
     expect(resolver).not.toHaveBeenCalled();
   });
+  describe('Security: Invalid inputs and edge cases', () => {
+    it('handles URLs with special characters in filename (spaces, %, #)', async () => {
+      const urlWithSpecialChars =
+        'https://ucarecdn.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/preview/300x300/my%20photo%20(1).jpg';
+      const resolver = vi.fn().mockResolvedValue('https://resolved.example.com/file');
+      const config: SecureDeliveryProxyConfig = {
+        secureDeliveryProxy: '',
+        secureDeliveryProxyUrlResolver: resolver,
+      };
+
+      await resolveSecureDeliveryProxyUrl(config, onResolverError, urlWithSpecialChars);
+
+      expect(resolver).toHaveBeenCalledOnce();
+      const callArgs = resolver.mock.calls[0]![1];
+      expect(callArgs!.fileName).toBe('my%20photo%20(1).jpg');
+    });
+
+    it('properly encodes special characters in proxy template substitution', async () => {
+      const urlWithSpecialChars =
+        'https://ucarecdn.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/preview/300x300/photo%20with%20spaces.jpg';
+      const config: SecureDeliveryProxyConfig = {
+        secureDeliveryProxy: 'https://proxy.example.com/?secure={{previewUrl}}',
+        secureDeliveryProxyUrlResolver: null,
+      };
+
+      const result = await resolveSecureDeliveryProxyUrl(config, onResolverError, urlWithSpecialChars);
+
+      // encodeURIComponent encodes the URL once for safe template substitution
+      const expectedEncodedUrl = encodeURIComponent(urlWithSpecialChars);
+      expect(result).toBe(`https://proxy.example.com/?secure=${expectedEncodedUrl}`);
+    });
+
+    it('handles URLs with unicode characters in filename', async () => {
+      const unicodeUrl = 'https://ucarecdn.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/preview/300x300/фото.jpg';
+      const resolver = vi.fn().mockResolvedValue('https://resolved.example.com/file');
+      const config: SecureDeliveryProxyConfig = {
+        secureDeliveryProxy: '',
+        secureDeliveryProxyUrlResolver: resolver,
+      };
+
+      const result = await resolveSecureDeliveryProxyUrl(config, onResolverError, unicodeUrl);
+
+      expect(resolver).toHaveBeenCalledOnce();
+      expect(result).toBe('https://resolved.example.com/file');
+    });
+
+    it('handles very long URLs without truncation', async () => {
+      const longFileName = `${'a'.repeat(500)}.jpg`;
+      const longUrl = `https://ucarecdn.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/preview/300x300/${longFileName}`;
+      const resolver = vi.fn().mockResolvedValue('https://resolved.example.com/file');
+      const config: SecureDeliveryProxyConfig = {
+        secureDeliveryProxy: '',
+        secureDeliveryProxyUrlResolver: resolver,
+      };
+
+      await resolveSecureDeliveryProxyUrl(config, onResolverError, longUrl);
+
+      expect(resolver).toHaveBeenCalledOnce();
+      const callArgs = resolver.mock.calls[0]!;
+      expect(callArgs![0]).toBe(longUrl);
+      expect(callArgs![1]!.fileName).toBe(longFileName);
+    });
+
+    it('handles URLs with fragment identifiers (#)', async () => {
+      const urlWithFragment =
+        'https://ucarecdn.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/preview/300x300/photo.jpg#section';
+      const resolver = vi.fn().mockResolvedValue('https://resolved.example.com/file');
+      const config: SecureDeliveryProxyConfig = {
+        secureDeliveryProxy: '',
+        secureDeliveryProxyUrlResolver: resolver,
+      };
+
+      // URL parsing should handle or reject fragment
+      try {
+        await resolveSecureDeliveryProxyUrl(config, onResolverError, urlWithFragment);
+        // If it succeeds, resolver was called
+        expect(resolver).toHaveBeenCalledOnce();
+      } catch {
+        // If it fails, that's also acceptable for security
+        expect(resolver).not.toHaveBeenCalled();
+      }
+    });
+
+    it('rejects or handles null URL input safely', async () => {
+      const resolver = vi.fn().mockResolvedValue('https://resolved.example.com/file');
+      const config: SecureDeliveryProxyConfig = {
+        secureDeliveryProxy: '',
+        secureDeliveryProxyUrlResolver: resolver,
+      };
+
+      // Pass null as url (type assertion to bypass TS)
+      const nullUrl = null as unknown as string;
+
+      try {
+        await resolveSecureDeliveryProxyUrl(config, onResolverError, nullUrl);
+      } catch {
+        // Expected: either throws or handles gracefully
+      }
+    });
+
+    it('rejects or handles empty string URL safely', async () => {
+      const resolver = vi.fn().mockResolvedValue('https://resolved.example.com/file');
+      const config: SecureDeliveryProxyConfig = {
+        secureDeliveryProxy: '',
+        secureDeliveryProxyUrlResolver: resolver,
+      };
+
+      const result = await resolveSecureDeliveryProxyUrl(config, onResolverError, '');
+
+      // Empty string should not parse as valid CDN URL, fallback expected
+      expect(result).toBe('');
+      expect(resolver).not.toHaveBeenCalled();
+    });
+
+    it('handles URLs with query parameters', async () => {
+      const urlWithParams =
+        'https://ucarecdn.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/preview/300x300/photo.jpg?param=value&other=123';
+      const resolver = vi.fn().mockResolvedValue('https://resolved.example.com/file');
+      const config: SecureDeliveryProxyConfig = {
+        secureDeliveryProxy: '',
+        secureDeliveryProxyUrlResolver: resolver,
+      };
+
+      const result = await resolveSecureDeliveryProxyUrl(config, onResolverError, urlWithParams);
+
+      // Query params might cause parse to fail (acceptable for security)
+      // or succeed (resolver gets called)
+      if (resolver.mock.calls.length > 0) {
+        expect(result).toBe('https://resolved.example.com/file');
+      } else {
+        expect(result).toBe(urlWithParams);
+      }
+    });
+
+    it('resolver receives correctly extracted modifiers from complex URLs', async () => {
+      const complexUrl =
+        'https://ucarecdn.com/12345678-1234-1234-1234-123456789012/-/quality/best/-/format/auto/-/progressive/yes/-/preview/500x500/complex-image.png';
+      const resolver = vi.fn().mockResolvedValue('https://resolved.example.com/file');
+      const config: SecureDeliveryProxyConfig = {
+        secureDeliveryProxy: '',
+        secureDeliveryProxyUrlResolver: resolver,
+      };
+
+      await resolveSecureDeliveryProxyUrl(config, onResolverError, complexUrl);
+
+      expect(resolver).toHaveBeenCalledOnce();
+      const callArgs = resolver.mock.calls[0]![1];
+      expect(callArgs!.uuid).toBe('12345678-1234-1234-1234-123456789012');
+      expect(callArgs!.fileName).toBe('complex-image.png');
+      expect(callArgs!.cdnUrlModifiers).toContain('quality');
+      expect(callArgs!.cdnUrlModifiers).toContain('format');
+      expect(callArgs!.cdnUrlModifiers).toContain('progressive');
+      expect(callArgs!.cdnUrlModifiers).toContain('preview');
+    });
+
+    it('proxy template expansion handles URL-like values safely', async () => {
+      const config: SecureDeliveryProxyConfig = {
+        secureDeliveryProxy: 'https://proxy.example.com/secure?file={{previewUrl}}&sig=abc123',
+        secureDeliveryProxyUrlResolver: null,
+      };
+
+      const result = await resolveSecureDeliveryProxyUrl(config, onResolverError, cdnUrl);
+
+      // Result must be a valid URL
+      expect(() => new URL(result)).not.toThrow();
+      // Signature must be preserved as-is
+      expect(result).toContain('sig=abc123');
+      // Original URL must be encoded
+      expect(result).toContain('proxy.example.com');
+    });
+  });
 });

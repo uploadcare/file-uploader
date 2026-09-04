@@ -374,6 +374,18 @@ describe('UploadEventsController', () => {
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.COMMON_UPLOAD_SUCCESS, expect.anything());
     });
 
+    it('emits COMMON_UPLOAD_SUCCESS once per completion, even on repeated errors flushes', () => {
+      const t = setup();
+      const id = t.collection.add({ fileName: 'a.txt' });
+      t.collection.publishProp(id, 'fileInfo', { uuid: 'u1' } as never);
+
+      t.fireProperties({ errors: new Set([id]) });
+      t.fireProperties({ errors: new Set([id]) });
+
+      const successCalls = t.emit.mock.calls.filter((c: unknown[]) => c[0] === UploaderEventType.COMMON_UPLOAD_SUCCESS);
+      expect(successCalls).toHaveLength(1);
+    });
+
     it('emits FILE_URL_CHANGED for entries that now have a cdnUrl and clears groupInfo', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });

@@ -454,21 +454,26 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     // keeps its original position, which matters to the CDN for a few pairs
     // (`stretch` applies to a following resize) — enforced by `editorAppliedUrl`
     // composing the operation list once for both `cdnUrl` and `cdnUrlModifiers`.
-    const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, sourceOperations });
+    try {
+      const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, sourceOperations });
 
-    const eventData: ApplyResult = {
-      originalUrl,
-      cdnUrlModifiers,
-      cdnUrl,
-      transformations,
-    };
-    this.dispatchEvent(
-      new CustomEvent<ApplyResult>('apply', {
-        detail: eventData,
-        bubbles: true,
-        composed: true,
-      }),
-    );
+      const eventData: ApplyResult = {
+        originalUrl,
+        cdnUrlModifiers,
+        cdnUrl,
+        transformations,
+      };
+      this.dispatchEvent(
+        new CustomEvent<ApplyResult>('apply', {
+          detail: eventData,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    } catch (err) {
+      this._log.error('Failed to apply editor transformations', err);
+      return;
+    }
     this.remove();
   }
 
@@ -579,6 +584,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     this._configChangeUnsub?.();
     this._configChangeUnsub = undefined;
     this._editorController.destroy();
+    this._pendingTelemetry = [];
 
     super.disconnectedCallback();
   }

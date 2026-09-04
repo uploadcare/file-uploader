@@ -81,8 +81,19 @@ export class TelemetryManager {
   private _config: ConfigType = structuredClone(initialConfig);
   private _initialized = false;
   private _lastPayload: TelemetryState | null = null;
+  /** The config as last shipped — what a `CHANGE_CONFIG` has to differ from to be worth sending. */
+  private _reportedConfig: TelemetryState['config'] | null = null;
+  #configChangePending = false;
   private readonly _queue: Queue = new Queue(10);
   readonly #disposables = new Disposables();
+  /**
+   * Set by `destroy()`. The queued `sendEvent` task resumes on a microtask that
+   * can land AFTER the owning container disposed this instance — at which point
+   * the container has cleared its `CONTAINER` tag and every `@inject` getter
+   * throws. Guarding on this flag (rather than catching) also stops a disposed
+   * uploader from shipping a trailing event.
+   */
+  #destroyed = false;
 
   /**
    * Container lifecycle hook — runs after the container has tagged + cached this
@@ -130,10 +141,32 @@ export class TelemetryManager {
       }
     }
     if (changed && this._initialized) {
-      this.sendEvent({
-        eventType: InternalEventType.CHANGE_CONFIG,
-      });
+      this._reportConfigChange();
     }
+  }
+
+  /**
+   * `CHANGE_CONFIG` reports the snapshot, so it is worth an event only once that
+   * snapshot differs from the one telemetry last shipped. The check waits a
+   * microtask because the events that carry a config are formatted on one too:
+   * a `<uc-config>` seed lands in the `init-solution` already queued ahead of it,
+   * and reporting the same values again right behind it says nothing.
+   */
+  private _reportConfigChange(): void {
+    if (this.#configChangePending) {
+      return;
+    }
+    this.#configChangePending = true;
+    void Promise.resolve().then(() => {
+      this.#configChangePending = false;
+      if (this.#destroyed || !this._isEnabled) {
+        return;
+      }
+      if (this._reportedConfig && this._checkObj(this._reportedConfig, this._sanitizedConfig())) {
+        return;
+      }
+      this.sendEvent({ eventType: InternalEventType.CHANGE_CONFIG });
+    });
   }
 
   private _sanitizedConfig(): TelemetryState['config'] {
@@ -209,25 +242,17 @@ export class TelemetryManager {
   }
 
   public sendEvent(body: TelemetryEventBody): void {
+    if (this.#destroyed) {
+      return;
+    }
     if (!this._isEnabled) {
       return;
     }
-    const payload = this._formattingPayload({
-      eventType: body.eventType,
-      payload: body.payload,
-      config: body.config,
-      component: body.component,
-    });
 
     this._init(body.eventType);
 
     const hasExcludedEvents = this._excludedEvents(body.eventType);
     if (hasExcludedEvents) {
-      return;
-    }
-
-    const hasDataSame = this._lastPayload && this._checkObj(this._lastPayload, payload);
-    if (hasDataSame) {
       return;
     }
 
@@ -242,10 +267,31 @@ export class TelemetryManager {
       // editor demo). One microtask lands after the seed; the opt-out is then
       // visible and the event is dropped instead of sent.
       await Promise.resolve();
-      if (!this._isEnabled) {
+      // The container may have disposed us during that yield; bail before
+      // touching any `@inject` field (see `#destroyed`).
+      if (this.#destroyed || !this._isEnabled) {
+        return;
+      }
+      // Format AFTER the yield, not at emit time: `controllerReady` sends
+      // `init-solution` while the solution element connects — one task before
+      // `<uc-config>` has upgraded and seeded its attributes — so a payload built
+      // eagerly ships the default config and an empty `projectPubkey`. Building it
+      // at send time reports the config the page actually configured.
+      const payload = this._formattingPayload({
+        eventType: body.eventType,
+        payload: body.payload,
+        config: body.config,
+        component: body.component,
+      });
+      // The repeat-event dedup moved down here with it — it has to compare what
+      // actually ships, not two different pre-seed snapshots.
+      if (this._lastPayload && this._checkObj(this._lastPayload, payload)) {
         return;
       }
       this._lastPayload = payload;
+      if (payload.config) {
+        this._reportedConfig = payload.config;
+      }
       await this._telemetryInstance.sendEvent(payload);
     });
   }
@@ -333,6 +379,9 @@ export class TelemetryManager {
   }
 
   public destroy(): void {
+    // Flip BEFORE the teardowns run: any already-queued `sendEvent` task must
+    // see the disposed state when its microtask resumes.
+    this.#destroyed = true;
     // Runs the config-subscription and bus-observer teardowns. Detaching the bus
     // observer is safe even if the container already disposed the EventBus (its
     // `destroy()` cleared listeners): the returned unsubscribe is an idempotent

@@ -670,7 +670,8 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      * this hook runs. NB: `_localValues` is intentionally NOT cleared — the next
      * adoption re-seeds against it.
      */
-    protected override controllerReleased(): void {
+    protected override controllerReleased(container: ControllerContainer): void {
+      super.controllerReleased(container);
       this._writerConfig?.unregisterWriter(this);
       this._writerConfig = undefined;
       this._customConfigSubscriptions.clear();

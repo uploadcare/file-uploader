@@ -95,9 +95,7 @@ describe('Telemetry: session', () => {
     expect(init.component).toBe('uc-file-uploader-regular');
     expect(init.payload.location).toBe(location.origin);
     expect(init.config).toMatchObject({ pubkey: 'demopublickey', test_mode: true, quality_insights: true });
-    // The top-level pubkey is still empty at init time — the config has not reached TelemetryManager yet. Pinned as
-    // current behaviour, not an endorsement of it.
-    expect(init.project_pubkey).toBe('');
+    expect(init.project_pubkey).toBe('demopublickey');
   });
 
   it('sends change-config when a config value changes after init', async () => {
@@ -131,9 +129,9 @@ describe('Telemetry: upload lifecycle', () => {
     await waitForType('common-upload-success');
     await delay(SETTLE_MS);
 
-    // No `common-upload-start`: `uploadAll()` emits it straight through the EventEmitter, bypassing `LitBlock.emit`
-    // and therefore telemetry.
-    expect(types()).toEqual(['file-url-changed', 'common-upload-success']);
+    // `uploadAll()` emits `common-upload-start` straight through the EventEmitter; the EventBus observer telemetry
+    // subscribes to sees it anyway (the old per-emit mirror did not) — see TelemetryManager's class comment.
+    expect(types()).toEqual(['common-upload-start', 'file-url-changed', 'common-upload-success']);
 
     // TelemetryManager._excludedEvents — reporting any of these would be a regression.
     for (const excluded of [

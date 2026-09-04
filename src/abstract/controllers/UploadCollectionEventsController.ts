@@ -32,10 +32,19 @@ export class UploadCollectionEventsController {
     this._eventEmitter?.emit(...args);
   };
 
+  /**
+   * `COMMON_UPLOAD_SUCCESS` is emitted from the `errors` change flush, which can run
+   * more than once while the collection stays complete — latch it so a completion
+   * reports exactly once. Cleared when the collection stops being complete or its
+   * membership changes.
+   */
+  private _commonSuccessEmitted = false;
+
   /** Membership changed → the current group no longer describes the collection. */
   public resetGroupIfMembershipChanged(added: Set<Entry>, removed: Set<Entry>): void {
     if (added.size || removed.size) {
       this._collectionState.set('groupInfo', null);
+      this._commonSuccessEmitted = false;
     }
   }
 
@@ -118,16 +127,22 @@ export class UploadCollectionEventsController {
         loadedCount++;
       }
     }
-    if (
+    const complete =
       collection.size > 0 &&
       !hasErrored &&
       collection.size === loadedCount &&
-      this._collectionState.get('collectionErrors').length === 0
-    ) {
-      this._emit(
-        UploaderEventType.COMMON_UPLOAD_SUCCESS,
-        this._api.getOutputCollectionState() as OutputCollectionState<'success'>,
-      );
+      this._collectionState.get('collectionErrors').length === 0;
+    if (!complete) {
+      this._commonSuccessEmitted = false;
+      return;
     }
+    if (this._commonSuccessEmitted) {
+      return;
+    }
+    this._commonSuccessEmitted = true;
+    this._emit(
+      UploaderEventType.COMMON_UPLOAD_SUCCESS,
+      this._api.getOutputCollectionState() as OutputCollectionState<'success'>,
+    );
   }
 }
