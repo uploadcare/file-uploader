@@ -29,8 +29,9 @@ export type RenderedUploader = {
 };
 
 /**
- * `configProps` are applied as JS properties after render, which is how a test sets anything that has no attribute
- * form (validators, resolvers, `metadata`, `tags`, …).
+ * `configProps` are applied as JS properties after render. That is how a test sets anything with no attribute form
+ * (validators, resolvers, `metadata`, `tags`, …) — and also the only reliable way to set a **false** boolean here:
+ * render-jsx drops `prop={false}` entirely, so writing it in the JSX leaves the option at its default.
  */
 export async function renderSolution(
   solution: Solution = 'regular',
