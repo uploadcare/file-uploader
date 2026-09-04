@@ -43,7 +43,7 @@ export async function renderSolution(
   page.render(
     <>
       <Solution ctx-name={ctxName}></Solution>
-      <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+      <uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
       <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
     </>,
   );
@@ -51,6 +51,9 @@ export async function renderSolution(
   // Queries are scoped by ctx-name rather than testid: `page.render` appends a container instead of replacing the
   // previous one, so a test that renders two uploaders has two of every tag on the page.
   const config = inCtx<Config>('uc-config', ctxName);
+  // Set as a DOM property, not in the JSX above: render-jsx drops `prop={false}`, so the `qualityInsights={false}`
+  // that most of the existing e2e files declare never actually disables telemetry.
+  config.qualityInsights = false;
   Object.assign(config, configProps);
 
   // One tick so the solution's blocks register with the ctx before a test drives them.
