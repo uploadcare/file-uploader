@@ -5,7 +5,7 @@
   "knownMissing": {
     "methods": {},
     "activityTypes": {
-      "details": "Listed in the documented ActivityType union for setCurrentActivity (api.mdx:285); absent from ACTIVITY_TYPES in src/lit/activity-constants.ts."
+      "details": "RESOLVED in favour of the code: the activity was removed from the uploader and the docs still listed it. Docs fix committed on fern-docs branch `docs/file-uploader-correct-defaults`. Delete this entry once that lands and the fixture is regenerated from fern-docs `main`."
     }
   },
   "knownMismatch": {
@@ -17,7 +17,7 @@
     "retryThrottledRequestMaxTimes": {
       "documented": 10,
       "actual": 3,
-      "note": "Docs say `10`; initialConfig.ts:47 is `3`. A real behavioural difference from what the docs promise."
+      "note": "RESOLVED in favour of the code: 3 is correct and has always shipped; the documented 10 was wrong. Docs fix committed on fern-docs branch `docs/file-uploader-correct-defaults`. Delete this entry once that lands and the fixture is regenerated from fern-docs `main`."
     },
     "enableVideoRecording": {
       "documented": true,
