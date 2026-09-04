@@ -21,8 +21,14 @@ It means the code and the docs disagree. Decide which is wrong:
 - **The docs changed** → regenerate the fixture:
 
   ```sh
+  git -C ~/workspace/fern-docs checkout main   # released docs only
   node scripts/extract-public-surface.mjs ~/workspace/fern-docs
   ```
+
+  **Regenerate from `main`, never a feature branch.** A docs branch for an
+  unreleased version describes API that has not shipped — generating from one
+  files the whole of it as drift. That already happened once: `navigate()` came
+  from `docs/v1.34-minor-deprecations` and looked like a missing method.
 
   `knownMissing` and `knownMismatch` are preserved across regeneration; only the
   extracted sections are rewritten.

@@ -45,12 +45,14 @@ describe('documented public API', () => {
     expect(getApi().getCurrentActivity).toBeTypeOf('function');
   });
 
-  // QUIRK(api): `navigate()` is documented in api.mdx as "New in v1.34" but does not exist on UploaderPublicApi;
-  // package.json is 1.33.2. Pinned as current behaviour, not endorsed — the fix is either shipping the method or
-  // correcting the docs, and that is a human decision. This test fails the moment it appears, which is the signal to
-  // move it out of `knownMissing`.
-  it.each(missingMethods)('getAPI().%s is documented but not shipped', (name) => {
-    expect(getApi()[name as keyof ReturnType<typeof getApi>]).toBeUndefined();
+  // Methods the released docs promise and the code does not ship. Empty today; an entry here fails the moment the
+  // method appears, which is the signal to remove it and let the test above demand it instead. Written as one test
+  // rather than `it.each` so it still runs when the list is empty.
+  it('does not ship the methods listed in knownMissing', () => {
+    const api = getApi();
+    for (const name of missingMethods) {
+      expect(api[name as keyof typeof api]).toBeUndefined();
+    }
   });
 
   it('accepts every documented activity type that the code registers', () => {

@@ -1,20 +1,18 @@
 {
-  "_source": "Transcribed from ~/workspace/fern-docs/fern/pages/file-uploader/{options,events,api,styling}.mdx",
+  "_source": "Transcribed from the RELEASED docs \u2014 ~/workspace/fern-docs on branch `main`. Do not regenerate from a feature branch: unreleased pages describe API that has not shipped.",
   "_why": "The documented public API lives in a different repo, so the contract is checked in here and the parity specs in this directory assert the implementation still matches it.",
-  "_regenerate": "node scripts/extract-public-surface.mjs <path-to-fern-docs> — then re-apply knownMissing/knownMismatch by hand.",
+  "_regenerate": "node scripts/extract-public-surface.mjs <path-to-fern-docs> \u2014 then re-apply knownMissing/knownMismatch by hand.",
   "knownMissing": {
-    "methods": {
-      "navigate": "Documented in api.mdx as 'New in v1.34'; absent from UploaderPublicApi. package.json is 1.33.2, so either the docs are ahead of the release or it landed only on a v2 branch. Needs a human decision — do not add a shim to make a test pass."
-    },
+    "methods": {},
     "activityTypes": {
-      "details": "Listed in the documented ActivityType union for navigate(); absent from ACTIVITY_TYPES in src/lit/activity-constants.ts."
+      "details": "Listed in the documented ActivityType union for setCurrentActivity (api.mdx:285); absent from ACTIVITY_TYPES in src/lit/activity-constants.ts."
     }
   },
   "knownMismatch": {
     "multipleMax": {
       "documented": 0,
       "actual": 9007199254740991,
-      "note": "Docs say `0` — 'means no limit'; initialConfig.ts:14 uses Number.MAX_SAFE_INTEGER. Both behave as no-limit (validateMultiple treats 0 as falsy), so only the documented literal is wrong."
+      "note": "Docs say `0` \u2014 'means no limit'; initialConfig.ts:14 uses Number.MAX_SAFE_INTEGER. Both behave as no-limit (validateMultiple treats 0 as falsy), so only the documented literal is wrong."
     },
     "retryThrottledRequestMaxTimes": {
       "documented": 10,
@@ -24,7 +22,7 @@
     "enableVideoRecording": {
       "documented": true,
       "actual": null,
-      "note": "Docs say `true`; initialConfig.ts:77 is `null`. The option is deprecated in favour of `cameraModes`, and `null` reads as 'unset, derive from cameraModes' — a tri-state the docs do not describe."
+      "note": "Docs say `true`; initialConfig.ts:77 is `null`. The option is deprecated in favour of `cameraModes`, and `null` reads as 'unset, derive from cameraModes' \u2014 a tri-state the docs do not describe."
     },
     "cdnCname": {
       "documented": "https://:subdomain.ucarecd.net",
@@ -474,10 +472,6 @@
     {
       "name": "doneFlow",
       "signature": "doneFlow()"
-    },
-    {
-      "name": "navigate",
-      "signature": "navigate(activityType: ActivityType, params: ActivityParams<typeof activityType> = {})"
     },
     {
       "name": "setCurrentActivity",
