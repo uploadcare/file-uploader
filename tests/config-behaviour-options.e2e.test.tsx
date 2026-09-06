@@ -152,3 +152,67 @@ describe('validationConcurrency', () => {
     expect(await peakConcurrency(3)).toBeGreaterThan(1);
   });
 });
+
+describe('pasting urls and text', () => {
+  const pasteText = async (root: HTMLElement, text: string, type = 'text/plain', target: Element = root) => {
+    const data = new DataTransfer();
+    data.items.add(text, type);
+    target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, composed: true }));
+    await delay(400);
+  };
+
+  it('adds a file from a pasted http url', async () => {
+    const { root, api } = await renderSolution('regular');
+
+    await pasteText(root, 'https://example.com/photo.jpg');
+
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
+    expect(api.getOutputCollectionState().allEntries[0].externalUrl).toBe('https://example.com/photo.jpg');
+  });
+
+  it('accepts a url pasted as text/uri-list', async () => {
+    const { root, api } = await renderSolution('regular');
+
+    await pasteText(root, 'https://example.com/photo.jpg', 'text/uri-list');
+
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
+  });
+
+  it('ignores plain text that is not a url', async () => {
+    const { root, api } = await renderSolution('regular');
+
+    await pasteText(root, 'just some words');
+
+    expect(api.getOutputCollectionState().totalCount).toBe(0);
+  });
+
+  it('ignores a url with a scheme it will not fetch', async () => {
+    // `_getPastedUrl` only lets http and https through (ClipboardLayer.ts:76).
+    const { root, api } = await renderSolution('regular');
+
+    await pasteText(root, 'ftp://example.com/photo.jpg');
+
+    expect(api.getOutputCollectionState().totalCount).toBe(0);
+  });
+
+  it('ignores a paste into a text field', async () => {
+    // Otherwise pasting a link into the url-source input would also add it to the collection.
+    const { root, api } = await renderSolution('regular');
+    const input = document.createElement('input');
+    root.appendChild(input);
+
+    await pasteText(root, 'https://example.com/photo.jpg', 'text/plain', input);
+
+    expect(api.getOutputCollectionState().totalCount).toBe(0);
+  });
+
+  it('takes both a file and a url from one paste', async () => {
+    const { root, api } = await renderSolution('regular');
+    const data = new DataTransfer();
+    data.items.add(IMAGE.PIXEL);
+    data.items.add('https://example.com/photo.jpg', 'text/plain');
+    root.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, composed: true }));
+
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(2);
+  });
+});
