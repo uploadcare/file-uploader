@@ -34,10 +34,10 @@ export default defineConfig({
       // to 78.92/66.50/85.17. Set a new floor from the *lowest* of several runs,
       // never from a single one.
       thresholds: {
-        statements: 78,
-        branches: 65,
-        functions: 84,
-        lines: 78,
+        statements: 81,
+        branches: 69,
+        functions: 86,
+        lines: 81,
       },
     },
     projects: [
