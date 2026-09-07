@@ -53,8 +53,8 @@ export async function renderSolution(
   // Queries are scoped by ctx-name rather than testid: `page.render` appends a container instead of replacing the
   // previous one, so a test that renders two uploaders has two of every tag on the page.
   const config = inCtx<Config>('uc-config', ctxName);
-  // Set as a DOM property, not in the JSX above: render-jsx drops `prop={false}`, so the `qualityInsights={false}`
-  // that most of the existing e2e files declare never actually disables telemetry.
+  // Set as a DOM property rather than in the JSX above: render-jsx drops `prop={false}` entirely, so the
+  // `qualityInsights={false}` form does nothing. The string attribute works too, and the other e2e files use it.
   config.qualityInsights = false;
   Object.assign(config, configProps);
 

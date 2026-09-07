@@ -337,7 +337,7 @@ describe('Custom Config', () => {
     page.render(
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode debug></uc-config>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode debug></uc-config>
         <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
       </>,
     );
@@ -382,7 +382,7 @@ describe('Custom Config', () => {
     page.render(
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode debug></uc-config>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode debug></uc-config>
         <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
       </>,
     );
@@ -430,7 +430,7 @@ describe('Custom Config', () => {
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
         <uc-config
-          qualityInsights={false}
+          quality-insights="false"
           ctx-name={ctxName}
           pubkey="demopublickey"
           testMode

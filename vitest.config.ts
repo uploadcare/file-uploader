@@ -28,11 +28,11 @@ export default defineConfig({
       // A ratchet, not a target: raise these as coverage lands, never lower them
       // to make a run pass.
       //
-      // They sit ~0.5pp under what the suite actually reaches, because the e2e
+      // They sit ~1pp under what the suite actually reaches, because the e2e
       // project uploads to the real API and which code paths run depends on
-      // network timing — full runs have measured anywhere from 78.12/64.71/84.38
-      // to 78.92/66.50/85.17. Set a new floor from the *lowest* of several runs,
-      // never from a single one.
+      // network timing — full runs at this level have measured between
+      // 87.76/76.31/91.82/87.96 and 88.18/77.00/92.28/88.38. Set a new floor
+      // from the *lowest* of several runs, never from a single one.
       thresholds: {
         statements: 86,
         branches: 74,

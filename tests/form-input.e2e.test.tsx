@@ -16,7 +16,7 @@ describe('Form input', () => {
     page.render(
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         <uc-form-input ctx-name={ctxName}></uc-form-input>
         <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
       </>,
@@ -39,7 +39,7 @@ describe('Form input', () => {
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
         <uc-config
-          qualityInsights={false}
+          quality-insights="false"
           ctx-name={ctxName}
           pubkey="demopublickey"
           testMode
@@ -61,7 +61,7 @@ describe('Form input', () => {
     page.render(
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         <uc-form-input ctx-name={ctxName}></uc-form-input>
         <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
       </>,
@@ -103,7 +103,7 @@ describe('Form input', () => {
     page.render(
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         <uc-form-input ctx-name={ctxName}></uc-form-input>
         <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
       </>,
@@ -157,7 +157,7 @@ describe('Form input', () => {
     page.render(
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         <uc-form-input ctx-name={ctxName} name={nameAttr}></uc-form-input>
         <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
       </>,
@@ -199,7 +199,7 @@ describe('Form input', () => {
     page.render(
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         <uc-form-input ctx-name={ctxName}></uc-form-input>
         <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
       </>,
@@ -253,7 +253,7 @@ describe('Form input', () => {
     page.render(
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         <uc-form-input ctx-name={ctxName} name={nameAttr}></uc-form-input>
         <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
       </>,
@@ -306,7 +306,7 @@ describe('Form input', () => {
     page.render(
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         <uc-form-input ctx-name={ctxName}></uc-form-input>
         <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
       </>,
@@ -355,7 +355,7 @@ describe('Form input', () => {
     page.render(
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         <uc-form-input ctx-name={ctxName}></uc-form-input>
         <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
       </>,
@@ -380,7 +380,7 @@ describe('Form input', () => {
     page.render(
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
         <uc-form-input ctx-name={ctxName} name={nameAttr}></uc-form-input>
         <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
       </>,

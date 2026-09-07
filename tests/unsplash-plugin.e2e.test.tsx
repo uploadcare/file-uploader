@@ -42,8 +42,15 @@ const okResponse = (photos: unknown[] = [PHOTO]) =>
  * Calls the plugin made, ignoring everything else on the page. The uploader's own telemetry also goes through
  * `fetch`, and some of it is sent during init before a test can turn `qualityInsights` off.
  */
-const unsplashCalls = () =>
-  fetchSpy.mock.calls.map((call) => String(call[0])).filter((url) => url.includes('api.unsplash.com'));
+const isUnsplashApi = (url: string) => {
+  try {
+    return new URL(url).host === 'api.unsplash.com';
+  } catch {
+    return false;
+  }
+};
+
+const unsplashCalls = () => fetchSpy.mock.calls.map((call) => String(call[0])).filter(isUnsplashApi);
 
 /** Renders the uploader with the plugin registered and opens its activity. */
 const openUnsplash = async (accessKey = 'test-key') => {

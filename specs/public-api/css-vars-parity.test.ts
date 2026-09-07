@@ -25,7 +25,9 @@ describe('documented CSS custom properties', () => {
     expect(css.length).toBeGreaterThan(0);
   });
 
-  it.each(surface.cssVars)('%s is present in the built CSS', (name) => {
-    expect(css).toContain(name);
+  it.each(surface.cssVars)('%s is declared in the built CSS', (name) => {
+    // A declaration, not any occurrence: `--uc-primary` appears inside `--uc-primary-dark` and inside every
+    // `var(--uc-primary)` reference, so a substring check would still pass after the variable itself was removed.
+    expect(css).toMatch(new RegExp(`${name}\\s*:`));
   });
 });

@@ -12,7 +12,7 @@ beforeEach(() => {
   page.render(
     <>
       <uc-file-uploader-inline ctx-name={ctxName}></uc-file-uploader-inline>
-      <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+      <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
     </>,
   );
 });

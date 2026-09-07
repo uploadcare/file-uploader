@@ -71,7 +71,7 @@ describe('tag order', () => {
     page.render(
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
       </>,
     );
     await delay(50);
@@ -177,7 +177,7 @@ describe('config values set after render', () => {
       <>
         <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
         <uc-config
-          qualityInsights={false}
+          quality-insights="false"
           ctx-name={ctxName}
           pubkey="demopublickey"
           testMode

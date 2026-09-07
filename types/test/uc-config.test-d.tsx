@@ -184,13 +184,13 @@ type DocumentedOption =
   | 'validationTimeout';
 
 // Fails to compile if the published Config loses a documented option.
-() => {
+export const assertDocumentedOptionsExist = () => {
   const documented: Record<DocumentedOption, unknown> = {} as Pick<Config, DocumentedOption>;
   expectType<Record<DocumentedOption, unknown>>(documented);
 };
 
 // Documented value types.
-() => {
+export const assertDocumentedOptionTypes = () => {
   const config = {} as Config;
 
   // boolean

@@ -60,19 +60,22 @@ describe('editor filters tab', () => {
     expect(originals).toHaveLength(1);
   });
 
-  it('loads a preview thumbnail for each filter', async () => {
+  it('loads a preview thumbnail for every filter', async () => {
     await openFilters();
+    await expect.poll(() => filterControls().length, { timeout: 20_000 }).toBeGreaterThan(1);
 
-    // `_previewImage` becomes a CDN url with the filter applied, painted as the button's background.
-    await expect
-      .poll(
-        () => {
-          const previews = [...filterControls()].map((c) => c.querySelector<HTMLElement>('.uc-preview'));
-          return previews.filter((p) => p?.style.backgroundImage.includes('ucarecdn.com')).length;
-        },
-        { timeout: 30_000 },
-      )
-      .toBeGreaterThan(0);
+    // `_previewImage` becomes a CDN url with the filter applied, painted as the button's background. Previews are
+    // fetched lazily on visibility, so each control is scrolled into view and awaited in turn — asserting the whole
+    // strip at once would only ever prove that the handful on screen loaded.
+    const hasPreview = (control: Element) => {
+      const preview = control.querySelector<HTMLElement>('.uc-preview');
+      return /^url\("https:\/\/ucarecdn\.com\//.test(preview?.style.backgroundImage ?? '');
+    };
+
+    for (const control of [...filterControls()].filter((c) => !c.querySelector('.uc-original-icon'))) {
+      control.scrollIntoView({ block: 'nearest', inline: 'center' });
+      await expect.poll(() => hasPreview(control), { timeout: 20_000 }).toBe(true);
+    }
   });
 
   /**
