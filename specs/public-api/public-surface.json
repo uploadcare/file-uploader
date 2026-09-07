@@ -1,7 +1,7 @@
 {
-  "_source": "Transcribed from the RELEASED docs \u2014 ~/workspace/fern-docs on branch `main`. Do not regenerate from a feature branch: unreleased pages describe API that has not shipped.",
-  "_why": "The documented public API lives in a different repo, so the contract is checked in here and the parity specs in this directory assert the implementation still matches it.",
-  "_regenerate": "node scripts/extract-public-surface.mjs <path-to-fern-docs> \u2014 then re-apply knownMissing/knownMismatch by hand.",
+  "_source": "Extracted from the published docs at https://uploadcare.com/docs (Fern serves a clean Markdown version of every page, indexed by /docs/llms.txt). Released content only — a docs branch for an unreleased version describes API that has not shipped.",
+  "_why": "The documented public API lives in a different repo, so the contract is checked in here and the parity specs in this directory assert the implementation still matches it. When one fails, decide which side is wrong: the code broke a documented promise, or the docs moved and this file needs regenerating.",
+  "_regenerate": "node scripts/extract-public-surface.mjs — knownMissing and knownMismatch are preserved; everything else is rewritten.",
   "knownMissing": {
     "methods": {},
     "activityTypes": {
@@ -12,7 +12,7 @@
     "multipleMax": {
       "documented": 0,
       "actual": 9007199254740991,
-      "note": "Docs say `0` \u2014 'means no limit'; initialConfig.ts:14 uses Number.MAX_SAFE_INTEGER. Both behave as no-limit (validateMultiple treats 0 as falsy), so only the documented literal is wrong."
+      "note": "Docs say `0` — 'means no limit'; initialConfig.ts:14 uses Number.MAX_SAFE_INTEGER. Both behave as no-limit (validateMultiple treats 0 as falsy), so only the documented literal is wrong."
     },
     "retryThrottledRequestMaxTimes": {
       "documented": 10,
@@ -22,7 +22,7 @@
     "enableVideoRecording": {
       "documented": true,
       "actual": null,
-      "note": "Docs say `true`; initialConfig.ts:77 is `null`. The option is deprecated in favour of `cameraModes`, and `null` reads as 'unset, derive from cameraModes' \u2014 a tri-state the docs do not describe."
+      "note": "Docs say `true`; initialConfig.ts:77 is `null`. The option is deprecated in favour of `cameraModes`, and `null` reads as 'unset, derive from cameraModes' — a tri-state the docs do not describe."
     },
     "cdnCname": {
       "documented": "https://:subdomain.ucarecd.net",
