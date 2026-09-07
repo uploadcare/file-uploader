@@ -20,7 +20,7 @@ beforeEach(() => {
       ></uc-cloud-image-editor>
       <uc-config
         cdn-cname="https://ucarecdn.com/"
-        qualityInsights={false}
+        quality-insights="false"
         ctx-name={ctxName}
         pubkey="demopublickey"
         testMode
@@ -95,7 +95,7 @@ describe('Cloud Image Editor', () => {
           </div>
           <uc-config
             cdn-cname="https://ucarecdn.com/"
-            qualityInsights={false}
+            quality-insights="false"
             ctx-name={ctxName}
             pubkey="demopublickey"
             testMode

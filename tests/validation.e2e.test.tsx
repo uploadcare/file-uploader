@@ -1,33 +1,27 @@
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import type { Config, FuncFileValidator, OutputErrorCollection, OutputErrorFile, UploadCtxProvider } from '@/index';
+import type { Config, FuncFileValidator, OutputErrorCollection, OutputErrorFile } from '@/index';
 import { delay } from '@/utils/delay.js';
 import '../types/jsx';
 import { IMAGE } from './fixtures/files';
+import { type RenderedUploader, renderSolution } from './utils/render-solution';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
 });
 
-beforeEach(() => {
-  const ctxName = `test-${Math.random().toString(36).slice(2)}`;
-  page.render(
-    <>
-      <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-      <uc-config qualityInsights={false} ctx-name={ctxName} testMode pubkey="demopublickey"></uc-config>
-      <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-    </>,
-  );
+let config: Config;
+let api: RenderedUploader['api'];
+
+beforeEach(async () => {
+  ({ config, api } = await renderSolution('regular'));
 });
 
 describe('Common file validation', () => {
   describe('imgOnly', () => {
     it('should show UI error if non-image file is uploaded', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       config.imgOnly = true;
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       const file = new File(['(⌐□_□)'], 'chucknorris.txt', { type: 'text/plain' });
       api.addFileFromObject(file);
       api.initFlow();
@@ -37,10 +31,7 @@ describe('Common file validation', () => {
 
   describe('accept', () => {
     it('should show UI error if non-accepted file is uploaded', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       config.accept = 'image/png';
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       const file = new File(['(⌐□_□)'], 'chucknorris.jpg', { type: 'image/jpeg' });
       api.addFileFromObject(file);
       api.initFlow();
@@ -50,10 +41,7 @@ describe('Common file validation', () => {
 
   describe('maxLocalFileSizeBytes', () => {
     it('should show UI error if file is too large', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       config.maxLocalFileSizeBytes = 1024;
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       const file = new File([new ArrayBuffer(2048)], 'largefile.jpg', { type: 'image/jpeg' });
       api.addFileFromObject(file);
       api.initFlow();
@@ -63,8 +51,6 @@ describe('Common file validation', () => {
 
   describe('server-side validation', () => {
     it('should show UI error if server rejects the file', async () => {
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       api.addFileFromUrl(`https://fake-domain-that-will-404.com/image.jpg`);
       api.initFlow();
       await expect.element(page.getByText('Host does not exist')).toBeVisible();
@@ -75,10 +61,7 @@ describe('Common file validation', () => {
 describe('Common upload collection validation', () => {
   describe('multiple', () => {
     it('should show UI error if multiple files are added when multiple is false', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       config.multiple = false;
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       api.addFileFromObject(IMAGE.PIXEL);
       api.addFileFromObject(IMAGE.PIXEL);
       api.initFlow();
@@ -86,10 +69,7 @@ describe('Common upload collection validation', () => {
     });
 
     it('should show UI error if more than multipleMax files are added', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       config.multipleMax = 2;
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       api.addFileFromObject(IMAGE.PIXEL);
       api.addFileFromObject(IMAGE.PIXEL);
       api.addFileFromObject(IMAGE.PIXEL);
@@ -98,10 +78,7 @@ describe('Common upload collection validation', () => {
     });
 
     it('should show UI error if less than multipleMin files are added', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       config.multipleMin = 2;
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       api.addFileFromObject(IMAGE.PIXEL);
       api.initFlow();
       await expect.element(page.getByText(`At least 2 files required`)).toBeVisible();
@@ -112,7 +89,6 @@ describe('Common upload collection validation', () => {
 describe('Custom file validation', () => {
   describe('Validator descriptors', () => {
     it('should be able to set custom validator descriptor', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       const customValidator = vi.fn(() => {
         return {
           message: 'Bad image',
@@ -124,8 +100,6 @@ describe('Custom file validation', () => {
           runOn: 'change',
         },
       ];
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       const badFile = new File(['(⌐□_□)'], 'badfile.jpg', { type: 'image/jpeg' });
       api.addFileFromObject(badFile);
       api.initFlow();
@@ -134,7 +108,6 @@ describe('Custom file validation', () => {
     });
 
     it('should run "change" validator even if previous "add" validator failed', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       const customChangeValidator = vi.fn(() => {
         return {
           message: 'Change error',
@@ -155,8 +128,6 @@ describe('Custom file validation', () => {
           runOn: 'change',
         },
       ];
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       const badFile = new File(['(⌐□_□)'], 'badfile.jpg', { type: 'image/jpeg' });
       api.addFileFromObject(badFile);
       api.initFlow();
@@ -166,7 +137,6 @@ describe('Custom file validation', () => {
 
     describe('runOn option is "add"', () => {
       it('should run validator once on file add during whole upload', async () => {
-        const config = page.getByTestId('uc-config').query()! as Config;
         const customValidator = vi.fn(() => undefined);
         config.fileValidators = [
           {
@@ -174,8 +144,6 @@ describe('Custom file validation', () => {
             runOn: 'add',
           },
         ];
-        const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-        const api = ctxProvider.getAPI();
         api.addFileFromObject(IMAGE.PIXEL);
         api.initFlow();
         await expect
@@ -187,7 +155,6 @@ describe('Custom file validation', () => {
       });
 
       it('should not re-run validator on cdnUrl change (e.g. image edit)', async () => {
-        const config = page.getByTestId('uc-config').query()! as Config;
         const customValidator = vi.fn(() => undefined);
         config.fileValidators = [
           {
@@ -195,8 +162,6 @@ describe('Custom file validation', () => {
             runOn: 'add',
           },
         ];
-        const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-        const api = ctxProvider.getAPI();
         api.addFileFromObject(IMAGE.SQUARE);
         api.initFlow();
         await page.getByLabelText('Edit', { exact: true }).click();
@@ -210,7 +175,6 @@ describe('Custom file validation', () => {
 
     describe("runOn option is 'upload'", () => {
       it('should run validator once on file upload when runOn is "upload" during whole upload', async () => {
-        const config = page.getByTestId('uc-config').query()! as Config;
         const customValidator = vi.fn(() => undefined);
         config.fileValidators = [
           {
@@ -218,8 +182,6 @@ describe('Custom file validation', () => {
             runOn: 'upload',
           },
         ];
-        const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-        const api = ctxProvider.getAPI();
         api.addFileFromObject(IMAGE.PIXEL);
         api.initFlow();
         await expect
@@ -231,7 +193,6 @@ describe('Custom file validation', () => {
       });
 
       it('should not re-run validator on cdnUrl change (e.g. image edit)', async () => {
-        const config = page.getByTestId('uc-config').query()! as Config;
         const customValidator = vi.fn(() => undefined);
         config.fileValidators = [
           {
@@ -239,8 +200,6 @@ describe('Custom file validation', () => {
             runOn: 'add',
           },
         ];
-        const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-        const api = ctxProvider.getAPI();
         api.addFileFromObject(IMAGE.SQUARE);
         api.initFlow();
         await page.getByLabelText('Edit', { exact: true }).click({
@@ -256,7 +215,6 @@ describe('Custom file validation', () => {
 
     describe("runOn option is 'change'", () => {
       it('should run validator on every file change when runOn is "change"', async () => {
-        const config = page.getByTestId('uc-config').query()! as Config;
         const customValidator = vi.fn(() => undefined);
         config.fileValidators = [
           {
@@ -264,8 +222,6 @@ describe('Custom file validation', () => {
             runOn: 'change',
           },
         ];
-        const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-        const api = ctxProvider.getAPI();
         api.addFileFromObject(IMAGE.PIXEL);
         api.initFlow();
         await expect
@@ -277,7 +233,6 @@ describe('Custom file validation', () => {
       });
 
       it('should re-run validator on cdnUrl change (e.g. image edit)', async () => {
-        const config = page.getByTestId('uc-config').query()! as Config;
         const customValidator = vi.fn(() => undefined);
         config.fileValidators = [
           {
@@ -285,8 +240,6 @@ describe('Custom file validation', () => {
             runOn: 'change',
           },
         ];
-        const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-        const api = ctxProvider.getAPI();
         api.addFileFromObject(IMAGE.SQUARE);
         api.initFlow();
         await page.getByLabelText('Edit', { exact: true }).click();
@@ -300,7 +253,6 @@ describe('Custom file validation', () => {
 
   describe('Async file validators', () => {
     it('should show UI error if validator fails', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       config.fileValidators = [
         async (file) => {
           await delay(500);
@@ -311,8 +263,6 @@ describe('Custom file validation', () => {
           }
         },
       ];
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       const badFile = new File(['(⌐□_□)'], 'badfile.jpg', { type: 'image/jpeg' });
       api.addFileFromObject(badFile);
       api.initFlow();
@@ -321,7 +271,6 @@ describe('Custom file validation', () => {
     });
 
     it('should skip async validation on timeout', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       config.validationTimeout = 100;
       config.fileValidators = [
         async () => {
@@ -331,30 +280,24 @@ describe('Custom file validation', () => {
           };
         },
       ];
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       api.addFileFromObject(IMAGE.PIXEL);
       api.initFlow();
       await expect.element(page.getByText('1 file uploaded')).toBeVisible();
     });
 
     it('should skip async validation if it throws an error', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       config.fileValidators = [
         async () => {
           await delay(1000);
           throw new Error('Some error');
         },
       ];
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       api.addFileFromObject(IMAGE.PIXEL);
       api.initFlow();
       await expect.element(page.getByText('1 file uploaded')).toBeVisible();
     });
 
     it('should abort async validation if file is removed', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       const validator = vi.fn(async () => {
         await delay(500);
         return {
@@ -362,8 +305,6 @@ describe('Custom file validation', () => {
         };
       });
       config.fileValidators = [validator];
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       const entry = api.addFileFromObject(IMAGE.PIXEL);
       api.initFlow();
       await delay(100);
@@ -380,7 +321,6 @@ describe('Custom file validation', () => {
 
   describe('Sync file validators', () => {
     it('should show UI error if validator fails', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       config.fileValidators = [
         (file) => {
           if (file.name === 'badfile.jpg') {
@@ -390,8 +330,6 @@ describe('Custom file validation', () => {
           }
         },
       ];
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       const goodFile = IMAGE.PIXEL;
       api.addFileFromObject(goodFile);
       const badFile = new File(['(⌐□_□)'], 'badfile.jpg', { type: 'image/jpeg' });
@@ -401,11 +339,8 @@ describe('Custom file validation', () => {
       await expect.element(page.getByLabelText('File pixel.jpg in status finished')).toBeVisible();
     });
     it('should be run multiple times during upload', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       const validator = vi.fn<FuncFileValidator>(() => undefined);
       config.fileValidators = [validator];
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       api.addFileFromObject(IMAGE.PIXEL);
       api.initFlow();
       await expect
@@ -428,11 +363,8 @@ describe('Custom file validation', () => {
     }, 20000);
 
     it('should be called when cdnUrl or cdnUrlModifiers changed', async () => {
-      const config = page.getByTestId('uc-config').query()! as Config;
       const validator = vi.fn(() => undefined);
       config.fileValidators = [validator];
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
       api.addFileFromObject(IMAGE.SQUARE);
       api.initFlow();
 
@@ -488,7 +420,6 @@ describe('Custom file validation', () => {
 
 describe('Custom upload collection validation', () => {
   it('should show UI error if collection validator fails', async () => {
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.collectionValidators = [
       () => {
         return {
@@ -496,15 +427,12 @@ describe('Custom upload collection validation', () => {
         };
       },
     ];
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
     api.addFileFromObject(IMAGE.PIXEL);
     api.initFlow();
     await expect.element(page.getByText('Bad collection')).toBeVisible();
   });
 
   it('should toggle UI error while collection changes and re-validation executes', async () => {
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.collectionValidators = [
       (collection) => {
         if (collection.totalCount !== 2)
@@ -513,8 +441,6 @@ describe('Custom upload collection validation', () => {
           };
       },
     ];
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
     api.addFileFromObject(IMAGE.PIXEL);
     api.initFlow();
     await expect.element(page.getByText('Bad collection')).toBeVisible();
@@ -525,7 +451,6 @@ describe('Custom upload collection validation', () => {
 
 describe('File errors API', () => {
   it('should collect all validation errors in the `errors` property of the file', async () => {
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.imgOnly = true;
     config.accept = 'image/png';
     config.maxLocalFileSizeBytes = 1;
@@ -535,8 +460,6 @@ describe('File errors API', () => {
       }),
     ];
 
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
     const badFile = new File(['(⌐□_□)'], 'badfile.txt', { type: 'text/plain' });
     const entry = api.addFileFromObject(badFile);
     api.initFlow();
@@ -559,8 +482,6 @@ describe('File errors API', () => {
   });
 
   it('should provide upload errors', async () => {
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
     const entry = api.addFileFromUrl(`https://fake-domain-that-will-404.com/image.jpg`);
     api.initFlow();
     await expect
@@ -577,7 +498,6 @@ describe('File errors API', () => {
   });
 
   it('should toggle errors in the `errors` property of the file on file change', async () => {
-    const config = page.getByTestId('uc-config').query()! as Config;
     const customValidator = vi.fn<FuncFileValidator>((entry) => {
       if (entry.cdnUrlModifiers?.includes('mirror')) {
         return {
@@ -591,8 +511,6 @@ describe('File errors API', () => {
         runOn: 'change',
       },
     ];
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
     const entry = api.addFileFromObject(IMAGE.SQUARE);
     api.initFlow();
 
@@ -643,7 +561,6 @@ describe('File errors API', () => {
   }, 30000);
 
   it('should provide errors for "add" and "change" validators', async () => {
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.fileValidators = [
       {
         runOn: 'add',
@@ -658,8 +575,6 @@ describe('File errors API', () => {
         }),
       },
     ];
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
     const entry = api.addFileFromObject(IMAGE.SQUARE);
     api.initFlow();
 
@@ -684,14 +599,11 @@ describe('File errors API', () => {
 
 describe('Upload collection errors API', () => {
   it('should populate upload collection errors with the the common file validation error', async () => {
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.fileValidators = [
       () => ({
         message: 'Bad file',
       }),
     ];
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
     api.addFileFromObject(IMAGE.PIXEL);
     api.initFlow();
 

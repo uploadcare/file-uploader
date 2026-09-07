@@ -5,7 +5,7 @@ import { delay } from '@/utils/delay';
 import { IMAGE } from './fixtures/files';
 import { TEST_IMAGE_URL } from './utils/constants';
 import { type EventRecorder, recordEvents } from './utils/event-recorder';
-import { getCtxName } from './utils/test-renderer';
+import { renderSolution } from './utils/render-solution';
 import '../types/jsx';
 
 /**
@@ -33,17 +33,7 @@ beforeAll(async () => {
 });
 
 beforeEach(async () => {
-  const ctxName = getCtxName();
-  page.render(
-    <>
-      <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-      <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-      <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-    </>,
-  );
-  await delay(0);
-  provider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-  config = page.getByTestId('uc-config').query()! as Config;
+  ({ provider, config } = await renderSolution('regular'));
   recorder = recordEvents(provider);
 });
 

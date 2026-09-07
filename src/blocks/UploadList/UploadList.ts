@@ -232,6 +232,7 @@ export class UploadList extends LitUploaderBlock {
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
+      data-testid="close"
       @click=${this.$['*closeModal']}
       title=${this.l10n('a11y-activity-header-button-close')}
       aria-label=${this.l10n('a11y-activity-header-button-close')}
@@ -255,6 +256,7 @@ export class UploadList extends LitUploaderBlock {
     <button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
+      data-testid="add-more"
       @click=${this._handleAdd}
       ?disabled=${!this._addMoreBtnEnabled}
       ?hidden=${!this._addMoreBtnVisible}

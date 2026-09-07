@@ -14,7 +14,7 @@ beforeEach(() => {
       <uc-file-uploader-regular dynamic-button ctx-name={ctxName}></uc-file-uploader-regular>
       <uc-config
         dynamicButtonViewMode="auto"
-        qualityInsights={false}
+        quality-insights="false"
         ctx-name={ctxName}
         pubkey="demopublickey"
         testMode

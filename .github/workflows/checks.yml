@@ -65,8 +65,10 @@ jobs:
       # the build output too.
       - name: Build
         run: npm run build
+      # `test:coverage` runs both vitest projects in one pass, so coverage is
+      # merged across specs and e2e instead of each run overwriting the other.
       - name: Run tests
-        run: npm run test:specs && npm run test:locales && npm run test:e2e
+        run: npm run test:coverage && npm run test:locales
       - name: Archive artifacts
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: always()

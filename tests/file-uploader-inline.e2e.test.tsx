@@ -1,20 +1,15 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import '../types/jsx';
+import { renderSolution } from './utils/render-solution';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
 });
 
-beforeEach(() => {
-  const ctxName = `test-${Math.random().toString(36).slice(2)}`;
-  page.render(
-    <>
-      <uc-file-uploader-inline ctx-name={ctxName}></uc-file-uploader-inline>
-      <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-    </>,
-  );
+beforeEach(async () => {
+  await renderSolution('inline');
 });
 
 describe('File uploader inline', () => {

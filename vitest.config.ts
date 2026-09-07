@@ -21,10 +21,24 @@ export default defineConfig({
   test: {
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'html'],
+      reporter: ['text', 'html', 'json-summary'],
       reportsDirectory: './tests/__coverage__',
       include: ['src/**/*.ts'],
       exclude: ['**/*.test.*', '**/vite.config.js', './src/locales/**', './dist/**'],
+      // A ratchet, not a target: raise these as coverage lands, never lower them
+      // to make a run pass.
+      //
+      // They sit ~1pp under what the suite actually reaches, because the e2e
+      // project uploads to the real API and which code paths run depends on
+      // network timing — full runs at this level have measured between
+      // 87.76/76.31/91.82/87.96 and 88.18/77.00/92.28/88.38. Set a new floor
+      // from the *lowest* of several runs, never from a single one.
+      thresholds: {
+        statements: 86,
+        branches: 74,
+        functions: 90,
+        lines: 86,
+      },
     },
     projects: [
       {
@@ -40,6 +54,9 @@ export default defineConfig({
         test: {
           name: 'e2e',
           include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
+          // Every e2e test uploads to the real API, so a lost network race is not
+          // a regression. A genuine break still fails both attempts.
+          retry: 1,
           expect: {
             poll: {
               timeout: 20_000,
