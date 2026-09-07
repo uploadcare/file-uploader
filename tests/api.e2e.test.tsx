@@ -5,28 +5,23 @@ import type { Config, EventPayload } from '@/index.js';
 import { IMAGE } from './fixtures/files';
 import { TEST_IMAGE_URL } from './utils/constants';
 import '../types/jsx';
+import { type RenderedUploader, renderSolution } from './utils/render-solution';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
 });
 
-beforeEach(() => {
-  const ctxName = `test-${Math.random().toString(36).slice(2)}`;
-  page.render(
-    <>
-      <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-      <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-      <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-    </>,
-  );
+let config: Config;
+let api: RenderedUploader['api'];
+let uploadCtxProvider: RenderedUploader['provider'];
+
+beforeEach(async () => {
+  ({ config, api, provider: uploadCtxProvider } = await renderSolution('regular'));
 });
 
 describe('API', () => {
   it('should emit events', async () => {
-    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = uploadCtxProvider.api;
-
     const eventHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
 
     uploadCtxProvider.addEventListener('file-added', eventHandler);
@@ -45,9 +40,6 @@ describe('API', () => {
   it('should add an already-uploaded file from an UploadcareFile instance and fire the success events without uploading', async () => {
     // Upload a real local image via the upload client to get a genuine UploadcareFile.
     const file = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
-
-    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = uploadCtxProvider.api;
 
     const fileAddedHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
     const uploadStartHandler = vi.fn<(e: CustomEvent<EventPayload['file-upload-start']>) => void>();
@@ -94,8 +86,6 @@ describe('API', () => {
     const fileB = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
     const fileC = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
 
-    const config = page.getByTestId('uc-config').query()! as Config;
-
     // An `upload`-time validator runs once per uploaded file and is then skipped
     // on later changes. Seeing it run for the replacement proves the new entry
     // gets a fresh validation cycle (the whole point of remove + add).
@@ -109,9 +99,6 @@ describe('API', () => {
         },
       },
     ];
-
-    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = uploadCtxProvider.api;
 
     const addedHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
     const removedHandler = vi.fn<(e: CustomEvent<EventPayload['file-removed']>) => void>();
@@ -163,9 +150,6 @@ describe('API', () => {
       page.render(<uc-file-uploader-regular ctx-name={uploader.getAttribute('ctx-name')!}></uc-file-uploader-regular>);
     }
 
-    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = uploadCtxProvider.api;
-
     const eventHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
 
     uploadCtxProvider.addEventListener('file-added', eventHandler);
@@ -188,9 +172,6 @@ describe('API', () => {
       page.render(uploader);
     }
 
-    const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = uploadCtxProvider.api;
-
     const eventHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
 
     uploadCtxProvider.addEventListener('file-added', eventHandler);
@@ -208,9 +189,6 @@ describe('API', () => {
 
   describe('setCurrentActivity', () => {
     it('should set cloud-image-edit activity with params', async () => {
-      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = uploadCtxProvider.getAPI();
-
       const url = TEST_IMAGE_URL;
       api.addFileFromUrl(url);
 
@@ -229,9 +207,6 @@ describe('API', () => {
     });
 
     it('should open external source activity with defined source', async () => {
-      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = uploadCtxProvider.getAPI();
-
       api.setCurrentActivity('external', { externalSourceType: 'dropbox' });
       api.setModalState(true);
 
@@ -254,9 +229,6 @@ describe('API', () => {
 
   describe('historyBack', () => {
     it('should navigate back to the previous activity', async () => {
-      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = uploadCtxProvider.getAPI();
-
       api.initFlow();
 
       const startFrom = page.getByTestId('uc-start-from');
@@ -277,9 +249,6 @@ describe('API', () => {
 
   describe('initFlow', () => {
     it('should open the start from activity by default', async () => {
-      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = uploadCtxProvider.getAPI();
-
       api.initFlow();
 
       const startFrom = page.getByTestId('uc-start-from');
@@ -287,10 +256,6 @@ describe('API', () => {
     });
 
     it('should open system dialog for the single local source', async () => {
-      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const config = page.getByTestId('uc-config').query()! as Config;
-      const api = uploadCtxProvider.getAPI();
-
       const openSystemDialogSpy = vi.spyOn(api, 'openSystemDialog').mockImplementation(() => {});
 
       config.sourceList = 'local';
@@ -304,10 +269,6 @@ describe('API', () => {
     });
 
     it('should open the single activity in the source list', async () => {
-      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const config = page.getByTestId('uc-config').query()! as Config;
-      const api = uploadCtxProvider.getAPI();
-
       config.sourceList = 'url';
       api.initFlow();
 
@@ -317,9 +278,7 @@ describe('API', () => {
 
     // This is specific case of CKEditor integration, where they update source list and call initFlow on the next tick, so we need to ensure that it works correctly in this scenario
     it('should handle initFlow right after updating sourceList', async () => {
-      const uploadCtxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
       const config = page.getByTestId('uc-config').query()! as HTMLElement;
-      const api = uploadCtxProvider.getAPI();
 
       config.setAttribute('source-list', 'dropbox');
       api.initFlow();

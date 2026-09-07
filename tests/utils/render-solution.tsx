@@ -2,6 +2,7 @@ import { expect } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index';
 import { delay } from '@/utils/delay';
+import { toKebabCase } from '@/utils/toKebabCase';
 import { getCtxName } from './test-renderer';
 import '../../types/jsx';
 
@@ -30,39 +31,85 @@ export type RenderedUploader = {
   root: HTMLElement;
 };
 
+/** The one element of `tag` belonging to `ctxName`. Throws rather than returning null, so a typo fails loudly. */
+export function inCtx<T extends Element>(tag: string, ctxName: string): T {
+  const element = document.querySelector<T>(`${tag}[ctx-name="${ctxName}"]`);
+  if (!element) {
+    throw new Error(`No <${tag}> found for ctx-name "${ctxName}"`);
+  }
+  return element;
+}
+
+export type RenderOptions = {
+  /** `null` renders `<uc-config>` without one, for tests that set it themselves and watch what it derives. */
+  pubkey?: string | null;
+  /** Adds `<uc-form-input>` to the ctx; pass a name to set its `name` attribute. */
+  formInput?: boolean | { name: string };
+};
+
 /**
- * `configProps` are applied as JS properties after render. That is how a test sets anything with no attribute form
- * (validators, resolvers, `metadata`, `tags`, …) — and also the only reliable way to set a **false** boolean here:
- * render-jsx drops `prop={false}` entirely, so writing it in the JSX leaves the option at its default.
+ * Options that can be expressed as an attribute, which is everything primitive. They are set **before** the elements
+ * are connected, because several blocks read config once while initialising — `<uc-form-input>` decides whether its
+ * validation input is `required` when it creates it, and `TelemetryManager` sends its first events during init, so a
+ * value assigned after render is already too late.
+ */
+const isAttributeValue = (value: unknown): value is string | number | boolean =>
+  typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean';
+
+/**
+ * `configProps` reach the element as attributes where they can, and as DOM properties otherwise — validators,
+ * resolvers, `metadata`, `tags` and anything else that is not a primitive.
+ *
+ * Elements are built imperatively rather than through JSX on purpose: render-jsx drops a `false`-valued prop
+ * entirely, so `qualityInsights={false}` silently did nothing, and the generated JSX types reject the string form
+ * that works. Building them by hand sidesteps both.
  */
 export async function renderSolution(
   solution: Solution = 'regular',
   configProps: Partial<Config> = {},
+  { pubkey = 'demopublickey', formInput = false }: RenderOptions = {},
 ): Promise<RenderedUploader> {
   const ctxName = getCtxName();
-  const Solution = solutionTag[solution];
 
-  page.render(
-    <>
-      <Solution ctx-name={ctxName}></Solution>
-      <uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-      <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-    </>,
-  );
+  const create = <T extends Element>(tag: string, attrs: Record<string, string> = {}): T => {
+    const element = document.createElement(tag);
+    element.setAttribute('ctx-name', ctxName);
+    for (const [name, value] of Object.entries(attrs)) {
+      element.setAttribute(name, value);
+    }
+    return element as unknown as T;
+  };
 
-  // Queries are scoped by ctx-name rather than testid: `page.render` appends a container instead of replacing the
-  // previous one, so a test that renders two uploaders has two of every tag on the page.
-  const config = inCtx<Config>('uc-config', ctxName);
-  // Set as a DOM property rather than in the JSX above: render-jsx drops `prop={false}` entirely, so the
-  // `qualityInsights={false}` form does nothing. The string attribute works too, and the other e2e files use it.
-  config.qualityInsights = false;
-  Object.assign(config, configProps);
+  const configAttrs: Record<string, string> = { 'test-mode': 'true', 'quality-insights': 'false' };
+  if (pubkey !== null) {
+    configAttrs.pubkey = pubkey;
+  }
+  const propsForLater: Partial<Config> = {};
+  for (const [name, value] of Object.entries(configProps)) {
+    if (isAttributeValue(value)) {
+      configAttrs[toKebabCase(name)] = String(value);
+    } else {
+      Object.assign(propsForLater, { [name]: value });
+    }
+  }
+
+  const root = create<HTMLElement>(solutionTag[solution]);
+  const config = create<Config>('uc-config', configAttrs);
+  const provider = create<UploadCtxProvider>('uc-upload-ctx-provider');
+
+  page.render(<div ctx-name={ctxName}></div>);
+  const host = inCtx<HTMLElement>('div', ctxName);
+  host.append(root, config);
+  if (formInput) {
+    host.append(create('uc-form-input', typeof formInput === 'object' ? { name: formInput.name } : {}));
+  }
+  host.append(provider);
+
+  Object.assign(config, propsForLater);
 
   // One tick so the solution's blocks register with the ctx before a test drives them.
   await delay(0);
 
-  const provider = inCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
-  const root = inCtx<HTMLElement>(Solution, ctxName);
   return { ctxName, config, provider, api: provider.getAPI(), root };
 }
 
@@ -77,15 +124,6 @@ export async function renderSolution(
  * attribute vitest's own `getByTestId` does — `browser.locators.testIdAttribute`, `data-testid` by default.
  */
 export const within = (root: HTMLElement) => page.elementLocator(root);
-
-/** The one element of `tag` belonging to `ctxName`. Throws rather than returning null, so a typo fails loudly. */
-export function inCtx<T extends Element>(tag: string, ctxName: string): T {
-  const element = document.querySelector<T>(`${tag}[ctx-name="${ctxName}"]`);
-  if (!element) {
-    throw new Error(`No <${tag}> found for ctx-name "${ctxName}"`);
-  }
-  return element;
-}
 
 /**
  * Asserts which activity is on screen, by activity id rather than by tag.

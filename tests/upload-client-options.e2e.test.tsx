@@ -1,7 +1,9 @@
 import type { FileFromOptions, UploadcareFile } from '@uploadcare/upload-client';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { page } from 'vitest/browser';
 import { IMAGE } from './fixtures/files';
-import { renderSolution } from './utils/render-solution';
+import { inCtx, renderSolution } from './utils/render-solution';
+import { getCtxName } from './utils/test-renderer';
 import '../types/jsx';
 
 /**
@@ -73,12 +75,30 @@ describe('options handed to upload-client', () => {
   // `getPrefixedCdnBaseAsync` (Config/computed-properties.ts:74). A resolution already in flight from the pubkey
   // therefore lands with a guard evaluated against the old, default cname, and overwrites an explicit `cdnCname` set
   // in the meantime — so a documented option is silently dropped depending on timing. Pinned, not endorsed.
-  it('loses a custom CDN cname set after the pubkey resolution has started', async () => {
+  //
+  // The elements are built by hand rather than through `renderSolution`, which sets primitives as attributes before
+  // the element connects and settles a tick before returning. Both of those avoid the race, so reproducing it needs
+  // the assignment to land in the same tick as connection.
+  it('loses a custom CDN cname assigned in the same tick as connection', async () => {
     uploadFile.mockClear();
-    const { api, config } = await renderSolution('regular', { cdnCname: 'https://cdn.example.com' });
+    const ctxName = getCtxName();
+    const uploader = document.createElement('uc-file-uploader-regular');
+    const config = document.createElement('uc-config');
+    const provider = document.createElement('uc-upload-ctx-provider');
+    for (const element of [uploader, config, provider]) {
+      element.setAttribute('ctx-name', ctxName);
+    }
+    config.setAttribute('pubkey', 'demopublickey');
+    config.setAttribute('test-mode', 'true');
+    config.setAttribute('quality-insights', 'false');
+
+    page.render(<div ctx-name={ctxName}></div>);
+    inCtx<HTMLElement>('div', ctxName).append(uploader, config, provider);
+    config.cdnCname = 'https://cdn.example.com';
 
     await expect.poll(() => config.cdnCname).toBe('https://1s4oyld5dc.ucarecd.net');
 
+    const api = provider.getAPI();
     api.addFileFromObject(IMAGE.PIXEL);
     api.uploadAll();
     await vi.waitFor(() => expect(uploadFile).toHaveBeenCalled());

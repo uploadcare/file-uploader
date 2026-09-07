@@ -5,6 +5,7 @@ import { delay } from '@/utils/delay';
 import { IMAGE } from './fixtures/files';
 import { cleanup, getCtxName } from './utils/test-renderer';
 import '../types/jsx';
+import { renderSolution } from './utils/render-solution';
 
 /**
  * Baseline for the telemetry contract: which requests the uploader sends to the telemetry endpoint, in which order,
@@ -64,17 +65,8 @@ beforeEach(async () => {
     return Promise.resolve(new Response('{}', { status: 200, headers: { 'Content-Type': 'application/json' } }));
   });
 
-  const ctxName = getCtxName();
-  page.render(
-    <>
-      <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-      <uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-      <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-    </>,
-  );
-  await delay(0);
-  provider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-  config = page.getByTestId('uc-config').query()! as Config;
+  // `qualityInsights` back on: the shared helper disables telemetry, which is the thing under test here.
+  ({ provider, config } = await renderSolution('regular', { qualityInsights: true }));
 });
 
 afterEach(() => {

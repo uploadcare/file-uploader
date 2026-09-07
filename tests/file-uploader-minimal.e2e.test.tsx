@@ -3,21 +3,15 @@ import { page, userEvent } from 'vitest/browser';
 import type { UploadCtxProvider } from '@/index';
 import { TEST_IMAGE_URL } from './utils/constants';
 import '../types/jsx';
+import { renderSolution } from './utils/render-solution';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
 });
 
-beforeEach(() => {
-  const ctxName = `test-${Math.random().toString(36).slice(2)}`;
-  page.render(
-    <>
-      <uc-file-uploader-minimal ctx-name={ctxName}></uc-file-uploader-minimal>
-      <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-      <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-    </>,
-  );
+beforeEach(async () => {
+  await renderSolution('minimal');
 });
 
 describe('File uploader minimal', () => {

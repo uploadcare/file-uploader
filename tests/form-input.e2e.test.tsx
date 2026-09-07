@@ -1,8 +1,8 @@
 import { commands, page, userEvent } from '@vitest/browser/context';
 import { beforeAll, describe, expect, it } from 'vitest';
-import type { Config, UploadCtxProvider } from '@/index';
 import '../types/jsx';
 import { IMAGE } from './fixtures/files';
+import { renderSolution } from './utils/render-solution';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
@@ -11,16 +11,7 @@ beforeAll(async () => {
 
 describe('Form input', () => {
   it('should create hidden input for form validation', async () => {
-    const ctxName = `test-${Math.random().toString(36).slice(2)}`;
-
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-        <uc-form-input ctx-name={ctxName}></uc-form-input>
-        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-      </>,
-    );
+    const { ctxName } = await renderSolution('regular', {}, { formInput: true });
 
     const ucFormInput = page.getByTestId('uc-form-input');
     await expect.element(ucFormInput).toBeInTheDocument();
@@ -33,22 +24,7 @@ describe('Form input', () => {
   });
 
   it('should mark validation input as required when multipleMin > 0', async () => {
-    const ctxName = `test-${Math.random().toString(36).slice(2)}`;
-
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config
-          quality-insights="false"
-          ctx-name={ctxName}
-          pubkey="demopublickey"
-          testMode
-          multipleMin={1}
-        ></uc-config>
-        <uc-form-input ctx-name={ctxName}></uc-form-input>
-        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-      </>,
-    );
+    await renderSolution('regular', { multipleMin: 1 }, { formInput: true });
 
     const ucFormInputEl = page.getByTestId('uc-form-input').element();
     const inputEl = ucFormInputEl.querySelector('input')!;
@@ -56,18 +32,8 @@ describe('Form input', () => {
   });
 
   it('should set single value when multiple is false and one file uploaded', async () => {
-    const ctxName = `test-${Math.random().toString(36).slice(2)}`;
+    const { config, api } = await renderSolution('regular', {}, { formInput: true });
 
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-        <uc-form-input ctx-name={ctxName}></uc-form-input>
-        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-      </>,
-    );
-
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.multiple = false;
 
     const uploadButton = page.getByText('Upload file', { exact: true });
@@ -88,9 +54,6 @@ describe('Form input', () => {
     const ucFormInputEl = page.getByTestId('uc-form-input').element();
     const inputEl = ucFormInputEl.querySelector('input');
 
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
-
     await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl, { timeout: 5000 }).toBeTruthy();
 
     const cdnUrl = api.getOutputCollectionState().allEntries[0]?.cdnUrl;
@@ -98,18 +61,8 @@ describe('Form input', () => {
   });
 
   it('should replace single input value when a new file is uploaded', async () => {
-    const ctxName = `test-${Math.random().toString(36).slice(2)}`;
+    const { config, api } = await renderSolution('regular', {}, { formInput: true });
 
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-        <uc-form-input ctx-name={ctxName}></uc-form-input>
-        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-      </>,
-    );
-
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.multiple = false;
 
     // First upload
@@ -121,9 +74,6 @@ describe('Form input', () => {
       commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']),
       userEvent.click(fromDeviceButton),
     ]);
-
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
 
     await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl, { timeout: 15000 }).toBeTruthy();
     const firstCdn = api.getOutputCollectionState().allEntries[0]?.cdnUrl;
@@ -151,19 +101,10 @@ describe('Form input', () => {
   });
 
   it('should set single value using name attr when multiple is false', async () => {
-    const ctxName = `test-${Math.random().toString(36).slice(2)}`;
     const nameAttr = 'custom-single-name';
 
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-        <uc-form-input ctx-name={ctxName} name={nameAttr}></uc-form-input>
-        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-      </>,
-    );
+    const { config, api } = await renderSolution('regular', {}, { formInput: { name: nameAttr } });
 
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.multiple = false;
 
     const uploadButton = page.getByText('Upload file', { exact: true });
@@ -183,9 +124,6 @@ describe('Form input', () => {
     const ucFormInputEl = page.getByTestId('uc-form-input').element();
     const inputEl = ucFormInputEl.querySelector('input');
 
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
-
     await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl, { timeout: 5000 }).toBeTruthy();
 
     const cdnUrl = api.getOutputCollectionState().allEntries[0]?.cdnUrl;
@@ -194,18 +132,8 @@ describe('Form input', () => {
   });
 
   it('should set two inputs when multiple is true and two files uploaded', async () => {
-    const ctxName = `test-${Math.random().toString(36).slice(2)}`;
+    const { ctxName, config, api } = await renderSolution('regular', {}, { formInput: true });
 
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-        <uc-form-input ctx-name={ctxName}></uc-form-input>
-        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-      </>,
-    );
-
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.multiple = true;
 
     const uploadButton = page.getByText('Upload files', { exact: true });
@@ -221,9 +149,6 @@ describe('Form input', () => {
 
     const uploadList = page.getByTestId('uc-upload-list');
     await expect.element(uploadList).toBeVisible();
-
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
 
     await expect
       .poll(
@@ -247,19 +172,10 @@ describe('Form input', () => {
   });
 
   it('should set two inputs using name attr when multiple is true', async () => {
-    const ctxName = `test-${Math.random().toString(36).slice(2)}`;
     const nameAttr = 'custom-multiple-name';
 
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-        <uc-form-input ctx-name={ctxName} name={nameAttr}></uc-form-input>
-        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-      </>,
-    );
+    const { config, api } = await renderSolution('regular', {}, { formInput: { name: nameAttr } });
 
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.multiple = true;
 
     const uploadButton = page.getByText('Upload files', { exact: true });
@@ -275,9 +191,6 @@ describe('Form input', () => {
 
     const uploadList = page.getByTestId('uc-upload-list');
     await expect.element(uploadList).toBeVisible();
-
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
 
     await expect
       .poll(
@@ -301,18 +214,8 @@ describe('Form input', () => {
   });
 
   it('should set single group input when multiple and groupOutput are true', async () => {
-    const ctxName = `test-${Math.random().toString(36).slice(2)}`;
+    const { ctxName, config, api } = await renderSolution('regular', {}, { formInput: true });
 
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-        <uc-form-input ctx-name={ctxName}></uc-form-input>
-        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-      </>,
-    );
-
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.multiple = true;
     config.groupOutput = true;
 
@@ -329,9 +232,6 @@ describe('Form input', () => {
 
     const uploadList = page.getByTestId('uc-upload-list');
     await expect.element(uploadList).toBeVisible();
-
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
 
     const getGroupCdnUrl = () => api.getOutputCollectionState().group?.cdnUrl;
     await expect.poll(getGroupCdnUrl, { timeout: 15000 }).toBeTruthy();
@@ -350,22 +250,10 @@ describe('Form input', () => {
   });
 
   it('should set validation message on failed collection', async () => {
-    const ctxName = `test-${Math.random().toString(36).slice(2)}`;
+    const { config, api } = await renderSolution('regular', {}, { formInput: true });
 
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-        <uc-form-input ctx-name={ctxName}></uc-form-input>
-        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-      </>,
-    );
-
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.fileValidators = [() => ({ message: 'Bad file' })];
 
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
     api.addFileFromObject(IMAGE.PIXEL);
     api.initFlow();
 
@@ -374,19 +262,10 @@ describe('Form input', () => {
   });
 
   it('should set group input using name attr when multiple and groupOutput are true', async () => {
-    const ctxName = `test-${Math.random().toString(36).slice(2)}`;
     const nameAttr = 'custom-group-name';
 
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-        <uc-form-input ctx-name={ctxName} name={nameAttr}></uc-form-input>
-        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-      </>,
-    );
+    const { config, api } = await renderSolution('regular', {}, { formInput: { name: nameAttr } });
 
-    const config = page.getByTestId('uc-config').query()! as Config;
     config.multiple = true;
     config.groupOutput = true;
 
@@ -403,9 +282,6 @@ describe('Form input', () => {
 
     const uploadList = page.getByTestId('uc-upload-list');
     await expect.element(uploadList).toBeVisible();
-
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
 
     const getGroupCdnUrl = () => api.getOutputCollectionState().group?.cdnUrl;
     await expect.poll(getGroupCdnUrl, { timeout: 15000 }).toBeTruthy();
