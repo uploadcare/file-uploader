@@ -66,6 +66,18 @@ export async function renderSolution(
   return { ctxName, config, provider, api: provider.getAPI(), root };
 }
 
+/**
+ * Locators scoped to one uploader.
+ *
+ * `page.getByTestId` searches the whole document, and `page.render` appends rather than replaces, so a test with two
+ * uploaders trips strict mode on every shared test id. `page.elementLocator` gives the same locator API rooted at a
+ * single element, which is what the `root` returned by `renderSolution` is for.
+ *
+ * The ids are the ones `testMode` derives from each block's tag name (`LitBlock.testId`), and this reads the same
+ * attribute vitest's own `getByTestId` does — `browser.locators.testIdAttribute`, `data-testid` by default.
+ */
+export const within = (root: HTMLElement) => page.elementLocator(root);
+
 /** The one element of `tag` belonging to `ctxName`. Throws rather than returning null, so a typo fails loudly. */
 export function inCtx<T extends Element>(tag: string, ctxName: string): T {
   const element = document.querySelector<T>(`${tag}[ctx-name="${ctxName}"]`);
@@ -90,6 +102,8 @@ export function inCtx<T extends Element>(tag: string, ctxName: string): T {
  * only the tags an integrator writes by hand have one.
  */
 export async function expectActivity(root: HTMLElement, activityId: string): Promise<void> {
+  // Keyed on the activity id rather than a test id: the id is what the router sets, and one generic
+  // `<uc-plugin-activity-host>` serves every plugin activity, so their test ids are all identical.
   await expect.poll(() => root.querySelector(`[activity="${activityId}"]`)?.hasAttribute('active') ?? false).toBe(true);
 }
 
@@ -104,5 +118,9 @@ export async function expectModal(root: HTMLElement, id: string, state: 'open' |
 }
 
 export function modalDialog(root: HTMLElement, id: string): HTMLDialogElement | null {
-  return root.querySelector(`uc-modal[id="${id}"] dialog`);
+  const modal = within(root)
+    .getByTestId('uc-modal')
+    .elements()
+    .find((element) => element.id === id);
+  return modal?.querySelector('dialog') ?? null;
 }

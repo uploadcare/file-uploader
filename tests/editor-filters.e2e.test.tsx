@@ -33,7 +33,7 @@ const openFilters = async () => {
   await userEvent.click(tab);
 };
 
-const filterControls = () => document.querySelectorAll('uc-editor-filter-control');
+const filterControls = () => page.getByTestId('uc-editor-filter-control').elements();
 
 /** The first real filter — the list also holds an "original" entry that behaves differently. */
 const pickFilter = async () => {

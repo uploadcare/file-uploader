@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from 'vitest';
 import { delay } from '@/utils/delay';
-import { expectActivity, renderSolution } from './utils/render-solution';
+import { expectActivity, renderSolution, within } from './utils/render-solution';
 import '../types/jsx';
 
 /**
@@ -21,7 +21,9 @@ const openStartFrom = async (configProps: Parameters<typeof renderSolution>[1] =
 
   // The regular solution renders more than one drop area; this is the one inside the start-from dialog. The other is
   // a page-level fullscreen zone that defers to it (`_shouldIgnore`), so dropping on it does nothing.
-  const dropArea = rendered.root.querySelector('uc-modal[id="start-from"] uc-drop-area') as HTMLElement;
+  const dropArea = rendered.root.querySelector(
+    '[data-testid="uc-modal"][id="start-from"] [data-testid="uc-drop-area"]',
+  ) as HTMLElement;
   return { ...rendered, dropArea };
 };
 
@@ -172,7 +174,9 @@ describe('when local uploads are not offered', () => {
 
   it('ignores a drop while disabled', async () => {
     const { root, api } = await openStartFrom({ sourceList: 'url, camera' });
-    const area = root.querySelector('uc-drop-area') as HTMLElement;
+    // Every area in the solution is disabled, so any of them proves the point — `.elements()` rather than `.query()`
+    // because the strict locator refuses an ambiguous match, which is the behaviour worth keeping elsewhere.
+    const [area] = within(root).getByTestId('uc-drop-area').elements();
 
     area.dispatchEvent(
       new DragEvent('drop', {

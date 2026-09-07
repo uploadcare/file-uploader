@@ -3,7 +3,7 @@ import { page } from 'vitest/browser';
 import type { IconHrefResolver } from '@/index';
 import { delay } from '@/utils/delay';
 import { IMAGE } from './fixtures/files';
-import { expectActivity, renderSolution } from './utils/render-solution';
+import { expectActivity, renderSolution, within } from './utils/render-solution';
 import '../types/jsx';
 
 /**
@@ -26,7 +26,7 @@ describe('removeCopyright', () => {
     api.initFlow();
     await expectActivity(root, 'start-from');
 
-    await expect.poll(() => root.querySelector('uc-copyright')?.hasAttribute('hidden')).toBe(false);
+    await expect.poll(() => within(root).getByTestId('uc-copyright').query()?.hasAttribute('hidden')).toBe(false);
   });
 
   it('hides the credit when set', async () => {
@@ -34,7 +34,7 @@ describe('removeCopyright', () => {
     api.initFlow();
     await expectActivity(root, 'start-from');
 
-    await expect.poll(() => root.querySelector('uc-copyright')?.hasAttribute('hidden')).toBe(true);
+    await expect.poll(() => within(root).getByTestId('uc-copyright').query()?.hasAttribute('hidden')).toBe(true);
   });
 });
 
@@ -44,7 +44,7 @@ describe('showEmptyList', () => {
     await expectActivity(root, 'start-from');
 
     await delay(100);
-    expect(root.querySelector('uc-upload-list')?.hasAttribute('active')).toBe(false);
+    expect(within(root).getByTestId('uc-upload-list').query()?.hasAttribute('active')).toBe(false);
   });
 
   it('lets the empty upload list open when set', async () => {
@@ -77,8 +77,8 @@ describe('filesViewMode', () => {
     api.initFlow();
     await expectActivity(root, 'upload-list');
 
-    await expect.poll(() => root.querySelector('uc-upload-list')?.getAttribute('mode')).toBe('list');
-    await expect.poll(() => root.querySelector('uc-file-item')?.getAttribute('mode')).toBe('list');
+    await expect.poll(() => within(root).getByTestId('uc-upload-list').query()?.getAttribute('mode')).toBe('list');
+    await expect.poll(() => within(root).getByTestId('uc-file-item').query()?.getAttribute('mode')).toBe('list');
   });
 
   it('switches the list and its items to grid mode', async () => {
@@ -87,8 +87,8 @@ describe('filesViewMode', () => {
     api.initFlow();
     await expectActivity(root, 'upload-list');
 
-    await expect.poll(() => root.querySelector('uc-upload-list')?.getAttribute('mode')).toBe('grid');
-    await expect.poll(() => root.querySelector('uc-file-item')?.getAttribute('mode')).toBe('grid');
+    await expect.poll(() => within(root).getByTestId('uc-upload-list').query()?.getAttribute('mode')).toBe('grid');
+    await expect.poll(() => within(root).getByTestId('uc-file-item').query()?.getAttribute('mode')).toBe('grid');
   });
 });
 
@@ -100,7 +100,7 @@ describe('gridShowFileNames', () => {
     api.initFlow();
     await expectActivity(root, 'upload-list');
 
-    const name = () => root.querySelector<HTMLElement>('uc-file-item .uc-file-name');
+    const name = () => root.querySelector<HTMLElement>('[data-testid="uc-file-item"] .uc-file-name');
     // The file item renders its inner template a beat after the list becomes active.
     await expect.poll(() => name()?.textContent).toBe('pixel.jpg');
 
@@ -128,7 +128,9 @@ describe('iconHrefResolver', () => {
     api.initFlow();
     await expectActivity(root, 'start-from');
 
-    await expect.poll(() => root.querySelector('uc-icon use')?.getAttribute('href')).toMatch(/^#uc-icon-/);
+    await expect
+      .poll(() => root.querySelector('[data-testid="uc-icon"] use')?.getAttribute('href'))
+      .toMatch(/^#uc-icon-/);
   });
 
   it('takes the href the resolver returns', async () => {
@@ -139,7 +141,7 @@ describe('iconHrefResolver', () => {
     await expectActivity(root, 'start-from');
 
     await expect
-      .poll(() => root.querySelector('uc-icon use')?.getAttribute('href'))
+      .poll(() => root.querySelector('[data-testid="uc-icon"] use')?.getAttribute('href'))
       .toMatch(/^https:\/\/icons\.example\.com\/.+\.svg#icon$/);
   });
 
@@ -153,7 +155,9 @@ describe('iconHrefResolver', () => {
     api.initFlow();
     await expectActivity(root, 'start-from');
 
-    await expect.poll(() => root.querySelector('uc-icon use')?.getAttribute('href')).toMatch(/^#uc-icon-/);
+    await expect
+      .poll(() => root.querySelector('[data-testid="uc-icon"] use')?.getAttribute('href'))
+      .toMatch(/^#uc-icon-/);
   });
 });
 

@@ -119,13 +119,13 @@ describe('microphone toggle', () => {
     const toggle = page.getByTestId('uc-camera-source--toggle-microphone');
     await expect.element(toggle).toBeVisible();
 
-    const iconBefore = toggle.element().querySelector('uc-icon');
+    const iconBefore = toggle.element().querySelector('[data-testid="uc-icon"]');
     const nameBefore = (iconBefore as unknown as { name?: string })?.name;
 
     await toggle.click();
 
     await expect
-      .poll(() => (toggle.element().querySelector('uc-icon') as unknown as { name?: string })?.name)
+      .poll(() => (toggle.element().querySelector('[data-testid="uc-icon"]') as unknown as { name?: string })?.name)
       .not.toBe(nameBefore);
   });
 });

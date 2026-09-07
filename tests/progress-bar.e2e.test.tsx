@@ -28,7 +28,7 @@ const renderBar = async (): Promise<ProgressBar> => {
   host.innerHTML = `<uc-progress-bar ctx-name="${ctxName}"></uc-progress-bar>`;
   await delay(50);
 
-  return host.querySelector('uc-progress-bar') as ProgressBar;
+  return host.querySelector('[data-testid="uc-progress-bar"]') as ProgressBar;
 };
 
 const progressValue = (bar: ProgressBar) => bar.style.getPropertyValue('--l-progress-value');
@@ -127,13 +127,13 @@ describe('uc-progress-bar-common', () => {
     host.innerHTML = `<uc-progress-bar-common ctx-name="${ctxName}"></uc-progress-bar-common>`;
     await delay(100);
 
-    return host.querySelector('uc-progress-bar-common') as HTMLElement;
+    return host.querySelector('[data-testid="uc-progress-bar-common"]') as HTMLElement;
   };
 
   it('renders a progress bar', async () => {
     const common = await renderCommon();
 
-    expect(common.querySelector('uc-progress-bar')).not.toBe(null);
+    expect(common.querySelector('[data-testid="uc-progress-bar"]')).not.toBe(null);
   });
 
   // QUIRK(progress): `updated()` gates the `active` attribute on `changedProperties.has('visible')`, but the field is

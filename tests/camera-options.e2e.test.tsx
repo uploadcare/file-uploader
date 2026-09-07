@@ -33,14 +33,16 @@ describe('cameraMirror', () => {
   it('leaves the preview unmirrored by default', async () => {
     const { root } = await openCamera();
 
-    await expect.poll(() => root.querySelector<HTMLVideoElement>('uc-camera-source video')?.style.transform).toBe('');
+    await expect
+      .poll(() => root.querySelector<HTMLVideoElement>('[data-testid="uc-camera-source"] video')?.style.transform)
+      .toBe('');
   });
 
   it('mirrors the preview when set', async () => {
     const { root } = await openCamera({ cameraMirror: true });
 
     await expect
-      .poll(() => root.querySelector<HTMLVideoElement>('uc-camera-source video')?.style.transform)
+      .poll(() => root.querySelector<HTMLVideoElement>('[data-testid="uc-camera-source"] video')?.style.transform)
       .toBe('scaleX(-1)');
   });
 });

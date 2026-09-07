@@ -110,7 +110,7 @@ describe('inline: no modal is ever used', () => {
 
     await expectActivity(root, 'start-from');
     expect(api.getCurrentActivity()).toBe('start-from');
-    expect(root.querySelector('uc-modal')).toBe(null);
+    expect(root.querySelector('[data-testid="uc-modal"]')).toBe(null);
   });
 
   it('switches to the upload list when a file arrives', async () => {
