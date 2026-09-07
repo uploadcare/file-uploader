@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { delay } from '@/utils/delay';
 import { IMAGE } from './fixtures/files';
-import { expectActivity, expectModal, modalDialog, renderSolution } from './utils/render-solution';
+import { expectActivity, expectModal, modalDialog, renderSolution, within } from './utils/render-solution';
 import '../types/jsx';
 
 /**
@@ -63,7 +63,7 @@ describe('regular', () => {
     api.initFlow();
     await expectModal(root, 'upload-list', 'open');
 
-    await page.getByTestId('uc-upload-list').getByRole('button', { name: 'Close' }).click();
+    await page.getByTestId('uc-activity-header--close').click();
 
     await expectModal(root, 'upload-list', 'closed');
     await expect.poll(() => api.getCurrentActivity()).toBe(null);
@@ -177,7 +177,7 @@ describe('inline', () => {
     api.addFileFromObject(IMAGE.PIXEL);
     await expectActivity(root, 'upload-list');
 
-    (root.querySelector('.uc-add-more-btn') as HTMLButtonElement).click();
+    (within(root).getByTestId('uc-upload-list--add-more').element() as HTMLButtonElement).click();
     await expectActivity(root, 'start-from');
 
     const cancel = root.querySelector('.uc-cancel-btn') as HTMLButtonElement;

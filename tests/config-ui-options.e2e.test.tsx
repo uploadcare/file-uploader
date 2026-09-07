@@ -100,7 +100,7 @@ describe('gridShowFileNames', () => {
     api.initFlow();
     await expectActivity(root, 'upload-list');
 
-    const name = () => root.querySelector<HTMLElement>('[data-testid="uc-file-item"] .uc-file-name');
+    const name = () => within(root).getByTestId('uc-file-item--file-name').query() as HTMLElement | null;
     // The file item renders its inner template a beat after the list becomes active.
     await expect.poll(() => name()?.textContent).toBe('pixel.jpg');
 

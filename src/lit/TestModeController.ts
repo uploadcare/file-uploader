@@ -8,6 +8,22 @@ const isCustomElement = (el: Element): boolean => {
   return el.tagName?.includes('-') ?? false;
 };
 
+/**
+ * The block an element belongs to: the closest custom-element ancestor.
+ *
+ * Every block whose subtree contains the element used to claim it, and each prefixed the id in turn, so a `dialog`
+ * inside `<uc-modal>` inside a solution came out as `uc-file-uploader-regular--uc-modal--dialog`. Claiming only from
+ * the nearest block keeps ids stable and independent of how deeply the element happens to be nested.
+ */
+const owningBlock = (el: Element): Element | null => {
+  for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+    if (isCustomElement(parent)) {
+      return parent;
+    }
+  }
+  return null;
+};
+
 export class TestModeController implements ReactiveController {
   private _trackedElements: Set<Element> = new Set();
   private _originalValues: Map<Element, string> = new Map();
@@ -48,13 +64,12 @@ export class TestModeController implements ReactiveController {
     }
 
     const hostElement = this._host as unknown as Element;
-    const hostTag = hostElement.tagName?.toLowerCase();
     const candidates = Array.from(root.querySelectorAll('[data-testid]')).filter(
       (el) => !isCustomElement(el),
     ) as Element[];
 
     for (const el of candidates) {
-      if (hostTag && el.closest(hostTag) !== hostElement) {
+      if (owningBlock(el) !== hostElement) {
         continue;
       }
 
@@ -69,7 +84,7 @@ export class TestModeController implements ReactiveController {
     }
 
     for (const el of Array.from(this._trackedElements)) {
-      if (!el.isConnected || (hostTag && el.closest(hostTag) !== hostElement)) {
+      if (!el.isConnected || owningBlock(el) !== hostElement) {
         this._trackedElements.delete(el);
         this._originalValues.delete(el);
       }

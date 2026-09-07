@@ -318,8 +318,14 @@ export class EditorFilterControl extends EditorButtonControl {
         title=${ifDefined(this.titleProp)}
         @click=${clickHandler}
       >
-        <div class="uc-preview" ?data-loaded=${this._previewLoaded} style=${styleMap(previewStyles)}></div>
+        <div
+          class="uc-preview"
+          data-testid="preview"
+          ?data-loaded=${this._previewLoaded}
+          style=${styleMap(previewStyles)}
+        ></div>
         <uc-icon
+          data-original=${this.isOriginal ? 'true' : 'false'}
           class=${classMap({ 'uc-original-icon': this.isOriginal })}
           name=${this.icon}
           style=${styleMap(iconStyles)}
