@@ -101,26 +101,6 @@ describe('Bundles', () => {
     await expect.element(page.getByText('Upload files', { exact: true })).toBeVisible();
   });
 
-  test('web/uc-cloud-image-editor.min.js', async () => {
-    // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
-    // @ts-ignore
-    await import('~/web/uc-cloud-image-editor.min.css');
-    const UC = await import('~/web/uc-cloud-image-editor.min.js');
-
-    UC.defineComponents(UC);
-
-    const ctxName = getCtxName();
-    page.render(
-      <>
-        <uc-cloud-image-editor ctx-name={ctxName} uuid="90e06e59-8055-4435-9291-c005a98cf098"></uc-cloud-image-editor>
-        <uc-config ctx-name={ctxName} pubkey="364c0864158c27472ffe" testMode></uc-config>
-      </>,
-    );
-
-    // TODO: For some reason, toBeVisible() doesn't work here
-    await expect.element(page.getByTestId('uc-crop-frame')).toBeInTheDocument();
-  });
-
   test('web/uc-file-uploader-inline.min.js', async () => {
     // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
     // @ts-ignore
@@ -190,5 +170,29 @@ describe('Bundles', () => {
         document.querySelector('uc-img > img')?.getAttribute('src')?.includes('90e06e59-8055-4435-9291-c005a98cf098'),
       )
       .toBe(true);
+  });
+  // Last on purpose. Every bundle in this file registers its components into the one shared custom-element
+  // registry, and the first definition of a tag wins — so the editor bundle, the only one here that is not a
+  // whole uploader, must not claim shared tags like `uc-btn-ui` before the uploader bundles have. Running it
+  // earlier leaves the uploaders that follow rendering the editor's classes, which is how the inline solution
+  // ended up with no source buttons.
+  test('web/uc-cloud-image-editor.min.js', async () => {
+    // biome-ignore lint/suspicious/noTsIgnore: Ignoring TypeScript error for CSS import
+    // @ts-ignore
+    await import('~/web/uc-cloud-image-editor.min.css');
+    const UC = await import('~/web/uc-cloud-image-editor.min.js');
+
+    UC.defineComponents(UC);
+
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-cloud-image-editor ctx-name={ctxName} uuid="90e06e59-8055-4435-9291-c005a98cf098"></uc-cloud-image-editor>
+        <uc-config ctx-name={ctxName} pubkey="364c0864158c27472ffe" testMode></uc-config>
+      </>,
+    );
+
+    // TODO: For some reason, toBeVisible() doesn't work here
+    await expect.element(page.getByTestId('uc-crop-frame')).toBeInTheDocument();
   });
 });
