@@ -23,6 +23,14 @@ const SETTLE_MS = 1000;
 const CHANGE = 'change' as const;
 const PROGRESS = ['file-upload-progress', 'common-upload-progress'] as const;
 
+/**
+ * `file-upload-progress` only ever fires when a progress tick lands while the entry is still uploading
+ * (`LitUploaderBlock` skips it once `isUploading` has flipped). A replayed response is fulfilled by Playwright rather
+ * than sent over the wire, which produces no XHR upload-progress tick at all, so the single progress update arrives
+ * together with the success — too late. Every run that goes over the real network, recording included, asserts it.
+ */
+const FILE_UPLOAD_PROGRESS = import.meta.env.E2E_NET === 'replay' ? ([] as const) : (['file-upload-progress'] as const);
+
 let provider: UploadCtxProvider;
 let config: Config;
 let recorder: EventRecorder;
@@ -52,7 +60,7 @@ describe('Events: upload lifecycle', () => {
       'file-added',
       'common-upload-start',
       'file-upload-start',
-      'file-upload-progress',
+      ...FILE_UPLOAD_PROGRESS,
       'common-upload-progress',
       'file-upload-success',
       'file-url-changed',
@@ -159,7 +167,7 @@ describe('Events: upload lifecycle', () => {
       'file-added',
       'common-upload-start',
       'file-upload-start',
-      'file-upload-progress',
+      ...FILE_UPLOAD_PROGRESS,
       'common-upload-progress',
       'file-upload-success',
       'file-url-changed',

@@ -15,6 +15,9 @@ export default defineConfig({
   resolve: {
     alias,
   },
+  // Tests that assert on upload progress need to know whether they are watching the real network; see
+  // `tests/utils/network-snapshot.ts`.
+  define: { 'import.meta.env.E2E_NET': JSON.stringify(process.env.E2E_NET ?? 'replay') },
   esbuild: {
     jsxInject: "import { renderer } from '~/tests/utils/test-renderer';",
   },
@@ -54,6 +57,7 @@ export default defineConfig({
         test: {
           name: 'e2e',
           include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
+          setupFiles: ['./tests/utils/setup-network.ts'],
           // Every e2e test uploads to the real API, so a lost network race is not
           // a regression. A genuine break still fails both attempts.
           retry: 1,

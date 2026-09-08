@@ -82,6 +82,7 @@
     "test:publint": "publint",
     "test:specs": "vitest run --project specs",
     "test:e2e": "vitest run --project e2e",
+    "test:e2e:record": "E2E_NET=record vitest run --project e2e && tsx ./scripts/normalize-har.ts",
     "test:e2e:dev": "vitest --project e2e --browser.headless=false",
     "test:coverage": "vitest run --coverage",
     "test:locales": "tsx ./scripts/test-locales.ts",
