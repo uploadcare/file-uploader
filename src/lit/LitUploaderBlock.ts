@@ -423,7 +423,8 @@ export class LitUploaderBlock extends LitActivityBlock {
   }
 
   protected async getUploadClientOptions(): Promise<FileFromOptions> {
-    const secureToken = await this.secureUploadsManager.getSecureToken().catch(() => null);
+    const authToken = this.cfg.authToken ?? undefined;
+    const secureToken = authToken ? null : await this.secureUploadsManager.getSecureToken().catch(() => null);
 
     const options = {
       store: this.cfg.store,
@@ -432,6 +433,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       baseURL: this.cfg.baseUrl,
       userAgent: customUserAgent,
       integration: this.cfg.userAgentIntegration,
+      authToken,
       secureSignature: secureToken?.secureSignature,
       secureExpire: secureToken?.secureExpire,
       retryThrottledRequestMaxTimes: this.cfg.retryThrottledRequestMaxTimes,

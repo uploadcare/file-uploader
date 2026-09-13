@@ -64,6 +64,7 @@ const config = {
   localeDefinitionOverride: null,
   secureUploadsExpireThreshold: 10 * 60 * 1000,
   secureUploadsSignatureResolver: null,
+  authToken: null,
   secureDeliveryProxyUrlResolver: null,
   iconHrefResolver: null,
   fileValidators: [],

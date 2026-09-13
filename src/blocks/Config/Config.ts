@@ -25,6 +25,7 @@ export const complexConfigKeys = [
   'plugins',
   'localeDefinitionOverride',
   'secureUploadsSignatureResolver',
+  'authToken',
   'secureDeliveryProxyUrlResolver',
   'iconHrefResolver',
   'fileValidators',

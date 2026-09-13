@@ -12,6 +12,7 @@ import type { complexConfigKeys } from '../blocks/Config/Config';
 import type { FilesViewMode } from '../blocks/UploadList/UploadList';
 
 export {
+  type AuthToken,
   type Metadata,
   NetworkError,
   type Tags,
@@ -22,6 +23,7 @@ export {
 } from '@uploadcare/upload-client';
 
 import type {
+  AuthToken,
   Metadata,
   NetworkError,
   Tags,
@@ -268,6 +270,12 @@ export type ConfigType = {
    * Resolver for secure uploads signature.
    */
   secureUploadsSignatureResolver: SecureUploadsSignatureResolver | null;
+  /**
+   * JWT for the Upload API `Authorization: Bearer <token>` scheme. Accepts a plain token or a resolver function; the
+   * resolver is called before every request, so long-running uploads can supply a fresh token mid-flight. Takes
+   * precedence over `secureSignature`/`secureExpire` and `secureUploadsSignatureResolver`.
+   */
+  authToken: AuthToken | null;
   /**
    * Resolver for secure delivery proxy URL.
    */
