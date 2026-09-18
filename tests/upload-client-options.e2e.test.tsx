@@ -1,8 +1,9 @@
 import type { FileFromOptions, UploadcareFile } from '@uploadcare/upload-client';
 import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
+import type { Config, UploadCtxProvider } from '@/index';
 import { IMAGE } from './fixtures/files';
-import { inCtx, renderSolution } from './utils/render-solution';
+import { createInCtx, inCtx, renderSolution } from './utils/render-solution';
 import { getCtxName } from './utils/test-renderer';
 import '../types/jsx';
 
@@ -82,15 +83,13 @@ describe('options handed to upload-client', () => {
   it('loses a custom CDN cname assigned in the same tick as connection', async () => {
     uploadFile.mockClear();
     const ctxName = getCtxName();
-    const uploader = document.createElement('uc-file-uploader-regular');
-    const config = document.createElement('uc-config');
-    const provider = document.createElement('uc-upload-ctx-provider');
-    for (const element of [uploader, config, provider]) {
-      element.setAttribute('ctx-name', ctxName);
-    }
-    config.setAttribute('pubkey', 'demopublickey');
-    config.setAttribute('test-mode', 'true');
-    config.setAttribute('quality-insights', 'false');
+    const uploader = createInCtx('uc-file-uploader-regular', ctxName);
+    const provider = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
+    const config = createInCtx<Config>('uc-config', ctxName, {
+      pubkey: 'demopublickey',
+      'test-mode': 'true',
+      'quality-insights': 'false',
+    });
 
     page.render(<div ctx-name={ctxName}></div>);
     inCtx<HTMLElement>('div', ctxName).append(uploader, config, provider);

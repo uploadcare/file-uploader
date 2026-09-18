@@ -40,6 +40,19 @@ export function inCtx<T extends Element>(tag: string, ctxName: string): T {
   return element;
 }
 
+/**
+ * A disconnected element already scoped to `ctxName`. `renderSolution` covers the usual case; this is for the tests
+ * that must control connection timing themselves and would otherwise repeat the `ctx-name` boilerplate by hand.
+ */
+export function createInCtx<T extends Element>(tag: string, ctxName: string, attrs: Record<string, string> = {}): T {
+  const element = document.createElement(tag);
+  element.setAttribute('ctx-name', ctxName);
+  for (const [name, value] of Object.entries(attrs)) {
+    element.setAttribute(name, value);
+  }
+  return element as unknown as T;
+}
+
 export type RenderOptions = {
   /** `null` renders `<uc-config>` without one, for tests that set it themselves and watch what it derives. */
   pubkey?: string | null;
@@ -71,14 +84,8 @@ export async function renderSolution(
 ): Promise<RenderedUploader> {
   const ctxName = getCtxName();
 
-  const create = <T extends Element>(tag: string, attrs: Record<string, string> = {}): T => {
-    const element = document.createElement(tag);
-    element.setAttribute('ctx-name', ctxName);
-    for (const [name, value] of Object.entries(attrs)) {
-      element.setAttribute(name, value);
-    }
-    return element as unknown as T;
-  };
+  const create = <T extends Element>(tag: string, attrs: Record<string, string> = {}): T =>
+    createInCtx<T>(tag, ctxName, attrs);
 
   const configAttrs: Record<string, string> = { 'test-mode': 'true', 'quality-insights': 'false' };
   if (pubkey !== null) {

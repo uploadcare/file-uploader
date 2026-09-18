@@ -1,9 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { page } from 'vitest/browser';
-import type { UploadCtxProvider } from '@/index';
 import { ACTIVITY_TYPES } from '@/lit/activity-constants';
 import surface from '../specs/public-api/public-surface.json' with { type: 'json' };
-import { getCtxName } from './utils/test-renderer';
+import { type RenderedUploader, renderSolution } from './utils/render-solution';
 import '../types/jsx';
 
 /**
@@ -20,36 +18,31 @@ beforeAll(async () => {
   UC.defineComponents(UC);
 });
 
-beforeEach(() => {
-  const ctxName = getCtxName();
-  page.render(
-    <>
-      <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-      <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-      <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-    </>,
-  );
-});
+// Through `renderSolution` rather than JSX so the fixture matches the rest of the suite and picks up its defaults:
+// `test-mode`, and `quality-insights="false"` as an attribute, which is the form that survives render-jsx. Written as
+// JSX, `qualityInsights={false}` is dropped and every run of this file would report telemetry from the demo account.
+let api: RenderedUploader['api'];
 
-const getApi = () => (page.getByTestId('uc-upload-ctx-provider').query() as UploadCtxProvider).getAPI();
+beforeEach(async () => {
+  ({ api } = await renderSolution('regular'));
+});
 
 const missingMethods = Object.keys(surface.knownMissing.methods);
 const shippedMethods = surface.methods.map((method) => method.name).filter((name) => !missingMethods.includes(name));
 
 describe('documented public API', () => {
   it.each(shippedMethods)('getAPI().%s is callable', (name) => {
-    expect(getApi()[name as keyof ReturnType<typeof getApi>]).toBeTypeOf('function');
+    expect(api[name as keyof typeof api]).toBeTypeOf('function');
   });
 
   it('exposes getCurrentActivity, which api.mdx describes in prose rather than a signature block', () => {
-    expect(getApi().getCurrentActivity).toBeTypeOf('function');
+    expect(api.getCurrentActivity).toBeTypeOf('function');
   });
 
   // Methods the released docs promise and the code does not ship. Empty today; an entry here fails the moment the
   // method appears, which is the signal to remove it and let the test above demand it instead. Written as one test
   // rather than `it.each` so it still runs when the list is empty.
   it('does not ship the methods listed in knownMissing', () => {
-    const api = getApi();
     for (const name of missingMethods) {
       expect(api[name as keyof typeof api]).toBeUndefined();
     }

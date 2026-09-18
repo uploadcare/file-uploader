@@ -325,7 +325,6 @@ export class EditorFilterControl extends EditorButtonControl {
           style=${styleMap(previewStyles)}
         ></div>
         <uc-icon
-          data-original=${this.isOriginal ? 'true' : 'false'}
           class=${classMap({ 'uc-original-icon': this.isOriginal })}
           name=${this.icon}
           style=${styleMap(iconStyles)}

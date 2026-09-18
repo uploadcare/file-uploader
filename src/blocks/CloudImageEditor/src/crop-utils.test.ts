@@ -460,46 +460,39 @@ describe('crop-utils', () => {
       [1000, -1000],
     ];
 
-    it.each(directions)('keeps the result inside the image box when dragging %s past every edge', (direction) => {
-      for (const delta of overshoots) {
-        const result = resizeRect({ direction, rect, delta, imageBox });
+    /** Every handle against every overshoot, so a failure names the pair instead of only the direction. */
+    const cases = directions.flatMap((direction) => overshoots.map((delta) => ({ direction, delta })));
 
-        expect(isRectInsideRect(result, imageBox)).toBe(true);
-      }
+    it.each(cases)('keeps the result inside the image box dragging $direction by $delta', ({ direction, delta }) => {
+      const result = resizeRect({ direction, rect, delta, imageBox });
+
+      expect(isRectInsideRect(result, imageBox)).toBe(true);
     });
 
-    it.each(directions)('never shrinks below the minimum crop size dragging %s', (direction) => {
-      // The opposite overshoot collapses the rectangle towards zero on at least one axis.
-      for (const delta of overshoots) {
-        const result = resizeRect({ direction, rect, delta, imageBox });
+    // The overshoot opposite the handle collapses the rectangle towards zero on at least one axis.
+    it.each(cases)('never shrinks below the minimum size dragging $direction by $delta', ({ direction, delta }) => {
+      const result = resizeRect({ direction, rect, delta, imageBox });
 
-        expect(result.width).toBeGreaterThanOrEqual(MIN_CROP_SIZE);
-        expect(result.height).toBeGreaterThanOrEqual(MIN_CROP_SIZE);
-      }
+      expect(result.width).toBeGreaterThanOrEqual(MIN_CROP_SIZE);
+      expect(result.height).toBeGreaterThanOrEqual(MIN_CROP_SIZE);
     });
 
-    it.each(directions)('holds a 2:1 aspect ratio while dragging %s', (direction) => {
-      for (const delta of overshoots) {
-        const result = resizeRect({ direction, rect, delta, imageBox, aspectRatio: 2 });
+    it.each(cases)('holds a 2:1 aspect ratio dragging $direction by $delta', ({ direction, delta }) => {
+      const result = resizeRect({ direction, rect, delta, imageBox, aspectRatio: 2 });
 
-        expect(isRectMatchesAspectRatio(result, 2)).toBe(true);
-      }
+      expect(isRectMatchesAspectRatio(result, 2)).toBe(true);
     });
 
-    it.each(directions)('holds a 1:2 aspect ratio while dragging %s', (direction) => {
-      for (const delta of overshoots) {
-        const result = resizeRect({ direction, rect, delta, imageBox, aspectRatio: 0.5 });
+    it.each(cases)('holds a 1:2 aspect ratio dragging $direction by $delta', ({ direction, delta }) => {
+      const result = resizeRect({ direction, rect, delta, imageBox, aspectRatio: 0.5 });
 
-        expect(isRectMatchesAspectRatio(result, 0.5)).toBe(true);
-      }
+      expect(isRectMatchesAspectRatio(result, 0.5)).toBe(true);
     });
 
-    it.each(directions)('stays inside the image box with an aspect ratio dragging %s', (direction) => {
-      for (const delta of overshoots) {
-        const result = resizeRect({ direction, rect, delta, imageBox, aspectRatio: 2 });
+    it.each(cases)('stays inside the image box with a 2:1 ratio, $direction by $delta', ({ direction, delta }) => {
+      const result = resizeRect({ direction, rect, delta, imageBox, aspectRatio: 2 });
 
-        expect(isRectInsideRect(result, imageBox)).toBe(true);
-      }
+      expect(isRectInsideRect(result, imageBox)).toBe(true);
     });
 
     it('returns the rectangle untouched for a direction it does not handle', () => {

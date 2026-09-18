@@ -4,7 +4,7 @@ import type { Config, UploadCtxProvider } from '@/index';
 import { delay } from '@/utils/delay';
 import { IMAGE } from './fixtures/files';
 import { recordEvents } from './utils/event-recorder';
-import { inCtx, renderSolution } from './utils/render-solution';
+import { createInCtx, inCtx, renderSolution } from './utils/render-solution';
 import { getCtxName } from './utils/test-renderer';
 import '../types/jsx';
 
@@ -37,22 +37,19 @@ const mount = async ({
 }) => {
   const ctxName = getCtxName();
 
-  const config = document.createElement('uc-config');
-  config.setAttribute('ctx-name', ctxName);
-  config.setAttribute('pubkey', 'demopublickey');
-  config.setAttribute('test-mode', 'true');
-  for (const [name, value] of Object.entries(attrs)) {
-    config.setAttribute(name, value);
-  }
-
-  const uploader = document.createElement('uc-file-uploader-regular');
-  uploader.setAttribute('ctx-name', ctxName);
+  const config = createInCtx<Config>('uc-config', ctxName, {
+    pubkey: 'demopublickey',
+    'test-mode': 'true',
+    'quality-insights': 'false',
+    ...attrs,
+  });
+  const uploader = createInCtx('uc-file-uploader-regular', ctxName);
 
   page.render(<div ctx-name={ctxName}></div>);
   inCtx('div', ctxName).append(...(configFirst ? [config, uploader] : [uploader, config]));
   await delay(50);
 
-  return { ctxName, config: config as Config };
+  return { ctxName, config };
 };
 
 describe('tag order', () => {
@@ -76,12 +73,11 @@ describe('tag order', () => {
     );
     await delay(50);
 
-    const provider = document.createElement('uc-upload-ctx-provider');
-    provider.setAttribute('ctx-name', ctxName);
+    const provider = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
     inCtx('uc-config', ctxName).after(provider);
     await delay(0);
 
-    const api = (provider as UploadCtxProvider).getAPI();
+    const api = provider.getAPI();
     const entry = api.addFileFromObject(IMAGE.PIXEL);
     expect(api.getOutputCollectionState().totalCount).toBe(1);
     expect(entry.internalId).toBeTruthy();
@@ -116,15 +112,14 @@ describe('two uploaders on one page', () => {
   it('shares one collection between two providers on the same ctx-name', async () => {
     const { ctxName, api } = await renderSolution();
 
-    const sibling = document.createElement('uc-upload-ctx-provider');
-    sibling.setAttribute('ctx-name', ctxName);
+    const sibling = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
     inCtx('uc-upload-ctx-provider', ctxName).after(sibling);
     await delay(0);
 
     api.addFileFromObject(IMAGE.PIXEL);
     await delay(50);
 
-    expect((sibling as UploadCtxProvider).getAPI().getOutputCollectionState().totalCount).toBe(1);
+    expect(sibling.getAPI().getOutputCollectionState().totalCount).toBe(1);
   });
 });
 
