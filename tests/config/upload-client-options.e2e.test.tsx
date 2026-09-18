@@ -186,4 +186,38 @@ describe('options handed to upload-client', () => {
     expect(options.metadata).toEqual({ name: 'pixel.jpg' });
     expect(options.tags).toEqual(['resolved']);
   });
+
+  it('passes a plain authToken straight through', async () => {
+    // The SSR shape: the token is already minted, so there is nothing to cache.
+    const options = await optionsFor({ authToken: 'eyJ.token.sig' });
+
+    expect(options.authToken).toBe('eyJ.token.sig');
+  });
+
+  it('passes a cached resolver for an authToken function, not the raw config value', async () => {
+    // upload-client calls the resolver before every request, so handing it the
+    // raw config function would re-fetch a token per request.
+    const fetchToken = vi.fn(async () => 'resolved.token.sig');
+    const options = await optionsFor({ authToken: fetchToken });
+
+    expect(typeof options.authToken).toBe('function');
+    expect(options.authToken).not.toBe(fetchToken);
+
+    const resolve = options.authToken as () => Promise<string>;
+    await expect(resolve()).resolves.toBe('resolved.token.sig');
+    await expect(resolve()).resolves.toBe('resolved.token.sig');
+    expect(fetchToken).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops the legacy signature params when authToken is set', async () => {
+    const options = await optionsFor({
+      authToken: 'eyJ.token.sig',
+      secureSignature: 'sig',
+      secureExpire: '9999999999',
+    });
+
+    expect(options.authToken).toBe('eyJ.token.sig');
+    expect(options.secureSignature).toBeUndefined();
+    expect(options.secureExpire).toBeUndefined();
+  });
 });

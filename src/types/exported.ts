@@ -8,7 +8,7 @@ import type {
   FuncFileValidator,
 } from '../abstract/managers/ValidationManager';
 import type { CameraMode } from '../blocks/CameraSource/CameraSource';
-import type { complexConfigKeys } from '../blocks/Config/Config';
+import type { PropertyOnlyConfigKey } from '../blocks/Config/Config';
 import type { FilesViewMode } from '../blocks/UploadList/UploadList';
 
 export {
@@ -253,7 +253,7 @@ export type ConfigType = {
    */
   plugins: UploaderPlugin[];
 
-  // Complex types
+  // Options with no attribute representation: property only
   /**
    * Metadata for the file.
    */
@@ -367,9 +367,20 @@ export type ConfigType = {
   dynamicButtonViewMode: DynamicButtonMode;
   dynamicButtonShowFirstIcon: boolean;
 };
-export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
-export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;
-export type ConfigAttributesType = KebabCaseKeys<ConfigPlainType> & LowerCaseKeys<ConfigPlainType>;
+/** Options with no attribute representation: settable only as a DOM property. */
+export type PropertyOnlyConfigType = Pick<ConfigType, PropertyOnlyConfigKey>;
+/** Options settable via an attribute (as well as as a property). */
+export type AttributeConfigType = Omit<ConfigType, PropertyOnlyConfigKey>;
+/**
+ * A DOM attribute can only ever carry a primitive, so an option whose value type
+ * also admits an object or a function (`authToken` accepts a token *or* a
+ * resolver) exposes only the primitive half here. Without this, JSX would
+ * type-accept a function and silently stringify it into the DOM. For options
+ * that are already primitive this is the identity.
+ */
+type AttributeValue<T> = Extract<T, string | number | boolean | null | undefined>;
+type ConfigAttributeValues = { [K in keyof AttributeConfigType]: AttributeValue<AttributeConfigType[K]> };
+export type ConfigAttributesType = KebabCaseKeys<ConfigAttributeValues> & LowerCaseKeys<ConfigAttributeValues>;
 
 export type KebabCase<S extends string> = S extends `${infer C}${infer T}`
   ? T extends Uncapitalize<T>

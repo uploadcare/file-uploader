@@ -2,6 +2,7 @@ import type { Queue, UploadcareGroup } from '@uploadcare/upload-client';
 import type { ClipboardLayer } from '../abstract/features/ClipboardLayer';
 import type { RouterHooksLayer } from '../abstract/features/RouterHooksLayer';
 import type { LocaleDefinition } from '../abstract/localeRegistry';
+import type { AuthTokenManager } from '../abstract/managers/AuthTokenManager';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
@@ -116,6 +117,7 @@ type DynamicUploaderBlockState = {
   '*publicApi': UploaderPublicApi;
   '*validationManager': ValidationManager;
   '*secureUploadsManager': SecureUploadsManager;
+  '*authTokenManager': AuthTokenManager;
 };
 
 type LocaleState = {

@@ -1,6 +1,7 @@
 import { expectTypeOf, test } from 'vitest';
 import type {
   Config,
+  ConfigAttributesType,
   FileValidatorDescriptor,
   FuncCollectionValidator,
   FuncFileValidator,
@@ -165,6 +166,26 @@ test('tags takes an array or a function', () => {
       config.tags = () => ['cat'];
     }
   };
+});
+
+test('authToken takes a token or a resolver as a DOM property', () => {
+  () => {
+    const ref = useRef<Config | null>(null);
+    if (ref.current) {
+      const config = ref.current;
+      config.authToken = 'eyJ.token.sig';
+      config.authToken = () => 'eyJ.token.sig';
+      config.authToken = async () => 'eyJ.token.sig';
+    }
+  };
+});
+
+test('the auth-token attribute carries only the plain token', () => {
+  // An attribute is a string, so the resolver half of the value type is not
+  // part of it. (TypeScript does not check hyphenated JSX attributes at all, so
+  // this is asserted on the type rather than through <uc-config>.)
+  expectTypeOf<ConfigAttributesType['auth-token']>().toEqualTypeOf<string | null>();
+  expectTypeOf<ConfigAttributesType['authtoken']>().toEqualTypeOf<string | null>();
 });
 
 test('validators take sync, async and descriptor forms', () => {
