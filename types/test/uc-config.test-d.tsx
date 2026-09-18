@@ -55,6 +55,7 @@ type DocumentedOption =
   | 'multipleMax'
   | 'multipleMin'
   | 'pasteScope'
+  | 'plugins'
   | 'pubkey'
   | 'qualityInsights'
   | 'remoteTabSessionKey'
@@ -283,6 +284,7 @@ test('every documented option has its documented value type', () => {
   config.secureUploadsSignatureResolver = async () => null;
   config.secureDeliveryProxyUrlResolver = async (_previewUrl, { uuid }) => `https://proxy.example.com/${uuid}`;
   config.iconHrefResolver = (name) => `#uc-icon-${name}`;
+  config.plugins = [{ id: 'p', setup: () => {} }];
 
   // QUIRK(types): options.mdx says returning nothing from `iconHrefResolver` falls back to the default sprite, and
   // `Icon._updateResolvedHref` implements that (`customHref ?? defaultHref`) — but the published type is

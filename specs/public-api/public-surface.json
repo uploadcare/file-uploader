@@ -406,6 +406,11 @@
       "type": "boolean",
       "documented": "true",
       "value": true
+    },
+    "plugins": {
+      "attribute": null,
+      "type": "UploaderPlugin[]",
+      "documented": "[]"
     }
   },
   "events": [
