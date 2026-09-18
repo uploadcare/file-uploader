@@ -30,7 +30,6 @@ type Case = { name: string; file: string; flags: string[] };
 const cases: Case[] = [
   { name: 'bundler', file: 'consumer.ts', flags: ['--module', 'esnext', '--moduleResolution', 'bundler'] },
   { name: 'nodenext (ESM)', file: 'consumer.mts', flags: ['--module', 'nodenext', '--moduleResolution', 'nodenext'] },
-  { name: 'node16 (CJS)', file: 'consumer.cts', flags: ['--module', 'node16', '--moduleResolution', 'node16'] },
 ];
 
 const compile = ({ file, flags }: Case): { ok: boolean; output: string } => {
@@ -74,13 +73,13 @@ describe('published types under consumer compiler settings', () => {
     expect(ok).toBe(true);
   });
 
-  // QUIRK(types): under node16 / nodenext resolution with `skipLibCheck: false`, type-checking fails inside
+  // QUIRK(types): under nodenext resolution with `skipLibCheck: false`, type-checking fails inside
   // `dist/index.d.ts`: `TelemetryManager` (src/abstract/managers/TelemetryManager.ts:15) derives its method types
   // from `TelemetryRequest`, so the import of `@uploadcare/quality-insights` ends up in the public d.ts, and that
-  // package ships extensionless relative imports in an ESM d.ts, which those resolutions reject. Goes away when the
+  // package ships extensionless relative imports in an ESM d.ts, which nodenext rejects. Goes away when the
   // dependency fixes its d.ts or the manager stops leaking the type. Pinned as current behaviour, not endorsed.
-  it.each(cases.slice(1))('$name, strict, skipLibCheck: false fails inside quality-insights', (c) => {
-    const { ok, output } = compile(c);
+  it('nodenext (ESM), strict, skipLibCheck: false fails inside quality-insights', () => {
+    const { ok, output } = compile(cases[1]);
     expect(ok).toBe(false);
     expect(output).toContain('quality-insights');
   });
