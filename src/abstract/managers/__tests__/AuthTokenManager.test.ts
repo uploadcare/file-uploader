@@ -89,6 +89,34 @@ describe('AuthTokenManager', () => {
     expect(second).not.toHaveBeenCalled();
   });
 
+  it('returns one stable function that follows later config changes', async () => {
+    // Whoever we hand this to may keep it. If it captured the configured
+    // function, a stored copy would go on calling the old one forever.
+    const first = vi.fn(async () => tokenExpiringIn(3600));
+    const { manager, cfg } = createManager({ authToken: first });
+
+    const stored = manager.getAuthToken() as () => Promise<string>;
+    expect(manager.getAuthToken()).toBe(stored);
+    await stored();
+
+    const second = vi.fn(async () => tokenExpiringIn(3600));
+    cfg.authToken = second;
+    manager.invalidate();
+    await stored();
+
+    expect(second).toHaveBeenCalledTimes(1);
+    expect(first).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves to the token once authToken switches from a function to a string', async () => {
+    const { manager, cfg } = createManager({ authToken: vi.fn(async () => tokenExpiringIn(3600)) });
+    const stored = manager.getAuthToken() as () => Promise<string>;
+
+    cfg.authToken = 'eyJ.plain.sig';
+
+    await expect(stored()).resolves.toBe('eyJ.plain.sig');
+  });
+
   it('refetches after invalidate()', async () => {
     const fetchToken = vi.fn(() => tokenExpiringIn(3600));
     const { manager } = createManager({ authToken: fetchToken });

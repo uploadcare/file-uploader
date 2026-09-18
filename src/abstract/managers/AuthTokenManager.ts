@@ -14,6 +14,35 @@ import type { AuthToken } from '../../types/index';
 export class AuthTokenManager extends SharedInstance {
   private _cache: AuthTokenCache | null = null;
 
+  /**
+   * One function, the same one for the life of this manager, that reads the
+   * configured resolver when it is called rather than capturing it.
+   *
+   * That stability is the point: whoever we hand this to can keep it, and it
+   * still follows later changes to `authToken`. Returning the cache's own
+   * `getToken` instead would mean re-reading it after every config change to
+   * stay current, which is a rule nothing enforces.
+   */
+  private readonly _resolveAuthToken = (): Promise<string> => {
+    const { authToken } = this._cfg;
+
+    if (typeof authToken !== 'function') {
+      return Promise.resolve(typeof authToken === 'string' ? authToken : '');
+    }
+
+    if (this._cache) {
+      // A React component passes a new closure on every render. Swapping the
+      // function keeps the cached token; rebuilding the cache would throw it
+      // away and refetch on each render.
+      this._cache.fetchToken = authToken;
+    } else {
+      this._debugPrint('Creating the auth token cache.');
+      this._cache = new AuthTokenCache({ fetchToken: authToken });
+    }
+
+    return this._cache.getToken();
+  };
+
   /** The value to hand `@uploadcare/upload-client` as `authToken`. */
   public getAuthToken(): AuthToken | undefined {
     const { authToken } = this._cfg;
@@ -28,17 +57,7 @@ export class AuthTokenManager extends SharedInstance {
       return authToken;
     }
 
-    if (this._cache) {
-      // A React component passes a new closure on every render. Swapping the
-      // function keeps the cached token; rebuilding the cache would throw it
-      // away and refetch on each render.
-      this._cache.fetchToken = authToken;
-    } else {
-      this._debugPrint('Creating the auth token cache.');
-      this._cache = new AuthTokenCache({ fetchToken: authToken });
-    }
-
-    return this._cache.getToken;
+    return this._resolveAuthToken;
   }
 
   /** Drop the cached token, e.g. once the signed-in user changes. */
