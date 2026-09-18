@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import { getCtxName } from './utils/test-renderer';
-import '../types/jsx';
+import { getCtxName } from '~/tests/utils/test-renderer';
+import '~/types/jsx';
 
 /**
  * The editor's Filters tab. `tests/cloud-image-editor.e2e.test.tsx` covers crop and tuning, so

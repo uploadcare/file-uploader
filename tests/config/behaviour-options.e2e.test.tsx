@@ -2,9 +2,9 @@ import type { UploadcareFile } from '@uploadcare/upload-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FuncFileValidator } from '@/index';
 import { delay } from '@/utils/delay';
-import { IMAGE } from './fixtures/files';
-import { renderSolution } from './utils/render-solution';
-import '../types/jsx';
+import { IMAGE } from '~/tests/fixtures/files';
+import { renderSolution } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
 /**
  * The documented options whose effect is neither a plain pass-through to upload-client nor a rendered attribute:

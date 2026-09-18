@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { delay } from '@/utils/delay';
-import { IMAGE } from './fixtures/files';
-import { recordEvents } from './utils/event-recorder';
-import { renderSolution } from './utils/render-solution';
-import '../types/jsx';
+import { IMAGE } from '~/tests/fixtures/files';
+import { recordEvents } from '~/tests/utils/event-recorder';
+import { renderSolution } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
 /**
  * The documented API described in `fern-docs` covers the happy path. This covers what happens when a caller passes an

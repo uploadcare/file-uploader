@@ -2,10 +2,10 @@ import { uploadFile } from '@uploadcare/upload-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, EventPayload } from '@/index.js';
-import { IMAGE } from './fixtures/files';
-import { TEST_IMAGE_URL } from './utils/constants';
-import '../types/jsx';
-import { type RenderedUploader, renderSolution } from './utils/render-solution';
+import { IMAGE } from '~/tests/fixtures/files';
+import { TEST_IMAGE_URL } from '~/tests/utils/constants';
+import '~/types/jsx';
+import { type RenderedUploader, renderSolution } from '~/tests/utils/render-solution';
 
 let config: Config;
 let api: RenderedUploader['api'];

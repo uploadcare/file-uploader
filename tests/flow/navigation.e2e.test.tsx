@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { delay } from '@/utils/delay';
-import { IMAGE } from './fixtures/files';
-import { expectActivity, expectModal, modalDialog, renderSolution, within } from './utils/render-solution';
-import '../types/jsx';
+import { IMAGE } from '~/tests/fixtures/files';
+import { expectActivity, expectModal, modalDialog, renderSolution, within } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
 /**
  * Back, close and cancel across the three solutions. Each assertion goes through what the user sees — the `active`

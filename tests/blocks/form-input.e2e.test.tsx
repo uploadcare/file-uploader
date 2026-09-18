@@ -1,8 +1,8 @@
 import { commands, page, userEvent } from '@vitest/browser/context';
 import { describe, expect, it } from 'vitest';
-import '../types/jsx';
-import { IMAGE } from './fixtures/files';
-import { renderSolution } from './utils/render-solution';
+import '~/types/jsx';
+import { IMAGE } from '~/tests/fixtures/files';
+import { renderSolution } from '~/tests/utils/render-solution';
 
 describe('Form input', () => {
   it('should create hidden input for form validation', async () => {
@@ -38,7 +38,7 @@ describe('Form input', () => {
     const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
     await Promise.all([
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']),
+      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']),
       userEvent.click(fromDeviceButton),
     ]);
 
@@ -66,7 +66,7 @@ describe('Form input', () => {
     const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
     await Promise.all([
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']),
+      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']),
       userEvent.click(fromDeviceButton),
     ]);
 
@@ -80,7 +80,7 @@ describe('Form input', () => {
     // Second upload
     await expect.element(startFrom).toBeVisible();
     await Promise.all([
-      commands.waitFileChooserAndUpload(['./fixtures/test_image2.jpeg']),
+      commands.waitFileChooserAndUpload(['../fixtures/test_image2.jpeg']),
       userEvent.click(fromDeviceButton),
     ]);
 
@@ -109,7 +109,7 @@ describe('Form input', () => {
     const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
     await Promise.all([
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']),
+      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']),
       userEvent.click(fromDeviceButton),
     ]);
 
@@ -138,7 +138,7 @@ describe('Form input', () => {
     const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
     await Promise.all([
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg', './fixtures/test_image2.jpeg']),
+      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg', '../fixtures/test_image2.jpeg']),
       userEvent.click(fromDeviceButton),
     ]);
 
@@ -180,7 +180,7 @@ describe('Form input', () => {
     const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
     await Promise.all([
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg', './fixtures/test_image2.jpeg']),
+      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg', '../fixtures/test_image2.jpeg']),
       userEvent.click(fromDeviceButton),
     ]);
 
@@ -221,7 +221,7 @@ describe('Form input', () => {
     const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
     await Promise.all([
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg', './fixtures/test_image2.jpeg']),
+      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg', '../fixtures/test_image2.jpeg']),
       userEvent.click(fromDeviceButton),
     ]);
 
@@ -271,7 +271,7 @@ describe('Form input', () => {
     const fromDeviceButton = startFrom.getByText('From device', { exact: true });
     await expect.element(startFrom).toBeVisible();
     await Promise.all([
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg', './fixtures/test_image2.jpeg']),
+      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg', '../fixtures/test_image2.jpeg']),
       userEvent.click(fromDeviceButton),
     ]);
 

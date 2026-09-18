@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, test } from 'vitest';
 import { commands, page, userEvent } from 'vitest/browser';
-import { TEST_IMAGE_URL } from './utils/constants';
-import '../types/jsx';
-import { renderSolution } from './utils/render-solution';
+import { TEST_IMAGE_URL } from '~/tests/utils/constants';
+import '~/types/jsx';
+import { renderSolution } from '~/tests/utils/render-solution';
 
 beforeEach(async () => {
   await renderSolution('regular');
@@ -74,7 +74,7 @@ describe('File uploader regular', () => {
       const startFrom = page.getByTestId('uc-start-from');
       const uploadList = page.getByTestId('uc-upload-list');
 
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
+      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
 
       await startFrom.getByText('From device', { exact: true }).click();
 

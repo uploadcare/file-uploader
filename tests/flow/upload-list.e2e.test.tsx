@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { commands, page } from 'vitest/browser';
-import '../types/jsx';
+import '~/types/jsx';
 
 beforeEach(() => {
   const ctxName = `test-${Math.random().toString(36).slice(2)}`;
@@ -26,7 +26,7 @@ describe('DynamicBtn upload list behavior', () => {
 
       await expect.element(dynamicBtn).toBeVisible();
 
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
+      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
 
       await dynamicBtn.click();
 
@@ -40,7 +40,7 @@ describe('DynamicBtn upload list behavior', () => {
 
       await expect.element(dynamicBtn).toBeVisible();
 
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
+      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
       await dynamicBtn.click();
 
       await dynamicBtn.click();
@@ -56,7 +56,7 @@ describe('DynamicBtn upload list behavior', () => {
 
       await expect.element(dynamicBtn).toBeVisible();
 
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
+      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
       await dynamicBtn.click();
 
       await expect.element(uploadList).toBeVisible();
@@ -79,7 +79,7 @@ describe('DynamicBtn upload list behavior', () => {
         expect(dynamicBtn.query()?.querySelector('uc-drop-down')).toBeNull();
       });
 
-      commands.waitFileChooserAndUpload(['./fixtures/test_image.jpeg']);
+      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
       await dynamicBtn.click();
 
       await expect.element(dynamicBtn.getByText('1 file uploaded')).toBeVisible();

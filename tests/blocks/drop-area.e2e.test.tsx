@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { delay } from '@/utils/delay';
-import { expectActivity, renderSolution, within } from './utils/render-solution';
-import '../types/jsx';
+import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
 /**
  * `<uc-drop-area>` and its `addDropzone` helper. `tests/file-uploader-minimal.e2e.test.tsx` drops one file; the drag

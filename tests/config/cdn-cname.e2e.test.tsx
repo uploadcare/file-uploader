@@ -1,9 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config } from '@/index';
-import '../types/jsx';
-import { inCtx, renderSolution } from './utils/render-solution';
-import { cleanup, getCtxName } from './utils/test-renderer';
+import '~/types/jsx';
+import { inCtx, renderSolution } from '~/tests/utils/render-solution';
+import { cleanup, getCtxName } from '~/tests/utils/test-renderer';
 
 let config: Config;
 

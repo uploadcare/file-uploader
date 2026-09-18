@@ -2,10 +2,10 @@ import type { FileFromOptions, UploadcareFile } from '@uploadcare/upload-client'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index';
-import { IMAGE } from './fixtures/files';
-import { createInCtx, inCtx, renderSolution } from './utils/render-solution';
-import { getCtxName } from './utils/test-renderer';
-import '../types/jsx';
+import { IMAGE } from '~/tests/fixtures/files';
+import { createInCtx, inCtx, renderSolution } from '~/tests/utils/render-solution';
+import { getCtxName } from '~/tests/utils/test-renderer';
+import '~/types/jsx';
 
 /**
  * A large group of documented options does nothing but reach `@uploadcare/upload-client`. Their whole contract is

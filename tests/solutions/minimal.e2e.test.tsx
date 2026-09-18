@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import type { UploadCtxProvider } from '@/index';
-import { TEST_IMAGE_URL } from './utils/constants';
-import '../types/jsx';
+import { TEST_IMAGE_URL } from '~/tests/utils/constants';
+import '~/types/jsx';
 import { testFile } from '~/tests/fixtures/files';
-import { renderSolution } from './utils/render-solution';
+import { renderSolution } from '~/tests/utils/render-solution';
 
 beforeEach(async () => {
   await renderSolution('minimal');

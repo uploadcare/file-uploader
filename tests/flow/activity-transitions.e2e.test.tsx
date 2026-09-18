@@ -1,10 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { delay } from '@/utils/delay';
-import { IMAGE } from './fixtures/files';
-import { recordEvents } from './utils/event-recorder';
-import { expectActivity, expectModal, renderSolution } from './utils/render-solution';
-import '../types/jsx';
+import { IMAGE } from '~/tests/fixtures/files';
+import { recordEvents } from '~/tests/utils/event-recorder';
+import { expectActivity, expectModal, renderSolution } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
 /**
  * Transitions between the built-in activities, asserted on what the user can actually see: the `active` attribute the

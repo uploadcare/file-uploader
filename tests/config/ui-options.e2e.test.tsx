@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { IconHrefResolver } from '@/index';
 import { delay } from '@/utils/delay';
-import { IMAGE } from './fixtures/files';
-import { expectActivity, renderSolution, within } from './utils/render-solution';
-import '../types/jsx';
+import { IMAGE } from '~/tests/fixtures/files';
+import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
 /**
  * Documented options whose whole effect is on what the uploader renders. `tests/config.e2e.test.tsx` covers

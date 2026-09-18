@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config } from '@/index';
-import { expectActivity, renderSolution } from './utils/render-solution';
-import '../types/jsx';
+import { browserFeatures } from '@/utils/browser-info';
+import { expectActivity, openModal, renderSolution } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
 /**
  * Camera-related options, none of which had a test. The chromium instance runs with
@@ -123,5 +124,22 @@ describe('defaultCameraMode', () => {
     await expect
       .poll(() => root.querySelector('[data-testid="uc-camera-source--tab-video"]')?.classList.contains('uc-active'))
       .toBe(true);
+  });
+});
+
+describe('htmlMediaCapture', () => {
+  it('offers Photo and Video buttons on mobile', async () => {
+    const original = browserFeatures.htmlMediaCapture;
+    (browserFeatures as { htmlMediaCapture: boolean }).htmlMediaCapture = true;
+
+    try {
+      const { root } = await renderSolution('regular');
+      await openModal(root);
+
+      await expect.element(page.getByText('Photo')).toBeVisible();
+      await expect.element(page.getByText('Video')).toBeVisible();
+    } finally {
+      (browserFeatures as { htmlMediaCapture: boolean }).htmlMediaCapture = original;
+    }
   });
 });

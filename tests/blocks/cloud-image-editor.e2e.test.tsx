@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { delay } from '@/utils/delay';
-import '../types/jsx';
-import { cleanup } from './utils/test-renderer';
+import '~/types/jsx';
+import { cleanup } from '~/tests/utils/test-renderer';
 
 beforeEach(() => {
   const ctxName = `test-${Math.random().toString(36).slice(2)}`;

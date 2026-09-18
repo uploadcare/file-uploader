@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { ProgressBar } from '@/index';
 import { delay } from '@/utils/delay';
-import { getCtxName } from './utils/test-renderer';
-import '../types/jsx';
+import { getCtxName } from '~/tests/utils/test-renderer';
+import '~/types/jsx';
 
 /**
  * `<uc-progress-bar>` and `<uc-progress-bar-common>` are both exported from the package index but neither appears in

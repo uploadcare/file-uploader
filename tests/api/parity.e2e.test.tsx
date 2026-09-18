@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ACTIVITY_TYPES } from '@/lit/activity-constants';
-import surface from '../specs/public-api/public-surface.json' with { type: 'json' };
-import { type RenderedUploader, renderSolution } from './utils/render-solution';
-import '../types/jsx';
+import surface from '~/specs/public-api/public-surface.json' with { type: 'json' };
+import { type RenderedUploader, renderSolution } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
 /**
  * Asserts the shape of the surface documented in `fern-docs` against a real `getAPI()`. It runs in the browser rather

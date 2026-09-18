@@ -2,10 +2,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index.js';
 import { delay } from '@/utils/delay';
-import { IMAGE } from './fixtures/files';
-import { cleanup, getCtxName } from './utils/test-renderer';
-import '../types/jsx';
-import { renderSolution } from './utils/render-solution';
+import { IMAGE } from '~/tests/fixtures/files';
+import { cleanup, getCtxName } from '~/tests/utils/test-renderer';
+import '~/types/jsx';
+import { renderSolution } from '~/tests/utils/render-solution';
 
 /**
  * Baseline for the telemetry contract: which requests the uploader sends to the telemetry endpoint, in which order,

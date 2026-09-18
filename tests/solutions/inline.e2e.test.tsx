@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import '../types/jsx';
-import { renderSolution } from './utils/render-solution';
+import '~/types/jsx';
+import { renderSolution } from '~/tests/utils/render-solution';
 
 beforeEach(async () => {
   await renderSolution('inline');

@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, FuncFileValidator, OutputErrorCollection, OutputErrorFile } from '@/index';
 import { delay } from '@/utils/delay.js';
-import '../types/jsx';
-import { IMAGE, testFile } from './fixtures/files';
-import { type RenderedUploader, renderSolution } from './utils/render-solution';
+import '~/types/jsx';
+import { IMAGE, testFile } from '~/tests/fixtures/files';
+import { type RenderedUploader, renderSolution } from '~/tests/utils/render-solution';
 
 let config: Config;
 let api: RenderedUploader['api'];

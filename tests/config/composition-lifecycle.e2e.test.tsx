@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index';
 import { delay } from '@/utils/delay';
-import { IMAGE } from './fixtures/files';
-import { recordEvents } from './utils/event-recorder';
-import { createInCtx, inCtx, renderSolution } from './utils/render-solution';
-import { getCtxName } from './utils/test-renderer';
-import '../types/jsx';
+import { IMAGE } from '~/tests/fixtures/files';
+import { recordEvents } from '~/tests/utils/event-recorder';
+import { createInCtx, inCtx, renderSolution } from '~/tests/utils/render-solution';
+import { getCtxName } from '~/tests/utils/test-renderer';
+import '~/types/jsx';
 
 /**
  * The documented composition model is several sibling tags wired by a shared `ctx-name`. These cover the orders and

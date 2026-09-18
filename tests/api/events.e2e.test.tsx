@@ -2,11 +2,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index.js';
 import { delay } from '@/utils/delay';
-import { IMAGE } from './fixtures/files';
-import { TEST_IMAGE_URL } from './utils/constants';
-import { type EventRecorder, recordEvents } from './utils/event-recorder';
-import { renderSolution } from './utils/render-solution';
-import '../types/jsx';
+import { IMAGE } from '~/tests/fixtures/files';
+import { TEST_IMAGE_URL } from '~/tests/utils/constants';
+import { type EventRecorder, recordEvents } from '~/tests/utils/event-recorder';
+import { renderSolution } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
 /**
  * Baseline for the public event contract: which events fire, and in which order. The ordered assertions are exact, so a

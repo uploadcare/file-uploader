@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
-import '../types/jsx';
+import '~/types/jsx';
 
 /**
  * `<uc-img>` builds a CDN URL from its documented settings (adaptive-image.mdx, "Settings"). Nothing asserted any of

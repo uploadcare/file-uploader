@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import { delay } from '@/utils/delay';
-import { expectActivity, renderSolution } from './utils/render-solution';
-import '../types/jsx';
+import { expectActivity, renderSolution } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
 /**
  * Video recording, retake and the microphone toggle — the half of `CameraSource` the existing tests never reach. The

@@ -1,7 +1,7 @@
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
-import '../types/jsx';
-import { getCtxName } from './utils/test-renderer';
+import '~/types/jsx';
+import { getCtxName } from '~/tests/utils/test-renderer';
 
 /**
  * Those tests are for the bundles to make sure that they work correctly:

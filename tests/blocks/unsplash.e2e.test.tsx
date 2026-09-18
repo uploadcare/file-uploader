@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } fr
 import { page, userEvent } from 'vitest/browser';
 import { unsplashPlugin } from '@/plugins/unsplashPlugin';
 import { delay } from '@/utils/delay';
-import { expectActivity, renderSolution } from './utils/render-solution';
-import '../types/jsx';
+import { expectActivity, renderSolution } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
 /**
  * The built-in Unsplash plugin is exported from the package and registers a source, an activity and its own config

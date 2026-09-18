@@ -3,7 +3,7 @@ import { page } from 'vitest/browser';
 import type { Config, PluginConfigApi } from '@/index.ts';
 import { delay } from '@/utils/delay';
 import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
-import { getCtxName } from '../utils/test-renderer';
+import { getCtxName } from '~/tests/utils/test-renderer';
 
 describe('Custom Config', () => {
   it('should set default value from config definition', async () => {
