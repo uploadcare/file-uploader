@@ -78,7 +78,6 @@ describe('pasteScope', () => {
     const data = new DataTransfer();
     data.items.add(IMAGE.PIXEL);
     target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, composed: true }));
-    await delay(300);
   };
 
   it("accepts a paste inside the uploader on the default 'local' scope", async () => {
@@ -95,6 +94,8 @@ describe('pasteScope', () => {
 
     await pasteInto(document.body);
 
+    // Negative wait: nothing should be added, so there is no signal to wait for.
+    await delay(300);
     expect(api.getOutputCollectionState().totalCount).toBe(0);
   });
 
@@ -111,6 +112,8 @@ describe('pasteScope', () => {
 
     await pasteInto(root);
 
+    // Negative wait: nothing should be added, so there is no signal to wait for.
+    await delay(300);
     expect(api.getOutputCollectionState().totalCount).toBe(0);
   });
 });
@@ -120,12 +123,14 @@ describe('validationConcurrency', () => {
   const peakConcurrency = async (validationConcurrency: number): Promise<number> => {
     let inFlight = 0;
     let peak = 0;
+    let finished = 0;
 
     const validator: FuncFileValidator = async () => {
       inFlight += 1;
       peak = Math.max(peak, inFlight);
       await delay(150);
       inFlight -= 1;
+      finished += 1;
       return undefined;
     };
 
@@ -134,8 +139,7 @@ describe('validationConcurrency', () => {
       api.addFileFromObject(new File(['x'], `file-${i}.jpg`, { type: 'image/jpeg' }));
     }
 
-    await vi.waitFor(() => expect(peak).toBeGreaterThan(0), { timeout: 10_000 });
-    await delay(1000);
+    await expect.poll(() => finished, { timeout: 10_000 }).toBe(3);
     return peak;
   };
 
@@ -153,7 +157,6 @@ describe('pasting urls and text', () => {
     const data = new DataTransfer();
     data.items.add(text, type);
     target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, composed: true }));
-    await delay(400);
   };
 
   it('adds a file from a pasted http url', async () => {
@@ -178,6 +181,8 @@ describe('pasting urls and text', () => {
 
     await pasteText(root, 'just some words');
 
+    // Negative wait: nothing should be added, so there is no signal to wait for.
+    await delay(400);
     expect(api.getOutputCollectionState().totalCount).toBe(0);
   });
 
@@ -187,6 +192,8 @@ describe('pasting urls and text', () => {
 
     await pasteText(root, 'ftp://example.com/photo.jpg');
 
+    // Negative wait: nothing should be added, so there is no signal to wait for.
+    await delay(400);
     expect(api.getOutputCollectionState().totalCount).toBe(0);
   });
 
@@ -198,6 +205,8 @@ describe('pasting urls and text', () => {
 
     await pasteText(root, 'https://example.com/photo.jpg', 'text/plain', input);
 
+    // Negative wait: nothing should be added, so there is no signal to wait for.
+    await delay(400);
     expect(api.getOutputCollectionState().totalCount).toBe(0);
   });
 

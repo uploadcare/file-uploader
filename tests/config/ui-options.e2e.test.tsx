@@ -1,19 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { page } from 'vitest/browser';
 import type { IconHrefResolver } from '@/index';
 import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
-/**
- * Documented options whose whole effect is on what the uploader renders. `tests/config.e2e.test.tsx` covers
- * `cdnCname` resolution; this covers the rest of the UI-facing set, which had no tests at all.
- *
- * A separate file rather than an addition to config.e2e: that file's `beforeEach` renders its own fixture, and
- * `page.render` appends instead of replacing, so a second render inside a test would leave two uploaders on the page
- * and break every `getByTestId` on strict mode.
- */
+/** Documented options whose whole effect is on what the uploader renders; `cdn-cname.e2e` covers `cdnCname`. */
 
 describe('removeCopyright', () => {
   it('shows the credit by default', async () => {
@@ -38,6 +30,7 @@ describe('showEmptyList', () => {
     const { root } = await renderSolution('inline');
     await expectActivity(root, 'start-from');
 
+    // Negative wait: the list must never activate, so there is no signal to wait for.
     await delay(100);
     expect(within(root).getByTestId('uc-upload-list').query()?.hasAttribute('active')).toBe(false);
   });
@@ -59,6 +52,7 @@ describe('showEmptyList', () => {
 
     api.setCurrentActivity('upload-list');
 
+    // Negative wait: the activity may bounce through upload-list before settling, so give it time to come back.
     await delay(300);
     await expectActivity(root, 'start-from');
     expect(api.getCurrentActivity()).toBe('start-from');
@@ -164,7 +158,9 @@ describe('localeDefinitionOverride', () => {
     api.initFlow();
     await expectActivity(root, 'start-from');
 
-    await expect.element(page.getByTestId('uc-start-from').getByText('Never mind', { exact: true })).toBeVisible();
+    await expect
+      .element(within(root).getByTestId('uc-start-from').getByText('Never mind', { exact: true }))
+      .toBeVisible();
   });
 
   it('leaves strings it does not name alone', async () => {
@@ -174,7 +170,9 @@ describe('localeDefinitionOverride', () => {
     api.initFlow();
     await expectActivity(root, 'start-from');
 
-    await expect.element(page.getByTestId('uc-start-from').getByText('From link', { exact: true })).toBeVisible();
+    await expect
+      .element(within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }))
+      .toBeVisible();
   });
 
   it('ignores an override aimed at a different locale', async () => {
@@ -184,6 +182,6 @@ describe('localeDefinitionOverride', () => {
     api.initFlow();
     await expectActivity(root, 'start-from');
 
-    await expect.element(page.getByTestId('uc-start-from').getByText('Cancel', { exact: true })).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true })).toBeVisible();
   });
 });

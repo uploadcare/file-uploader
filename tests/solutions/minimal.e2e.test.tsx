@@ -1,70 +1,65 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import type { UploadCtxProvider } from '@/index';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import '~/types/jsx';
 import { testFile } from '~/tests/fixtures/files';
-import { renderSolution } from '~/tests/utils/render-solution';
+import { renderSolution, within } from '~/tests/utils/render-solution';
 
-beforeEach(async () => {
-  await renderSolution('minimal');
-});
+describe('uc-file-uploader-minimal', () => {
+  it('renders the choose-files button', async () => {
+    const { root } = await renderSolution('minimal');
 
-describe('File uploader minimal', () => {
-  describe('Upload button', () => {
-    it('should be rendered', async () => {
-      await expect.element(page.getByText('Choose files', { exact: true })).toBeVisible();
-    });
+    await expect.element(within(root).getByText('Choose files', { exact: true })).toBeVisible();
+  });
 
-    it('should open file dialog on click', async () => {
-      await page.getByText('Choose files', { exact: true }).click();
-      await expect.element(page.getByText('From device', { exact: true })).toBeVisible();
-    });
+  it('opens start-from on click', async () => {
+    const { root } = await renderSolution('minimal');
 
-    it('should drag and drop file', async () => {
-      await expect.element(page.getByText('Choose files', { exact: true })).toBeVisible();
+    await within(root).getByText('Choose files', { exact: true }).click();
 
-      const fileUploader = page.getByTestId('uc-file-uploader-minimal');
-      const copyright = page.getByText('Powered by Uploadcare', { exact: true });
+    await expect.element(within(root).getByText('From device', { exact: true })).toBeVisible();
+  });
 
-      const uploadList = page.getByTestId('uc-upload-list');
+  it('accepts a drag and drop onto the uploader', async () => {
+    const { root } = await renderSolution('minimal');
+    await expect.element(within(root).getByText('Choose files', { exact: true })).toBeVisible();
 
-      await userEvent.dragAndDrop(copyright, fileUploader);
+    const copyright = within(root).getByText('Powered by Uploadcare', { exact: true });
+    await userEvent.dragAndDrop(copyright, within(root));
 
-      await expect.element(uploadList).toBeVisible();
-    });
+    await expect.element(within(root).getByTestId('uc-upload-list')).toBeVisible();
+  });
 
-    it('should show the upload list after a file is picked from the device dialog', async () => {
-      await page.getByText('Choose files', { exact: true }).click();
-      await page.getByText('From device', { exact: true }).click();
+  it('shows the upload list after a file is picked from the device dialog', async () => {
+    const { root } = await renderSolution('minimal');
+    await within(root).getByText('Choose files', { exact: true }).click();
+    await within(root).getByText('From device', { exact: true }).click();
 
-      // openSystemDialog() appends a hidden input and clicks it; the native dialog
-      // never opens under test, so feed the input directly to fire its change handler.
-      const fileInput = page.elementLocator(document.querySelector('[uploadcare-file-input]')!);
-      await userEvent.upload(fileInput, testFile('regression.txt', 'text/plain'));
+    // openSystemDialog() appends a hidden input and clicks it; the native dialog
+    // never opens under test, so feed the input directly to fire its change handler.
+    // The input carries no test id and is appended outside the uploader, hence the document query.
+    const fileInput = page.elementLocator(document.querySelector('[uploadcare-file-input]')!);
+    await userEvent.upload(fileInput, testFile('regression.txt', 'text/plain'));
 
-      await expect.element(page.getByTestId('uc-upload-list')).toBeVisible();
-      await expect.element(page.getByTestId('uc-file-item')).toBeVisible();
-    });
+    await expect.element(within(root).getByTestId('uc-upload-list')).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-file-item')).toBeVisible();
+  });
 
-    it('should open cloud image editor modal on edit button click', async () => {
-      const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-      const api = ctxProvider.getAPI();
+  it('opens the cloud image editor from the edit button', async () => {
+    const { root, api } = await renderSolution('minimal');
 
-      api.addFileFromUrl(TEST_IMAGE_URL);
-      api.initFlow();
+    api.addFileFromUrl(TEST_IMAGE_URL);
+    api.initFlow();
 
-      await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl, { timeout: 15000 }).toBeTruthy();
+    await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl, { timeout: 15000 }).toBeTruthy();
 
-      const file = page.getByTestId('uc-file-item');
-      await expect.element(file).toBeVisible();
+    const file = within(root).getByTestId('uc-file-item');
+    await expect.element(file).toBeVisible();
 
-      const editButton = file.getByRole('button', { name: 'Edit', exact: true });
-      await expect.element(editButton).toBeVisible();
-      await userEvent.click(editButton);
+    const editButton = file.getByRole('button', { name: 'Edit', exact: true });
+    await expect.element(editButton).toBeVisible();
+    await userEvent.click(editButton);
 
-      const modal = page.getByTestId('uc-cloud-image-editor-activity');
-      await expect.element(modal).toBeVisible();
-    });
+    await expect.element(within(root).getByTestId('uc-cloud-image-editor-activity')).toBeVisible();
   });
 });

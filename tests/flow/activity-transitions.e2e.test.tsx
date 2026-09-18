@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { page } from 'vitest/browser';
 import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { recordEvents } from '~/tests/utils/event-recorder';
-import { expectActivity, expectModal, renderSolution } from '~/tests/utils/render-solution';
+import { expectActivity, expectModal, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
 /**
@@ -24,7 +23,9 @@ describe('regular: entering the flow', () => {
     await expectActivity(root, 'start-from');
     await expectModal(root, 'start-from', 'open');
     // Not just state: the source list is rendered inside the dialog that is actually open.
-    await expect.element(page.getByTestId('uc-start-from').getByText('From link', { exact: true })).toBeVisible();
+    await expect
+      .element(within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }))
+      .toBeVisible();
     expect(api.getCurrentActivity()).toBe('start-from');
     expect(recorder.detailsOf('activity-change').at(-1)).toEqual({ activity: 'start-from' });
   });
@@ -32,7 +33,7 @@ describe('regular: entering the flow', () => {
   it('goes straight to the upload list when files are already in the collection', async () => {
     const { root, api } = await renderSolution('regular');
     api.addFileFromObject(IMAGE.PIXEL);
-    await delay(50);
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
 
     api.initFlow();
 
@@ -49,7 +50,7 @@ describe('regular: start-from to a source', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await page.getByTestId('uc-start-from').getByText('From link', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }).click();
 
     await expectActivity(root, 'url');
     await expectModal(root, 'start-from', 'closed');
@@ -61,7 +62,7 @@ describe('regular: start-from to a source', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await page.getByTestId('uc-start-from').getByText('Camera', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByText('Camera', { exact: true }).click();
 
     await expectActivity(root, 'camera');
     expect(api.getCurrentActivity()).toBe('camera');
@@ -105,7 +106,7 @@ describe('inline: no modal is ever used', () => {
 
     await expectActivity(root, 'start-from');
     expect(api.getCurrentActivity()).toBe('start-from');
-    expect(root.querySelector('[data-testid="uc-modal"]')).toBe(null);
+    expect(within(root).getByTestId('uc-modal').query()).toBe(null);
   });
 
   it('switches to the upload list when a file arrives', async () => {
@@ -127,6 +128,7 @@ describe('inline: no modal is ever used', () => {
 
     api.setModalState(false);
 
+    // Negative wait: nothing signals "still on start-from", so give a would-be transition time to happen.
     await delay(100);
     await expectActivity(root, 'start-from');
     expect(api.getCurrentActivity()).toBe('start-from');

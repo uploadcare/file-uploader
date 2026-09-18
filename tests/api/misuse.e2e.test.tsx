@@ -48,12 +48,13 @@ describe('unknown internal ids', () => {
   });
 });
 
-describe('calls that should be no-ops', () => {
+describe('no-op calls', () => {
   it('removeAllFiles on an empty collection does nothing', async () => {
     const { api, provider } = await renderSolution();
     const recorder = recordEvents(provider);
 
     expect(() => api.removeAllFiles()).not.toThrow();
+    // Negative wait: no event is expected, so there is nothing to wait for.
     await delay(50);
     expect(recorder.types).toEqual([]);
   });
@@ -63,6 +64,7 @@ describe('calls that should be no-ops', () => {
     const recorder = recordEvents(provider);
 
     api.uploadAll();
+    // Negative wait: no event is expected, so there is nothing to wait for.
     await delay(50);
     expect(recorder.detailsOf('common-upload-start')).toEqual([]);
   });
@@ -87,6 +89,7 @@ describe('calls that should be no-ops', () => {
     expect(() => unsubscribe()).not.toThrow();
 
     api.addFileFromObject(IMAGE.PIXEL);
+    // Negative wait: the handler must stay uncalled, so there is nothing to wait for.
     await delay(50);
     expect(handler).not.toHaveBeenCalled();
   });
@@ -181,6 +184,7 @@ describe('silent: true', () => {
     api.uploadAll();
 
     await recorder.waitFor('common-upload-success');
+    // Negative wait: the per-file events must stay absent; long enough for the debounced trailing `change` to land.
     await delay(500);
 
     // api.mdx: "events file-added, file-upload-start, file-upload-progress, file-upload-success won't be triggered".

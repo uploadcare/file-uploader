@@ -1,10 +1,11 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
+import { inCtx, within } from '~/tests/utils/render-solution';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
 
 /**
- * The editor's Filters tab. `tests/cloud-image-editor.e2e.test.tsx` covers crop and tuning, so
+ * The editor's Filters tab. `tests/blocks/cloud-image-editor.e2e.test.tsx` covers crop and tuning, so
  * `EditorFilterControl` — the filter thumbnail buttons, their lazily previewed backgrounds and the slider they open —
  * sat at 3% coverage.
  *
@@ -12,7 +13,8 @@ import '~/types/jsx';
  * thumbnails to appear.
  */
 
-beforeEach(() => {
+/** Renders a stand-alone editor and opens its Filters tab; the editor is not in any solution. */
+const openFilters = async () => {
   const ctxName = getCtxName();
   page.render(
     <>
@@ -20,54 +22,53 @@ beforeEach(() => {
       <uc-config cdn-cname="https://ucarecdn.com/" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
     </>,
   );
-});
+  const editor = within(inCtx<HTMLElement>('uc-cloud-image-editor', ctxName));
 
-const openFilters = async () => {
-  const tab = page.getByRole('tab', { name: /filters/i });
+  const tab = editor.getByRole('tab', { name: /filters/i });
   await expect.element(tab).toBeVisible();
   await userEvent.click(tab);
+
+  const controls = () => editor.getByTestId('uc-editor-filter-control').elements();
+  // The "original" entry has no test id of its own; the class is the only marker.
+  const isOriginal = (control: Element) => control.querySelector('.uc-original-icon') !== null;
+  const filters = () => controls().filter((control) => !isOriginal(control));
+  const button = (control: Element) => control.querySelector('button') as HTMLElement;
+
+  return { editor, controls, isOriginal, filters, button };
 };
 
-const filterControls = () => page.getByTestId('uc-editor-filter-control').elements();
-
-/** The first real filter — the list also holds an "original" entry that behaves differently. */
-const pickFilter = async () => {
-  await expect.poll(() => filterControls().length, { timeout: 20_000 }).toBeGreaterThan(1);
-  const filter = [...filterControls()].find((control) => !control.querySelector('.uc-original-icon'));
-  if (!filter) {
-    throw new Error('No filter controls rendered');
-  }
-  return filter;
+/** Waits for the strip to hold at least `min` entries; the list also holds an "original" entry that behaves differently. */
+const waitForControls = async (controls: () => Element[], min = 1) => {
+  await expect.poll(() => controls().length, { timeout: 20_000 }).toBeGreaterThan(min);
 };
 
 describe('editor filters tab', () => {
   it('lists the filters once the tab is opened', async () => {
-    await openFilters();
+    const { controls } = await openFilters();
 
-    await expect.poll(() => filterControls().length, { timeout: 20_000 }).toBeGreaterThan(1);
+    await waitForControls(controls);
   });
 
   it('offers an original entry alongside the filters', async () => {
-    await openFilters();
-    await expect.poll(() => filterControls().length, { timeout: 20_000 }).toBeGreaterThan(1);
+    const { controls, isOriginal } = await openFilters();
+    await waitForControls(controls);
 
-    const originals = [...filterControls()].filter((control) => control.querySelector('.uc-original-icon'));
-    expect(originals).toHaveLength(1);
+    expect(controls().filter(isOriginal)).toHaveLength(1);
   });
 
   it('loads a preview thumbnail for every filter', async () => {
-    await openFilters();
-    await expect.poll(() => filterControls().length, { timeout: 20_000 }).toBeGreaterThan(1);
+    const { controls, filters } = await openFilters();
+    await waitForControls(controls);
 
     // `_previewImage` becomes a CDN url with the filter applied, painted as the button's background. Previews are
     // fetched lazily on visibility, so each control is scrolled into view and awaited in turn — asserting the whole
     // strip at once would only ever prove that the handful on screen loaded.
     const hasPreview = (control: Element) => {
-      const preview = control.querySelector<HTMLElement>('.uc-preview');
-      return /^url\("https:\/\/ucarecdn\.com\//.test(preview?.style.backgroundImage ?? '');
+      const preview = page.elementLocator(control).getByTestId('uc-editor-filter-control--preview').query();
+      return /^url\("https:\/\/ucarecdn\.com\//.test((preview as HTMLElement | null)?.style.backgroundImage ?? '');
     };
 
-    for (const control of [...filterControls()].filter((c) => !c.querySelector('.uc-original-icon'))) {
+    for (const control of filters()) {
       control.scrollIntoView({ block: 'nearest', inline: 'center' });
       await expect.poll(() => hasPreview(control), { timeout: 20_000 }).toBe(true);
     }
@@ -78,50 +79,50 @@ describe('editor filters tab', () => {
    * already-active one (EditorFilterControl.ts:62).
    */
   it('applies the filter on the first click', async () => {
-    await openFilters();
-    const filter = await pickFilter();
+    const { editor, controls, filters, button } = await openFilters();
+    await waitForControls(controls);
+    const filter = button(filters()[0]);
 
-    await userEvent.click(filter.querySelector('button') as HTMLElement);
+    await userEvent.click(filter);
 
-    await expect.poll(() => filter.querySelector('button')?.className).toContain('uc-active');
-    await expect.element(page.getByTestId('uc-editor-slider')).not.toBeVisible();
+    await expect.poll(() => filter.className).toContain('uc-active');
+    await expect.element(editor.getByTestId('uc-editor-slider')).not.toBeVisible();
   });
 
   it('opens the strength slider on the second click', async () => {
-    await openFilters();
-    const filter = await pickFilter();
-    const button = filter.querySelector('button') as HTMLElement;
+    const { editor, controls, filters, button } = await openFilters();
+    await waitForControls(controls);
+    const filter = button(filters()[0]);
 
-    await userEvent.click(button);
-    await expect.poll(() => button.className).toContain('uc-active');
-    await userEvent.click(button);
+    await userEvent.click(filter);
+    await expect.poll(() => filter.className).toContain('uc-active');
+    await userEvent.click(filter);
 
-    await expect.element(page.getByTestId('uc-editor-slider')).toBeVisible();
+    await expect.element(editor.getByTestId('uc-editor-slider')).toBeVisible();
   });
 
   it('never opens the slider for the original entry', async () => {
-    await openFilters();
-    await expect.poll(() => filterControls().length, { timeout: 20_000 }).toBeGreaterThan(1);
-    const original = [...filterControls()].find((control) => control.querySelector('.uc-original-icon'));
-    const button = original?.querySelector('button') as HTMLElement;
+    const { editor, controls, isOriginal, button } = await openFilters();
+    await waitForControls(controls);
+    const original = button(controls().find(isOriginal) as Element);
 
-    await userEvent.click(button);
-    await userEvent.click(button);
+    await userEvent.click(original);
+    await userEvent.click(original);
 
-    await expect.element(page.getByTestId('uc-editor-slider')).not.toBeVisible();
+    await expect.element(editor.getByTestId('uc-editor-slider')).not.toBeVisible();
   });
 
   it('switches the active filter when another is picked', async () => {
-    await openFilters();
-    await expect.poll(() => filterControls().length, { timeout: 20_000 }).toBeGreaterThan(2);
+    const { controls, filters, button } = await openFilters();
+    await waitForControls(controls, 2);
 
-    const [first, second] = [...filterControls()].filter((c) => !c.querySelector('.uc-original-icon'));
-    await userEvent.click(first.querySelector('button') as HTMLElement);
-    await expect.poll(() => first.querySelector('button')?.className).toContain('uc-active');
+    const [first, second] = filters().map(button);
+    await userEvent.click(first);
+    await expect.poll(() => first.className).toContain('uc-active');
 
-    await userEvent.click(second.querySelector('button') as HTMLElement);
+    await userEvent.click(second);
 
-    await expect.poll(() => second.querySelector('button')?.className).toContain('uc-active');
-    await expect.poll(() => first.querySelector('button')?.className).not.toContain('uc-active');
+    await expect.poll(() => second.className).toContain('uc-active');
+    await expect.poll(() => first.className).not.toContain('uc-active');
   });
 });

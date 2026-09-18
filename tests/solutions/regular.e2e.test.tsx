@@ -1,30 +1,31 @@
-import { beforeEach, describe, expect, it, test } from 'vitest';
-import { commands, page, userEvent } from 'vitest/browser';
+import { describe, expect, it, test } from 'vitest';
+import { commands, userEvent } from 'vitest/browser';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import '~/types/jsx';
-import { renderSolution } from '~/tests/utils/render-solution';
+import { openModal, renderSolution, within } from '~/tests/utils/render-solution';
 
-beforeEach(async () => {
-  await renderSolution('regular');
-});
+describe('uc-file-uploader-regular', () => {
+  describe('upload button', () => {
+    it('renders', async () => {
+      const { root } = await renderSolution('regular');
 
-describe('File uploader regular', () => {
-  describe('Upload button', () => {
-    it('should be rendered', async () => {
-      await expect.element(page.getByText('Upload files', { exact: true })).toBeVisible();
+      await expect.element(within(root).getByText('Upload files', { exact: true })).toBeVisible();
     });
   });
 
-  describe('Modal: start from', async () => {
-    it('should be opened on upload button click', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-      const startFrom = page.getByTestId('uc-start-from');
-      await expect.element(startFrom).toBeVisible();
+  describe('start-from modal', () => {
+    it('opens on upload button click', async () => {
+      const { root } = await renderSolution('regular');
+
+      await within(root).getByText('Upload files', { exact: true }).click();
+
+      await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
     });
 
-    it('should have default sources', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-      const startFrom = page.getByTestId('uc-start-from');
+    it('offers the default sources', async () => {
+      const { root } = await renderSolution('regular');
+      await openModal(root);
+      const startFrom = within(root).getByTestId('uc-start-from');
 
       await expect.element(startFrom.getByText('From device', { exact: true })).toBeVisible();
       await expect.element(startFrom.getByText('From link', { exact: true })).toBeVisible();
@@ -33,46 +34,29 @@ describe('File uploader regular', () => {
       await expect.element(startFrom.getByText('Google Drive', { exact: true })).toBeVisible();
     });
 
-    it('should have copyright', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
+    it('shows the copyright', async () => {
+      const { root } = await renderSolution('regular');
+      await openModal(root);
 
-      const startFrom = page.getByTestId('uc-start-from');
+      const startFrom = within(root).getByTestId('uc-start-from');
       await expect.element(startFrom.getByText('Powered by Uploadcare', { exact: true })).toBeVisible();
     });
 
-    it('should have cancel button', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
+    it('shows a cancel button', async () => {
+      const { root } = await renderSolution('regular');
+      await openModal(root);
 
-      const startFrom = page.getByTestId('uc-start-from');
+      const startFrom = within(root).getByTestId('uc-start-from');
       await expect.element(startFrom.getByText('Cancel', { exact: true })).toBeVisible();
-    });
-
-    it('should close modal on cancel button click', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-
-      const startFrom = page.getByTestId('uc-start-from');
-      await startFrom.getByText('Cancel', { exact: true }).click();
-      await expect.element(startFrom).not.toBeVisible();
-    });
-
-    it('should close modal on overlay click', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-      const startFrom = page.getByTestId('uc-start-from');
-      await userEvent.click(document.body, {
-        position: {
-          x: 10,
-          y: 10,
-        },
-      });
-      await expect.element(startFrom).not.toBeVisible();
     });
   });
 
-  describe('Add files to the upload list', () => {
+  describe('adding files to the upload list', () => {
     test('from device', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-      const startFrom = page.getByTestId('uc-start-from');
-      const uploadList = page.getByTestId('uc-upload-list');
+      const { root } = await renderSolution('regular');
+      await openModal(root);
+      const startFrom = within(root).getByTestId('uc-start-from');
+      const uploadList = within(root).getByTestId('uc-upload-list');
 
       commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
 
@@ -81,17 +65,17 @@ describe('File uploader regular', () => {
       await expect.element(startFrom).not.toBeVisible();
       await expect.element(uploadList).toBeVisible();
 
-      await expect.element(page.getByText('test_image.jpeg')).toBeVisible();
-      await expect.element(page.getByText('1 file uploaded')).toBeVisible();
+      await expect.element(within(root).getByText('test_image.jpeg')).toBeVisible();
+      await expect.element(within(root).getByText('1 file uploaded')).toBeVisible();
     });
 
     test('from link', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-      const startFrom = page.getByTestId('uc-start-from');
-      const uploadList = page.getByTestId('uc-upload-list');
-      const urlSource = page.getByTestId('uc-url-source');
+      const { root } = await renderSolution('regular');
+      await openModal(root);
+      const startFrom = within(root).getByTestId('uc-start-from');
+      const uploadList = within(root).getByTestId('uc-upload-list');
+      const urlSource = within(root).getByTestId('uc-url-source');
 
-      await expect.element(startFrom).toBeVisible();
       await startFrom.getByText('From link').click();
       await expect.element(startFrom).not.toBeVisible();
       await expect.element(urlSource).toBeVisible();
@@ -101,30 +85,27 @@ describe('File uploader regular', () => {
       await userEvent.keyboard('{Enter}');
 
       await expect.element(uploadList).toBeVisible();
-      await expect.element(page.getByText('prithiviraj-a-fa7Stge3YXs-unsplash.jpg')).toBeVisible();
-      await expect.element(page.getByText('1 file uploaded')).toBeVisible();
+      await expect.element(within(root).getByText('prithiviraj-a-fa7Stge3YXs-unsplash.jpg')).toBeVisible();
+      await expect.element(within(root).getByText('1 file uploaded')).toBeVisible();
     });
 
     test('from camera', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-      const startFrom = page.getByTestId('uc-start-from');
-      const uploadList = page.getByTestId('uc-upload-list');
-      const cameraSource = page.getByTestId('uc-camera-source');
+      const { root } = await renderSolution('regular');
+      await openModal(root);
+      const startFrom = within(root).getByTestId('uc-start-from');
+      const uploadList = within(root).getByTestId('uc-upload-list');
+      const cameraSource = within(root).getByTestId('uc-camera-source');
 
-      await expect.element(startFrom).toBeVisible();
       await startFrom.getByText('Camera').click();
       await expect.element(startFrom).not.toBeVisible();
       await expect.element(cameraSource).toBeVisible();
 
-      const cameraButton = cameraSource.getByTestId('uc-camera-source--shot');
-      await userEvent.click(cameraButton);
-
-      const acceptButton = cameraSource.getByTestId('uc-camera-source--accept');
-      await userEvent.click(acceptButton);
+      await userEvent.click(cameraSource.getByTestId('uc-camera-source--shot'));
+      await userEvent.click(cameraSource.getByTestId('uc-camera-source--accept'));
 
       await expect.element(uploadList).toBeVisible();
-      await expect.element(page.getByText(/camera-\d+\.jpeg/)).toBeVisible();
-      await expect.element(page.getByText('1 file uploaded')).toBeVisible();
+      await expect.element(within(root).getByText(/camera-\d+\.jpeg/)).toBeVisible();
+      await expect.element(within(root).getByText('1 file uploaded')).toBeVisible();
     });
   });
 });

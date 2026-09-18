@@ -1,11 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import { page } from 'vitest/browser';
 import type { PluginRender } from '@/index.ts';
 import { delay } from '@/utils/delay';
-import { addSource, createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
+import { addSource, createTestPlugin, renderSolution, within } from '~/tests/utils/render-solution';
 
-describe('Activity Registration', () => {
-  it('should call render() when activity becomes active via setCurrentActivity', async () => {
+describe('plugin activities', () => {
+  it('calls render() when the activity is activated via setCurrentActivity', async () => {
     const render = vi.fn(() => undefined);
     const plugin = createTestPlugin({
       id: 'act-render',
@@ -32,7 +31,7 @@ describe('Activity Registration', () => {
     );
   });
 
-  it('should pass activity params to render()', async () => {
+  it('passes activity params to render()', async () => {
     const render = vi.fn<PluginRender>(() => undefined);
     const plugin = createTestPlugin({
       id: 'act-params',
@@ -58,7 +57,7 @@ describe('Activity Registration', () => {
     });
   });
 
-  it('should call dispose (return value of render) when activity is deactivated', async () => {
+  it('calls the disposer returned by render() on deactivation', async () => {
     const dispose = vi.fn();
     const render = vi.fn((_el: HTMLElement) => dispose);
 
@@ -96,7 +95,7 @@ describe('Activity Registration', () => {
     });
   });
 
-  it('should render content into the host element', async () => {
+  it('renders content into the host element', async () => {
     const plugin = createTestPlugin({
       id: 'act-dom',
       setup: ({ pluginApi }) => {
@@ -112,15 +111,15 @@ describe('Activity Registration', () => {
       },
     });
 
-    const { api } = await renderSolution('regular', { plugins: [plugin] });
+    const { api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setCurrentActivity('dom-activity');
     api.setModalState(true);
 
-    await expect.element(page.getByText('Plugin Activity Content')).toBeVisible();
+    await expect.element(within(root).getByText('Plugin Activity Content')).toBeVisible();
   });
 
-  it('should clear container DOM on deactivate', async () => {
+  it('clears the host DOM on deactivation', async () => {
     const plugin = createTestPlugin({
       id: 'act-clear',
       setup: ({ pluginApi }) => {
@@ -136,19 +135,19 @@ describe('Activity Registration', () => {
       },
     });
 
-    const { api } = await renderSolution('regular', { plugins: [plugin] });
+    const { api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setCurrentActivity('clear-activity');
     api.setModalState(true);
 
-    await expect.element(page.getByText('Will Be Cleared')).toBeVisible();
+    await expect.element(within(root).getByText('Will Be Cleared')).toBeVisible();
 
     api.setCurrentActivity(null);
 
-    await expect.element(page.getByText('Will Be Cleared')).not.toBeInTheDocument();
+    await expect.element(within(root).getByText('Will Be Cleared')).not.toBeInTheDocument();
   });
 
-  it('should remove activity host when plugin is unregistered', async () => {
+  it('removes the activity host when the plugin is unregistered', async () => {
     const render = vi.fn((el: HTMLElement) => {
       el.textContent = 'Activity To Remove';
       return () => {};
@@ -164,19 +163,19 @@ describe('Activity Registration', () => {
       },
     });
 
-    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
+    const { config, api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setCurrentActivity('remove-activity');
     api.setModalState(true);
 
-    await expect.element(page.getByText('Activity To Remove')).toBeVisible();
+    await expect.element(within(root).getByText('Activity To Remove')).toBeVisible();
 
     config.plugins = [];
 
-    await expect.element(page.getByText('Activity To Remove')).not.toBeInTheDocument();
+    await expect.element(within(root).getByText('Activity To Remove')).not.toBeInTheDocument();
   });
 
-  it('should purge activity registration when setup throws', async () => {
+  it('purges the activity when setup() throws', async () => {
     const plugin = createTestPlugin({
       id: 'act-throw-setup',
       setup: ({ pluginApi }) => {
@@ -191,19 +190,20 @@ describe('Activity Registration', () => {
       },
     });
 
-    const { api } = await renderSolution('regular', { plugins: [plugin] });
+    const { api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setCurrentActivity('throw-activity');
     api.setModalState(true);
 
     // Activity should not render because setup failed and registrations were purged
-    await expect.element(page.getByText('Throw Activity')).not.toBeInTheDocument();
+    await expect.element(within(root).getByText('Throw Activity')).not.toBeInTheDocument();
   });
 
-  it('should render activity registered by an async plugin setup without awaiting pluginsReady', async () => {
+  it('renders an activity registered by an async setup() without awaiting pluginsReady', async () => {
     const plugin = createTestPlugin({
       id: 'act-async-setup',
       setup: async ({ pluginApi }) => {
+        // Deliberate: a slow async setup() so setCurrentActivity runs before the activity is registered.
         await delay(50);
         pluginApi.registry.registerActivity({
           id: 'async-setup-activity',
@@ -217,13 +217,13 @@ describe('Activity Registration', () => {
       },
     });
 
-    const { api } = await renderSolution('regular', { plugins: [plugin] });
+    const { api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     // setCurrentActivity internally waits for pluginsReady, so no explicit await needed
     api.setCurrentActivity('async-setup-activity');
     api.setModalState(true);
 
-    await expect.element(page.getByText('Async Setup Activity Content')).toBeVisible();
+    await expect.element(within(root).getByText('Async Setup Activity Content')).toBeVisible();
   });
 });
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { page, userEvent } from 'vitest/browser';
+import { userEvent } from 'vitest/browser';
 import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { expectActivity, expectModal, modalDialog, renderSolution, within } from '~/tests/utils/render-solution';
@@ -11,7 +11,7 @@ import '~/types/jsx';
  */
 
 const openUrlSource = async (root: HTMLElement) => {
-  await page.getByTestId('uc-start-from').getByText('From link', { exact: true }).click();
+  await within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }).click();
   await expectActivity(root, 'url');
 };
 
@@ -21,7 +21,7 @@ describe('regular', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await page.getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
 
     await expectModal(root, 'start-from', 'closed');
     expect(api.getCurrentActivity()).toBe(null);
@@ -33,7 +33,7 @@ describe('regular', () => {
     await expectModal(root, 'start-from', 'open');
     await openUrlSource(root);
 
-    await page.getByTestId('uc-url-source').getByRole('button', { name: 'Back' }).click();
+    await within(root).getByTestId('uc-url-source').getByRole('button', { name: 'Back' }).click();
 
     await expectActivity(root, 'start-from');
     await expectModal(root, 'start-from', 'open');
@@ -46,7 +46,7 @@ describe('regular', () => {
     await expectModal(root, 'start-from', 'open');
     await openUrlSource(root);
 
-    await page.getByTestId('uc-url-source').getByRole('button', { name: 'Close' }).click();
+    await within(root).getByTestId('uc-url-source').getByRole('button', { name: 'Close' }).click();
 
     await expectModal(root, 'start-from', 'closed');
     await expect.poll(() => api.getCurrentActivity()).toBe(null);
@@ -58,7 +58,7 @@ describe('regular', () => {
     api.initFlow();
     await expectModal(root, 'upload-list', 'open');
 
-    await page.getByTestId('uc-activity-header--close').click();
+    await within(root).getByTestId('uc-activity-header--close').click();
 
     await expectModal(root, 'upload-list', 'closed');
     await expect.poll(() => api.getCurrentActivity()).toBe(null);
@@ -97,10 +97,11 @@ describe('regular', () => {
     // Modal only closes when mousedown and mouseup both land on the dialog element itself, so releasing a selection
     // drag over the backdrop must not dismiss it (Modal.ts:52).
     const dialog = modalDialog(root, 'start-from') as HTMLDialogElement;
-    const inside = page.getByTestId('uc-start-from').element();
+    const inside = within(root).getByTestId('uc-start-from').element();
     inside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     dialog.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
 
+    // Negative wait: the assertion is that the dialog does NOT close, and a close would have no other signal.
     await delay(200);
     expect(dialog.open).toBe(true);
     expect(api.getCurrentActivity()).toBe('start-from');
@@ -119,7 +120,7 @@ describe('minimal', () => {
     api.setModalState(true);
     await expectModal(root, 'start-from', 'open');
 
-    await page.getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
 
     await expectModal(root, 'start-from', 'closed');
     await expectActivity(root, 'upload-list');
@@ -131,7 +132,7 @@ describe('minimal', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await page.getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
 
     await expectModal(root, 'start-from', 'closed');
     await expect.poll(() => api.getCurrentActivity()).toBe('start-from');
@@ -152,11 +153,12 @@ describe('inline', () => {
     await expectActivity(root, 'start-from');
     await openUrlSource(root);
 
-    await page.getByTestId('uc-url-source').getByRole('button', { name: 'Back' }).click();
+    await within(root).getByTestId('uc-url-source').getByRole('button', { name: 'Back' }).click();
     await expectActivity(root, 'start-from');
 
     // Correct here: history is back at start-from and the collection is empty, so cancelling would have nowhere to
     // go (`_couldHistoryBack` and `_couldShowList` are both false — FileUploaderInline.ts:52).
+    // Negative wait: the button has to stay hidden after the history update settles; no event marks that.
     await delay(200);
     expect((root.querySelector('.uc-cancel-btn') as HTMLButtonElement).hidden).toBe(true);
   });
@@ -176,6 +178,7 @@ describe('inline', () => {
     await expectActivity(root, 'start-from');
 
     const cancel = root.querySelector('.uc-cancel-btn') as HTMLButtonElement;
+    // Negative wait: pins that the button stays hidden; a recompute that never happens has no signal to wait on.
     await delay(200);
     expect(cancel.hidden).toBe(true);
 

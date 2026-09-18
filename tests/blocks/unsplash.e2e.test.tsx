@@ -1,8 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
-import { page, userEvent } from 'vitest/browser';
+import { userEvent } from 'vitest/browser';
 import { unsplashPlugin } from '@/plugins/unsplashPlugin';
-import { delay } from '@/utils/delay';
-import { expectActivity, renderSolution } from '~/tests/utils/render-solution';
+import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
 /**
@@ -49,26 +48,26 @@ const unsplashCalls = () => fetchSpy.mock.calls.map((call) => String(call[0])).f
 
 /** Renders the uploader with the plugin registered and opens its activity. */
 const openUnsplash = async (accessKey = 'test-key') => {
-  const rendered = await renderSolution('regular', { plugins: [unsplashPlugin] });
-  Object.assign(rendered.config, { unsplashAccessKey: accessKey });
-  await delay(100);
+  const rendered = await renderSolution('regular', { plugins: [unsplashPlugin], unsplashAccessKey: accessKey });
 
   rendered.api.setCurrentActivity('unsplash-gallery');
   rendered.api.setModalState(true);
   await expectActivity(rendered.root, 'unsplash-gallery');
 
+  // The plugin's activity element is not a block, so it has no test id.
   const activity = rendered.root.querySelector('uc-unsplash-activity') as HTMLElement;
   return { ...rendered, activity };
 };
 
 describe('unsplash plugin', () => {
   it('registers a source on the start-from screen', async () => {
-    const { root, api, config } = await renderSolution('regular', { plugins: [unsplashPlugin] });
-    config.sourceList = 'local, unsplash';
+    const { root, api } = await renderSolution('regular', { plugins: [unsplashPlugin], sourceList: 'local, unsplash' });
     api.initFlow();
     await expectActivity(root, 'start-from');
 
-    await expect.element(page.getByTestId('uc-start-from').getByText('Unsplash', { exact: true })).toBeVisible();
+    await expect
+      .element(within(root).getByTestId('uc-start-from').getByText('Unsplash', { exact: true }))
+      .toBeVisible();
   });
 
   it('asks the API for photos with the configured key', async () => {
@@ -109,6 +108,7 @@ describe('unsplash plugin', () => {
     await vi.waitFor(() => expect(unsplashCalls()).not.toHaveLength(0));
     fetchSpy.mockClear();
 
+    // Plain markup inside the plugin activity, no test id.
     const input = activity.querySelector('input.search-input') as HTMLInputElement;
     await userEvent.fill(input, 'cats');
     await userEvent.keyboard('{Enter}');

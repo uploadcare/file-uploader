@@ -1,60 +1,47 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { page } from 'vitest/browser';
-import type { Config } from '@/index';
+import { describe, expect, it } from 'vitest';
 import '~/types/jsx';
-import { inCtx, renderSolution } from '~/tests/utils/render-solution';
-import { cleanup, getCtxName } from '~/tests/utils/test-renderer';
+import { renderSolution } from '~/tests/utils/render-solution';
 
-let config: Config;
+// No pubkey: these tests set it themselves and watch what `cdnCname` derives from it.
+const render = (configProps: Parameters<typeof renderSolution>[1] = {}) =>
+  renderSolution('regular', configProps, { pubkey: null });
 
-beforeEach(async () => {
-  // No pubkey: these tests set it themselves and watch what `cdnCname` derives from it.
-  ({ config } = await renderSolution('regular', {}, { pubkey: null }));
-});
+describe('cdnCname', () => {
+  it('is ucarecdn.com by default', async () => {
+    const { config } = await render();
+    expect(config.cdnCname).toBe('https://ucarecdn.com');
+  });
 
-describe('Config', () => {
-  describe('cdnCname', () => {
-    it('should be ucarecdn.com by default', async () => {
-      expect(config.cdnCname).toBe('https://ucarecdn.com');
-    });
+  it('updates synchronously', async () => {
+    const { config } = await render();
+    config.cdnCname = 'https://cdn.example.com';
+    expect(config.cdnCname).toBe('https://cdn.example.com');
+  });
 
-    it('should be updated synchronously', async () => {
-      config.cdnCname = 'https://cdn.example.com';
-      expect(config.cdnCname).toBe('https://cdn.example.com');
-    });
+  it('is derived asynchronously from the pubkey when no custom domain is set', async () => {
+    const { config } = await render();
+    config.pubkey = 'demopublickey';
+    expect(config.cdnCname).toBe('https://ucarecdn.com');
+    await expect.poll(() => config.cdnCname).toBe('https://1s4oyld5dc.ucarecd.net');
+  });
 
-    it('should be async calculated from pubkey if another custom domain is not set', async () => {
-      config.pubkey = 'demopublickey';
-      expect(config.cdnCname).toBe('https://ucarecdn.com');
-      await expect.poll(() => config.cdnCname).toBe('https://1s4oyld5dc.ucarecd.net');
-    });
+  it('is not derived when a custom domain is set', async () => {
+    const { config } = await render();
+    config.cdnCname = 'https://cdn.example.com';
+    config.pubkey = 'demopublickey';
+    await expect.poll(() => config.cdnCname).toBe('https://cdn.example.com');
+  });
 
-    it('should not be calculated if another custom domain is set', async () => {
-      config.cdnCname = 'https://cdn.example.com';
-      config.pubkey = 'demopublickey';
-      await expect.poll(() => config.cdnCname).toBe('https://cdn.example.com');
-    });
+  it('is derived again when the pubkey changes and no custom domain is present', async () => {
+    const { config } = await render();
+    config.pubkey = 'demopublickey';
+    await expect.poll(() => config.cdnCname).toBe('https://1s4oyld5dc.ucarecd.net');
+    config.pubkey = 'anotherpublickey';
+    await expect.poll(() => config.cdnCname).toBe('https://t8zl5ek5q1.ucarecd.net');
+  });
 
-    it('should be calculated if pubkey is changed and custom domain is not present', async () => {
-      config.pubkey = 'demopublickey';
-      await expect.poll(() => config.cdnCname).toBe('https://1s4oyld5dc.ucarecd.net');
-      config.pubkey = 'anotherpublickey';
-      await expect.poll(() => config.cdnCname).toBe('https://t8zl5ek5q1.ucarecd.net');
-    });
-
-    it('should be initially loaded from attribute without pubkey defined', async () => {
-      cleanup();
-      const ctxName = getCtxName();
-      page.render(
-        <>
-          <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-          <uc-config ctx-name={ctxName} cdn-cname="https://cdn.example.com" testMode></uc-config>
-          <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-        </>,
-      );
-
-      // This test renders its own uploader, so it reads that one rather than the fixture's.
-      expect(inCtx<Config>('uc-config', ctxName).cdnCname).toBe('https://cdn.example.com');
-    });
+  it('is read from the attribute when no pubkey is defined', async () => {
+    const { config } = await render({ cdnCname: 'https://cdn.example.com' });
+    expect(config.cdnCname).toBe('https://cdn.example.com');
   });
 });

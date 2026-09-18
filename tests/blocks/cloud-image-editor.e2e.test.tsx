@@ -1,11 +1,12 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import { delay } from '@/utils/delay';
 import '~/types/jsx';
-import { cleanup } from '~/tests/utils/test-renderer';
+import { inCtx, within } from '~/tests/utils/render-solution';
+import { getCtxName } from '~/tests/utils/test-renderer';
 
-beforeEach(() => {
-  const ctxName = `test-${Math.random().toString(36).slice(2)}`;
+/** `<uc-cloud-image-editor>` is not part of any solution, so it is rendered by hand with its own config. */
+const renderEditor = () => {
+  const ctxName = getCtxName();
   page.render(
     <>
       <uc-cloud-image-editor
@@ -22,63 +23,61 @@ beforeEach(() => {
       ></uc-config>
     </>,
   );
-});
+  const element = inCtx<HTMLElement>('uc-cloud-image-editor', ctxName);
+  return { element, editor: within(element) };
+};
 
-describe('Cloud Image Editor', () => {
-  it('should be rendered', async () => {
-    await expect.element(page.getByTestId('uc-cloud-image-editor')).toBeVisible();
+describe('uc-cloud-image-editor', () => {
+  it('renders', async () => {
+    const { element } = renderEditor();
+
+    await expect.element(element).toBeVisible();
   });
 
-  it('should select tunings tab', async () => {
-    const flip = page.getByTestId('uc-editor-crop-button-control').nth(2);
+  it('accepts a click on a crop control', async () => {
+    const { editor } = renderEditor();
+    const flip = editor.getByTestId('uc-editor-crop-button-control').nth(2);
 
     await userEvent.click(flip);
   });
 
-  it('should select crop preset', async () => {
-    const freeform = page.getByTestId('uc-editor-freeform-button-control');
+  it('selects a crop preset', async () => {
+    const { editor } = renderEditor();
+    const freeform = editor.getByTestId('uc-editor-freeform-button-control');
 
     await userEvent.click(freeform);
 
-    const preset16x9 = page.getByTestId('uc-editor-aspect-ratio-button-control').nth(1);
-
+    const preset16x9 = editor.getByTestId('uc-editor-aspect-ratio-button-control').nth(1);
     await expect.element(preset16x9).toBeVisible();
-
     await userEvent.click(preset16x9);
 
-    const apply = page.getByRole('button', { name: /apply/i });
-
-    await userEvent.click(apply);
+    await userEvent.click(editor.getByRole('button', { name: /apply/i }));
 
     await expect.element(freeform).toBeVisible();
   });
 
-  it("should apply 'brightness' operation", async () => {
-    const tuningTab = page.getByRole('tab', { name: /tuning/i });
+  it("applies the 'brightness' operation", async () => {
+    const { editor } = renderEditor();
+    const tuningTab = editor.getByRole('tab', { name: /tuning/i });
     await userEvent.click(tuningTab);
 
-    const brightness = page.getByRole('option', { name: /Brightness/i });
-    await userEvent.click(brightness);
+    await userEvent.click(editor.getByRole('option', { name: /Brightness/i }));
 
-    const slider = page.getByTestId('uc-editor-slider');
+    const slider = editor.getByTestId('uc-editor-slider');
     await expect.element(slider).toBeVisible();
 
-    const applySlider = page.getByRole('button', { name: /apply/i });
     await userEvent.click(slider);
     await userEvent.keyboard('[ArrowRight]');
-    await userEvent.click(applySlider);
+    await userEvent.click(editor.getByRole('button', { name: /apply/i }));
 
     await expect.element(tuningTab).toBeVisible();
   });
 
-  it('should log timeout without unhandled rejection when container size stays zero', async () => {
-    cleanup();
-
+  it('logs a timeout without an unhandled rejection when the container size stays zero', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     try {
-      const ctxName = `test-${Math.random().toString(36).slice(2)}`;
-
+      const ctxName = getCtxName();
       page.render(
         <>
           <div style="width: 0; height: 0; overflow: hidden;">
@@ -98,7 +97,8 @@ describe('Cloud Image Editor', () => {
         </>,
       );
 
-      await delay(3100);
+      // The editor gives up on a zero-sized container after its own 3s timeout, so the log is the signal.
+      await vi.waitFor(() => expect(errorSpy).toHaveBeenCalled(), { timeout: 5000 });
 
       expect(errorSpy).toHaveBeenCalledTimes(1);
       expect(errorSpy).toHaveBeenCalledWith('[cloud-image-editor] timeout waiting for non-zero container size');

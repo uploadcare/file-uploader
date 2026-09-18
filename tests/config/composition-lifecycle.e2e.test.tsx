@@ -42,6 +42,7 @@ const mount = async ({
 
   page.render(<div ctx-name={ctxName}></div>);
   inCtx('div', ctxName).append(...(configFirst ? [config, uploader] : [uploader, config]));
+  // Connection order is the subject, so there is no single signal to wait for: let every block settle.
   await delay(50);
 
   return { ctxName, config };
@@ -66,10 +67,12 @@ describe('tag order', () => {
         <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
       </>,
     );
+    // "Settled" is the precondition under test; nothing observable marks it, so wait it out.
     await delay(50);
 
     const provider = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
     inCtx('uc-config', ctxName).after(provider);
+    // One tick for the late provider to connect and register with the ctx.
     await delay(0);
 
     const api = provider.getAPI();
@@ -88,7 +91,7 @@ describe('two uploaders on one page', () => {
     const secondEvents = recordEvents(second.provider);
 
     first.api.addFileFromObject(IMAGE.PIXEL, { fileName: 'first.jpg' });
-    await delay(100);
+    await firstEvents.waitFor('file-added');
 
     expect(first.api.getOutputCollectionState().totalCount).toBe(1);
     expect(second.api.getOutputCollectionState().totalCount).toBe(0);
@@ -109,12 +112,12 @@ describe('two uploaders on one page', () => {
 
     const sibling = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
     inCtx('uc-upload-ctx-provider', ctxName).after(sibling);
+    // One tick for the sibling provider to connect and register with the ctx.
     await delay(0);
 
     api.addFileFromObject(IMAGE.PIXEL);
-    await delay(50);
 
-    expect(sibling.getAPI().getOutputCollectionState().totalCount).toBe(1);
+    await expect.poll(() => sibling.getAPI().getOutputCollectionState().totalCount).toBe(1);
   });
 });
 
@@ -122,15 +125,32 @@ describe('disconnect and reconnect', () => {
   it('keeps the collection when the uploader is moved within the same task', async () => {
     const { ctxName, api } = await renderSolution();
     api.addFileFromObject(IMAGE.PIXEL);
-    await delay(50);
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
 
     const uploader = inCtx('uc-file-uploader-regular', ctxName);
     const parent = uploader.parentElement as HTMLElement;
     uploader.remove();
     parent.appendChild(uploader);
+    // Negative wait: a ctx teardown, had one been scheduled, lands in a `setTimeout(0)` (LitBlock.ts:166).
     await delay(50);
 
     expect(api.getOutputCollectionState().totalCount).toBe(1);
+  });
+
+  it('fires each event once after the uploader is re-mounted several times', async () => {
+    const { ctxName, provider, api } = await renderSolution();
+    const uploader = inCtx('uc-file-uploader-regular', ctxName);
+    const parent = uploader.parentElement as HTMLElement;
+    for (let i = 0; i < 5; i++) {
+      uploader.remove();
+      parent.appendChild(uploader);
+    }
+    const recorder = recordEvents(provider);
+
+    api.addFileFromObject(IMAGE.PIXEL);
+
+    await recorder.waitFor('file-added');
+    await expect.poll(() => recorder.detailsOf('file-added').length).toBe(1);
   });
 
   // QUIRK(lifecycle): the ctx is torn down in a `setTimeout(0)` once the last block disconnects
@@ -140,7 +160,7 @@ describe('disconnect and reconnect', () => {
   it('drops the collection when a macrotask passes between removal and re-insertion', async () => {
     const { ctxName, api } = await renderSolution();
     api.addFileFromObject(IMAGE.PIXEL);
-    await delay(50);
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
 
     const uploader = inCtx('uc-file-uploader-regular', ctxName);
     const provider = inCtx('uc-upload-ctx-provider', ctxName);
@@ -150,39 +170,23 @@ describe('disconnect and reconnect', () => {
     for (const element of [uploader, provider, config]) {
       element.remove();
     }
+    // The macrotask gap is the subject: it lets the `setTimeout(0)` teardown run.
     await delay(50);
     for (const element of [config, uploader, provider]) {
       parent.appendChild(element);
     }
-    await delay(50);
 
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(0);
   });
 });
 
 describe('config values set after render', () => {
   it('takes a JS property that overrides the declared attribute', async () => {
-    const ctxName = getCtxName();
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config
-          quality-insights="false"
-          ctx-name={ctxName}
-          pubkey="demopublickey"
-          testMode
-          multipleMax={3}
-        ></uc-config>
-      </>,
-    );
-    await delay(0);
-
-    const config = inCtx<Config>('uc-config', ctxName);
+    const { config } = await renderSolution('regular', { multipleMax: 3 });
     expect(config.multipleMax).toBe(3);
 
     config.multipleMax = 7;
-    await delay(0);
-    expect(config.multipleMax).toBe(7);
+    await expect.poll(() => config.multipleMax).toBe(7);
   });
 
   it('falls back to the default when a string option is cleared', async () => {
@@ -190,8 +194,7 @@ describe('config values set after render', () => {
     expect(config.accept).toBe('image/png');
 
     config.accept = '';
-    await delay(0);
-    expect(config.accept).toBe('');
+    await expect.poll(() => config.accept).toBe('');
   });
 });
 

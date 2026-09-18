@@ -1,85 +1,72 @@
-import { describe, expect, it, vi } from 'vitest';
-import { cloudImageEditorPlugin } from '@/plugins/cloudImageEditorPlugin';
+import { describe, expect, it } from 'vitest';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { renderSolution } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
 const CLOUD_IMG_EDIT = 'cloud-image-edit';
+// Real uploads run against the network.
+const UPLOAD = { timeout: 10000 };
 
-describe('Cloud Image Editor Plugin', () => {
+describe('cloud image editor options', () => {
   describe('cloudImageEditorAutoOpen', () => {
-    it('should open cloud editor after image upload when cloudImageEditorAutoOpen is true', async () => {
-      const { config, api } = await renderSolution('regular', { plugins: [cloudImageEditorPlugin] });
-      config.useCloudImageEditor = true;
-      config.cloudImageEditorAutoOpen = true;
+    it('opens the editor after an image upload when set', async () => {
+      const { api } = await renderSolution('regular', { useCloudImageEditor: true, cloudImageEditorAutoOpen: true });
       api.addFileFromUrl(TEST_IMAGE_URL);
       api.initFlow();
 
-      await vi.waitFor(() => expect(api.getCurrentActivity()).toBe(CLOUD_IMG_EDIT), { timeout: 10000 });
+      await expect.poll(() => api.getCurrentActivity(), UPLOAD).toBe(CLOUD_IMG_EDIT);
     });
 
-    it('should not open cloud editor when cloudImageEditorAutoOpen is false', async () => {
-      const { config, api } = await renderSolution('regular', { plugins: [cloudImageEditorPlugin] });
-      config.useCloudImageEditor = true;
-      config.cloudImageEditorAutoOpen = false;
+    it('does not open the editor when unset', async () => {
+      const { api } = await renderSolution('regular', { useCloudImageEditor: true, cloudImageEditorAutoOpen: false });
       api.addFileFromUrl(TEST_IMAGE_URL);
       api.initFlow();
 
-      await vi.waitFor(() => expect(api.getOutputCollectionState().successEntries.length).toBe(1), { timeout: 10000 });
-
+      await expect.poll(() => api.getOutputCollectionState().successEntries.length, UPLOAD).toBe(1);
       expect(api.getCurrentActivity()).not.toBe(CLOUD_IMG_EDIT);
     });
 
-    it('should not open cloud editor when useCloudImageEditor is false', async () => {
-      const { config, api } = await renderSolution('regular', { plugins: [cloudImageEditorPlugin] });
-      config.useCloudImageEditor = false;
-      config.cloudImageEditorAutoOpen = true;
+    it('does not open the editor when useCloudImageEditor is false', async () => {
+      const { api } = await renderSolution('regular', { useCloudImageEditor: false, cloudImageEditorAutoOpen: true });
       api.addFileFromUrl(TEST_IMAGE_URL);
       api.initFlow();
 
-      await vi.waitFor(() => expect(api.getOutputCollectionState().successEntries.length).toBe(1), { timeout: 10000 });
-
+      await expect.poll(() => api.getOutputCollectionState().successEntries.length, UPLOAD).toBe(1);
       expect(api.getCurrentActivity()).not.toBe(CLOUD_IMG_EDIT);
     });
 
-    it('should not open cloud editor when more than one file is in the collection', async () => {
-      const { config, api } = await renderSolution('regular', { plugins: [cloudImageEditorPlugin] });
-      config.useCloudImageEditor = true;
-      config.cloudImageEditorAutoOpen = true;
-      config.multiple = true;
+    it('does not open the editor when more than one file is in the collection', async () => {
+      const { api } = await renderSolution('regular', {
+        useCloudImageEditor: true,
+        cloudImageEditorAutoOpen: true,
+        multiple: true,
+      });
       api.addFileFromUrl(TEST_IMAGE_URL);
       api.addFileFromUrl(TEST_IMAGE_URL);
       api.initFlow();
 
-      await vi.waitFor(() => expect(api.getOutputCollectionState().successEntries.length).toBe(2), { timeout: 10000 });
-
+      await expect.poll(() => api.getOutputCollectionState().successEntries.length, UPLOAD).toBe(2);
       expect(api.getCurrentActivity()).not.toBe(CLOUD_IMG_EDIT);
     });
   });
 
   describe('cropPreset', () => {
-    it('should apply crop modifiers to uploaded image when cropPreset is set', async () => {
-      const { config, api } = await renderSolution('regular', { plugins: [cloudImageEditorPlugin] });
-      config.cropPreset = '16:9';
+    it('applies crop modifiers to the uploaded image', async () => {
+      const { api } = await renderSolution('regular', { cropPreset: '16:9' });
       api.addFileFromUrl(TEST_IMAGE_URL);
       api.initFlow();
 
-      await vi.waitFor(
-        () => {
-          const entry = api.getOutputCollectionState().allEntries[0];
-          expect(entry?.cdnUrlModifiers).toMatch(/\/crop\//);
-        },
-        { timeout: 10000 },
-      );
+      await expect
+        .poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrlModifiers, UPLOAD)
+        .toMatch(/\/crop\//);
     });
 
-    it('should open cloud editor after upload when cropPreset and useCloudImageEditor are set', async () => {
-      const { config, api } = await renderSolution('regular', { plugins: [cloudImageEditorPlugin] });
-      config.useCloudImageEditor = true;
-      config.cropPreset = '16:9';
+    it('opens the editor after upload when useCloudImageEditor is also set', async () => {
+      const { api } = await renderSolution('regular', { useCloudImageEditor: true, cropPreset: '16:9' });
       api.addFileFromUrl(TEST_IMAGE_URL);
       api.initFlow();
 
-      await vi.waitFor(() => expect(api.getCurrentActivity()).toBe(CLOUD_IMG_EDIT), { timeout: 10000 });
+      await expect.poll(() => api.getCurrentActivity(), UPLOAD).toBe(CLOUD_IMG_EDIT);
     });
   });
 });

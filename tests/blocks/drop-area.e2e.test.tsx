@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { delay } from '@/utils/delay';
-import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
+import { expectActivity, modalDialog, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
 /**
- * `<uc-drop-area>` and its `addDropzone` helper. `tests/file-uploader-minimal.e2e.test.tsx` drops one file; the drag
+ * `<uc-drop-area>` and its `addDropzone` helper. `tests/solutions/minimal.e2e.test.tsx` drops one file; the drag
  * state machine, the url branch and the rules that switch the area off had no coverage.
  */
 
@@ -12,14 +12,16 @@ const openStartFrom = async (configProps: Parameters<typeof renderSolution>[1] =
   const rendered = await renderSolution('regular', configProps);
   rendered.api.initFlow();
   await expectActivity(rendered.root, 'start-from');
-  await delay(100);
 
   // The regular solution renders more than one drop area; this is the one inside the start-from dialog. The other is
   // a page-level fullscreen zone that defers to it (`_shouldIgnore`), so dropping on it does nothing.
-  const dropArea = rendered.root.querySelector(
-    '[data-testid="uc-modal"][id="start-from"] [data-testid="uc-drop-area"]',
-  ) as HTMLElement;
-  return { ...rendered, dropArea };
+  const dialog = modalDialog(rendered.root, 'start-from') as HTMLDialogElement;
+  const dropArea = within(dialog).getByTestId('uc-drop-area');
+  // The dropzone is wired up in `connectedCallback` and publishes its state as `drag-state`; wait for that first.
+  await expect.poll(() => dropArea.query()?.hasAttribute('drag-state')).toBe(true);
+  const dragState = () => dropArea.element().getAttribute('drag-state');
+
+  return { ...rendered, dropArea: dropArea.element() as HTMLElement, dragState };
 };
 
 const transfer = (build: (data: DataTransfer) => void) => {
@@ -28,7 +30,7 @@ const transfer = (build: (data: DataTransfer) => void) => {
   return data;
 };
 
-const dragOver = async (dropArea: HTMLElement) => {
+const dragOver = (dropArea: HTMLElement) => {
   const rect = dropArea.getBoundingClientRect();
   document.body.dispatchEvent(new DragEvent('dragenter', { bubbles: true }));
   dropArea.dispatchEvent(
@@ -39,55 +41,51 @@ const dragOver = async (dropArea: HTMLElement) => {
       clientY: rect.y + rect.height / 2,
     }),
   );
-  await delay(50);
 };
 
 describe('drag state', () => {
   it('starts inactive', async () => {
-    const { dropArea } = await openStartFrom();
+    const { dragState } = await openStartFrom();
 
-    expect(dropArea.getAttribute('drag-state')).toBe('inactive');
+    expect(dragState()).toBe('inactive');
   });
 
   it('becomes active when a drag starts anywhere on the page', async () => {
-    const { dropArea } = await openStartFrom();
+    const { dragState } = await openStartFrom();
 
     // `addDropzone` listens on document.body, not window.
     document.body.dispatchEvent(new DragEvent('dragenter', { bubbles: true }));
-    await delay(50);
 
-    expect(dropArea.getAttribute('drag-state')).toBe('active');
+    await expect.poll(dragState).toBe('active');
   });
 
   it('becomes over when the pointer is on the area', async () => {
-    const { dropArea } = await openStartFrom();
+    const { dropArea, dragState } = await openStartFrom();
 
-    await dragOver(dropArea);
+    dragOver(dropArea);
 
-    expect(dropArea.getAttribute('drag-state')).toBe('over');
+    await expect.poll(dragState).toBe('over');
   });
 
   it('returns to inactive when the drag leaves', async () => {
-    const { dropArea } = await openStartFrom();
+    const { dragState } = await openStartFrom();
     document.body.dispatchEvent(new DragEvent('dragenter', { bubbles: true }));
-    await delay(50);
+    await expect.poll(dragState).toBe('active');
 
     document.body.dispatchEvent(new DragEvent('dragleave', { bubbles: true }));
-    await delay(50);
 
-    expect(dropArea.getAttribute('drag-state')).toBe('inactive');
+    await expect.poll(dragState).toBe('inactive');
   });
 
   it('resets when the window regains focus mid-drag', async () => {
     // A drag that ends outside the page never fires dragleave, so focus is the escape hatch.
-    const { dropArea } = await openStartFrom();
+    const { dragState } = await openStartFrom();
     document.body.dispatchEvent(new DragEvent('dragenter', { bubbles: true }));
-    await delay(50);
+    await expect.poll(dragState).toBe('active');
 
     window.dispatchEvent(new Event('focus'));
-    await delay(50);
 
-    expect(dropArea.getAttribute('drag-state')).toBe('inactive');
+    await expect.poll(dragState).toBe('inactive');
   });
 });
 
@@ -121,6 +119,7 @@ describe('dropping', () => {
     const { dropArea, api } = await openStartFrom();
 
     dropArea.dispatchEvent(new DragEvent('drop', { bubbles: true, composed: true, dataTransfer: new DataTransfer() }));
+    // Negative wait: a drop that adds nothing fires no event, so give the async drop handler time to have run.
     await delay(300);
 
     expect(api.getOutputCollectionState().totalCount).toBe(0);
@@ -132,6 +131,7 @@ describe('dropping', () => {
     await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
 
     dropUrl(dropArea, 'https://example.com/second.jpg');
+    // Negative wait: the refused drop has no signal; the first drop landed well within this window.
     await delay(400);
 
     expect(api.getOutputCollectionState().totalCount).toBe(1);
@@ -143,6 +143,7 @@ describe('dropping', () => {
     await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
 
     dropUrl(dropArea, 'https://example.com/second.jpg');
+    // Negative wait: the refused drop has no signal; the first drop landed well within this window.
     await delay(400);
 
     expect(api.getOutputCollectionState().totalCount).toBe(1);
@@ -163,6 +164,7 @@ describe('when local uploads are not offered', () => {
   it('stays visible even though it no longer accepts anything', async () => {
     const { dropArea } = await openStartFrom({ sourceList: 'url, camera' });
 
+    // Negative wait: pins that no later recompute hides the area; there is nothing to wait on.
     await delay(300);
     expect(dropArea.hidden).toBe(false);
   });
@@ -180,6 +182,7 @@ describe('when local uploads are not offered', () => {
         dataTransfer: transfer((d) => d.items.add('https://example.com/photo.jpg', 'text/uri-list')),
       }),
     );
+    // Negative wait: a refused drop has no signal.
     await delay(400);
 
     expect(api.getOutputCollectionState().totalCount).toBe(0);

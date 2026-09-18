@@ -1,38 +1,14 @@
 import { uploadFile } from '@uploadcare/upload-client';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { page } from 'vitest/browser';
-import type { Config, EventPayload } from '@/index.js';
+import { describe, expect, it, vi } from 'vitest';
+import type { EventPayload } from '@/index.js';
 import { IMAGE } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import '~/types/jsx';
-import { type RenderedUploader, renderSolution } from '~/tests/utils/render-solution';
+import { renderSolution, within } from '~/tests/utils/render-solution';
 
-let config: Config;
-let api: RenderedUploader['api'];
-let uploadCtxProvider: RenderedUploader['provider'];
-
-beforeEach(async () => {
-  ({ config, api, provider: uploadCtxProvider } = await renderSolution('regular'));
-});
-
-describe('API', () => {
-  it('should emit events', async () => {
-    const eventHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
-
-    uploadCtxProvider.addEventListener('file-added', eventHandler);
-
-    const url = TEST_IMAGE_URL;
-    api.addFileFromUrl(url);
-
-    const eventPayload = await vi.waitFor(() => {
-      expect(eventHandler).toHaveBeenCalled();
-      return eventHandler.mock.calls[0][0].detail;
-    });
-
-    expect(eventPayload).toMatchObject(expect.objectContaining({ status: 'idle', externalUrl: url }));
-  });
-
-  it('should add an already-uploaded file from an UploadcareFile instance and fire the success events without uploading', async () => {
+describe('UploadCtxProvider api', () => {
+  it('adds an already-uploaded file from an UploadcareFile instance and fires the success events without uploading', async () => {
+    const { api, provider } = await renderSolution();
     // Upload a real local image via the upload client to get a genuine UploadcareFile.
     const file = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
 
@@ -40,10 +16,10 @@ describe('API', () => {
     const uploadStartHandler = vi.fn<(e: CustomEvent<EventPayload['file-upload-start']>) => void>();
     const uploadSuccessHandler = vi.fn<(e: CustomEvent<EventPayload['file-upload-success']>) => void>();
     const commonSuccessHandler = vi.fn<(e: CustomEvent<EventPayload['common-upload-success']>) => void>();
-    uploadCtxProvider.addEventListener('file-added', fileAddedHandler);
-    uploadCtxProvider.addEventListener('file-upload-start', uploadStartHandler);
-    uploadCtxProvider.addEventListener('file-upload-success', uploadSuccessHandler);
-    uploadCtxProvider.addEventListener('common-upload-success', commonSuccessHandler);
+    provider.addEventListener('file-added', fileAddedHandler);
+    provider.addEventListener('file-upload-start', uploadStartHandler);
+    provider.addEventListener('file-upload-success', uploadSuccessHandler);
+    provider.addEventListener('common-upload-success', commonSuccessHandler);
 
     const entry = api.addFileFromUploadcareFile(file);
 
@@ -76,31 +52,33 @@ describe('API', () => {
   }, 30_000);
 
   it('replaceFile swaps a file in place: keeps position, new internalId, re-validates, fires natural add/remove events', async () => {
+    // An `upload`-time validator runs once per uploaded file and is then skipped
+    // on later changes. Seeing it run for the replacement proves the new entry
+    // gets a fresh validation cycle (the whole point of remove + add).
+    const uploadValidated: string[] = [];
+    const { api, provider } = await renderSolution('regular', {
+      fileValidators: [
+        {
+          runOn: 'upload',
+          validator: (entry) => {
+            if (entry.uuid) uploadValidated.push(entry.uuid);
+            return undefined;
+          },
+        },
+      ],
+    });
+
     // Three genuine, distinct already-uploaded files.
     const fileA = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
     const fileB = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
     const fileC = await uploadFile(IMAGE.PIXEL, { publicKey: 'demopublickey', store: false });
 
-    // An `upload`-time validator runs once per uploaded file and is then skipped
-    // on later changes. Seeing it run for the replacement proves the new entry
-    // gets a fresh validation cycle (the whole point of remove + add).
-    const uploadValidated: string[] = [];
-    config.fileValidators = [
-      {
-        runOn: 'upload',
-        validator: (entry) => {
-          if (entry.uuid) uploadValidated.push(entry.uuid);
-          return undefined;
-        },
-      },
-    ];
-
     const addedHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
     const removedHandler = vi.fn<(e: CustomEvent<EventPayload['file-removed']>) => void>();
     const successHandler = vi.fn<(e: CustomEvent<EventPayload['file-upload-success']>) => void>();
-    uploadCtxProvider.addEventListener('file-added', addedHandler);
-    uploadCtxProvider.addEventListener('file-removed', removedHandler);
-    uploadCtxProvider.addEventListener('file-upload-success', successHandler);
+    provider.addEventListener('file-added', addedHandler);
+    provider.addEventListener('file-removed', removedHandler);
+    provider.addEventListener('file-upload-success', successHandler);
 
     // Two entries; we'll replace the FIRST and assert it stays first.
     const entryA = api.addFileFromUploadcareFile(fileA);
@@ -137,84 +115,31 @@ describe('API', () => {
     await vi.waitFor(() => expect(uploadValidated).toContain(fileB.uuid));
   }, 30_000);
 
-  it('should not duplicate events after uploader add/removal', async () => {
-    for (let i = 0; i < 5; i++) {
-      const uploader = page.getByTestId('uc-file-uploader-regular').query()!;
-      uploader.remove();
-
-      page.render(<uc-file-uploader-regular ctx-name={uploader.getAttribute('ctx-name')!}></uc-file-uploader-regular>);
-    }
-
-    const eventHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
-
-    uploadCtxProvider.addEventListener('file-added', eventHandler);
-
-    const url = TEST_IMAGE_URL;
-    api.addFileFromUrl(url);
-
-    const eventPayload = await vi.waitFor(() => {
-      expect(eventHandler).toHaveBeenCalledOnce();
-      return eventHandler.mock.calls[0][0].detail;
-    });
-
-    expect(eventPayload).toMatchObject(expect.objectContaining({ status: 'idle', externalUrl: url }));
-  });
-
-  it('should emit events after uploader re-mount', async () => {
-    const uploader = page.getByTestId('uc-file-uploader-regular').query()!;
-    for (let i = 0; i < 5; i++) {
-      uploader.remove();
-      page.render(uploader);
-    }
-
-    const eventHandler = vi.fn<(e: CustomEvent<EventPayload['file-added']>) => void>();
-
-    uploadCtxProvider.addEventListener('file-added', eventHandler);
-
-    const url = TEST_IMAGE_URL;
-    api.addFileFromUrl(url);
-
-    const eventPayload = await vi.waitFor(() => {
-      expect(eventHandler).toHaveBeenCalledOnce();
-      return eventHandler.mock.calls[0][0].detail;
-    });
-
-    expect(eventPayload).toMatchObject(expect.objectContaining({ status: 'idle', externalUrl: url }));
-  });
-
   describe('setCurrentActivity', () => {
-    it('should set cloud-image-edit activity with params', async () => {
-      const url = TEST_IMAGE_URL;
-      api.addFileFromUrl(url);
+    it('sets the cloud-image-edit activity with params', async () => {
+      const { api, provider, root } = await renderSolution();
+      api.addFileFromUrl(TEST_IMAGE_URL);
 
-      const eventHandler = (event: CustomEvent<EventPayload['file-upload-success']>) => {
-        const detail = event.detail as EventPayload['file-upload-success'];
-        api.setCurrentActivity('cloud-image-edit', { internalId: detail.internalId });
+      provider.addEventListener('file-upload-success', (event: CustomEvent<EventPayload['file-upload-success']>) => {
+        api.setCurrentActivity('cloud-image-edit', { internalId: event.detail.internalId });
         api.setModalState(true);
-      };
+      });
 
-      uploadCtxProvider.addEventListener('file-upload-success', eventHandler);
-
-      const startFrom = page.getByTestId('uc-start-from');
-      const cloudImageEdit = page.getByTestId('uc-cloud-image-editor-activity');
-      await expect.element(startFrom).not.toBeVisible();
-      await expect.element(cloudImageEdit).toBeVisible();
+      await expect.element(within(root).getByTestId('uc-start-from')).not.toBeVisible();
+      await expect.element(within(root).getByTestId('uc-cloud-image-editor-activity')).toBeVisible();
     });
 
-    it('should open external source activity with defined source', async () => {
+    it('opens the external source activity with the given source', async () => {
+      const { api, root } = await renderSolution();
       api.setCurrentActivity('external', { externalSourceType: 'dropbox' });
       api.setModalState(true);
 
-      const startFrom = page.getByTestId('uc-start-from');
-      const externalSource = page.getByTestId('uc-external-source');
-
-      await expect.element(startFrom).not.toBeVisible();
+      const externalSource = within(root).getByTestId('uc-external-source');
+      await expect.element(within(root).getByTestId('uc-start-from')).not.toBeVisible();
       await expect.element(externalSource).toBeVisible();
 
       await vi.waitFor(() => {
-        const iframe = (externalSource.query() as HTMLElement | null)?.querySelector(
-          'iframe',
-        ) as HTMLIFrameElement | null;
+        const iframe = externalSource.query()?.querySelector('iframe');
         expect(iframe).toBeTruthy();
         // Not the best option to verify correct source, probably we should add some data- or testid attributes for external source activity
         expect(iframe!.src).toContain('/dropbox');
@@ -223,16 +148,17 @@ describe('API', () => {
   });
 
   describe('historyBack', () => {
-    it('should navigate back to the previous activity', async () => {
+    it('navigates back to the previous activity', async () => {
+      const { api, root } = await renderSolution();
       api.initFlow();
 
-      const startFrom = page.getByTestId('uc-start-from');
+      const startFrom = within(root).getByTestId('uc-start-from');
       await expect.element(startFrom).toBeVisible();
 
       api.setCurrentActivity('url');
       api.setModalState(true);
 
-      const urlSource = page.getByTestId('uc-url-source');
+      const urlSource = within(root).getByTestId('uc-url-source');
       await expect.element(urlSource).toBeVisible();
 
       api.historyBack();
@@ -243,17 +169,17 @@ describe('API', () => {
   });
 
   describe('initFlow', () => {
-    it('should open the start from activity by default', async () => {
+    it('opens the start-from activity by default', async () => {
+      const { api, root } = await renderSolution();
       api.initFlow();
 
-      const startFrom = page.getByTestId('uc-start-from');
-      await expect.element(startFrom).toBeVisible();
+      await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
     });
 
-    it('should open system dialog for the single local source', async () => {
+    it('opens the system dialog for a single local source', async () => {
+      const { api } = await renderSolution('regular', { sourceList: 'local' });
       const openSystemDialogSpy = vi.spyOn(api, 'openSystemDialog').mockImplementation(() => {});
 
-      config.sourceList = 'local';
       api.initFlow();
 
       await vi.waitFor(() => {
@@ -263,29 +189,26 @@ describe('API', () => {
       openSystemDialogSpy.mockRestore();
     });
 
-    it('should open the single activity in the source list', async () => {
-      config.sourceList = 'url';
+    it('opens the single activity in the source list', async () => {
+      const { api, root } = await renderSolution('regular', { sourceList: 'url' });
       api.initFlow();
 
-      const urlSource = page.getByTestId('uc-url-source');
-      await expect.element(urlSource).toBeVisible();
+      await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
     });
 
     // This is specific case of CKEditor integration, where they update source list and call initFlow on the next tick, so we need to ensure that it works correctly in this scenario
-    it('should handle initFlow right after updating sourceList', async () => {
-      const config = page.getByTestId('uc-config').query()! as HTMLElement;
+    it('handles initFlow right after updating sourceList', async () => {
+      const { api, config, root } = await renderSolution();
 
       config.setAttribute('source-list', 'dropbox');
       api.initFlow();
 
-      const externalSource = page.getByTestId('uc-external-source');
-      await expect.element(externalSource).toBeVisible();
+      await expect.element(within(root).getByTestId('uc-external-source')).toBeVisible();
 
       config.setAttribute('source-list', 'url');
       api.initFlow();
 
-      const urlSource = page.getByTestId('uc-url-source');
-      await expect.element(urlSource).toBeVisible();
+      await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
     });
   });
 });

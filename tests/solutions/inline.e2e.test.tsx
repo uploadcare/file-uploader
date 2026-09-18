@@ -1,40 +1,40 @@
-import { beforeEach, describe, expect, it } from 'vitest';
-import { page, userEvent } from 'vitest/browser';
+import { describe, expect, it } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import '~/types/jsx';
-import { renderSolution } from '~/tests/utils/render-solution';
+import { renderSolution, within } from '~/tests/utils/render-solution';
 
-beforeEach(async () => {
-  await renderSolution('inline');
-});
+describe('uc-file-uploader-inline', () => {
+  it('renders start-from inline', async () => {
+    const { root } = await renderSolution('inline');
 
-describe('File uploader inline', () => {
-  it('should be rendered', async () => {
-    await expect.element(page.getByTestId('uc-start-from').getByText('Drop files here', { exact: true })).toBeVisible();
+    await expect
+      .element(within(root).getByTestId('uc-start-from').getByText('Drop files here', { exact: true }))
+      .toBeVisible();
   });
 
-  it('should open the url source, when clicked', async () => {
-    await page.getByText('From link', { exact: true }).click();
-    const urlSource = page.getByTestId('uc-url-source');
-    await expect(urlSource).toBeDefined();
+  it('opens the url source when clicked', async () => {
+    const { root } = await renderSolution('inline');
+
+    await within(root).getByText('From link', { exact: true }).click();
+
+    await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
   });
 
-  it('should open the camera source, when clicked', async () => {
+  it('opens the camera source when clicked', async () => {
     // Intentionally do not test full recording/accept flow here:
     // media-recorder interactions are flaky in CI and may close the browser connection.
     // This test focuses on camera source availability and primary controls rendering.
-    await page.getByTestId('uc-start-from').getByText('Camera', { exact: true }).click();
+    const { root } = await renderSolution('inline');
+    await within(root).getByTestId('uc-start-from').getByText('Camera', { exact: true }).click();
 
-    const cameraSource = page.getByTestId('uc-camera-source');
+    const cameraSource = within(root).getByTestId('uc-camera-source');
     await expect.element(cameraSource).toBeVisible();
 
     const tabVideo = cameraSource.getByTestId('uc-camera-source--tab-video');
     await userEvent.click(tabVideo);
-    await expect(tabVideo).toHaveClass('uc-active');
+    await expect.element(tabVideo).toHaveClass('uc-active');
 
-    const toggleMicrophone = cameraSource.getByTestId('uc-camera-source--toggle-microphone');
-    await expect(toggleMicrophone).toBeVisible();
-
-    const shot = cameraSource.getByTestId('uc-camera-source--shot');
-    await expect(shot).toBeDefined();
+    await expect.element(cameraSource.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
+    await expect.element(cameraSource.getByTestId('uc-camera-source--shot')).toBeInTheDocument();
   });
 });

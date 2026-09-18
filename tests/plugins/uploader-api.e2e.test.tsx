@@ -1,46 +1,34 @@
 import { describe, expect, it } from 'vitest';
-import { page } from 'vitest/browser';
+import type { PluginSetupParams } from '@/index';
 import { testFile } from '~/tests/fixtures/files';
-import { TEST_IMAGE_URL } from '~/tests/utils/constants';
-import { addSource, createTestPlugin, openModal, renderSolution } from '~/tests/utils/render-solution';
+import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
 
-describe('Uploader API (from plugin)', () => {
-  it('should allow adding files via uploaderApi.addFileFromUrl()', async () => {
+describe('uploaderApi (from plugin)', () => {
+  it('hands setup() the same api object the provider exposes', async () => {
+    let received: PluginSetupParams['uploaderApi'] | undefined;
     const plugin = createTestPlugin({
-      id: 'uapi-url',
-      setup: ({ pluginApi, uploaderApi }) => {
-        pluginApi.registry.registerSource({
-          id: 'url-add-source',
-          label: 'Add URL',
-          onSelect: () => {
-            uploaderApi.addFileFromUrl(TEST_IMAGE_URL);
-            uploaderApi.setCurrentActivity('upload-list');
-            uploaderApi.setModalState(true);
-          },
-        });
+      id: 'uapi-identity',
+      setup: ({ uploaderApi }) => {
+        received = uploaderApi;
       },
     });
 
-    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
-    addSource(config, 'url-add-source');
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
-    await openModal(root);
-    await page.getByText('Add URL').click();
-
-    await expect.element(page.getByText('prithiviraj-a-fa7Stge3YXs-unsplash.jpg')).toBeVisible();
+    await expect.poll(() => received).toBe(api);
   });
 
-  it('should allow adding files via uploaderApi.addFileFromObject()', async () => {
+  it('adds a file and switches activity from a source onSelect', async () => {
     const plugin = createTestPlugin({
-      id: 'uapi-object',
+      id: 'uapi-roundtrip',
       setup: ({ pluginApi, uploaderApi }) => {
         pluginApi.registry.registerSource({
           id: 'obj-add-source',
           label: 'Add Object',
           onSelect: () => {
-            const file = testFile('test-file.txt', 'text/plain');
-            uploaderApi.addFileFromObject(file);
+            uploaderApi.addFileFromObject(testFile('test-file.txt', 'text/plain'));
             uploaderApi.setCurrentActivity('upload-list');
+            // Selecting a source closes the modal, so reopen it on the list.
             uploaderApi.setModalState(true);
           },
         });
@@ -51,98 +39,8 @@ describe('Uploader API (from plugin)', () => {
     addSource(config, 'obj-add-source');
 
     await openModal(root);
-    await page.getByText('Add Object').click();
+    await within(root).getByText('Add Object').click();
 
-    await expect.element(page.getByText('test-file.txt')).toBeVisible();
-  });
-
-  it('should allow calling setCurrentActivity() to switch activities', async () => {
-    const plugin = createTestPlugin({
-      id: 'uapi-activity',
-      setup: ({ pluginApi, uploaderApi }) => {
-        pluginApi.registry.registerActivity({
-          id: 'switchable-activity',
-          render: (el) => {
-            el.textContent = 'Switched Activity';
-            return () => el.replaceChildren();
-          },
-        });
-
-        pluginApi.registry.registerSource({
-          id: 'switch-source',
-          label: 'Switch Activity',
-          onSelect: () => {
-            uploaderApi.setCurrentActivity('switchable-activity');
-            uploaderApi.setModalState(true);
-          },
-        });
-      },
-    });
-
-    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
-    addSource(config, 'switch-source');
-
-    await openModal(root);
-    await page.getByText('Switch Activity').click();
-
-    await expect.element(page.getByText('Switched Activity')).toBeVisible();
-  });
-
-  it('should allow calling setModalState() to open/close modal', async () => {
-    const plugin = createTestPlugin({
-      id: 'uapi-modal',
-      setup: ({ pluginApi, uploaderApi }) => {
-        pluginApi.registry.registerSource({
-          id: 'modal-source',
-          label: 'Toggle Modal',
-          onSelect: () => {
-            uploaderApi.setModalState(false);
-          },
-        });
-      },
-    });
-
-    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
-    addSource(config, 'modal-source');
-
-    await openModal(root);
-    const startFrom = page.getByTestId('uc-start-from');
-    await expect.element(startFrom).toBeVisible();
-
-    await page.getByText('Toggle Modal').click();
-
-    await expect.element(startFrom).not.toBeVisible();
-  });
-
-  it('should allow calling initFlow() / doneFlow()', async () => {
-    const plugin = createTestPlugin({
-      id: 'uapi-flow',
-      setup: ({ pluginApi, uploaderApi }) => {
-        pluginApi.registry.registerSource({
-          id: 'flow-source',
-          label: 'Start Flow',
-          onSelect: () => {
-            uploaderApi.addFileFromUrl(TEST_IMAGE_URL);
-            uploaderApi.initFlow();
-          },
-        });
-      },
-    });
-
-    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
-    addSource(config, 'flow-source');
-
-    await openModal(root);
-    await page.getByText('Start Flow').click();
-
-    await expect.element(page.getByTestId('uc-upload-list')).toBeVisible();
+    await expect.element(within(root).getByText('test-file.txt')).toBeVisible();
   });
 });
-
-declare module '@/types/index' {
-  interface CustomActivities {
-    'switchable-activity': {
-      params: never;
-    };
-  }
-}

@@ -3,8 +3,8 @@ import type { PluginSetupParams } from '@/index';
 import { delay } from '@/utils/delay';
 import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
 
-describe('Activity API', () => {
-  it('should return current params via activity.getParams()', async () => {
+describe('plugin activity api', () => {
+  it('returns the current params from activity.getParams()', async () => {
     let activityApi: PluginSetupParams['pluginApi']['activity'];
 
     const plugin = createTestPlugin({
@@ -29,7 +29,7 @@ describe('Activity API', () => {
     });
   });
 
-  it('should notify subscribers via activity.subscribeToParams() when params change', async () => {
+  it('notifies activity.subscribeToParams() when params change', async () => {
     const paramsCallback = vi.fn<(params: Record<string, unknown>) => void>();
 
     const plugin = createTestPlugin({
@@ -61,13 +61,15 @@ describe('Activity API', () => {
     });
   });
 
-  it('should auto-cleanup activity params subscriptions on plugin unregister', async () => {
+  it('drops params subscriptions when the plugin is unregistered', async () => {
     const paramsCallback = vi.fn<(params: Record<string, unknown>) => void>();
+    const dispose = vi.fn();
 
     const plugin = createTestPlugin({
       id: 'actapi-cleanup',
       setup: ({ pluginApi }) => {
         pluginApi.activity.subscribeToParams(paramsCallback);
+        return dispose;
       },
     });
 
@@ -77,16 +79,15 @@ describe('Activity API', () => {
       expect(paramsCallback).toHaveBeenCalled();
     });
 
-    paramsCallback.mockClear();
     config.plugins = [];
+    await vi.waitFor(() => {
+      expect(dispose).toHaveBeenCalledOnce();
+    });
 
-    // Wait for cleanup to happen
-    await delay(100);
     paramsCallback.mockClear();
-
-    // Changes should not trigger the old subscription
     api.setCurrentActivity('some-activity', { data: 'test' });
 
+    // Negative wait: nothing signals "the old subscription did not fire".
     await delay(100);
     expect(paramsCallback).not.toHaveBeenCalled();
   });

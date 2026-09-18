@@ -2,10 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { testFile } from '~/tests/fixtures/files';
 import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
 
-describe('onAdd hook + validators integration', () => {
-  it('should allow file with empty mime type when imgOnly is set (no plugin)', async () => {
-    const { config, api } = await renderSolution('regular', { plugins: [] });
-    config.imgOnly = true;
+describe('file hook: onAdd with validators', () => {
+  it('accepts a file with an empty mime type under imgOnly (no plugin)', async () => {
+    const { api } = await renderSolution('regular', { plugins: [], imgOnly: true });
 
     // A file whose mime type the browser can't determine — validation is skipped
     // so the file passes through even with imgOnly enabled
@@ -17,7 +16,7 @@ describe('onAdd hook + validators integration', () => {
     expect(output.isFailed).toBe(false);
   });
 
-  it('should allow image file when plugin returns a file with image mime type', async () => {
+  it('accepts the file when the hook returns an image mime type under imgOnly', async () => {
     const plugin = createTestPlugin({
       id: 'mime-detector-image',
       setup: ({ pluginApi }) => {
@@ -30,8 +29,7 @@ describe('onAdd hook + validators integration', () => {
       },
     });
 
-    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
-    config.imgOnly = true;
+    const { api } = await renderSolution('regular', { plugins: [plugin], imgOnly: true });
 
     const file = testFile('photo.heic', '');
     const entry = api.addFileFromObject(file);
@@ -43,7 +41,7 @@ describe('onAdd hook + validators integration', () => {
     expect(output.errors).toHaveLength(0);
   });
 
-  it('should deny non-image when plugin returns a file with non-image mime type with imgOnly', async () => {
+  it('rejects the file when the hook returns a non-image mime type under imgOnly', async () => {
     const plugin = createTestPlugin({
       id: 'mime-detector-non-image',
       setup: ({ pluginApi }) => {
@@ -56,8 +54,7 @@ describe('onAdd hook + validators integration', () => {
       },
     });
 
-    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
-    config.imgOnly = true;
+    const { api } = await renderSolution('regular', { plugins: [plugin], imgOnly: true });
 
     const file = testFile('document.bin', '');
     const entry = api.addFileFromObject(file);
@@ -69,7 +66,7 @@ describe('onAdd hook + validators integration', () => {
     expect(output.errors[0]?.type).toBe('NOT_AN_IMAGE');
   });
 
-  it('should deny file when plugin returns non-image mime type and accept restricts to images', async () => {
+  it('rejects the file when the hook returns a non-image mime type under accept=image/*', async () => {
     const plugin = createTestPlugin({
       id: 'mime-detector-accept',
       setup: ({ pluginApi }) => {
@@ -82,8 +79,7 @@ describe('onAdd hook + validators integration', () => {
       },
     });
 
-    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
-    config.accept = 'image/*';
+    const { api } = await renderSolution('regular', { plugins: [plugin], accept: 'image/*' });
 
     const file = testFile('document.bin', '');
     const entry = api.addFileFromObject(file);
