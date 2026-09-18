@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { delay } from '@/utils/delay';
 import { expectActivity, renderSolution, within } from './utils/render-solution';
 import '../types/jsx';
@@ -7,11 +7,6 @@ import '../types/jsx';
  * `<uc-drop-area>` and its `addDropzone` helper. `tests/file-uploader-minimal.e2e.test.tsx` drops one file; the drag
  * state machine, the url branch and the rules that switch the area off had no coverage.
  */
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 const openStartFrom = async (configProps: Parameters<typeof renderSolution>[1] = {}) => {
   const rendered = await renderSolution('regular', configProps);

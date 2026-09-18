@@ -1,5 +1,5 @@
 import type { UploadcareFile } from '@uploadcare/upload-client';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FuncFileValidator } from '@/index';
 import { delay } from '@/utils/delay';
 import { IMAGE } from './fixtures/files';
@@ -32,11 +32,6 @@ const UPLOADED = {
   isImage: true,
   mimeType: 'image/jpeg',
 } as unknown as UploadcareFile;
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 beforeEach(() => {
   uploadFile.mockReset();

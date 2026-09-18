@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index.js';
 import { delay } from '@/utils/delay';
@@ -47,11 +47,6 @@ const waitForType = (type: string) =>
     if (!found) throw new Error(`No telemetry "${type}". Sent: ${types().join(', ')}`);
     return found;
   }, WAIT);
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 beforeEach(async () => {
   sent = [];

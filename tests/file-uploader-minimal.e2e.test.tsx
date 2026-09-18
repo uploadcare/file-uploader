@@ -1,14 +1,10 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import type { UploadCtxProvider } from '@/index';
 import { TEST_IMAGE_URL } from './utils/constants';
 import '../types/jsx';
+import { testFile } from '~/tests/fixtures/files';
 import { renderSolution } from './utils/render-solution';
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 beforeEach(async () => {
   await renderSolution('minimal');
@@ -45,7 +41,7 @@ describe('File uploader minimal', () => {
       // openSystemDialog() appends a hidden input and clicks it; the native dialog
       // never opens under test, so feed the input directly to fire its change handler.
       const fileInput = page.elementLocator(document.querySelector('[uploadcare-file-input]')!);
-      await userEvent.upload(fileInput, new File(['regression'], 'regression.txt', { type: 'text/plain' }));
+      await userEvent.upload(fileInput, testFile('regression.txt', 'text/plain'));
 
       await expect.element(page.getByTestId('uc-upload-list')).toBeVisible();
       await expect.element(page.getByTestId('uc-file-item')).toBeVisible();

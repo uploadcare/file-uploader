@@ -1,12 +1,7 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import '../types/jsx';
 import { renderSolution } from './utils/render-solution';
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 beforeEach(async () => {
   await renderSolution('inline');

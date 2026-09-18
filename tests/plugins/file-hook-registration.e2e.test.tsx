@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { delay } from '@/utils/delay';
-import { createTestPlugin, getApi, renderUploader } from './utils';
+import { testFile } from '~/tests/fixtures/files';
+import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
 
 describe('File Hook Registration', () => {
   describe('onAdd', () => {
@@ -17,10 +18,9 @@ describe('File Hook Registration', () => {
         },
       });
 
-      await renderUploader([plugin]);
-      const api = getApi();
+      const { api } = await renderSolution('regular', { plugins: [plugin] });
 
-      const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+      const file = testFile('test.jpg');
       const entry = api.addFileFromObject(file);
 
       await vi.waitFor(() => {
@@ -30,7 +30,7 @@ describe('File Hook Registration', () => {
     });
 
     it('should replace the file blob', async () => {
-      const replacementFile = new File(['new content'], 'transformed.jpg', { type: 'image/jpeg' });
+      const replacementFile = testFile('transformed.jpg');
 
       const plugin = createTestPlugin({
         id: 'hook-onadd-file',
@@ -44,10 +44,9 @@ describe('File Hook Registration', () => {
         },
       });
 
-      await renderUploader([plugin]);
-      const api = getApi();
+      const { api } = await renderSolution('regular', { plugins: [plugin] });
 
-      const original = new File(['original'], 'original.jpg', { type: 'image/jpeg' });
+      const original = testFile('original.jpg');
       const entry = api.addFileFromObject(original);
 
       await vi.waitFor(() => {
@@ -69,10 +68,9 @@ describe('File Hook Registration', () => {
         },
       });
 
-      await renderUploader([plugin]);
-      const api = getApi();
+      const { api } = await renderSolution('regular', { plugins: [plugin] });
 
-      const file = new File(['content'], 'original.bin', { type: '' });
+      const file = testFile('original.bin', '');
       const entry = api.addFileFromObject(file);
 
       await vi.waitFor(() => {
@@ -115,10 +113,9 @@ describe('File Hook Registration', () => {
         },
       });
 
-      await renderUploader([pluginA, pluginB]);
-      const api = getApi();
+      const { api } = await renderSolution('regular', { plugins: [pluginA, pluginB] });
 
-      const file = new File(['content'], 'test.txt', { type: 'text/plain' });
+      const file = testFile('test.txt', 'text/plain');
       const entry = api.addFileFromObject(file);
 
       await vi.waitFor(() => {
@@ -153,10 +150,9 @@ describe('File Hook Registration', () => {
         },
       });
 
-      await renderUploader([pluginA, pluginB]);
-      const api = getApi();
+      const { api } = await renderSolution('regular', { plugins: [pluginA, pluginB] });
 
-      const file = new File(['content'], 'test.txt', { type: 'text/plain' });
+      const file = testFile('test.txt', 'text/plain');
       const entry = api.addFileFromObject(file);
 
       await vi.waitFor(() => {
@@ -178,14 +174,12 @@ describe('File Hook Registration', () => {
         },
       });
 
-      const { config } = await renderUploader([plugin]);
+      const { config, api } = await renderSolution('regular', { plugins: [plugin] });
       config.plugins = [];
 
       // Wait for plugin to be unregistered
       await delay(0);
-
-      const api = getApi();
-      const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+      const file = testFile('test.jpg');
       const entry = api.addFileFromObject(file);
 
       // Give enough time for hooks to run if they were still registered
@@ -210,10 +204,9 @@ describe('File Hook Registration', () => {
         },
       });
 
-      await renderUploader([plugin]);
-      const api = getApi();
+      const { api } = await renderSolution('regular', { plugins: [plugin] });
 
-      const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+      const file = testFile('test.jpg');
       api.addFileFromObject(file);
       api.uploadAll();
 
@@ -237,13 +230,11 @@ describe('File Hook Registration', () => {
         },
       });
 
-      const { config } = await renderUploader([plugin]);
+      const { config, api } = await renderSolution('regular', { plugins: [plugin] });
       config.plugins = [];
 
       await delay(0);
-
-      const api = getApi();
-      const file = new File(['content'], 'test.jpg', { type: 'image/jpeg' });
+      const file = testFile('test.jpg');
       api.addFileFromObject(file);
       api.uploadAll();
 

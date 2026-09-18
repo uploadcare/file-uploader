@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
+import { testFile } from '~/tests/fixtures/files';
+import { addSource, createTestPlugin, openModal, renderSolution } from '~/tests/utils/render-solution';
 import { TEST_IMAGE_URL } from '../utils/constants';
-import { addSource, createTestPlugin, openModal, renderUploader } from './utils';
 
 describe('Uploader API (from plugin)', () => {
   it('should allow adding files via uploaderApi.addFileFromUrl()', async () => {
@@ -20,10 +21,10 @@ describe('Uploader API (from plugin)', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'url-add-source');
 
-    await openModal();
+    await openModal(root);
     await page.getByText('Add URL').click();
 
     await expect.element(page.getByText('prithiviraj-a-fa7Stge3YXs-unsplash.jpg')).toBeVisible();
@@ -37,7 +38,7 @@ describe('Uploader API (from plugin)', () => {
           id: 'obj-add-source',
           label: 'Add Object',
           onSelect: () => {
-            const file = new File(['test content'], 'test-file.txt', { type: 'text/plain' });
+            const file = testFile('test-file.txt', 'text/plain');
             uploaderApi.addFileFromObject(file);
             uploaderApi.setCurrentActivity('upload-list');
             uploaderApi.setModalState(true);
@@ -46,10 +47,10 @@ describe('Uploader API (from plugin)', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'obj-add-source');
 
-    await openModal();
+    await openModal(root);
     await page.getByText('Add Object').click();
 
     await expect.element(page.getByText('test-file.txt')).toBeVisible();
@@ -78,10 +79,10 @@ describe('Uploader API (from plugin)', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'switch-source');
 
-    await openModal();
+    await openModal(root);
     await page.getByText('Switch Activity').click();
 
     await expect.element(page.getByText('Switched Activity')).toBeVisible();
@@ -101,10 +102,10 @@ describe('Uploader API (from plugin)', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'modal-source');
 
-    await openModal();
+    await openModal(root);
     const startFrom = page.getByTestId('uc-start-from');
     await expect.element(startFrom).toBeVisible();
 
@@ -128,10 +129,10 @@ describe('Uploader API (from plugin)', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'flow-source');
 
-    await openModal();
+    await openModal(root);
     await page.getByText('Start Flow').click();
 
     await expect.element(page.getByTestId('uc-upload-list')).toBeVisible();

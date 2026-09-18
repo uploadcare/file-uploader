@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { unsplashPlugin } from '@/plugins/unsplashPlugin';
 import { delay } from '@/utils/delay';
@@ -19,11 +19,6 @@ const PHOTO = {
   alt_description: 'a cat',
   user: { name: 'A Photographer' },
 };
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 let fetchSpy: MockInstance<typeof window.fetch>;
 

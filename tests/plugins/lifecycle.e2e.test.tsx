@@ -1,14 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { PluginSetupParams, UploaderPlugin } from '@/index.ts';
-import { addSource, createTestPlugin, openModal, renderUploader } from './utils';
+import { addSource, createTestPlugin, openModal, renderSolution } from '~/tests/utils/render-solution';
 
 describe('Plugin Registration & Lifecycle', () => {
   it('should register a plugin when added to config.plugins', async () => {
     const setup = vi.fn<(params: PluginSetupParams) => void>();
     const plugin = createTestPlugin({ id: 'test-register', setup });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
       expect(setup).toHaveBeenCalledOnce();
@@ -19,7 +19,7 @@ describe('Plugin Registration & Lifecycle', () => {
     const setup = vi.fn<(params: PluginSetupParams) => void>();
     const plugin = createTestPlugin({ id: 'test-setup-args', setup });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
       expect(setup).toHaveBeenCalledOnce();
@@ -53,14 +53,14 @@ describe('Plugin Registration & Lifecycle', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
       expect(setup).toHaveBeenCalledOnce();
     });
 
     config.sourceList += ',temp-source';
-    await openModal();
+    await openModal(root);
     await expect.element(page.getByText('Temp Source')).toBeVisible();
 
     // Remove the plugin
@@ -78,7 +78,7 @@ describe('Plugin Registration & Lifecycle', () => {
       setup,
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config } = await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
       expect(setup).toHaveBeenCalledOnce();
@@ -98,7 +98,7 @@ describe('Plugin Registration & Lifecycle', () => {
     const plugin1 = createTestPlugin({ id: 'multi-1', setup: setup1 });
     const plugin2 = createTestPlugin({ id: 'multi-2', setup: setup2 });
 
-    await renderUploader([plugin1, plugin2]);
+    await renderSolution('regular', { plugins: [plugin1, plugin2] });
 
     await vi.waitFor(() => {
       expect(setup1).toHaveBeenCalledOnce();
@@ -114,7 +114,7 @@ describe('Plugin Registration & Lifecycle', () => {
     const plugin1 = createTestPlugin({ id: 'replace-old', setup: setup1 });
     const plugin2 = createTestPlugin({ id: 'replace-new', setup: setup2 });
 
-    const { config } = await renderUploader([plugin1]);
+    const { config } = await renderSolution('regular', { plugins: [plugin1] });
 
     await vi.waitFor(() => {
       expect(setup1).toHaveBeenCalledOnce();
@@ -141,10 +141,10 @@ describe('Plugin Registration & Lifecycle', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     config.sourceList += ',error-source';
 
-    await openModal();
+    await openModal(root);
 
     // Source should not be present since setup threw
     await expect.element(page.getByText('Error Source')).not.toBeInTheDocument();
@@ -167,14 +167,14 @@ describe('Plugin Registration & Lifecycle', () => {
     });
     const workingPlugin = createTestPlugin({ id: 'working-plugin', setup: workingSetup });
 
-    const { config } = await renderUploader([failingPlugin, workingPlugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [failingPlugin, workingPlugin] });
     config.sourceList += ',working-source';
 
     await vi.waitFor(() => {
       expect(workingSetup).toHaveBeenCalledOnce();
     });
 
-    await openModal();
+    await openModal(root);
     await expect.element(page.getByText('Working Source')).toBeVisible();
   });
 
@@ -191,10 +191,10 @@ describe('Plugin Registration & Lifecycle', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'async-source');
 
-    await openModal();
+    await openModal(root);
     await expect.element(page.getByText('Async Source')).toBeVisible();
   });
 
@@ -206,7 +206,7 @@ describe('Plugin Registration & Lifecycle', () => {
     const plugin1 = createTestPlugin({ id: 'dup-id', setup: setup1 });
     const plugin2 = createTestPlugin({ id: 'dup-id', setup: setup2 });
 
-    await renderUploader([plugin1, plugin2]);
+    await renderSolution('regular', { plugins: [plugin1, plugin2] });
 
     await vi.waitFor(() => {
       expect(setup1).toHaveBeenCalledOnce();
@@ -230,7 +230,7 @@ describe('Plugin Registration & Lifecycle', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"setup-throws"'), expect.any(Error));
@@ -250,7 +250,7 @@ describe('Plugin Registration & Lifecycle', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"async-setup-rejects"'), expect.any(Error));
@@ -265,7 +265,7 @@ describe('Plugin Registration & Lifecycle', () => {
     const setupFn = vi.fn();
     const pluginWithoutId = { setup: setupFn } as unknown as UploaderPlugin;
 
-    await renderUploader([pluginWithoutId]);
+    await renderSolution('regular', { plugins: [pluginWithoutId] });
 
     await vi.waitFor(() => {
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"id"'));
@@ -285,7 +285,7 @@ describe('Plugin Registration & Lifecycle', () => {
     });
     const plugin = createTestPlugin({ id: 'async-dispose', setup });
 
-    const { config } = await renderUploader([plugin]);
+    const { config } = await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
       expect(setup).toHaveBeenCalledOnce();

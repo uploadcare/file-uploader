@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { IconHrefResolver } from '@/index';
 import { delay } from '@/utils/delay';
@@ -14,11 +14,6 @@ import '../types/jsx';
  * `page.render` appends instead of replacing, so a second render inside a test would leave two uploaders on the page
  * and break every `getByTestId` on strict mode.
  */
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 describe('removeCopyright', () => {
   it('shows the credit by default', async () => {

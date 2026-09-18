@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { ACTIVITY_TYPES } from '@/lit/activity-constants';
 import surface from '../specs/public-api/public-surface.json' with { type: 'json' };
 import { type RenderedUploader, renderSolution } from './utils/render-solution';
@@ -12,11 +12,6 @@ import '../types/jsx';
  * The contract itself is transcribed in `specs/public-api/public-surface.json`; see that file's `knownMissing` block
  * for the parts the docs promise and the code does not ship.
  */
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 // Through `renderSolution` rather than JSX so the fixture matches the rest of the suite and picks up its defaults:
 // `test-mode`, and `quality-insights="false"` as an attribute, which is the form that survives render-jsx. Written as

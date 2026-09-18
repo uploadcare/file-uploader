@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { PluginRender } from '@/index.ts';
 import { delay } from '@/utils/delay';
-import { addSource, createTestPlugin, getApi, renderUploader } from './utils';
+import { addSource, createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
 
 describe('Activity Registration', () => {
   it('should call render() when activity becomes active via setCurrentActivity', async () => {
@@ -17,8 +17,7 @@ describe('Activity Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setCurrentActivity('test-activity');
     api.setModalState(true);
@@ -45,8 +44,7 @@ describe('Activity Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setCurrentActivity('params-activity', { foo: 'bar', num: 42 });
     api.setModalState(true);
@@ -80,10 +78,8 @@ describe('Activity Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'dispose-source');
-
-    const api = getApi();
 
     api.setCurrentActivity('dispose-activity');
     api.setModalState(true);
@@ -116,8 +112,7 @@ describe('Activity Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setCurrentActivity('dom-activity');
     api.setModalState(true);
@@ -141,8 +136,7 @@ describe('Activity Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setCurrentActivity('clear-activity');
     api.setModalState(true);
@@ -170,8 +164,7 @@ describe('Activity Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
-    const api = getApi();
+    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setCurrentActivity('remove-activity');
     api.setModalState(true);
@@ -198,8 +191,7 @@ describe('Activity Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setCurrentActivity('throw-activity');
     api.setModalState(true);
@@ -225,8 +217,7 @@ describe('Activity Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     // setCurrentActivity internally waits for pluginsReady, so no explicit await needed
     api.setCurrentActivity('async-setup-activity');

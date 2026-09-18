@@ -2,8 +2,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, PluginConfigApi } from '@/index.ts';
 import { delay } from '@/utils/delay';
+import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
 import { getCtxName } from '../utils/test-renderer';
-import { createTestPlugin, renderUploader } from './utils';
 
 describe('Custom Config', () => {
   it('should set default value from config definition', async () => {
@@ -17,7 +17,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
 
     const config = page.getByTestId('uc-config').query()! as Config;
     await expect.poll(() => config.myOption).toBe('hello');
@@ -36,7 +36,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
 
     await expect.poll(() => configApi.get('readableOption')).toBe(42);
   });
@@ -56,7 +56,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
 
     // Wait for setup() to complete (it's called asynchronously after config.plugins is set)
     await vi.waitFor(() => {
@@ -81,7 +81,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
       expect(firstCallValue.length).toBeGreaterThan(0);
@@ -104,7 +104,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
     const config = page.getByTestId('uc-config').query()! as Config;
 
     await vi.waitFor(() => {
@@ -135,7 +135,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
     const config = page.getByTestId('uc-config').query()! as Config;
 
     await expect.poll(() => config.jsPropOption).toBe(false);
@@ -160,7 +160,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
     const config = page.getByTestId('uc-config').query()! as Config;
 
     await expect.poll(() => config.attrOption).toBe('default');
@@ -184,7 +184,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
     const config = page.getByTestId('uc-config').query()! as Config;
 
     await expect.poll(() => configApi.get('removableAttrOption')).toBe('default-qa');
@@ -210,7 +210,7 @@ describe('Custom Config', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config } = await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
       expect(callback).toHaveBeenCalled();
@@ -242,7 +242,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
     const config = page.getByTestId('uc-config').query()! as Config;
 
     await expect.poll(() => config.normalizedOption).toBe(0);
@@ -274,7 +274,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
     const config = page.getByTestId('uc-config').query()! as Config;
 
     await expect.poll(() => config.throwingNormOption).toBe('safe');
@@ -305,7 +305,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
     const config = page.getByTestId('uc-config').query()! as Config;
 
     await expect.poll(() => configApi.get('noAttrOption')).toBe('server');
@@ -478,7 +478,7 @@ describe('Custom Config', () => {
       },
     });
 
-    await renderUploader([pluginA, pluginB]);
+    await renderSolution('regular', { plugins: [pluginA, pluginB] });
 
     const config = page.getByTestId('uc-config').query()! as Config;
     await expect.poll(() => config.dupOption).toBe('first');

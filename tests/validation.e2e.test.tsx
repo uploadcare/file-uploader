@@ -1,15 +1,10 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, FuncFileValidator, OutputErrorCollection, OutputErrorFile } from '@/index';
 import { delay } from '@/utils/delay.js';
 import '../types/jsx';
-import { IMAGE } from './fixtures/files';
+import { IMAGE, testFile } from './fixtures/files';
 import { type RenderedUploader, renderSolution } from './utils/render-solution';
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 let config: Config;
 let api: RenderedUploader['api'];
@@ -22,7 +17,7 @@ describe('Common file validation', () => {
   describe('imgOnly', () => {
     it('should show UI error if non-image file is uploaded', async () => {
       config.imgOnly = true;
-      const file = new File(['(⌐□_□)'], 'chucknorris.txt', { type: 'text/plain' });
+      const file = testFile('chucknorris.txt', 'text/plain');
       api.addFileFromObject(file);
       api.initFlow();
       await expect.element(page.getByText('Only image files are accepted')).toBeVisible();
@@ -32,7 +27,7 @@ describe('Common file validation', () => {
   describe('accept', () => {
     it('should show UI error if non-accepted file is uploaded', async () => {
       config.accept = 'image/png';
-      const file = new File(['(⌐□_□)'], 'chucknorris.jpg', { type: 'image/jpeg' });
+      const file = testFile('chucknorris.jpg');
       api.addFileFromObject(file);
       api.initFlow();
       await expect.element(page.getByText('Uploading of these file types is not allowed')).toBeVisible();
@@ -100,7 +95,7 @@ describe('Custom file validation', () => {
           runOn: 'change',
         },
       ];
-      const badFile = new File(['(⌐□_□)'], 'badfile.jpg', { type: 'image/jpeg' });
+      const badFile = testFile('badfile.jpg');
       api.addFileFromObject(badFile);
       api.initFlow();
       await expect.element(page.getByText('Bad image')).toBeVisible();
@@ -128,7 +123,7 @@ describe('Custom file validation', () => {
           runOn: 'change',
         },
       ];
-      const badFile = new File(['(⌐□_□)'], 'badfile.jpg', { type: 'image/jpeg' });
+      const badFile = testFile('badfile.jpg');
       api.addFileFromObject(badFile);
       api.initFlow();
       await expect.poll(() => customAddValidator).toHaveBeenCalled();
@@ -263,7 +258,7 @@ describe('Custom file validation', () => {
           }
         },
       ];
-      const badFile = new File(['(⌐□_□)'], 'badfile.jpg', { type: 'image/jpeg' });
+      const badFile = testFile('badfile.jpg');
       api.addFileFromObject(badFile);
       api.initFlow();
       await expect.element(page.getByText('Bad image')).toBeVisible();
@@ -332,7 +327,7 @@ describe('Custom file validation', () => {
       ];
       const goodFile = IMAGE.PIXEL;
       api.addFileFromObject(goodFile);
-      const badFile = new File(['(⌐□_□)'], 'badfile.jpg', { type: 'image/jpeg' });
+      const badFile = testFile('badfile.jpg');
       api.addFileFromObject(badFile);
       api.initFlow();
       await expect.element(page.getByText('Bad image')).toBeVisible();
@@ -460,7 +455,7 @@ describe('File errors API', () => {
       }),
     ];
 
-    const badFile = new File(['(⌐□_□)'], 'badfile.txt', { type: 'text/plain' });
+    const badFile = testFile('badfile.txt', 'text/plain');
     const entry = api.addFileFromObject(badFile);
     api.initFlow();
 

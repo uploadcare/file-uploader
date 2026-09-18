@@ -1,5 +1,5 @@
 import type { FileFromOptions, UploadcareFile } from '@uploadcare/upload-client';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index';
 import { IMAGE } from './fixtures/files';
@@ -28,11 +28,6 @@ const UPLOADED = {
   mimeType: 'image/jpeg',
   cdnUrl: 'https://ucarecdn.com/00000000-0000-4000-8000-000000000000/',
 } as unknown as UploadcareFile;
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 beforeEach(() => {
   uploadFile.mockReset();

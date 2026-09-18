@@ -1,13 +1,8 @@
 import { commands, page, userEvent } from '@vitest/browser/context';
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import '../types/jsx';
 import { IMAGE } from './fixtures/files';
 import { renderSolution } from './utils/render-solution';
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 describe('Form input', () => {
   it('should create hidden input for form validation', async () => {

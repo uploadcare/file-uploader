@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index.js';
 import { delay } from '@/utils/delay';
@@ -26,11 +26,6 @@ const PROGRESS = ['file-upload-progress', 'common-upload-progress'] as const;
 let provider: UploadCtxProvider;
 let config: Config;
 let recorder: EventRecorder;
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 beforeEach(async () => {
   ({ provider, config } = await renderSolution('regular'));

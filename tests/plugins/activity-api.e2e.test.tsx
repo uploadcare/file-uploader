@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { PluginSetupParams } from '@/index';
 import { delay } from '@/utils/delay';
-import { createTestPlugin, getApi, renderUploader } from './utils';
+import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
 
 describe('Activity API', () => {
   it('should return current params via activity.getParams()', async () => {
@@ -18,8 +18,7 @@ describe('Activity API', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setCurrentActivity('getparams-activity', { key: 'value' });
     api.setModalState(true);
@@ -44,8 +43,7 @@ describe('Activity API', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setCurrentActivity('subscribe-activity', { step: 1 });
     api.setModalState(true);
@@ -73,7 +71,7 @@ describe('Activity API', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
       expect(paramsCallback).toHaveBeenCalled();
@@ -87,7 +85,6 @@ describe('Activity API', () => {
     paramsCallback.mockClear();
 
     // Changes should not trigger the old subscription
-    const api = getApi();
     api.setCurrentActivity('some-activity', { data: 'test' });
 
     await delay(100);

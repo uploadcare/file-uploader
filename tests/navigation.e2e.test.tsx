@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { delay } from '@/utils/delay';
 import { IMAGE } from './fixtures/files';
@@ -9,11 +9,6 @@ import '../types/jsx';
  * Back, close and cancel across the three solutions. Each assertion goes through what the user sees — the `active`
  * attribute on the activity host and the `open` state of the `<dialog>` — rather than `getCurrentActivity()` alone.
  */
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 const openUrlSource = async (root: HTMLElement) => {
   await page.getByTestId('uc-start-from').getByText('From link', { exact: true }).click();

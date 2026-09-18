@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index';
 import { delay } from '@/utils/delay';
@@ -13,11 +13,6 @@ import '../types/jsx';
  * lifecycles a real page can produce — config after the uploader, a tag appended late, two uploaders side by side,
  * an element removed and put back — none of which the existing suite exercised.
  */
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 /**
  * Mounts `<uc-config>` and a solution in an explicit DOM order, with attributes set imperatively.

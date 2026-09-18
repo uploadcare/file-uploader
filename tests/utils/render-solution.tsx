@@ -1,18 +1,12 @@
 import { expect } from 'vitest';
 import { page } from 'vitest/browser';
-import type { Config, UploadCtxProvider } from '@/index';
+import type { Config, UploadCtxProvider, UploaderPlugin } from '@/index';
 import { delay } from '@/utils/delay';
 import { toKebabCase } from '@/utils/toKebabCase';
 import { getCtxName } from './test-renderer';
 import '../../types/jsx';
 
-/**
- * Renders one of the three uploader solutions with a fresh `ctx-name` and hands back the pieces every test needs.
- *
- * `tests/plugins/utils.tsx` has a similar helper scoped to plugin tests; this one is the general-purpose version for
- * the specs in `tests/`. They are deliberately not merged yet — folding the existing e2e files onto a shared harness
- * is a refactor of tests that already pass, and belongs in its own change.
- */
+/** Renders one of the three uploader solutions with a fresh `ctx-name` and hands back the pieces every test needs. */
 
 export type Solution = 'regular' | 'minimal' | 'inline';
 
@@ -168,4 +162,20 @@ export function modalDialog(root: HTMLElement, id: string): HTMLDialogElement | 
     .elements()
     .find((element) => element.id === id);
   return modal?.querySelector('dialog') ?? null;
+}
+
+/** A plugin that does nothing until `overrides` say otherwise. */
+export function createTestPlugin(overrides: Partial<UploaderPlugin> & { id: string }): UploaderPlugin {
+  return { setup: () => {}, ...overrides };
+}
+
+/** Appends a source id to `sourceList`, which is how a plugin-registered source is switched on. */
+export function addSource(config: Config, sourceId: string): void {
+  config.sourceList += `,${sourceId}`;
+}
+
+/** Clicks the solution's upload button and waits for start-from to show. */
+export async function openModal(root: HTMLElement): Promise<void> {
+  await within(root).getByText('Upload files', { exact: true }).click();
+  await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
 }

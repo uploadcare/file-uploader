@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { instagramPlugin } from '@/plugins/instagramPlugin';
-import { addSource, createTestPlugin, openModal, renderUploader } from './utils';
+import { addSource, createTestPlugin, openModal, renderSolution } from '~/tests/utils/render-solution';
 
 describe('Source Registration', () => {
   it('should show registered source in the source list', async () => {
@@ -16,10 +16,10 @@ describe('Source Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'my-source');
 
-    await openModal();
+    await openModal(root);
     await expect.element(page.getByText('My Custom Source')).toBeVisible();
   });
 
@@ -36,10 +36,10 @@ describe('Source Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'click-source');
 
-    await openModal();
+    await openModal(root);
     await page.getByText('Click Me').click();
 
     await vi.waitFor(() => {
@@ -65,10 +65,10 @@ describe('Source Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'l10n-source');
 
-    await openModal();
+    await openModal(root);
     await expect.element(page.getByText('Translated Source')).toBeVisible();
   });
 
@@ -84,10 +84,10 @@ describe('Source Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'removable-source');
 
-    await openModal();
+    await openModal(root);
     await expect.element(page.getByText('Removable Source')).toBeVisible();
 
     config.plugins = [];
@@ -98,10 +98,10 @@ describe('Source Registration', () => {
   it('should print console.error and not render a source button for deprecated instagram source', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     try {
-      const { config } = await renderUploader([instagramPlugin]);
+      const { config, root } = await renderSolution('regular', { plugins: [instagramPlugin] });
       addSource(config, 'instagram');
 
-      await openModal();
+      await openModal(root);
 
       await vi.waitFor(() => {
         expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Instagram source was removed'));
@@ -138,14 +138,14 @@ describe('Source Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([pluginA, pluginB]);
+    const { config, root } = await renderSolution('regular', { plugins: [pluginA, pluginB] });
     addSource(config, 'shared-source');
 
     await vi.waitFor(() => {
       expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"shared-source"'));
     });
 
-    await openModal();
+    await openModal(root);
     // Only the first registration should appear
     await expect.element(page.getByText('First')).toBeVisible();
     await expect.element(page.getByText('Second')).not.toBeInTheDocument();
@@ -165,9 +165,9 @@ describe('Source Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
+    const { root } = await renderSolution('regular', { plugins: [plugin] });
 
-    await openModal();
+    await openModal(root);
     await expect.element(page.getByText('Unlisted Source')).not.toBeInTheDocument();
   });
 
@@ -196,10 +196,10 @@ describe('Source Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'parent-source');
 
-    await openModal();
+    await openModal(root);
 
     await expect.element(page.getByText('Photo')).toBeVisible();
     await expect.element(page.getByText('Video')).toBeVisible();
@@ -234,10 +234,10 @@ describe('Source Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'camera-like');
 
-    await openModal();
+    await openModal(root);
 
     await page.getByText('Take Photo').click();
     await vi.waitFor(() => {
@@ -259,10 +259,10 @@ describe('Source Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'desktop-camera');
 
-    await openModal();
+    await openModal(root);
     await expect.element(page.getByText('Desktop Camera')).toBeVisible();
   });
 
@@ -285,10 +285,10 @@ describe('Source Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'partial-expand');
 
-    await openModal();
+    await openModal(root);
     await expect.element(page.getByText('Registered Child')).toBeVisible();
     await expect.element(page.getByText('Partial')).not.toBeInTheDocument();
   });

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import { cleanup, createTestPlugin, openModal, renderUploader } from './utils';
+import { createTestPlugin, openModal, renderSolution } from '~/tests/utils/render-solution';
+import { cleanup } from '~/tests/utils/test-renderer';
 
 describe('Cleanup & Edge Cases', () => {
   it('should clean up everything on component destroy', async () => {
@@ -10,7 +11,7 @@ describe('Cleanup & Edge Cases', () => {
       setup: () => dispose,
     });
 
-    await renderUploader([plugin]);
+    await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
       expect(dispose).not.toHaveBeenCalled();
@@ -35,7 +36,7 @@ describe('Cleanup & Edge Cases', () => {
       },
     });
 
-    const { config } = await renderUploader([]);
+    const { config } = await renderSolution('regular', { plugins: [] });
 
     // Rapidly add and remove
     config.plugins = [plugin];
@@ -68,7 +69,7 @@ describe('Cleanup & Edge Cases', () => {
       setup: setup2,
     });
 
-    const { config } = await renderUploader([plugin1]);
+    const { config } = await renderSolution('regular', { plugins: [plugin1] });
 
     await vi.waitFor(() => {
       expect(dispose1).not.toHaveBeenCalled();
@@ -97,7 +98,7 @@ describe('Cleanup & Edge Cases', () => {
       setup: setup2,
     });
 
-    await renderUploader([plugin1, plugin2]);
+    await renderSolution('regular', { plugins: [plugin1, plugin2] });
 
     await vi.waitFor(() => {
       expect(setup1).toHaveBeenCalledOnce();
@@ -108,9 +109,9 @@ describe('Cleanup & Edge Cases', () => {
   });
 
   it('should not break when no plugins are registered', async () => {
-    await renderUploader([]);
+    const { root } = await renderSolution('regular', { plugins: [] });
 
-    await openModal();
+    await openModal(root);
     await expect.element(page.getByTestId('uc-start-from')).toBeVisible();
   });
 });

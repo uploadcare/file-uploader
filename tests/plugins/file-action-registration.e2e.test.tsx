@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
+import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
 import { TEST_IMAGE_URL } from '../utils/constants';
-import { createTestPlugin, getApi, renderUploader } from './utils';
 
 describe('File Action Registration', () => {
   it('should show file action button when shouldRender() returns true', async () => {
@@ -22,8 +22,7 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
@@ -45,8 +44,7 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
@@ -73,8 +71,7 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
@@ -106,8 +103,7 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
@@ -132,8 +128,7 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
@@ -161,8 +156,7 @@ describe('File Action Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
-    const api = getApi();
+    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
@@ -193,8 +187,7 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
@@ -229,8 +222,7 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([pluginA, pluginB]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [pluginA, pluginB] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
@@ -255,8 +247,7 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();

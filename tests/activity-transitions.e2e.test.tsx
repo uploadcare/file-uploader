@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { delay } from '@/utils/delay';
 import { IMAGE } from './fixtures/files';
@@ -13,11 +13,6 @@ import '../types/jsx';
  *
  * Custom plugin activities are covered by tests/plugins/activity-registration.e2e.test.tsx; this is the built-ins.
  */
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 describe('regular: entering the flow', () => {
   it('opens start-from from nothing', async () => {

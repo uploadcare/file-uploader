@@ -1,16 +1,11 @@
 import { uploadFile } from '@uploadcare/upload-client';
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, EventPayload } from '@/index.js';
 import { IMAGE } from './fixtures/files';
 import { TEST_IMAGE_URL } from './utils/constants';
 import '../types/jsx';
 import { type RenderedUploader, renderSolution } from './utils/render-solution';
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 let config: Config;
 let api: RenderedUploader['api'];

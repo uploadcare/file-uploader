@@ -18,3 +18,7 @@ export const IMAGE = {
   PIXEL: new File([base64ToUint8Array(RED_PIXEL_JPEG)], 'pixel.jpg', { type: 'image/jpeg' }),
   SQUARE: new File([base64ToUint8Array(SQUARE_JPEG)], 'square.jpg', { type: 'image/jpeg' }),
 };
+
+/** A throwaway file whose only interesting properties are its name and mime type. */
+export const testFile = (name: string, type = 'image/jpeg', content: BlobPart[] = ['content']): File =>
+  new File(content, name, { type });

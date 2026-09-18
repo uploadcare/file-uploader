@@ -1,4 +1,4 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { getCtxName } from './utils/test-renderer';
 import '../types/jsx';
@@ -11,11 +11,6 @@ import '../types/jsx';
  * Uses the same real uuid as the existing editor test: the filter previews are CDN URLs that have to load for the
  * thumbnails to appear.
  */
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 beforeEach(() => {
   const ctxName = getCtxName();

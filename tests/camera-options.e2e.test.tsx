@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config } from '@/index';
 import { expectActivity, renderSolution } from './utils/render-solution';
@@ -11,11 +11,6 @@ import '../types/jsx';
  *
  * Nested test ids are prefixed with the host tag by TestModeController, hence `uc-camera-source--tab-photo`.
  */
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 /** Opens the camera activity and returns the solution root once it is really on screen. */
 const openCamera = async (configProps: Partial<Config> = {}) => {

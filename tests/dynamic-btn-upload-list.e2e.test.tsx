@@ -1,11 +1,6 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { commands, page } from 'vitest/browser';
 import '../types/jsx';
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 beforeEach(() => {
   const ctxName = `test-${Math.random().toString(36).slice(2)}`;

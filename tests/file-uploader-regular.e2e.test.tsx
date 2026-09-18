@@ -1,13 +1,8 @@
-import { beforeAll, beforeEach, describe, expect, it, test } from 'vitest';
+import { beforeEach, describe, expect, it, test } from 'vitest';
 import { commands, page, userEvent } from 'vitest/browser';
 import { TEST_IMAGE_URL } from './utils/constants';
 import '../types/jsx';
 import { renderSolution } from './utils/render-solution';
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 beforeEach(async () => {
   await renderSolution('regular');

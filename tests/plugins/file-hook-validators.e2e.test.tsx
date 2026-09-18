@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { createTestPlugin, getApi, renderUploader } from './utils';
+import { testFile } from '~/tests/fixtures/files';
+import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
 
 describe('onAdd hook + validators integration', () => {
   it('should allow file with empty mime type when imgOnly is set (no plugin)', async () => {
-    const { config } = await renderUploader([]);
+    const { config, api } = await renderSolution('regular', { plugins: [] });
     config.imgOnly = true;
-    const api = getApi();
 
     // A file whose mime type the browser can't determine — validation is skipped
     // so the file passes through even with imgOnly enabled
-    const file = new File(['content'], 'photo.heic', { type: '' });
+    const file = testFile('photo.heic', '');
     const entry = api.addFileFromObject(file);
 
     await expect.poll(() => api.getOutputItem(entry.internalId).errors.length, { timeout: 5000 }).toBe(0);
@@ -30,11 +30,10 @@ describe('onAdd hook + validators integration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
     config.imgOnly = true;
-    const api = getApi();
 
-    const file = new File(['content'], 'photo.heic', { type: '' });
+    const file = testFile('photo.heic', '');
     const entry = api.addFileFromObject(file);
 
     await expect.poll(() => api.getOutputItem(entry.internalId).mimeType, { timeout: 5000 }).toBe('image/jpeg');
@@ -57,11 +56,10 @@ describe('onAdd hook + validators integration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
     config.imgOnly = true;
-    const api = getApi();
 
-    const file = new File(['content'], 'document.bin', { type: '' });
+    const file = testFile('document.bin', '');
     const entry = api.addFileFromObject(file);
 
     await expect.poll(() => api.getOutputItem(entry.internalId).isFailed, { timeout: 5000 }).toBe(true);
@@ -84,11 +82,10 @@ describe('onAdd hook + validators integration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
     config.accept = 'image/*';
-    const api = getApi();
 
-    const file = new File(['content'], 'document.bin', { type: '' });
+    const file = testFile('document.bin', '');
     const entry = api.addFileFromObject(file);
 
     await expect.poll(() => api.getOutputItem(entry.internalId).isFailed, { timeout: 5000 }).toBe(true);

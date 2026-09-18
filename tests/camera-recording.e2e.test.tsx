@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import { delay } from '@/utils/delay';
 import { expectActivity, renderSolution } from './utils/render-solution';
@@ -9,11 +9,6 @@ import '../types/jsx';
  * chromium instance runs with `--use-fake-device-for-media-stream`, so `MediaRecorder` gets a real stream and the
  * whole record → stop → accept path runs for real.
  */
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 const openCamera = async (configProps: Parameters<typeof renderSolution>[1] = {}) => {
   const rendered = await renderSolution('regular', configProps);

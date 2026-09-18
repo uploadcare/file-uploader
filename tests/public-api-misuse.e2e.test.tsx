@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { delay } from '@/utils/delay';
 import { IMAGE } from './fixtures/files';
 import { recordEvents } from './utils/event-recorder';
@@ -11,11 +11,6 @@ import '../types/jsx';
  *
  * Where current behaviour is surprising it is marked `QUIRK(...)` and pinned as-is, not fixed.
  */
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 describe('unknown internal ids', () => {
   // QUIRK(api): api.mdx documents `getOutputItem(internalId: string) => OutputFileEntry` with no mention that it can

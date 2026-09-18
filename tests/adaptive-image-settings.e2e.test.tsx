@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import '../types/jsx';
 
@@ -11,10 +11,6 @@ import '../types/jsx';
  */
 
 const UUID = '7124ae98-344c-42b2-ae2a-bd9aa79d76d8';
-
-beforeAll(async () => {
-  await import('@/solutions/adaptive-image/index.js');
-});
 
 /** Renders one `<uc-img>` and waits for the real image, which is when `srcset` appears. */
 const renderImg = async (attrs: string) => {

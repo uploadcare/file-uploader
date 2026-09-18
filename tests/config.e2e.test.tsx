@@ -1,14 +1,9 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config } from '@/index';
 import '../types/jsx';
 import { inCtx, renderSolution } from './utils/render-solution';
 import { cleanup, getCtxName } from './utils/test-renderer';
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 let config: Config;
 

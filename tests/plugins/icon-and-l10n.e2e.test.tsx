@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import { defineLocale } from '@/index';
 import { delay } from '@/utils/delay';
+import { addSource, createTestPlugin, openModal, renderSolution } from '~/tests/utils/render-solution';
 import { TEST_IMAGE_URL } from '../utils/constants';
-import { addSource, createTestPlugin, getApi, openModal, renderUploader } from './utils';
 
 describe('Icon Registration', () => {
   it('should make registered icon available for use in file actions', async () => {
@@ -24,8 +24,7 @@ describe('Icon Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
@@ -54,10 +53,10 @@ describe('L10n Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'translated-source');
 
-    await openModal();
+    await openModal(root);
     await expect.element(page.getByText('My Translated Source')).toBeVisible();
   });
 
@@ -88,10 +87,10 @@ describe('L10n Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'lazy-source');
 
-    await openModal();
+    await openModal(root);
     await expect.element(page.getByText('Generate')).toBeVisible();
 
     config.localeName = 'de';
@@ -110,8 +109,7 @@ describe('L10n Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
-    const api = getApi();
+    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setModalState(true);
     await expect.element(page.getByText('Translated Upload')).toBeVisible();

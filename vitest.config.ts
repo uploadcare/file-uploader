@@ -53,6 +53,7 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'e2e',
+          setupFiles: ['./tests/setup.e2e.ts'],
           include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
           // Every e2e test uploads to the real API, so a lost network race is not
           // a regression. A genuine break still fails both attempts.

@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { ProgressBar } from '@/index';
 import { delay } from '@/utils/delay';
@@ -9,11 +9,6 @@ import '../types/jsx';
  * `<uc-progress-bar>` and `<uc-progress-bar-common>` are both exported from the package index but neither appears in
  * a solution template, so nothing rendered them and both sat under 9% coverage.
  */
-
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
 
 const renderBar = async (): Promise<ProgressBar> => {
   const ctxName = getCtxName();
