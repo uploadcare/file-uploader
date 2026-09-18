@@ -39,12 +39,28 @@ type ExternalSource = import('../dist/index.ts').ExternalSource;
 type CloudImageEditorActivity = import('../dist/index.ts').CloudImageEditorActivity;
 type FormInput = import('../dist/index.ts').FormInput;
 type CloudImageEditorBlock = import('../dist/index.ts').CloudImageEditorBlock;
+type ActivityHeader = import('../dist/index.ts').ActivityHeader;
+type Copyright = import('../dist/index.ts').Copyright;
+type DropDown = import('../dist/index.ts').DropDown;
+type DynamicBtn = import('../dist/index.ts').DynamicBtn;
+type FileActionButton = import('../dist/index.ts').FileActionButton;
+type NoWrapModeDynamicBtn = import('../dist/index.ts').NoWrapModeDynamicBtn;
+type PluginActivityRenderer = import('../dist/index.ts').PluginActivityRenderer;
+type PluginActivityHost = import('../dist/index.ts').PluginActivityHost;
+type PrimaryAction = import('../dist/index.ts').PrimaryAction;
+type Select = import('../dist/index.ts').Select;
+type Spinner = import('../dist/index.ts').Spinner;
+type Thumb = import('../dist/index.ts').Thumb;
 
 type CommonHtmlAttributes<T> = Partial<
   Pick<React.HTMLAttributes<T>, 'id' | 'children' | 'hidden'> & { class: React.HTMLAttributes<T>['className'] }
 >;
 
-type ReflectAttributes<T extends LitElement & { attributesMeta?: Record<string, unknown> }> = T['attributesMeta'];
+/**
+ * The attributes a tag accepts in JSX come from the block's `attributesMeta` declaration. A block that declares none
+ * takes only `ctx-name`, so a typo on any tag is a type error rather than a silently ignored attribute.
+ */
+type ReflectAttributes<T extends LitElement> = T extends { attributesMeta: infer Meta } ? Meta : { 'ctx-name': string };
 
 type CustomElement<C extends LitElement> = React.DetailedHTMLProps<CommonHtmlAttributes<C>, C> & ReflectAttributes<C>;
 
@@ -83,6 +99,18 @@ declare namespace JSX {
     'uc-cloud-image-editor-activity': CustomElement<CloudImageEditorActivity>;
     'uc-cloud-image-editor-block': CustomElement<CloudImageEditorBlock>;
     'uc-cloud-image-editor': CustomElement<CloudImageEditorBlock>;
+    'uc-activity-header': CustomElement<ActivityHeader>;
+    'uc-copyright': CustomElement<Copyright>;
+    'uc-drop-down': CustomElement<DropDown>;
+    'uc-dynamic-btn': CustomElement<DynamicBtn>;
+    'uc-file-action-button': CustomElement<FileActionButton>;
+    'uc-no-wrap-mode-dynamic-btn': CustomElement<NoWrapModeDynamicBtn>;
+    'uc-plugin-activity-renderer': CustomElement<PluginActivityRenderer>;
+    'uc-plugin-activity-host': CustomElement<PluginActivityHost>;
+    'uc-primary-action': CustomElement<PrimaryAction>;
+    'uc-select': CustomElement<Select>;
+    'uc-spinner': CustomElement<Spinner>;
+    'uc-thumb': CustomElement<Thumb>;
     'uc-form-input': CustomElement<FormInput>;
     'uc-file-uploader-regular': CustomElement<FileUploaderRegular>;
     'uc-file-uploader-minimal': CustomElement<FileUploaderMinimal>;
