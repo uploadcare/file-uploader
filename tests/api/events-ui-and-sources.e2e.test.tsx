@@ -106,32 +106,27 @@ describe('events: sources', () => {
     const recorder = recordEvents(provider);
 
     await clickSource(root, 'dropbox');
-    const iframe = await vi.waitFor(() => {
-      const found = root.querySelector<HTMLIFrameElement>('uc-external-source iframe');
-      if (!found) throw new Error('External source iframe was not mounted');
-      return found;
-    }, WAIT);
     recorder.clear();
 
-    // Drive the remote picker through its message bridge instead of the real social app.
-    window.dispatchEvent(
-      new MessageEvent('message', {
-        source: iframe.contentWindow,
-        data: {
-          type: 'selected-files-change',
-          total: 2,
-          selectedCount: 2,
-          isReady: true,
-          isMultipleMode: true,
-          selectedFiles: [
-            { obj_type: 'selected_file', url: TEST_IMAGE_URL, filename: 'from-dropbox-1.jpg' },
-            { obj_type: 'selected_file', url: TEST_IMAGE_URL, filename: 'from-dropbox-2.jpg' },
-          ],
-        },
-      }),
-    );
-
+    // Drive the remote picker through its message bridge instead of the real social app. The block mounts an
+    // iframe in `initCallback` and mounts a fresh one on the next tick when `*currentActivityParams` settles
+    // (ExternalSource.ts:92), and the bridge only accepts messages from the iframe it currently owns. So the message
+    // is re-sent to whatever iframe is mounted until the Done button reacts.
+    const selection = {
+      type: 'selected-files-change',
+      total: 2,
+      selectedCount: 2,
+      isReady: true,
+      isMultipleMode: true,
+      selectedFiles: [
+        { obj_type: 'selected_file', url: TEST_IMAGE_URL, filename: 'from-dropbox-1.jpg' },
+        { obj_type: 'selected_file', url: TEST_IMAGE_URL, filename: 'from-dropbox-2.jpg' },
+      ],
+    };
     const doneBtn = await vi.waitFor(() => {
+      const iframe = root.querySelector<HTMLIFrameElement>('uc-external-source iframe');
+      if (!iframe) throw new Error('External source iframe was not mounted');
+      window.dispatchEvent(new MessageEvent('message', { data: selection, source: iframe.contentWindow }));
       const found = root.querySelector<HTMLButtonElement>('uc-external-source .uc-done-btn');
       if (!found || found.hidden || found.disabled) throw new Error('Done button is not clickable');
       return found;
