@@ -209,6 +209,27 @@ describe('options handed to upload-client', () => {
     expect(fetchToken).toHaveBeenCalledTimes(1);
   });
 
+  it('hands the same cached resolver to getAuthToken() as to upload-client', async () => {
+    // A plugin forwards `api.getAuthToken()` so it shares this cache instead of
+    // calling the app's token endpoint again.
+    const fetchToken = vi.fn(async () => 'resolved.token.sig');
+    const { api } = await renderSolution('regular', { authToken: fetchToken });
+
+    const resolve = api.getAuthToken() as () => Promise<string>;
+    await expect(resolve()).resolves.toBe('resolved.token.sig');
+    await expect(resolve()).resolves.toBe('resolved.token.sig');
+    expect(fetchToken).toHaveBeenCalledTimes(1);
+
+    api.invalidateAuthToken();
+    await expect(resolve()).resolves.toBe('resolved.token.sig');
+    expect(fetchToken).toHaveBeenCalledTimes(2);
+  });
+
+  it('returns a plain string authToken from getAuthToken() unchanged', async () => {
+    const { api } = await renderSolution('regular', { authToken: 'eyJ.token.sig' });
+    expect(api.getAuthToken()).toBe('eyJ.token.sig');
+  });
+
   it('drops the legacy signature params when authToken is set', async () => {
     const options = await optionsFor({
       authToken: 'eyJ.token.sig',
