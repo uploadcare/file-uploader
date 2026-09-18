@@ -1,6 +1,7 @@
 import { createHash, createHmac } from 'node:crypto';
 import path from 'node:path';
 import type { BrowserCommand } from 'vitest/node';
+import { isLive, useFakeNetwork } from './network';
 
 export const waitFileChooserAndUpload: BrowserCommand<[string[]]> = async ({ page, testPath }, relativePaths) => {
   if (!testPath) {
@@ -39,7 +40,7 @@ export type AuthTokenKind =
  * so this is the only way an e2e test can prove the uploader's token actually
  * works against the real API rather than against a stub.
  *
- * Returns `null` when the credentials are not configured, and the tests that
+ * Returns `null` when the credentials are not configured or the run is not live, and the tests that
  * need them skip.
  */
 export const mintSecureUploadsCredentials: BrowserCommand<[AuthTokenKind?]> = async (
@@ -48,7 +49,9 @@ export const mintSecureUploadsCredentials: BrowserCommand<[AuthTokenKind?]> = as
 ): Promise<SecureUploadsCredentials | null> => {
   const publicKey = process.env.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY;
   const secretKey = process.env.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY;
-  if (!publicKey || !secretKey) {
+  // The emulator cannot verify a token signed with the real project's key, so
+  // these tests only mean something live.
+  if (!isLive || !publicKey || !secretKey) {
     return null;
   }
 
@@ -85,12 +88,14 @@ const mintExpiredToken = (secretKey: string): string => {
 
 export const commands = {
   waitFileChooserAndUpload,
+  useFakeNetwork,
   mintSecureUploadsCredentials,
 };
 
 declare module 'vitest/browser' {
   interface BrowserCommands {
     waitFileChooserAndUpload: (relativePaths: string[]) => Promise<void>;
+    useFakeNetwork: () => Promise<void>;
     mintSecureUploadsCredentials: (kind?: AuthTokenKind) => Promise<SecureUploadsCredentials | null>;
   }
 }
