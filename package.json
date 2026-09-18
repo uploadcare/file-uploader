@@ -77,7 +77,7 @@
   "scripts": {
     "dev": "vite dev",
     "test": "npm run test:types && npm run test:coverage && npm run test:locales",
-    "test:types": "tsd -t ./dist/index.d.ts -f ./types/test/",
+    "test:types": "vitest run --project types",
     "test:attw": "attw --pack . --profile esm-only",
     "test:publint": "publint",
     "test:specs": "vitest run --project specs",
@@ -149,7 +149,6 @@
     "stylelint-order": "^8.0.0",
     "svg-sprite": "^2.0.4",
     "ts-lit-plugin": "^2.0.2",
-    "tsd": "^0.33.0",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",

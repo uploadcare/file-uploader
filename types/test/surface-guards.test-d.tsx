@@ -1,6 +1,6 @@
 import '../jsx';
 import type { LitElement } from 'lit';
-import { expectAssignable, expectType } from 'tsd';
+import { expectTypeOf, test } from 'vitest';
 import type * as UC from '../../dist/index';
 import type { EventMap, KebabCase, UploadCtxProvider } from '../../dist/index';
 
@@ -22,15 +22,15 @@ type BlockName = {
 /** The tag `defineComponents` derives from the class name. */
 type BlockTag = `uc-${KebabCase<Uncapitalize<BlockName>>}`;
 
-// Every registered block can be written in JSX.
-declare const notInJsx: Exclude<BlockTag, keyof JSX.IntrinsicElements>;
-expectType<never>(notInJsx);
+test('every exported block has a JSX entry', () => {
+  expectTypeOf<Exclude<BlockTag, keyof JSX.IntrinsicElements>>().toBeNever();
+});
 
-// ...and is known to `document.createElement` / `querySelector`.
-declare const notInTagNameMap: Exclude<BlockTag, keyof HTMLElementTagNameMap>;
-expectType<never>(notInTagNameMap);
+test('every exported block is in HTMLElementTagNameMap', () => {
+  expectTypeOf<Exclude<BlockTag, keyof HTMLElementTagNameMap>>().toBeNever();
+});
 
-// The 18 events documented in fern-docs `events.mdx` (specs/public-api/public-surface.json), and no others.
+// The 18 events documented in fern-docs `events.mdx` (specs/public-api/public-surface.json).
 type DocumentedEvent =
   | 'file-added'
   | 'file-removed'
@@ -50,10 +50,12 @@ type DocumentedEvent =
   | 'common-upload-failed'
   | 'change'
   | 'group-created';
-declare const eventKey: keyof EventMap;
-expectType<DocumentedEvent>(eventKey);
 
-// The 15 methods documented in `api.mdx` exist on the api object with those names.
+test('EventMap has exactly the documented events', () => {
+  expectTypeOf<keyof EventMap>().toEqualTypeOf<DocumentedEvent>();
+});
+
+// The 15 methods documented in `api.mdx`.
 type DocumentedMethod =
   | 'getOutputItem'
   | 'getOutputCollectionState'
@@ -70,5 +72,7 @@ type DocumentedMethod =
   | 'historyBack'
   | 'setModalState'
   | 'on';
-declare const method: DocumentedMethod;
-expectAssignable<keyof ReturnType<UploadCtxProvider['getAPI']>>(method);
+
+test('the api exposes every documented method', () => {
+  expectTypeOf<DocumentedMethod>().toExtend<keyof ReturnType<UploadCtxProvider['getAPI']>>();
+});

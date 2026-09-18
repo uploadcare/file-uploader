@@ -52,6 +52,21 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          name: 'types',
+          include: ['./types/test/**/*.test-d.tsx'],
+          // Type-only: the files are compiled by tsc against the built `dist/index.d.ts`, never executed. Run `npm run
+          // build` first, as `test:types` does in CI.
+          typecheck: {
+            enabled: true,
+            only: true,
+            include: ['./types/test/**/*.test-d.tsx'],
+            tsconfig: './tsconfig.types-test.json',
+          },
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'e2e',
           setupFiles: ['./tests/setup.e2e.ts'],
           include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],

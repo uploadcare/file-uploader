@@ -1,14 +1,20 @@
-import { expectAssignable, expectType } from 'tsd';
-import { loadFileUploaderFrom, UC_WINDOW_KEY } from '../../dist/abstract/loadFileUploaderFrom';
-import { PACKAGE_NAME, PACKAGE_VERSION } from '../../dist/env';
+import { expectTypeOf, test } from 'vitest';
+import { loadFileUploaderFrom, type UC_WINDOW_KEY } from '../../dist/abstract/loadFileUploaderFrom';
+import { type PACKAGE_NAME, PACKAGE_VERSION } from '../../dist/env';
 
 /** The two typed subpath exports besides the root: `./env` and `./abstract/loadFileUploaderFrom.js`. */
 
-expectType<'blocks'>(PACKAGE_NAME);
-expectType<string>(PACKAGE_VERSION);
+test('env exposes the package name as a literal and the version as a string', () => {
+  expectTypeOf<typeof PACKAGE_NAME>().toEqualTypeOf<'blocks'>();
+  expectTypeOf(PACKAGE_VERSION).toEqualTypeOf<string>();
+});
 
-expectType<'UC'>(UC_WINDOW_KEY);
-expectAssignable<Promise<Record<string, unknown> | null>>(loadFileUploaderFrom('https://cdn.example/uc.js'));
-expectAssignable<Promise<Record<string, unknown> | null>>(loadFileUploaderFrom('https://cdn.example/uc.js', true));
-// @ts-expect-error url is required
-loadFileUploaderFrom();
+test('loadFileUploaderFrom takes a url and an optional register flag', () => {
+  expectTypeOf<typeof UC_WINDOW_KEY>().toEqualTypeOf<'UC'>();
+  expectTypeOf(loadFileUploaderFrom('https://cdn.example/uc.js')).toExtend<Promise<Record<string, unknown> | null>>();
+  expectTypeOf(loadFileUploaderFrom('https://cdn.example/uc.js', true)).toExtend<
+    Promise<Record<string, unknown> | null>
+  >();
+  // @ts-expect-error url is required
+  loadFileUploaderFrom();
+});

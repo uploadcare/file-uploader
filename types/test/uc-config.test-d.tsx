@@ -1,4 +1,4 @@
-import { expectType } from 'tsd';
+import { expectTypeOf, test } from 'vitest';
 import type {
   Config,
   FileValidatorDescriptor,
@@ -9,112 +9,8 @@ import type {
 import '../jsx';
 import React, { createRef, useRef } from 'react';
 
-// @ts-expect-error untyped props
-() => <uc-config ctx-name="1" something="wrong"></uc-config>;
-
-// @ts-expect-error missing ctx-name
-() => <uc-config></uc-config>;
-
-// allow common html attributes and required ctx-name
-() => <uc-config ctx-name="1" id="1" class="1" hidden></uc-config>;
-
-// allow key prop
-() => <uc-config ctx-name="1" key={1}></uc-config>;
-
-// allow useRef hook
-() => {
-  const ref = useRef<Config | null>(null);
-  expectType<Config | null>(ref.current);
-  <uc-config ctx-name="1" ref={ref}></uc-config>;
-};
-
-// allow callback ref
-() => {
-  <uc-config
-    ctx-name="1"
-    ref={(el) => {
-      expectType<Config | null>(el);
-    }}
-  ></uc-config>;
-};
-
-// allow createRef
-() => {
-  const ref = createRef<Config>();
-  expectType<Config | null>(ref.current);
-  <uc-config ctx-name="1" ref={ref}></uc-config>;
-};
-
-// accept config attributes
-() => <uc-config ctx-name="1" multiple multipleMax={1} multipleMin={2} accept="str" />;
-
-// allow to use DOM properties
-() => {
-  const ref = useRef<Config | null>(null);
-  if (ref.current) {
-    const config = ref.current;
-    config.metadata = { foo: 'bar' };
-    config.secureSignature = '1231';
-    config.multiple = true;
-  }
-};
-
-// allow to pass metadata
-() => {
-  const ref = useRef<Config | null>(null);
-  if (ref.current) {
-    const config = ref.current;
-    config.metadata = { foo: 'bar' };
-    config.metadata = () => ({ foo: 'bar' });
-    config.metadata = async (entry) => {
-      expectType<OutputFileEntry>(entry);
-      return { foo: 'bar' };
-    };
-  }
-};
-
-// allow to pass tags
-() => {
-  const ref = useRef<Config | null>(null);
-  if (ref.current) {
-    const config = ref.current;
-    config.tags = ['cat'];
-    config.tags = () => ['cat'];
-  }
-};
-
-// allow to pass validators
-() => {
-  const ref = useRef<Config | null>(null);
-  if (ref.current) {
-    const config = ref.current;
-
-    const syncFileValidator: FuncFileValidator = (outputEntry, api) => ({
-      message: api.l10n('images-only-accepted'),
-      payload: { entry: outputEntry },
-    });
-
-    const asyncFileValidator: FuncFileValidator = async (outputEntry, api) => ({
-      message: api.l10n('images-only-accepted'),
-      payload: { entry: outputEntry },
-    });
-
-    const fileValidatorDescriptor: FileValidatorDescriptor = {
-      runOn: 'change',
-      validator: syncFileValidator,
-    };
-
-    const maxCollection: FuncCollectionValidator = (_collection, api) => ({
-      message: api.l10n('some-files-were-not-uploaded'),
-    });
-
-    config.fileValidators = [syncFileValidator, asyncFileValidator, fileValidatorDescriptor];
-    config.collectionValidators = [maxCollection];
-  }
-};
-
 // Every option documented in fern-docs `options.mdx`, asserted against the published `Config` type.
-// tsd checks `dist/index.d.ts` under its own compiler options, so this is what catches a public option
+// These run against `dist/index.d.ts`, so this is what catches a public option
 // that is dropped, renamed or narrowed in a way the app-level `tsc` projects would not see.
 // Kept in sync with specs/public-api/public-surface.json — the parity specs assert the same list at runtime.
 type DocumentedOption =
@@ -183,14 +79,130 @@ type DocumentedOption =
   | 'validationConcurrency'
   | 'validationTimeout';
 
-// Fails to compile if the published Config loses a documented option.
-export const assertDocumentedOptionsExist = () => {
-  const documented: Record<DocumentedOption, unknown> = {} as Pick<Config, DocumentedOption>;
-  expectType<Record<DocumentedOption, unknown>>(documented);
-};
+test('<uc-config> rejects unknown attributes', () => {
+  // @ts-expect-error untyped props
+  () => <uc-config ctx-name="1" something="wrong"></uc-config>;
+});
 
-// Documented value types.
-export const assertDocumentedOptionTypes = () => {
+test('<uc-config> requires ctx-name', () => {
+  // @ts-expect-error missing ctx-name
+  () => <uc-config></uc-config>;
+});
+
+test('<uc-config> takes the common HTML attributes', () => {
+  () => <uc-config ctx-name="1" id="1" class="1" hidden></uc-config>;
+});
+
+test('<uc-config> takes a React key', () => {
+  () => <uc-config ctx-name="1" key={1}></uc-config>;
+});
+
+test('<uc-config> ref through useRef is typed as Config', () => {
+  () => {
+    const ref = useRef<Config | null>(null);
+    expectTypeOf(ref.current).toEqualTypeOf<Config | null>();
+    <uc-config ctx-name="1" ref={ref}></uc-config>;
+  };
+});
+
+test('<uc-config> callback ref receives a Config', () => {
+  () => {
+    <uc-config
+      ctx-name="1"
+      ref={(el) => {
+        expectTypeOf(el).toEqualTypeOf<Config | null>();
+      }}
+    ></uc-config>;
+  };
+});
+
+test('<uc-config> ref through createRef is typed as Config', () => {
+  () => {
+    const ref = createRef<Config>();
+    expectTypeOf(ref.current).toEqualTypeOf<Config | null>();
+    <uc-config ctx-name="1" ref={ref}></uc-config>;
+  };
+});
+
+test('<uc-config> takes the config options as attributes', () => {
+  () => <uc-config ctx-name="1" multiple multipleMax={1} multipleMin={2} accept="str" />;
+});
+
+test('Config options are settable as DOM properties', () => {
+  () => {
+    const ref = useRef<Config | null>(null);
+    if (ref.current) {
+      const config = ref.current;
+      config.metadata = { foo: 'bar' };
+      config.secureSignature = '1231';
+      config.multiple = true;
+    }
+  };
+});
+
+test('metadata takes an object, a function or an async function of the entry', () => {
+  () => {
+    const ref = useRef<Config | null>(null);
+    if (ref.current) {
+      const config = ref.current;
+      config.metadata = { foo: 'bar' };
+      config.metadata = () => ({ foo: 'bar' });
+      config.metadata = async (entry) => {
+        expectTypeOf(entry).toEqualTypeOf<OutputFileEntry>();
+        return { foo: 'bar' };
+      };
+    }
+  };
+});
+
+test('tags takes an array or a function', () => {
+  () => {
+    const ref = useRef<Config | null>(null);
+    if (ref.current) {
+      const config = ref.current;
+      config.tags = ['cat'];
+      config.tags = () => ['cat'];
+    }
+  };
+});
+
+test('validators take sync, async and descriptor forms', () => {
+  () => {
+    const ref = useRef<Config | null>(null);
+    if (ref.current) {
+      const config = ref.current;
+
+      const syncFileValidator: FuncFileValidator = (outputEntry, api) => ({
+        message: api.l10n('images-only-accepted'),
+        payload: { entry: outputEntry },
+      });
+
+      const asyncFileValidator: FuncFileValidator = async (outputEntry, api) => ({
+        message: api.l10n('images-only-accepted'),
+        payload: { entry: outputEntry },
+      });
+
+      const fileValidatorDescriptor: FileValidatorDescriptor = {
+        runOn: 'change',
+        validator: syncFileValidator,
+      };
+
+      const maxCollection: FuncCollectionValidator = (_collection, api) => ({
+        message: api.l10n('some-files-were-not-uploaded'),
+      });
+
+      config.fileValidators = [syncFileValidator, asyncFileValidator, fileValidatorDescriptor];
+      config.collectionValidators = [maxCollection];
+    }
+  };
+});
+
+test('Config has every documented option', () => {
+  const documented: Record<DocumentedOption, unknown> = {} as Pick<Config, DocumentedOption>;
+  expectTypeOf(documented).toEqualTypeOf<Record<DocumentedOption, unknown>>();
+});
+
+test('every documented option has its documented value type', () => {
   const config = {} as Config;
 
   // boolean
@@ -278,4 +290,4 @@ export const assertDocumentedOptionTypes = () => {
   // `string | undefined` this `@ts-expect-error` starts failing, which is the signal to delete it.
   // @ts-expect-error the documented "return nothing" form is not expressible in the published type
   config.iconHrefResolver = () => undefined;
-};
+});
