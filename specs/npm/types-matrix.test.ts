@@ -66,7 +66,8 @@ afterAll(() => {
   rmSync(consumerDir, { recursive: true, force: true });
 });
 
-describe('published types under consumer compiler settings', () => {
+// A cold tsc over the shipped d.ts takes several seconds on CI, well past vitest's 5s default.
+describe('published types under consumer compiler settings', { timeout: 60_000 }, () => {
   it('bundler, strict, skipLibCheck: false', () => {
     const { ok, output } = compile(cases[0]);
     expect(output).toBe('');
