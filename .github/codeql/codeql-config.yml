@@ -1,0 +1,4 @@
+# The type tests are compiled, never executed: every statement in them exists only to be type-checked, so CodeQL's
+# runtime rules (useless expressions, unused values) report the pattern itself, not a defect.
+paths-ignore:
+  - types/test

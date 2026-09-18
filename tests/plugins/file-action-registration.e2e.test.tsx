@@ -1,10 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { page } from 'vitest/browser';
-import { TEST_IMAGE_URL } from '../utils/constants';
-import { createTestPlugin, getApi, renderUploader } from './utils';
+import { TEST_IMAGE_URL } from '~/tests/utils/constants';
+import { createTestPlugin, renderSolution, within } from '~/tests/utils/render-solution';
 
-describe('File Action Registration', () => {
-  it('should show file action button when shouldRender() returns true', async () => {
+describe('plugin file actions', () => {
+  it('shows the action button when shouldRender() returns true', async () => {
     const plugin = createTestPlugin({
       id: 'fa-show',
       setup: ({ pluginApi }) => {
@@ -22,16 +21,15 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    await expect.element(page.getByRole('button', { name: 'Show Action', exact: true })).toBeVisible();
+    await expect.element(within(root).getByRole('button', { name: 'Show Action', exact: true })).toBeVisible();
   });
 
-  it('should hide file action button when shouldRender() returns false', async () => {
+  it('hides the action button when shouldRender() returns false', async () => {
     const plugin = createTestPlugin({
       id: 'fa-hide',
       setup: ({ pluginApi }) => {
@@ -45,20 +43,21 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
     // Wait for the file item to appear in the upload list
-    await expect.element(page.getByTestId('uc-upload-list')).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-upload-list')).toBeVisible();
 
     // The action button should not be in the DOM
-    await expect.element(page.getByRole('button', { name: 'Hidden Action', exact: true })).not.toBeInTheDocument();
+    await expect
+      .element(within(root).getByRole('button', { name: 'Hidden Action', exact: true }))
+      .not.toBeInTheDocument();
   });
 
-  it('should call onClick() when file action button is clicked', async () => {
+  it('calls onClick() with the entry when the button is clicked', async () => {
     const onClick = vi.fn();
     const plugin = createTestPlugin({
       id: 'fa-click',
@@ -73,13 +72,12 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    const actionBtn = page.getByRole('button', { name: 'Click Action', exact: true });
+    const actionBtn = within(root).getByRole('button', { name: 'Click Action', exact: true });
     await expect.element(actionBtn).toBeVisible();
     await actionBtn.click();
 
@@ -91,7 +89,7 @@ describe('File Action Registration', () => {
     });
   });
 
-  it('should update file actions when file upload status changes', async () => {
+  it('re-evaluates shouldRender() when the upload status changes', async () => {
     const shouldRender = vi.fn((entry) => entry.status === 'success');
     const plugin = createTestPlugin({
       id: 'fa-status',
@@ -106,17 +104,16 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
     // After upload completes, the action should appear
-    await expect.element(page.getByRole('button', { name: 'Status Action', exact: true })).toBeVisible();
+    await expect.element(within(root).getByRole('button', { name: 'Status Action', exact: true })).toBeVisible();
   });
 
-  it('should handle shouldRender() throwing an error gracefully', async () => {
+  it('hides the action and keeps the file item when shouldRender() throws', async () => {
     const plugin = createTestPlugin({
       id: 'fa-error',
       setup: ({ pluginApi }) => {
@@ -132,22 +129,23 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    await expect.element(page.getByTestId('uc-upload-list')).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-upload-list')).toBeVisible();
 
     // The action should not appear, but the UI should not be broken
-    await expect.element(page.getByRole('button', { name: 'Error Action', exact: true })).not.toBeInTheDocument();
+    await expect
+      .element(within(root).getByRole('button', { name: 'Error Action', exact: true }))
+      .not.toBeInTheDocument();
 
     // The file item should still be visible and functional
-    await expect.element(page.getByText('prithiviraj-a-fa7Stge3YXs-unsplash.jpg')).toBeVisible();
+    await expect.element(within(root).getByText('prithiviraj-a-fa7Stge3YXs-unsplash.jpg')).toBeVisible();
   });
 
-  it('should remove file actions when plugin is unregistered', async () => {
+  it('removes the action when the plugin is unregistered', async () => {
     const plugin = createTestPlugin({
       id: 'fa-remove',
       setup: ({ pluginApi }) => {
@@ -161,20 +159,21 @@ describe('File Action Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
-    const api = getApi();
+    const { config, api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    await expect.element(page.getByRole('button', { name: 'Remove File Action', exact: true })).toBeVisible();
+    await expect.element(within(root).getByRole('button', { name: 'Remove File Action', exact: true })).toBeVisible();
 
     config.plugins = [];
 
-    await expect.element(page.getByRole('button', { name: 'Remove File Action', exact: true })).not.toBeInTheDocument();
+    await expect
+      .element(within(root).getByRole('button', { name: 'Remove File Action', exact: true }))
+      .not.toBeInTheDocument();
   });
 
-  it('should purge file actions and icons when setup throws', async () => {
+  it('purges actions and icons when setup() throws', async () => {
     const plugin = createTestPlugin({
       id: 'fa-throw-setup',
       setup: ({ pluginApi }) => {
@@ -193,16 +192,17 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    await expect.element(page.getByRole('button', { name: 'Temp Action', exact: true })).not.toBeInTheDocument();
+    await expect
+      .element(within(root).getByRole('button', { name: 'Temp Action', exact: true }))
+      .not.toBeInTheDocument();
   });
 
-  it('should render multiple actions from different plugins on the same file', async () => {
+  it('renders actions from several plugins on the same file', async () => {
     const pluginA = createTestPlugin({
       id: 'fa-multi-a',
       setup: ({ pluginApi }) => {
@@ -229,17 +229,16 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([pluginA, pluginB]);
-    const api = getApi();
+    const { api, root } = await renderSolution('regular', { plugins: [pluginA, pluginB] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    await expect.element(page.getByRole('button', { name: 'Action A', exact: true })).toBeVisible();
-    await expect.element(page.getByRole('button', { name: 'Action B', exact: true })).toBeVisible();
+    await expect.element(within(root).getByRole('button', { name: 'Action A', exact: true })).toBeVisible();
+    await expect.element(within(root).getByRole('button', { name: 'Action B', exact: true })).toBeVisible();
   });
 
-  it('should tolerate onClick throwing without breaking UI', async () => {
+  it('keeps the button and file item when onClick throws', async () => {
     const plugin = createTestPlugin({
       id: 'fa-onclick-error',
       setup: ({ pluginApi }) => {
@@ -255,18 +254,17 @@ describe('File Action Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
-    const btn = page.getByRole('button', { name: 'Error OnClick', exact: true });
+    const btn = within(root).getByRole('button', { name: 'Error OnClick', exact: true });
     await expect.element(btn).toBeVisible();
     await btn.click();
 
     // File item and button should remain present even if handler throws
     await expect.element(btn).toBeVisible();
-    await expect.element(page.getByText('prithiviraj-a-fa7Stge3YXs-unsplash.jpg')).toBeVisible();
+    await expect.element(within(root).getByText('prithiviraj-a-fa7Stge3YXs-unsplash.jpg')).toBeVisible();
   });
 });

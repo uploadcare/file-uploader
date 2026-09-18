@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { page } from 'vitest/browser';
 import { defineLocale } from '@/index';
 import { delay } from '@/utils/delay';
-import { TEST_IMAGE_URL } from '../utils/constants';
-import { addSource, createTestPlugin, getApi, openModal, renderUploader } from './utils';
+import { TEST_IMAGE_URL } from '~/tests/utils/constants';
+import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
 
-describe('Icon Registration', () => {
-  it('should make registered icon available for use in file actions', async () => {
+describe('plugin icons', () => {
+  it('makes a registered icon usable by file actions', async () => {
     const plugin = createTestPlugin({
       id: 'icon-plugin',
       setup: ({ pluginApi }) => {
@@ -24,19 +23,18 @@ describe('Icon Registration', () => {
       },
     });
 
-    await renderUploader([plugin]);
-    const api = getApi();
+    const { api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.addFileFromUrl(TEST_IMAGE_URL);
     api.initFlow();
 
     // The file action button with the custom icon should be visible
-    await expect.element(page.getByRole('button', { name: 'Icon Action' })).toBeVisible();
+    await expect.element(within(root).getByRole('button', { name: 'Icon Action' })).toBeVisible();
   });
 });
 
-describe('L10n Registration', () => {
-  it('should use registered label translations for source list items', async () => {
+describe('plugin l10n', () => {
+  it('translates source labels through registered l10n', async () => {
     const plugin = createTestPlugin({
       id: 'l10n-plugin',
       setup: ({ pluginApi }) => {
@@ -54,11 +52,11 @@ describe('L10n Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'translated-source');
 
-    await openModal();
-    await expect.element(page.getByText('My Translated Source')).toBeVisible();
+    await openModal(root);
+    await expect.element(within(root).getByText('My Translated Source')).toBeVisible();
   });
 
   it('applies l10n registered asynchronously after a locale switch to a rendered source label', async () => {
@@ -88,17 +86,20 @@ describe('L10n Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
+    const { config, root } = await renderSolution('regular', { plugins: [plugin] });
     addSource(config, 'lazy-source');
 
-    await openModal();
-    await expect.element(page.getByText('Generate')).toBeVisible();
+    await openModal(root);
+    await expect.element(within(root).getByText('Generate')).toBeVisible();
 
     config.localeName = 'de';
-    await expect.element(page.getByText('Erzeugen')).toBeVisible();
+    await expect.element(within(root).getByText('Erzeugen')).toBeVisible();
   });
 
-  it('should keep plugin l10n overrides even after plugin is unregistered (current behavior)', async () => {
+  it('keeps plugin l10n overrides after the plugin is unregistered', async () => {
+    // QUIRK(plugins): `LocaleManager._applyPluginLocales` (src/abstract/managers/LocaleManager.ts:69) writes plugin
+    // strings into the ctx `*l10n/<key>` slots and nothing resets them when `registry.purge()` drops the plugin's l10n.
+    // Pinned as current behaviour, not endorsed.
     const plugin = createTestPlugin({
       id: 'l10n-persist',
       setup: ({ pluginApi }) => {
@@ -110,15 +111,14 @@ describe('L10n Registration', () => {
       },
     });
 
-    const { config } = await renderUploader([plugin]);
-    const api = getApi();
+    const { config, api, root } = await renderSolution('regular', { plugins: [plugin] });
 
     api.setModalState(true);
-    await expect.element(page.getByText('Translated Upload')).toBeVisible();
+    await expect.element(within(root).getByText('Translated Upload')).toBeVisible();
 
     config.plugins = [];
 
     api.setModalState(true);
-    await expect.element(page.getByText('Translated Upload')).toBeVisible();
+    await expect.element(within(root).getByText('Translated Upload')).toBeVisible();
   });
 });

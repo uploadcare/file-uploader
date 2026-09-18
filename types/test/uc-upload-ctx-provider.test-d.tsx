@@ -1,7 +1,6 @@
 import '../jsx';
-
 import React, { useRef } from 'react';
-import { expectType } from 'tsd';
+import { expectTypeOf, test } from 'vitest';
 import {
   type ActivityType,
   type EventMap,
@@ -18,206 +17,245 @@ import {
 } from '../../dist/index';
 
 const instance = new UploadCtxProvider();
-instance.uploadCollection.size;
-
 const api = instance.getAPI();
-api.addFileFromUrl('https://example.com/image.png');
-
-instance.addEventListener('change', (e) => {
-  expectType<EventMap['change']>(e);
-});
-
 const onChange = (e: EventMap['change']) => e;
-instance.addEventListener('change', onChange);
 
-instance.addEventListener('change', (e) => {
-  const state = e.detail;
-
-  expectType<OutputFileEntry<'failed'>[]>(state.failedEntries);
-  expectType<OutputFileEntry<'uploading'>[]>(state.uploadingEntries);
-  expectType<OutputFileEntry<'success'>[]>(state.successEntries);
-  expectType<OutputFileEntry<'idle'>[]>(state.idleEntries);
-  // group is optional here
-  expectType<UploadcareGroup | null>(state.group);
-
-  if (state.status === 'success' || state.isSuccess) {
-    expectType<'success'>(state.status);
-    expectType<true>(state.isSuccess);
-    expectType<false>(state.isFailed);
-    expectType<false>(state.isUploading);
-    expectType<[]>(state.errors);
-    expectType<'success'>(state.allEntries[0].status);
-  } else if (state.status === 'failed' || state.isFailed) {
-    expectType<'failed'>(state.status);
-    expectType<false>(state.isSuccess);
-    expectType<true>(state.isFailed);
-    expectType<false>(state.isUploading);
-    expectType<OutputError<OutputCollectionErrorType>[]>(state.errors);
-  } else if (state.status === 'uploading' || state.isUploading) {
-    expectType<'uploading'>(state.status);
-    expectType<false>(state.isSuccess);
-    expectType<false>(state.isFailed);
-    expectType<true>(state.isUploading);
-    expectType<[]>(state.errors);
-  } else {
-    expectType<'idle'>(state.status);
-    expectType<false>(state.isSuccess);
-    expectType<false>(state.isFailed);
-    expectType<false>(state.isUploading);
-    expectType<[]>(state.errors);
-    expectType<'success' | 'idle'>(state.allEntries[0].status);
-  }
+test('the provider exposes the collection and the api', () => {
+  expectTypeOf(instance.uploadCollection.size).toEqualTypeOf<number>();
+  api.addFileFromUrl('https://example.com/image.png');
 });
 
-instance.addEventListener('group-created', (e) => {
-  const state = e.detail;
-
-  // group is required here
-  expectType<UploadcareGroup>(state.group);
+test("'change' listeners receive the typed CustomEvent", () => {
+  instance.addEventListener('change', (e) => {
+    expectTypeOf(e).toEqualTypeOf<EventMap['change']>();
+  });
+  instance.addEventListener('change', onChange);
 });
 
-instance.addEventListener('done-click', (e) => {
-  const state = e.detail;
+test("'change' event payload narrows the collection by status", () => {
+  instance.addEventListener('change', (e) => {
+    const state = e.detail;
 
-  expectType<OutputCollectionStatus>(state.status);
-  expectType<UploadcareGroup | null>(state.group);
+    expectTypeOf(state.failedEntries).toEqualTypeOf<OutputFileEntry<'failed'>[]>();
+    expectTypeOf(state.uploadingEntries).toEqualTypeOf<OutputFileEntry<'uploading'>[]>();
+    expectTypeOf(state.successEntries).toEqualTypeOf<OutputFileEntry<'success'>[]>();
+    expectTypeOf(state.idleEntries).toEqualTypeOf<OutputFileEntry<'idle'>[]>();
+    // group is optional here
+    expectTypeOf(state.group).toEqualTypeOf<UploadcareGroup | null>();
+
+    if (state.status === 'success' || state.isSuccess) {
+      expectTypeOf(state.status).toEqualTypeOf<'success'>();
+      expectTypeOf(state.isSuccess).toEqualTypeOf<true>();
+      expectTypeOf(state.isFailed).toEqualTypeOf<false>();
+      expectTypeOf(state.isUploading).toEqualTypeOf<false>();
+      expectTypeOf(state.errors).toEqualTypeOf<[]>();
+      expectTypeOf(state.allEntries[0].status).toEqualTypeOf<'success'>();
+    } else if (state.status === 'failed' || state.isFailed) {
+      expectTypeOf(state.status).toEqualTypeOf<'failed'>();
+      expectTypeOf(state.isSuccess).toEqualTypeOf<false>();
+      expectTypeOf(state.isFailed).toEqualTypeOf<true>();
+      expectTypeOf(state.isUploading).toEqualTypeOf<false>();
+      expectTypeOf(state.errors).toEqualTypeOf<OutputError<OutputCollectionErrorType>[]>();
+    } else if (state.status === 'uploading' || state.isUploading) {
+      expectTypeOf(state.status).toEqualTypeOf<'uploading'>();
+      expectTypeOf(state.isSuccess).toEqualTypeOf<false>();
+      expectTypeOf(state.isFailed).toEqualTypeOf<false>();
+      expectTypeOf(state.isUploading).toEqualTypeOf<true>();
+      expectTypeOf(state.errors).toEqualTypeOf<[]>();
+    } else {
+      expectTypeOf(state.status).toEqualTypeOf<'idle'>();
+      expectTypeOf(state.isSuccess).toEqualTypeOf<false>();
+      expectTypeOf(state.isFailed).toEqualTypeOf<false>();
+      expectTypeOf(state.isUploading).toEqualTypeOf<false>();
+      expectTypeOf(state.errors).toEqualTypeOf<[]>();
+      expectTypeOf(state.allEntries[0].status).toEqualTypeOf<'success' | 'idle'>();
+    }
+  });
 });
 
-instance.addEventListener('file-added', (e) => {
-  const state = e.detail;
+test("'group-created' event payload", () => {
+  instance.addEventListener('group-created', (e) => {
+    const state = e.detail;
 
-  expectType<string>(state.internalId);
-  expectType<boolean>(state.isImage);
-  expectType<number>(state.size);
-  expectType<string>(state.name);
-  expectType<'idle'>(state.status);
-  expectType<false>(state.isSuccess);
-  expectType<false>(state.isFailed);
-  expectType<false>(state.isUploading);
-  expectType<false>(state.isRemoved);
-  expectType<[]>(state.errors);
-  expectType<null>(state.cdnUrl);
-  expectType<null>(state.cdnUrlModifiers);
-  expectType<null>(state.uuid);
-  expectType<null>(state.fileInfo);
-  expectType<SourceTypes | null>(state.source);
+    // group is required here
+    expectTypeOf(state.group).toEqualTypeOf<UploadcareGroup>();
+  });
 });
 
-instance.addEventListener('file-removed', (e) => {
-  const state = e.detail;
+test("'done-click' event payload", () => {
+  instance.addEventListener('done-click', (e) => {
+    const state = e.detail;
 
-  expectType<string>(state.internalId);
-  expectType<'removed'>(state.status);
-  expectType<false>(state.isSuccess);
-  expectType<false>(state.isFailed);
-  expectType<false>(state.isUploading);
-  expectType<true>(state.isRemoved);
-  expectType<OutputError<OutputFileErrorType>[]>(state.errors);
-  expectType<string | null>(state.cdnUrl);
-  expectType<string | null>(state.cdnUrlModifiers);
-  expectType<string | null>(state.uuid);
-  expectType<UploadcareFile | null>(state.fileInfo);
+    expectTypeOf(state.status).toEqualTypeOf<OutputCollectionStatus>();
+    expectTypeOf(state.group).toEqualTypeOf<UploadcareGroup | null>();
+  });
 });
 
-instance.addEventListener('file-upload-failed', (e) => {
-  const state = e.detail;
+test("'file-added' event payload", () => {
+  instance.addEventListener('file-added', (e) => {
+    const state = e.detail;
 
-  expectType<string>(state.internalId);
-  expectType<'failed'>(state.status);
-  expectType<false>(state.isSuccess);
-  expectType<true>(state.isFailed);
-  expectType<false>(state.isUploading);
-  expectType<false>(state.isRemoved);
-  expectType<OutputError<OutputFileErrorType>[]>(state.errors);
-  expectType<string | null>(state.cdnUrl);
-  expectType<string | null>(state.cdnUrlModifiers);
-  expectType<string | null>(state.uuid);
-  expectType<UploadcareFile | null>(state.fileInfo);
+    expectTypeOf(state.internalId).toEqualTypeOf<string>();
+    expectTypeOf(state.isImage).toEqualTypeOf<boolean>();
+    expectTypeOf(state.size).toEqualTypeOf<number>();
+    expectTypeOf(state.name).toEqualTypeOf<string>();
+    expectTypeOf(state.status).toEqualTypeOf<'idle'>();
+    expectTypeOf(state.isSuccess).toEqualTypeOf<false>();
+    expectTypeOf(state.isFailed).toEqualTypeOf<false>();
+    expectTypeOf(state.isUploading).toEqualTypeOf<false>();
+    expectTypeOf(state.isRemoved).toEqualTypeOf<false>();
+    expectTypeOf(state.errors).toEqualTypeOf<[]>();
+    expectTypeOf(state.cdnUrl).toEqualTypeOf<null>();
+    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<null>();
+    expectTypeOf(state.uuid).toEqualTypeOf<null>();
+    expectTypeOf(state.fileInfo).toEqualTypeOf<null>();
+    expectTypeOf(state.source).toEqualTypeOf<SourceTypes | null>();
+  });
 });
 
-instance.addEventListener('file-upload-start', (e) => {
-  const state = e.detail;
+test("'file-removed' event payload", () => {
+  instance.addEventListener('file-removed', (e) => {
+    const state = e.detail;
 
-  expectType<string>(state.internalId);
-  expectType<'uploading'>(state.status);
-  expectType<false>(state.isSuccess);
-  expectType<false>(state.isFailed);
-  expectType<true>(state.isUploading);
-  expectType<false>(state.isRemoved);
-  expectType<[]>(state.errors);
-  expectType<null>(state.cdnUrl);
-  expectType<null>(state.cdnUrlModifiers);
-  expectType<null>(state.uuid);
-  expectType<null>(state.fileInfo);
+    expectTypeOf(state.internalId).toEqualTypeOf<string>();
+    expectTypeOf(state.status).toEqualTypeOf<'removed'>();
+    expectTypeOf(state.isSuccess).toEqualTypeOf<false>();
+    expectTypeOf(state.isFailed).toEqualTypeOf<false>();
+    expectTypeOf(state.isUploading).toEqualTypeOf<false>();
+    expectTypeOf(state.isRemoved).toEqualTypeOf<true>();
+    expectTypeOf(state.errors).toEqualTypeOf<OutputError<OutputFileErrorType>[]>();
+    expectTypeOf(state.cdnUrl).toEqualTypeOf<string | null>();
+    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<string | null>();
+    expectTypeOf(state.uuid).toEqualTypeOf<string | null>();
+    expectTypeOf(state.fileInfo).toEqualTypeOf<UploadcareFile | null>();
+  });
 });
 
-instance.addEventListener('file-upload-progress', (e) => {
-  const state = e.detail;
-  expectType<'uploading'>(state.status);
+test("'file-upload-failed' event payload", () => {
+  instance.addEventListener('file-upload-failed', (e) => {
+    const state = e.detail;
+
+    expectTypeOf(state.internalId).toEqualTypeOf<string>();
+    expectTypeOf(state.status).toEqualTypeOf<'failed'>();
+    expectTypeOf(state.isSuccess).toEqualTypeOf<false>();
+    expectTypeOf(state.isFailed).toEqualTypeOf<true>();
+    expectTypeOf(state.isUploading).toEqualTypeOf<false>();
+    expectTypeOf(state.isRemoved).toEqualTypeOf<false>();
+    expectTypeOf(state.errors).toEqualTypeOf<OutputError<OutputFileErrorType>[]>();
+    expectTypeOf(state.cdnUrl).toEqualTypeOf<string | null>();
+    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<string | null>();
+    expectTypeOf(state.uuid).toEqualTypeOf<string | null>();
+    expectTypeOf(state.fileInfo).toEqualTypeOf<UploadcareFile | null>();
+  });
 });
 
-instance.addEventListener('file-upload-success', (e) => {
-  const state = e.detail;
+test("'file-upload-start' event payload", () => {
+  instance.addEventListener('file-upload-start', (e) => {
+    const state = e.detail;
 
-  expectType<string>(state.internalId);
-  expectType<'success'>(state.status);
-  expectType<true>(state.isSuccess);
-  expectType<false>(state.isFailed);
-  expectType<false>(state.isUploading);
-  expectType<false>(state.isRemoved);
-  expectType<[]>(state.errors);
-  expectType<string>(state.cdnUrl);
-  expectType<string>(state.cdnUrlModifiers);
-  expectType<string>(state.uuid);
-  expectType<UploadcareFile>(state.fileInfo);
+    expectTypeOf(state.internalId).toEqualTypeOf<string>();
+    expectTypeOf(state.status).toEqualTypeOf<'uploading'>();
+    expectTypeOf(state.isSuccess).toEqualTypeOf<false>();
+    expectTypeOf(state.isFailed).toEqualTypeOf<false>();
+    expectTypeOf(state.isUploading).toEqualTypeOf<true>();
+    expectTypeOf(state.isRemoved).toEqualTypeOf<false>();
+    expectTypeOf(state.errors).toEqualTypeOf<[]>();
+    expectTypeOf(state.cdnUrl).toEqualTypeOf<null>();
+    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<null>();
+    expectTypeOf(state.uuid).toEqualTypeOf<null>();
+    expectTypeOf(state.fileInfo).toEqualTypeOf<null>();
+  });
 });
 
-instance.addEventListener('file-url-changed', (e) => {
-  const state = e.detail;
-  expectType<'success'>(state.status);
+test("'file-upload-progress' event payload", () => {
+  instance.addEventListener('file-upload-progress', (e) => {
+    const state = e.detail;
+    expectTypeOf(state.status).toEqualTypeOf<'uploading'>();
+  });
 });
 
-instance.addEventListener('common-upload-start', (e) => {
-  const state = e.detail;
-  expectType<'uploading'>(state.status);
+test("'file-upload-success' event payload", () => {
+  instance.addEventListener('file-upload-success', (e) => {
+    const state = e.detail;
+
+    expectTypeOf(state.internalId).toEqualTypeOf<string>();
+    expectTypeOf(state.status).toEqualTypeOf<'success'>();
+    expectTypeOf(state.isSuccess).toEqualTypeOf<true>();
+    expectTypeOf(state.isFailed).toEqualTypeOf<false>();
+    expectTypeOf(state.isUploading).toEqualTypeOf<false>();
+    expectTypeOf(state.isRemoved).toEqualTypeOf<false>();
+    expectTypeOf(state.errors).toEqualTypeOf<[]>();
+    expectTypeOf(state.cdnUrl).toEqualTypeOf<string>();
+    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<string>();
+    expectTypeOf(state.uuid).toEqualTypeOf<string>();
+    expectTypeOf(state.fileInfo).toEqualTypeOf<UploadcareFile>();
+  });
 });
 
-instance.addEventListener('common-upload-failed', (e) => {
-  const state = e.detail;
-  expectType<'failed'>(state.status);
+test("'file-url-changed' event payload", () => {
+  instance.addEventListener('file-url-changed', (e) => {
+    const state = e.detail;
+    expectTypeOf(state.status).toEqualTypeOf<'success'>();
+  });
 });
 
-instance.addEventListener('common-upload-progress', (e) => {
-  const state = e.detail;
-  expectType<'uploading'>(state.status);
+test("'common-upload-start' event payload", () => {
+  instance.addEventListener('common-upload-start', (e) => {
+    const state = e.detail;
+    expectTypeOf(state.status).toEqualTypeOf<'uploading'>();
+  });
 });
 
-instance.addEventListener('common-upload-success', (e) => {
-  const state = e.detail;
-  expectType<'success'>(state.status);
+test("'common-upload-failed' event payload", () => {
+  instance.addEventListener('common-upload-failed', (e) => {
+    const state = e.detail;
+    expectTypeOf(state.status).toEqualTypeOf<'failed'>();
+  });
 });
 
-instance.addEventListener('modal-close', (e) => {
-  const payload = e.detail;
-  expectType<{
-    modalId: ModalId;
-    hasActiveModals: boolean;
-  }>(payload);
+test("'common-upload-progress' event payload", () => {
+  instance.addEventListener('common-upload-progress', (e) => {
+    const state = e.detail;
+    expectTypeOf(state.status).toEqualTypeOf<'uploading'>();
+  });
 });
 
-instance.addEventListener('modal-open', (e) => {
-  const payload = e.detail;
-  expectType<{
-    modalId: ModalId;
-  }>(payload);
+test("'common-upload-success' event payload", () => {
+  instance.addEventListener('common-upload-success', (e) => {
+    const state = e.detail;
+    expectTypeOf(state.status).toEqualTypeOf<'success'>();
+  });
 });
 
-instance.addEventListener('activity-change', (e) => {
-  const payload = e.detail;
-  expectType<ActivityType>(payload.activity);
+test("'modal-close' event payload", () => {
+  instance.addEventListener('modal-close', (e) => {
+    const payload = e.detail;
+    expectTypeOf(payload).toEqualTypeOf<{
+      modalId: ModalId;
+      hasActiveModals: boolean;
+    }>();
+  });
 });
 
-() => {
-  const ref = useRef<UploadCtxProvider>(null);
-  return <uc-upload-ctx-provider ctx-name="ctx" ref={ref}></uc-upload-ctx-provider>;
-};
+test("'modal-open' event payload", () => {
+  instance.addEventListener('modal-open', (e) => {
+    const payload = e.detail;
+    expectTypeOf(payload).toEqualTypeOf<{
+      modalId: ModalId;
+    }>();
+  });
+});
+
+test("'activity-change' event payload", () => {
+  instance.addEventListener('activity-change', (e) => {
+    const payload = e.detail;
+    expectTypeOf(payload.activity).toEqualTypeOf<ActivityType>();
+  });
+});
+
+test('<uc-upload-ctx-provider> ref is typed as UploadCtxProvider', () => {
+  () => {
+    const ref = useRef<UploadCtxProvider>(null);
+    return <uc-upload-ctx-provider ctx-name="ctx" ref={ref}></uc-upload-ctx-provider>;
+  };
+});
