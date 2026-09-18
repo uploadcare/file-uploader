@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { initialConfig } from '../../../blocks/Config/initialConfig';
 import type { SharedInstancesBag } from '../../../lit/shared-instances';
@@ -48,6 +48,12 @@ const tokenExpiringIn = (seconds: number) => {
 describe('AuthTokenManager', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+  });
+
+  afterEach(() => {
+    // Nothing resets timer state after the last test in a file, so a worker
+    // reused for another spec would inherit fake timers.
+    vi.useRealTimers();
   });
 
   it('returns undefined when authToken is not configured', () => {

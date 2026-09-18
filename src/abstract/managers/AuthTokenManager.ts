@@ -6,8 +6,10 @@ import type { AuthToken } from '../../types/index';
  * Owns the one long-lived token cache for this uploader context.
  *
  * `authToken` may be a resolver, and `@uploadcare/upload-client` calls it
- * before every single request — so without a cache a multipart upload would hit
- * the app's token endpoint once per chunk.
+ * before every authenticated request — so without a cache each upload, each
+ * readiness poll and each multipart start/complete would hit the app's token
+ * endpoint again. (Multipart chunks go to presigned storage URLs and carry no
+ * token, so they are not part of that count.)
  */
 export class AuthTokenManager extends SharedInstance {
   private _cache: AuthTokenCache | null = null;
