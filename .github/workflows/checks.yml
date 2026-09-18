@@ -68,6 +68,16 @@ jobs:
       # `test:coverage` runs both vitest projects in one pass, so coverage is
       # merged across specs and e2e instead of each run overwriting the other.
       - name: Run tests
+        env:
+          # e2e talks to the fake Uploadcare in tests/utils/fake-uploadcare by
+          # default, so a normal PR needs neither API access nor luck with timing.
+          # Release branches run against the real service instead — a fake cannot
+          # tell you the upload API changed under you — and any PR can opt in by
+          # carrying the `e2e-live` label.
+          E2E_NET: >-
+            ${{ (startsWith(github.head_ref, 'releases/v')
+              || contains(github.event.pull_request.labels.*.name, 'e2e-live'))
+              && 'live' || 'fake' }}
         run: npm run test:coverage && npm run test:locales
       - name: Archive artifacts
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
