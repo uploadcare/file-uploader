@@ -371,6 +371,17 @@ export type ConfigType = {
 export type PropertyOnlyConfigType = Pick<ConfigType, PropertyOnlyConfigKey>;
 /** Options settable via an attribute (as well as as a property). */
 export type AttributeConfigType = Omit<ConfigType, PropertyOnlyConfigKey>;
+
+/**
+ * @deprecated Renamed to {@link PropertyOnlyConfigType}. Kept as an alias so
+ *   existing imports keep compiling.
+ */
+export type ConfigComplexType = PropertyOnlyConfigType;
+/**
+ * @deprecated Renamed to {@link AttributeConfigType}. Kept as an alias so
+ *   existing imports keep compiling.
+ */
+export type ConfigPlainType = AttributeConfigType;
 /**
  * A DOM attribute can only ever carry a primitive, so an option whose value type
  * also admits an object or a function (`authToken` accepts a token *or* a

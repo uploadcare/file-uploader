@@ -75,6 +75,18 @@ const isReflectedKey = (key: string): boolean => behaviorOf(key).reflect !== fal
 const attributeConfigKeys = allConfigKeys.filter((key) => !isPropertyOnlyKey(key)) as AttributeConfigKey[];
 
 /**
+ * Config keys that can't be passed as attribute (because they are object or function)
+ *
+ * @deprecated Renamed to {@link PropertyOnlyConfigKey}, since the old name
+ *   described one axis when the descriptor has two: whether a key can be read
+ *   from an attribute, and whether it is written back to one. Derived from
+ *   {@link configAttributeBehavior} so it cannot drift from the new name.
+ */
+export const complexConfigKeys: readonly PropertyOnlyConfigKey[] = allConfigKeys.filter((key) =>
+  isPropertyOnlyKey(key),
+) as PropertyOnlyConfigKey[];
+
+/**
  * Mapping of attribute names to config keys Kebab-case and lowercase are supported. lowercase could be used by
  * frameworks like vue and react.
  */

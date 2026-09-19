@@ -1,11 +1,15 @@
 import { expectTypeOf, test } from 'vitest';
 import type {
+  AttributeConfigType,
   Config,
   ConfigAttributesType,
+  ConfigComplexType,
+  ConfigPlainType,
   FileValidatorDescriptor,
   FuncCollectionValidator,
   FuncFileValidator,
   OutputFileEntry,
+  PropertyOnlyConfigType,
 } from '../../dist/index';
 import '../jsx';
 import React, { createRef, useRef } from 'react';
@@ -178,6 +182,13 @@ test('authToken takes a token or a resolver as a DOM property', () => {
       config.authToken = async () => 'eyJ.token.sig';
     }
   };
+});
+
+test('the deprecated config type names still resolve', () => {
+  // Renamed to AttributeConfigType / PropertyOnlyConfigType; these aliases stay
+  // so existing imports keep compiling.
+  expectTypeOf<ConfigPlainType>().toEqualTypeOf<AttributeConfigType>();
+  expectTypeOf<ConfigComplexType>().toEqualTypeOf<PropertyOnlyConfigType>();
 });
 
 test('the auth-token attribute carries only the plain token', () => {
