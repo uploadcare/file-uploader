@@ -13,6 +13,7 @@ import type { FilesViewMode } from '../blocks/UploadList/UploadList';
 
 export {
   type AuthToken,
+  AuthTokenResolverError,
   type Metadata,
   NetworkError,
   type Tags,
@@ -24,6 +25,7 @@ export {
 
 import type {
   AuthToken,
+  AuthTokenResolverError,
   Metadata,
   NetworkError,
   Tags,
@@ -412,6 +414,7 @@ export type OutputFileErrorType =
   | 'FORBIDDEN_FILE_TYPE'
   | 'FILE_SIZE_EXCEEDED'
   | 'UPLOAD_ERROR'
+  | 'AUTH_TOKEN_ERROR'
   | 'NETWORK_ERROR'
   | 'UNKNOWN_ERROR';
 
@@ -443,6 +446,9 @@ export type OutputErrorTypePayload = {
   };
   UPLOAD_ERROR: OutputFileErrorPayload & {
     error: UploadError;
+  };
+  AUTH_TOKEN_ERROR: OutputFileErrorPayload & {
+    error: AuthTokenResolverError;
   };
   NETWORK_ERROR: OutputFileErrorPayload & {
     error: NetworkError;
