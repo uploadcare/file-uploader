@@ -8,10 +8,11 @@ import type {
   FuncFileValidator,
 } from '../abstract/managers/ValidationManager';
 import type { CameraMode } from '../blocks/CameraSource/CameraSource';
-import type { complexConfigKeys } from '../blocks/Config/Config';
+import type { PropertyOnlyConfigKey } from '../blocks/Config/Config';
 import type { FilesViewMode } from '../blocks/UploadList/UploadList';
 
 export {
+  type AuthToken,
   type Metadata,
   NetworkError,
   type Tags,
@@ -22,6 +23,7 @@ export {
 } from '@uploadcare/upload-client';
 
 import type {
+  AuthToken,
   Metadata,
   NetworkError,
   Tags,
@@ -251,7 +253,7 @@ export type ConfigType = {
    */
   plugins: UploaderPlugin[];
 
-  // Complex types
+  // Options with no attribute representation: property only
   /**
    * Metadata for the file.
    */
@@ -268,6 +270,12 @@ export type ConfigType = {
    * Resolver for secure uploads signature.
    */
   secureUploadsSignatureResolver: SecureUploadsSignatureResolver | null;
+  /**
+   * JWT for the Upload API `Authorization: Bearer <token>` scheme. Accepts a plain token or a resolver function; the
+   * resolver is called before every request, so long-running uploads can supply a fresh token mid-flight. Takes
+   * precedence over `secureSignature`/`secureExpire` and `secureUploadsSignatureResolver`.
+   */
+  authToken: AuthToken | null;
   /**
    * Resolver for secure delivery proxy URL.
    */
@@ -359,9 +367,31 @@ export type ConfigType = {
   dynamicButtonViewMode: DynamicButtonMode;
   dynamicButtonShowFirstIcon: boolean;
 };
-export type ConfigComplexType = Pick<ConfigType, (typeof complexConfigKeys)[number]>;
-export type ConfigPlainType = Omit<ConfigType, keyof ConfigComplexType>;
-export type ConfigAttributesType = KebabCaseKeys<ConfigPlainType> & LowerCaseKeys<ConfigPlainType>;
+/** Options with no attribute representation: settable only as a DOM property. */
+export type PropertyOnlyConfigType = Pick<ConfigType, PropertyOnlyConfigKey>;
+/** Options settable via an attribute (as well as as a property). */
+export type AttributeConfigType = Omit<ConfigType, PropertyOnlyConfigKey>;
+
+/**
+ * @deprecated Renamed to {@link PropertyOnlyConfigType}. Kept as an alias so
+ *   existing imports keep compiling.
+ */
+export type ConfigComplexType = PropertyOnlyConfigType;
+/**
+ * @deprecated Renamed to {@link AttributeConfigType}. Kept as an alias so
+ *   existing imports keep compiling.
+ */
+export type ConfigPlainType = AttributeConfigType;
+/**
+ * A DOM attribute can only ever carry a primitive, so an option whose value type
+ * also admits an object or a function (`authToken` accepts a token *or* a
+ * resolver) exposes only the primitive half here. Without this, JSX would
+ * type-accept a function and silently stringify it into the DOM. For options
+ * that are already primitive this is the identity.
+ */
+type AttributeValue<T> = Extract<T, string | number | boolean | null | undefined>;
+type ConfigAttributeValues = { [K in keyof AttributeConfigType]: AttributeValue<AttributeConfigType[K]> };
+export type ConfigAttributesType = KebabCaseKeys<ConfigAttributeValues> & LowerCaseKeys<ConfigAttributeValues>;
 
 export type KebabCase<S extends string> = S extends `${infer C}${infer T}`
   ? T extends Uncapitalize<T>

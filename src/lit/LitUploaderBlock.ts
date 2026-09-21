@@ -2,6 +2,7 @@
 
 import { type FileFromOptions, uploadFileGroup } from '@uploadcare/upload-client';
 import { uploaderBlockCtx } from '../abstract/CTX';
+import { AuthTokenManager } from '../abstract/managers/AuthTokenManager';
 import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import { ValidationManager } from '../abstract/managers/ValidationManager';
 import type { TypedCollectionObserverHandler } from '../abstract/TypedCollection';
@@ -66,6 +67,10 @@ export class LitUploaderBlock extends LitActivityBlock {
       (sharedInstancesBag) => new SecureUploadsManager(sharedInstancesBag),
     );
     this._addSharedContextInstance(
+      '*authTokenManager',
+      (sharedInstancesBag) => new AuthTokenManager(sharedInstancesBag),
+    );
+    this._addSharedContextInstance(
       '*validationManager',
       (sharedInstancesBag) => new ValidationManager(sharedInstancesBag),
     );
@@ -94,6 +99,10 @@ export class LitUploaderBlock extends LitActivityBlock {
 
   public get secureUploadsManager(): SecureUploadsManager {
     return this._getSharedContextInstance('*secureUploadsManager');
+  }
+
+  public get authTokenManager(): AuthTokenManager {
+    return this._getSharedContextInstance('*authTokenManager');
   }
 
   public override disconnectedCallback(): void {
@@ -423,7 +432,8 @@ export class LitUploaderBlock extends LitActivityBlock {
   }
 
   protected async getUploadClientOptions(): Promise<FileFromOptions> {
-    const secureToken = await this.secureUploadsManager.getSecureToken().catch(() => null);
+    const authToken = this.authTokenManager.getAuthToken();
+    const secureToken = authToken ? null : await this.secureUploadsManager.getSecureToken().catch(() => null);
 
     const options = {
       store: this.cfg.store,
@@ -432,6 +442,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       baseURL: this.cfg.baseUrl,
       userAgent: customUserAgent,
       integration: this.cfg.userAgentIntegration,
+      authToken,
       secureSignature: secureToken?.secureSignature,
       secureExpire: secureToken?.secureExpire,
       retryThrottledRequestMaxTimes: this.cfg.retryThrottledRequestMaxTimes,

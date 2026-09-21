@@ -198,6 +198,36 @@ describe('config values set after render', () => {
   });
 });
 
+describe('authToken', () => {
+  it('reads a plain token from the auth-token attribute', async () => {
+    const { config } = await mount({ attrs: { 'auth-token': 'eyJ.token.sig' } });
+    expect(config.authToken).toBe('eyJ.token.sig');
+  });
+
+  it('takes a resolver as a DOM property', async () => {
+    const { config } = await mount({});
+    const resolver = async () => 'resolved.token.sig';
+    config.authToken = resolver;
+    await expect.poll(() => config.authToken).toBe(resolver);
+  });
+
+  it('never writes a resolver back to the attribute', async () => {
+    // Stringifying a function would put source code in the DOM.
+    const { config } = await mount({});
+    config.authToken = async () => 'resolved.token.sig';
+    await delay(50);
+    expect(config.getAttribute('auth-token')).toBe(null);
+  });
+
+  it('does not mirror a token into the DOM', async () => {
+    // A bearer credential is not something we put in the markup unasked.
+    const { config } = await mount({});
+    config.authToken = 'eyJ.secret.sig';
+    await delay(50);
+    expect(config.getAttribute('auth-token')).toBe(null);
+  });
+});
+
 describe('documented attribute conventions', () => {
   const renderConfig = async (attrs: Record<string, string>) => (await mount({ attrs })).config;
 
