@@ -1,3 +1,6 @@
+import type { FileFromOptions } from '@uploadcare/upload-client';
+import type { ConfigType } from '../types/exported';
+
 /**
  * Config and upload-client option keys whose value is a credential.
  *
@@ -6,9 +9,11 @@
  * either one is enough to upload to the project on its own.
  *
  * The names are shared between `ConfigType` and upload-client's options, which
- * is what lets one list cover both.
+ * is what lets one list cover both — pinned by `satisfies`, so a rename on
+ * either side fails to compile rather than silently unredacting a credential.
  */
-export const SECRET_KEYS = ['authToken', 'secureSignature'] as const;
+export const SECRET_KEYS = ['authToken', 'secureSignature'] as const satisfies readonly (keyof ConfigType &
+  keyof FileFromOptions)[];
 
 export const REDACTED = '<redacted>';
 
