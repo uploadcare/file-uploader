@@ -194,6 +194,19 @@ describe('options handed to upload-client', () => {
     expect(options.authToken).toBe('eyJ.token.sig');
   });
 
+  it('picks up an authToken attribute set after the element is connected', async () => {
+    // The attribute form is the SSR shape, and it was silently ignored while
+    // `authToken` sat in `complexConfigKeys`.
+    uploadFile.mockClear();
+    const { ctxName, api } = await renderSolution('regular', {});
+    inCtx<Config>('uc-config', ctxName).setAttribute('auth-token', 'eyJ.token.sig');
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
+
+    await vi.waitFor(() => expect(uploadFile).toHaveBeenCalled());
+    expect((uploadFile.mock.calls[0][1] as FileFromOptions).authToken).toBe('eyJ.token.sig');
+  });
+
   it('passes a cached resolver for an authToken function, not the raw config value', async () => {
     // upload-client calls the resolver before every request, so handing it the
     // raw config function would re-fetch a token per request.
