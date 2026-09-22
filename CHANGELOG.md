@@ -8,7 +8,7 @@
 
 ### Features
 
-* JWT auth token for the Upload API ([#1083](https://github.com/uploadcare/file-uploader/issues/1083)) ([7213195](https://github.com/uploadcare/file-uploader/commit/721319549f4072652963de177322c408580f565d))
+* JWT auth token for the Upload API ([#1083](https://github.com/uploadcare/file-uploader/issues/1083)) ([7213195](https://github.com/uploadcare/file-uploader/commit/721319549f4072652963de177322c408580f565d)). Set [`authToken`](https://uploadcare.com/docs/file-uploader/options/#auth-token) to a token or to a function returning one, and the uploader sends it with every upload, caching it and replacing it before it expires. See [Upload control with auth tokens](https://uploadcare.com/docs/security/secure-uploads-auth-token/).
 ## [1.33.2](https://github.com/uploadcare/file-uploader/compare/v1.33.1...v1.33.2) (2026-08-26)
 
 
