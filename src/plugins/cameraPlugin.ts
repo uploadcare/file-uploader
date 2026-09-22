@@ -42,7 +42,7 @@ export const cameraPlugin: UploaderPlugin = {
     pluginApi.registry.registerSource({
       id: 'mobile-video-camera',
       label: 'src-type-mobile-video-camera',
-      icon: 'camera',
+      icon: 'video-camera',
       onSelect: () => {
         uploaderApi.openSystemDialog({ captureCamera: true, modeCamera: 'video' });
       },
