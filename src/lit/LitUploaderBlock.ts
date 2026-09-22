@@ -151,31 +151,54 @@ export class LitUploaderBlock extends LitActivityBlock {
     this._unobserveCollection = undefined;
   }
 
+  /** Bumped whenever the collection changes; see `_flushOutputItems`. */
+  private _groupGeneration = 0;
+
+  /**
+   * Creates the group for `collectionState` and reports the outcome, whichever
+   * it is. Never rejects: the caller does not wait for the group, so a
+   * rejection would have nowhere to go.
+   *
+   * A request cannot be cancelled once the API has it, so both outcomes are
+   * dropped when the collection has moved on — a group of files that are no
+   * longer the collection is neither its group nor its error. That is what the
+   * generation tracks; `*collectionState` cannot, since it is republished on a
+   * flush rather than on every change, and is still the same object at the
+   * moment a mid-flight response lands.
+   */
   private async _createGroup(collectionState: OutputCollectionState): Promise<void> {
-    const uploadClientOptions = await this.getUploadClientOptions();
-    const uuidList = collectionState.allEntries.map((entry) => {
-      return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
-    });
-    const abortController = new AbortController();
-    const resp = await uploadFileGroup(uuidList, {
-      ...uploadClientOptions,
-      signal: abortController.signal,
-    });
-    if (this.$['*collectionState'] !== collectionState) {
-      abortController.abort();
-      return;
+    const generation = this._groupGeneration;
+    const isCurrent = () => generation === this._groupGeneration;
+
+    try {
+      const uploadClientOptions = await this.getUploadClientOptions();
+      const uuidList = collectionState.allEntries.map((entry) => {
+        return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
+      });
+      const resp = await uploadFileGroup(uuidList, uploadClientOptions);
+      if (!isCurrent()) {
+        return;
+      }
+
+      this.$['*groupInfo'] = resp;
+      this.$['*groupError'] = null;
+      const collectionStateWithGroup = this.api.getOutputCollectionState() as OutputCollectionState<
+        'success',
+        'has-group'
+      >;
+      this.emit(EventType.GROUP_CREATED, collectionStateWithGroup);
+      this.emit(EventType.CHANGE, () => this.api.getOutputCollectionState(), {
+        debounce: true,
+      });
+      this.$['*collectionState'] = collectionStateWithGroup;
+    } catch (cause) {
+      if (!isCurrent()) {
+        return;
+      }
+
+      this.$['*groupError'] = cause instanceof Error ? cause : new Error('Failed to create a group', { cause });
+      this.validationManager.runCollectionValidators();
     }
-    this.$['*groupInfo'] = resp;
-    this.$['*groupError'] = null;
-    const collectionStateWithGroup = this.api.getOutputCollectionState() as OutputCollectionState<
-      'success',
-      'has-group'
-    >;
-    this.emit(EventType.GROUP_CREATED, collectionStateWithGroup);
-    this.emit(EventType.CHANGE, () => this.api.getOutputCollectionState(), {
-      debounce: true,
-    });
-    this.$['*collectionState'] = collectionStateWithGroup;
   }
 
   private _flushOutputItems = debounce(async () => {
@@ -190,20 +213,18 @@ export class LitUploaderBlock extends LitActivityBlock {
     });
 
     if (this.cfg.groupOutput && collectionState.totalCount > 0 && collectionState.status === 'success') {
-      // Deliberately not awaited — the collection should not wait on the group
-      // — but the rejection has to go somewhere, or a failure here (an auth
-      // token function that throws, a network error) is an unhandled rejection
-      // and the output quietly has no group.
-      this._createGroup(collectionState).catch((cause: unknown) => {
-        this.$['*groupError'] = cause instanceof Error ? cause : new Error('Failed to create a group', { cause });
-        this.validationManager.runCollectionValidators();
-      });
+      // Deliberately not awaited: the collection does not wait for its group.
+      // `_createGroup` reports both outcomes itself and never rejects.
+      void this._createGroup(collectionState);
     }
   }, 300);
 
   private _handleCollectionUpdate: TypedCollectionObserverHandler<UploadEntryData> = (entries, added, removed) => {
     if (!this.isConnected) return;
     if (added.size || removed.size) {
+      // Any group request in flight is now about a collection that no longer
+      // exists, so its result, good or bad, is dropped on arrival.
+      this._groupGeneration += 1;
       this.$['*groupInfo'] = null;
       // The collection changed, so the previous failure is about a group that
       // is no longer the one being made.

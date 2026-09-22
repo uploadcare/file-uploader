@@ -1,5 +1,6 @@
 import { AuthTokenResolverError, NetworkError, UploadError } from '@uploadcare/upload-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
@@ -111,5 +112,64 @@ describe('a failed group creation', () => {
     expect(reported.type === 'GROUP_ERROR' ? reported.payload?.error : undefined).toBe(error);
     expect(reported.message).toBe(error.message);
     expect(api.getOutputCollectionState().group).toBeNull();
+  });
+
+  it('ignores a group that arrives for a collection that has since changed', async () => {
+    // The success path used to compare `*collectionState`, which is republished
+    // on a flush rather than on every change — so a group made from the old
+    // file set was published as the collection's group, missing the new file.
+    uploadFile.mockResolvedValue(UPLOADED);
+    let resolveGroup: (group: unknown) => void = () => {};
+    uploadFileGroup.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveGroup = resolve;
+        }),
+    );
+
+    const { api } = await renderSolution('regular', { multiple: true, groupOutput: true });
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
+    await expect.poll(() => uploadFileGroup.mock.calls.length).toBeGreaterThan(0);
+
+    api.addFileFromObject(IMAGE.PIXEL);
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(2);
+    await delay(100);
+
+    resolveGroup({ uuid: 'group-uuid~1', cdnUrl: 'https://ucarecdn.com/group-uuid~1/' });
+    await delay(100);
+
+    expect(api.getOutputCollectionState().group).toBeNull();
+  });
+
+  it('ignores a group failure for a collection that has since changed', async () => {
+    // The request cannot be cancelled, so a late rejection would otherwise
+    // report against files it was never about.
+    uploadFile.mockResolvedValue(UPLOADED);
+    let rejectGroup: (reason: unknown) => void = () => {};
+    uploadFileGroup.mockImplementation(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectGroup = reject;
+        }),
+    );
+
+    const { api } = await renderSolution('regular', { multiple: true, groupOutput: true });
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
+    await expect.poll(() => uploadFileGroup.mock.calls.length).toBeGreaterThan(0);
+
+    // A second file: a different collection, and a different group to make.
+    // The collection observer runs a turn after the entry appears in the
+    // output state, and the race is specifically a rejection arriving after
+    // that observer, so this waits for the observer rather than the entry.
+    api.addFileFromObject(IMAGE.PIXEL);
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(2);
+    await delay(100);
+
+    rejectGroup(new Error('too late'));
+
+    await expect.poll(() => api.getOutputCollectionState().errors).toBeDefined();
+    expect(api.getOutputCollectionState().errors.some((error) => error.type === 'GROUP_ERROR')).toBe(false);
   });
 });
