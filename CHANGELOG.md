@@ -1,3 +1,14 @@
+# [1.34.0](https://github.com/uploadcare/file-uploader/compare/v1.33.2...v1.34.0) (2026-09-22)
+
+
+### Bug Fixes
+
+* use video-camera icon for camera plugin video mode ([#1084](https://github.com/uploadcare/file-uploader/issues/1084)) ([9c4d24a](https://github.com/uploadcare/file-uploader/commit/9c4d24a8209da3651598bb4c95d41f03201e8af0))
+
+
+### Features
+
+* JWT auth token for the Upload API ([#1083](https://github.com/uploadcare/file-uploader/issues/1083)) ([7213195](https://github.com/uploadcare/file-uploader/commit/721319549f4072652963de177322c408580f565d))
 ## [1.33.2](https://github.com/uploadcare/file-uploader/compare/v1.33.1...v1.33.2) (2026-08-26)
 
 
