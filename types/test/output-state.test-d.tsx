@@ -14,6 +14,7 @@ import type {
 
 declare const entry: OutputFileEntry;
 declare const fileError: OutputError<OutputFileErrorType>;
+declare const collectionError: OutputError<OutputCollectionErrorType>;
 declare const state: OutputCollectionState;
 
 test('a success entry has its upload result and no errors', () => {
@@ -43,6 +44,13 @@ test('narrowing a file error on `type` pins what its payload carries', () => {
   if (fileError.type === 'AUTH_TOKEN_ERROR') {
     // The class, so `instanceof` and `cause` are reachable without a cast.
     expectTypeOf(fileError.payload?.error).toEqualTypeOf<AuthTokenResolverError | undefined>();
+  }
+});
+
+test('narrowing a collection error on `type` pins what its payload carries', () => {
+  if (collectionError.type === 'GROUP_ERROR') {
+    // Whatever failed the group request, reachable without a cast.
+    expectTypeOf(collectionError.payload?.error).toEqualTypeOf<Error | undefined>();
   }
 });
 
