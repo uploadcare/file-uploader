@@ -254,6 +254,19 @@ export class LitUploaderBlock extends LitActivityBlock {
         this.validationManager.runFileValidators('change', entriesToRunValidation);
       });
 
+    // Before progress, because both can land in the same batch of changes: an upload that starts and reports its
+    // first tick between two flushes would otherwise announce progress on a file it had not said was uploading yet.
+    // Against the real API the two are far enough apart that the order came out right by accident.
+    if (changeMap.isUploading) {
+      for (const entryId of changeMap.isUploading) {
+        const ctx = PubSub.getCtx<UploadEntryData>(entryId);
+        if (!ctx) continue;
+        const { isUploading, silent } = ctx.store;
+        if (isUploading && !silent) {
+          this.emit(EventType.FILE_UPLOAD_START, this.api.getOutputItem(entryId));
+        }
+      }
+    }
     if (changeMap.uploadProgress) {
       for (const entryId of changeMap.uploadProgress) {
         const ctx = PubSub.getCtx<UploadEntryData>(entryId);
@@ -265,16 +278,6 @@ export class LitUploaderBlock extends LitActivityBlock {
       }
 
       this._flushCommonUploadProgress();
-    }
-    if (changeMap.isUploading) {
-      for (const entryId of changeMap.isUploading) {
-        const ctx = PubSub.getCtx<UploadEntryData>(entryId);
-        if (!ctx) continue;
-        const { isUploading, silent } = ctx.store;
-        if (isUploading && !silent) {
-          this.emit(EventType.FILE_UPLOAD_START, this.api.getOutputItem(entryId));
-        }
-      }
     }
     if (changeMap.fileInfo) {
       for (const entryId of changeMap.fileInfo) {

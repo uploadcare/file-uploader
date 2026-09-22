@@ -1,5 +1,6 @@
 import path from 'node:path';
 import type { BrowserCommand } from 'vitest/node';
+import { useFakeNetwork } from './network';
 
 export const waitFileChooserAndUpload: BrowserCommand<[string[]]> = async ({ page, testPath }, relativePaths) => {
   if (!testPath) {
@@ -13,10 +14,12 @@ export const waitFileChooserAndUpload: BrowserCommand<[string[]]> = async ({ pag
 
 export const commands = {
   waitFileChooserAndUpload,
+  useFakeNetwork,
 };
 
 declare module 'vitest/browser' {
   interface BrowserCommands {
     waitFileChooserAndUpload: (relativePaths: string[]) => Promise<void>;
+    useFakeNetwork: () => Promise<void>;
   }
 }

@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig } from 'vitest/config';
 import { commands } from './tests/utils/commands';
+import { isLive } from './tests/utils/network';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -28,16 +29,16 @@ export default defineConfig({
       // A ratchet, not a target: raise these as coverage lands, never lower them
       // to make a run pass.
       //
-      // They sit ~1pp under what the suite actually reaches, because the e2e
-      // project uploads to the real API and which code paths run depends on
-      // network timing — full runs at this level have measured between
-      // 87.76/76.31/91.82/87.96 and 88.18/77.00/92.28/88.38. Set a new floor
-      // from the *lowest* of several runs, never from a single one.
+      // Repeated full runs against the fake now measure 88.03/76.36/92.33/88.20
+      // exactly, because which code paths run no longer depends on how quickly
+      // the upload API happens to answer. The floor keeps ~1pp under that, for
+      // the live runs on release branches and for whatever a different machine
+      // does with the camera and video paths.
       thresholds: {
-        statements: 86,
-        branches: 74,
-        functions: 90,
-        lines: 86,
+        statements: 87,
+        branches: 75,
+        functions: 91,
+        lines: 87,
       },
     },
     projects: [
@@ -70,9 +71,10 @@ export default defineConfig({
           name: 'e2e',
           setupFiles: ['./tests/setup.e2e.ts'],
           include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
-          // Every e2e test uploads to the real API, so a lost network race is not
-          // a regression. A genuine break still fails both attempts.
-          retry: 1,
+          // Nothing to retry when the network is the fake in `tests/utils/fake-uploadcare`:
+          // it answers the same way every time, so a second attempt would only hide a
+          // real flake. A live run still races the real API, and still gets one.
+          retry: isLive ? 1 : 0,
           expect: {
             poll: {
               timeout: 20_000,
