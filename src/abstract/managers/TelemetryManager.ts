@@ -48,13 +48,18 @@ export class TelemetryManager extends SharedInstance {
           if (!this._isEnabled) {
             return;
           }
-          if (this._initialized && this._config[key] !== value) {
+          const isChange = this._initialized && this._config[key] !== value;
+          // Recorded before the event is sent, so a change-config payload
+          // carries the value it is announcing. The payload used to be the
+          // manager's own config object, which filled in afterwards and made
+          // the ordering invisible; it is a snapshot now.
+          this._setConfig(key, value);
+
+          if (isChange) {
             this.sendEvent({
               eventType: InternalEventType.CHANGE_CONFIG,
             });
           }
-
-          this._setConfig(key, value);
         }),
       );
     }
