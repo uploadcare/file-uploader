@@ -166,6 +166,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       return;
     }
     this.$['*groupInfo'] = resp;
+    this.$['*groupError'] = null;
     const collectionStateWithGroup = this.api.getOutputCollectionState() as OutputCollectionState<
       'success',
       'has-group'
@@ -189,7 +190,14 @@ export class LitUploaderBlock extends LitActivityBlock {
     });
 
     if (this.cfg.groupOutput && collectionState.totalCount > 0 && collectionState.status === 'success') {
-      this._createGroup(collectionState);
+      // Deliberately not awaited — the collection should not wait on the group
+      // — but the rejection has to go somewhere, or a failure here (an auth
+      // token function that throws, a network error) is an unhandled rejection
+      // and the output quietly has no group.
+      this._createGroup(collectionState).catch((cause: unknown) => {
+        this.$['*groupError'] = cause instanceof Error ? cause : new Error('Failed to create a group', { cause });
+        this.validationManager.runCollectionValidators();
+      });
     }
   }, 300);
 
@@ -197,6 +205,9 @@ export class LitUploaderBlock extends LitActivityBlock {
     if (!this.isConnected) return;
     if (added.size || removed.size) {
       this.$['*groupInfo'] = null;
+      // The collection changed, so the previous failure is about a group that
+      // is no longer the one being made.
+      this.$['*groupError'] = null;
     }
 
     this.validationManager.runFileValidators(

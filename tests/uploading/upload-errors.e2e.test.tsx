@@ -12,14 +12,28 @@ import '~/types/jsx';
  */
 
 const uploadFile = vi.hoisted(() => vi.fn());
+const uploadFileGroup = vi.hoisted(() => vi.fn());
 
 vi.mock('@uploadcare/upload-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@uploadcare/upload-client')>();
-  return { ...actual, uploadFile };
+  return { ...actual, uploadFile, uploadFileGroup };
 });
+
+/** Enough of an `UploadcareFile` for an entry to reach `success`. */
+const UPLOADED = {
+  uuid: '00000000-0000-4000-8000-000000000000',
+  originalFilename: 'pixel.jpg',
+  name: 'pixel.jpg',
+  size: 1,
+  isImage: true,
+  mimeType: 'image/jpeg',
+  isStored: true,
+  cdnUrl: 'https://ucarecdn.com/00000000-0000-4000-8000-000000000000/',
+} as unknown as Awaited<ReturnType<typeof import('@uploadcare/upload-client').uploadFile>>;
 
 beforeEach(() => {
   uploadFile.mockReset();
+  uploadFileGroup.mockReset();
 });
 
 /** Uploads one file that fails with `error`, and returns the entry's errors. */
@@ -72,5 +86,30 @@ describe('a failed upload', () => {
     const [reported] = await errorsFor(new Error('something nobody classified'));
 
     expect(reported.type).toBe('UNKNOWN_ERROR');
+  });
+});
+
+describe('a failed group creation', () => {
+  it('reports GROUP_ERROR rather than failing silently', async () => {
+    // `_createGroup` is deliberately not awaited, so before this the rejection
+    // was unhandled and the output simply had no group.
+    const error = new AuthTokenResolverError(new Error('token endpoint is down'));
+    uploadFile.mockResolvedValue(UPLOADED);
+    uploadFileGroup.mockRejectedValue(error);
+
+    const { api } = await renderSolution('regular', {
+      multiple: true,
+      groupOutput: true,
+    });
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
+
+    await expect.poll(() => api.getOutputCollectionState().errors.length).toBeGreaterThan(0);
+    const [reported] = api.getOutputCollectionState().errors;
+
+    expect(reported.type).toBe('GROUP_ERROR');
+    expect(reported.type === 'GROUP_ERROR' ? reported.payload?.error : undefined).toBe(error);
+    expect(reported.message).toBe(error.message);
+    expect(api.getOutputCollectionState().group).toBeNull();
   });
 });

@@ -54,6 +54,8 @@ type UploaderBlockCtxState = ActivityBlockCtxState & {
   '*collectionErrors': OutputErrorCollection[];
   '*collectionState': OutputCollectionState | null;
   '*groupInfo': UploadcareGroup | null;
+  /** The failure of the last group creation, if it failed. */
+  '*groupError': Error | null;
   '*uploadTrigger': Set<Uid>;
 };
 

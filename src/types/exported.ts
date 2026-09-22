@@ -421,6 +421,7 @@ export type OutputFileErrorType =
 export type OutputCollectionErrorType =
   | OutputCustomErrorType
   | 'SOME_FILES_HAS_ERRORS'
+  | 'GROUP_ERROR'
   | 'TOO_MANY_FILES'
   | 'TOO_FEW_FILES';
 
@@ -434,6 +435,9 @@ export type OutputErrorTypePayload = {
   FILE_SIZE_EXCEEDED: OutputFileErrorPayload;
 
   SOME_FILES_HAS_ERRORS: { [k: string]: never };
+  GROUP_ERROR: {
+    error: Error;
+  };
   TOO_MANY_FILES: {
     min: number;
     max: number;

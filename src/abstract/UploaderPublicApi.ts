@@ -46,6 +46,15 @@ export class UploaderPublicApi extends SharedInstance {
     return this._sharedInstancesBag.uploadCollection;
   }
 
+  /**
+   * The failure of the last group creation, for the validator that reports it.
+   * Underscored like `_uploadCollection`: internal, but a validator has no
+   * other way to reach the context.
+   */
+  public get _groupError(): Error | null {
+    return this._ctx.read('*groupError');
+  }
+
   public get cfg() {
     return this._cfg;
   }
