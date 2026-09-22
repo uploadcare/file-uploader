@@ -13,6 +13,7 @@ import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { debounce } from '../../utils/debounce';
 import { fileIsImage } from '../../utils/fileTypes';
+import { redactSecrets } from '../../utils/redactSecrets';
 import { throttle } from '../../utils/throttle';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
@@ -476,7 +477,7 @@ export class FileItem extends FileItemConfig {
           metadata: await this.getMetadataFor(entry.uid),
           tags: await this.getTagsFor(entry.uid),
         };
-        this.debugPrint('upload options', fileInput, uploadClientOptions);
+        this.debugPrint('upload options', fileInput, redactSecrets(uploadClientOptions));
         return uploadFile(fileInput, uploadClientOptions);
       };
 

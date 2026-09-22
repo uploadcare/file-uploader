@@ -7,6 +7,7 @@ import { toKebabCase } from '../../utils/toKebabCase';
 import { runAssertions } from './assertions';
 import './config.css';
 import { LitBlock } from '../../lit/LitBlock';
+import { isSecretKey, REDACTED } from '../../utils/redactSecrets';
 import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
 import { normalizeConfigValue } from './normalizeConfigValue';
@@ -220,7 +221,7 @@ export class Config extends LitBlock {
     this._flushValueToAttribute(key, normalizedValue);
     this._flushValueToState(key, normalizedValue);
 
-    this.debugPrint(`"${key}"`, normalizedValue);
+    this.debugPrint(`"${key}"`, isSecretKey(key) ? REDACTED : normalizedValue);
 
     // Only run assertions for built-in configs
     if (!this._isCustomConfig(key)) {

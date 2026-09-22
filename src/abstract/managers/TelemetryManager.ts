@@ -7,6 +7,7 @@ import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/Eve
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
 import type { ConfigType } from '../../types/index';
+import { redactSecrets } from '../../utils/redactSecrets';
 import { UID } from '../../utils/UID';
 import { sharedConfigKey } from '../sharedConfigKey';
 
@@ -81,7 +82,9 @@ export class TelemetryManager extends SharedInstance {
 
     const result: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config'>> = { ...body };
     if (body.eventType === InternalEventType.INIT_SOLUTION || body.eventType === InternalEventType.CHANGE_CONFIG) {
-      result.config = this._config as TelemetryState['config'];
+      // Redacted: the payload leaves the browser, and a configured
+      // `authToken` or `secureSignature` would leave with it.
+      result.config = redactSecrets(this._config) as TelemetryState['config'];
     }
 
     return {
