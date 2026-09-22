@@ -65,6 +65,10 @@ describe('documented config options', () => {
     // constraint — it fails only when the list moves, keeping the contract/internals split deliberate.
     const undocumented = Object.keys(initialConfig).filter((name) => !names.includes(name));
     expect(undocumented.sort()).toEqual([
+      // `authToken` is documented on the fern-docs side (file-uploader/options.mdx, "authToken"), but the fixture is
+      // transcribed from *published* docs only. Remove this entry once that page ships and the fixture is
+      // regenerated — see `_source` in public-surface.json.
+      'authToken',
       'cdnCnamePrefixed',
       'externalSourcesEmbedCss',
       'mediaRecorderOptions',

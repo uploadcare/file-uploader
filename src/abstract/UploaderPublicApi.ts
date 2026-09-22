@@ -12,6 +12,7 @@ import { PubSub } from '../lit/PubSubCompat';
 import { SharedInstance } from '../lit/shared-instances';
 import type { Uid } from '../lit/Uid';
 import type {
+  AuthToken,
   OutputCollectionState,
   OutputCollectionStatus,
   OutputFileEntry,
@@ -43,6 +44,15 @@ export class UploaderPublicApi extends SharedInstance {
 
   public get _uploadCollection() {
     return this._sharedInstancesBag.uploadCollection;
+  }
+
+  /**
+   * The failure of the last group creation, for the validator that reports it.
+   * Underscored like `_uploadCollection`: internal, but a validator has no
+   * other way to reach the context.
+   */
+  public get _groupError(): Error | null {
+    return this._ctx.read('*groupError');
   }
 
   public get cfg() {
@@ -427,6 +437,32 @@ export class UploaderPublicApi extends SharedInstance {
 
   public on = <T extends EventKey>(type: T, handler: (payload: EventPayload[T]) => void): (() => void) => {
     return this._sharedInstancesBag.eventEmitter.on(type, handler);
+  };
+
+  /**
+   * The auth token as `@uploadcare/upload-client` receives it: the configured
+   * string, or a resolver whose result the uploader already caches.
+   *
+   * Forward this rather than `cfg.authToken` when something else has to
+   * authenticate with the same token — a plugin, say — so it shares this cache
+   * instead of calling your token endpoint again.
+   */
+  public getAuthToken = (): AuthToken | undefined => {
+    return this._sharedInstancesBag.authTokenManager?.getAuthToken();
+  };
+
+  /**
+   * Drop the cached auth token, so the next request asks `authToken` for a new
+   * one.
+   *
+   * Assigning a different function to `authToken` does not do this: a new
+   * function identity is taken to be the same function, which is what lets a
+   * React component pass an inline resolver without refetching on every render.
+   * Call this when the change is real — the signed-in user changed, say — or
+   * rely on short-lived tokens.
+   */
+  public invalidateAuthToken = (): void => {
+    this._sharedInstancesBag.authTokenManager?.invalidate();
   };
 
   public getCurrentActivity = (): ActivityType => {

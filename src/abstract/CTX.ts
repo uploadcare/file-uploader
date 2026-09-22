@@ -28,6 +28,7 @@ export const uploaderBlockCtx = (fnCtx: LitBlock) => ({
   '*collectionErrors': [] as OutputErrorCollection[],
   '*collectionState': null as OutputCollectionState | null,
   '*groupInfo': null as UploadcareGroup | null,
+  '*groupError': null as Error | null,
   '*uploadTrigger': new Set<string>(),
 });
 

@@ -2,6 +2,7 @@
 
 import { type FileFromOptions, uploadFileGroup } from '@uploadcare/upload-client';
 import { uploaderBlockCtx } from '../abstract/CTX';
+import { AuthTokenManager } from '../abstract/managers/AuthTokenManager';
 import { SecureUploadsManager } from '../abstract/managers/SecureUploadsManager';
 import { ValidationManager } from '../abstract/managers/ValidationManager';
 import type { TypedCollectionObserverHandler } from '../abstract/TypedCollection';
@@ -66,6 +67,10 @@ export class LitUploaderBlock extends LitActivityBlock {
       (sharedInstancesBag) => new SecureUploadsManager(sharedInstancesBag),
     );
     this._addSharedContextInstance(
+      '*authTokenManager',
+      (sharedInstancesBag) => new AuthTokenManager(sharedInstancesBag),
+    );
+    this._addSharedContextInstance(
       '*validationManager',
       (sharedInstancesBag) => new ValidationManager(sharedInstancesBag),
     );
@@ -94,6 +99,10 @@ export class LitUploaderBlock extends LitActivityBlock {
 
   public get secureUploadsManager(): SecureUploadsManager {
     return this._getSharedContextInstance('*secureUploadsManager');
+  }
+
+  public get authTokenManager(): AuthTokenManager {
+    return this._getSharedContextInstance('*authTokenManager');
   }
 
   public override disconnectedCallback(): void {
@@ -142,30 +151,54 @@ export class LitUploaderBlock extends LitActivityBlock {
     this._unobserveCollection = undefined;
   }
 
+  /** Bumped whenever the collection changes; see `_flushOutputItems`. */
+  private _groupGeneration = 0;
+
+  /**
+   * Creates the group for `collectionState` and reports the outcome, whichever
+   * it is. Never rejects: the caller does not wait for the group, so a
+   * rejection would have nowhere to go.
+   *
+   * A request cannot be cancelled once the API has it, so both outcomes are
+   * dropped when the collection has moved on — a group of files that are no
+   * longer the collection is neither its group nor its error. That is what the
+   * generation tracks; `*collectionState` cannot, since it is republished on a
+   * flush rather than on every change, and is still the same object at the
+   * moment a mid-flight response lands.
+   */
   private async _createGroup(collectionState: OutputCollectionState): Promise<void> {
-    const uploadClientOptions = await this.getUploadClientOptions();
-    const uuidList = collectionState.allEntries.map((entry) => {
-      return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
-    });
-    const abortController = new AbortController();
-    const resp = await uploadFileGroup(uuidList, {
-      ...uploadClientOptions,
-      signal: abortController.signal,
-    });
-    if (this.$['*collectionState'] !== collectionState) {
-      abortController.abort();
-      return;
+    const generation = this._groupGeneration;
+    const isCurrent = () => generation === this._groupGeneration;
+
+    try {
+      const uploadClientOptions = await this.getUploadClientOptions();
+      const uuidList = collectionState.allEntries.map((entry) => {
+        return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
+      });
+      const resp = await uploadFileGroup(uuidList, uploadClientOptions);
+      if (!isCurrent()) {
+        return;
+      }
+
+      this.$['*groupInfo'] = resp;
+      this.$['*groupError'] = null;
+      const collectionStateWithGroup = this.api.getOutputCollectionState() as OutputCollectionState<
+        'success',
+        'has-group'
+      >;
+      this.emit(EventType.GROUP_CREATED, collectionStateWithGroup);
+      this.emit(EventType.CHANGE, () => this.api.getOutputCollectionState(), {
+        debounce: true,
+      });
+      this.$['*collectionState'] = collectionStateWithGroup;
+    } catch (cause) {
+      if (!isCurrent()) {
+        return;
+      }
+
+      this.$['*groupError'] = cause instanceof Error ? cause : new Error('Failed to create a group', { cause });
+      this.validationManager.runCollectionValidators();
     }
-    this.$['*groupInfo'] = resp;
-    const collectionStateWithGroup = this.api.getOutputCollectionState() as OutputCollectionState<
-      'success',
-      'has-group'
-    >;
-    this.emit(EventType.GROUP_CREATED, collectionStateWithGroup);
-    this.emit(EventType.CHANGE, () => this.api.getOutputCollectionState(), {
-      debounce: true,
-    });
-    this.$['*collectionState'] = collectionStateWithGroup;
   }
 
   private _flushOutputItems = debounce(async () => {
@@ -180,14 +213,22 @@ export class LitUploaderBlock extends LitActivityBlock {
     });
 
     if (this.cfg.groupOutput && collectionState.totalCount > 0 && collectionState.status === 'success') {
-      this._createGroup(collectionState);
+      // Deliberately not awaited: the collection does not wait for its group.
+      // `_createGroup` reports both outcomes itself and never rejects.
+      void this._createGroup(collectionState);
     }
   }, 300);
 
   private _handleCollectionUpdate: TypedCollectionObserverHandler<UploadEntryData> = (entries, added, removed) => {
     if (!this.isConnected) return;
     if (added.size || removed.size) {
+      // Any group request in flight is now about a collection that no longer
+      // exists, so its result, good or bad, is dropped on arrival.
+      this._groupGeneration += 1;
       this.$['*groupInfo'] = null;
+      // The collection changed, so the previous failure is about a group that
+      // is no longer the one being made.
+      this.$['*groupError'] = null;
     }
 
     this.validationManager.runFileValidators(
@@ -423,7 +464,8 @@ export class LitUploaderBlock extends LitActivityBlock {
   }
 
   protected async getUploadClientOptions(): Promise<FileFromOptions> {
-    const secureToken = await this.secureUploadsManager.getSecureToken().catch(() => null);
+    const authToken = this.authTokenManager.getAuthToken();
+    const secureToken = authToken ? null : await this.secureUploadsManager.getSecureToken().catch(() => null);
 
     const options = {
       store: this.cfg.store,
@@ -432,6 +474,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       baseURL: this.cfg.baseUrl,
       userAgent: customUserAgent,
       integration: this.cfg.userAgentIntegration,
+      authToken,
       secureSignature: secureToken?.secureSignature,
       secureExpire: secureToken?.secureExpire,
       retryThrottledRequestMaxTimes: this.cfg.retryThrottledRequestMaxTimes,

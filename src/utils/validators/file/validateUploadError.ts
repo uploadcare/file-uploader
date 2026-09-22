@@ -1,4 +1,4 @@
-import { NetworkError, UploadError } from '@uploadcare/upload-client';
+import { AuthTokenResolverError, NetworkError, UploadError } from '@uploadcare/upload-client';
 import type { FuncFileValidator } from '../../../abstract/managers/ValidationManager';
 import type { Uid } from '../../../lit/Uid';
 
@@ -13,6 +13,20 @@ export const validateUploadError: FuncFileValidator = (outputEntry, api) => {
   const cause: unknown = internalEntry?.getValue('uploadError');
   if (!cause) {
     return;
+  }
+
+  // Before the rest: this one never reached Upload API, so it says the
+  // integrator's own token endpoint failed rather than that we refused the
+  // upload.
+  if (cause instanceof AuthTokenResolverError) {
+    return {
+      type: 'AUTH_TOKEN_ERROR',
+      message: cause.message,
+      payload: {
+        entry: outputEntry,
+        error: cause,
+      },
+    };
   }
 
   if (cause instanceof UploadError) {
