@@ -1,3 +1,4 @@
+## [1.34.1](https://github.com/uploadcare/file-uploader/compare/v1.34.0...v1.34.1) (2026-09-23)
 # [1.34.0](https://github.com/uploadcare/file-uploader/compare/v1.33.2...v1.34.0) (2026-09-22)
 
 
