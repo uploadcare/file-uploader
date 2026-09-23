@@ -68,6 +68,14 @@ jobs:
       # `test:coverage` runs both vitest projects in one pass, so coverage is
       # merged across specs and e2e instead of each run overwriting the other.
       - name: Run tests
+        env:
+          # A project with Signed Uploads enabled, which rejects every unsigned
+          # request — so it cannot be the default test project. Without these
+          # the auth token tests in `tests/uploading/auth-token.e2e.test.tsx`
+          # skip, and nothing checks that a token the uploader sends is one
+          # Upload API accepts.
+          UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY }}
+          UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY }}
         run: npm run test:coverage && npm run test:locales
       - name: Archive artifacts
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
