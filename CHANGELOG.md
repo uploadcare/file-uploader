@@ -1,3 +1,9 @@
+## [1.34.1](https://github.com/uploadcare/file-uploader/compare/v1.34.0...v1.34.1) (2026-09-30)
+
+
+### Bug Fixes
+
+* **dropdown:** updated style based on --uc-radius ([#1092](https://github.com/uploadcare/file-uploader/issues/1092)) ([d5a84ea](https://github.com/uploadcare/file-uploader/commit/d5a84ead74ea2be730c90adbeade3904c6d2577d))
 # [1.34.0](https://github.com/uploadcare/file-uploader/compare/v1.33.2...v1.34.0) (2026-09-22)
 
 
