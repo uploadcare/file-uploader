@@ -56,8 +56,10 @@ describe('AuthTokenManager', () => {
     vi.useRealTimers();
   });
 
-  it('returns undefined when authToken is not configured', () => {
-    expect(createManager().manager.getAuthToken()).toBeUndefined();
+  it.each([null, undefined, ''])('returns undefined, so no token is sent, when authToken is %p', (value) => {
+    const { manager } = createManager({ authToken: value as unknown as null });
+
+    expect(manager.getAuthToken()).toBeUndefined();
   });
 
   it('passes a plain string straight through', () => {
