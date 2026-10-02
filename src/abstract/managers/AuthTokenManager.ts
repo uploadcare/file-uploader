@@ -27,7 +27,12 @@ export class AuthTokenManager extends SharedInstance {
     const { authToken } = this._cfg;
 
     if (typeof authToken !== 'function') {
-      return Promise.resolve(typeof authToken === 'string' ? authToken : '');
+      if (typeof authToken === 'string' && authToken) {
+        return Promise.resolve(authToken);
+      }
+      // Unset while something still holds this function: fail with the real
+      // reason rather than hand back an empty token.
+      return Promise.reject(new Error('`authToken` was unset while a request still needed it'));
     }
 
     if (this._cache) {
@@ -43,7 +48,11 @@ export class AuthTokenManager extends SharedInstance {
     return this._cache.getToken();
   };
 
-  /** The value to hand `@uploadcare/upload-client` as `authToken`. */
+  /**
+   * The value to hand `@uploadcare/upload-client` as `authToken`. Unset is
+   * `undefined` rather than the config's `null`, because upload-client types
+   * the option as `authToken?: AuthToken`.
+   */
   public getAuthToken(): AuthToken | undefined {
     const { authToken } = this._cfg;
 

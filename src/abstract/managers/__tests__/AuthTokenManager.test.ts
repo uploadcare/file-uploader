@@ -117,6 +117,15 @@ describe('AuthTokenManager', () => {
     await expect(stored()).resolves.toBe('eyJ.plain.sig');
   });
 
+  it('rejects, rather than return an empty token, once authToken is unset', async () => {
+    const { manager, cfg } = createManager({ authToken: vi.fn(async () => tokenExpiringIn(3600)) });
+    const stored = manager.getAuthToken() as () => Promise<string>;
+
+    cfg.authToken = null;
+
+    await expect(stored()).rejects.toThrow('`authToken` was unset while a request still needed it');
+  });
+
   it('refetches after invalidate()', async () => {
     const fetchToken = vi.fn(() => tokenExpiringIn(3600));
     const { manager } = createManager({ authToken: fetchToken });
