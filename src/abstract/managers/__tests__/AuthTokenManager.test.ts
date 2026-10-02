@@ -89,41 +89,40 @@ describe('AuthTokenManager', () => {
     expect(second).not.toHaveBeenCalled();
   });
 
-  it('returns one stable function that follows later config changes', async () => {
-    // Whoever we hand this to may keep it. If it captured the configured
-    // function, a stored copy would go on calling the old one forever.
+  it('keeps the function it was handed, while a new call follows the config', async () => {
+    // A request already under way keeps the token function it started with;
+    // whoever needs the current value asks again.
     const first = vi.fn(async () => tokenExpiringIn(3600));
     const { manager, cfg } = createManager({ authToken: first });
-
     const stored = manager.getAuthToken() as () => Promise<string>;
-    expect(manager.getAuthToken()).toBe(stored);
-    await stored();
 
     const second = vi.fn(async () => tokenExpiringIn(3600));
     cfg.authToken = second;
     manager.invalidate();
     await stored();
-
-    expect(second).toHaveBeenCalledTimes(1);
     expect(first).toHaveBeenCalledTimes(1);
+    expect(second).not.toHaveBeenCalled();
+
+    manager.invalidate();
+    await (manager.getAuthToken() as () => Promise<string>)();
+    expect(second).toHaveBeenCalledTimes(1);
   });
 
-  it('resolves to the token once authToken switches from a function to a string', async () => {
+  it('returns undefined once authToken is unset, so no request is signed', () => {
     const { manager, cfg } = createManager({ authToken: vi.fn(async () => tokenExpiringIn(3600)) });
-    const stored = manager.getAuthToken() as () => Promise<string>;
-
-    cfg.authToken = 'eyJ.plain.sig';
-
-    await expect(stored()).resolves.toBe('eyJ.plain.sig');
-  });
-
-  it('rejects, rather than return an empty token, once authToken is unset', async () => {
-    const { manager, cfg } = createManager({ authToken: vi.fn(async () => tokenExpiringIn(3600)) });
-    const stored = manager.getAuthToken() as () => Promise<string>;
+    expect(typeof manager.getAuthToken()).toBe('function');
 
     cfg.authToken = null;
 
-    await expect(stored()).rejects.toThrow('`authToken` was unset while a request still needed it');
+    expect(manager.getAuthToken()).toBeUndefined();
+  });
+
+  it('returns a plain token once authToken switches from a function to a string', () => {
+    const { manager, cfg } = createManager({ authToken: vi.fn(async () => tokenExpiringIn(3600)) });
+
+    cfg.authToken = 'eyJ.plain.sig';
+
+    expect(manager.getAuthToken()).toBe('eyJ.plain.sig');
   });
 
   it('refetches after invalidate()', async () => {

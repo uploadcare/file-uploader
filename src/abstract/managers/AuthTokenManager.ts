@@ -15,38 +15,22 @@ export class AuthTokenManager extends SharedInstance {
   private _cache: AuthTokenCache | null = null;
 
   /**
-   * One function, the same one for the life of this manager, that reads the
-   * configured resolver when it is called rather than capturing it.
+   * The token from `fetchToken`, through the one shared cache.
    *
-   * That stability is the point: whoever we hand this to can keep it, and it
-   * still follows later changes to `authToken`. Returning the cache's own
-   * `getToken` instead would mean re-reading it after every config change to
-   * stay current, which is a rule nothing enforces.
+   * A React component passes a new closure on every render. Swapping the
+   * function keeps the cached token; rebuilding the cache would throw it away
+   * and refetch on each render.
    */
-  private readonly _resolveAuthToken = (): Promise<string> => {
-    const { authToken } = this._cfg;
-
-    if (typeof authToken !== 'function') {
-      if (typeof authToken === 'string' && authToken) {
-        return Promise.resolve(authToken);
-      }
-      // Unset while something still holds this function: fail with the real
-      // reason rather than hand back an empty token.
-      return Promise.reject(new Error('`authToken` was unset while a request still needed it'));
-    }
-
+  private _getToken(fetchToken: () => string | Promise<string>): Promise<string> {
     if (this._cache) {
-      // A React component passes a new closure on every render. Swapping the
-      // function keeps the cached token; rebuilding the cache would throw it
-      // away and refetch on each render.
-      this._cache.fetchToken = authToken;
+      this._cache.fetchToken = fetchToken;
     } else {
       this._debugPrint('Creating the auth token cache.');
-      this._cache = new AuthTokenCache({ fetchToken: authToken });
+      this._cache = new AuthTokenCache({ fetchToken });
     }
 
     return this._cache.getToken();
-  };
+  }
 
   /**
    * The value to hand `@uploadcare/upload-client` as `authToken`. Unset is
@@ -66,7 +50,11 @@ export class AuthTokenManager extends SharedInstance {
       return authToken;
     }
 
-    return this._resolveAuthToken;
+    // Captures the function configured now. Callers ask again when they need
+    // the current value: each upload builds its options from this, and the AI
+    // Image Editor plugin re-reads it whenever `authToken` changes. A request
+    // already under way keeps the function it started with.
+    return () => this._getToken(authToken);
   }
 
   /** Drop the cached token, e.g. once the signed-in user changes. */
