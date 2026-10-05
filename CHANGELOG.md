@@ -1,3 +1,9 @@
+# [1.35.0](https://github.com/uploadcare/file-uploader/compare/v1.34.1...v1.35.0) (2026-10-05)
+
+
+### Features
+
+* hand upload-client a token provider, from the token configured now ([#1094](https://github.com/uploadcare/file-uploader/issues/1094)) ([f2ace58](https://github.com/uploadcare/file-uploader/commit/f2ace587c5362b09ea9827a7e6fd84fa49f4095f)), closes [uploadcare/uploadcare-js-api-clients#591](https://github.com/uploadcare/uploadcare-js-api-clients/issues/591)
 ## [1.34.1](https://github.com/uploadcare/file-uploader/compare/v1.34.0...v1.34.1) (2026-09-30)
 
 
