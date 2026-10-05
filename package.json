@@ -1,6 +1,6 @@
 {
   "name": "@uploadcare/file-uploader",
-  "version": "1.33.2",
+  "version": "1.35.0",
   "description": "Building blocks for Uploadcare products integration",
   "keywords": [
     "web components",
@@ -165,7 +165,8 @@
     "@uploadcare/cname-prefix": "^6.19.0",
     "@uploadcare/image-shrink": "^6.19.0",
     "@uploadcare/quality-insights": "^6.19.0",
-    "@uploadcare/upload-client": "^6.19.0",
+    "@uploadcare/signed-uploads": "^6.23.0",
+    "@uploadcare/upload-client": "^6.23.0",
     "keyux": "^0.11.3",
     "lit": "^3.3.2",
     "nanostores": "^1.1.1"

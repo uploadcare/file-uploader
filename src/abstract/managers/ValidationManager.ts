@@ -14,7 +14,11 @@ import type {
   UploaderPublicApi,
 } from '../../types';
 import { debounce } from '../../utils/debounce';
-import { validateCollectionUploadError, validateMultiple } from '../../utils/validators/collection/index';
+import {
+  validateCollectionUploadError,
+  validateGroupError,
+  validateMultiple,
+} from '../../utils/validators/collection/index';
 import {
   validateFileType,
   validateIsImage,
@@ -70,7 +74,11 @@ export class ValidationManager extends SharedInstance {
     validateUploadError,
   ];
 
-  private _commonCollectionValidators: FuncCollectionValidator[] = [validateMultiple, validateCollectionUploadError];
+  private _commonCollectionValidators: FuncCollectionValidator[] = [
+    validateMultiple,
+    validateCollectionUploadError,
+    validateGroupError,
+  ];
 
   private _queue = new Queue(20);
   private _runQueueDebounced = debounce(() => {

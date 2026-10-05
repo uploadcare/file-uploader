@@ -1,5 +1,6 @@
 import { expectTypeOf, test } from 'vitest';
 import type {
+  AuthTokenResolverError,
   OutputCollectionErrorType,
   OutputCollectionState,
   OutputError,
@@ -12,6 +13,8 @@ import type {
 /** Narrowing on `status` is the documented way to read an entry or the collection; each branch must pin its fields. */
 
 declare const entry: OutputFileEntry;
+declare const fileError: OutputError<OutputFileErrorType>;
+declare const collectionError: OutputError<OutputCollectionErrorType>;
 declare const state: OutputCollectionState;
 
 test('a success entry has its upload result and no errors', () => {
@@ -34,6 +37,20 @@ test('a failed or removed entry may carry a partial result and file errors', () 
   if (entry.status === 'removed') {
     expectTypeOf(entry.isRemoved).toEqualTypeOf<true>();
     expectTypeOf(entry.errors).toEqualTypeOf<OutputError<OutputFileErrorType>[]>();
+  }
+});
+
+test('narrowing a file error on `type` pins what its payload carries', () => {
+  if (fileError.type === 'AUTH_TOKEN_ERROR') {
+    // The class, so `instanceof` and `cause` are reachable without a cast.
+    expectTypeOf(fileError.payload?.error).toEqualTypeOf<AuthTokenResolverError | undefined>();
+  }
+});
+
+test('narrowing a collection error on `type` pins what its payload carries', () => {
+  if (collectionError.type === 'GROUP_ERROR') {
+    // Whatever failed the group request, reachable without a cast.
+    expectTypeOf(collectionError.payload?.error).toEqualTypeOf<Error | undefined>();
   }
 });
 

@@ -1,5 +1,6 @@
 import type { ConfigType, UploaderPublicApi } from '..';
 import type { RouterHooksLayer } from '../abstract/features/RouterHooksLayer';
+import type { AuthTokenManager } from '../abstract/managers/AuthTokenManager';
 import type { A11y } from '../abstract/managers/a11y';
 import type { LocaleManager } from '../abstract/managers/LocaleManager';
 import type { ModalManager } from '../abstract/managers/ModalManager';
@@ -85,6 +86,7 @@ const instanceKeyMap = {
   eventEmitter: '*eventEmitter',
   uploadCollection: '*uploadCollection',
   secureUploadsManager: '*secureUploadsManager',
+  authTokenManager: '*authTokenManager',
   api: '*publicApi',
   validationManager: '*validationManager',
 } satisfies Record<string, keyof SharedState>;
@@ -152,6 +154,9 @@ export const createSharedInstancesBag = (getCtx: () => PubSub<SharedState>) => {
     },
     get secureUploadsManager(): SecureUploadsManager {
       return getSharedInstance(getCtx(), '*secureUploadsManager', false);
+    },
+    get authTokenManager(): AuthTokenManager {
+      return getSharedInstance(getCtx(), '*authTokenManager', false);
     },
     get api(): UploaderPublicApi {
       return getSharedInstance(getCtx(), '*publicApi');

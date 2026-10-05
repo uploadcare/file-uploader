@@ -16,6 +16,13 @@ const ASSERTIONS: Assertion[] = [
       'The value of `accept` will be concatenated with the internal image mime types list.',
   },
   {
+    test: (cfg) =>
+      !!cfg.authToken && (!!cfg.secureSignature || !!cfg.secureExpire || !!cfg.secureUploadsSignatureResolver),
+    message:
+      'Both `authToken` and `secureSignature`/`secureExpire`/`secureUploadsSignatureResolver` parameters are set.\n' +
+      'The `authToken` will be used and the secure signature will be ignored.',
+  },
+  {
     test: (cfg) => cfg.enableVideoRecording !== null,
     message:
       'The `enableVideoRecording` parameter is deprecated and will be removed in the next major release.\n' +

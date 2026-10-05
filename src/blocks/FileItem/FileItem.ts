@@ -1,4 +1,5 @@
 import {
+  AuthTokenResolverError,
   CancelError,
   type FileFromOptions,
   UploadcareError,
@@ -12,6 +13,7 @@ import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import { debounce } from '../../utils/debounce';
 import { fileIsImage } from '../../utils/fileTypes';
+import { redactSecrets } from '../../utils/redactSecrets';
 import { throttle } from '../../utils/throttle';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
@@ -475,7 +477,7 @@ export class FileItem extends FileItemConfig {
           metadata: await this.getMetadataFor(entry.uid),
           tags: await this.getTagsFor(entry.uid),
         };
-        this.debugPrint('upload options', fileInput, uploadClientOptions);
+        this.debugPrint('upload options', fileInput, redactSecrets(uploadClientOptions));
         return uploadFile(fileInput, uploadClientOptions);
       };
 
@@ -505,7 +507,11 @@ export class FileItem extends FileItemConfig {
           isUploading: false,
           uploadProgress: 0,
         });
-      } else if (cause instanceof UploadcareError) {
+      } else if (cause instanceof UploadcareError || cause instanceof AuthTokenResolverError) {
+        // `AuthTokenResolverError` is not an `UploadcareError` (it comes from
+        // the dependency-free `@uploadcare/signed-uploads`), but it is just as
+        // well understood, so it reaches the entry intact instead of being
+        // buried under "Something went wrong".
         entry.setMultipleValues({
           isUploading: false,
           uploadProgress: 0,

@@ -11,6 +11,7 @@ import type {
 import { initialConfig } from './initialConfig';
 import {
   asArray,
+  asAuthToken,
   asBoolean,
   asCameraCapture,
   asCameraMode,
@@ -89,6 +90,7 @@ const mapping: { [Key in keyof ConfigType]: ConfigNormalizer<Key> } = {
   secureUploadsExpireThreshold: asNumber,
   localeDefinitionOverride: (value) => asObject<LocaleDefinitionOverride>(value),
   secureUploadsSignatureResolver: (value) => asFunction<SecureUploadsSignatureResolver>(value),
+  authToken: asAuthToken,
   secureDeliveryProxyUrlResolver: (value) => asFunction<SecureDeliveryProxyUrlResolver>(value),
   iconHrefResolver: (value) => asFunction<IconHrefResolver>(value),
   plugins: (value) => asArray<UploaderPlugin[]>(value),

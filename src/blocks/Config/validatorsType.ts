@@ -1,5 +1,5 @@
 import type { PasteScope } from '../../abstract/features/ClipboardLayer';
-import type { Metadata, MetadataCallback, Tags, TagsCallback } from '../../types/index';
+import type { AuthToken, Metadata, MetadataCallback, Tags, TagsCallback } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
 import type { ModeCameraType } from '../CameraSource/constants';
 import { CameraSourceTypes } from '../CameraSource/constants';
@@ -89,6 +89,14 @@ const asTags = (value: unknown): Tags | TagsCallback => {
   throw new Error('Invalid tags value. Must be an array or function.');
 };
 
+const asAuthToken = (value: unknown): AuthToken => {
+  if (typeof value === 'string' || typeof value === 'function') {
+    return value as AuthToken;
+  }
+
+  throw new Error('Invalid authToken value. Must be a string or function.');
+};
+
 const asObject = <T>(value: unknown): T => {
   if (typeof value === 'object') {
     return value as T;
@@ -133,6 +141,7 @@ const asDynamicButtonViewMode = (value: unknown): DynamicButtonMode => {
 
 export {
   asArray,
+  asAuthToken,
   asBoolean,
   asCameraCapture,
   asCameraMode,

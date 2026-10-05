@@ -1,3 +1,30 @@
+# [1.35.0](https://github.com/uploadcare/file-uploader/compare/v1.34.1...v1.35.0) (2026-10-05)
+
+
+### Features
+
+* an upload whose auth token is refused as expired, or out of operations, is retried once with a fresh token. The uploader hands upload-client 6.23.0 a token provider, which is what lets it drop the refused token and ask for another ([#1094](https://github.com/uploadcare/file-uploader/issues/1094)) ([f2ace58](https://github.com/uploadcare/file-uploader/commit/f2ace587c5362b09ea9827a7e6fd84fa49f4095f))
+* `authToken` also accepts a provider (`{ getToken, invalidate }`), for an app that runs its own token cache. It is passed through as is, rather than cached a second time ([#1094](https://github.com/uploadcare/file-uploader/issues/1094)) ([f2ace58](https://github.com/uploadcare/file-uploader/commit/f2ace587c5362b09ea9827a7e6fd84fa49f4095f))
+* `getAuthToken()` returns that provider rather than a bare function. Forwarding it, which is what it is for, is unchanged; code that called the result directly should call `getToken()` on it ([#1094](https://github.com/uploadcare/file-uploader/issues/1094)) ([f2ace58](https://github.com/uploadcare/file-uploader/commit/f2ace587c5362b09ea9827a7e6fd84fa49f4095f))
+
+
+## [1.34.1](https://github.com/uploadcare/file-uploader/compare/v1.34.0...v1.34.1) (2026-09-30)
+
+
+### Bug Fixes
+
+* **dropdown:** updated style based on --uc-radius ([#1092](https://github.com/uploadcare/file-uploader/issues/1092)) ([d5a84ea](https://github.com/uploadcare/file-uploader/commit/d5a84ead74ea2be730c90adbeade3904c6d2577d))
+# [1.34.0](https://github.com/uploadcare/file-uploader/compare/v1.33.2...v1.34.0) (2026-09-22)
+
+
+### Bug Fixes
+
+* use video-camera icon for camera plugin video mode ([#1084](https://github.com/uploadcare/file-uploader/issues/1084)) ([9c4d24a](https://github.com/uploadcare/file-uploader/commit/9c4d24a8209da3651598bb4c95d41f03201e8af0))
+
+
+### Features
+
+* JWT auth token for the Upload API ([#1083](https://github.com/uploadcare/file-uploader/issues/1083)) ([7213195](https://github.com/uploadcare/file-uploader/commit/721319549f4072652963de177322c408580f565d)). Set [`authToken`](https://uploadcare.com/docs/file-uploader/options/#auth-token) to a token or to a function returning one, and the uploader sends it with every upload, caching it and replacing it before it expires. See [Upload control with auth tokens](https://uploadcare.com/docs/security/secure-uploads-auth-token/).
 ## [1.33.2](https://github.com/uploadcare/file-uploader/compare/v1.33.1...v1.33.2) (2026-08-26)
 
 

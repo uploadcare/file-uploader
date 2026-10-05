@@ -78,7 +78,23 @@ jobs:
             ${{ (startsWith(github.head_ref, 'releases/v')
               || contains(github.event.pull_request.labels.*.name, 'e2e-live'))
               && 'live' || 'fake' }}
+          # A project with Signed Uploads enabled, which rejects every unsigned
+          # request — so it cannot be the default test project. Without these
+          # the auth token tests in `tests/uploading/auth-token.e2e.test.tsx`
+          # skip, and nothing checks that a token the uploader sends is one
+          # Upload API accepts.
+          UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY }}
+          UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY }}
         run: npm run test:coverage && npm run test:locales
+      # Whether Upload API accepts a token the uploader sends is a question only
+      # the real API can answer, so the auth token tests skip against the
+      # emulator and run here, live, on every PR.
+      - name: Run auth token tests against the real API
+        env:
+          E2E_NET: live
+          UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY }}
+          UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY }}
+        run: npx vitest run --project e2e tests/uploading/auth-token.e2e.test.tsx
       - name: Archive artifacts
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: always()

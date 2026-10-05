@@ -2,11 +2,12 @@
 import type { CustomConfig } from '../../abstract/customConfigOptions';
 import type { PluginManager } from '../../abstract/managers/plugin';
 import { sharedConfigKey } from '../../abstract/sharedConfigKey';
-import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types';
+import type { AttributeConfigType, ConfigType } from '../../types';
 import { toKebabCase } from '../../utils/toKebabCase';
 import { runAssertions } from './assertions';
 import './config.css';
 import { LitBlock } from '../../lit/LitBlock';
+import { isSecretKey, REDACTED } from '../../utils/redactSecrets';
 import { type ComputedPropertyControllers, computeProperty } from './computed-properties';
 import { initialConfig } from './initialConfig';
 import { normalizeConfigValue } from './normalizeConfigValue';
@@ -17,41 +18,77 @@ const allConfigKeys = [
 ] as Array<keyof ConfigType>;
 
 /**
- * Config keys that can't be passed as attribute (because they are object or function)
+ * How a built-in config key relates to its DOM attribute — the same idea as a
+ * plugin's {@link CustomConfigDefinition.attribute}, declared for built-ins.
+ *
+ * Both default to `true`; a key only appears here to opt out of something.
+ * - `attribute: false` — property only, no attribute representation at all
+ *   (the value is an object or a function).
+ * - `reflect: false` — readable from an attribute, but the value is never
+ *   written back to one.
  */
-export const complexConfigKeys = [
-  'metadata',
-  'tags',
-  'plugins',
-  'localeDefinitionOverride',
-  'secureUploadsSignatureResolver',
-  'secureDeliveryProxyUrlResolver',
-  'iconHrefResolver',
-  'fileValidators',
-  'collectionValidators',
-  'mediaRecorderOptions',
-] as const;
+type ConfigAttributeBehavior = {
+  attribute?: boolean;
+  reflect?: boolean;
+};
 
-const isComplexKey = (key: keyof ConfigType): key is keyof ConfigComplexType =>
-  complexConfigKeys.includes(key as unknown as (typeof complexConfigKeys)[number]);
+export const configAttributeBehavior = {
+  metadata: { attribute: false },
+  tags: { attribute: false },
+  plugins: { attribute: false },
+  localeDefinitionOverride: { attribute: false },
+  secureUploadsSignatureResolver: { attribute: false },
+  secureDeliveryProxyUrlResolver: { attribute: false },
+  iconHrefResolver: { attribute: false },
+  fileValidators: { attribute: false },
+  collectionValidators: { attribute: false },
+  mediaRecorderOptions: { attribute: false },
+  /**
+   * Settable either way: the attribute carries a plain token, the property also
+   * accepts a resolver. Never reflected — a resolver has no attribute form, and
+   * a bearer credential is not something to mirror into the DOM unasked.
+   */
+  authToken: { reflect: false },
+} as const satisfies Partial<Record<keyof ConfigType, ConfigAttributeBehavior>>;
+
+/** Keys of the descriptor whose `field` is declared as `Value`. */
+type KeysWithBehavior<Field extends keyof ConfigAttributeBehavior, Value extends boolean> = {
+  [K in keyof typeof configAttributeBehavior]: (typeof configAttributeBehavior)[K] extends Record<Field, Value>
+    ? K
+    : never;
+}[keyof typeof configAttributeBehavior];
+
+/** The declared behavior of a key, with both defaults applied. */
+const behaviorOf = (key: string): ConfigAttributeBehavior =>
+  (configAttributeBehavior as Record<string, ConfigAttributeBehavior | undefined>)[key] ?? {};
+
+/** Keys the descriptor marks as having no attribute representation at all. */
+export type PropertyOnlyConfigKey = KeysWithBehavior<'attribute', false>;
+
+/** Keys settable via an attribute — everything the descriptor doesn't opt out. */
+export type AttributeConfigKey = Exclude<keyof ConfigType, PropertyOnlyConfigKey>;
+
+const isPropertyOnlyKey = (key: keyof ConfigType): key is PropertyOnlyConfigKey => behaviorOf(key).attribute === false;
+
+const isReflectedKey = (key: string): boolean => behaviorOf(key).reflect !== false;
 
 /** Config keys that can be passed as attribute */
-const plainConfigKeys = allConfigKeys.filter((key) => !isComplexKey(key)) as (keyof ConfigPlainType)[];
+const attributeConfigKeys = allConfigKeys.filter((key) => !isPropertyOnlyKey(key)) as AttributeConfigKey[];
 
 /**
  * Mapping of attribute names to config keys Kebab-case and lowercase are supported. lowercase could be used by
  * frameworks like vue and react.
  */
-const builtinAttrKeyMapping: Record<string, keyof ConfigPlainType> = {
-  ...Object.fromEntries(plainConfigKeys.map((key) => [toKebabCase(key), key])),
-  ...Object.fromEntries(plainConfigKeys.map((key) => [key.toLowerCase(), key])),
+const builtinAttrKeyMapping: Record<string, AttributeConfigKey> = {
+  ...Object.fromEntries(attributeConfigKeys.map((key) => [toKebabCase(key), key])),
+  ...Object.fromEntries(attributeConfigKeys.map((key) => [key.toLowerCase(), key])),
 };
 
 const getLocalPropName = (key: string) => `__${key}`;
 
 // biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add configuration setters/getters
 export class Config extends LitBlock {
-  public declare attributesMeta: Partial<ConfigPlainType> & {
+  public declare attributesMeta: Partial<AttributeConfigType> & {
     'ctx-name': string;
   };
 
@@ -105,19 +142,25 @@ export class Config extends LitBlock {
     return [...new Set([toKebabCase(key), key.toLowerCase()])];
   }
 
-  private _flushValueToAttribute(key: string, value: unknown) {
-    // Check if it's a complex built-in key
-    if (isComplexKey(key as keyof ConfigType)) {
-      return; // Complex keys can't be represented as attributes
+  /** Whether this key's value is written back to the DOM as an attribute. */
+  private _isReflectedToAttribute(key: string, value: unknown): boolean {
+    if (this._isCustomConfig(key)) {
+      // Default is true, so reflect unless the plugin opted out.
+      return this._getCustomConfigDefinition(key)?.attribute !== false;
     }
 
-    // Check if it's a custom config with attribute: false
-    if (this._isCustomConfig(key)) {
-      const config = this._getCustomConfigDefinition(key);
-      // Skip if attribute is explicitly false (default is true, so flush unless false)
-      if (config?.attribute === false) {
-        return;
-      }
+    if (isPropertyOnlyKey(key as keyof ConfigType) || !isReflectedKey(key)) {
+      return false;
+    }
+
+    // An attribute is a string; stringifying a callback would write source code
+    // into the DOM.
+    return typeof value !== 'function';
+  }
+
+  private _flushValueToAttribute(key: string, value: unknown) {
+    if (!this._isReflectedToAttribute(key, value)) {
+      return;
     }
 
     // Flush the value to the DOM attributes (works for both built-in and custom configs)
@@ -178,7 +221,7 @@ export class Config extends LitBlock {
     this._flushValueToAttribute(key, normalizedValue);
     this._flushValueToState(key, normalizedValue);
 
-    this.debugPrint(`"${key}"`, normalizedValue);
+    this.debugPrint(`"${key}"`, isSecretKey(key) ? REDACTED : normalizedValue);
 
     // Only run assertions for built-in configs
     if (!this._isCustomConfig(key)) {
@@ -375,7 +418,7 @@ export class Config extends LitBlock {
     // Subscribe to the state changes and update the local properties and attributes.
     // Initial callback call is disabled to prevent the initial value to be set here.
     // Initial value will be set below, skipping the default values.
-    for (const key of plainConfigKeys) {
+    for (const key of attributeConfigKeys) {
       this.sub(
         sharedConfigKey(key),
         (value) => {
