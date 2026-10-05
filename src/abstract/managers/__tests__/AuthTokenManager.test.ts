@@ -45,6 +45,15 @@ const tokenExpiringIn = (seconds: number) => {
   return `header.${payload}.signature`;
 };
 
+/** `getAuthToken()` hands back a provider; this is its token function. */
+const resolverOf = (manager: AuthTokenManager): (() => Promise<string>) => {
+  const authToken = manager.getAuthToken();
+  if (!authToken || typeof authToken !== 'object') {
+    throw new Error(`expected a provider, got ${typeof authToken}`);
+  }
+  return authToken.getToken as () => Promise<string>;
+};
+
 describe('AuthTokenManager', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -56,8 +65,10 @@ describe('AuthTokenManager', () => {
     vi.useRealTimers();
   });
 
-  it('returns undefined when authToken is not configured', () => {
-    expect(createManager().manager.getAuthToken()).toBeUndefined();
+  it.each([null, undefined, ''])('returns undefined, so no token is sent, when authToken is %p', (value) => {
+    const { manager } = createManager({ authToken: value as unknown as null });
+
+    expect(manager.getAuthToken()).toBeUndefined();
   });
 
   it('passes a plain string straight through', () => {
@@ -69,7 +80,7 @@ describe('AuthTokenManager', () => {
     const fetchToken = vi.fn(() => tokenExpiringIn(3600));
     const { manager } = createManager({ authToken: fetchToken });
 
-    const resolve = manager.getAuthToken() as () => Promise<string>;
+    const resolve = resolverOf(manager);
     await resolve();
     await resolve();
 
@@ -80,51 +91,87 @@ describe('AuthTokenManager', () => {
     // React passes a new closure on every render; the token must survive it.
     const first = vi.fn(() => tokenExpiringIn(3600));
     const { manager, cfg } = createManager({ authToken: first });
-    const token = await (manager.getAuthToken() as () => Promise<string>)();
+    const token = await resolverOf(manager)();
 
     const second = vi.fn(() => tokenExpiringIn(3600));
     cfg.authToken = second;
 
-    expect(await (manager.getAuthToken() as () => Promise<string>)()).toBe(token);
+    expect(await resolverOf(manager)()).toBe(token);
     expect(second).not.toHaveBeenCalled();
   });
 
-  it('returns one stable function that follows later config changes', async () => {
-    // Whoever we hand this to may keep it. If it captured the configured
-    // function, a stored copy would go on calling the old one forever.
+  it('keeps the function it was handed, while a new call follows the config', async () => {
+    // A request already under way keeps the token function it started with;
+    // whoever needs the current value asks again.
     const first = vi.fn(async () => tokenExpiringIn(3600));
     const { manager, cfg } = createManager({ authToken: first });
-
-    const stored = manager.getAuthToken() as () => Promise<string>;
-    expect(manager.getAuthToken()).toBe(stored);
-    await stored();
+    const stored = resolverOf(manager);
 
     const second = vi.fn(async () => tokenExpiringIn(3600));
     cfg.authToken = second;
     manager.invalidate();
     await stored();
-
-    expect(second).toHaveBeenCalledTimes(1);
     expect(first).toHaveBeenCalledTimes(1);
+    expect(second).not.toHaveBeenCalled();
+
+    manager.invalidate();
+    await resolverOf(manager)();
+    expect(second).toHaveBeenCalledTimes(1);
   });
 
-  it('resolves to the token once authToken switches from a function to a string', async () => {
+  it('returns undefined once authToken is unset, so no request is signed', () => {
     const { manager, cfg } = createManager({ authToken: vi.fn(async () => tokenExpiringIn(3600)) });
-    const stored = manager.getAuthToken() as () => Promise<string>;
+    expect(typeof manager.getAuthToken()).toBe('object');
+
+    cfg.authToken = null;
+
+    expect(manager.getAuthToken()).toBeUndefined();
+  });
+
+  it('returns a plain token once authToken switches from a function to a string', () => {
+    const { manager, cfg } = createManager({ authToken: vi.fn(async () => tokenExpiringIn(3600)) });
 
     cfg.authToken = 'eyJ.plain.sig';
 
-    await expect(stored()).resolves.toBe('eyJ.plain.sig');
+    expect(manager.getAuthToken()).toBe('eyJ.plain.sig');
   });
 
   it('refetches after invalidate()', async () => {
     const fetchToken = vi.fn(() => tokenExpiringIn(3600));
     const { manager } = createManager({ authToken: fetchToken });
 
-    await (manager.getAuthToken() as () => Promise<string>)();
+    await resolverOf(manager)();
     manager.invalidate();
-    await (manager.getAuthToken() as () => Promise<string>)();
+    await resolverOf(manager)();
 
     expect(fetchToken).toHaveBeenCalledTimes(2);
+  });
+
+  it('hands upload-client a provider, so a refused token can be dropped', async () => {
+    const fetchToken = vi.fn(() => tokenExpiringIn(3600));
+    const { manager } = createManager({ authToken: fetchToken });
+
+    const provider = manager.getAuthToken();
+    if (!provider || typeof provider !== 'object') throw new Error('expected a provider');
+
+    await provider.getToken();
+    // What upload-client calls when the Upload API refuses the token, e.g.
+    // once its operation limit is spent.
+    provider.invalidate?.();
+    await provider.getToken();
+
+    expect(fetchToken).toHaveBeenCalledTimes(2);
+  });
+
+  it('passes a configured provider through, rather than caching it twice', async () => {
+    // Someone bringing their own cache already decides when a token is stale.
+    const getToken = vi.fn(async () => tokenExpiringIn(3600));
+    const invalidate = vi.fn();
+    const { manager } = createManager({ authToken: { getToken, invalidate } });
+
+    expect(manager.getAuthToken()).toEqual({ getToken, invalidate });
+
+    manager.invalidate();
+    expect(invalidate).toHaveBeenCalledTimes(1);
   });
 });

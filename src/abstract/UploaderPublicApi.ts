@@ -446,6 +446,13 @@ export class UploaderPublicApi extends SharedInstance {
    * Forward this rather than `cfg.authToken` when something else has to
    * authenticate with the same token — a plugin, say — so it shares this cache
    * instead of calling your token endpoint again.
+   *
+   * Returns `undefined`, not the config's `null`, when no token is set: this is
+   * upload-client's `authToken?: AuthToken`, so it can be passed straight on.
+   *
+   * The value reflects `authToken` at the time of the call. Call it again after
+   * `authToken` changes, for example from a `config.subscribe('authToken')`
+   * handler.
    */
   public getAuthToken = (): AuthToken | undefined => {
     return this._sharedInstancesBag.authTokenManager?.getAuthToken();

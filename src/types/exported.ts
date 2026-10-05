@@ -273,9 +273,10 @@ export type ConfigType = {
    */
   secureUploadsSignatureResolver: SecureUploadsSignatureResolver | null;
   /**
-   * JWT for the Upload API `Authorization: Bearer <token>` scheme. Accepts a plain token or a resolver function; the
-   * resolver is called before every request, so long-running uploads can supply a fresh token mid-flight. Takes
-   * precedence over `secureSignature`/`secureExpire` and `secureUploadsSignatureResolver`.
+   * JWT for the Upload API `Authorization: Bearer <token>` scheme. Accepts a plain token, a resolver function, or a
+   * provider (`{ getToken, invalidate }`) when you run your own cache. A resolver is called before every request, so
+   * long-running uploads can supply a fresh token mid-flight; the uploader caches what it returns. Takes precedence
+   * over `secureSignature`/`secureExpire` and `secureUploadsSignatureResolver`.
    */
   authToken: AuthToken | null;
   /**

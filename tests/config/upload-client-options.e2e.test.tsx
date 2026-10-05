@@ -207,34 +207,43 @@ describe('options handed to upload-client', () => {
     expect((uploadFile.mock.calls[0][1] as FileFromOptions).authToken).toBe('eyJ.token.sig');
   });
 
-  it('passes a cached resolver for an authToken function, not the raw config value', async () => {
+  it('passes a cached provider for an authToken function, not the raw config value', async () => {
     // upload-client calls the resolver before every request, so handing it the
-    // raw config function would re-fetch a token per request.
+    // raw config function would re-fetch a token per request. It gets a
+    // provider rather than a bare function, so it can also drop a token the
+    // Upload API refuses and retry with a new one.
     const fetchToken = vi.fn(async () => 'resolved.token.sig');
     const options = await optionsFor({ authToken: fetchToken });
 
-    expect(typeof options.authToken).toBe('function');
+    expect(typeof options.authToken).toBe('object');
     expect(options.authToken).not.toBe(fetchToken);
 
-    const resolve = options.authToken as () => Promise<string>;
-    await expect(resolve()).resolves.toBe('resolved.token.sig');
-    await expect(resolve()).resolves.toBe('resolved.token.sig');
+    const provider = options.authToken as {
+      getToken: () => Promise<string>;
+      invalidate: () => void;
+    };
+    await expect(provider.getToken()).resolves.toBe('resolved.token.sig');
+    await expect(provider.getToken()).resolves.toBe('resolved.token.sig');
     expect(fetchToken).toHaveBeenCalledTimes(1);
+
+    provider.invalidate();
+    await expect(provider.getToken()).resolves.toBe('resolved.token.sig');
+    expect(fetchToken).toHaveBeenCalledTimes(2);
   });
 
-  it('hands the same cached resolver to getAuthToken() as to upload-client', async () => {
+  it('hands the same cached provider to getAuthToken() as to upload-client', async () => {
     // A plugin forwards `api.getAuthToken()` so it shares this cache instead of
     // calling the app's token endpoint again.
     const fetchToken = vi.fn(async () => 'resolved.token.sig');
     const { api } = await renderSolution('regular', { authToken: fetchToken });
 
-    const resolve = api.getAuthToken() as () => Promise<string>;
-    await expect(resolve()).resolves.toBe('resolved.token.sig');
-    await expect(resolve()).resolves.toBe('resolved.token.sig');
+    const { getToken } = api.getAuthToken() as { getToken: () => Promise<string> };
+    await expect(getToken()).resolves.toBe('resolved.token.sig');
+    await expect(getToken()).resolves.toBe('resolved.token.sig');
     expect(fetchToken).toHaveBeenCalledTimes(1);
 
     api.invalidateAuthToken();
-    await expect(resolve()).resolves.toBe('resolved.token.sig');
+    await expect(getToken()).resolves.toBe('resolved.token.sig');
     expect(fetchToken).toHaveBeenCalledTimes(2);
   });
 
