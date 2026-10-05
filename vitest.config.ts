@@ -71,8 +71,8 @@ export default defineConfig({
           name: 'e2e',
           setupFiles: ['./tests/setup.e2e.ts'],
           include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
-          // Nothing to retry when the network is the fake in `tests/utils/fake-uploadcare`:
-          // it answers the same way every time, so a second attempt would only hide a
+          // Nothing to retry when the network is the emulator (`@uploadcare/api-emulator`, wired up in
+          // `tests/utils/network.ts`): it answers the same way every time, so a second attempt would only hide a
           // real flake. A live run still races the real API, and still gets one.
           retry: isLive ? 1 : 0,
           expect: {
