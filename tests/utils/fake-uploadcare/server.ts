@@ -67,35 +67,47 @@ let started: Promise<string> | undefined;
 export const fakeServerOrigin = () => {
   started ??= new Promise<string>((resolve, reject) => {
     const server = createServer(certificate(), async (request, response) => {
-      const url = request.headers[ORIGINAL_URL];
-      if (typeof url !== 'string') {
-        response.writeHead(400).end(`missing ${ORIGINAL_URL}`);
-        return;
-      }
-
-      const answer = await getResponse(
-        handlers,
-        new Request(url, { method: request.method, headers: headersOf(request), body: await bodyOf(request) }),
-      );
-
-      if (!answer) {
-        // Nothing the fake knows about. A test that starts calling something new fails here rather than reaching the
-        // real internet; `E2E_NET_DEBUG=1` says what it asked for.
-        if (process.env.E2E_NET_DEBUG) {
-          console.log('[unhandled]', `${request.method} ${url}`.slice(0, 140));
+      try {
+        const url = request.headers[ORIGINAL_URL];
+        if (typeof url !== 'string') {
+          response.writeHead(400).end(`missing ${ORIGINAL_URL}`);
+          return;
         }
-        response.writeHead(502).end('not handled by the fake uploadcare');
-        return;
-      }
 
-      if (process.env.E2E_NET_DEBUG) {
-        console.log('[fake]', answer.status, `${request.method} ${url}`.slice(0, 120));
-      }
+        const answer = await getResponse(
+          handlers,
+          new Request(url, { method: request.method, headers: headersOf(request), body: await bodyOf(request) }),
+        );
 
-      // The page is served from localhost and this is 127.0.0.1, so every answer is cross-origin.
-      const headers = Object.fromEntries(answer.headers);
-      response.writeHead(answer.status, { ...headers, 'access-control-allow-origin': '*' });
-      response.end(Buffer.from(await answer.arrayBuffer()));
+        if (!answer) {
+          // Nothing the fake knows about. A test that starts calling something new fails here rather than reaching the
+          // real internet; `E2E_NET_DEBUG=1` says what it asked for.
+          if (process.env.E2E_NET_DEBUG) {
+            console.log('[unhandled]', `${request.method} ${url}`.slice(0, 140));
+          }
+          response.writeHead(502).end('not handled by the fake uploadcare');
+          return;
+        }
+
+        if (process.env.E2E_NET_DEBUG) {
+          console.log('[fake]', answer.status, `${request.method} ${url}`.slice(0, 120));
+        }
+
+        // The page is served from localhost and this is 127.0.0.1, so every answer is cross-origin.
+        const headers = Object.fromEntries(answer.headers);
+        response.writeHead(answer.status, { ...headers, 'access-control-allow-origin': '*' });
+        response.end(Buffer.from(await answer.arrayBuffer()));
+      } catch (error) {
+        if (process.env.E2E_NET_DEBUG) {
+          console.log('[error]', `${request.method} ${request.headers[ORIGINAL_URL]}`.slice(0, 120), error);
+        }
+        // The client went away or the answer was half-sent; there is nobody left to tell.
+        if (request.destroyed || response.destroyed || response.headersSent) {
+          response.destroy();
+          return;
+        }
+        response.writeHead(500).end(String(error));
+      }
     });
 
     server.on('error', reject);
