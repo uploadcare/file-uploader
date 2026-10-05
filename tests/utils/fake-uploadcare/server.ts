@@ -1,7 +1,10 @@
 import { execFileSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import type { IncomingMessage } from 'node:http';
 import { createServer } from 'node:https';
 import type { AddressInfo } from 'node:net';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { getResponse } from 'msw';
 import { handlers } from './index';
 
@@ -21,10 +24,17 @@ import { handlers } from './index';
  * with `ignoreHTTPSErrors`. openssl ships with macOS and with the CI images.
  */
 const certificate = () => {
-  // biome-ignore format: the command reads better as it would be typed.
-  const pem = execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1', '-subj', '/CN=localhost', '-keyout', '/dev/stdout', '-out', '/dev/stdout'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-  const boundary = pem.indexOf('-----BEGIN CERTIFICATE-----');
-  return { key: pem.slice(0, boundary), cert: pem.slice(boundary) };
+  // Real files, not /dev/stdout for both: the Linux CI runner refused that. stderr is kept so a failure says why.
+  const dir = mkdtempSync(path.join(tmpdir(), 'e2e-tls-'));
+  const key = path.join(dir, 'key.pem');
+  const cert = path.join(dir, 'cert.pem');
+  try {
+    // biome-ignore format: the command reads better as it would be typed.
+    execFileSync('openssl', ['req', '-x509', '-newkey', 'rsa:2048', '-nodes', '-days', '1', '-subj', '/CN=localhost', '-keyout', key, '-out', cert], { stdio: ['ignore', 'ignore', 'pipe'] });
+    return { key: readFileSync(key, 'utf8'), cert: readFileSync(cert, 'utf8') };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
 };
 
 /** The URL the browser originally asked for, which is what the handlers match on. */
