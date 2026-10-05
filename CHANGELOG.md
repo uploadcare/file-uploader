@@ -1,3 +1,13 @@
+# [1.35.0](https://github.com/uploadcare/file-uploader/compare/v1.34.1...v1.35.0) (2026-10-05)
+
+
+### Features
+
+* an upload whose auth token is refused as expired, or out of operations, is retried once with a fresh token. The uploader hands upload-client 6.23.0 a token provider, which is what lets it drop the refused token and ask for another ([#1094](https://github.com/uploadcare/file-uploader/issues/1094)) ([f2ace58](https://github.com/uploadcare/file-uploader/commit/f2ace587c5362b09ea9827a7e6fd84fa49f4095f))
+* `authToken` also accepts a provider (`{ getToken, invalidate }`), for an app that runs its own token cache. It is passed through as is, rather than cached a second time ([#1094](https://github.com/uploadcare/file-uploader/issues/1094)) ([f2ace58](https://github.com/uploadcare/file-uploader/commit/f2ace587c5362b09ea9827a7e6fd84fa49f4095f))
+* `getAuthToken()` returns that provider rather than a bare function. Forwarding it, which is what it is for, is unchanged; code that called the result directly should call `getToken()` on it ([#1094](https://github.com/uploadcare/file-uploader/issues/1094)) ([f2ace58](https://github.com/uploadcare/file-uploader/commit/f2ace587c5362b09ea9827a7e6fd84fa49f4095f))
+
+
 ## [1.34.1](https://github.com/uploadcare/file-uploader/compare/v1.34.0...v1.34.1) (2026-09-30)
 
 
