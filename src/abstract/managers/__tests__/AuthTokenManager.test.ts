@@ -45,6 +45,15 @@ const tokenExpiringIn = (seconds: number) => {
   return `header.${payload}.signature`;
 };
 
+/** `getAuthToken()` hands back a provider; this is its token function. */
+const resolverOf = (manager: AuthTokenManager): (() => Promise<string>) => {
+  const authToken = manager.getAuthToken();
+  if (!authToken || typeof authToken !== 'object') {
+    throw new Error(`expected a provider, got ${typeof authToken}`);
+  }
+  return authToken.getToken as () => Promise<string>;
+};
+
 describe('AuthTokenManager', () => {
   beforeEach(() => {
     vi.useFakeTimers();
@@ -71,7 +80,7 @@ describe('AuthTokenManager', () => {
     const fetchToken = vi.fn(() => tokenExpiringIn(3600));
     const { manager } = createManager({ authToken: fetchToken });
 
-    const resolve = manager.getAuthToken() as () => Promise<string>;
+    const resolve = resolverOf(manager);
     await resolve();
     await resolve();
 
@@ -82,12 +91,12 @@ describe('AuthTokenManager', () => {
     // React passes a new closure on every render; the token must survive it.
     const first = vi.fn(() => tokenExpiringIn(3600));
     const { manager, cfg } = createManager({ authToken: first });
-    const token = await (manager.getAuthToken() as () => Promise<string>)();
+    const token = await resolverOf(manager)();
 
     const second = vi.fn(() => tokenExpiringIn(3600));
     cfg.authToken = second;
 
-    expect(await (manager.getAuthToken() as () => Promise<string>)()).toBe(token);
+    expect(await resolverOf(manager)()).toBe(token);
     expect(second).not.toHaveBeenCalled();
   });
 
@@ -96,7 +105,7 @@ describe('AuthTokenManager', () => {
     // whoever needs the current value asks again.
     const first = vi.fn(async () => tokenExpiringIn(3600));
     const { manager, cfg } = createManager({ authToken: first });
-    const stored = manager.getAuthToken() as () => Promise<string>;
+    const stored = resolverOf(manager);
 
     const second = vi.fn(async () => tokenExpiringIn(3600));
     cfg.authToken = second;
@@ -106,13 +115,13 @@ describe('AuthTokenManager', () => {
     expect(second).not.toHaveBeenCalled();
 
     manager.invalidate();
-    await (manager.getAuthToken() as () => Promise<string>)();
+    await resolverOf(manager)();
     expect(second).toHaveBeenCalledTimes(1);
   });
 
   it('returns undefined once authToken is unset, so no request is signed', () => {
     const { manager, cfg } = createManager({ authToken: vi.fn(async () => tokenExpiringIn(3600)) });
-    expect(typeof manager.getAuthToken()).toBe('function');
+    expect(typeof manager.getAuthToken()).toBe('object');
 
     cfg.authToken = null;
 
@@ -131,10 +140,38 @@ describe('AuthTokenManager', () => {
     const fetchToken = vi.fn(() => tokenExpiringIn(3600));
     const { manager } = createManager({ authToken: fetchToken });
 
-    await (manager.getAuthToken() as () => Promise<string>)();
+    await resolverOf(manager)();
     manager.invalidate();
-    await (manager.getAuthToken() as () => Promise<string>)();
+    await resolverOf(manager)();
 
     expect(fetchToken).toHaveBeenCalledTimes(2);
+  });
+
+  it('hands upload-client a provider, so a refused token can be dropped', async () => {
+    const fetchToken = vi.fn(() => tokenExpiringIn(3600));
+    const { manager } = createManager({ authToken: fetchToken });
+
+    const provider = manager.getAuthToken();
+    if (!provider || typeof provider !== 'object') throw new Error('expected a provider');
+
+    await provider.getToken();
+    // What upload-client calls when the Upload API refuses the token, e.g.
+    // once its operation limit is spent.
+    provider.invalidate?.();
+    await provider.getToken();
+
+    expect(fetchToken).toHaveBeenCalledTimes(2);
+  });
+
+  it('passes a configured provider through, rather than caching it twice', async () => {
+    // Someone bringing their own cache already decides when a token is stale.
+    const getToken = vi.fn(async () => tokenExpiringIn(3600));
+    const invalidate = vi.fn();
+    const { manager } = createManager({ authToken: { getToken, invalidate } });
+
+    expect(manager.getAuthToken()).toEqual({ getToken, invalidate });
+
+    manager.invalidate();
+    expect(invalidate).toHaveBeenCalledTimes(1);
   });
 });
