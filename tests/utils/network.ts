@@ -55,7 +55,11 @@ let started: Promise<string> | undefined;
 
 /** Starts the emulator server on a free port, once per run, and answers with its origin. */
 const emulatorOrigin = () => {
-  started ??= createEmulatorServer({ tls: certificate() }).then(({ origin }) => origin);
+  // Unref'd: nothing here can close it after the last test, and a listening server would keep the run from exiting.
+  started ??= createEmulatorServer({ tls: certificate() }).then(({ origin, unref }) => {
+    unref();
+    return origin;
+  });
   return started;
 };
 
