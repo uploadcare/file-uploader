@@ -1,3 +1,9 @@
+## [1.35.1](https://github.com/uploadcare/file-uploader/compare/v1.35.0...v1.35.1) (2026-10-06)
+
+
+### Bug Fixes
+
+* **config:** accept a token provider as authToken ([#1096](https://github.com/uploadcare/file-uploader/issues/1096)) ([47e76b6](https://github.com/uploadcare/file-uploader/commit/47e76b68af013afdc80da80226960c912ccfb9ee))
 # [1.35.0](https://github.com/uploadcare/file-uploader/compare/v1.34.1...v1.35.0) (2026-10-05)
 
 
