@@ -1,3 +1,4 @@
+import { isAuthTokenResolver } from '@uploadcare/upload-client';
 import type { PasteScope } from '../../abstract/features/ClipboardLayer';
 import type { AuthToken, Metadata, MetadataCallback, Tags, TagsCallback } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
@@ -90,11 +91,15 @@ const asTags = (value: unknown): Tags | TagsCallback => {
 };
 
 const asAuthToken = (value: unknown): AuthToken => {
-  if (typeof value === 'string' || typeof value === 'function') {
+  // A provider (`{ getToken, invalidate }`, an `AuthTokenCache` among them) is
+  // as valid as a plain token or a resolver. `isAuthTokenResolver` is the same
+  // guard upload-client uses to tell the callable forms from a string, so the
+  // two ends of the handoff cannot drift apart.
+  if (typeof value === 'string' || isAuthTokenResolver(value as AuthToken)) {
     return value as AuthToken;
   }
 
-  throw new Error('Invalid authToken value. Must be a string or function.');
+  throw new Error('Invalid authToken value. Must be a string, a function, or a `{ getToken }` object.');
 };
 
 const asObject = <T>(value: unknown): T => {

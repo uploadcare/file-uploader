@@ -120,6 +120,39 @@ describe('authToken against the real Upload API', () => {
     expect(calls).toBe(1);
   });
 
+  it('uploads with a provider, so a caller can bring their own cache', async (ctx) => {
+    const credentials = await commands.mintSecureUploadsCredentials();
+    if (!credentials) return ctx.skip();
+
+    // The `{ getToken, invalidate }` shape, which an `AuthTokenCache` from
+    // `@uploadcare/signed-uploads/client` already satisfies. The config
+    // validator used to reject it and fall back to no token at all, so the
+    // upload went out unsigned and this project refused it.
+    let calls = 0;
+    let invalidated = 0;
+    const { ctxName, api } = await renderSolution('regular', { store: false }, { pubkey: credentials.publicKey });
+    inCtx<Config>('uc-config', ctxName).authToken = {
+      getToken: () => {
+        calls += 1;
+        return credentials.authToken;
+      },
+      invalidate: () => {
+        invalidated += 1;
+      },
+    };
+
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
+
+    await expect.poll(() => entry(api)?.status, { timeout: 20_000 }).toBe('success');
+    // A provider owns its own caching, so the uploader does not add one and
+    // the call count is the provider's business. That it was asked at all is
+    // what proves the value survived validation.
+    expect(calls).toBeGreaterThan(0);
+    // Nothing refused this token, so nothing should have dropped it.
+    expect(invalidated).toBe(0);
+  });
+
   const rejectedTokens = [
     ['expired', 'AccessTokenExpiredError'],
     ['scoped', 'ScopeForbiddenError'],
