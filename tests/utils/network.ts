@@ -17,7 +17,11 @@ import type { BrowserCommand } from 'vitest/node';
  * redirects nothing and lets the suite hit the real service, which is what release branches run, because a fake
  * cannot tell you the API moved.
  */
-export const isLive = process.env.E2E_NET === 'live';
+const mode = process.env.E2E_NET || 'fake';
+if (mode !== 'fake' && mode !== 'live') {
+  throw new Error(`E2E_NET must be 'fake' or 'live', got '${mode}'`);
+}
+export const isLive = mode === 'live';
 
 /**
  * Everything third-party. The app's own modules must keep coming from the running Vite server, so localhost is
