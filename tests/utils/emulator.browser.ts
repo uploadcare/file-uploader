@@ -16,7 +16,8 @@ import { delay } from '@/utils/delay';
  *
  * `E2E_NET=live` leaves the page alone and lets the suite hit the real service; see `./network.ts`.
  */
-const isLive = import.meta.env.E2E_NET === 'live';
+/** The page-side flag; `./network.ts` is the Node side. */
+export const isLive = import.meta.env.E2E_NET === 'live';
 
 let started: Promise<void> | undefined;
 
