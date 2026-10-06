@@ -31,6 +31,7 @@ const UPLOADED = {
   size: 1,
   isImage: true,
   mimeType: 'image/jpeg',
+  cdnUrl: 'https://ucarecdn.com/00000000-0000-4000-8000-000000000000/',
 } as unknown as UploadcareFile;
 
 beforeEach(() => {
@@ -47,6 +48,8 @@ describe('imageShrink', () => {
     api.uploadAll();
 
     await vi.waitFor(() => expect(uploadFile).toHaveBeenCalled(), { timeout: 20_000 });
+    // The entry takes its cdnUrl from the upload result; a fixture without one leaves it undefined.
+    await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl).toBe(UPLOADED.cdnUrl);
     return uploadFile.mock.calls[0][0] as File;
   };
 
