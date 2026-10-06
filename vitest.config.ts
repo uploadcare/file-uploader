@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { playwright } from '@vitest/browser-playwright';
 import { defineConfig } from 'vitest/config';
 import { commands } from './tests/utils/commands';
-import { isLive } from './tests/utils/network';
+import { isLive, mode } from './tests/utils/network';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -70,10 +70,12 @@ export default defineConfig({
         test: {
           name: 'e2e',
           setupFiles: ['./tests/setup.e2e.ts'],
+          // Reaches the page as `import.meta.env.E2E_NET`: vitest defines `env` into the browser bundle.
+          env: { E2E_NET: mode },
           include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
-          // Nothing to retry when the network is the emulator (`@uploadcare/api-emulator`, wired up in
-          // `tests/utils/network.ts`): it answers the same way every time, so a second attempt would only hide a
-          // real flake. A live run still races the real API, and still gets one.
+          // Nothing to retry when the network is the emulator (`@uploadcare/api-emulator`, run in the page by
+          // `tests/utils/emulator.browser.ts`): it answers the same way every time, so a second attempt would only
+          // hide a real flake. A live run still races the real API, and still gets one.
           retry: isLive ? 1 : 0,
           expect: {
             poll: {

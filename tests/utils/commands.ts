@@ -1,9 +1,9 @@
 import { createHash, createHmac } from 'node:crypto';
 import path from 'node:path';
-// TEMPORARY: file: dependency, see the note in ./network.ts.
+// TEMPORARY: file: dependency, see the note in ./emulator.browser.ts.
 import { SIGNED_UPLOADS_PUBLIC_KEY, SIGNED_UPLOADS_SECRET_KEY } from '@uploadcare/api-emulator';
 import type { BrowserCommand } from 'vitest/node';
-import { isLive, useFakeNetwork } from './network';
+import { isLive } from './network';
 
 export const waitFileChooserAndUpload: BrowserCommand<[string[]]> = async ({ page, testPath }, relativePaths) => {
   if (!testPath) {
@@ -88,14 +88,12 @@ const mintExpiredToken = (secretKey: string): string => {
 
 export const commands = {
   waitFileChooserAndUpload,
-  useFakeNetwork,
   mintSecureUploadsCredentials,
 };
 
 declare module 'vitest/browser' {
   interface BrowserCommands {
     waitFileChooserAndUpload: (relativePaths: string[]) => Promise<void>;
-    useFakeNetwork: () => Promise<void>;
     mintSecureUploadsCredentials: (kind?: AuthTokenKind) => Promise<SecureUploadsCredentials | null>;
   }
 }
