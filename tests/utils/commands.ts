@@ -1,5 +1,7 @@
 import { createHash, createHmac } from 'node:crypto';
 import path from 'node:path';
+// TEMPORARY: file: dependency, see the note in ./network.ts.
+import { SIGNED_UPLOADS_PUBLIC_KEY, SIGNED_UPLOADS_SECRET_KEY } from '@uploadcare/api-emulator';
 import type { BrowserCommand } from 'vitest/node';
 import { isLive, useFakeNetwork } from './network';
 
@@ -34,24 +36,22 @@ export type AuthTokenKind =
   | 'wrong-key';
 
 /**
- * Mints a real Upload API token, in Node, where the project secret key is.
+ * Mints an Upload API token, in Node, where the project secret key is.
  *
  * The browser must never see that key, which is the whole point of the scheme,
- * so this is the only way an e2e test can prove the uploader's token actually
- * works against the real API rather than against a stub.
+ * so this is the only way an e2e test can get a token the API verifies. Against
+ * the emulator that is its Signed Uploads project; live, it is a real one.
  *
- * Returns `null` when the credentials are not configured or the run is not live, and the tests that
- * need them skip.
+ * Returns `null` when a live run has no credentials configured, and the tests
+ * that need them skip.
  */
 export const mintSecureUploadsCredentials: BrowserCommand<[AuthTokenKind?]> = async (
   _ctx,
   kind: AuthTokenKind = 'valid',
 ): Promise<SecureUploadsCredentials | null> => {
-  const publicKey = process.env.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY;
-  const secretKey = process.env.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY;
-  // The emulator cannot verify a token signed with the real project's key, so
-  // these tests only mean something live.
-  if (!isLive || !publicKey || !secretKey) {
+  const publicKey = isLive ? process.env.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY : SIGNED_UPLOADS_PUBLIC_KEY;
+  const secretKey = isLive ? process.env.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY : SIGNED_UPLOADS_SECRET_KEY;
+  if (!publicKey || !secretKey) {
     return null;
   }
 
