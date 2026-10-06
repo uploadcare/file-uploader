@@ -37,6 +37,16 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      # e2e talks to the emulator in @uploadcare/api-emulator by default, so a
+      # normal PR needs neither API access nor luck with timing. Release
+      # branches run against the real service instead — a fake cannot tell
+      # you the upload API changed under you — and any PR can opt in by
+      # carrying the `e2e-live` label.
+      E2E_NET: >-
+        ${{ (startsWith(github.head_ref, 'releases/v')
+          || contains(github.event.pull_request.labels.*.name, 'e2e-live'))
+          && 'live' || 'fake' }}
     steps:
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
@@ -69,32 +79,23 @@ jobs:
       # merged across specs and e2e instead of each run overwriting the other.
       - name: Run tests
         env:
-          # e2e talks to the emulator in @uploadcare/api-emulator by default, so a
-          # normal PR needs neither API access nor luck with timing. Release
-          # branches run against the real service instead — a fake cannot tell
-          # you the upload API changed under you — and any PR can opt in by
-          # carrying the `e2e-live` label.
-          E2E_NET: >-
-            ${{ (startsWith(github.head_ref, 'releases/v')
-              || contains(github.event.pull_request.labels.*.name, 'e2e-live'))
-              && 'live' || 'fake' }}
-          # A project with Signed Uploads enabled, which rejects every unsigned
-          # request — so it cannot be the default test project. Without these
-          # the auth token tests in `tests/uploading/auth-token.e2e.test.tsx`
-          # skip, and nothing checks that a token the uploader sends is one
-          # Upload API accepts.
+          # A real project with Signed Uploads enabled, which rejects every
+          # unsigned request — so it cannot be the default test project. Live
+          # runs of `tests/uploading/auth-token.e2e.test.tsx` skip without it.
+          # Set per step rather than per job, so install and build never see it.
           UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY }}
           UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY }}
         run: npm run test:coverage && npm run test:locales
-      # Whether Upload API accepts a token the uploader sends is a question only
-      # the real API can answer, so the auth token tests skip against the
-      # emulator and run here, live, on every PR.
+      # The emulator only knows the token rules it was written with, so the auth
+      # token tests also run against the real API on every PR, on purpose: only
+      # it can say Upload API still accepts the tokens the uploader sends.
+      # Skipped when the step above already ran live.
       - name: Run auth token tests against the real API
+        if: env.E2E_NET != 'live'
         env:
-          E2E_NET: live
           UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY }}
           UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY }}
-        run: npx vitest run --project e2e tests/uploading/auth-token.e2e.test.tsx
+        run: E2E_NET=live npx vitest run --project e2e tests/uploading/auth-token.e2e.test.tsx
       - name: Archive artifacts
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: always()
