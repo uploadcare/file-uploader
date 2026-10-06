@@ -11,14 +11,14 @@ import '~/types/jsx';
  * only matter because it is a bearer token.
  *
  * Where it must not appear — the DOM, the console — and whether Upload API
- * actually accepts what the uploader sends, which no stub can answer.
+ * accepts what the uploader sends.
  * `upload-client-options.e2e` covers the value reaching the upload call, and
  * `upload-errors.e2e` how a failure is classified.
  *
- * The real uploads need a project with Signed Uploads enabled, which rejects
- * every unsigned request. Tokens are minted by a Node-side command, since the
- * project secret key must never reach the page, and the tests skip where its
- * credentials are absent.
+ * The uploads need a project with Signed Uploads enabled, which rejects every
+ * unsigned request: the emulator's by default, a real one when `E2E_NET=live`.
+ * Tokens are minted by a Node-side command, since the project secret key must
+ * never reach the page, and a live run without its credentials skips them.
  */
 
 const TOKEN = 'eyJ.a-real-looking-token.sig';
@@ -65,7 +65,7 @@ describe('authToken is not exposed', () => {
   });
 });
 
-describe('authToken against the real Upload API', () => {
+describe('authToken against Upload API', () => {
   it('uploads a file the project would otherwise refuse', async (ctx) => {
     const credentials = await commands.mintSecureUploadsCredentials();
     if (!credentials) return ctx.skip();
