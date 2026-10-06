@@ -4,7 +4,7 @@ import { SharedInstance } from '../../lit/shared-instances';
 import type { AuthToken } from '../../types/index';
 
 /**
- * Owns the one long-lived token cache for this uploader context.
+ * Owns the token cache for this uploader context.
  *
  * `authToken` may be a resolver, and `@uploadcare/upload-client` calls it
  * before every authenticated request — so without a cache each upload, each
@@ -16,21 +16,21 @@ export class AuthTokenManager extends SharedInstance {
   private _cache: AuthTokenCache | null = null;
 
   /**
-   * The token from `fetchToken`, through the one shared cache.
+   * The cache serving tokens from `fetchToken`.
    *
    * A React component passes a new closure on every render. Swapping the
    * function keeps the cached token; rebuilding the cache would throw it away
    * and refetch on each render.
    */
-  private _getToken(fetchToken: () => string | Promise<string>): Promise<string> {
+  private _cacheFor(fetchToken: () => string | Promise<string>): AuthTokenCache {
     if (this._cache) {
       this._cache.fetchToken = fetchToken;
-    } else {
-      this._debugPrint('Creating the auth token cache.');
-      this._cache = new AuthTokenCache({ fetchToken });
+      return this._cache;
     }
 
-    return this._cache.getToken();
+    this._debugPrint('Creating the auth token cache.');
+    this._cache = new AuthTokenCache({ fetchToken });
+    return this._cache;
   }
 
   /**
@@ -62,19 +62,32 @@ export class AuthTokenManager extends SharedInstance {
       return authToken;
     }
 
-    // Captures the function configured now. Callers ask again when they need
+    // Bound to the cache serving the function configured now, rather than to
+    // whichever one this manager holds later. Callers ask again when they need
     // the current value: each upload builds its options from this, and the AI
     // Image Editor plugin re-reads it whenever `authToken` changes. A request
-    // already under way keeps the function it started with.
+    // already under way keeps both the function and the cache it started with,
+    // which is what `invalidate()` relies on.
+    const cache = this._cacheFor(authToken);
     return {
-      getToken: () => this._getToken(authToken),
-      invalidate: () => this.invalidate(),
+      getToken: cache.getToken,
+      // Its own cache, which is where the token upload-client just had
+      // refused came from. A provider configured directly is handed to
+      // upload-client as it is and gets its own `invalidate()` call.
+      invalidate: () => cache.invalidate(),
     };
   }
 
   /** Drop the cached token, e.g. once the signed-in user changes. */
   public invalidate(): void {
     this._cache?.invalidate();
+
+    // Let go of the instance, do not just empty it. A provider already handed
+    // out keeps the cache it was built with, so what the upload still running
+    // fetches next stays with that upload. Sharing one cache instead would let
+    // it refill the slot the next upload reads — and the next upload may be a
+    // different signed-in user, which is usually why this was called.
+    this._cache = null;
 
     // A provider configured directly keeps its own token, so it is the only
     // thing that can drop that one. `normalizeAuthToken` is what knows the

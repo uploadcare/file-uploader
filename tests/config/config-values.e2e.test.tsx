@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
+import { CONFIG_VALUES, TEST_LOCALE } from '@/blocks/Config/__tests__/configValues';
 import { configAttributeBehavior } from '@/blocks/Config/Config';
 import { initialConfig } from '@/blocks/Config/initialConfig';
 import { type Config, defineLocale } from '@/index';
@@ -21,114 +22,17 @@ import '~/types/jsx';
  * provider shape while the element dropped it, because that test stubbed the
  * context and so never reached the validator at all.
  *
- * `VALUES` is typed as every key of `ConfigType` mapped to an array of its own
- * type, so the compiler rejects a value an option does not allow and a new
- * option fails to compile until it is listed here.
+ * The values come from `CONFIG_VALUES`, shared with the validator-level sweep
+ * so the two layers are held to one table rather than two that drift.
  */
 
-const noop = () => {};
-
-/**
- * Only `en` ships registered; every other locale is the integrator's to add
- * through `defineLocale`. `localeName` is typed `string`, but its real domain
- * is "a locale someone registered", so the sweep registers one rather than
- * naming a locale that only exists as a file on disk.
- */
-const TEST_LOCALE = 'xx-test';
+// Only `en` ships registered; every other locale is the integrator's to add.
+// `localeName` is typed `string`, but its real domain is "a locale someone
+// registered", so the sweep registers one rather than naming a locale that
+// only exists as a file on disk.
 defineLocale(TEST_LOCALE, en);
 
-const VALUES: { [K in keyof ConfigType]: ConfigType[K][] } = {
-  pubkey: ['', 'demopublickey'],
-  multiple: [true, false],
-  multipleMin: [0, 5],
-  multipleMax: [1, Number.MAX_SAFE_INTEGER],
-  confirmUpload: [true, false],
-  imgOnly: [true, false],
-  accept: ['', 'image/*', '.jpg,.png'],
-  externalSourcesPreferredTypes: ['', 'image/*'],
-  externalSourcesEmbedCss: ['', 'body { background: #fff }'],
-  store: [true, false, 'auto'],
-  cameraMirror: [true, false],
-  cameraCapture: ['', 'user', 'environment'],
-  sourceList: ['', 'local', 'local, url, camera'],
-  topLevelOrigin: ['', 'https://example.com'],
-  maxLocalFileSizeBytes: [0, 1024 * 1024],
-  thumbSize: [76, 120],
-  showEmptyList: [true, false],
-  useLocalImageEditor: [true, false],
-  useCloudImageEditor: [true, false],
-  cloudImageEditorTabs: ['crop', 'crop, tuning, filters'],
-  removeCopyright: [true, false],
-  cropPreset: ['', '1:1', '16:9 4:3'],
-  imageShrink: ['', '1024x1024 90%'],
-  modalScrollLock: [true, false],
-  modalBackdropStrokes: [true, false],
-  sourceListWrap: [true, false],
-  remoteTabSessionKey: ['', 'session-key'],
-  // The default is deliberately absent: holding it is the signal that asks
-  // `computed-properties` to swap in the pubkey-prefixed CDN base, so it is
-  // the one value that does not read back as it was set.
-  cdnCname: ['https://cdn.example.com'],
-  cdnCnamePrefixed: ['https://ucarecd.net', 'https://cdn.example.com'],
-  baseUrl: ['https://upload.uploadcare.com', 'https://upload.example.com'],
-  socialBaseUrl: ['https://social.uploadcare.com', 'https://social.example.com'],
-  secureSignature: ['', 'deadbeef'],
-  secureExpire: ['', '1700000000'],
-  secureDeliveryProxy: ['', 'https://proxy.example.com/{previewUrl}'],
-  retryThrottledRequestMaxTimes: [0, 3],
-  retryNetworkErrorMaxTimes: [0, 3],
-  multipartMinFileSize: [0, 26214400],
-  multipartChunkSize: [1, 5242880],
-  maxConcurrentRequests: [1, 10],
-  multipartMaxConcurrentRequests: [1, 4],
-  multipartMaxAttempts: [1, 3],
-  checkForUrlDuplicates: [true, false],
-  saveUrlForRecurrentUploads: [true, false],
-  groupOutput: [true, false],
-  userAgentIntegration: ['', 'MyApp/1.0'],
-  debug: [true, false],
-  localeName: ['en', TEST_LOCALE],
-  secureUploadsExpireThreshold: [0, 600000],
-  plugins: [[]],
-
-  metadata: [{}, { subject: 'id-card' }, () => ({ subject: 'id-card' }), async () => ({ subject: 'id-card' }), null],
-  tags: [[], ['one', 'two'], () => ['one'], async () => ['one'], null],
-  localeDefinitionOverride: [{}, { en: { 'upload-file': 'Upload' } }, null],
-  secureUploadsSignatureResolver: [async () => ({ secureSignature: 'sig', secureExpire: 'exp' }), null],
-  authToken: [
-    'eyJ.plain.sig',
-    () => 'eyJ',
-    async () => 'eyJ',
-    { getToken: () => 'eyJ' },
-    { getToken: async () => 'eyJ', invalidate: noop },
-    null,
-  ],
-  secureDeliveryProxyUrlResolver: [async () => 'https://proxy.example.com/x', null],
-  iconHrefResolver: [(iconName: string) => `#icon-${iconName}`, null],
-  fileValidators: [[], [() => undefined]],
-  collectionValidators: [[], [() => undefined]],
-  validationTimeout: [0, 15000],
-  validationConcurrency: [1, 100],
-
-  cameraModes: ['photo', 'video', 'photo, video', 'video, photo'],
-  defaultCameraMode: ['photo', 'video', null],
-  enableAudioRecording: [true, false],
-  enableVideoRecording: [true, false, null],
-  maxVideoRecordingDuration: [0, 30, null],
-  mediaRecorderOptions: [{}, { mimeType: 'video/webm' }, null],
-
-  filesViewMode: ['grid', 'list'],
-  gridShowFileNames: [true, false],
-  cloudImageEditorAutoOpen: [true, false],
-  qualityInsights: [true, false],
-  cloudImageEditorMaskHref: ['https://example.com/mask.svg', null],
-  testMode: [true, false],
-  pasteScope: ['local', 'global', false],
-  dynamicButtonViewMode: ['auto', 'menu', 'toolbar', 'compact', 'plain'],
-  dynamicButtonShowFirstIcon: [true, false],
-};
-
-const keys = Object.keys(VALUES) as (keyof ConfigType)[];
+const keys = Object.keys(CONFIG_VALUES) as (keyof ConfigType)[];
 
 const isPropertyOnly = (key: keyof ConfigType): boolean =>
   (configAttributeBehavior as Record<string, { attribute?: boolean } | undefined>)[key]?.attribute === false;
@@ -152,43 +56,61 @@ const mountConfig = async (attrs: Record<string, string> = {}): Promise<Config> 
 
 describe('the table matches ConfigType', () => {
   it('lists every option', () => {
-    // `VALUES` is a required mapped type, so a missing key is a compile error.
-    // This catches the other direction: a key listed here that the element
-    // does not actually ship.
+    // Both sides are compiler-guaranteed today: `CONFIG_VALUES` is a required
+    // mapped type and `initialConfig` is declared `satisfies ConfigType`. This
+    // stands guard over that, since loosening the table to a partial is the
+    // obvious shortcut when adding an option, and the sweeps would then skip
+    // it in silence — which is how `authToken` went unnoticed.
     expect(keys.sort()).toEqual(Object.keys(initialConfig).sort());
   });
 
   it('gives every option at least one value', () => {
-    expect(keys.filter((key) => VALUES[key].length === 0)).toEqual([]);
+    expect(keys.filter((key) => CONFIG_VALUES[key].length === 0)).toEqual([]);
   });
 });
+
+/** The one cast the sweeps need: the value is `unknown`, the property is not. */
+const write = (config: Config, key: keyof ConfigType, value: unknown): void => {
+  (config as unknown as Record<string, unknown>)[key] = value;
+};
+
+/**
+ * `normalizeConfigValue` reports a rejected value to `console.error` and falls
+ * back to the default rather than throwing. Reading the value back therefore
+ * proves nothing on its own: an option set to its own default reads back
+ * correctly whether it was accepted or thrown out. Every case below pairs the
+ * readback with this.
+ */
+const captureErrors = async (run: () => Promise<void>): Promise<unknown[][]> => {
+  const errors: unknown[][] = [];
+  const original = console.error;
+  console.error = (...args: unknown[]) => errors.push(args);
+  try {
+    await run();
+  } finally {
+    console.error = original;
+  }
+  return errors;
+};
 
 describe('accepts every value its type describes, as a property', () => {
   for (const key of keys) {
     // Wrapped in a tuple: `it.each` spreads a top-level array into arguments,
     // which would unwrap the array-valued options into nothing.
-    it.each((VALUES[key] as unknown[]).map((value) => [value]))(`${key} = %o`, async (value) => {
+    it.each((CONFIG_VALUES[key] as unknown[]).map((value) => [value]))(`${key} = %o`, async (value) => {
       const config = await mountConfig();
-      const errors: unknown[][] = [];
-      const original = console.error;
-      console.error = (...args: unknown[]) => errors.push(args);
 
-      try {
-        (config as unknown as Record<string, unknown>)[key] = value;
+      const errors = await captureErrors(async () => {
+        write(config, key, value);
 
         if (value === null) {
-          // A rejected value also reads back as the default, so the assertion
-          // below only means anything together with the empty `errors`.
-          expect((config as unknown as Record<string, unknown>)[key] ?? null).toBeNull();
+          expect(config[key] ?? null).toBeNull();
         } else {
-          expect((config as unknown as Record<string, unknown>)[key]).toEqual(value);
+          expect(config[key]).toEqual(value);
         }
-        // `normalizeConfigValue` reports a rejected value here rather than
-        // throwing, so without this a dropped value looks like a pass.
-        expect(errors).toEqual([]);
-      } finally {
-        console.error = original;
-      }
+      });
+
+      expect(errors).toEqual([]);
     });
   }
 });
@@ -197,7 +119,7 @@ describe('accepts the attribute form of every option that has one', () => {
   const attributeCases = keys
     .filter((key) => !isPropertyOnly(key))
     .flatMap((key) =>
-      (VALUES[key] as unknown[])
+      (CONFIG_VALUES[key] as unknown[])
         // Only primitives survive the trip through an attribute; the rest are
         // property-only by nature and are covered above.
         .filter((value) => ['string', 'number', 'boolean'].includes(typeof value))
@@ -205,10 +127,19 @@ describe('accepts the attribute form of every option that has one', () => {
     );
 
   it.each(attributeCases)('%s="%s"', async (key, attribute, expected) => {
-    // Set before connection, which is how a page writes them and the only
-    // route that exercises the string coercion React and Vue produce.
-    const config = await mountConfig({ [toKebabCase(key)]: attribute });
+    // The capture spans the mount, not just a later assignment: an attribute
+    // is read while the element connects, which is where it would be
+    // rejected. Without this, an attribute carrying its option's own default
+    // — `multiple="true"`, `test-mode="false"` — reads back correctly even
+    // when the validator threw it out.
+    const errors = await captureErrors(async () => {
+      // Set before connection, which is how a page writes them and the only
+      // route that exercises the string coercion React and Vue produce.
+      const config = await mountConfig({ [toKebabCase(key)]: attribute });
 
-    expect((config as unknown as Record<string, unknown>)[key]).toEqual(expected);
+      expect(config[key]).toEqual(expected);
+    });
+
+    expect(errors).toEqual([]);
   });
 });

@@ -114,9 +114,83 @@ describe('AuthTokenManager', () => {
     expect(first).toHaveBeenCalledTimes(1);
     expect(second).not.toHaveBeenCalled();
 
-    manager.invalidate();
+    // One `invalidate()`, not two. A second here would hide the retained
+    // provider having refilled the cache on the line above.
     await resolverOf(manager)();
     expect(second).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not let a retained provider hand the next upload the previous token', async () => {
+    // The signed-in user changes mid-upload. The upload already running keeps
+    // the provider it started with, and asking it again must not put that
+    // user's token back where the next upload would find it.
+    // Distinct lifetimes, so the two differ. Fake timers freeze `Date.now()`,
+    // so the same lifetime twice would produce the same string and the
+    // assertions below would hold whichever token came back.
+    const tokenA = tokenExpiringIn(3600);
+    const tokenB = tokenExpiringIn(7200);
+    const { manager, cfg } = createManager({ authToken: vi.fn(async () => tokenA) });
+
+    const retained = manager.getAuthToken();
+    if (!retained || typeof retained !== 'object') throw new Error('expected a provider');
+    expect(await retained.getToken()).toBe(tokenA);
+
+    const resolverB = vi.fn(async () => tokenB);
+    cfg.authToken = resolverB;
+    manager.invalidate();
+
+    // The old upload asks again before the new one starts.
+    expect(await retained.getToken()).toBe(tokenA);
+
+    expect(await resolverOf(manager)()).toBe(tokenB);
+    expect(resolverB).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not let a retained provider drop the token the next upload cached', async () => {
+    // The refusal arrives late: the user has already changed and the new
+    // upload has a token of its own. Dropping that one would make the new
+    // upload refetch for a rejection that was never about its token.
+    const { manager, cfg } = createManager({ authToken: vi.fn(async () => tokenExpiringIn(3600)) });
+
+    const retained = manager.getAuthToken();
+    if (!retained || typeof retained !== 'object') throw new Error('expected a provider');
+    await retained.getToken();
+
+    const resolverB = vi.fn(async () => tokenExpiringIn(7200));
+    cfg.authToken = resolverB;
+    manager.invalidate();
+
+    const current = resolverOf(manager);
+    await current();
+    expect(resolverB).toHaveBeenCalledTimes(1);
+
+    // Upload A's token is refused, long after it stopped being anyone's token.
+    retained.invalidate?.();
+
+    await current();
+    expect(resolverB).toHaveBeenCalledTimes(1);
+  });
+
+  it('drops only the cached token when upload-client reports a refusal', async () => {
+    // A provider configured directly owns its token and is handed to
+    // upload-client as it is, so it gets its own `invalidate()`. A retry on an
+    // upload that started with a function must not reach it.
+    const configured = { getToken: vi.fn(async () => tokenExpiringIn(3600)), invalidate: vi.fn() };
+    const fetchToken = vi.fn(async () => tokenExpiringIn(3600));
+    const { manager, cfg } = createManager({ authToken: fetchToken });
+
+    const fromFunction = manager.getAuthToken();
+    if (!fromFunction || typeof fromFunction !== 'object') throw new Error('expected a provider');
+    await fromFunction.getToken();
+
+    cfg.authToken = configured;
+    fromFunction.invalidate?.();
+
+    expect(configured.invalidate).not.toHaveBeenCalled();
+
+    // An explicit `invalidateAuthToken()` still reaches it.
+    manager.invalidate();
+    expect(configured.invalidate).toHaveBeenCalledTimes(1);
   });
 
   it('returns undefined once authToken is unset, so no request is signed', () => {
