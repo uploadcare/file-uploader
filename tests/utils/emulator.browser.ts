@@ -11,7 +11,8 @@ import { delay } from '@/utils/delay';
  * - `XMLHttpRequestInterceptor` answers XHR (every upload) in-process, so `xhr.upload` progress fires per body
  *   chunk, as MSW's recipe describes (https://mswjs.io/docs/recipes/xmlhttprequest-progress-events/);
  * - the MSW Service Worker answers `fetch` and resource loads (`<img>`), which no in-page hook can reach.
- * `handle` returns `undefined` for anything that is not Uploadcare, and that goes through to the real network.
+ * `handle` returns `undefined` for anything that is not Uploadcare; only the page's own origin (the Vite server) may
+ * pass through, everything else fails loudly, so a new or mistyped endpoint cannot slip out to the real service.
  *
  * `E2E_NET=live` leaves the page alone and lets the suite hit the real service; see `./network.ts`.
  */
@@ -19,11 +20,25 @@ const isLive = import.meta.env.E2E_NET === 'live';
 
 let started: Promise<void> | undefined;
 
+/** `undefined` for a request the page may make, an error naming the URL for one that would leave it. */
+const refuse = (url: string): TypeError | undefined => {
+  if (new URL(url).origin === location.origin) {
+    return;
+  }
+  const error = new TypeError(`E2E_NET=fake: ${url} is neither Uploadcare nor the Vite server`);
+  console.error(error.message);
+  return error;
+};
+
 const start = async () => {
   const xhr = new XMLHttpRequestInterceptor();
   xhr.on('request', async ({ request, controller }) => {
     const response = await handle(request);
     if (!response) {
+      const error = refuse(request.url);
+      if (error) {
+        controller.errorWith(error);
+      }
       return;
     }
     // One macrotask between `send()` and the first upload event. In-process the whole XHR would otherwise finish
@@ -34,7 +49,15 @@ const start = async () => {
   });
   xhr.apply();
 
-  const worker = setupWorker(http.all('*', async ({ request }) => (await handle(request)) ?? passthrough()));
+  const worker = setupWorker(
+    http.all('*', async ({ request }) => {
+      const response = await handle(request);
+      if (response) {
+        return response;
+      }
+      return refuse(request.url) ? Response.error() : passthrough();
+    }),
+  );
   // bypass: the page's own modules come from the Vite server.
   await worker.start({ onUnhandledRequest: 'bypass', quiet: true });
 };
