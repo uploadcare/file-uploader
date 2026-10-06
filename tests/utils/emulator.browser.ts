@@ -58,8 +58,10 @@ const start = async () => {
       return refuse(request.url) ? Response.error() : passthrough();
     }),
   );
-  // bypass: the page's own modules come from the Vite server.
-  await worker.start({ onUnhandledRequest: 'bypass', quiet: true });
+  // The worker script is served by @vitest/browser at /mockServiceWorker.js (it maps the path to msw's own copy), so
+  // there is no `msw init`. Vitest 4 mocks modules over RPC, not through MSW, so this is the only worker in the page.
+  // `http.all('*')` handles every request, so `onUnhandledRequest` never fires and is left at its default.
+  await worker.start({ quiet: true });
 };
 
 /** Starts both once per page (one per test file) and clears what the last test uploaded. Live runs touch nothing. */
