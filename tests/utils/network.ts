@@ -83,9 +83,6 @@ export const useFakeNetwork: BrowserCommand<[]> = async ({ page }) => {
   }
 
   const session = `session-${++opened}`;
-  sessions.set(page, session);
-  resetSession(session);
-
   const origin = await emulatorOrigin();
   await page.route(thirdParty, async (route) => {
     const request = route.request();
@@ -103,4 +100,8 @@ export const useFakeNetwork: BrowserCommand<[]> = async ({ page }) => {
       console.log('[emulator]', request.method(), url.toString().slice(0, 140));
     }
   });
+  // Only once the redirect is in place: a page with a session is taken as routed, and a failed start must not let
+  // the file's next test through to the real network.
+  sessions.set(page, session);
+  resetSession(session);
 };
