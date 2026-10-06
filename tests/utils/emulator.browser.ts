@@ -4,6 +4,7 @@ import { XMLHttpRequestInterceptor } from '@mswjs/interceptors/XMLHttpRequest';
 import { handle, resetSession } from '@uploadcare/api-emulator';
 import { http, passthrough } from 'msw';
 import { setupWorker } from 'msw/browser';
+import { delay } from '@/utils/delay';
 
 /**
  * The fake Uploadcare, running in the page. Two ways in, one state:
@@ -18,36 +19,18 @@ const isLive = import.meta.env.E2E_NET === 'live';
 
 let started: Promise<void> | undefined;
 
-const nextTask = () => new Promise<void>((resolve) => setTimeout(resolve));
-
-/**
- * Holds the response body back by one macrotask. In-page, the whole XHR — upload progress, response, `load` — would
- * otherwise complete within microtasks of `send()`, before the uploader's store flushes (`TypedCollection`, a
- * `setTimeout(0)`), and `file-upload-start`/`file-upload-progress` would never be observed: by the time the store
- * looks, the file is already done. A real network cannot answer before the body has gone out; this keeps that order.
- */
-const afterUpload = (response: Response): Response => {
-  if (!response.body) {
-    return response;
-  }
-  const body = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      const bytes = new Uint8Array(await response.arrayBuffer());
-      await nextTask();
-      controller.enqueue(bytes);
-      controller.close();
-    },
-  });
-  return new Response(body, response);
-};
-
 const start = async () => {
   const xhr = new XMLHttpRequestInterceptor();
   xhr.on('request', async ({ request, controller }) => {
     const response = await handle(request);
-    if (response) {
-      controller.respondWith(afterUpload(response));
+    if (!response) {
+      return;
     }
+    // One macrotask between `send()` and the first upload event. In-process the whole XHR would otherwise finish
+    // within microtasks of `send()`, before the uploader's store flushes (`TypedCollection`, a `setTimeout(0)`), and
+    // `file-upload-start`/`file-upload-progress` would never be observed. A real network cannot answer that fast.
+    await delay(0);
+    controller.respondWith(response);
   });
   xhr.apply();
 
