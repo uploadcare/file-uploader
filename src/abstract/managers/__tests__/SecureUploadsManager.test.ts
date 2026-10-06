@@ -306,6 +306,20 @@ describe('SecureUploadsManager', () => {
         consoleErrorSpy.mockRestore();
       });
 
+      it('should not report a resolver error that arrives after destroy', async () => {
+        let rejectResolver!: (error: Error) => void;
+        createManager({
+          secureUploadsSignatureResolver: () => new Promise((_resolve, reject) => (rejectResolver = reject)),
+        });
+
+        const pending = manager.getSecureToken();
+        manager.destroy();
+        rejectResolver(new Error('Resolver failed'));
+
+        expect(await pending).toBeNull();
+        expect(bag.telemetryManager.sendEventError).not.toHaveBeenCalled();
+      });
+
       it('should debug print when token is not set yet', async () => {
         const mockToken: SecureUploadsSignatureAndExpire = {
           secureSignature: 'resolved-signature',
