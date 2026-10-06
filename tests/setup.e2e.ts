@@ -1,11 +1,12 @@
 import { afterEach, beforeAll, beforeEach } from 'vitest';
-import { commands, page } from 'vitest/browser';
+import { page } from 'vitest/browser';
 import type { UploadCtxProvider } from '@/index';
+import { useEmulator } from '~/tests/utils/emulator.browser';
 import '~/tests/utils/test-renderer';
 
 /** Answers every third-party request from the fake Uploadcare, with nothing left over from the last test. */
 beforeEach(async () => {
-  await commands.useFakeNetwork();
+  await useEmulator();
 });
 
 /** Registers every custom element once per file, so no spec has to. `<uc-img>` ships from its own entry. */
