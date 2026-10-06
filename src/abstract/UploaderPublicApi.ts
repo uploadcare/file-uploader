@@ -366,6 +366,7 @@ export class UploaderPublicApi extends SharedInstance {
         const srcKey = this._sourceList[0];
 
         void this._pluginsReady().then(() => {
+          if (this._isDestroyed) return;
           const sources = this._sharedInstancesBag.pluginManager.snapshot().sources;
           const registeredSource = sources.find((s) => s.id === srcKey);
 
@@ -422,6 +423,7 @@ export class UploaderPublicApi extends SharedInstance {
       : []
   ) => {
     void this._pluginsReady().then(() => {
+      if (this._isDestroyed) return;
       this._ctx.pub('*currentActivityParams', params[0] ?? {});
       this._ctx.pub('*currentActivity', activityType);
       waitForBlockInCtx(
@@ -483,6 +485,7 @@ export class UploaderPublicApi extends SharedInstance {
 
   public setModalState = (opened: boolean): void => {
     void this._pluginsReady().then(() => {
+      if (this._isDestroyed) return;
       if (!opened) {
         this._sharedInstancesBag.modalManager?.close(this._ctx.read('*currentActivity'));
         this._ctx.pub('*currentActivity', null);
