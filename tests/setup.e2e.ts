@@ -4,7 +4,10 @@ import type { UploadCtxProvider } from '@/index';
 import { resetEmulator } from '~/tests/utils/emulator.browser';
 import '~/tests/utils/test-renderer';
 
-/** Answers every third-party request from the fake Uploadcare, with nothing left over from the last test. */
+/**
+ * Points Uploadcare's hosts at a fresh emulator session and refuses other third-party requests; does nothing when
+ * `E2E_NET=live`.
+ */
 beforeEach(resetEmulator);
 
 /** Registers every custom element once per file, so no spec has to. `<uc-img>` ships from its own entry. */
