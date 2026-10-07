@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { PubSub } from '../lit/PubSubCompat';
 import type { SharedState } from '../lit/SharedState';
 import { createSharedInstancesBag } from '../lit/shared-instances';
@@ -7,16 +7,17 @@ import { UploaderPublicApi } from './UploaderPublicApi';
 
 describe('UploaderPublicApi', () => {
   it.each([
-    ['initFlow', (api: UploaderPublicApi) => api.initFlow()],
-    ['setCurrentActivity', (api: UploaderPublicApi) => api.setCurrentActivity('upload-list')],
-    ['setModalState', (api: UploaderPublicApi) => api.setModalState(true)],
-  ])('%s does not read shared instances when destroyed while plugins are loading', async (_name, call) => {
+    ['initFlow', (api: UploaderPublicApi) => api.initFlow(), 'snapshot'],
+    ['setCurrentActivity', (api: UploaderPublicApi) => api.setCurrentActivity('upload-list'), 'pub'],
+    ['setModalState', (api: UploaderPublicApi) => api.setModalState(false), 'pub'],
+  ] as const)('%s does nothing once destroyed while plugins are loading', async (_name, call, touched) => {
     let pluginsLoaded!: () => void;
     const pluginsReady = new Promise<void>((resolve) => (pluginsLoaded = resolve));
+    const snapshot = vi.fn(() => ({ sources: [] }));
     const ctxName = 'public-api-teardown';
     const ctx = PubSub.registerCtx<Record<string, unknown>>(
       {
-        '*pluginManager': { pluginsReady: () => pluginsReady },
+        '*pluginManager': { pluginsReady: () => pluginsReady, snapshot },
         '*blocksRegistry': new Set(),
         '*uploadCollection': { size: 0 },
         '*currentActivity': 'upload-list',
@@ -24,21 +25,15 @@ describe('UploaderPublicApi', () => {
       },
       ctxName,
     ) as unknown as PubSub<SharedState>;
+    onTestFinished(() => PubSub.deleteCtx(ctxName));
     const api = new UploaderPublicApi(createSharedInstancesBag(() => ctx));
+    const pub = vi.spyOn(ctx, 'pub');
     call(api);
 
-    // What LitBlock.destroyCtxCallback does: destroy the instances, null their keys, delete the ctx.
     api.destroy();
-    ctx.pub('*pluginManager', null as never);
-    ctx.pub('*blocksRegistry', null as never);
-    PubSub.deleteCtx(ctxName);
-
-    const unhandled = vi.fn();
-    process.on('unhandledRejection', unhandled);
     pluginsLoaded();
     await new Promise((resolve) => setTimeout(resolve, 0));
-    process.off('unhandledRejection', unhandled);
 
-    expect(unhandled).not.toHaveBeenCalled();
+    expect({ snapshot, pub }[touched]).not.toHaveBeenCalled();
   });
 });
