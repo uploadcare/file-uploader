@@ -84,6 +84,10 @@ export default defineConfig({
           },
           browser: {
             enabled: true,
+            // Vitest's default is headless only under CI, so a local run opens a real window with the Vitest UI, and
+            // whatever the desktop does to it (a click, a focus change, a drag on the UI's splitter) lands in the
+            // tests. `test:e2e:dev` turns it back on to watch a run.
+            headless: true,
             provider: playwright({
               launchOptions: {
                 args: [
