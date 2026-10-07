@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
@@ -98,6 +98,37 @@ describe('events: upload lifecycle', () => {
     expect(recorder.detailsOf('common-upload-start')).toHaveLength(1);
     expect(recorder.detailsOf('common-upload-success')).toHaveLength(1);
     expect(recorder.detailsOf(CHANGE).at(-1)).toMatchObject({ status: 'success', successCount: 2 });
+  });
+
+  it('fires file-upload-start for an upload that finishes before its start is flushed', async () => {
+    const { api, provider } = await renderSolution('regular', { confirmUpload: true });
+    const recorder = recordEvents(provider);
+    api.addFileFromObject(IMAGE.PIXEL);
+    await recorder.waitFor('file-added');
+    await settle();
+
+    // The collection reports its changes in batches, on a 0ms timer. A busy or background tab runs that timer late
+    // while the network keeps answering, so a small upload can start and finish inside one batch. Holding the
+    // collection's change notifications back until the upload is done gets there on purpose.
+    const collection = provider.uploadCollection as unknown as {
+      _notifyObservers: (prop: string, uid: string) => void;
+    };
+    const notify = collection._notifyObservers;
+    const held: [string, string][] = [];
+    collection._notifyObservers = (prop, uid) => {
+      held.push([prop, uid]);
+      if (prop !== 'fileInfo' || !provider.uploadCollection.read(uid)?.getValue('fileInfo')) return;
+      collection._notifyObservers = notify;
+      for (const args of held) notify(...args);
+    };
+    onTestFinished(() => {
+      collection._notifyObservers = notify;
+    });
+
+    api.uploadAll();
+    await recorder.waitFor('common-upload-success');
+
+    expect(recorder.detailsOf('file-upload-start')).toHaveLength(1);
   });
 
   it('fires file-removed and a trailing change when a file is removed', async () => {
