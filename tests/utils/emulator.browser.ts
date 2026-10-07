@@ -1,6 +1,5 @@
 // TEMPORARY: file: dependency, see package.json's "@uploadcare/api-emulator" — swap for a published version range
 // once the package ships, and drop this comment.
-import { setupEmulator } from '@uploadcare/api-emulator/browser';
 
 /**
  * The fake Uploadcare, running in the page: `@uploadcare/api-emulator/browser` answers Uploadcare's hosts, lets the
@@ -10,12 +9,16 @@ import { setupEmulator } from '@uploadcare/api-emulator/browser';
  *
  * `E2E_NET=live` leaves the page alone and lets the suite hit the real service; see `./network.ts`.
  */
+import { setupEmulator } from '@uploadcare/api-emulator/browser';
+
 /** The page-side flag; `./network.ts` is the Node side. */
 export const isLive = import.meta.env.E2E_NET === 'live';
 
+// Starts once per test file, on the first reset.
 const emulator = isLive ? undefined : setupEmulator();
 
-/** Starts the emulator once per page (one per test file) and clears what the last test uploaded. Live runs touch nothing. */
-export const useEmulator = async () => {
-  await emulator?.reset();
-};
+/**
+ * Clears what the last test did and answers the fresh session, for a test to steer with `use()`/`on()`.
+ * `undefined` live, where there is nothing to reset.
+ */
+export const resetEmulator = () => emulator?.reset();
