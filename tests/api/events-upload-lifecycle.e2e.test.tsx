@@ -80,12 +80,21 @@ describe('events: upload lifecycle', () => {
   });
 
   it('fires per-file events for every file when uploading several at once', async () => {
-    const { api, provider } = await renderSolution();
+    // `confirmUpload`, so this `uploadAll()` is the only thing that starts an upload. With auto-upload it is a no-op
+    // (it skips files still being validated) and the uploader starts each file once its validation lands, so two
+    // validations finishing a throttle window apart make two batches and two `common-upload-start`s.
+    const { api, provider } = await renderSolution('regular', { confirmUpload: true });
     const recorder = recordEvents(provider);
 
     api.addFileFromObject(IMAGE.PIXEL);
     api.addFileFromObject(IMAGE.SQUARE);
-    await vi.waitFor(() => expect(recorder.detailsOf('file-added')).toHaveLength(2), { timeout: 20_000 });
+    await vi.waitFor(
+      () => {
+        expect(recorder.detailsOf('file-added')).toHaveLength(2);
+        expect(api.getOutputCollectionState().allEntries.filter((entry) => !entry.isValidationPending)).toHaveLength(2);
+      },
+      { timeout: 20_000 },
+    );
     api.uploadAll();
 
     await recorder.waitFor('common-upload-success');
@@ -98,6 +107,32 @@ describe('events: upload lifecycle', () => {
     expect(recorder.detailsOf('common-upload-start')).toHaveLength(1);
     expect(recorder.detailsOf('common-upload-success')).toHaveLength(1);
     expect(recorder.detailsOf(CHANGE).at(-1)).toMatchObject({ status: 'success', successCount: 2 });
+  });
+
+  it('fires common-upload-success once when the files are validated apart after uploading', async () => {
+    // Every uploaded file is validated again, and the collection reports success when those results land. A validator
+    // that takes longer on one file splits them into two batches, both seeing every file uploaded.
+    const { api, provider } = await renderSolution('regular', {
+      confirmUpload: true,
+      fileValidators: [
+        async (entry) => {
+          if (entry.status === 'success' && entry.name === IMAGE.SQUARE.name) await delay(700);
+          return undefined;
+        },
+      ],
+    });
+    const recorder = recordEvents(provider);
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.addFileFromObject(IMAGE.SQUARE);
+    await recorder.waitFor('file-added');
+    await settle();
+
+    api.uploadAll();
+    await recorder.waitFor('common-upload-success');
+    await delay(1500);
+
+    expect(recorder.detailsOf('file-upload-success')).toHaveLength(2);
+    expect(recorder.detailsOf('common-upload-success')).toHaveLength(1);
   });
 
   it('fires file-upload-start for an upload that finishes before its start is flushed', async () => {

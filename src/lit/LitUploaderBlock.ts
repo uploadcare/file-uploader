@@ -155,6 +155,12 @@ export class LitUploaderBlock extends LitActivityBlock {
   private _groupGeneration = 0;
 
   /**
+   * Whether `common-upload-success` has fired for the collection as it is. Every file is validated again once uploaded,
+   * and validations that land in separate batches would each see the whole collection done and report it again.
+   */
+  private _isUploadSuccessReported = false;
+
+  /**
    * Creates the group for `collectionState` and reports the outcome, whichever
    * it is. Never rejects: the caller does not wait for the group, so a
    * rejection would have nowhere to go.
@@ -225,6 +231,7 @@ export class LitUploaderBlock extends LitActivityBlock {
       // Any group request in flight is now about a collection that no longer
       // exists, so its result, good or bad, is dropped on arrival.
       this._groupGeneration += 1;
+      this._isUploadSuccessReported = false;
       this.$['*groupInfo'] = null;
       // The collection changed, so the previous failure is about a group that
       // is no longer the one being made.
@@ -342,17 +349,18 @@ export class LitUploaderBlock extends LitActivityBlock {
       const errorItems = uploadCollection.findItems((entry) => {
         return entry.getValue('errors').length > 0;
       });
-      if (
+      const isUploadSuccess =
         uploadCollection.size > 0 &&
         errorItems.length === 0 &&
         uploadCollection.size === loadedItems.length &&
-        this.$['*collectionErrors'].length === 0
-      ) {
+        this.$['*collectionErrors'].length === 0;
+      if (isUploadSuccess && !this._isUploadSuccessReported) {
         this.emit(
           EventType.COMMON_UPLOAD_SUCCESS,
           this.api.getOutputCollectionState() as OutputCollectionState<'success'>,
         );
       }
+      this._isUploadSuccessReported = isUploadSuccess;
     }
     if (changeMap.cdnUrl) {
       const uids = [...changeMap.cdnUrl].filter((uid) => {
