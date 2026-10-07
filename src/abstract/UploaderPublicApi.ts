@@ -507,6 +507,7 @@ export class UploaderPublicApi extends SharedInstance {
           onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
         },
       ).then(() => {
+        if (this._isDestroyed) return;
         this._sharedInstancesBag.modalManager?.open(activityType);
       });
     });
