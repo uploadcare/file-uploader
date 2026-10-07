@@ -3,6 +3,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { commands } from 'vitest/browser';
 import type { Config } from '@/index';
 import { IMAGE } from '~/tests/fixtures/files';
+import type { AuthTokenKind } from '~/tests/utils/commands';
+import { resetEmulator } from '~/tests/utils/emulator.browser';
 import { inCtx, renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -16,12 +18,19 @@ import '~/types/jsx';
  * `upload-errors.e2e` how a failure is classified.
  *
  * The uploads need a project with Signed Uploads enabled, which rejects every
- * unsigned request: the emulator's by default, a real one when `E2E_NET=live`.
+ * unsigned request: one the emulator turns it on for, a real one when `E2E_NET=live`.
  * Tokens are minted by a Node-side command, since the project secret key must
  * never reach the page, and a live run without its credentials skips them.
  */
 
 const TOKEN = 'eyJ.a-real-looking-token.sig';
+
+/** Mints credentials, and against the emulator starts the test on a session whose project enforces them. */
+const signedProject = async (kind?: AuthTokenKind) => {
+  const credentials = await commands.mintSecureUploadsCredentials(kind);
+  if (credentials) (await resetEmulator())?.use('signedUploads', { publicKey: credentials.publicKey });
+  return credentials;
+};
 
 const entry = (api: Awaited<ReturnType<typeof renderSolution>>['api']) => api.getOutputCollectionState().allEntries[0];
 
@@ -39,7 +48,7 @@ describe('authToken is not exposed', () => {
   });
 
   it('stays out of the debug log', async (ctx) => {
-    const credentials = await commands.mintSecureUploadsCredentials();
+    const credentials = await signedProject();
     if (!credentials) return ctx.skip();
 
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
@@ -67,7 +76,7 @@ describe('authToken is not exposed', () => {
 
 describe('authToken against Upload API', () => {
   it('uploads a file the project would otherwise refuse', async (ctx) => {
-    const credentials = await commands.mintSecureUploadsCredentials();
+    const credentials = await signedProject();
     if (!credentials) return ctx.skip();
 
     const { api } = await renderSolution(
@@ -86,7 +95,7 @@ describe('authToken against Upload API', () => {
   it('fails the upload when the same project gets no token', async (ctx) => {
     // Without this the rest proves nothing: a project that does not enforce
     // signed uploads would accept every upload below, token or not.
-    const credentials = await commands.mintSecureUploadsCredentials();
+    const credentials = await signedProject();
     if (!credentials) return ctx.skip();
 
     const { api } = await renderSolution('regular', { store: false }, { pubkey: credentials.publicKey });
@@ -101,7 +110,7 @@ describe('authToken against Upload API', () => {
   });
 
   it('uploads with a token function, asking it once for the whole upload', async (ctx) => {
-    const credentials = await commands.mintSecureUploadsCredentials();
+    const credentials = await signedProject();
     if (!credentials) return ctx.skip();
 
     // upload-client asks before every request, so without the uploader's cache
@@ -128,7 +137,7 @@ describe('authToken against Upload API', () => {
 
   for (const [kind, code] of rejectedTokens) {
     it(`surfaces the ${kind} token as its Upload API error code`, async (ctx) => {
-      const credentials = await commands.mintSecureUploadsCredentials(kind);
+      const credentials = await signedProject(kind);
       if (!credentials) return ctx.skip();
 
       const { api } = await renderSolution(
@@ -150,7 +159,7 @@ describe('authToken against Upload API', () => {
   }
 
   it('reports a token function that throws as AUTH_TOKEN_ERROR, without reaching the API', async (ctx) => {
-    const credentials = await commands.mintSecureUploadsCredentials();
+    const credentials = await signedProject();
     if (!credentials) return ctx.skip();
 
     const cause = new Error('token endpoint is down');
