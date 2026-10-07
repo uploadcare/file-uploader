@@ -77,21 +77,16 @@ jobs:
         run: npm run build
       # `test:coverage` runs both vitest projects in one pass, so coverage is
       # merged across specs and e2e instead of each run overwriting the other.
+      # Without the Signed Uploads secrets: a fake run never reads them, and a
+      # live one skips the auth token tests, which the next step runs.
       - name: Run tests
-        env:
-          # A real project with Signed Uploads enabled, which rejects every
-          # unsigned request — so it cannot be the default test project. Live
-          # runs of `tests/uploading/auth-token.e2e.test.tsx` skip without it.
-          # Set per step rather than per job, so install and build never see it.
-          UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY }}
-          UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY }}
         run: npm run test:coverage && npm run test:locales
       # The emulator only knows the token rules it was written with, so the auth
       # token tests also run against the real API on every PR, on purpose: only
       # it can say Upload API still accepts the tokens the uploader sends.
-      # Skipped when the step above already ran live.
+      # The only step that sees the secrets of that project, a real one with
+      # Signed Uploads enabled.
       - name: Run auth token tests against the real API
-        if: env.E2E_NET != 'live'
         env:
           UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY }}
           UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY }}
