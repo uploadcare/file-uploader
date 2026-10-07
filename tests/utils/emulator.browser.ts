@@ -12,7 +12,7 @@
 import { setupEmulator } from '@uploadcare/api-emulator/browser';
 
 /** The page-side flag; `./network.ts` is the Node side. */
-export const isLive = import.meta.env.E2E_NET === 'live';
+const isLive = import.meta.env.E2E_NET === 'live';
 
 // Starts once per test file, on the first reset.
 const emulator = isLive ? undefined : setupEmulator();
