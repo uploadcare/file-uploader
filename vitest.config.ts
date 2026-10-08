@@ -16,7 +16,10 @@ export default defineConfig({
   resolve: {
     alias,
   },
-  esbuild: {
+  oxc: {
+    // Oxc's dev JSX transform adds `__self`/`__source` props even on the classic runtime, and render-jsx would set
+    // them as attributes; esbuild's never did.
+    jsx: { development: false },
     jsxInject: "import { renderer } from '~/tests/utils/test-renderer';",
   },
   test: {
@@ -52,6 +55,9 @@ export default defineConfig({
       },
       {
         extends: true,
+        // Vitest still reads these files through Vite to find the tests in them, and Vite 8's Oxc honours the nearest
+        // tsconfig's `jsx: "preserve"` (tsconfig.test.json), which leaves JSX it cannot parse. Use the typecheck's own.
+        tsconfig: './tsconfig.types-test.json',
         test: {
           name: 'types',
           include: ['./types/test/**/*.test-d.tsx'],
