@@ -1,6 +1,7 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { playwright } from '@vitest/browser-playwright';
+import { msw } from 'msw/vite';
 import { defineConfig } from 'vitest/config';
 import { commands } from './tests/utils/commands';
 import { isLive, mode } from './tests/utils/network';
@@ -73,6 +74,9 @@ export default defineConfig({
       },
       {
         extends: true,
+        // Serves `/mockServiceWorker.js` from the installed msw for `tests/utils/emulator.browser.ts`. The emulator
+        // builds its own network, so only the worker script is needed here.
+        plugins: [msw({ mode: 'worker-only' })],
         test: {
           name: 'e2e',
           setupFiles: ['./tests/setup.e2e.ts'],
