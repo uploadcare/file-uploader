@@ -16,9 +16,12 @@ import { setupEmulator } from '@uploadcare/api-emulator/browser';
 export const isLive = import.meta.env.E2E_NET === 'live';
 
 // Starts once per test file, on the first reset.
-// The option tests point `baseUrl` and `cdnCname` at these. Routes are matched by path, so the Upload API answers on
-// the custom upload host as well as the CDN does on the custom cname.
-const emulator = isLive ? undefined : setupEmulator({ cdnHosts: ['upload.example.com', 'cdn.example.com'] });
+// More hosts to answer. The option tests point `baseUrl` and `cdnCname` at the example.com ones; routes are matched by
+// path, so the Upload API answers on the custom upload host as well as the CDN does on the custom cname. The Unsplash
+// plugin's API is answered by the routes its tests add with `session.on()`.
+const emulator = isLive
+  ? undefined
+  : setupEmulator({ cdnHosts: ['upload.example.com', 'cdn.example.com', 'api.unsplash.com'] });
 
 let current: EmulatorSession | undefined;
 
