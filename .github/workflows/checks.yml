@@ -2,6 +2,10 @@ name: checks
 
 on:
   pull_request:
+  # Runs the whole e2e suite against the real API on demand (Actions > checks >
+  # Run workflow), e.g. on master between releases, to find API drift before a
+  # release branch does.
+  workflow_dispatch:
 
 # The checks only read the repo; keep the GITHUB_TOKEN least-privilege
 # (the repo default is write-all).
@@ -42,9 +46,10 @@ jobs:
       # normal PR needs neither API access nor luck with timing. Release
       # branches run against the real service instead — a fake cannot tell
       # you the upload API changed under you — and any PR can opt in by
-      # carrying the `e2e-live` label.
+      # carrying the `e2e-live` label, as does a manual run.
       E2E_NET: >-
-        ${{ (startsWith(github.head_ref, 'releases/v')
+        ${{ (github.event_name == 'workflow_dispatch'
+          || startsWith(github.head_ref, 'releases/v')
           || contains(github.event.pull_request.labels.*.name, 'e2e-live'))
           && 'live' || 'fake' }}
     steps:
