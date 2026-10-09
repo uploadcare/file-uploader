@@ -173,5 +173,6 @@ describe.skipIf(!hasCredentials)('authToken against Upload API', () => {
     assert(error.type === 'AUTH_TOKEN_ERROR', `expected AUTH_TOKEN_ERROR, got ${error.type}`);
     expect(error.payload?.error).toBeInstanceOf(AuthTokenResolverError);
     expect(error.payload?.error.cause).toBe(cause);
+    expect(error.message).toBe(error.payload?.error.message);
   });
 });
