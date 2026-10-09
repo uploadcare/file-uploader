@@ -95,31 +95,34 @@ describe('filesViewMode', () => {
 
 describe('gridShowFileNames', () => {
   /** The name is always in the DOM; the option toggles `hidden` on it (FileItem.ts:557). */
-  const fileNameVisible = async (configProps: Parameters<typeof renderSolution>[1]) => {
+  const fileName = async (configProps: Parameters<typeof renderSolution>[1]) => {
     const { root, api } = await renderSolution('regular', configProps);
     api.addFileFromObject(IMAGE.PIXEL);
     api.initFlow();
     await expectActivity(root, 'upload-list');
 
-    const name = () => within(root).getByTestId('uc-file-item--file-name').query() as HTMLElement | null;
+    const name = within(root).getByTestId('uc-file-item--file-name');
     // The file item renders its inner template a beat after the list becomes active.
-    await expect.poll(() => name()?.textContent).toBe('pixel.jpg');
-
-    return !name()?.hidden;
+    await expect.element(name).toHaveTextContent('pixel.jpg');
+    return name;
   };
 
   it('hides names in grid mode by default', async () => {
-    expect(await fileNameVisible({ filesViewMode: 'grid' })).toBe(false);
+    await expect.element(await fileName({ filesViewMode: 'grid' })).toHaveAttribute('hidden');
   });
 
   it('shows names in grid mode when set', async () => {
-    expect(await fileNameVisible({ filesViewMode: 'grid', gridShowFileNames: true })).toBe(true);
+    await expect
+      .element(await fileName({ filesViewMode: 'grid', gridShowFileNames: true }))
+      .not.toHaveAttribute('hidden');
   });
 
   it('is ignored in list mode, where names always show', async () => {
     // `_updateShowFileNames` short-circuits for list mode (FileItem.ts:266), so the option only means anything in
     // grid mode — the docs describe it as grid-only and the code agrees.
-    expect(await fileNameVisible({ filesViewMode: 'list', gridShowFileNames: false })).toBe(true);
+    await expect
+      .element(await fileName({ filesViewMode: 'list', gridShowFileNames: false }))
+      .not.toHaveAttribute('hidden');
   });
 });
 

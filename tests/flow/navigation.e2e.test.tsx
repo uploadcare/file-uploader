@@ -160,7 +160,7 @@ describe('inline', () => {
     await expectActivity(root, 'start-from');
 
     const cancel = root.querySelector('.uc-cancel-btn') as HTMLButtonElement;
-    expect(cancel.hidden).toBe(true);
+    await expect.element(cancel).toHaveAttribute('hidden');
   });
 
   it('keeps cancel hidden after coming back to an empty start-from', async () => {
@@ -174,7 +174,7 @@ describe('inline', () => {
     // Correct here: history is back at start-from and the collection is empty, so cancelling would have nowhere to
     // go (`_couldHistoryBack` and `_couldShowList` are both false — FileUploaderInline.ts:52).
     const cancel = root.querySelector('.uc-cancel-btn') as HTMLButtonElement;
-    expect(cancel.hidden).toBe(true);
+    await expect.element(cancel).toHaveAttribute('hidden');
     // The sentinel: with a file in the list, the next history reset (the activity going to null) recomputes the
     // button and shows it. Nothing may have shown it before the file arrived.
     const hidden = logHidden(cancel);
@@ -200,7 +200,7 @@ describe('inline', () => {
     await expectActivity(root, 'start-from');
 
     const cancel = root.querySelector('.uc-cancel-btn') as HTMLButtonElement;
-    expect(cancel.hidden).toBe(true);
+    await expect.element(cancel).toHaveAttribute('hidden');
     const hidden = logHidden(cancel);
 
     cancel.click();
