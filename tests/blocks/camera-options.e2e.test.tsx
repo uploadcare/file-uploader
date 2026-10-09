@@ -10,7 +10,7 @@ import '~/types/jsx';
  * `--use-fake-device-for-media-stream` (vitest.config.ts), so the camera activity opens with a working stream and
  * these can be asserted on the rendered controls rather than mocked.
  *
- * Nested test ids are prefixed with the host tag by TestModeController, hence `uc-camera-source--tab-photo`.
+ * Nested test ids are prefixed with the host tag by TestModeController, hence `uc-camera-source--toggle-microphone`.
  */
 
 /** Opens the camera activity and returns the solution root once it is really on screen. */
@@ -67,14 +67,14 @@ describe('enableAudioRecording', () => {
 
   it('shows the microphone toggle on the video tab, which is the default', async () => {
     const { camera } = await openCamera();
-    await camera.getByTestId('uc-camera-source--tab-video').click();
+    await camera.getByRole('button', { name: 'Video', exact: true }).click();
 
     await expect.element(camera.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
   });
 
   it('hides the microphone toggle on the video tab when disabled', async () => {
     const { camera } = await openCamera({ enableAudioRecording: false });
-    await camera.getByTestId('uc-camera-source--tab-video').click();
+    await camera.getByRole('button', { name: 'Video', exact: true }).click();
 
     await expect.element(camera.getByTestId('uc-camera-source--toggle-microphone')).not.toBeVisible();
   });
@@ -84,20 +84,24 @@ describe('cameraModes', () => {
   it('offers both tabs by default', async () => {
     const { camera } = await openCamera();
 
-    await expect.element(camera.getByTestId('uc-camera-source--tab-photo')).toBeVisible();
-    await expect.element(camera.getByTestId('uc-camera-source--tab-video')).toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Photo', exact: true })).toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Video', exact: true })).toBeVisible();
   });
 
   it('hides the video tab when only photo is allowed', async () => {
     const { camera } = await openCamera({ cameraModes: 'photo' });
 
-    await expect.element(camera.getByTestId('uc-camera-source--tab-video')).not.toBeVisible();
+    await expect
+      .element(camera.getByRole('button', { name: 'Video', exact: true, includeHidden: true }))
+      .not.toBeVisible();
   });
 
   it('hides the photo tab when only video is allowed', async () => {
     const { camera } = await openCamera({ cameraModes: 'video' });
 
-    await expect.element(camera.getByTestId('uc-camera-source--tab-photo')).not.toBeVisible();
+    await expect
+      .element(camera.getByRole('button', { name: 'Photo', exact: true, includeHidden: true }))
+      .not.toBeVisible();
   });
 });
 
@@ -107,14 +111,16 @@ describe('enableVideoRecording (deprecated)', () => {
   it('drops the video tab when disabled', async () => {
     const { camera } = await openCamera({ enableVideoRecording: false });
 
-    await expect.element(camera.getByTestId('uc-camera-source--tab-video')).not.toBeVisible();
+    await expect
+      .element(camera.getByRole('button', { name: 'Video', exact: true, includeHidden: true }))
+      .not.toBeVisible();
   });
 
   it('leaves both tabs when enabled', async () => {
     const { camera } = await openCamera({ enableVideoRecording: true });
 
-    await expect.element(camera.getByTestId('uc-camera-source--tab-video')).toBeVisible();
-    await expect.element(camera.getByTestId('uc-camera-source--tab-photo')).toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Video', exact: true })).toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Photo', exact: true })).toBeVisible();
   });
 });
 
@@ -122,13 +128,17 @@ describe('defaultCameraMode', () => {
   it('opens on the photo tab by default', async () => {
     const { camera } = await openCamera();
 
-    await expect.element(camera.getByTestId('uc-camera-source--tab-photo')).toHaveClass('uc-active');
+    await expect
+      .element(camera.getByRole('button', { name: 'Photo', exact: true }))
+      .toHaveAttribute('aria-pressed', 'true');
   });
 
   it('opens on video when asked', async () => {
     const { camera } = await openCamera({ defaultCameraMode: 'video' });
 
-    await expect.element(camera.getByTestId('uc-camera-source--tab-video')).toHaveClass('uc-active');
+    await expect
+      .element(camera.getByRole('button', { name: 'Video', exact: true }))
+      .toHaveAttribute('aria-pressed', 'true');
   });
 });
 

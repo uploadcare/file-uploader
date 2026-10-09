@@ -63,12 +63,12 @@ describe('events: sources', () => {
 
     await clickSource(root, 'Camera');
     // The fake media device comes from the chromium launch flags in vitest.config.ts.
-    const shot = within(root).getByTestId('uc-camera-source--shot');
+    const shot = within(root).getByRole('button', { name: 'Shot', exact: true });
     await expect.element(shot).toBeVisible();
     recorder.clear();
 
     await shot.click();
-    const accept = within(root).getByTestId('uc-camera-source--accept');
+    const accept = within(root).getByRole('button', { name: 'Accept', exact: true });
     await expect.element(accept).toBeVisible();
     await accept.click();
 

@@ -30,11 +30,11 @@ describe('uc-file-uploader-inline', () => {
     const cameraSource = within(root).getByTestId('uc-camera-source');
     await expect.element(cameraSource).toBeVisible();
 
-    const tabVideo = cameraSource.getByTestId('uc-camera-source--tab-video');
+    const tabVideo = cameraSource.getByRole('button', { name: 'Video', exact: true });
     await userEvent.click(tabVideo);
-    await expect.element(tabVideo).toHaveClass('uc-active');
+    await expect.element(tabVideo).toHaveAttribute('aria-pressed', 'true');
 
     await expect.element(cameraSource.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
-    await expect.element(cameraSource.getByTestId('uc-camera-source--shot')).toBeInTheDocument();
+    await expect.element(cameraSource.getByRole('button', { name: 'Shot', exact: true })).toBeInTheDocument();
   });
 });

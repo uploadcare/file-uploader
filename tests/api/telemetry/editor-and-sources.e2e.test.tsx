@@ -71,15 +71,15 @@ describe('telemetry: sources', () => {
   it('reports the camera action events in order', { timeout: 60_000 }, async () => {
     const { root } = await renderSolution('regular', { qualityInsights: true });
     await clickSource(root, 'Camera');
-    const shot = within(root).getByTestId('uc-camera-source--shot');
+    const shot = within(root).getByRole('button', { name: 'Shot', exact: true });
     await expect.element(shot).toBeVisible();
     clearSent();
 
-    await within(root).getByTestId('uc-camera-source--tab-video').click();
-    await within(root).getByTestId('uc-camera-source--tab-photo').click();
+    await within(root).getByRole('button', { name: 'Video', exact: true }).click();
+    await within(root).getByRole('button', { name: 'Photo', exact: true }).click();
     await shot.click();
 
-    const accept = within(root).getByTestId('uc-camera-source--accept');
+    const accept = within(root).getByRole('button', { name: 'Accept', exact: true });
     await expect.element(accept).toBeVisible();
     await within(root).getByTestId('uc-camera-source').getByRole('button', { name: 'Retake', exact: true }).click();
 

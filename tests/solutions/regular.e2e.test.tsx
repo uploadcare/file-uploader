@@ -101,8 +101,8 @@ describe('uc-file-uploader-regular', () => {
       await expect.element(startFrom).not.toBeVisible();
       await expect.element(cameraSource).toBeVisible();
 
-      await userEvent.click(cameraSource.getByTestId('uc-camera-source--shot'));
-      await userEvent.click(cameraSource.getByTestId('uc-camera-source--accept'));
+      await userEvent.click(cameraSource.getByRole('button', { name: 'Shot', exact: true }));
+      await userEvent.click(cameraSource.getByRole('button', { name: 'Accept', exact: true }));
 
       await expect.element(uploadList).toBeVisible();
       await expect.element(within(root).getByText(/camera-\d+\.jpeg/)).toBeVisible();
