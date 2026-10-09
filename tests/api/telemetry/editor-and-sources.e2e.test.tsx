@@ -1,3 +1,4 @@
+import { EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { getCtxName } from '~/tests/utils/test-renderer';
@@ -11,7 +12,7 @@ describe('telemetry: cloud image editor', () => {
     const ctxName = getCtxName();
     page.render(
       <>
-        <uc-cloud-image-editor uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f" ctx-name={ctxName}></uc-cloud-image-editor>
+        <uc-cloud-image-editor uuid={EDITOR_IMAGE_UUID} ctx-name={ctxName}></uc-cloud-image-editor>
         <uc-config cdn-cname="https://ucarecdn.com/" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
       </>,
     );

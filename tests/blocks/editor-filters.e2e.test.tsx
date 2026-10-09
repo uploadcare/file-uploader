@@ -1,3 +1,4 @@
+import { EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { inCtx, within } from '~/tests/utils/render-solution';
@@ -9,8 +10,8 @@ import '~/types/jsx';
  * `EditorFilterControl` — the filter thumbnail buttons, their lazily previewed backgrounds and the slider they open —
  * sat at 3% coverage.
  *
- * Uses the same real uuid as the existing editor test: the filter previews are CDN URLs that have to load for the
- * thumbnails to appear.
+ * Uses the emulator's seeded editor image, as the existing editor test does: the filter previews are CDN URLs that
+ * have to load for the thumbnails to appear.
  */
 
 /** Renders a stand-alone editor and opens its Filters tab; the editor is not in any solution. */
@@ -18,7 +19,7 @@ const openFilters = async () => {
   const ctxName = getCtxName();
   page.render(
     <>
-      <uc-cloud-image-editor uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f" ctx-name={ctxName}></uc-cloud-image-editor>
+      <uc-cloud-image-editor uuid={EDITOR_IMAGE_UUID} ctx-name={ctxName}></uc-cloud-image-editor>
       <uc-config cdn-cname="https://ucarecdn.com/" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
     </>,
   );
