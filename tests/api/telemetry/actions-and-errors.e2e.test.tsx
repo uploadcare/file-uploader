@@ -16,7 +16,7 @@ describe('telemetry: action events', () => {
     await waitForType('init-solution');
     clearSent();
 
-    fileItem.query()!.querySelector<HTMLButtonElement>('.uc-remove-btn')?.click();
+    await fileItem.getByRole('button', { name: 'Remove' }).click();
 
     const removal = await vi.waitFor(
       () => {
@@ -42,7 +42,7 @@ describe('telemetry: action events', () => {
     await waitForType('init-solution');
     clearSent();
 
-    uploadList.query()!.querySelector<HTMLButtonElement>('.uc-cancel-btn')?.click();
+    await uploadList.getByRole('button', { name: 'Clear' }).click();
     await waitForType('action-event');
 
     expect(bodiesOf('action-event')[0].payload.metadata).toMatchObject({
