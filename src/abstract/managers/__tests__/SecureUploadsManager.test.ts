@@ -201,8 +201,6 @@ describe('SecureUploadsManager', () => {
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           'Both secureSignature/secureExpire and secureUploadsSignatureResolver are set. secureUploadsSignatureResolver will be used.',
         );
-
-        consoleWarnSpy.mockRestore();
       });
 
       it('should use resolver even when static config is set', async () => {
@@ -252,8 +250,6 @@ describe('SecureUploadsManager', () => {
           'Secure signature resolver returned an invalid result:',
           invalidToken,
         );
-
-        consoleErrorSpy.mockRestore();
       });
 
       it('should log error when resolver returns invalid result (missing secureExpire)', async () => {
@@ -271,8 +267,6 @@ describe('SecureUploadsManager', () => {
           'Secure signature resolver returned an invalid result:',
           invalidToken,
         );
-
-        consoleErrorSpy.mockRestore();
       });
 
       it('should handle resolver error and return previous token', async () => {
@@ -302,8 +296,20 @@ describe('SecureUploadsManager', () => {
           resolverError,
         );
         expect(bag.telemetryManager.sendEventError).toHaveBeenCalled();
+      });
 
-        consoleErrorSpy.mockRestore();
+      it('should not report a resolver error that arrives after destroy', async () => {
+        let rejectResolver!: (error: Error) => void;
+        createManager({
+          secureUploadsSignatureResolver: () => new Promise((_resolve, reject) => (rejectResolver = reject)),
+        });
+
+        const pending = manager.getSecureToken();
+        manager.destroy();
+        rejectResolver(new Error('Resolver failed'));
+
+        expect(await pending).toBeNull();
+        expect(bag.telemetryManager.sendEventError).not.toHaveBeenCalled();
       });
 
       it('should debug print when token is not set yet', async () => {

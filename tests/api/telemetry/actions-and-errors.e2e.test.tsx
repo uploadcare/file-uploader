@@ -1,10 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { IMAGE } from '~/tests/fixtures/files';
 import { renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
-import { bodiesOf, bodiesWithAction, clearSent, installTelemetryStub, types, waitForType } from './stub';
-
-beforeEach(installTelemetryStub);
+import { bodiesOf, bodiesWithAction, clearSent, types, waitForType } from './sink';
 
 describe('telemetry: action events', () => {
   it('reports an action-event when a file is removed from the upload list', { timeout: 60_000 }, async () => {
@@ -18,7 +16,7 @@ describe('telemetry: action events', () => {
     await waitForType('init-solution');
     clearSent();
 
-    fileItem.query()!.querySelector<HTMLButtonElement>('.uc-remove-btn')?.click();
+    await fileItem.getByRole('button', { name: 'Remove' }).click();
 
     const removal = await vi.waitFor(
       () => {
@@ -44,7 +42,7 @@ describe('telemetry: action events', () => {
     await waitForType('init-solution');
     clearSent();
 
-    uploadList.query()!.querySelector<HTMLButtonElement>('.uc-cancel-btn')?.click();
+    await uploadList.getByRole('button', { name: 'Clear' }).click();
     await waitForType('action-event');
 
     expect(bodiesOf('action-event')[0].payload.metadata).toMatchObject({

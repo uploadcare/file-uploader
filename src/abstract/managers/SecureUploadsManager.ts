@@ -36,6 +36,9 @@ export class SecureUploadsManager extends SharedInstance {
             this._secureToken = result;
           }
         } catch (err) {
+          if (this._isDestroyed) {
+            return null;
+          }
           console.error('Secure signature resolving failed. Falling back to the previous one.', err);
           this._sharedInstancesBag.telemetryManager.sendEventError(
             err,

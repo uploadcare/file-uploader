@@ -398,7 +398,9 @@ export class CloudImageEditorBlock extends LitBlock {
         (this.$['*faderEl'] as EditorImageFader)?.activate({ url: originalUrlValue });
       }
     } catch (err) {
-      if (err) {
+      // The editor can be removed while the request is in flight, and its shared context with it, so a failure that
+      // lands afterwards has nowhere to be reported.
+      if (err && this.isConnected) {
         this.telemetryManager.sendEventError(err, 'cloud editor image. Failed to load image info');
         console.error('Failed to load image info', err);
       }

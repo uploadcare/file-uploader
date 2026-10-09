@@ -103,6 +103,7 @@ class UcUnsplashActivity extends LitElement {
           <input
             class="search-input"
             type="text"
+            aria-label="Search photos"
             placeholder="Search photos…"
             .value=${this._query}
             @input=${(e: InputEvent) => {

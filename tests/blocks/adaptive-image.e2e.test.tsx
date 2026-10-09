@@ -1,3 +1,4 @@
+import { ADAPTIVE_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import '~/types/jsx';
@@ -10,7 +11,7 @@ import '~/types/jsx';
  * carries the package version, so it is matched loosely rather than pinned.
  */
 
-const UUID = '7124ae98-344c-42b2-ae2a-bd9aa79d76d8';
+const UUID = ADAPTIVE_IMAGE_UUID;
 
 /** Renders one `<uc-img>` and waits for the real image, which is when `srcset` appears. */
 const renderImg = async (attrs: string) => {

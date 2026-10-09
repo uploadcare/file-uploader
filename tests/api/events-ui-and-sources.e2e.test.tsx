@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { recordEvents } from '~/tests/utils/event-recorder';
-import { openModal, renderSolution, within } from '~/tests/utils/render-solution';
+import { clickSource, openModal, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
 /**
@@ -11,33 +10,22 @@ import '~/types/jsx';
  * sources. The ordered assertions are exact, so a reordered, dropped or extra event fails the test.
  */
 
-/**
- * Negative wait: the ordered assertions claim nothing *else* fires, and no signal marks "no more events". Longer than
- * the 300ms `_flushOutputItems` debounce, so every trailing `change` has landed.
- */
-const settle = () => delay(1000);
-
 const WAIT = { timeout: 20_000, interval: 50 };
 
 describe('events: UI interaction', () => {
-  const clickInUploadList = async (root: HTMLElement, selector: string) => {
-    const uploadList = within(root).getByTestId('uc-upload-list').query()!;
-    const button = await vi.waitFor(() => {
-      const found = uploadList.querySelector<HTMLButtonElement>(selector);
-      if (!found || found.hidden || found.disabled) throw new Error(`"${selector}" is not clickable`);
-      return found;
-    }, WAIT);
-    button.click();
-  };
+  const uploadListButton = (root: HTMLElement, name: string) =>
+    within(root).getByTestId('uc-upload-list').getByRole('button', { name, exact: true });
 
   it('fires activity-change then modal-open when the modal is opened', async () => {
-    const { provider, root } = await renderSolution();
+    const { api, provider, root } = await renderSolution();
     const recorder = recordEvents(provider);
 
     await openModal(root);
-    await settle();
+    // The sentinel: closing it fires modal-close, so the exact list below says nothing else fired before it.
+    api.setModalState(false);
+    await recorder.waitFor('modal-close');
 
-    expect(recorder.types).toEqual(['activity-change', 'modal-open']);
+    expect(recorder.types).toEqual(['activity-change', 'modal-open', 'modal-close']);
     expect(recorder.detailsOf('activity-change')[0]).toEqual({ activity: 'start-from' });
     expect(recorder.detailsOf('modal-open')[0]).toEqual({ modalId: 'start-from' });
   });
@@ -51,16 +39,16 @@ describe('events: UI interaction', () => {
     api.setCurrentActivity('upload-list');
     api.setModalState(true);
     await expect.element(within(root).getByTestId('uc-upload-list')).toBeVisible();
-    await settle();
+    await recorder.waitForAfter('change', 'file-added');
     recorder.clear();
 
-    await clickInUploadList(root, '.uc-upload-btn');
+    await uploadListButton(root, 'Upload').click();
     expect(recorder.types[0]).toBe('upload-click');
     expect(recorder.types[1]).toBe('common-upload-start');
 
     await recorder.waitFor('common-upload-success');
-    await clickInUploadList(root, '.uc-done-btn');
-    await settle();
+    await uploadListButton(root, 'Done').click();
+    await recorder.waitFor('modal-close');
 
     expect(recorder.detailsOf('done-click')).toHaveLength(1);
     expect(recorder.detailsOf('done-click')[0]).toMatchObject({ status: 'success', successCount: 1 });
@@ -69,29 +57,18 @@ describe('events: UI interaction', () => {
 });
 
 describe('events: sources', () => {
-  /** Picks a source button out of the start-from list by its registered id. */
-  const clickSource = async (root: HTMLElement, sourceId: string) => {
-    await openModal(root);
-    const button = await vi.waitFor(() => {
-      const found = root.querySelector<HTMLButtonElement>(`uc-source-btn[data-source-id="${sourceId}"] button`);
-      if (!found) throw new Error(`Source button "${sourceId}" was not rendered`);
-      return found;
-    }, WAIT);
-    button.click();
-  };
-
   it('fires file-added with the camera source after a shot is accepted', { timeout: 60_000 }, async () => {
     const { provider, root } = await renderSolution();
     const recorder = recordEvents(provider);
 
-    await clickSource(root, 'camera');
+    await clickSource(root, 'Camera');
     // The fake media device comes from the chromium launch flags in vitest.config.ts.
-    const shot = within(root).getByTestId('uc-camera-source--shot');
+    const shot = within(root).getByRole('button', { name: 'Shot', exact: true });
     await expect.element(shot).toBeVisible();
     recorder.clear();
 
     await shot.click();
-    const accept = within(root).getByTestId('uc-camera-source--accept');
+    const accept = within(root).getByRole('button', { name: 'Accept', exact: true });
     await expect.element(accept).toBeVisible();
     await accept.click();
 
@@ -105,7 +82,7 @@ describe('events: sources', () => {
     const { provider, root } = await renderSolution();
     const recorder = recordEvents(provider);
 
-    await clickSource(root, 'dropbox');
+    await clickSource(root, 'Dropbox');
     recorder.clear();
 
     // Drive the remote picker through its message bridge instead of the real social app. The block mounts an
@@ -123,15 +100,17 @@ describe('events: sources', () => {
         { obj_type: 'selected_file', url: TEST_IMAGE_URL, filename: 'from-dropbox-2.jpg' },
       ],
     };
-    const doneBtn = await vi.waitFor(() => {
-      const iframe = root.querySelector<HTMLIFrameElement>('uc-external-source iframe');
+    const externalSource = within(root).getByTestId('uc-external-source');
+    const done = externalSource.getByRole('button', { name: 'Done', exact: true });
+    await vi.waitFor(() => {
+      const iframe = externalSource.query()?.querySelector('iframe');
       if (!iframe) throw new Error('External source iframe was not mounted');
       window.dispatchEvent(new MessageEvent('message', { data: selection, source: iframe.contentWindow }));
-      const found = root.querySelector<HTMLButtonElement>('uc-external-source .uc-done-btn');
-      if (!found || found.hidden || found.disabled) throw new Error('Done button is not clickable');
-      return found;
+      // `getByRole` skips hidden elements, so this is null until the selection shows the button.
+      const button = done.query() as HTMLButtonElement | null;
+      if (!button || button.disabled) throw new Error('Done button is not clickable');
     }, WAIT);
-    doneBtn.click();
+    await done.click();
 
     await vi.waitFor(() => {
       expect(recorder.detailsOf('file-added')).toHaveLength(2);

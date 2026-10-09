@@ -85,8 +85,6 @@ export class ValidationManager extends SharedInstance {
     this._queue.run();
   }, 500);
 
-  private _isDestroyed = false;
-
   private _entryValidationState: Map<
     string,
     {
@@ -339,7 +337,7 @@ export class ValidationManager extends SharedInstance {
   }
 
   public override destroy(): void {
-    this._isDestroyed = true;
+    super.destroy();
     this._runQueueDebounced.cancel();
 
     for (const state of this._entryValidationState.values()) {

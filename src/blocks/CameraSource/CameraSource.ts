@@ -1041,6 +1041,8 @@ export class CameraSource extends LitUploaderBlock {
               'uc-mini-btn': true,
               'uc-active': this._activeTab === CameraSourceTypes.PHOTO,
             })}
+            aria-label=${this.l10n('src-type-mobile-photo-camera')}
+            aria-pressed=${this._activeTab === CameraSourceTypes.PHOTO}
             @click=${this._handleClickTab}
             ?hidden=${this._tabCameraHidden}
             data-testid="tab-photo"
@@ -1055,6 +1057,8 @@ export class CameraSource extends LitUploaderBlock {
               'uc-mini-btn': true,
               'uc-active': this._activeTab === CameraSourceTypes.VIDEO,
             })}
+            aria-label=${this.l10n('src-type-mobile-video-camera')}
+            aria-pressed=${this._activeTab === CameraSourceTypes.VIDEO}
             @click=${this._handleClickTab}
             ?hidden=${this._tabVideoHidden}
             data-testid="tab-video"
@@ -1098,6 +1102,7 @@ export class CameraSource extends LitUploaderBlock {
         <button
           type="button"
           data-testid="shot"
+          aria-label=${this.l10n('camera-shot')}
           @click=${this._handleStartCamera}
           class=${this._mutableClassButton}
           ?hidden=${this._cameraHidden}

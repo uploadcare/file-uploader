@@ -1,12 +1,8 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { PubSub } from '../lit/PubSubCompat';
 import { TypedData } from './TypedData';
 
 describe('TypedData', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   it('creates a unique context id and registers a PubSub context', () => {
     const ctx1 = new TypedData<{ a: number }>({ a: 1 });
     const ctx2 = new TypedData<{ a: number }>({ a: 2 });

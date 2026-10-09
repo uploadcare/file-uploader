@@ -117,15 +117,17 @@
     "@biomejs/wasm-nodejs": "^2.4.6",
     "@csstools/postcss-cascade-layers": "^6.0.0",
     "@happy-dom/global-registrator": "^20.8.3",
+    "@mswjs/interceptors": "0.45.7",
     "@size-limit/esbuild-why": "^12.0.1",
     "@size-limit/preset-small-lib": "^12.0.1",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/node": "^25",
     "@types/react": "^18.0.0",
     "@types/svg-sprite": "^0.0.39",
-    "@vitest/browser": "^4.0.18",
-    "@vitest/browser-playwright": "^4.0.18",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@uploadcare/api-emulator": "file:/Users/nd0ut/workspace/uc-586-sync/packages/api-emulator",
+    "@vitest/browser": "^4.1.11",
+    "@vitest/browser-playwright": "^4.1.11",
+    "@vitest/coverage-v8": "^4.1.11",
     "esbuild-minify-templates": "^0.13.1",
     "eslint": "^10.0.3",
     "eslint-plugin-lit": "^2.2.1",
@@ -134,6 +136,7 @@
     "jiti": "^2.6.1",
     "lint-staged": "^16.3.3",
     "lit-analyzer": "^2.0.3",
+    "msw": "3.0.2",
     "node-watch": "^0.7.4",
     "npm-run-all": "^4.1.5",
     "playwright": "^1.60.0",
@@ -153,8 +156,8 @@
     "tsx": "^4.21.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.57.0",
-    "vite": "8.0.0-beta.0",
-    "vitest": "^4.0.18",
+    "vite": "8.3.3",
+    "vitest": "^4.1.11",
     "vitest-browser-lit": "^1.0.1"
   },
   "author": "Uploadcare Inc.",
@@ -215,5 +218,10 @@
       "path": "web/uc-img.min.js",
       "limit": "10 KB"
     }
-  ]
+  ],
+  "overrides": {
+    "@vitest/mocker": {
+      "msw": "$msw"
+    }
+  }
 }

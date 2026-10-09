@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { recordEvents } from '~/tests/utils/event-recorder';
 import { expectActivity, expectModal, renderSolution, within } from '~/tests/utils/render-solution';
@@ -24,7 +23,7 @@ describe('regular: entering the flow', () => {
     await expectModal(root, 'start-from', 'open');
     // Not just state: the source list is rendered inside the dialog that is actually open.
     await expect
-      .element(within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }))
+      .element(within(root).getByTestId('uc-start-from').getByRole('button', { name: 'From link', exact: true }))
       .toBeVisible();
     expect(api.getCurrentActivity()).toBe('start-from');
     expect(recorder.detailsOf('activity-change').at(-1)).toEqual({ activity: 'start-from' });
@@ -50,7 +49,7 @@ describe('regular: start-from to a source', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'From link', exact: true }).click();
 
     await expectActivity(root, 'url');
     await expectModal(root, 'start-from', 'closed');
@@ -62,7 +61,7 @@ describe('regular: start-from to a source', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await within(root).getByTestId('uc-start-from').getByText('Camera', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Camera', exact: true }).click();
 
     await expectActivity(root, 'camera');
     expect(api.getCurrentActivity()).toBe('camera');
@@ -123,13 +122,16 @@ describe('inline: no modal is ever used', () => {
   // documented `setModalState(false)` — which sets the activity to null — cannot leave an inline uploader with
   // nothing showing. Pinned as current behaviour, not endorsed.
   it('re-enters the init activity instead of closing', async () => {
-    const { root, api } = await renderSolution('inline');
+    const { root, api, provider } = await renderSolution('inline');
     await expectActivity(root, 'start-from');
+    const recorder = recordEvents(provider);
 
     api.setModalState(false);
 
-    // Negative wait: nothing signals "still on start-from", so give a would-be transition time to happen.
-    await delay(100);
+    // The activity drops to null and start-from comes straight back, which is the end of the transition.
+    await expect
+      .poll(() => recorder.detailsOf('activity-change').map((detail) => detail.activity))
+      .toEqual(['start-from']);
     await expectActivity(root, 'start-from');
     expect(api.getCurrentActivity()).toBe('start-from');
   });

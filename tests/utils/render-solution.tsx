@@ -1,7 +1,7 @@
 import { expect } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider, UploaderPlugin } from '@/index';
-import { delay } from '@/utils/delay';
+import { LitBlock } from '@/lit/LitBlock';
 import { toKebabCase } from '@/utils/toKebabCase';
 import { getCtxName } from './test-renderer';
 import '../../types/jsx';
@@ -108,10 +108,26 @@ export async function renderSolution(
 
   Object.assign(config, propsForLater);
 
-  // One tick so the solution's blocks register with the ctx before a test drives them.
-  await delay(0);
+  await waitForBlocks(root, provider);
 
   return { ctxName, config, provider, api: provider.getAPI(), root };
+}
+
+/**
+ * Waits until every block in `elements`, and every block inside them, has joined its ctx and finished rendering. A
+ * solution renders its blocks over several updates, so this is when a test can drive it. A failure lists the blocks
+ * still missing.
+ */
+export async function waitForBlocks(...elements: Element[]): Promise<void> {
+  await expect
+    .poll(() =>
+      elements
+        .flatMap((element) => [element, ...element.querySelectorAll('*')])
+        .filter((element) => element instanceof LitBlock)
+        .filter((block) => !block.blocksRegistry?.has(block) || block.isUpdatePending)
+        .map((block) => block.localName),
+    )
+    .toEqual([]);
 }
 
 /**
@@ -143,25 +159,36 @@ export const within = (root: HTMLElement) => page.elementLocator(root);
 export async function expectActivity(root: HTMLElement, activityId: string): Promise<void> {
   // Keyed on the activity id rather than a test id: the id is what the router sets, and one generic
   // `<uc-plugin-activity-host>` serves every plugin activity, so their test ids are all identical.
-  await expect.poll(() => root.querySelector(`[activity="${activityId}"]`)?.hasAttribute('active') ?? false).toBe(true);
+  // Polls the ids of every active activity, not a boolean, so a failure names what is showing instead.
+  await expect
+    .poll(() => [...root.querySelectorAll('[activity][active]')].map((host) => host.getAttribute('activity')))
+    .toContain(activityId);
 }
 
 /**
  * Asserts a modal is really on screen, not merely selected in state.
  *
- * `<uc-modal>` renders a light-DOM `<dialog>` and calls `showModal()` on it, so `dialog.open` is the honest signal.
- * Every `uc-modal` shares one `data-testid` (it is derived from the tag name), so the id is the only discriminator.
+ * `<uc-modal>` renders a light-DOM `<dialog>` and calls `showModal()` on it. The `dialog` role only matches an open
+ * one, since a closed `<dialog>` is out of the accessibility tree. Every `uc-modal` shares one `data-testid` (it is
+ * derived from the tag name), so the host's id is the only discriminator.
  */
 export async function expectModal(root: HTMLElement, id: string, state: 'open' | 'closed'): Promise<void> {
-  await expect.poll(() => modalDialog(root, id)?.open ?? false).toBe(state === 'open');
+  // Polls the ids of every open modal, not a boolean, so a failure names what is open instead.
+  const openModals = expect.poll(() =>
+    within(root)
+      .getByRole('dialog')
+      .elements()
+      .map((dialog) => dialog.closest('uc-modal')?.id),
+  );
+  await (state === 'open' ? openModals.toContain(id) : openModals.not.toContain(id));
 }
 
 export function modalDialog(root: HTMLElement, id: string): HTMLDialogElement | null {
-  const modal = within(root)
-    .getByTestId('uc-modal')
+  const dialog = within(root)
+    .getByRole('dialog', { includeHidden: true })
     .elements()
-    .find((element) => element.id === id);
-  return modal?.querySelector('dialog') ?? null;
+    .find((element) => element.closest('uc-modal')?.id === id);
+  return (dialog as HTMLDialogElement | undefined) ?? null;
 }
 
 /** A plugin that does nothing until `overrides` say otherwise. */
@@ -176,6 +203,12 @@ export function addSource(config: Config, sourceId: string): void {
 
 /** Clicks the solution's upload button and waits for start-from to show. */
 export async function openModal(root: HTMLElement): Promise<void> {
-  await within(root).getByText('Upload files', { exact: true }).click();
+  await within(root).getByRole('button', { name: 'Upload files', exact: true }).click();
   await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
+}
+
+/** Opens the modal and clicks the start-from source button with this accessible name, e.g. 'Camera' or 'Dropbox'. */
+export async function clickSource(root: HTMLElement, name: string): Promise<void> {
+  await openModal(root);
+  await within(root).getByTestId('uc-start-from').getByRole('button', { name, exact: true }).click();
 }

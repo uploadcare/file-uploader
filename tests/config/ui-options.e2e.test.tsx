@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { IconHrefResolver } from '@/index';
-import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
+import { recordEvents } from '~/tests/utils/event-recorder';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -27,12 +27,21 @@ describe('removeCopyright', () => {
 
 describe('showEmptyList', () => {
   it('keeps the empty upload list out of the inline solution by default', async () => {
-    const { root } = await renderSolution('inline');
+    const { root, api, provider } = await renderSolution('inline');
     await expectActivity(root, 'start-from');
+    const recorder = recordEvents(provider);
 
-    // Negative wait: the list must never activate, so there is no signal to wait for.
-    await delay(100);
-    expect(within(root).getByTestId('uc-upload-list').query()?.hasAttribute('active')).toBe(false);
+    // The sentinel: a file opens the list through the same subscription that would open an empty one.
+    api.addFileFromObject(IMAGE.PIXEL);
+    await expectActivity(root, 'upload-list');
+
+    expect(
+      recorder.events
+        .filter((event) => event.type === 'file-added' || event.type === 'activity-change')
+        .map((event) =>
+          event.type === 'activity-change' ? (event.detail as { activity: string }).activity : event.type,
+        ),
+    ).toEqual(['file-added', 'upload-list']);
   });
 
   it('lets the empty upload list open when set', async () => {
@@ -47,13 +56,16 @@ describe('showEmptyList', () => {
   });
 
   it('bounces the empty upload list back to start-from when not set', async () => {
-    const { root, api } = await renderSolution('inline');
+    const { root, api, provider } = await renderSolution('inline');
     await expectActivity(root, 'start-from');
+    const recorder = recordEvents(provider);
 
     api.setCurrentActivity('upload-list');
 
-    // Negative wait: the activity may bounce through upload-list before settling, so give it time to come back.
-    await delay(300);
+    // The list opens and hands straight back: start-from coming back after it is the end of the bounce.
+    await expect
+      .poll(() => recorder.detailsOf('activity-change').map((detail) => detail.activity))
+      .toEqual(['upload-list', 'start-from']);
     await expectActivity(root, 'start-from');
     expect(api.getCurrentActivity()).toBe('start-from');
   });
@@ -83,31 +95,34 @@ describe('filesViewMode', () => {
 
 describe('gridShowFileNames', () => {
   /** The name is always in the DOM; the option toggles `hidden` on it (FileItem.ts:557). */
-  const fileNameVisible = async (configProps: Parameters<typeof renderSolution>[1]) => {
+  const fileName = async (configProps: Parameters<typeof renderSolution>[1]) => {
     const { root, api } = await renderSolution('regular', configProps);
     api.addFileFromObject(IMAGE.PIXEL);
     api.initFlow();
     await expectActivity(root, 'upload-list');
 
-    const name = () => within(root).getByTestId('uc-file-item--file-name').query() as HTMLElement | null;
+    const name = within(root).getByTestId('uc-file-item--file-name');
     // The file item renders its inner template a beat after the list becomes active.
-    await expect.poll(() => name()?.textContent).toBe('pixel.jpg');
-
-    return !name()?.hidden;
+    await expect.element(name).toHaveTextContent('pixel.jpg');
+    return name;
   };
 
   it('hides names in grid mode by default', async () => {
-    expect(await fileNameVisible({ filesViewMode: 'grid' })).toBe(false);
+    await expect.element(await fileName({ filesViewMode: 'grid' })).toHaveAttribute('hidden');
   });
 
   it('shows names in grid mode when set', async () => {
-    expect(await fileNameVisible({ filesViewMode: 'grid', gridShowFileNames: true })).toBe(true);
+    await expect
+      .element(await fileName({ filesViewMode: 'grid', gridShowFileNames: true }))
+      .not.toHaveAttribute('hidden');
   });
 
   it('is ignored in list mode, where names always show', async () => {
     // `_updateShowFileNames` short-circuits for list mode (FileItem.ts:266), so the option only means anything in
     // grid mode — the docs describe it as grid-only and the code agrees.
-    expect(await fileNameVisible({ filesViewMode: 'list', gridShowFileNames: false })).toBe(true);
+    await expect
+      .element(await fileName({ filesViewMode: 'list', gridShowFileNames: false }))
+      .not.toHaveAttribute('hidden');
   });
 });
 
@@ -171,7 +186,7 @@ describe('localeDefinitionOverride', () => {
     await expectActivity(root, 'start-from');
 
     await expect
-      .element(within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }))
+      .element(within(root).getByTestId('uc-start-from').getByRole('button', { name: 'From link', exact: true }))
       .toBeVisible();
   });
 
@@ -182,6 +197,8 @@ describe('localeDefinitionOverride', () => {
     api.initFlow();
     await expectActivity(root, 'start-from');
 
-    await expect.element(within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true })).toBeVisible();
+    await expect
+      .element(within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Cancel', exact: true }))
+      .toBeVisible();
   });
 });
