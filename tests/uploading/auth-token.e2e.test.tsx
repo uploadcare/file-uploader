@@ -136,27 +136,25 @@ describe.skipIf(!hasCredentials)('authToken against Upload API', () => {
     ['wrong-key', 'AccessTokenInvalidError'],
   ] as const;
 
-  for (const [kind, code] of rejectedTokens) {
-    it(`surfaces the ${kind} token as its Upload API error code`, async () => {
-      const credentials = await signedProject(kind);
+  it.each(rejectedTokens)('surfaces the %s token as its Upload API error code', async (kind, code) => {
+    const credentials = await signedProject(kind);
 
-      const { api } = await renderSolution(
-        'regular',
-        { authToken: credentials.authToken, store: false },
-        { pubkey: credentials.publicKey },
-      );
-      api.addFileFromObject(IMAGE.PIXEL);
-      api.uploadAll();
+    const { api } = await renderSolution(
+      'regular',
+      { authToken: credentials.authToken, store: false },
+      { pubkey: credentials.publicKey },
+    );
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
 
-      await expect.poll(() => entry(api)?.status, { timeout: 20_000 }).toBe('failed');
-      const [error] = entry(api).errors;
+    await expect.poll(() => entry(api)?.status, { timeout: 20_000 }).toBe('failed');
+    const [error] = entry(api).errors;
 
-      // An `AuthError` is an `UploadError`, so it classifies as UPLOAD_ERROR
-      // and the distinguishing detail is the code the API sent.
-      expect(error.type).toBe('UPLOAD_ERROR');
-      expect(error.type === 'UPLOAD_ERROR' ? error.payload?.error.code : undefined).toBe(code);
-    });
-  }
+    // An `AuthError` is an `UploadError`, so it classifies as UPLOAD_ERROR
+    // and the distinguishing detail is the code the API sent.
+    expect(error.type).toBe('UPLOAD_ERROR');
+    expect(error.type === 'UPLOAD_ERROR' ? error.payload?.error.code : undefined).toBe(code);
+  });
 
   it('reports a token function that throws as AUTH_TOKEN_ERROR, without reaching the API', async () => {
     const credentials = await signedProject();
