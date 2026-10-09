@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { Locator } from 'vitest/browser';
 import type { Config } from '@/index';
 import { browserFeatures } from '@/utils/browser-info';
 import { expectActivity, openModal, renderSolution, within } from '~/tests/utils/render-solution';
@@ -25,17 +26,33 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
 };
 
 describe('cameraMirror', () => {
+  /**
+   * The preview's transform as rendered, so the check holds however the mirroring is applied. Read once the preview is
+   * showing: a hidden `<video>` reports `none` whatever its style says. A `<video>` has no ARIA role and no test id,
+   * hence the tag lookup.
+   */
+  const previewTransform = async (camera: Locator) => {
+    const video = await vi.waitFor(
+      () => {
+        const found = camera.element().querySelector('video');
+        if (!found?.checkVisibility()) throw new Error('The camera preview is not showing');
+        return found;
+      },
+      { timeout: 20_000 },
+    );
+    return getComputedStyle(video).transform;
+  };
+
   it('leaves the preview unmirrored by default', async () => {
     const { camera } = await openCamera();
 
-    // The `<video>` carries no test id.
-    await expect.poll(() => camera.element().querySelector('video')?.style.transform).toBe('');
+    expect(await previewTransform(camera)).toBe('none');
   });
 
   it('mirrors the preview when set', async () => {
     const { camera } = await openCamera({ cameraMirror: true });
 
-    await expect.poll(() => camera.element().querySelector('video')?.style.transform).toBe('scaleX(-1)');
+    expect(await previewTransform(camera)).toBe('matrix(-1, 0, 0, 1, 0, 0)');
   });
 });
 
