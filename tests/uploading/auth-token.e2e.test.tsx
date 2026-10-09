@@ -22,15 +22,22 @@ import '~/types/jsx';
  * Tokens are minted by a Node-side command, since the project secret key must
  * never reach the page. A live run without its credentials skips them, except
  * under `E2E_REQUIRE_SECURE_UPLOADS=1` (the CI step that runs them live), where
- * the missing credentials fail every one.
+ * the missing credentials fail the whole file.
  */
 
 const TOKEN = 'eyJ.a-real-looking-token.sig';
 
+/**
+ * Whether this run can mint tokens: always against the emulator, live only with the project's keys set. Under
+ * `E2E_REQUIRE_SECURE_UPLOADS=1` the probe throws instead, which fails the whole file.
+ */
+const hasCredentials = (await commands.mintSecureUploadsCredentials()) !== null;
+
 /** Mints credentials, and against the emulator starts the test on a session whose project enforces them. */
 const signedProject = async (kind?: AuthTokenKind) => {
   const credentials = await commands.mintSecureUploadsCredentials(kind);
-  if (credentials) (await resetEmulator())?.use('signedUploads', { publicKey: credentials.publicKey });
+  if (!credentials) throw new Error('No Signed Uploads credentials, though the probe minted some');
+  (await resetEmulator())?.use('signedUploads', { publicKey: credentials.publicKey });
   return credentials;
 };
 
@@ -49,9 +56,8 @@ describe('authToken is not exposed', () => {
     expect(config.getAttribute('auth-token')).toBeNull();
   });
 
-  it('stays out of the debug log', async (ctx) => {
+  it.skipIf(!hasCredentials)('stays out of the debug log', async () => {
     const credentials = await signedProject();
-    if (!credentials) return ctx.skip();
 
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
     const { ctxName, api } = await renderSolution(
@@ -72,10 +78,9 @@ describe('authToken is not exposed', () => {
   });
 });
 
-describe('authToken against Upload API', () => {
-  it('uploads a file the project would otherwise refuse', async (ctx) => {
+describe.skipIf(!hasCredentials)('authToken against Upload API', () => {
+  it('uploads a file the project would otherwise refuse', async () => {
     const credentials = await signedProject();
-    if (!credentials) return ctx.skip();
 
     const { api } = await renderSolution(
       'regular',
@@ -90,11 +95,10 @@ describe('authToken against Upload API', () => {
     expect(entry(api).cdnUrl).toContain(entry(api).uuid);
   });
 
-  it('fails the upload when the same project gets no token', async (ctx) => {
+  it('fails the upload when the same project gets no token', async () => {
     // Without this the rest proves nothing: a project that does not enforce
     // signed uploads would accept every upload below, token or not.
     const credentials = await signedProject();
-    if (!credentials) return ctx.skip();
 
     const { api } = await renderSolution('regular', { store: false }, { pubkey: credentials.publicKey });
     api.addFileFromObject(IMAGE.PIXEL);
@@ -107,9 +111,8 @@ describe('authToken against Upload API', () => {
     expect(error.type === 'UPLOAD_ERROR' ? error.payload?.error.code : undefined).toBe('SignatureRequiredError');
   });
 
-  it('uploads with a token function, asking it once for the whole upload', async (ctx) => {
+  it('uploads with a token function, asking it once for the whole upload', async () => {
     const credentials = await signedProject();
-    if (!credentials) return ctx.skip();
 
     // upload-client asks before every request, so without the uploader's cache
     // this would call an app's token endpoint several times for one file.
@@ -134,9 +137,8 @@ describe('authToken against Upload API', () => {
   ] as const;
 
   for (const [kind, code] of rejectedTokens) {
-    it(`surfaces the ${kind} token as its Upload API error code`, async (ctx) => {
+    it(`surfaces the ${kind} token as its Upload API error code`, async () => {
       const credentials = await signedProject(kind);
-      if (!credentials) return ctx.skip();
 
       const { api } = await renderSolution(
         'regular',
@@ -156,9 +158,8 @@ describe('authToken against Upload API', () => {
     });
   }
 
-  it('reports a token function that throws as AUTH_TOKEN_ERROR, without reaching the API', async (ctx) => {
+  it('reports a token function that throws as AUTH_TOKEN_ERROR, without reaching the API', async () => {
     const credentials = await signedProject();
-    if (!credentials) return ctx.skip();
 
     const cause = new Error('token endpoint is down');
     const { ctxName, api } = await renderSolution('regular', { store: false }, { pubkey: credentials.publicKey });
