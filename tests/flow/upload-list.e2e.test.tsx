@@ -21,8 +21,9 @@ describe('upload list after picking files through the dynamic button', () => {
   it('stays closed and reports the upload on the button', async () => {
     const { dynamicBtn, uploadList } = await renderDynamic();
 
-    commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
+    const chooser = commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
     await dynamicBtn.click();
+    await chooser;
 
     await expect.element(uploadList).not.toBeVisible();
     await expect.element(dynamicBtn.getByText('1 file uploaded')).toBeVisible();
@@ -31,8 +32,9 @@ describe('upload list after picking files through the dynamic button', () => {
   it('opens on a second click once files are uploaded', async () => {
     const { dynamicBtn, uploadList } = await renderDynamic();
 
-    commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
+    const chooser = commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
     await dynamicBtn.click();
+    await chooser;
 
     await dynamicBtn.click();
     await expect.element(uploadList).toBeVisible();
@@ -41,8 +43,9 @@ describe('upload list after picking files through the dynamic button', () => {
   it('opens right away when upload confirmation is required', async () => {
     const { dynamicBtn, uploadList } = await renderDynamic({ confirmUpload: true });
 
-    commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
+    const chooser = commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
     await dynamicBtn.click();
+    await chooser;
 
     await expect.element(uploadList).toBeVisible();
     await expect.element(uploadList.getByText('test_image.jpeg')).toBeVisible();
@@ -56,8 +59,9 @@ describe('compact dynamic button with a single source', () => {
 
     await expect.poll(() => within(root).getByTestId('uc-drop-down').query()).toBeNull();
 
-    commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
+    const chooser = commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
     await dynamicBtn.click();
+    await chooser;
 
     await expect.element(dynamicBtn.getByText('1 file uploaded')).toBeVisible();
   });
