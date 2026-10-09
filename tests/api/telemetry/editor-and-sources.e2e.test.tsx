@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
-import { inCtx, openModal, renderSolution, waitForBlocks, within } from '~/tests/utils/render-solution';
+import { clickSource, inCtx, renderSolution, waitForBlocks, within } from '~/tests/utils/render-solution';
 import { actionEvents, bodiesWithAction, clearSent, waitForType } from './sink';
 
 describe('telemetry: cloud image editor', () => {
@@ -54,24 +54,13 @@ describe('telemetry: cloud image editor', () => {
 describe('telemetry: sources', () => {
   const WAIT = { timeout: 20_000, interval: 50 };
 
-  /** Picks a source button out of the start-from list by its registered id. */
-  const clickSource = async (root: HTMLElement, sourceId: string) => {
-    await openModal(root);
-    const button = await vi.waitFor(() => {
-      const found = root.querySelector<HTMLButtonElement>(`uc-source-btn[data-source-id="${sourceId}"] button`);
-      if (!found) throw new Error(`Source button "${sourceId}" was not rendered`);
-      return found;
-    }, WAIT);
-    button.click();
-  };
-
   it('reports an action-event carrying the source id when a source is picked', async () => {
     // `qualityInsights` back on: the shared helper disables telemetry, which is the thing under test here.
     const { root } = await renderSolution('regular', { qualityInsights: true });
     await waitForType('init-solution');
     clearSent();
 
-    await clickSource(root, 'dropbox');
+    await clickSource(root, 'Dropbox');
     const action = await waitForType('action-event');
 
     // SourceBtn puts the id straight on the payload, not inside `metadata`.
@@ -80,7 +69,7 @@ describe('telemetry: sources', () => {
 
   it('reports the camera action events in order', { timeout: 60_000 }, async () => {
     const { root } = await renderSolution('regular', { qualityInsights: true });
-    await clickSource(root, 'camera');
+    await clickSource(root, 'Camera');
     const shot = within(root).getByTestId('uc-camera-source--shot');
     await expect.element(shot).toBeVisible();
     clearSent();
@@ -91,8 +80,7 @@ describe('telemetry: sources', () => {
 
     const accept = within(root).getByTestId('uc-camera-source--accept');
     await expect.element(accept).toBeVisible();
-    const retake = root.querySelector<HTMLButtonElement>('uc-camera-source .uc-camera-actions .uc-secondary-btn')!;
-    retake.click();
+    await within(root).getByTestId('uc-camera-source').getByRole('button', { name: 'Retake', exact: true }).click();
 
     await shot.click();
     await expect.element(accept).toBeVisible();
