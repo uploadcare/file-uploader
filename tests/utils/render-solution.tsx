@@ -206,3 +206,9 @@ export async function openModal(root: HTMLElement): Promise<void> {
   await within(root).getByText('Upload files', { exact: true }).click();
   await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
 }
+
+/** Opens the modal and clicks the start-from source button with this accessible name, e.g. 'Camera' or 'Dropbox'. */
+export async function clickSource(root: HTMLElement, name: string): Promise<void> {
+  await openModal(root);
+  await within(root).getByTestId('uc-start-from').getByRole('button', { name, exact: true }).click();
+}
