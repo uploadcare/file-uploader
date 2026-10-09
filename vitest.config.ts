@@ -30,20 +30,24 @@ export default defineConfig({
       reportsDirectory: './tests/__coverage__',
       include: ['src/**/*.ts'],
       exclude: ['**/*.test.*', '**/vite.config.js', './src/locales/**', './dist/**'],
-      // A ratchet, not a target: raise these as coverage lands, never lower them
-      // to make a run pass.
+      // A signal, not a target: a drop means some behaviour lost its test, so
+      // review the uncovered lines rather than writing tests to reach a number.
+      // Never lower these to make a run pass.
       //
-      // Repeated full runs against the fake now measure 88.03/76.36/92.33/88.20
-      // exactly, because which code paths run no longer depends on how quickly
-      // the upload API happens to answer. The floor keeps ~1pp under that, for
-      // the live runs on release branches and for whatever a different machine
-      // does with the camera and video paths.
-      thresholds: {
-        statements: 87,
-        branches: 75,
-        functions: 91,
-        lines: 87,
-      },
+      // Repeated full runs against the fake measure 88.03/76.36/92.33/88.20
+      // exactly, because which code paths run does not depend on how quickly
+      // the upload API answers. The floor keeps ~1pp under that for whatever a
+      // different machine does with the camera and video paths. A live run
+      // (release branches, the `e2e-live` label) races the real API, so its
+      // coverage moves with timing and is reported but not enforced.
+      thresholds: isLive
+        ? undefined
+        : {
+            statements: 87,
+            branches: 75,
+            functions: 91,
+            lines: 87,
+          },
     },
     projects: [
       {
