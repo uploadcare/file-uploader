@@ -50,17 +50,16 @@ describe('uc-cloud-image-editor', () => {
 
   it('selects a crop preset', async () => {
     const { editor } = renderEditor();
-    const freeform = editor.getByTestId('uc-editor-freeform-button-control');
+    // The preset menu's button is named after the current preset, the first in `crop-preset`.
+    await userEvent.click(editor.getByRole('option', { name: 'Crop to 1:1', exact: true }));
 
-    await userEvent.click(freeform);
-
-    const preset16x9 = editor.getByTestId('uc-editor-aspect-ratio-button-control').nth(1);
-    await expect.element(preset16x9).toBeVisible();
+    const preset16x9 = editor.getByRole('option', { name: /^Apply operation crop to 16:9/ });
     await userEvent.click(preset16x9);
+    await expect.element(preset16x9).toHaveAttribute('aria-selected', 'true');
 
     await userEvent.click(editor.getByRole('button', { name: /apply/i }));
 
-    await expect.element(freeform).toBeVisible();
+    await expect.element(editor.getByRole('option', { name: 'Crop to 16:9', exact: true })).toBeVisible();
   });
 
   it("applies the 'brightness' operation", async () => {
