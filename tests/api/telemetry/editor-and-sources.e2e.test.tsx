@@ -1,9 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import { delay } from '@/utils/delay';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
-import { openModal, renderSolution, within } from '~/tests/utils/render-solution';
+import { inCtx, openModal, renderSolution, waitForBlocks, within } from '~/tests/utils/render-solution';
 import { actionEvents, bodiesWithAction, clearSent, installTelemetryStub, waitForType } from './stub';
 
 beforeEach(installTelemetryStub);
@@ -18,8 +17,7 @@ describe('telemetry: cloud image editor', () => {
         <uc-config cdn-cname="https://ucarecdn.com/" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
       </>,
     );
-    // One tick so the editor's blocks register with the ctx before a test drives them.
-    await delay(0);
+    await waitForBlocks(inCtx('uc-cloud-image-editor', ctxName), inCtx('uc-config', ctxName));
   });
 
   it('reports the editor as its own solution', async () => {
