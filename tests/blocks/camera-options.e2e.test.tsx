@@ -19,7 +19,7 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
   rendered.api.initFlow();
   await expectActivity(rendered.root, 'start-from');
 
-  await within(rendered.root).getByTestId('uc-start-from').getByText('Camera', { exact: true }).click();
+  await within(rendered.root).getByTestId('uc-start-from').getByRole('button', { name: 'Camera', exact: true }).click();
   await expectActivity(rendered.root, 'camera');
 
   return { ...rendered, camera: within(rendered.root).getByTestId('uc-camera-source') };

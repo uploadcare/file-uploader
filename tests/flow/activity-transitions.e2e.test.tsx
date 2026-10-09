@@ -23,7 +23,7 @@ describe('regular: entering the flow', () => {
     await expectModal(root, 'start-from', 'open');
     // Not just state: the source list is rendered inside the dialog that is actually open.
     await expect
-      .element(within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }))
+      .element(within(root).getByTestId('uc-start-from').getByRole('button', { name: 'From link', exact: true }))
       .toBeVisible();
     expect(api.getCurrentActivity()).toBe('start-from');
     expect(recorder.detailsOf('activity-change').at(-1)).toEqual({ activity: 'start-from' });
@@ -49,7 +49,7 @@ describe('regular: start-from to a source', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'From link', exact: true }).click();
 
     await expectActivity(root, 'url');
     await expectModal(root, 'start-from', 'closed');
@@ -61,7 +61,7 @@ describe('regular: start-from to a source', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await within(root).getByTestId('uc-start-from').getByText('Camera', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Camera', exact: true }).click();
 
     await expectActivity(root, 'camera');
     expect(api.getCurrentActivity()).toBe('camera');
