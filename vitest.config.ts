@@ -99,6 +99,9 @@ export default defineConfig({
           // `tests/utils/emulator.browser.ts`): it answers the same way every time, so a second attempt would only
           // hide a real flake. A live run still races the real API, and still gets one.
           retry: isLive ? 1 : 0,
+          // Above the poll timeout below. Browser mode's default (15s) is under it, so a failing `expect.poll` used to
+          // end as "Test timed out" and never printed the value it last saw.
+          testTimeout: 30_000,
           expect: {
             poll: {
               timeout: 20_000,
