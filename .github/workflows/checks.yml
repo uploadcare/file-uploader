@@ -85,9 +85,12 @@ jobs:
       # token tests also run against the real API on every PR, on purpose: only
       # it can say Upload API still accepts the tokens the uploader sends.
       # The only step that sees the secrets of that project, a real one with
-      # Signed Uploads enabled.
+      # Signed Uploads enabled. E2E_REQUIRE_SECURE_UPLOADS turns missing or
+      # rotated secrets (or a fork PR, which gets none) into a failed step
+      # instead of a green one where every test skipped.
       - name: Run auth token tests against the real API
         env:
+          E2E_REQUIRE_SECURE_UPLOADS: '1'
           UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY }}
           UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY }}
         run: E2E_NET=live npx vitest run --project e2e tests/uploading/auth-token.e2e.test.tsx

@@ -20,7 +20,9 @@ import '~/types/jsx';
  * The uploads need a project with Signed Uploads enabled, which rejects every
  * unsigned request: one the emulator turns it on for, a real one when `E2E_NET=live`.
  * Tokens are minted by a Node-side command, since the project secret key must
- * never reach the page, and a live run without its credentials skips them.
+ * never reach the page. A live run without its credentials skips them, except
+ * under `E2E_REQUIRE_SECURE_UPLOADS=1` (the CI step that runs them live), where
+ * the missing credentials fail every one.
  */
 
 const TOKEN = 'eyJ.a-real-looking-token.sig';

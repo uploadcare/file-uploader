@@ -43,7 +43,9 @@ export type AuthTokenKind =
  * `signedUploads` preset; live, it is a real one.
  *
  * Returns `null` when a live run has no credentials configured, and the tests
- * that need them skip.
+ * that need them skip. With `E2E_REQUIRE_SECURE_UPLOADS=1`, which the CI step
+ * that exists to run them sets, it throws instead: missing or rotated secrets
+ * must fail that step, not leave it green with every test skipped.
  */
 export const mintSecureUploadsCredentials: BrowserCommand<[AuthTokenKind?]> = async (
   _ctx,
@@ -52,6 +54,11 @@ export const mintSecureUploadsCredentials: BrowserCommand<[AuthTokenKind?]> = as
   const publicKey = isLive ? process.env.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY : 'signed_uploads_project';
   const secretKey = isLive ? process.env.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY : SIGNED_UPLOADS_SECRET_KEY;
   if (!publicKey || !secretKey) {
+    if (process.env.E2E_REQUIRE_SECURE_UPLOADS === '1') {
+      throw new Error(
+        'E2E_REQUIRE_SECURE_UPLOADS=1, but UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY or UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY is not set',
+      );
+    }
     return null;
   }
 
