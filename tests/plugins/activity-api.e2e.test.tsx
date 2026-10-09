@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { PluginSetupParams } from '@/index';
-import { delay } from '@/utils/delay';
 import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
 
 describe('plugin activity api', () => {
@@ -64,6 +63,9 @@ describe('plugin activity api', () => {
   it('drops params subscriptions when the plugin is unregistered', async () => {
     const paramsCallback = vi.fn<(params: Record<string, unknown>) => void>();
     const dispose = vi.fn();
+    // The sentinel: a plugin that stays subscribes after the removed one, so new params reach it after they would have
+    // reached the removed subscription.
+    const sentinel = vi.fn<(params: Record<string, unknown>) => void>();
 
     const plugin = createTestPlugin({
       id: 'actapi-cleanup',
@@ -72,23 +74,28 @@ describe('plugin activity api', () => {
         return dispose;
       },
     });
+    const kept = createTestPlugin({
+      id: 'actapi-cleanup-sentinel',
+      setup: ({ pluginApi }) => {
+        pluginApi.activity.subscribeToParams(sentinel);
+      },
+    });
 
-    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
+    const { config, api } = await renderSolution('regular', { plugins: [plugin, kept] });
 
     await vi.waitFor(() => {
       expect(paramsCallback).toHaveBeenCalled();
     });
 
-    config.plugins = [];
+    config.plugins = [kept];
     await vi.waitFor(() => {
       expect(dispose).toHaveBeenCalledOnce();
     });
 
     paramsCallback.mockClear();
     api.setCurrentActivity('some-activity', { data: 'test' });
+    await vi.waitFor(() => expect(sentinel).toHaveBeenLastCalledWith({ data: 'test' }));
 
-    // Negative wait: nothing signals "the old subscription did not fire".
-    await delay(100);
     expect(paramsCallback).not.toHaveBeenCalled();
   });
 });
