@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { IconHrefResolver } from '@/index';
-import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
+import { recordEvents } from '~/tests/utils/event-recorder';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -27,12 +27,21 @@ describe('removeCopyright', () => {
 
 describe('showEmptyList', () => {
   it('keeps the empty upload list out of the inline solution by default', async () => {
-    const { root } = await renderSolution('inline');
+    const { root, api, provider } = await renderSolution('inline');
     await expectActivity(root, 'start-from');
+    const recorder = recordEvents(provider);
 
-    // Negative wait: the list must never activate, so there is no signal to wait for.
-    await delay(100);
-    expect(within(root).getByTestId('uc-upload-list').query()?.hasAttribute('active')).toBe(false);
+    // The sentinel: a file opens the list through the same subscription that would open an empty one.
+    api.addFileFromObject(IMAGE.PIXEL);
+    await expectActivity(root, 'upload-list');
+
+    expect(
+      recorder.events
+        .filter((event) => event.type === 'file-added' || event.type === 'activity-change')
+        .map((event) =>
+          event.type === 'activity-change' ? (event.detail as { activity: string }).activity : event.type,
+        ),
+    ).toEqual(['file-added', 'upload-list']);
   });
 
   it('lets the empty upload list open when set', async () => {
@@ -47,13 +56,16 @@ describe('showEmptyList', () => {
   });
 
   it('bounces the empty upload list back to start-from when not set', async () => {
-    const { root, api } = await renderSolution('inline');
+    const { root, api, provider } = await renderSolution('inline');
     await expectActivity(root, 'start-from');
+    const recorder = recordEvents(provider);
 
     api.setCurrentActivity('upload-list');
 
-    // Negative wait: the activity may bounce through upload-list before settling, so give it time to come back.
-    await delay(300);
+    // The list opens and hands straight back: start-from coming back after it is the end of the bounce.
+    await expect
+      .poll(() => recorder.detailsOf('activity-change').map((detail) => detail.activity))
+      .toEqual(['upload-list', 'start-from']);
     await expectActivity(root, 'start-from');
     expect(api.getCurrentActivity()).toBe('start-from');
   });
