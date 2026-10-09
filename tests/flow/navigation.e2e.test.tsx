@@ -14,6 +14,10 @@ const openUrlSource = async (root: HTMLElement) => {
   await expectActivity(root, 'url');
 };
 
+/** Inline's own Cancel button on start-from. Found even while hidden, since several tests assert that it is. */
+const inlineCancel = (root: HTMLElement) =>
+  within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Cancel', includeHidden: true });
+
 /**
  * Every change to `element.hidden` from now on, as 'shown'/'hidden', with the test's own markers mixed in so a log can
  * say what happened before which step.
@@ -159,8 +163,7 @@ describe('inline', () => {
     const { root } = await renderSolution('inline');
     await expectActivity(root, 'start-from');
 
-    const cancel = root.querySelector('.uc-cancel-btn') as HTMLButtonElement;
-    await expect.element(cancel).toHaveAttribute('hidden');
+    await expect.element(inlineCancel(root)).not.toBeVisible();
   });
 
   it('keeps cancel hidden after coming back to an empty start-from', async () => {
@@ -173,11 +176,11 @@ describe('inline', () => {
 
     // Correct here: history is back at start-from and the collection is empty, so cancelling would have nowhere to
     // go (`_couldHistoryBack` and `_couldShowList` are both false — FileUploaderInline.ts:52).
-    const cancel = root.querySelector('.uc-cancel-btn') as HTMLButtonElement;
-    await expect.element(cancel).toHaveAttribute('hidden');
+    const cancel = inlineCancel(root);
+    await expect.element(cancel).not.toBeVisible();
     // The sentinel: with a file in the list, the next history reset (the activity going to null) recomputes the
     // button and shows it. Nothing may have shown it before the file arrived.
-    const hidden = logHidden(cancel);
+    const hidden = logHidden(cancel.element() as HTMLElement);
     hidden.mark('file added');
     api.addFileFromObject(IMAGE.PIXEL);
     await expectActivity(root, 'upload-list');
@@ -199,11 +202,12 @@ describe('inline', () => {
     (within(root).getByTestId('uc-upload-list--add-more').element() as HTMLButtonElement).click();
     await expectActivity(root, 'start-from');
 
-    const cancel = root.querySelector('.uc-cancel-btn') as HTMLButtonElement;
-    await expect.element(cancel).toHaveAttribute('hidden');
-    const hidden = logHidden(cancel);
+    const cancel = inlineCancel(root);
+    await expect.element(cancel).not.toBeVisible();
+    const hidden = logHidden(cancel.element() as HTMLElement);
 
-    cancel.click();
+    // Clicked through the DOM on purpose: the button is hidden, and this checks that its handler would still work.
+    (cancel.element() as HTMLButtonElement).click();
     await expectActivity(root, 'upload-list');
     expect(api.getCurrentActivity()).toBe('upload-list');
 
