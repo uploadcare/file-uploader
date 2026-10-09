@@ -45,4 +45,33 @@ describe('UploaderPublicApi', () => {
     expect(ctx.read('*currentActivityParams')).toEqual({});
     expect([...openModals]).toEqual([]);
   });
+
+  it('setModalState(true) does not open the modal once destroyed while waiting for the activity block', async () => {
+    /** The modals something has opened and not closed again. */
+    const openModals = new Set<string>();
+    const blocksRegistry = new Set<unknown>();
+    const ctxName = 'public-api-teardown-modal';
+    const ctx = PubSub.registerCtx<Record<string, unknown>>(
+      {
+        '*pluginManager': { pluginsReady: () => Promise.resolve(), snapshot: () => ({ sources: [] }) },
+        '*modalManager': { open: (id: string) => openModals.add(id) },
+        '*blocksRegistry': blocksRegistry,
+        '*currentActivity': 'upload-list',
+      },
+      ctxName,
+    ) as unknown as PubSub<SharedState>;
+    onTestFinished(() => PubSub.deleteCtx(ctxName));
+    const api = new UploaderPublicApi(createSharedInstancesBag(() => ctx));
+    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    api.setModalState(true);
+    // Plugins are ready at once, so by the next frame setModalState is polling the registry for the activity block.
+    await nextFrame();
+
+    api.destroy();
+    blocksRegistry.add({ activityType: 'upload-list' });
+    await nextFrame();
+    await nextFrame();
+
+    expect([...openModals]).toEqual([]);
+  });
 });
