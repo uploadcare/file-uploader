@@ -1,7 +1,7 @@
 import type { UploadcareFile } from '@uploadcare/upload-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FuncFileValidator } from '@/index';
-import { delay } from '@/utils/delay';
+import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE } from '~/tests/fixtures/files';
 import { renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
@@ -76,6 +76,19 @@ describe('imageShrink', () => {
   });
 });
 
+/** The sentinel url: a paste of it that is accepted lands after the paste under test, through the same handler. */
+const SENTINEL_URL = 'https://example.com/sentinel.jpg';
+
+const pasteSentinel = (target: Element) => {
+  const data = new DataTransfer();
+  data.items.add(SENTINEL_URL, 'text/plain');
+  target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, composed: true }));
+};
+
+/** Everything in the collection, by url or file name; the sentinel shows up as its url. */
+const added = (api: Awaited<ReturnType<typeof renderSolution>>['api']) =>
+  api.getOutputCollectionState().allEntries.map((entry) => entry.externalUrl ?? entry.name);
+
 describe('pasteScope', () => {
   const pasteInto = async (target: Element) => {
     const data = new DataTransfer();
@@ -93,13 +106,12 @@ describe('pasteScope', () => {
   });
 
   it("ignores a paste outside the uploader on 'local'", async () => {
-    const { api } = await renderSolution('regular');
+    const { api, root } = await renderSolution('regular');
 
     await pasteInto(document.body);
+    pasteSentinel(root);
 
-    // Negative wait: nothing should be added, so there is no signal to wait for.
-    await delay(300);
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
+    await expect.poll(() => added(api)).toEqual([SENTINEL_URL]);
   });
 
   it("accepts a paste anywhere on 'global'", async () => {
@@ -111,27 +123,33 @@ describe('pasteScope', () => {
   });
 
   it('ignores paste entirely when disabled', async () => {
-    const { root, api } = await renderSolution('regular', { pasteScope: false });
+    const { root, api, config } = await renderSolution('regular', { pasteScope: false });
 
     await pasteInto(root);
+    config.pasteScope = 'local';
+    pasteSentinel(root);
 
-    // Negative wait: nothing should be added, so there is no signal to wait for.
-    await delay(300);
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
+    await expect.poll(() => added(api)).toEqual([SENTINEL_URL]);
   });
 });
 
 describe('validationConcurrency', () => {
-  /** Runs three files through a slow async validator and reports the highest number in flight at once. */
+  /**
+   * Runs three files through a validator and reports the highest number in flight at once. Every validator holds until
+   * `validationConcurrency` of them are running, so the runs overlap as far as the setting allows; a manager that let
+   * fewer run at once would never get there, and the test would time out.
+   */
   const peakConcurrency = async (validationConcurrency: number): Promise<number> => {
     let inFlight = 0;
     let peak = 0;
     let finished = 0;
+    const allowedRunning = withResolvers();
 
     const validator: FuncFileValidator = async () => {
       inFlight += 1;
       peak = Math.max(peak, inFlight);
-      await delay(150);
+      if (inFlight >= validationConcurrency) allowedRunning.resolve();
+      await allowedRunning.promise;
       inFlight -= 1;
       finished += 1;
       return undefined;
@@ -151,7 +169,7 @@ describe('validationConcurrency', () => {
   });
 
   it('runs them in parallel when allowed', async () => {
-    expect(await peakConcurrency(3)).toBeGreaterThan(1);
+    expect(await peakConcurrency(3)).toBe(3);
   });
 });
 
@@ -183,10 +201,9 @@ describe('pasting urls and text', () => {
     const { root, api } = await renderSolution('regular');
 
     await pasteText(root, 'just some words');
+    pasteSentinel(root);
 
-    // Negative wait: nothing should be added, so there is no signal to wait for.
-    await delay(400);
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
+    await expect.poll(() => added(api)).toEqual([SENTINEL_URL]);
   });
 
   it('ignores a url with a scheme it will not fetch', async () => {
@@ -194,10 +211,9 @@ describe('pasting urls and text', () => {
     const { root, api } = await renderSolution('regular');
 
     await pasteText(root, 'ftp://example.com/photo.jpg');
+    pasteSentinel(root);
 
-    // Negative wait: nothing should be added, so there is no signal to wait for.
-    await delay(400);
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
+    await expect.poll(() => added(api)).toEqual([SENTINEL_URL]);
   });
 
   it('ignores a paste into a text field', async () => {
@@ -207,10 +223,9 @@ describe('pasting urls and text', () => {
     root.appendChild(input);
 
     await pasteText(root, 'https://example.com/photo.jpg', 'text/plain', input);
+    pasteSentinel(root);
 
-    // Negative wait: nothing should be added, so there is no signal to wait for.
-    await delay(400);
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
+    await expect.poll(() => added(api)).toEqual([SENTINEL_URL]);
   });
 
   it('takes both a file and a url from one paste', async () => {
