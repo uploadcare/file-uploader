@@ -73,7 +73,7 @@ describe('regular', () => {
     api.initFlow();
     await expectModal(root, 'upload-list', 'open');
 
-    await within(root).getByTestId('uc-activity-header--close').click();
+    await within(root).getByTestId('uc-upload-list').getByRole('button', { name: 'Close', exact: true }).click();
 
     await expectModal(root, 'upload-list', 'closed');
     await expect.poll(() => api.getCurrentActivity()).toBe(null);
@@ -199,7 +199,7 @@ describe('inline', () => {
     api.addFileFromObject(IMAGE.PIXEL);
     await expectActivity(root, 'upload-list');
 
-    (within(root).getByTestId('uc-upload-list--add-more').element() as HTMLButtonElement).click();
+    await within(root).getByRole('button', { name: 'Add more', exact: true }).click();
     await expectActivity(root, 'start-from');
 
     const cancel = inlineCancel(root);
