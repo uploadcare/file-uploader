@@ -108,18 +108,26 @@ export async function renderSolution(
 
   Object.assign(config, propsForLater);
 
-  // The solution renders its blocks over several updates; a test drives it once every one of them has joined the ctx
-  // and finished rendering.
+  await waitForBlocks(root, provider);
+
+  return { ctxName, config, provider, api: provider.getAPI(), root };
+}
+
+/**
+ * Waits until every block in `elements`, and every block inside them, has joined its ctx and finished rendering. A
+ * solution renders its blocks over several updates, so this is when a test can drive it. A failure lists the blocks
+ * still missing.
+ */
+export async function waitForBlocks(...elements: Element[]): Promise<void> {
   await expect
     .poll(() =>
-      [root, ...root.querySelectorAll('*')]
+      elements
+        .flatMap((element) => [element, ...element.querySelectorAll('*')])
         .filter((element) => element instanceof LitBlock)
-        .filter((block) => !provider.blocksRegistry.has(block) || block.isUpdatePending)
+        .filter((block) => !block.blocksRegistry?.has(block) || block.isUpdatePending)
         .map((block) => block.localName),
     )
     .toEqual([]);
-
-  return { ctxName, config, provider, api: provider.getAPI(), root };
 }
 
 /**
