@@ -10,8 +10,6 @@ import { type MockInstance, vi } from 'vitest';
  */
 
 const TELEMETRY_URL = 'https://tlm.uploadcare.com/api/v1/events';
-/** Longer than the 300ms output flush, so trailing telemetry has been queued and sent. */
-export const SETTLE_MS = 1000;
 const WAIT = { timeout: 20_000, interval: 50 };
 
 /** Telemetry bodies are snake_cased on the way out. */
