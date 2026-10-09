@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { recordEvents } from '~/tests/utils/event-recorder';
@@ -10,12 +9,6 @@ import '~/types/jsx';
  * Public events driven from the UI rather than the API: modal/activity events and `file-added` from the built-in
  * sources. The ordered assertions are exact, so a reordered, dropped or extra event fails the test.
  */
-
-/**
- * Negative wait: the ordered assertions claim nothing *else* fires, and no signal marks "no more events". Longer than
- * the 300ms `_flushOutputItems` debounce, so every trailing `change` has landed.
- */
-const settle = () => delay(1000);
 
 const WAIT = { timeout: 20_000, interval: 50 };
 
@@ -31,13 +24,15 @@ describe('events: UI interaction', () => {
   };
 
   it('fires activity-change then modal-open when the modal is opened', async () => {
-    const { provider, root } = await renderSolution();
+    const { api, provider, root } = await renderSolution();
     const recorder = recordEvents(provider);
 
     await openModal(root);
-    await settle();
+    // The sentinel: closing it fires modal-close, so the exact list below says nothing else fired before it.
+    api.setModalState(false);
+    await recorder.waitFor('modal-close');
 
-    expect(recorder.types).toEqual(['activity-change', 'modal-open']);
+    expect(recorder.types).toEqual(['activity-change', 'modal-open', 'modal-close']);
     expect(recorder.detailsOf('activity-change')[0]).toEqual({ activity: 'start-from' });
     expect(recorder.detailsOf('modal-open')[0]).toEqual({ modalId: 'start-from' });
   });
@@ -51,7 +46,7 @@ describe('events: UI interaction', () => {
     api.setCurrentActivity('upload-list');
     api.setModalState(true);
     await expect.element(within(root).getByTestId('uc-upload-list')).toBeVisible();
-    await settle();
+    await recorder.waitForAfter('change', 'file-added');
     recorder.clear();
 
     await clickInUploadList(root, '.uc-upload-btn');
@@ -60,7 +55,7 @@ describe('events: UI interaction', () => {
 
     await recorder.waitFor('common-upload-success');
     await clickInUploadList(root, '.uc-done-btn');
-    await settle();
+    await recorder.waitFor('modal-close');
 
     expect(recorder.detailsOf('done-click')).toHaveLength(1);
     expect(recorder.detailsOf('done-click')[0]).toMatchObject({ status: 'success', successCount: 1 });

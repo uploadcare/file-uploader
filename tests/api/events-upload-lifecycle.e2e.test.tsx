@@ -1,6 +1,5 @@
 import { DEMO_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
-import { delay } from '@/utils/delay';
 import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
@@ -18,12 +17,6 @@ import '~/types/jsx';
  * instead — that it fires and carries the right final state.
  */
 
-/**
- * Negative wait: the ordered assertions claim nothing *else* fires, and no signal marks "no more events". Longer than
- * the 300ms `_flushOutputItems` debounce, so every trailing `change` has landed.
- */
-const settle = () => delay(1000);
-
 const CHANGE = 'change' as const;
 const PROGRESS = ['file-upload-progress', 'common-upload-progress'] as const;
 
@@ -36,8 +29,7 @@ describe('events: upload lifecycle', () => {
     await recorder.waitFor('file-added');
     api.uploadAll();
 
-    await recorder.waitFor('common-upload-success');
-    await settle();
+    await recorder.waitForAfter(CHANGE, 'common-upload-success');
 
     expect(recorder.typesExcluding(CHANGE)).toEqual([
       'file-added',
@@ -63,8 +55,7 @@ describe('events: upload lifecycle', () => {
     await recorder.waitFor('file-added');
     api.uploadAll();
 
-    await recorder.waitFor('common-upload-success');
-    await settle();
+    await recorder.waitForAfter(CHANGE, 'common-upload-success');
 
     // Progress events are excluded here: a URL upload is polled server-side, so it can finish without reporting any
     // intermediate progress.
@@ -100,8 +91,7 @@ describe('events: upload lifecycle', () => {
     );
     api.uploadAll();
 
-    await recorder.waitFor('common-upload-success');
-    await settle();
+    await recorder.waitForAfter(CHANGE, 'common-upload-success');
 
     expect(recorder.detailsOf('file-added')).toHaveLength(2);
     expect(recorder.detailsOf('file-upload-start')).toHaveLength(2);
@@ -177,13 +167,12 @@ describe('events: upload lifecycle', () => {
     const recorder = recordEvents(provider);
 
     const entry = api.addFileFromObject(IMAGE.PIXEL);
-    await recorder.waitFor('file-added');
-    await settle();
+    // The file uploads on its own; drop its events once the upload is done.
+    await recorder.waitForAfter(CHANGE, 'common-upload-success');
     recorder.clear();
 
     api.removeFileByInternalId(entry.internalId);
-    await recorder.waitFor('file-removed');
-    await settle();
+    await recorder.waitForAfter(CHANGE, 'file-removed');
 
     // Removing a file recomputes the common progress, which re-emits it.
     expect(recorder.types).toEqual(['file-removed', 'common-upload-progress', CHANGE]);
@@ -199,8 +188,8 @@ describe('events: upload lifecycle', () => {
     config.maxLocalFileSizeBytes = 1;
 
     api.addFileFromObject(IMAGE.PIXEL);
-    await recorder.waitFor('common-upload-failed');
-    await settle();
+    await expect.poll(() => recorder.detailsOf('common-upload-failed')).toHaveLength(2);
+    await recorder.waitForAfter(CHANGE, 'common-upload-failed');
 
     // The failure pair fires twice: once from the `add` validators and once from the `change` validators that run in
     // the next tick. Pinned as-is — this is current behaviour, not an endorsement of it.
@@ -225,7 +214,7 @@ describe('events: upload lifecycle', () => {
 
     const groupState = await recorder.waitFor('group-created');
     expect(groupState.group?.cdnUrl).toBeTruthy();
-    await settle();
+    await recorder.waitForAfter(CHANGE, 'common-upload-success');
 
     // group-created is excluded from the ordered comparison: creating the group is a separate network call, so it can
     // land either side of common-upload-success.
