@@ -159,7 +159,10 @@ export const within = (root: HTMLElement) => page.elementLocator(root);
 export async function expectActivity(root: HTMLElement, activityId: string): Promise<void> {
   // Keyed on the activity id rather than a test id: the id is what the router sets, and one generic
   // `<uc-plugin-activity-host>` serves every plugin activity, so their test ids are all identical.
-  await expect.poll(() => root.querySelector(`[activity="${activityId}"]`)?.hasAttribute('active') ?? false).toBe(true);
+  // Polls the ids of every active activity, not a boolean, so a failure names what is showing instead.
+  await expect
+    .poll(() => [...root.querySelectorAll('[activity][active]')].map((host) => host.getAttribute('activity')))
+    .toContain(activityId);
 }
 
 /**
@@ -169,7 +172,15 @@ export async function expectActivity(root: HTMLElement, activityId: string): Pro
  * Every `uc-modal` shares one `data-testid` (it is derived from the tag name), so the id is the only discriminator.
  */
 export async function expectModal(root: HTMLElement, id: string, state: 'open' | 'closed'): Promise<void> {
-  await expect.poll(() => modalDialog(root, id)?.open ?? false).toBe(state === 'open');
+  // Polls the ids of every open modal, not a boolean, so a failure names what is open instead.
+  const openModals = expect.poll(() =>
+    within(root)
+      .getByTestId('uc-modal')
+      .elements()
+      .filter((modal) => modal.querySelector('dialog')?.open)
+      .map((modal) => modal.id),
+  );
+  await (state === 'open' ? openModals.toContain(id) : openModals.not.toContain(id));
 }
 
 export function modalDialog(root: HTMLElement, id: string): HTMLDialogElement | null {
