@@ -1,7 +1,8 @@
 import { AuthTokenResolverError, NetworkError, UploadError } from '@uploadcare/upload-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { delay } from '@/utils/delay';
+import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE } from '~/tests/fixtures/files';
+import { recordEvents } from '~/tests/utils/event-recorder';
 import { renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -119,57 +120,62 @@ describe('a failed group creation', () => {
     // on a flush rather than on every change — so a group made from the old
     // file set was published as the collection's group, missing the new file.
     uploadFile.mockResolvedValue(UPLOADED);
-    let resolveGroup: (group: unknown) => void = () => {};
-    uploadFileGroup.mockImplementation(
-      () =>
-        new Promise((resolve) => {
-          resolveGroup = resolve;
-        }),
-    );
+    const groups = holdGroupRequests();
 
-    const { api } = await renderSolution('regular', { multiple: true, groupOutput: true });
+    const { api, provider } = await renderSolution('regular', { multiple: true, groupOutput: true });
+    const recorder = recordEvents(provider);
     api.addFileFromObject(IMAGE.PIXEL);
     api.uploadAll();
-    await expect.poll(() => uploadFileGroup.mock.calls.length).toBeGreaterThan(0);
+    await expect.poll(() => groups.length).toBe(1);
 
+    // The race is a group arriving after the collection observer has seen the second file, which is when it emits
+    // file-added. Auto-upload then makes the two-file collection its own group request.
     api.addFileFromObject(IMAGE.PIXEL);
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(2);
-    await delay(100);
+    await expect.poll(() => recorder.detailsOf('file-added')).toHaveLength(2);
+    await expect.poll(() => groups.length).toBe(2);
 
-    resolveGroup({ uuid: 'group-uuid~1', cdnUrl: 'https://ucarecdn.com/group-uuid~1/' });
-    await delay(100);
+    // In this order, a stale group that was not dropped would be created first.
+    groups[0].resolve({ uuid: 'stale-group~1', cdnUrl: 'https://ucarecdn.com/stale-group~1/' });
+    groups[1].resolve({ uuid: 'current-group~2', cdnUrl: 'https://ucarecdn.com/current-group~2/' });
+    await recorder.waitFor('group-created');
 
-    expect(api.getOutputCollectionState().group).toBeNull();
+    expect(recorder.detailsOf('group-created').map((state) => state.group.uuid)).toEqual(['current-group~2']);
   });
 
   it('ignores a group failure for a collection that has since changed', async () => {
     // The request cannot be cancelled, so a late rejection would otherwise
     // report against files it was never about.
     uploadFile.mockResolvedValue(UPLOADED);
-    let rejectGroup: (reason: unknown) => void = () => {};
-    uploadFileGroup.mockImplementation(
-      () =>
-        new Promise((_resolve, reject) => {
-          rejectGroup = reject;
-        }),
-    );
+    const groups = holdGroupRequests();
 
-    const { api } = await renderSolution('regular', { multiple: true, groupOutput: true });
+    const { api, provider } = await renderSolution('regular', { multiple: true, groupOutput: true });
+    const recorder = recordEvents(provider);
     api.addFileFromObject(IMAGE.PIXEL);
     api.uploadAll();
-    await expect.poll(() => uploadFileGroup.mock.calls.length).toBeGreaterThan(0);
+    await expect.poll(() => groups.length).toBe(1);
 
-    // A second file: a different collection, and a different group to make.
-    // The collection observer runs a turn after the entry appears in the
-    // output state, and the race is specifically a rejection arriving after
-    // that observer, so this waits for the observer rather than the entry.
+    // A second file: a different collection, and a different group to make, once the collection observer has seen it.
     api.addFileFromObject(IMAGE.PIXEL);
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(2);
-    await delay(100);
+    await expect.poll(() => recorder.detailsOf('file-added')).toHaveLength(2);
+    await expect.poll(() => groups.length).toBe(2);
 
-    rejectGroup(new Error('too late'));
+    // The current group lands after the stale rejection, so once it is created the rejection has been handled too.
+    // Creating a group does not re-run the collection validators, so a GROUP_ERROR raised by the rejection would stay.
+    groups[0].reject(new Error('too late'));
+    groups[1].resolve({ uuid: 'current-group~2', cdnUrl: 'https://ucarecdn.com/current-group~2/' });
+    await recorder.waitFor('group-created');
 
-    await expect.poll(() => api.getOutputCollectionState().errors).toBeDefined();
-    expect(api.getOutputCollectionState().errors.some((error) => error.type === 'GROUP_ERROR')).toBe(false);
+    expect(api.getOutputCollectionState().errors.map((error) => error.type)).not.toContain('GROUP_ERROR');
   });
 });
+
+/** Makes every `uploadFileGroup` call wait until the test settles it, in call order. */
+function holdGroupRequests() {
+  const held: ReturnType<typeof withResolvers<unknown>>[] = [];
+  uploadFileGroup.mockImplementation(() => {
+    const request = withResolvers<unknown>();
+    held.push(request);
+    return request.promise;
+  });
+  return held;
+}
