@@ -203,7 +203,7 @@ export function addSource(config: Config, sourceId: string): void {
 
 /** Clicks the solution's upload button and waits for start-from to show. */
 export async function openModal(root: HTMLElement): Promise<void> {
-  await within(root).getByText('Upload files', { exact: true }).click();
+  await within(root).getByRole('button', { name: 'Upload files', exact: true }).click();
   await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
 }
 

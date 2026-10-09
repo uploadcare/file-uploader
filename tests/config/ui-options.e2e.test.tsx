@@ -186,7 +186,7 @@ describe('localeDefinitionOverride', () => {
     await expectActivity(root, 'start-from');
 
     await expect
-      .element(within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }))
+      .element(within(root).getByTestId('uc-start-from').getByRole('button', { name: 'From link', exact: true }))
       .toBeVisible();
   });
 
@@ -197,6 +197,8 @@ describe('localeDefinitionOverride', () => {
     api.initFlow();
     await expectActivity(root, 'start-from');
 
-    await expect.element(within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true })).toBeVisible();
+    await expect
+      .element(within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Cancel', exact: true }))
+      .toBeVisible();
   });
 });

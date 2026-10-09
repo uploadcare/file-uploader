@@ -10,7 +10,7 @@ import '~/types/jsx';
  */
 
 const openUrlSource = async (root: HTMLElement) => {
-  await within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }).click();
+  await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'From link', exact: true }).click();
   await expectActivity(root, 'url');
 };
 
@@ -36,7 +36,7 @@ describe('regular', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Cancel', exact: true }).click();
 
     await expectModal(root, 'start-from', 'closed');
     expect(api.getCurrentActivity()).toBe(null);
@@ -139,7 +139,7 @@ describe('minimal', () => {
     api.setModalState(true);
     await expectModal(root, 'start-from', 'open');
 
-    await within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Cancel', exact: true }).click();
 
     await expectModal(root, 'start-from', 'closed');
     await expectActivity(root, 'upload-list');
@@ -151,7 +151,7 @@ describe('minimal', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Cancel', exact: true }).click();
 
     await expectModal(root, 'start-from', 'closed');
     await expect.poll(() => api.getCurrentActivity()).toBe('start-from');

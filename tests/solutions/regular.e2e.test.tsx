@@ -28,8 +28,8 @@ describe('uc-file-uploader-regular', () => {
       const startFrom = within(root).getByTestId('uc-start-from');
 
       await expect.element(startFrom.getByText('From device', { exact: true })).toBeVisible();
-      await expect.element(startFrom.getByText('From link', { exact: true })).toBeVisible();
-      await expect.element(startFrom.getByText('Camera', { exact: true })).toBeVisible();
+      await expect.element(startFrom.getByRole('button', { name: 'From link', exact: true })).toBeVisible();
+      await expect.element(startFrom.getByRole('button', { name: 'Camera', exact: true })).toBeVisible();
       await expect.element(startFrom.getByText('Dropbox', { exact: true })).toBeVisible();
       await expect.element(startFrom.getByText('Google Drive', { exact: true })).toBeVisible();
     });
@@ -47,7 +47,7 @@ describe('uc-file-uploader-regular', () => {
       await openModal(root);
 
       const startFrom = within(root).getByTestId('uc-start-from');
-      await expect.element(startFrom.getByText('Cancel', { exact: true })).toBeVisible();
+      await expect.element(startFrom.getByRole('button', { name: 'Cancel', exact: true })).toBeVisible();
     });
   });
 
@@ -77,7 +77,7 @@ describe('uc-file-uploader-regular', () => {
       const uploadList = within(root).getByTestId('uc-upload-list');
       const urlSource = within(root).getByTestId('uc-url-source');
 
-      await startFrom.getByText('From link').click();
+      await startFrom.getByRole('button', { name: 'From link', exact: true }).click();
       await expect.element(startFrom).not.toBeVisible();
       await expect.element(urlSource).toBeVisible();
 
@@ -97,7 +97,7 @@ describe('uc-file-uploader-regular', () => {
       const uploadList = within(root).getByTestId('uc-upload-list');
       const cameraSource = within(root).getByTestId('uc-camera-source');
 
-      await startFrom.getByText('Camera').click();
+      await startFrom.getByRole('button', { name: 'Camera', exact: true }).click();
       await expect.element(startFrom).not.toBeVisible();
       await expect.element(cameraSource).toBeVisible();
 
