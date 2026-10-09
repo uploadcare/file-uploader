@@ -67,12 +67,8 @@ describe('imageShrink', () => {
   it('leaves the file alone when the setting cannot be parsed', async () => {
     // The plugin warns and passes the file through rather than failing the upload
     // (src/plugins/imageShrinkPlugin.ts:17).
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      expect(await uploadedFile('not-a-size')).toBe(IMAGE.SQUARE);
-    } finally {
-      warn.mockRestore();
-    }
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect(await uploadedFile('not-a-size')).toBe(IMAGE.SQUARE);
   });
 });
 

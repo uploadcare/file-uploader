@@ -6,7 +6,6 @@ import { TypedData } from './TypedData';
 describe('TypedCollection', () => {
   afterEach(() => {
     vi.useRealTimers();
-    vi.restoreAllMocks();
   });
 
   it('supports basic add/read/publish/remove flows', () => {

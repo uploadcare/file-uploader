@@ -24,6 +24,10 @@ export default defineConfig({
     jsxInject: "import { renderer } from '~/tests/utils/test-renderer';",
   },
   test: {
+    // Every project starts each test with the real implementations back and the stubbed globals gone, so a test that
+    // spies or stubs needs no try/finally of its own, and one that fails halfway cannot leak into the next.
+    restoreMocks: true,
+    unstubGlobals: true,
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'json-summary'],

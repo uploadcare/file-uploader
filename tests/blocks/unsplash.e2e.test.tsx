@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
+import { beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { unsplashPlugin } from '@/plugins/unsplashPlugin';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
@@ -23,10 +23,6 @@ let fetchSpy: MockInstance<typeof window.fetch>;
 
 beforeEach(() => {
   fetchSpy = vi.spyOn(window, 'fetch');
-});
-
-afterEach(() => {
-  fetchSpy.mockRestore();
 });
 
 const okResponse = (photos: unknown[] = [PHOTO]) =>

@@ -201,8 +201,6 @@ describe('SecureUploadsManager', () => {
         expect(consoleWarnSpy).toHaveBeenCalledWith(
           'Both secureSignature/secureExpire and secureUploadsSignatureResolver are set. secureUploadsSignatureResolver will be used.',
         );
-
-        consoleWarnSpy.mockRestore();
       });
 
       it('should use resolver even when static config is set', async () => {
@@ -252,8 +250,6 @@ describe('SecureUploadsManager', () => {
           'Secure signature resolver returned an invalid result:',
           invalidToken,
         );
-
-        consoleErrorSpy.mockRestore();
       });
 
       it('should log error when resolver returns invalid result (missing secureExpire)', async () => {
@@ -271,8 +267,6 @@ describe('SecureUploadsManager', () => {
           'Secure signature resolver returned an invalid result:',
           invalidToken,
         );
-
-        consoleErrorSpy.mockRestore();
       });
 
       it('should handle resolver error and return previous token', async () => {
@@ -302,8 +296,6 @@ describe('SecureUploadsManager', () => {
           resolverError,
         );
         expect(bag.telemetryManager.sendEventError).toHaveBeenCalled();
-
-        consoleErrorSpy.mockRestore();
       });
 
       it('should not report a resolver error that arrives after destroy', async () => {

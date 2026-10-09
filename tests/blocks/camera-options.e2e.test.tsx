@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { Config } from '@/index';
 import { browserFeatures } from '@/utils/browser-info';
 import { expectActivity, openModal, renderSolution, within } from '~/tests/utils/render-solution';
@@ -117,17 +117,12 @@ describe('defaultCameraMode', () => {
 
 describe('htmlMediaCapture', () => {
   it('offers Photo and Video buttons on mobile', async () => {
-    const original = browserFeatures.htmlMediaCapture;
-    (browserFeatures as { htmlMediaCapture: boolean }).htmlMediaCapture = true;
+    vi.spyOn(browserFeatures, 'htmlMediaCapture', 'get').mockReturnValue(true);
 
-    try {
-      const { root } = await renderSolution('regular');
-      await openModal(root);
+    const { root } = await renderSolution('regular');
+    await openModal(root);
 
-      await expect.element(within(root).getByText('Photo')).toBeVisible();
-      await expect.element(within(root).getByText('Video')).toBeVisible();
-    } finally {
-      (browserFeatures as { htmlMediaCapture: boolean }).htmlMediaCapture = original;
-    }
+    await expect.element(within(root).getByText('Photo')).toBeVisible();
+    await expect.element(within(root).getByText('Video')).toBeVisible();
   });
 });
