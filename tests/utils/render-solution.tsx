@@ -168,27 +168,27 @@ export async function expectActivity(root: HTMLElement, activityId: string): Pro
 /**
  * Asserts a modal is really on screen, not merely selected in state.
  *
- * `<uc-modal>` renders a light-DOM `<dialog>` and calls `showModal()` on it, so `dialog.open` is the honest signal.
- * Every `uc-modal` shares one `data-testid` (it is derived from the tag name), so the id is the only discriminator.
+ * `<uc-modal>` renders a light-DOM `<dialog>` and calls `showModal()` on it. The `dialog` role only matches an open
+ * one, since a closed `<dialog>` is out of the accessibility tree. Every `uc-modal` shares one `data-testid` (it is
+ * derived from the tag name), so the host's id is the only discriminator.
  */
 export async function expectModal(root: HTMLElement, id: string, state: 'open' | 'closed'): Promise<void> {
   // Polls the ids of every open modal, not a boolean, so a failure names what is open instead.
   const openModals = expect.poll(() =>
     within(root)
-      .getByTestId('uc-modal')
+      .getByRole('dialog')
       .elements()
-      .filter((modal) => modal.querySelector('dialog')?.open)
-      .map((modal) => modal.id),
+      .map((dialog) => dialog.closest('uc-modal')?.id),
   );
   await (state === 'open' ? openModals.toContain(id) : openModals.not.toContain(id));
 }
 
 export function modalDialog(root: HTMLElement, id: string): HTMLDialogElement | null {
-  const modal = within(root)
-    .getByTestId('uc-modal')
+  const dialog = within(root)
+    .getByRole('dialog', { includeHidden: true })
     .elements()
-    .find((element) => element.id === id);
-  return modal?.querySelector('dialog') ?? null;
+    .find((element) => element.closest('uc-modal')?.id === id);
+  return (dialog as HTMLDialogElement | undefined) ?? null;
 }
 
 /** A plugin that does nothing until `overrides` say otherwise. */
