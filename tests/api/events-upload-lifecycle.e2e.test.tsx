@@ -1,7 +1,9 @@
-import { describe, expect, it, onTestFinished, vi } from 'vitest';
+import { DEMO_IMAGE_UUID } from '@uploadcare/api-emulator';
+import { describe, expect, it, vi } from 'vitest';
 import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
+import { resetEmulator } from '~/tests/utils/emulator.browser';
 import { recordEvents } from '~/tests/utils/event-recorder';
 import { renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
@@ -136,28 +138,17 @@ describe('events: upload lifecycle', () => {
   });
 
   it('fires file-upload-start for an upload that finishes before its start is flushed', async () => {
+    // The collection reports its changes in batches, on a 0ms timer. A busy or background tab runs that timer late
+    // while the network keeps answering, so an upload can start and finish inside one batch. Answering in the task
+    // that asked gets there on purpose: an upload by uuid is one body-less `GET /info/`, which `hold: false` answers
+    // before the timer runs. Live, the real API is slower than the timer, so the race is not reproduced there.
+    (await resetEmulator())?.on({}, ({ next }) => next(), { hold: false });
     const { api, provider } = await renderSolution('regular', { confirmUpload: true });
     const recorder = recordEvents(provider);
-    api.addFileFromObject(IMAGE.PIXEL);
+    api.addFileFromUuid(DEMO_IMAGE_UUID);
     await recorder.waitFor('file-added');
-    await settle();
-
-    // The collection reports its changes in batches, on a 0ms timer. A busy or background tab runs that timer late
-    // while the network keeps answering, so a small upload can start and finish inside one batch. Holding the
-    // collection's change notifications back until the upload is done gets there on purpose.
-    const collection = provider.uploadCollection as unknown as {
-      _notifyObservers: (prop: string, uid: string) => void;
-    };
-    const notify = collection._notifyObservers;
-    const held: [string, string][] = [];
-    collection._notifyObservers = (prop, uid) => {
-      held.push([prop, uid]);
-      if (prop !== 'fileInfo' || !provider.uploadCollection.read(uid)?.getValue('fileInfo')) return;
-      collection._notifyObservers = notify;
-      for (const args of held) notify(...args);
-    };
-    onTestFinished(() => {
-      collection._notifyObservers = notify;
+    await vi.waitFor(() => {
+      expect(api.getOutputCollectionState().allEntries).toMatchObject([{ isValidationPending: false }]);
     });
 
     api.uploadAll();
