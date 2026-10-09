@@ -9,16 +9,33 @@
  *
  * `E2E_NET=live` leaves the page alone and lets the suite hit the real service; see `./network.ts`.
  */
+import type { EmulatorSession } from '@uploadcare/api-emulator';
 import { setupEmulator } from '@uploadcare/api-emulator/browser';
 
 /** The page-side flag; `./network.ts` is the Node side. */
-const isLive = import.meta.env.E2E_NET === 'live';
+export const isLive = import.meta.env.E2E_NET === 'live';
 
 // Starts once per test file, on the first reset.
 const emulator = isLive ? undefined : setupEmulator();
+
+let current: EmulatorSession | undefined;
 
 /**
  * Clears what the last test did and answers the fresh session, for a test to steer with `use()`/`on()`.
  * `undefined` live, where there is nothing to reset.
  */
-export const resetEmulator = () => emulator?.reset();
+export const resetEmulator = async () => {
+  current = await emulator?.reset();
+  return current;
+};
+
+/**
+ * The running test's session: what it received (`files`, `telemetry`, `requests`) and the scenarios that steer it.
+ * Live there is none, so a test that reads or steers it runs against the emulator only, under `it.skipIf(isLive)`.
+ */
+export const emulatorSession = (): EmulatorSession => {
+  if (!current) {
+    throw new Error('No emulator session: E2E_NET=live has no emulator, so skip this test with it.skipIf(isLive)');
+  }
+  return current;
+};

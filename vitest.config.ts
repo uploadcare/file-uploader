@@ -91,6 +91,10 @@ export default defineConfig({
           // Reaches the page as `import.meta.env.E2E_NET`: vitest defines `env` into the browser bundle.
           env: { E2E_NET: mode },
           include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
+          // Fake-only: these read back what the emulator received or steer it with scenarios, and a live run has no
+          // emulator. They never measured the real API either: before the emulator they ran on a stubbed `fetch` or
+          // `uploadFile`, live or not.
+          exclude: isLive ? ['./tests/api/telemetry/**'] : [],
           // Nothing to retry when the network is the emulator (`@uploadcare/api-emulator`, run in the page by
           // `tests/utils/emulator.browser.ts`): it answers the same way every time, so a second attempt would only
           // hide a real flake. A live run still races the real API, and still gets one.

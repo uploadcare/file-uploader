@@ -1,10 +1,8 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { IMAGE } from '~/tests/fixtures/files';
 import { renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
-import { bodiesOf, bodiesWithAction, clearSent, installTelemetryStub, types, waitForType } from './stub';
-
-beforeEach(installTelemetryStub);
+import { bodiesOf, bodiesWithAction, clearSent, types, waitForType } from './sink';
 
 describe('telemetry: action events', () => {
   it('reports an action-event when a file is removed from the upload list', { timeout: 60_000 }, async () => {

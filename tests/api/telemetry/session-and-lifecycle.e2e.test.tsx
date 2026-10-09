@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import type { Config, UploadCtxProvider } from '@/index';
 import { IMAGE } from '~/tests/fixtures/files';
 import { recordEvents } from '~/tests/utils/event-recorder';
 import { openModal, renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
-import { bodiesOf, clearSent, installTelemetryStub, types, waitForType } from './stub';
+import { bodiesOf, clearSent, types, waitForType } from './sink';
 
 /** `qualityInsights` back on: the shared helper disables telemetry, which is the thing under test here. */
 const renderWithTelemetry = () => renderSolution('regular', { qualityInsights: true });
@@ -23,8 +23,6 @@ const uploadSettled = (provider: UploadCtxProvider) => {
   const recorder = recordEvents(provider);
   return () => recorder.waitForAfter('change', 'common-upload-success');
 };
-
-beforeEach(installTelemetryStub);
 
 describe('telemetry: session', () => {
   it('sends init-solution first, carrying the effective config', async () => {
