@@ -105,7 +105,9 @@ describe('plugin sources', () => {
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Instagram source was removed'));
     });
 
-    await expect.element(root.querySelector<HTMLElement>('[data-source-id="instagram"]')).not.toBeInTheDocument();
+    // The list has rendered once the local source it keeps is there; only then does instagram's absence mean anything.
+    await expect.poll(() => root.querySelector('[data-source-id="local"]')).not.toBeNull();
+    expect(root.querySelector('[data-source-id="instagram"]')).toBeNull();
   });
 
   it('warns and skips a duplicate source id', async () => {
