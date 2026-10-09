@@ -1,3 +1,4 @@
+import { BUNDLE_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { describe, expect, test } from 'vitest';
 import { page } from 'vitest/browser';
 import '~/types/jsx';
@@ -112,7 +113,7 @@ describe('Bundles', () => {
     const ctxName = getCtxName();
     page.render(
       <>
-        <uc-cloud-image-editor ctx-name={ctxName} uuid="90e06e59-8055-4435-9291-c005a98cf098"></uc-cloud-image-editor>
+        <uc-cloud-image-editor ctx-name={ctxName} uuid={BUNDLE_IMAGE_UUID}></uc-cloud-image-editor>
         <uc-config ctx-name={ctxName} pubkey="364c0864158c27472ffe" testMode></uc-config>
       </>,
     );
@@ -183,12 +184,10 @@ describe('Bundles', () => {
     // @ts-ignore
     await import('~/web/uc-img.min.js');
 
-    page.render(<uc-img uuid="90e06e59-8055-4435-9291-c005a98cf098"></uc-img>);
+    page.render(<uc-img uuid={BUNDLE_IMAGE_UUID}></uc-img>);
 
     await expect
-      .poll(() =>
-        document.querySelector('uc-img > img')?.getAttribute('src')?.includes('90e06e59-8055-4435-9291-c005a98cf098'),
-      )
+      .poll(() => document.querySelector('uc-img > img')?.getAttribute('src')?.includes(BUNDLE_IMAGE_UUID))
       .toBe(true);
   });
 });

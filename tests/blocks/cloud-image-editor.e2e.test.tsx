@@ -1,3 +1,4 @@
+import { EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import '~/types/jsx';
@@ -11,7 +12,7 @@ const renderEditor = () => {
     <>
       <uc-cloud-image-editor
         crop-preset="1:1, 16:9, 4:3, 3:4, 9:16"
-        uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f"
+        uuid={EDITOR_IMAGE_UUID}
         ctx-name={ctxName}
       ></uc-cloud-image-editor>
       <uc-config
@@ -82,7 +83,7 @@ describe('uc-cloud-image-editor', () => {
         <div style="width: 0; height: 0; overflow: hidden;">
           <uc-cloud-image-editor
             crop-preset="1:1, 16:9, 4:3, 3:4, 9:16"
-            uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f"
+            uuid={EDITOR_IMAGE_UUID}
             ctx-name={ctxName}
           ></uc-cloud-image-editor>
         </div>

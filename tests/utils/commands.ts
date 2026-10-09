@@ -1,6 +1,6 @@
 import { createHash, createHmac } from 'node:crypto';
 import path from 'node:path';
-import { SIGNED_UPLOADS_SECRET_KEY } from '@uploadcare/api-emulator';
+import { SIGNED_UPLOADS_PUBLIC_KEY, SIGNED_UPLOADS_SECRET_KEY } from '@uploadcare/api-emulator';
 import type { BrowserCommand } from 'vitest/node';
 import { isLive } from './network';
 
@@ -51,7 +51,7 @@ export const mintSecureUploadsCredentials: BrowserCommand<[AuthTokenKind?]> = as
   _ctx,
   kind: AuthTokenKind = 'valid',
 ): Promise<SecureUploadsCredentials | null> => {
-  const publicKey = isLive ? process.env.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY : 'signed_uploads_project';
+  const publicKey = isLive ? process.env.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY : SIGNED_UPLOADS_PUBLIC_KEY;
   const secretKey = isLive ? process.env.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY : SIGNED_UPLOADS_SECRET_KEY;
   if (!publicKey || !secretKey) {
     if (process.env.E2E_REQUIRE_SECURE_UPLOADS === '1') {
