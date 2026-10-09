@@ -3,9 +3,7 @@ import { page, userEvent } from 'vitest/browser';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
 import { inCtx, openModal, renderSolution, waitForBlocks, within } from '~/tests/utils/render-solution';
-import { actionEvents, bodiesWithAction, clearSent, installTelemetryStub, waitForType } from './stub';
-
-beforeEach(installTelemetryStub);
+import { actionEvents, bodiesWithAction, clearSent, waitForType } from './sink';
 
 describe('telemetry: cloud image editor', () => {
   /** The standalone editor is not one of `renderSolution`'s solutions, so it is rendered by hand. */
