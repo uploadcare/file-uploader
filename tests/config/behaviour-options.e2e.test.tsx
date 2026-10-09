@@ -125,12 +125,10 @@ describe('validationConcurrency', () => {
     return peak;
   };
 
+  // The cap itself, over more settings and files, is in `src/abstract/managers/__tests__/ValidationManager.test.ts`.
+  // This checks the option reaches a real uploader's validation.
   it('runs validators one at a time when set to 1', async () => {
     expect(await peakConcurrency(1)).toBe(1);
-  });
-
-  it('runs them in parallel when allowed', async () => {
-    expect(await peakConcurrency(3)).toBe(3);
   });
 });
 
