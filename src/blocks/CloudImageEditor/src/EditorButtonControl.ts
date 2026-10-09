@@ -57,6 +57,7 @@ export class EditorButtonControl extends LitBlock {
     return html`
       <button
         role="option"
+        aria-selected=${this.active ? 'true' : 'false'}
         type="button"
         aria-label=${ifDefined(this.titleProp)}
         title=${ifDefined(this.titleProp)}
