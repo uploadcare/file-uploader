@@ -1,7 +1,7 @@
 import { expect } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider, UploaderPlugin } from '@/index';
-import { delay } from '@/utils/delay';
+import { LitBlock } from '@/lit/LitBlock';
 import { toKebabCase } from '@/utils/toKebabCase';
 import { getCtxName } from './test-renderer';
 import '../../types/jsx';
@@ -108,8 +108,16 @@ export async function renderSolution(
 
   Object.assign(config, propsForLater);
 
-  // One tick so the solution's blocks register with the ctx before a test drives them.
-  await delay(0);
+  // The solution renders its blocks over several updates; a test drives it once every one of them has joined the ctx
+  // and finished rendering.
+  await expect
+    .poll(() =>
+      [root, ...root.querySelectorAll('*')]
+        .filter((element) => element instanceof LitBlock)
+        .filter((block) => !provider.blocksRegistry.has(block) || block.isUpdatePending)
+        .map((block) => block.localName),
+    )
+    .toEqual([]);
 
   return { ctxName, config, provider, api: provider.getAPI(), root };
 }
