@@ -101,9 +101,7 @@ describe.skipIf(isLive)('unsplash plugin, against a routed API', () => {
     const { activity } = await openUnsplash();
     await expect.poll(() => photoQueries()).toHaveLength(1);
 
-    // Plain markup inside the plugin activity, no test id.
-    const input = activity.querySelector('input.search-input') as HTMLInputElement;
-    await userEvent.fill(input, 'cats');
+    await userEvent.fill(within(activity).getByLabelText('Search photos'), 'cats');
     await userEvent.keyboard('{Enter}');
 
     await expect.poll(() => photoQueries()).toHaveLength(2);
@@ -115,8 +113,7 @@ describe.skipIf(isLive)('unsplash plugin, against a routed API', () => {
     routePhotos();
     const { activity, api } = await openUnsplash();
 
-    await expect.poll(() => activity.querySelectorAll('img').length).toBeGreaterThan(0);
-    await userEvent.click(activity.querySelector('img') as HTMLElement);
+    await within(activity).getByRole('img', { name: PHOTO.alt_description }).click();
 
     await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
     const [entry] = api.getOutputCollectionState().allEntries;
