@@ -22,7 +22,12 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
   await within(rendered.root).getByTestId('uc-start-from').getByRole('button', { name: 'Camera', exact: true }).click();
   await expectActivity(rendered.root, 'camera');
 
-  return { ...rendered, camera: within(rendered.root).getByTestId('uc-camera-source') };
+  const camera = within(rendered.root).getByTestId('uc-camera-source');
+  // The controls stay `display: none` until the stream starts, so a "hidden" check made earlier passes whatever the
+  // option says. The shutter shows in every mode, which makes it the sign the controls are up.
+  await expect.element(camera.getByRole('button', { name: 'Shot', exact: true }), { timeout: 20_000 }).toBeVisible();
+
+  return { ...rendered, camera };
 };
 
 describe('cameraMirror', () => {
