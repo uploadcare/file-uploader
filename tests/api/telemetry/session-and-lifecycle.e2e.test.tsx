@@ -21,14 +21,7 @@ const sendSentinel = async (config: Config) => {
 /** The upload's last public event: the debounced `change` that follows common-upload-success by the output flush. */
 const uploadSettled = (provider: UploadCtxProvider) => {
   const recorder = recordEvents(provider);
-  return () =>
-    expect
-      .poll(() => {
-        const order = recorder.events.map((event) => event.type);
-        const success = order.indexOf('common-upload-success');
-        return success >= 0 && order.indexOf('change', success) > success;
-      })
-      .toBe(true);
+  return () => recorder.waitForAfter('change', 'common-upload-success');
 };
 
 beforeEach(installTelemetryStub);
