@@ -65,6 +65,8 @@ const pasteSentinel = (target: Element) => {
 const added = (api: Awaited<ReturnType<typeof renderSolution>>['api']) =>
   api.getOutputCollectionState().allEntries.map((entry) => entry.externalUrl ?? entry.name);
 
+// Which pastes are taken (url schemes, editable targets, scopes, activities) is in the happy-dom spec,
+// `src/abstract/features/ClipboardLayer.test.ts`. These check the option and the paste reach a real uploader.
 describe('pasteScope', () => {
   const pasteInto = async (target: Element) => {
     const data = new DataTransfer();
@@ -77,23 +79,6 @@ describe('pasteScope', () => {
     expect(config.pasteScope).toBe('local');
 
     await pasteInto(root);
-
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
-  });
-
-  it("ignores a paste outside the uploader on 'local'", async () => {
-    const { api, root } = await renderSolution('regular');
-
-    await pasteInto(document.body);
-    pasteSentinel(root);
-
-    await expect.poll(() => added(api)).toEqual([SENTINEL_URL]);
-  });
-
-  it("accepts a paste anywhere on 'global'", async () => {
-    const { api } = await renderSolution('regular', { pasteScope: 'global' });
-
-    await pasteInto(document.body);
 
     await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
   });
@@ -150,10 +135,10 @@ describe('validationConcurrency', () => {
 });
 
 describe('pasting urls and text', () => {
-  const pasteText = async (root: HTMLElement, text: string, type = 'text/plain', target: Element = root) => {
+  const pasteText = async (root: HTMLElement, text: string) => {
     const data = new DataTransfer();
-    data.items.add(text, type);
-    target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, composed: true }));
+    data.items.add(text, 'text/plain');
+    root.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, composed: true }));
   };
 
   it('adds a file from a pasted http url', async () => {
@@ -163,54 +148,5 @@ describe('pasting urls and text', () => {
 
     await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
     expect(api.getOutputCollectionState().allEntries[0].externalUrl).toBe('https://example.com/photo.jpg');
-  });
-
-  it('accepts a url pasted as text/uri-list', async () => {
-    const { root, api } = await renderSolution('regular');
-
-    await pasteText(root, 'https://example.com/photo.jpg', 'text/uri-list');
-
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
-  });
-
-  it('ignores plain text that is not a url', async () => {
-    const { root, api } = await renderSolution('regular');
-
-    await pasteText(root, 'just some words');
-    pasteSentinel(root);
-
-    await expect.poll(() => added(api)).toEqual([SENTINEL_URL]);
-  });
-
-  it('ignores a url with a scheme it will not fetch', async () => {
-    // `_getPastedUrl` only lets http and https through (ClipboardLayer.ts:76).
-    const { root, api } = await renderSolution('regular');
-
-    await pasteText(root, 'ftp://example.com/photo.jpg');
-    pasteSentinel(root);
-
-    await expect.poll(() => added(api)).toEqual([SENTINEL_URL]);
-  });
-
-  it('ignores a paste into a text field', async () => {
-    // Otherwise pasting a link into the url-source input would also add it to the collection.
-    const { root, api } = await renderSolution('regular');
-    const input = document.createElement('input');
-    root.appendChild(input);
-
-    await pasteText(root, 'https://example.com/photo.jpg', 'text/plain', input);
-    pasteSentinel(root);
-
-    await expect.poll(() => added(api)).toEqual([SENTINEL_URL]);
-  });
-
-  it('takes both a file and a url from one paste', async () => {
-    const { root, api } = await renderSolution('regular');
-    const data = new DataTransfer();
-    data.items.add(IMAGE.PIXEL);
-    data.items.add('https://example.com/photo.jpg', 'text/plain');
-    root.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, composed: true }));
-
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(2);
   });
 });
