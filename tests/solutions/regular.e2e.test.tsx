@@ -58,9 +58,10 @@ describe('uc-file-uploader-regular', () => {
       const startFrom = within(root).getByTestId('uc-start-from');
       const uploadList = within(root).getByTestId('uc-upload-list');
 
-      commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
+      const chooser = commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
 
       await startFrom.getByText('From device', { exact: true }).click();
+      await chooser;
 
       await expect.element(startFrom).not.toBeVisible();
       await expect.element(uploadList).toBeVisible();
