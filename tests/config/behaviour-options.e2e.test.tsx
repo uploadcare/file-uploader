@@ -1,8 +1,8 @@
-import type { UploadcareFile } from '@uploadcare/upload-client';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { FuncFileValidator } from '@/index';
 import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE } from '~/tests/fixtures/files';
+import { emulatorSession, isLive } from '~/tests/utils/emulator.browser';
 import { renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -14,61 +14,41 @@ import '~/types/jsx';
  * single source — with none, the default upload icon renders regardless (PrimaryAction.ts:155) — and driving the
  * button to that state needs the dynamic-button attribute set at parse time plus the plugin manager ready. A test
  * that skips that setup asserts the wrong branch and passes for the wrong reason.
- *
- * `uploadFile` is stubbed so the shrink assertions can inspect the file that would have been sent, with no network.
  */
 
-const uploadFile = vi.hoisted(() => vi.fn());
-
-vi.mock('@uploadcare/upload-client', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@uploadcare/upload-client')>();
-  return { ...actual, uploadFile };
-});
-
-const UPLOADED = {
-  uuid: '00000000-0000-4000-8000-000000000000',
-  originalFilename: 'square.jpg',
-  size: 1,
-  isImage: true,
-  mimeType: 'image/jpeg',
-  cdnUrl: 'https://ucarecdn.com/00000000-0000-4000-8000-000000000000/',
-} as unknown as UploadcareFile;
-
-beforeEach(() => {
-  uploadFile.mockReset();
-  uploadFile.mockResolvedValue(UPLOADED);
-});
-
-describe('imageShrink', () => {
-  /** The file that actually reached the upload call. */
-  const uploadedFile = async (imageShrink?: string): Promise<File> => {
-    uploadFile.mockClear();
+// Fake-only: the bytes are read back from what the emulator stored, and a live run has no emulator.
+describe.skipIf(isLive)('imageShrink', () => {
+  /** The file the emulator stored for one upload of the 512×512 square. */
+  const storedFile = async (imageShrink?: string) => {
     const { api } = await renderSolution('regular', imageShrink ? { imageShrink } : {});
     api.addFileFromObject(IMAGE.SQUARE);
     api.uploadAll();
 
-    await vi.waitFor(() => expect(uploadFile).toHaveBeenCalled(), { timeout: 20_000 });
-    // The entry takes its cdnUrl from the upload result; a fixture without one leaves it undefined.
-    await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.cdnUrl).toBe(UPLOADED.cdnUrl);
-    return uploadFile.mock.calls[0][0] as File;
+    await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.status, { timeout: 20_000 }).toBe('success');
+    const { uuid } = api.getOutputCollectionState().allEntries[0];
+    const stored = emulatorSession().files.get(uuid ?? '');
+    if (!stored) throw new Error(`The emulator stored no file ${uuid}`);
+    return stored;
   };
 
+  const original = async () => new Uint8Array(await IMAGE.SQUARE.arrayBuffer());
+
   it('uploads the original file when unset', async () => {
-    expect(await uploadedFile()).toBe(IMAGE.SQUARE);
+    expect((await storedFile()).bytes).toEqual(await original());
   });
 
   it('replaces the file with a shrunk one when set', async () => {
-    const file = await uploadedFile('100x100');
+    const { image, size } = await storedFile('100x100');
 
-    expect(file).not.toBe(IMAGE.SQUARE);
-    expect(file.size).toBeLessThan(IMAGE.SQUARE.size);
+    expect(size).toBeLessThan(IMAGE.SQUARE.size);
+    expect(image).toMatchObject({ width: 100, height: 100 });
   });
 
   it('leaves the file alone when the setting cannot be parsed', async () => {
     // The plugin warns and passes the file through rather than failing the upload
     // (src/plugins/imageShrinkPlugin.ts:17).
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    expect(await uploadedFile('not-a-size')).toBe(IMAGE.SQUARE);
+    expect((await storedFile('not-a-size')).bytes).toEqual(await original());
   });
 });
 
