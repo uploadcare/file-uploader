@@ -106,8 +106,9 @@ describe('plugin sources', () => {
     });
 
     // The list has rendered once the local source it keeps is there; only then does instagram's absence mean anything.
-    await expect.poll(() => root.querySelector('[data-source-id="local"]')).not.toBeNull();
-    expect(root.querySelector('[data-source-id="instagram"]')).toBeNull();
+    const startFrom = within(root).getByTestId('uc-start-from');
+    await expect.element(startFrom.getByRole('button', { name: 'From device', exact: true })).toBeVisible();
+    expect(startFrom.getByRole('button', { name: /instagram/i }).elements()).toEqual([]);
   });
 
   it('warns and skips a duplicate source id', async () => {
