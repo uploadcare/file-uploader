@@ -1,5 +1,5 @@
 import { AuthTokenResolverError } from '@uploadcare/upload-client';
-import { describe, expect, it, vi } from 'vitest';
+import { assert, describe, expect, it, vi } from 'vitest';
 import { commands } from 'vitest/browser';
 import type { Config } from '@/index';
 import { IMAGE } from '~/tests/fixtures/files';
@@ -107,8 +107,7 @@ describe.skipIf(!hasCredentials)('authToken against Upload API', () => {
     await expect.poll(() => entry(api)?.status, { timeout: 20_000 }).toBe('failed');
     const [error] = entry(api).errors;
 
-    expect(error.type).toBe('UPLOAD_ERROR');
-    expect(error.type === 'UPLOAD_ERROR' ? error.payload?.error.code : undefined).toBe('SignatureRequiredError');
+    expect(error).toMatchObject({ type: 'UPLOAD_ERROR', payload: { error: { code: 'SignatureRequiredError' } } });
   });
 
   it('uploads with a token function, asking it once for the whole upload', async () => {
@@ -152,8 +151,7 @@ describe.skipIf(!hasCredentials)('authToken against Upload API', () => {
 
     // An `AuthError` is an `UploadError`, so it classifies as UPLOAD_ERROR
     // and the distinguishing detail is the code the API sent.
-    expect(error.type).toBe('UPLOAD_ERROR');
-    expect(error.type === 'UPLOAD_ERROR' ? error.payload?.error.code : undefined).toBe(code);
+    expect(error).toMatchObject({ type: 'UPLOAD_ERROR', payload: { error: { code } } });
   });
 
   it('reports a token function that throws as AUTH_TOKEN_ERROR, without reaching the API', async () => {
@@ -172,9 +170,8 @@ describe.skipIf(!hasCredentials)('authToken against Upload API', () => {
     const [error] = entry(api).errors;
 
     // Their endpoint, not ours: its own type, with the original on `cause`.
-    expect(error.type).toBe('AUTH_TOKEN_ERROR');
-    const reported = error.type === 'AUTH_TOKEN_ERROR' ? error.payload?.error : undefined;
-    expect(reported).toBeInstanceOf(AuthTokenResolverError);
-    expect(reported?.cause).toBe(cause);
+    assert(error.type === 'AUTH_TOKEN_ERROR', `expected AUTH_TOKEN_ERROR, got ${error.type}`);
+    expect(error.payload?.error).toBeInstanceOf(AuthTokenResolverError);
+    expect(error.payload?.error.cause).toBe(cause);
   });
 });

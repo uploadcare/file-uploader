@@ -1,5 +1,5 @@
 import { AuthTokenResolverError, NetworkError, UploadError } from '@uploadcare/upload-client';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { assert, beforeEach, describe, expect, it, vi } from 'vitest';
 import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE } from '~/tests/fixtures/files';
 import { recordEvents } from '~/tests/utils/event-recorder';
@@ -56,14 +56,13 @@ describe('a failed upload', () => {
 
     const [reported] = await errorsFor(error);
 
-    expect(reported.type).toBe('AUTH_TOKEN_ERROR');
     // Narrowed rather than cast, so the payload is typed as the union member
     // says it is.
-    const authTokenError = reported.type === 'AUTH_TOKEN_ERROR' ? reported : undefined;
+    assert(reported.type === 'AUTH_TOKEN_ERROR', `expected AUTH_TOKEN_ERROR, got ${reported.type}`);
     // The class itself, not a re-wrap: the integrator reaches `cause` through
     // it to find out what their own endpoint did.
-    expect(authTokenError?.payload?.error).toBe(error);
-    expect(authTokenError?.payload?.error.cause).toBe(cause);
+    expect(reported.payload?.error).toBe(error);
+    expect(reported.payload?.error.cause).toBe(cause);
     expect(reported.message).toBe(error.message);
   });
 
@@ -72,8 +71,8 @@ describe('a failed upload', () => {
 
     const [reported] = await errorsFor(error);
 
-    expect(reported.type).toBe('UPLOAD_ERROR');
-    expect(reported.type === 'UPLOAD_ERROR' ? reported.payload?.error : undefined).toBe(error);
+    assert(reported.type === 'UPLOAD_ERROR', `expected UPLOAD_ERROR, got ${reported.type}`);
+    expect(reported.payload?.error).toBe(error);
   });
 
   it('reports a dead connection as NETWORK_ERROR', async () => {
@@ -109,8 +108,8 @@ describe('a failed group creation', () => {
     await expect.poll(() => api.getOutputCollectionState().errors.length).toBeGreaterThan(0);
     const [reported] = api.getOutputCollectionState().errors;
 
-    expect(reported.type).toBe('GROUP_ERROR');
-    expect(reported.type === 'GROUP_ERROR' ? reported.payload?.error : undefined).toBe(error);
+    assert(reported.type === 'GROUP_ERROR', `expected GROUP_ERROR, got ${reported.type}`);
+    expect(reported.payload?.error).toBe(error);
     expect(reported.message).toBe(error.message);
     expect(api.getOutputCollectionState().group).toBeNull();
   });
