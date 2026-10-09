@@ -16,7 +16,9 @@ import { setupEmulator } from '@uploadcare/api-emulator/browser';
 export const isLive = import.meta.env.E2E_NET === 'live';
 
 // Starts once per test file, on the first reset.
-const emulator = isLive ? undefined : setupEmulator();
+// The option tests point `baseUrl` and `cdnCname` at these. Routes are matched by path, so the Upload API answers on
+// the custom upload host as well as the CDN does on the custom cname.
+const emulator = isLive ? undefined : setupEmulator({ cdnHosts: ['upload.example.com', 'cdn.example.com'] });
 
 let current: EmulatorSession | undefined;
 
