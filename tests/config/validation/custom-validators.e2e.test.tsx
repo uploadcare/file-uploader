@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { FuncFileValidator } from '@/index';
-import { delay } from '@/utils/delay';
 import '~/types/jsx';
 import { IMAGE, testFile } from '~/tests/fixtures/files';
 import { renderSolution, within } from '~/tests/utils/render-solution';
@@ -105,7 +104,6 @@ describe('validation: custom validators', () => {
       const { api, root } = await renderSolution('regular', {
         fileValidators: [
           async (file) => {
-            await delay(500);
             if (file.name === 'badfile.jpg') {
               return { message: 'Bad image' };
             }
@@ -122,10 +120,9 @@ describe('validation: custom validators', () => {
       const { api, root } = await renderSolution('regular', {
         validationTimeout: 100,
         fileValidators: [
-          async () => {
-            await delay(1000);
-            return { message: 'Bad image' };
-          },
+          // Fails only once the timeout has aborted it, so its result always comes too late.
+          (_entry, _api, { signal }) =>
+            new Promise((resolve) => signal.addEventListener('abort', () => resolve({ message: 'Bad image' }))),
         ],
       });
       api.addFileFromObject(IMAGE.PIXEL);
@@ -137,7 +134,6 @@ describe('validation: custom validators', () => {
       const { api, root } = await renderSolution('regular', {
         fileValidators: [
           async () => {
-            await delay(1000);
             throw new Error('Some error');
           },
         ],
@@ -148,10 +144,11 @@ describe('validation: custom validators', () => {
     });
 
     it('aborts async validation when the file is removed', async () => {
-      const validator = vi.fn(async () => {
-        await delay(500);
-        return { message: 'Bad image' };
-      });
+      // Settles only when aborted, so the file is removed while it runs.
+      const validator = vi.fn<FuncFileValidator>(
+        (_entry, _api, { signal }) =>
+          new Promise((resolve) => signal.addEventListener('abort', () => resolve({ message: 'Bad image' }))),
+      );
       const { api } = await renderSolution('regular', { fileValidators: [validator] });
       const entry = api.addFileFromObject(IMAGE.PIXEL);
       api.initFlow();
