@@ -109,30 +109,22 @@ describe('no-op calls', () => {
 describe('setCurrentActivity / setModalState misuse', () => {
   it('warns instead of throwing for an activity nothing registered', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      const { api } = await renderSolution();
-      api.setCurrentActivity('no-such-activity' as 'start-from');
+    const { api } = await renderSolution();
+    api.setCurrentActivity('no-such-activity' as 'start-from');
 
-      await vi.waitFor(() => {
-        expect(warn).toHaveBeenCalledWith(expect.stringContaining('not found in the context'));
-      });
-    } finally {
-      warn.mockRestore();
-    }
+    await vi.waitFor(() => {
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('not found in the context'));
+    });
   });
 
   it('warns when asked to open the modal with no current activity', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      const { api } = await renderSolution();
-      api.setModalState(true);
+    const { api } = await renderSolution();
+    api.setModalState(true);
 
-      await vi.waitFor(() => {
-        expect(warn).toHaveBeenCalledWith(expect.stringContaining("Can't open modal without current activity"));
-      });
-    } finally {
-      warn.mockRestore();
-    }
+    await vi.waitFor(() => {
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Can't open modal without current activity"));
+    });
   });
 });
 

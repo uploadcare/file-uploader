@@ -76,34 +76,30 @@ describe('uc-cloud-image-editor', () => {
   it('logs a timeout without an unhandled rejection when the container size stays zero', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    try {
-      const ctxName = getCtxName();
-      page.render(
-        <>
-          <div style="width: 0; height: 0; overflow: hidden;">
-            <uc-cloud-image-editor
-              crop-preset="1:1, 16:9, 4:3, 3:4, 9:16"
-              uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f"
-              ctx-name={ctxName}
-            ></uc-cloud-image-editor>
-          </div>
-          <uc-config
-            cdn-cname="https://ucarecdn.com/"
-            quality-insights="false"
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <div style="width: 0; height: 0; overflow: hidden;">
+          <uc-cloud-image-editor
+            crop-preset="1:1, 16:9, 4:3, 3:4, 9:16"
+            uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f"
             ctx-name={ctxName}
-            pubkey="demopublickey"
-            testMode
-          ></uc-config>
-        </>,
-      );
+          ></uc-cloud-image-editor>
+        </div>
+        <uc-config
+          cdn-cname="https://ucarecdn.com/"
+          quality-insights="false"
+          ctx-name={ctxName}
+          pubkey="demopublickey"
+          testMode
+        ></uc-config>
+      </>,
+    );
 
-      // The editor gives up on a zero-sized container after its own 3s timeout, so the log is the signal.
-      await vi.waitFor(() => expect(errorSpy).toHaveBeenCalled(), { timeout: 5000 });
+    // The editor gives up on a zero-sized container after its own 3s timeout, so the log is the signal.
+    await vi.waitFor(() => expect(errorSpy).toHaveBeenCalled(), { timeout: 5000 });
 
-      expect(errorSpy).toHaveBeenCalledTimes(1);
-      expect(errorSpy).toHaveBeenCalledWith('[cloud-image-editor] timeout waiting for non-zero container size');
-    } finally {
-      errorSpy.mockRestore();
-    }
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(errorSpy).toHaveBeenCalledWith('[cloud-image-editor] timeout waiting for non-zero container size');
   });
 });

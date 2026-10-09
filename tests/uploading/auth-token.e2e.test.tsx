@@ -54,25 +54,21 @@ describe('authToken is not exposed', () => {
     if (!credentials) return ctx.skip();
 
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    try {
-      const { ctxName, api } = await renderSolution(
-        'regular',
-        { debug: true, store: false },
-        { pubkey: credentials.publicKey },
-      );
-      inCtx<Config>('uc-config', ctxName).authToken = credentials.authToken;
-      api.addFileFromObject(IMAGE.PIXEL);
-      api.uploadAll();
-      await expect.poll(() => entry(api)?.status, { timeout: 20_000 }).toBe('success');
+    const { ctxName, api } = await renderSolution(
+      'regular',
+      { debug: true, store: false },
+      { pubkey: credentials.publicKey },
+    );
+    inCtx<Config>('uc-config', ctxName).authToken = credentials.authToken;
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
+    await expect.poll(() => entry(api)?.status, { timeout: 20_000 }).toBe('success');
 
-      // Debug mode prints the config assignment and the upload options; both
-      // used to carry the token verbatim.
-      const printed = log.mock.calls.map((args) => JSON.stringify(args)).join('\n');
-      expect(printed).toContain('authToken');
-      expect(printed).not.toContain(credentials.authToken);
-    } finally {
-      log.mockRestore();
-    }
+    // Debug mode prints the config assignment and the upload options; both
+    // used to carry the token verbatim.
+    const printed = log.mock.calls.map((args) => JSON.stringify(args)).join('\n');
+    expect(printed).toContain('authToken');
+    expect(printed).not.toContain(credentials.authToken);
   });
 });
 

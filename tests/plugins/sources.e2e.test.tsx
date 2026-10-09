@@ -96,20 +96,16 @@ describe('plugin sources', () => {
 
   it('logs an error and renders no button for the deprecated instagram source', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    try {
-      const { config, root } = await renderSolution('regular', { plugins: [instagramPlugin] });
-      addSource(config, 'instagram');
+    const { config, root } = await renderSolution('regular', { plugins: [instagramPlugin] });
+    addSource(config, 'instagram');
 
-      await openModal(root);
+    await openModal(root);
 
-      await vi.waitFor(() => {
-        expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Instagram source was removed'));
-      });
+    await vi.waitFor(() => {
+      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Instagram source was removed'));
+    });
 
-      await expect.element(root.querySelector<HTMLElement>('[data-source-id="instagram"]')).not.toBeInTheDocument();
-    } finally {
-      errorSpy.mockRestore();
-    }
+    await expect.element(root.querySelector<HTMLElement>('[data-source-id="instagram"]')).not.toBeInTheDocument();
   });
 
   it('warns and skips a duplicate source id', async () => {
@@ -147,8 +143,6 @@ describe('plugin sources', () => {
     await openModal(root);
     await expect.element(within(root).getByText('First')).toBeVisible();
     await expect.element(within(root).getByText('Second')).not.toBeInTheDocument();
-
-    warnSpy.mockRestore();
   });
 
   it('hides a registered source that is not in sourceList', async () => {
