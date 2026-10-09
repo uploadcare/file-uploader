@@ -1,6 +1,7 @@
 import { DEMO_IMAGE_UUID } from '@uploadcare/api-emulator';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { delay } from '@/utils/delay';
+import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { resetEmulator } from '~/tests/utils/emulator.browser';
@@ -112,13 +113,14 @@ describe('events: upload lifecycle', () => {
   });
 
   it('fires common-upload-success once when the files are validated apart after uploading', async () => {
-    // Every uploaded file is validated again, and the collection reports success when those results land. A validator
-    // that takes longer on one file splits them into two batches, both seeing every file uploaded.
+    // Every uploaded file is validated again, and the collection reports success when those results land. Holding each
+    // file's post-upload validation on its own gate lands the results in two batches, both seeing every file uploaded.
+    const gates = { [IMAGE.PIXEL.name]: withResolvers(), [IMAGE.SQUARE.name]: withResolvers() };
     const { api, provider } = await renderSolution('regular', {
       confirmUpload: true,
       fileValidators: [
         async (entry) => {
-          if (entry.status === 'success' && entry.name === IMAGE.SQUARE.name) await delay(700);
+          if (entry.status === 'success') await gates[entry.name ?? ''].promise;
           return undefined;
         },
       ],
@@ -126,14 +128,27 @@ describe('events: upload lifecycle', () => {
     const recorder = recordEvents(provider);
     api.addFileFromObject(IMAGE.PIXEL);
     api.addFileFromObject(IMAGE.SQUARE);
-    await recorder.waitFor('file-added');
-    await settle();
+    await vi.waitFor(() => {
+      expect(recorder.detailsOf('file-added')).toHaveLength(2);
+      expect(api.getOutputCollectionState().allEntries.filter((entry) => !entry.isValidationPending)).toHaveLength(2);
+    });
 
     api.uploadAll();
+    await vi.waitFor(() => expect(recorder.detailsOf('file-upload-success')).toHaveLength(2), { timeout: 20_000 });
+    gates[IMAGE.PIXEL.name].resolve();
     await recorder.waitFor('common-upload-success');
-    await delay(1500);
 
-    expect(recorder.detailsOf('file-upload-success')).toHaveLength(2);
+    // The sentinel for "the second batch has been handled": a property observer added now runs after the uploader's
+    // own, in the same batch, so once it sees the square's validation result the uploader has seen it too.
+    const square = api.getOutputCollectionState().allEntries.find((entry) => entry.name === IMAGE.SQUARE.name);
+    let isSquareValidationSeen = false;
+    const unobserve = provider.uploadCollection.observeProperties((changeMap) => {
+      if (changeMap.errors?.has(square?.internalId ?? '')) isSquareValidationSeen = true;
+    });
+    onTestFinished(unobserve);
+    gates[IMAGE.SQUARE.name].resolve();
+    await vi.waitFor(() => expect(isSquareValidationSeen).toBe(true));
+
     expect(recorder.detailsOf('common-upload-success')).toHaveLength(1);
   });
 
