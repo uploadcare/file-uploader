@@ -2,6 +2,7 @@ import { uploadFileGroup } from '@uploadcare/upload-client';
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { OutputCollectionState } from '../../types';
 import { controllerLogger } from '../controllerLogger';
+import { lifetimeOf } from '../di/ControllerContainer';
 import { inject, injectOrNull } from '../di/inject';
 import { UploaderEventType } from '../EventBus';
 import { UploaderPublicApi } from '../UploaderPublicApi';
@@ -43,14 +44,13 @@ export class UploadGroupController {
       const uuidList = collectionState.allEntries.map((entry) => {
         return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
       });
-      const abortController = new AbortController();
+      // Cancelled if the ctx is torn down mid-flight; the result would be discarded below anyway.
       const resp = await uploadFileGroup(uuidList, {
         ...uploadClientOptions,
-        signal: abortController.signal,
+        signal: lifetimeOf(this).signal,
       });
       // Bail if the stack was unobserved mid-flight or the collection state moved on.
       if (!isActive() || this._collectionState.get('collectionState') !== collectionState) {
-        abortController.abort();
         return;
       }
       this._collectionState.set('groupInfo', resp);
