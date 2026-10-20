@@ -40,6 +40,10 @@ export class LocaleManager {
   /** v2 locale string store — where the resolved dictionary is written. */
   @inject(LocaleController) private readonly _locale!: LocaleController;
   private _localeName = '';
+  /** The active locale's resolved dictionary — what a key falls back to once no plugin supplies it. */
+  private _definition: Partial<LocaleDefinition> = en;
+  /** Keys the registered plugins currently supply, so a key a plugin stops supplying can be restored. */
+  private _pluginKeys = new Set<keyof LocaleDefinition>();
   private _activated = false;
   private _destroyed = false;
   readonly #disposables = new Disposables();
@@ -112,6 +116,7 @@ export class LocaleManager {
           if (this._destroyed || this._localeName !== localeName) {
             return;
           }
+          this._definition = definition;
           this._applyPluginLocales(localeName);
 
           this._applyOverrides(localeName, definition);
@@ -158,6 +163,7 @@ export class LocaleManager {
       return;
     }
 
+    const supplied = new Map<keyof LocaleDefinition, string>();
     const snapshot = manager.snapshot();
     for (const entry of snapshot.l10n) {
       const { pluginId: _pluginId, ...locales } = entry as unknown as Record<string, Partial<LocaleDefinition>> & {
@@ -170,11 +176,25 @@ export class LocaleManager {
       }
 
       for (const [key, value] of Object.entries(pluginDefinition) as [keyof LocaleDefinition, string | undefined][]) {
-        if (value === undefined) {
-          continue;
+        if (value !== undefined) {
+          supplied.set(key, value);
         }
-        this._setLocale(key, value, true);
       }
+    }
+
+    // Restore what an unregistered plugin had replaced. A key only a plugin ever defined keeps its last value:
+    // the locale store has no delete, and nothing renders that key once its plugin is gone.
+    const overrides = this._config.get('localeDefinitionOverride')?.[localeName];
+    for (const key of this._pluginKeys) {
+      const base = supplied.has(key) ? undefined : (overrides?.[key] ?? this._definition[key]);
+      if (base !== undefined) {
+        this._setLocale(key, base, true);
+      }
+    }
+    this._pluginKeys = new Set(supplied.keys());
+
+    for (const [key, value] of supplied) {
+      this._setLocale(key, value, true);
     }
   }
 

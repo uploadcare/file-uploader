@@ -96,10 +96,7 @@ describe('plugin l10n', () => {
     await expect.element(within(root).getByText('Erzeugen')).toBeVisible();
   });
 
-  it('keeps plugin l10n overrides after the plugin is unregistered', async () => {
-    // QUIRK(plugins): `LocaleManager._applyPluginLocales` (src/abstract/managers/LocaleManager.ts:69) writes plugin
-    // strings into the ctx `*l10n/<key>` slots and nothing resets them when `registry.purge()` drops the plugin's l10n.
-    // Pinned as current behaviour, not endorsed.
+  it('restores the built-in string once the plugin is unregistered', async () => {
     const plugin = createTestPlugin({
       id: 'l10n-persist',
       setup: ({ pluginApi }) => {
@@ -119,6 +116,7 @@ describe('plugin l10n', () => {
     config.plugins = [];
 
     api.setModalState(true);
-    await expect.element(within(root).getByText('Translated Upload')).toBeVisible();
+    await expect.element(within(root).getByText('Translated Upload')).not.toBeInTheDocument();
+    await expect.element(within(root).getByText('Upload files')).toBeVisible();
   });
 });
