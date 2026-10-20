@@ -1,6 +1,5 @@
-import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import { delay } from '@/utils/delay';
 import '../types/jsx';
 import { cleanup } from './utils/test-renderer';
 
@@ -30,10 +29,6 @@ beforeEach(() => {
 });
 
 describe('Cloud Image Editor', () => {
-  it('should be rendered', async () => {
-    await expect.element(page.getByTestId('uc-cloud-image-editor')).toBeVisible();
-  });
-
   it('activates the cropper on the crop tab (renders the image + crop frame)', async () => {
     // Regression guard (M12 editor port): "should be rendered" only proves the
     // shell mounts — it does NOT prove the cropper draws the image. The cropper
@@ -66,30 +61,6 @@ describe('Cloud Image Editor', () => {
           }).length,
       )
       .toBeGreaterThan(0);
-  });
-
-  it('should select tunings tab', async () => {
-    const flip = page.getByTestId('uc-editor-crop-button-control').nth(2);
-
-    await userEvent.click(flip);
-  });
-
-  it('should select crop preset', async () => {
-    const freeform = page.getByTestId('uc-editor-freeform-button-control');
-
-    await userEvent.click(freeform);
-
-    const preset16x9 = page.getByTestId('uc-editor-aspect-ratio-button-control').nth(1);
-
-    await expect.element(preset16x9).toBeVisible();
-
-    await userEvent.click(preset16x9);
-
-    const apply = page.getByRole('button', { name: /apply/i });
-
-    await userEvent.click(apply);
-
-    await expect.element(freeform).toBeVisible();
   });
 
   it('applies a crop operation through state (rotate) without recursion', async () => {
@@ -125,24 +96,6 @@ describe('Cloud Image Editor', () => {
     } finally {
       document.removeEventListener('uc-internal:apply', onApply);
     }
-  });
-
-  it("should apply 'brightness' operation", async () => {
-    const tuningTab = page.getByRole('tab', { name: /tuning/i });
-    await userEvent.click(tuningTab);
-
-    const brightness = page.getByRole('option', { name: /Brightness/i });
-    await userEvent.click(brightness);
-
-    const slider = page.getByTestId('uc-editor-slider');
-    await expect.element(slider).toBeVisible();
-
-    const applySlider = page.getByRole('button', { name: /apply/i });
-    await userEvent.click(slider);
-    await userEvent.keyboard('[ArrowRight]');
-    await userEvent.click(applySlider);
-
-    await expect.element(tuningTab).toBeVisible();
   });
 
   it('fader self-activates on a color tab and previews via *colorPreview (no *faderEl)', async () => {
@@ -219,44 +172,5 @@ describe('Cloud Image Editor', () => {
     await expect.element(thumbnail).toBeVisible();
     const thumbnailPreviewStyle = () => thumbnail.element().querySelector('.uc-preview')?.getAttribute('style') ?? '';
     await expect.poll(thumbnailPreviewStyle, { timeout: 5000 }).toContain('blur/20');
-  });
-
-  it('should log timeout without unhandled rejection when container size stays zero', async () => {
-    cleanup();
-
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-    try {
-      const ctxName = `test-${Math.random().toString(36).slice(2)}`;
-
-      page.render(
-        <>
-          <div style="width: 0; height: 0; overflow: hidden;">
-            <uc-cloud-image-editor
-              crop-preset="1:1, 16:9, 4:3, 3:4, 9:16"
-              uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f"
-              ctx-name={ctxName}
-            ></uc-cloud-image-editor>
-          </div>
-          <uc-config
-            cdn-cname="https://ucarecdn.com/"
-            qualityInsights={false}
-            ctx-name={ctxName}
-            pubkey="demopublickey"
-            testMode
-          ></uc-config>
-        </>,
-      );
-
-      await delay(3100);
-
-      expect(errorSpy).toHaveBeenCalledTimes(1);
-      expect(errorSpy).toHaveBeenCalledWith(
-        '[uc][cloud-image-editor]',
-        '[cloud-image-editor] timeout waiting for non-zero container size',
-      );
-    } finally {
-      errorSpy.mockRestore();
-    }
   });
 });

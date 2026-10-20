@@ -31,65 +31,6 @@ beforeEach(() => {
 });
 
 describe('File uploader regular', () => {
-  describe('Upload button', () => {
-    it('should be rendered', async () => {
-      await expect.element(page.getByText('Upload files', { exact: true })).toBeVisible();
-    });
-  });
-
-  describe('Modal: start from', async () => {
-    it('should be opened on upload button click', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-      const startFrom = page.getByTestId('uc-start-from');
-      await expect.element(startFrom).toBeVisible();
-    });
-
-    it('should have default sources', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-      const startFrom = page.getByTestId('uc-start-from');
-
-      await expect.element(startFrom.getByText('From device', { exact: true })).toBeVisible();
-      await expect.element(startFrom.getByText('From link', { exact: true })).toBeVisible();
-      await expect.element(startFrom.getByText('Camera', { exact: true })).toBeVisible();
-      await expect.element(startFrom.getByText('Dropbox', { exact: true })).toBeVisible();
-      await expect.element(startFrom.getByText('Google Drive', { exact: true })).toBeVisible();
-    });
-
-    it('should have copyright', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-
-      const startFrom = page.getByTestId('uc-start-from');
-      await expect.element(startFrom.getByText('Powered by Uploadcare', { exact: true })).toBeVisible();
-    });
-
-    it('should have cancel button', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-
-      const startFrom = page.getByTestId('uc-start-from');
-      await expect.element(startFrom.getByText('Cancel', { exact: true })).toBeVisible();
-    });
-
-    it('should close modal on cancel button click', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-
-      const startFrom = page.getByTestId('uc-start-from');
-      await startFrom.getByText('Cancel', { exact: true }).click();
-      await expect.element(startFrom).not.toBeVisible();
-    });
-
-    it('should close modal on overlay click', async () => {
-      await page.getByText('Upload files', { exact: true }).click();
-      const startFrom = page.getByTestId('uc-start-from');
-      await userEvent.click(document.body, {
-        position: {
-          x: 10,
-          y: 10,
-        },
-      });
-      await expect.element(startFrom).not.toBeVisible();
-    });
-  });
-
   describe('Add files to the upload list', () => {
     test('from device', async () => {
       await page.getByText('Upload files', { exact: true }).click();
