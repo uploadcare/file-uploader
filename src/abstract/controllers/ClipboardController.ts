@@ -1,5 +1,6 @@
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { controllerLogger } from '../controllerLogger';
+import { lifetimeOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';
 import { UploaderPublicApi } from '../UploaderPublicApi';
 import { ConfigController } from './ConfigController';
@@ -47,11 +48,13 @@ export class ClipboardController {
   public constructor() {
     // Isolate-and-warn (AGENTS.md #3): a rejection from the injected api's
     // add-file path must stay contained here, not surface as an unhandled
-    // rejection.
+    // rejection. Bound to the ctx lifetime, so a paste still resolving its URLs
+    // when the ctx is torn down stops instead of adding to it.
     this._listener = (event) => {
-      this._handlePasteEvent(event).catch((err) => {
-        this._log.warn('clipboard paste handling failed', err);
-      });
+      lifetimeOf(this).run(
+        () => this._handlePasteEvent(event),
+        (err) => this._log.warn('clipboard paste handling failed', err),
+      );
     };
   }
 
@@ -213,7 +216,9 @@ export class ClipboardController {
     }
 
     if (urlItems.length > 0) {
-      const resolvedUrls = (await Promise.all(urlItems)).filter((url): url is string => url !== null);
+      const resolvedUrls = (await lifetimeOf(this).guard(Promise.all(urlItems))).filter(
+        (url): url is string => url !== null,
+      );
       if (resolvedUrls.length > 0) {
         const api = this._api;
         resolvedUrls.forEach((url) => {

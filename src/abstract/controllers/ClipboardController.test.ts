@@ -341,6 +341,32 @@ describe('ClipboardController', () => {
     expect(warn).toHaveBeenCalledWith('[uc][clipboard]', 'clipboard paste handling failed', expect.any(Error));
   });
 
+  it('drops a pasted URL that resolves after the ctx is torn down', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { layer, api, onFileAdd, container } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
+    track(layer);
+    layer.registerScope(connectedScope());
+    let deliver!: (text: string) => void;
+    const lateText: FakeItem = {
+      kind: 'string',
+      type: 'text/plain',
+      getAsString: (cb) => {
+        deliver = cb;
+      },
+    };
+
+    window.dispatchEvent(pasteEvent([lateText]));
+    container.dispose();
+    deliver('https://example.com/late.png');
+    await flush();
+
+    expect(api.addFileFromUrl).not.toHaveBeenCalled();
+    expect(onFileAdd).not.toHaveBeenCalled();
+    expect(warn).not.toHaveBeenCalled();
+    // Reading `_api` on the disposed container would have built an orphan public API on it.
+    expect(container.has(UploaderPublicApi)).toBe(false);
+  });
+
   it('destroy() detaches the window listener and clears scopes', async () => {
     const { layer, api } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
     layer.registerScope(connectedScope());
