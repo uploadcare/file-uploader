@@ -3,6 +3,7 @@ import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
+import { isAbortError } from '../../../abstract/di/Lifetime';
 import { debounce } from '../../../utils/debounce.js';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { throttle } from '../../../utils/throttle.js';
@@ -115,10 +116,15 @@ export class EditorImageCropper extends EditorBlock {
   public constructor() {
     super();
 
-    this._commitDebounced = debounce(this._commit.bind(this), 300);
+    // The trailing calls can fire after the controller is released.
+    this._commitDebounced = debounce(() => {
+      if (!this.adoptionSignal.aborted) {
+        this._commit();
+      }
+    }, 300);
 
     this._handleResizeThrottled = throttle(() => {
-      if (!this.isConnected || !this._isActive) {
+      if (this.adoptionSignal.aborted || !this._isActive) {
         return;
       }
       this._initCanvas();
@@ -412,7 +418,7 @@ export class EditorImageCropper extends EditorBlock {
   }
 
   private _commit(): void {
-    if (!this.isConnected || !this._imageSize) {
+    if (!this._imageSize) {
       return;
     }
     const operations = this._operations;
@@ -448,7 +454,8 @@ export class EditorImageCropper extends EditorBlock {
       !controller.get('*networkProblems');
 
     if (shouldBeActive && !this._isActive) {
-      void this.activate(this.imageSize as ImageSize);
+      const imageSize = this.imageSize as ImageSize;
+      this.runTask(() => this.activate(imageSize));
     } else if (!shouldBeActive && this._isActive) {
       this.deactivate();
     }
@@ -463,8 +470,8 @@ export class EditorImageCropper extends EditorBlock {
     // below bumps it, so this fire-and-forget activation aborts instead of
     // drawing a superseded image (see `_activationGeneration`).
     const generation = this._activationGeneration;
-    await this.updateComplete;
-    if (!this.isConnected || generation !== this._activationGeneration) {
+    await this.whileAdopted(this.updateComplete);
+    if (generation !== this._activationGeneration) {
       return;
     }
     this._initCanvas();
@@ -472,28 +479,20 @@ export class EditorImageCropper extends EditorBlock {
     this.removeEventListener('transitionend', this._reset);
 
     try {
-      // Capture the controller instance once (rather than re-reading the
-      // `editorController` accessor after each `await`): the accessor throws
-      // once this element disconnects (the editor context tears down its
-      // adopted controller on `hostDisconnected`), but the captured instance
-      // itself stays a valid, usable object — mirroring how the old
-      // shared-ctx `this.$` kept working across a disconnect.
-      const controller = this.editorControllerOrNull;
-      if (!controller) {
-        return;
-      }
+      const controller = this.editorController;
       const originalUrl = controller.get('*originalUrl') as string;
       const transformations = controller.get('*editorTransformations');
       this._image = await this._waitForImage(controller, originalUrl, transformations);
-      if (!this.isConnected || generation !== this._activationGeneration) {
+      if (generation !== this._activationGeneration) {
         return;
       }
       this._syncTransformations();
       this._handleResizeThrottled();
       this._animateIn({ fromViewer });
     } catch (err) {
+      if (isAbortError(err)) throw err;
       this._log.error('Failed to activate cropper', { error: err });
-      this.editorControllerOrNull?.telemetry.sendEventError(err, 'cloud editor image. Failed to activate cropper');
+      this.editorController.telemetry.sendEventError(err, 'cloud editor image. Failed to activate cropper');
     }
 
     this._observer = new ResizeObserver((entries) => {
@@ -573,24 +572,26 @@ export class EditorImageCropper extends EditorBlock {
       flip: undefined,
       mirror: undefined,
     };
-    const src = await controller.proxyUrl(
-      viewerImageSrc(originalUrl, width, transformations, controller.get('*sourceOperations')),
+    const src = await this.whileAdopted(
+      controller.proxyUrl(viewerImageSrc(originalUrl, width, transformations, controller.get('*sourceOperations'))),
     );
     const { promise, cancel, image } = preloadImage(src);
 
+    // Not bound to the adoption: the loading flag lives on the controller and must clear even if the load lands late.
     const stop = this._handleImageLoading(controller, src);
     image.addEventListener('load', stop, { once: true });
     image.addEventListener('error', stop, { once: true });
     this._cancelPreload?.();
     this._cancelPreload = cancel;
 
-    return promise
-      .then(() => image)
-      .catch((err) => {
-        this._log.error('Failed to load image', { error: err });
-        controller.set('*networkProblems', true);
-        return image;
-      });
+    try {
+      await this.whileAdopted(promise);
+    } catch (err) {
+      if (isAbortError(err)) throw err;
+      this._log.error('Failed to load image', { error: err });
+      controller.set('*networkProblems', true);
+    }
+    return image;
   }
 
   private _handleImageLoading(controller: CloudImageEditorController, src: string): () => void {
