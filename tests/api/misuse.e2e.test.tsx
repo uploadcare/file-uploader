@@ -36,15 +36,13 @@ describe('unknown internal ids', () => {
     expect(() => api.removeFileByInternalId(entry.internalId)).toThrow(/not found/);
   });
 
-  // QUIRK(api): entry stores live in a single module-level Map keyed by internal id (PubSubCompat.ts:8), not per
-  // ctx-name, so one uploader will happily return another uploader's entry. Ids are random, so this is not reachable
-  // by accident — but the isolation the multi-ctx model implies is not there. Pinned, not endorsed.
-  it('getOutputItem reads across ctx boundaries', async () => {
+  it("getOutputItem does not resolve another uploader's entry", async () => {
     const first = await renderSolution();
     const entry = first.api.addFileFromObject(IMAGE.PIXEL, { fileName: 'from-first.jpg' });
 
     const second = await renderSolution();
-    expect(second.api.getOutputItem(entry.internalId).name).toBe('from-first.jpg');
+    expect(() => second.api.getOutputItem(entry.internalId)).toThrow(/not found in the upload collection/);
+    expect(first.api.getOutputItem(entry.internalId).name).toBe('from-first.jpg');
   });
 });
 
