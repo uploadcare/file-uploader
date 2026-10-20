@@ -47,7 +47,8 @@ export type SecureDeliveryProxyUrlResolver = (
 ) => Promise<string> | string;
 export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureExpire: string };
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
-export type IconHrefResolver = (iconName: string) => string;
+/** Returning nothing falls back to the built-in sprite, as documented. */
+export type IconHrefResolver = (iconName: string) => string | undefined;
 export type FileValidators = FileValidator[];
 export type CollectionValidators = FuncCollectionValidator[];
 

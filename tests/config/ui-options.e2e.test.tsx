@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import type { IconHrefResolver } from '@/index';
 import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
@@ -134,13 +133,8 @@ describe('iconHrefResolver', () => {
       .toMatch(/^https:\/\/icons\.example\.com\/.+\.svg#icon$/);
   });
 
-  // QUIRK(types): options.mdx says "If nothing is returned, the default icon sprite will be used", and
-  // `Icon._updateResolvedHref` implements exactly that (`customHref ?? defaultHref`) — but the published type is
-  // `IconHrefResolver = (iconName: string) => string` (types/exported.ts:46), so a TypeScript user cannot write the
-  // documented resolver without a cast. The cast below exists only to express that gap. Pinned, not endorsed.
   it('falls back to the default href when the resolver returns undefined', async () => {
-    const resolver = (() => undefined) as unknown as IconHrefResolver;
-    const { root, api } = await renderSolution('regular', { iconHrefResolver: resolver });
+    const { root, api } = await renderSolution('regular', { iconHrefResolver: () => undefined });
     api.initFlow();
     await expectActivity(root, 'start-from');
 
