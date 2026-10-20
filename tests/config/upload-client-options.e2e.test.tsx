@@ -2,6 +2,7 @@ import type { FileFromOptions, UploadcareFile } from '@uploadcare/upload-client'
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index';
+import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { createInCtx, inCtx, renderSolution } from '~/tests/utils/render-solution';
 import { getCtxName } from '~/tests/utils/test-renderer';
@@ -67,15 +68,13 @@ describe('options handed to upload-client', () => {
     expect((await optionsFor({ baseUrl: 'https://upload.example.com' })).baseURL).toBe('https://upload.example.com');
   });
 
-  // QUIRK(config): the `cdnCname` computed property decides whether to override the current value *before* awaiting
-  // `getPrefixedCdnBaseAsync` (Config/computed-properties.ts:74). A resolution already in flight from the pubkey
-  // therefore lands with a guard evaluated against the old, default cname, and overwrites an explicit `cdnCname` set
-  // in the meantime — so a documented option is silently dropped depending on timing. Pinned, not endorsed.
+  // A pubkey resolution already in flight must not overwrite a cname the caller set meanwhile: `computeProperty`
+  // drops an async result once the value it started from has changed.
   //
   // The elements are built by hand rather than through `renderSolution`, which sets primitives as attributes before
   // the element connects and settles a tick before returning. Both of those avoid the race, so reproducing it needs
   // the assignment to land in the same tick as connection.
-  it('loses a custom CDN cname assigned in the same tick as connection', async () => {
+  it('keeps a custom CDN cname assigned in the same tick as connection', async () => {
     uploadFile.mockClear();
     const ctxName = getCtxName();
     const uploader = createInCtx('uc-file-uploader-regular', ctxName);
@@ -90,14 +89,16 @@ describe('options handed to upload-client', () => {
     inCtx<HTMLElement>('div', ctxName).append(uploader, config, provider);
     config.cdnCname = 'https://cdn.example.com';
 
-    await expect.poll(() => config.cdnCname).toBe('https://1s4oyld5dc.ucarecd.net');
+    // Negative wait: the in-flight pubkey resolution that must not win has no completion signal.
+    await delay(500);
+    expect(config.cdnCname).toBe('https://cdn.example.com');
 
     const api = provider.getAPI();
     api.addFileFromObject(IMAGE.PIXEL);
     api.uploadAll();
     await vi.waitFor(() => expect(uploadFile).toHaveBeenCalled());
 
-    expect((uploadFile.mock.calls[0][1] as FileFromOptions).baseCDN).toBe('https://1s4oyld5dc.ucarecd.net');
+    expect((uploadFile.mock.calls[0][1] as FileFromOptions).baseCDN).toBe('https://cdn.example.com');
   });
 
   it('keeps a custom CDN cname set once the pubkey resolution has settled', async () => {
