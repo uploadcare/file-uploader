@@ -454,7 +454,7 @@ export class UploaderPublicApi {
       if (this._sourceList?.length === 1) {
         const srcKey = this._sourceList[0];
 
-        void this._pluginsReady().then(() => {
+        this._whenPluginsReady(() => {
           const sources = this._pluginManager.snapshot().sources;
           const registeredSource = sources.find((s) => s.id === srcKey);
 
@@ -499,6 +499,22 @@ export class UploaderPublicApi {
   }
 
   /**
+   * Run `then` once plugins are ready, unless the ctx is torn down first — it reads the router and plugin manager,
+   * which are gone by then. A failure is logged rather than left as an unhandled rejection.
+   */
+  private _whenPluginsReady(then: () => unknown): void {
+    const ready = this._pluginsReady();
+    const lifetime = this._container.lifetime;
+    lifetime.run(
+      async () => {
+        await lifetime.guard(ready);
+        await then();
+      },
+      (error) => this._log.error('a deferred navigation failed', error),
+    );
+  }
+
+  /**
    * Navigate to an activity and show it in the slot appropriate for the current
    * preset (a modal in `regular`, inline in `inline`, a modal over the trigger
    * in `minimal`). Pass `null` to close everything.
@@ -514,7 +530,7 @@ export class UploaderPublicApi {
         : [ActivityParamsMap[T]]
       : []
   ) => {
-    void this._pluginsReady().then(() => {
+    this._whenPluginsReady(() => {
       this._router.navigate(activityType, params[0] ?? {});
       if (activityType !== null) {
         waitForActivityBlock(this._router, activityType, {
@@ -539,7 +555,7 @@ export class UploaderPublicApi {
         : [ActivityParamsMap[T]]
       : []
   ) => {
-    void this._pluginsReady().then(() => {
+    this._whenPluginsReady(() => {
       // `setCurrentActivity(null)` means "no current activity" — close every
       // slot (background + modal). Otherwise set the background activity (no
       // modal); a paired `setModalState(true)` opens it in the modal slot.
@@ -606,7 +622,7 @@ export class UploaderPublicApi {
    * already set via `setCurrentActivity`.
    */
   public setModalState = (opened: boolean): void => {
-    void this._pluginsReady().then(() => {
+    this._whenPluginsReady(() => {
       const router = this._router;
       if (!opened) {
         // Close everything (matches v1: close the modal + null the activity,
@@ -624,16 +640,20 @@ export class UploaderPublicApi {
         return;
       }
 
-      return waitForActivityBlock(router, activityType, {
-        onTimeout: () => this._log.warn(`Activity block "${activityType}" not found in the context`),
-      }).then((found) => {
-        if (!found) {
-          // Timeout — the activity's block never appeared; keep the modal
-          // closed (same observable behavior as before the promise settled).
-          return;
-        }
-        router.openModal(activityType);
-      });
+      return this._container.lifetime
+        .guard(
+          waitForActivityBlock(router, activityType, {
+            onTimeout: () => this._log.warn(`Activity block "${activityType}" not found in the context`),
+          }),
+        )
+        .then((found) => {
+          if (!found) {
+            // Timeout — the activity's block never appeared; keep the modal
+            // closed (same observable behavior as before the promise settled).
+            return;
+          }
+          router.openModal(activityType);
+        });
     });
   };
 

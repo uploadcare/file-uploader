@@ -668,6 +668,35 @@ describe('UploaderPublicApi', () => {
 
       expect(openModal).not.toHaveBeenCalled();
     });
+
+    it('drops a navigation still waiting for plugins when the ctx is torn down', async () => {
+      const { api, ctrl, ctxName, container } = setup();
+      const router = ctrl.router;
+      router.activityBlockMounted('upload-list' as never);
+      const navigate = vi.spyOn(router, 'navigate');
+
+      api.navigate('upload-list');
+      UploaderRegistry.dispose(ctxName);
+      await flush();
+
+      expect(navigate).not.toHaveBeenCalled();
+      // Reading the router on the disposed container would have built an orphan one on it.
+      expect(container.has(RouterController)).toBe(false);
+    });
+
+    it('logs a deferred navigation that throws instead of leaving it unhandled', async () => {
+      const { api, ctrl, ctxName } = setup();
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const boom = new Error('boom');
+      vi.spyOn(ctrl.router, 'navigate').mockImplementation(() => {
+        throw boom;
+      });
+
+      api.navigate(null);
+      await flush();
+
+      expect(error).toHaveBeenCalledWith(`[uc][${ctxName}][public-api]`, 'a deferred navigation failed', boom);
+    });
   });
 
   describe('events / current activity / history', () => {
