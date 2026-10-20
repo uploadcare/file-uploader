@@ -2,7 +2,7 @@ import { CancelError, UploadcareError, type UploadcareFile, uploadFile } from '@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Uid } from '../../lit/Uid';
 import type { ConfigType, OutputFileEntry } from '../../types';
-import { ControllerContainer } from '../di/ControllerContainer';
+import { ControllerContainer, containerOf } from '../di/ControllerContainer';
 import { __resetLoggerForTests } from '../logger';
 import { PluginController } from '../managers/plugin';
 import type { Owned, PluginFileHookRegistration } from '../managers/plugin/PluginTypes';
@@ -651,6 +651,79 @@ describe('UploadController', () => {
       const { controller } = setup();
 
       await expect(controller.getMetadataFor('x' as Uid)).resolves.toBeUndefined();
+    });
+  });
+
+  describe('ctx teardown', () => {
+    const disposeCtx = (controller: UploadController): void => {
+      containerOf(controller)?.dispose();
+    };
+
+    it('does not start an entry deferred by uploadEntries once the ctx is torn down', async () => {
+      vi.useFakeTimers();
+      const { controller, collection } = setup();
+      const id = collection.add({ file: new File(['a'], 'a.txt') });
+
+      controller.uploadEntries([id]);
+      disposeCtx(controller);
+      await vi.runAllTimersAsync();
+
+      expect(mockUploadFile).not.toHaveBeenCalled();
+      // Reading `_collection` on the disposed container would have built an orphan collection on it.
+      expect(containerOf(controller)?.has(UploadCollectionController)).toBe(false);
+    });
+
+    it('does not start the upload when the ctx is torn down while upload options resolve', async () => {
+      let resolveSignature!: (value: { secureSignature: string; secureExpire: string }) => void;
+      const { controller, collection } = setup({
+        cfg: {
+          secureUploadsSignatureResolver: () =>
+            new Promise((resolve) => {
+              resolveSignature = resolve;
+            }),
+        },
+      });
+      const id = collection.add({ file: new File(['a'], 'a.txt') });
+
+      const pending = controller.uploadEntry(id);
+      await vi.waitFor(() => expect(resolveSignature).toBeDefined());
+      disposeCtx(controller);
+      resolveSignature({ secureSignature: 'sig', secureExpire: String(Date.now() / 1000 + 3600) });
+      await pending;
+
+      expect(mockUploadFile).not.toHaveBeenCalled();
+    });
+
+    it('drops a failure that settles after the ctx is torn down instead of reporting it', async () => {
+      let rejectUpload!: (error: Error) => void;
+      mockUploadFile.mockReturnValue(
+        new Promise((_, reject) => {
+          rejectUpload = reject;
+        }),
+      );
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { controller, collection, onUploadError } = setup();
+      const id = collection.add({ file: new File(['a'], 'a.txt') });
+
+      const pending = controller.uploadEntry(id);
+      await vi.waitFor(() => expect(mockUploadFile).toHaveBeenCalled());
+      disposeCtx(controller);
+      rejectUpload(new Error('late'));
+      await pending;
+
+      expect(onUploadError).not.toHaveBeenCalled();
+      expect(error).not.toHaveBeenCalled();
+    });
+
+    it('ignores uploadEntry once the ctx is torn down', async () => {
+      const { controller, collection } = setup();
+      const id = collection.add({ file: new File(['a'], 'a.txt') });
+
+      disposeCtx(controller);
+      await controller.uploadEntry(id);
+
+      expect(mockUploadFile).not.toHaveBeenCalled();
+      expect(containerOf(controller)?.has(UploadCollectionController)).toBe(false);
     });
   });
 });

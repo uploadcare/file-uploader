@@ -12,7 +12,7 @@ import { fileIsImage } from '../../utils/fileTypes';
 import { redactSecrets } from '../../utils/redactSecrets';
 import { customUserAgent } from '../../utils/userAgent';
 import { controllerLogger } from '../controllerLogger';
-import { containerOf } from '../di/ControllerContainer';
+import { containerOf, lifetimeOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { lazy } from '../logger';
@@ -181,6 +181,12 @@ export class UploadController {
   }
 
   public async uploadEntry(uid: Uid): Promise<void> {
+    // Bound to the ctx: once it is torn down nothing here may touch a peer, so an entry deferred by
+    // `uploadEntries` or still queued does not start, and a late result or failure is dropped.
+    const lifetime = lifetimeOf(this);
+    if (lifetime.signal.aborted) {
+      return;
+    }
     const entry = this._collection.read(uid);
     if (!entry) {
       return;
@@ -211,6 +217,7 @@ export class UploadController {
       entry.set('abortController', abortController);
 
       const uploadTask = async (): Promise<UploadcareFile> => {
+        lifetime.signal.throwIfAborted();
         entry.set('isQueuedForUploading', false);
         let file: File | Blob | null = entry.get('file');
 
@@ -243,11 +250,13 @@ export class UploadController {
           }
         }
 
+        // The hooks above may have outlived the ctx.
+        lifetime.signal.throwIfAborted();
         const fileInput = file || entry.get('externalUrl') || entry.get('uuid');
         if (!fileInput) {
           throw new Error('No file input');
         }
-        const baseUploadClientOptions = await this.buildUploadOptions();
+        const baseUploadClientOptions = await lifetime.guard(this.buildUploadOptions());
         const uploadClientOptions: FileFromOptions = {
           ...baseUploadClientOptions,
           fileName: entry.get('fileName') ?? undefined,
@@ -259,8 +268,8 @@ export class UploadController {
             }
           },
           signal: abortController.signal,
-          metadata: await this.getMetadataFor(uid),
-          tags: await this.getTagsFor(uid),
+          metadata: await lifetime.guard(this.getMetadataFor(uid)),
+          tags: await lifetime.guard(this.getTagsFor(uid)),
         };
         // Redact the signing credential from debug output — never print
         // `secureSignature` to the console. Lazy so the redacted copy is only
@@ -277,7 +286,7 @@ export class UploadController {
         return uploadFile(fileInput, uploadClientOptions);
       };
 
-      const fileInfo = await this._queue.add(uploadTask);
+      const fileInfo = await lifetime.guard(this._queue.add(uploadTask));
       entry.setMany({
         fileInfo,
         isQueuedForUploading: false,
@@ -293,6 +302,9 @@ export class UploadController {
         source: entry.get('source') ?? null,
       });
     } catch (cause) {
+      if (lifetime.signal.aborted) {
+        return;
+      }
       const isCancelError = cause instanceof CancelError && cause.isCancel;
       if (isCancelError) {
         entry.setMany({
