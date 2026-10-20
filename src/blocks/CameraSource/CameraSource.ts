@@ -883,10 +883,12 @@ export class CameraSource extends ChildBlock {
 
   private _requestDeviceAccess = async (): Promise<void> => {
     try {
-      await navigator.mediaDevices.getUserMedia({
+      // Only probes for permission so device labels are readable; `_capture` opens the real stream.
+      const probe = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: this._config.get('enableAudioRecording'),
       });
+      for (const track of probe.getTracks()) track.stop();
       if (!this.isConnected) return;
       await this._getDevices();
 
