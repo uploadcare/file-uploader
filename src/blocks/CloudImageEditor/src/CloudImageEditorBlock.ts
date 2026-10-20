@@ -10,6 +10,7 @@ import {
   type EditorConfig,
   type EditorServices,
 } from '../../../abstract/controllers/CloudImageEditorController';
+import { isAbortError, Lifetime } from '../../../abstract/di/Lifetime';
 import { logger } from '../../../abstract/logger';
 import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../../../abstract/secureDeliveryProxyUrl';
@@ -210,6 +211,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   private _configChangeUnsub: (() => void) | undefined;
 
+  // One per connection, ended first thing on disconnect (which also destroys the controller); already ended while
+  // disconnected. The root is the provider, not an `EditorBlock`, so it holds its own.
+  private _lifetime = Lifetime.ended();
+
   private readonly _debouncedShowLoader = debounce((show: boolean) => {
     this._showLoader = show;
   }, 300);
@@ -294,6 +299,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   };
 
   public override connectedCallback(): void {
+    this._lifetime = new Lifetime();
     super.connectedCallback();
     // Apply `styleAttrs` as bare attributes — the entire editor stylesheet is
     // scoped under `[uc-cloud-image-editor]` (incl. the `.uc-editor_ON`
@@ -533,7 +539,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       const rejectWait = () => {
         const error = new Error('[cloud-image-editor] timeout waiting for non-zero container size');
         cleanup();
-        if (this.isConnected) {
+        if (!this._lifetime.signal.aborted) {
           this._log.error(error.message);
         }
         reject(error);
@@ -576,6 +582,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   }
 
   public override disconnectedCallback(): void {
+    this._lifetime.end();
     this._configChangeUnsub?.();
     this._configChangeUnsub = undefined;
     this._editorController.destroy();
@@ -757,16 +764,13 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   }
 
   public async updateImage(): Promise<void> {
-    if (!this.isConnected) {
+    // `updated` can still run once after disconnect.
+    if (this._lifetime.signal.aborted) {
       return;
     }
     try {
-      await this._waitForSize();
+      await this._lifetime.guard(this._waitForSize());
     } catch {
-      return;
-    }
-
-    if (!this.isConnected) {
       return;
     }
 
@@ -830,18 +834,20 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     try {
       const originalUrlValue = editorController.get('*originalUrl') as string;
-      const cdnUrl = await this.proxyUrl(
-        editorImageInfoUrl(originalUrlValue, editorController.get('*sourceOperations')),
+      const cdnUrl = await this._lifetime.guard(
+        this.proxyUrl(editorImageInfoUrl(originalUrlValue, editorController.get('*sourceOperations'))),
       );
-      const json = (await fetch(cdnUrl).then((response) => response.json())) as { width: number; height: number };
-
-      if (!this.isConnected) {
-        return;
-      }
+      const json = (await this._lifetime.guard(
+        fetch(cdnUrl, { signal: this._lifetime.signal }).then((response) => response.json()),
+      )) as { width: number; height: number };
 
       const { width, height } = json;
       this._imageSize = { width, height };
     } catch (err) {
+      // Disconnected mid-request: nothing left to initialize.
+      if (isAbortError(err)) {
+        return;
+      }
       if (err) {
         editorController.telemetry.sendEventError(err, 'cloud editor image. Failed to load image info');
         this._log.error('Failed to load image info', err);
@@ -853,12 +859,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   public async initEditor(): Promise<void> {
     try {
-      await this._waitForSize();
+      await this._lifetime.guard(this._waitForSize());
     } catch {
-      return;
-    }
-
-    if (!this.isConnected) {
       return;
     }
 
