@@ -204,7 +204,12 @@ export class DropArea extends ChildBlock {
       },
     });
 
-    this.updateComplete.then(() => this._setupContentWrapperDropzone());
+    this.updateComplete.then(() => {
+      this._setupContentWrapperDropzone();
+      // Visibility depends on whether there is slotted content to hide, which is not rendered yet when
+      // `_syncSourceList` first runs. Recompute once the element has rendered.
+      this._updateVisibility();
+    });
   }
 
   // `sourceList` drives imperative drop-handler/host state read outside
