@@ -35,12 +35,13 @@ export class UploadCollectionEventsController {
   /** Membership changed → the current group no longer describes the collection. */
   public resetGroupIfMembershipChanged(added: Set<Entry>, removed: Set<Entry>): void {
     if (added.size || removed.size) {
-      this._collectionState.set('groupInfo', null);
+      this.resetGroup();
     }
   }
 
   public resetGroup(): void {
     this._collectionState.set('groupInfo', null);
+    this._collectionState.set('groupError', null);
   }
 
   public setUploadList(entries: Uid[]): void {

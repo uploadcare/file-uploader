@@ -1,353 +1,190 @@
-import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { page, userEvent } from 'vitest/browser';
-import { SecureUploadsController } from '@/abstract/controllers/SecureUploadsController';
-import { UploadCollectionController } from '@/abstract/controllers/UploadCollectionController';
-import { UploadController } from '@/abstract/controllers/UploadController';
-import { UploadEventsController } from '@/abstract/controllers/UploadEventsController';
-import { ValidationController } from '@/abstract/controllers/ValidationController';
-import type { ControllerContainer } from '@/abstract/di/ControllerContainer';
-import { UploaderPublicApi } from '@/abstract/UploaderPublicApi';
-import type { Config, DropArea, UploadCtxProvider } from '@/index.ts';
-import { TEST_IMAGE_URL } from '../utils/constants';
-import { containerOf, hasCtx } from '../utils/registry';
-import { getCtxName } from '../utils/test-renderer';
-import '../../types/jsx';
+import { describe, expect, it } from 'vitest';
+import { delay } from '@/utils/delay';
+import { expectActivity, modalDialog, renderSolution, within } from '~/tests/utils/render-solution';
+import '~/types/jsx';
 
-// M10 Task 1 — coverage-first safety net ahead of the `LitUploaderBlock` ->
-// `ChildBlock` port of `<uc-drop-area>` (src/blocks/DropArea/DropArea.ts).
-// `<uc-drop-area>` has no dedicated e2e suite today (only indirect coverage
-// via the solution + start-from suites), and it is uniquely load-bearing:
-// via `LitUploaderBlock.initCallback` it is the SOLE element that attaches
-// the uploader scope in the built-in solutions (they render `<uc-drop-area>`
-// directly and never include a `<uc-upload-ctx-provider>`). These pins must
-// hold on the current v1 code and must keep holding after the port.
+/**
+ * `<uc-drop-area>` and its `addDropzone` helper. `tests/solutions/minimal.e2e.test.tsx` drops one file; the drag
+ * state machine, the url branch and the rules that switch the area off had no coverage.
+ */
 
-beforeAll(async () => {
-  const UC = await import('@/index.js');
-  UC.defineComponents(UC);
-});
+const openStartFrom = async (configProps: Parameters<typeof renderSolution>[1] = {}) => {
+  const rendered = await renderSolution('regular', configProps);
+  rendered.api.initFlow();
+  await expectActivity(rendered.root, 'start-from');
 
-describe('uc-drop-area — uploader-scope-attach (solution-only composition, no provider)', () => {
-  it('attaches the full uploader scope from a bare solution + config composition (no <uc-upload-ctx-provider>)', async () => {
-    const ctxName = getCtxName();
+  // The regular solution renders more than one drop area; this is the one inside the start-from dialog. The other is
+  // a page-level fullscreen zone that defers to it (`_shouldIgnore`), so dropping on it does nothing.
+  const dialog = modalDialog(rendered.root, 'start-from') as HTMLDialogElement;
+  const dropArea = within(dialog).getByTestId('uc-drop-area');
+  // The dropzone is wired up in `connectedCallback` and publishes its state as `drag-state`; wait for that first.
+  await expect.poll(() => dropArea.query()?.hasAttribute('drag-state')).toBe(true);
+  const dragState = () => dropArea.element().getAttribute('drag-state');
 
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-      </>,
-    );
+  return { ...rendered, dropArea: dropArea.element() as HTMLElement, dragState };
+};
 
-    // Sanity: this composition genuinely has no provider — DropArea (inside
-    // start-from) must be the thing attaching the scope.
-    expect(document.querySelector('uc-upload-ctx-provider')).toBeNull();
+const transfer = (build: (data: DataTransfer) => void) => {
+  const data = new DataTransfer();
+  build(data);
+  return data;
+};
 
-    await expect.poll(() => hasCtx(ctxName)).toBe(true);
-    const container = containerOf(ctxName);
+const dragOver = (dropArea: HTMLElement) => {
+  const rect = dropArea.getBoundingClientRect();
+  document.body.dispatchEvent(new DragEvent('dragenter', { bubbles: true }));
+  dropArea.dispatchEvent(
+    new DragEvent('dragover', {
+      bubbles: true,
+      composed: true,
+      clientX: rect.x + rect.width / 2,
+      clientY: rect.y + rect.height / 2,
+    }),
+  );
+};
 
-    await expect.poll(() => container.has(UploaderPublicApi)).toBe(true);
-    expect(container.has(UploadController)).toBe(true);
-    expect(container.has(ValidationController)).toBe(true);
-    expect(container.has(SecureUploadsController)).toBe(true);
-    expect(container.has(UploadEventsController)).toBe(true);
-    expect(container.has(UploadCollectionController)).toBe(true);
+describe('drag state', () => {
+  it('starts inactive', async () => {
+    const { dragState } = await openStartFrom();
 
-    // Provider-less API works: grab a drop-area and resolve its own container
-    // surface directly, exactly as the solution does internally.
-    const dropArea = page.getByTestId('uc-drop-area').first().query()! as DropArea;
-    expect(dropArea).toBeTruthy();
-    const dropAreaContainer = (dropArea as unknown as { container: ControllerContainer }).container;
-    expect(typeof dropAreaContainer.get(UploaderPublicApi).openSystemDialog).toBe('function');
-    expect(dropAreaContainer.get(UploadController)).toBeTruthy();
+    expect(dragState()).toBe('inactive');
+  });
+
+  it('becomes active when a drag starts anywhere on the page', async () => {
+    const { dragState } = await openStartFrom();
+
+    // `addDropzone` listens on document.body, not window.
+    document.body.dispatchEvent(new DragEvent('dragenter', { bubbles: true }));
+
+    await expect.poll(dragState).toBe('active');
+  });
+
+  it('becomes over when the pointer is on the area', async () => {
+    const { dropArea, dragState } = await openStartFrom();
+
+    dragOver(dropArea);
+
+    await expect.poll(dragState).toBe('over');
+  });
+
+  it('returns to inactive when the drag leaves', async () => {
+    const { dragState } = await openStartFrom();
+    document.body.dispatchEvent(new DragEvent('dragenter', { bubbles: true }));
+    await expect.poll(dragState).toBe('active');
+
+    document.body.dispatchEvent(new DragEvent('dragleave', { bubbles: true }));
+
+    await expect.poll(dragState).toBe('inactive');
+  });
+
+  it('resets when the window regains focus mid-drag', async () => {
+    // A drag that ends outside the page never fires dragleave, so focus is the escape hatch.
+    const { dragState } = await openStartFrom();
+    document.body.dispatchEvent(new DragEvent('dragenter', { bubbles: true }));
+    await expect.poll(dragState).toBe('active');
+
+    window.dispatchEvent(new Event('focus'));
+
+    await expect.poll(dragState).toBe('inactive');
   });
 });
 
-describe('uc-drop-area — drag & drop', () => {
-  const renderRegularWithProvider = () => {
-    const ctxName = getCtxName();
-    page.render(
-      <>
-        <uc-file-uploader-regular ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-      </>,
+/**
+ * Drops carry urls rather than files here. A `DataTransfer` built in JS exposes `webkitGetAsEntry`, but it returns
+ * null, and `getDropItems` takes that branch and skips the item rather than falling back to `getAsFile` — so a
+ * synthetic file drop adds nothing, and a test written that way would pass for the wrong reason. The file path is
+ * covered properly by the unit spec in `src/blocks/DropArea/getDropItems.test.ts`.
+ */
+describe('dropping', () => {
+  const dropUrl = (dropArea: HTMLElement, url: string) => {
+    dropArea.dispatchEvent(
+      new DragEvent('drop', {
+        bubbles: true,
+        composed: true,
+        dataTransfer: transfer((d) => d.items.add(url, 'text/uri-list')),
+      }),
     );
-    const provider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    return { ctxName, api: provider.getAPI() };
   };
 
-  it('dropping a url onto the modal drop-area grows the collection and advances the router (onFileAdd)', async () => {
-    const { api } = renderRegularWithProvider();
+  it('adds a dropped url', async () => {
+    const { dropArea, api } = await openStartFrom();
 
-    await page.getByText('Upload files', { exact: true }).click();
-    await expect.element(page.getByTestId('uc-start-from')).toBeVisible();
-    await expect.poll(() => document.querySelector('uc-start-from')?.hasAttribute('active')).toBe(true);
-    expect(api.getOutputCollectionState().allEntries.length).toBe(0);
+    dropUrl(dropArea, 'https://example.com/photo.jpg');
 
-    // A real cross-element `userEvent.dragAndDrop` (as used by
-    // tests/file-uploader-minimal.e2e.test.tsx "should drag and drop file",
-    // which drags an anchor tag — real anchor drags natively populate
-    // `text/uri-list` — onto the WHOLE solution root) is coordinate/hit-test
-    // dependent and flaky once the drop-area is nested inside a `<uc-modal>`
-    // dialog (Playwright repeatedly reported the target as "not
-    // visible"/"not stable" mid-gesture here). Dispatching the `drop`
-    // `DragEvent` directly on the drop-area element sidesteps that
-    // instability while still exercising the exact production code path:
-    // `getDropItems` (src/blocks/DropArea/getDropItems.ts) branches on
-    // `item.kind === 'string' && /^text\/uri-list/.test(item.type)` with no
-    // filesystem-entry involvement, so a plain `DataTransfer` built via
-    // `setData('text/uri-list', ...)` is indistinguishable from a real
-    // browser-native link/URL drag for this branch — unlike a `kind:
-    // 'file'` item, which `getDropItems` skips whenever
-    // `item.webkitGetAsEntry()` exists but returns null (true for
-    // programmatically-constructed file items, since they lack a real OS
-    // filesystem entry). So the *file* path is pinned via
-    // `userEvent.dragAndDrop` in the same-idiom minimal suite; here we pin
-    // the *url* path, deterministically, through DropArea's real listener.
-    const dropArea = document.querySelector('uc-modal#start-from uc-drop-area') as HTMLElement;
-    expect(dropArea).toBeTruthy();
-    const dataTransfer = new DataTransfer();
-    dataTransfer.setData('text/uri-list', TEST_IMAGE_URL);
-    dropArea.dispatchEvent(new DragEvent('drop', { dataTransfer, bubbles: true, cancelable: true }));
-
-    await expect.poll(() => api.getOutputCollectionState().allEntries.length).toBeGreaterThan(0);
-    // Collection growth is what gates `router.traverse('onFileAdd')` in
-    // DropArea.ts's `onItems` callback — the router leaving start-from is
-    // the observable proxy for that traversal having fired.
-    await expect.poll(() => document.querySelector('uc-start-from')?.hasAttribute('active')).toBe(false);
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
+    expect(api.getOutputCollectionState().allEntries[0].externalUrl).toBe('https://example.com/photo.jpg');
   });
 
-  it('a drop that adds no items (drag-state ping-pong with no dataTransfer) does not advance the router', async () => {
-    const { api } = renderRegularWithProvider();
+  it('ignores an empty drop', async () => {
+    const { dropArea, api } = await openStartFrom();
 
-    await page.getByText('Upload files', { exact: true }).click();
-    await expect.element(page.getByTestId('uc-start-from')).toBeVisible();
-    await expect.poll(() => document.querySelector('uc-start-from')?.hasAttribute('active')).toBe(true);
+    dropArea.dispatchEvent(new DragEvent('drop', { bubbles: true, composed: true, dataTransfer: new DataTransfer() }));
+    // Negative wait: a drop that adds nothing fires no event, so give the async drop handler time to have run.
+    await delay(300);
 
-    const dropArea = document.querySelector('uc-modal#start-from uc-drop-area') as HTMLElement;
-    const emptyDataTransfer = new DataTransfer();
-    dropArea.dispatchEvent(new DragEvent('drop', { dataTransfer: emptyDataTransfer, bubbles: true, cancelable: true }));
+    expect(api.getOutputCollectionState().totalCount).toBe(0);
+  });
 
-    // Give the (absent) traversal a chance to happen before asserting the
-    // negative — DropArea.ts's `onItems` returns early when `items.length`
-    // is falsy, so `router.traverse('onFileAdd')` never fires and start-from
-    // stays active/foreground.
-    await expect.poll(() => api.getOutputCollectionState().allEntries.length).toBe(0);
-    expect(document.querySelector('uc-start-from')?.hasAttribute('active')).toBe(true);
+  it('refuses a second item when multiple is off', async () => {
+    const { dropArea, api } = await openStartFrom({ multiple: false });
+    dropUrl(dropArea, 'https://example.com/first.jpg');
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
+
+    dropUrl(dropArea, 'https://example.com/second.jpg');
+    // Negative wait: the refused drop has no signal; the first drop landed well within this window.
+    await delay(400);
+
+    expect(api.getOutputCollectionState().totalCount).toBe(1);
+  });
+
+  it('refuses more items than multipleMax allows', async () => {
+    const { dropArea, api } = await openStartFrom({ multiple: true, multipleMax: 1 });
+    dropUrl(dropArea, 'https://example.com/first.jpg');
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
+
+    dropUrl(dropArea, 'https://example.com/second.jpg');
+    // Negative wait: the refused drop has no signal; the first drop landed well within this window.
+    await delay(400);
+
+    expect(api.getOutputCollectionState().totalCount).toBe(1);
   });
 });
 
-describe('uc-drop-area — click / keyboard (clickable)', () => {
-  // `openSystemDialog` (src/abstract/UploaderPublicApi.ts) appends a real
-  // `[uploadcare-file-input]` to `document.body` outside any test-renderer
-  // container, so it survives across tests unless explicitly swept.
-  beforeEach(() => {
-    document.querySelectorAll('[uploadcare-file-input]').forEach((el) => {
-      el.remove();
-    });
+/**
+ * `sourceList` keeps two entries so start-from actually renders: `initFlow` with a single source expands it and
+ * navigates straight there instead of showing the picker.
+ */
+describe('when local uploads are not offered', () => {
+  // QUIRK(drop-area): removing `local` from `sourceList` is supposed to hide the area — `_updateVisibility` keeps it
+  // only when there is no default slot to hide (DropArea.ts:223). But visibility is computed from the `sourceList`
+  // subscription, which fires before the element has rendered its slotted content, so `querySelector` finds nothing,
+  // the area is judged slotless and stays visible. Nothing recomputes once the content appears. The result is a
+  // visible "Drop files here" target that silently refuses every drop (the next test). Reproduced through the
+  // attribute route too, so it is not a test-setup artefact. Pinned as current behaviour, not endorsed.
+  it('stays visible even though it no longer accepts anything', async () => {
+    const { dropArea } = await openStartFrom({ sourceList: 'url, camera' });
+
+    // Negative wait: pins that no later recompute hides the area; there is nothing to wait on.
+    await delay(300);
+    expect(dropArea.hidden).toBe(false);
   });
 
-  // Boolean JSX attrs don't reliably stick (see AGENTS.md / sibling suites'
-  // convention, e.g. source-btn.e2e.test.tsx) — drive `clickable` via the JS
-  // property after mount instead. `_updateClickableListeners` (which
-  // attaches the keydown/click listeners) runs from Lit's `updated()`
-  // lifecycle, so the property set must be flushed via `updateComplete`
-  // before dispatching a synthetic event, or the listener won't be attached
-  // yet.
-  const renderStandalone = async (props: { clickable?: boolean } = {}) => {
-    const ctxName = getCtxName();
-    page.render(
-      <>
-        <uc-drop-area ctx-name={ctxName}></uc-drop-area>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-      </>,
+  it('ignores a drop while disabled', async () => {
+    const { root, api } = await openStartFrom({ sourceList: 'url, camera' });
+    // Every area in the solution is disabled, so any of them proves the point — `.elements()` rather than `.query()`
+    // because the strict locator refuses an ambiguous match, which is the behaviour worth keeping elsewhere.
+    const [area] = within(root).getByTestId('uc-drop-area').elements();
+
+    area.dispatchEvent(
+      new DragEvent('drop', {
+        bubbles: true,
+        composed: true,
+        dataTransfer: transfer((d) => d.items.add('https://example.com/photo.jpg', 'text/uri-list')),
+      }),
     );
-    const config = page.getByTestId('uc-config').query()! as Config;
-    const dropArea = page.getByTestId('uc-drop-area').query()! as DropArea;
-    if (props.clickable) {
-      dropArea.clickable = true;
-      await dropArea.updateComplete;
-    }
-    return { ctxName, config, dropArea };
-  };
+    // Negative wait: a refused drop has no signal.
+    await delay(400);
 
-  it('without clickable, a click does nothing (no system dialog, no navigation)', async () => {
-    const { dropArea } = await renderStandalone({ clickable: false });
-
-    await userEvent.click(dropArea);
-    // Give any (incorrect) async reaction a chance to happen before asserting
-    // the negative.
-    await expect.poll(() => document.querySelector('[uploadcare-file-input]')).toBeNull();
-    expect(document.querySelector('[uploadcare-file-input]')).toBeNull();
-  });
-
-  it('with clickable and no initflow, a click opens the native system dialog (a file input is appended)', async () => {
-    const { dropArea } = await renderStandalone({ clickable: true });
-
-    await userEvent.click(dropArea);
-    await expect.poll(() => document.querySelector('[uploadcare-file-input]')).toBeTruthy();
-  });
-
-  it('with clickable and no initflow, Enter/Space keydown also opens the system dialog', async () => {
-    const { dropArea } = await renderStandalone({ clickable: true });
-
-    dropArea.dispatchEvent(new KeyboardEvent('keydown', { code: 'Enter', bubbles: true }));
-    await expect.poll(() => document.querySelector('[uploadcare-file-input]')).toBeTruthy();
-
-    document.querySelector('[uploadcare-file-input]')?.remove();
-
-    dropArea.dispatchEvent(new KeyboardEvent('keydown', { code: 'Space', bubbles: true }));
-    await expect.poll(() => document.querySelector('[uploadcare-file-input]')).toBeTruthy();
-  });
-
-  it('a keydown with an unrelated key does not open the system dialog', async () => {
-    const { dropArea } = await renderStandalone({ clickable: true });
-
-    dropArea.dispatchEvent(new KeyboardEvent('keydown', { code: 'Tab', bubbles: true }));
-    expect(document.querySelector('[uploadcare-file-input]')).toBeNull();
-  });
-
-  it('with clickable and initflow, a click calls api.initFlow() (opens start-from) instead of the system dialog', async () => {
-    // FileUploaderMinimal's inline (non-modal) drop-area is rendered with
-    // both `initflow` and `clickable` (src/solutions/file-uploader/minimal/
-    // FileUploaderMinimal.ts) — the real composition that exercises this
-    // exact combination, so we drive it through the actual solution rather
-    // than approximating the wiring by hand.
-    const ctxName = getCtxName();
-    page.render(
-      <>
-        <uc-file-uploader-minimal ctx-name={ctxName}></uc-file-uploader-minimal>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-        <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
-      </>,
-    );
-    const ctxProvider = page.getByTestId('uc-upload-ctx-provider').query()! as UploadCtxProvider;
-    const api = ctxProvider.getAPI();
-
-    // Two `uc-drop-area`s render for minimal (the inline `initflow clickable`
-    // one, and the modal's `with-icon clickable` one); the inline one renders
-    // first in DOM order (see FileUploaderMinimal.ts's render(): the inline
-    // `<uc-start-from>` precedes the `<uc-modal id="start-from">`).
-    const initflowDropArea = page.getByTestId('uc-drop-area').first();
-    await expect.element(initflowDropArea).toBeInTheDocument();
-
-    await userEvent.click(initflowDropArea);
-
-    // api.initFlow() with an empty collection opens the modal start-from
-    // flow rather than the native system dialog.
-    await expect
-      .poll(() => document.querySelector('uc-modal#start-from uc-start-from')?.hasAttribute('active'))
-      .toBe(true);
-    expect(document.querySelector('[uploadcare-file-input]')).toBeNull();
-    expect(api.getOutputCollectionState().allEntries.length).toBe(0);
-  });
-});
-
-describe('uc-drop-area — enable / visibility / _shouldIgnore proxies', () => {
-  const renderStandalone = () => {
-    const ctxName = getCtxName();
-    page.render(
-      <>
-        <uc-drop-area ctx-name={ctxName}></uc-drop-area>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-      </>,
-    );
-    const config = page.getByTestId('uc-config').query()! as Config;
-    const dropArea = page.getByTestId('uc-drop-area').query()! as DropArea;
-    return { ctxName, config, dropArea };
-  };
-
-  it('disabled hides the drop-area when it renders its own default slot', async () => {
-    const { dropArea } = renderStandalone();
-    await expect.poll(() => dropArea.hidden).toBe(false);
-
-    dropArea.disabled = true;
-    await expect.poll(() => dropArea.hidden).toBe(true);
-
-    dropArea.disabled = false;
-    await expect.poll(() => dropArea.hidden).toBe(false);
-  });
-
-  it('disabled does NOT hide the drop-area when it has custom light-DOM children (no default slot rendered)', async () => {
-    const ctxName = getCtxName();
-    page.render(
-      <>
-        <uc-drop-area ctx-name={ctxName} disabled>
-          <span class="custom-child">custom</span>
-        </uc-drop-area>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-      </>,
-    );
-    const dropArea = page.getByTestId('uc-drop-area').query()! as DropArea;
-    await expect.poll(() => document.querySelector('uc-drop-area [data-default-slot]')).toBeNull();
-    await expect.poll(() => dropArea.hidden).toBe(false);
-  });
-
-  it('a sourceList without "local" disables the drop-area (hidden, same as disabled)', async () => {
-    const { config, dropArea } = renderStandalone();
-    await expect.poll(() => dropArea.hidden).toBe(false);
-
-    config.sourceList = 'url, camera';
-    await expect.poll(() => dropArea.hidden).toBe(true);
-
-    config.sourceList = 'local, url';
-    await expect.poll(() => dropArea.hidden).toBe(false);
-  });
-
-  it('multiple:false plus an existing file blocks further drop handling (drag-state never advances past inactive)', async () => {
-    const { config, dropArea } = renderStandalone();
-    config.multiple = false;
-
-    // Drive the real config-driven public API to add one file so the
-    // collection is non-empty, then confirm a synthetic dragenter/dragover
-    // on the (now un-handleable) drop-area is ignored: `shouldIgnore()`
-    // (private) gates `addDropzone`'s `setState`, so the observable proxy is
-    // that `drag-state` never leaves "inactive".
-    const dropAreaContainer = (dropArea as unknown as { container: ControllerContainer }).container;
-    dropAreaContainer.get(UploaderPublicApi).addFileFromUrl(TEST_IMAGE_URL);
-    await expect.poll(() => dropAreaContainer.get(UploadCollectionController).size).toBe(1);
-
-    dropArea.dispatchEvent(new Event('dragenter', { bubbles: true }));
-    dropArea.dispatchEvent(new Event('dragover', { bubbles: true, cancelable: true }));
-
-    expect(dropArea.getAttribute('drag-state')).toBe('inactive');
-  });
-});
-
-describe('uc-drop-area — drop text', () => {
-  const renderStandalone = () => {
-    const ctxName = getCtxName();
-    page.render(
-      <>
-        <uc-drop-area ctx-name={ctxName}></uc-drop-area>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-      </>,
-    );
-    const config = page.getByTestId('uc-config').query()! as Config;
-    const dropArea = page.getByTestId('uc-drop-area').query()! as DropArea;
-    return { ctxName, config, dropArea };
-  };
-
-  it('defaults to the "Drop files here" locale string when multiple is true', async () => {
-    const { dropArea } = renderStandalone();
-    await expect.poll(() => dropArea.querySelector('.uc-text')?.textContent).toBe('Drop files here');
-  });
-
-  it('falls back to the "Drop file here" (singular) locale string when multiple is false', async () => {
-    const { config, dropArea } = renderStandalone();
-    config.multiple = false;
-    await expect.poll(() => dropArea.querySelector('.uc-text')?.textContent).toBe('Drop file here');
-  });
-
-  it('the "text" attribute overrides the locale-derived text', async () => {
-    const ctxName = getCtxName();
-    page.render(
-      <>
-        <uc-drop-area ctx-name={ctxName} text="Custom drop text"></uc-drop-area>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
-      </>,
-    );
-    const dropArea = page.getByTestId('uc-drop-area').query()! as DropArea;
-    await expect.poll(() => dropArea.querySelector('.uc-text')?.textContent).toBe('Custom drop text');
+    expect(api.getOutputCollectionState().totalCount).toBe(0);
   });
 });

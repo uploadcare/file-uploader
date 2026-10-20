@@ -16,6 +16,7 @@ import {
   sidePath,
   thumbCursor,
 } from './crop-utils';
+import { MIN_CROP_SIZE } from './cropper-constants';
 import type { Rectangle } from './types';
 
 describe('crop-utils', () => {
@@ -440,6 +441,65 @@ describe('crop-utils', () => {
     });
   });
 
+  /**
+   * `resizeRect` dispatches to one per-direction helper, and each of those carries the same four constraint branches:
+   * clamp to the image box on the leading edge, clamp on the trailing edge, hold the aspect ratio, and refuse to go
+   * below `MIN_CROP_SIZE`. The per-direction tests above only exercise the unconstrained path, so these drive every
+   * branch through the invariants that must hold whatever the direction and however hard the handle is dragged.
+   */
+  describe('resizeRect constraints', () => {
+    const imageBox: Rectangle = { x: 0, y: 0, width: 500, height: 400 };
+    const rect: Rectangle = { x: 100, y: 100, width: 200, height: 150 };
+    const directions = ['n', 's', 'e', 'w', 'nw', 'ne', 'sw', 'se'] as const;
+
+    /** Drags that overshoot the image box on both axes, in all four diagonal senses. */
+    const overshoots: [number, number][] = [
+      [-1000, -1000],
+      [1000, 1000],
+      [-1000, 1000],
+      [1000, -1000],
+    ];
+
+    /** Every handle against every overshoot, so a failure names the pair instead of only the direction. */
+    const cases = directions.flatMap((direction) => overshoots.map((delta) => ({ direction, delta })));
+
+    it.each(cases)('keeps the result inside the image box dragging $direction by $delta', ({ direction, delta }) => {
+      const result = resizeRect({ direction, rect, delta, imageBox });
+
+      expect(isRectInsideRect(result, imageBox)).toBe(true);
+    });
+
+    // The overshoot opposite the handle collapses the rectangle towards zero on at least one axis.
+    it.each(cases)('never shrinks below the minimum size dragging $direction by $delta', ({ direction, delta }) => {
+      const result = resizeRect({ direction, rect, delta, imageBox });
+
+      expect(result.width).toBeGreaterThanOrEqual(MIN_CROP_SIZE);
+      expect(result.height).toBeGreaterThanOrEqual(MIN_CROP_SIZE);
+    });
+
+    it.each(cases)('holds a 2:1 aspect ratio dragging $direction by $delta', ({ direction, delta }) => {
+      const result = resizeRect({ direction, rect, delta, imageBox, aspectRatio: 2 });
+
+      expect(isRectMatchesAspectRatio(result, 2)).toBe(true);
+    });
+
+    it.each(cases)('holds a 1:2 aspect ratio dragging $direction by $delta', ({ direction, delta }) => {
+      const result = resizeRect({ direction, rect, delta, imageBox, aspectRatio: 0.5 });
+
+      expect(isRectMatchesAspectRatio(result, 0.5)).toBe(true);
+    });
+
+    it.each(cases)('stays inside the image box with a 2:1 ratio, $direction by $delta', ({ direction, delta }) => {
+      const result = resizeRect({ direction, rect, delta, imageBox, aspectRatio: 2 });
+
+      expect(isRectInsideRect(result, imageBox)).toBe(true);
+    });
+
+    it('returns the rectangle untouched for a direction it does not handle', () => {
+      expect(resizeRect({ direction: '' as 'n', rect, delta: [50, 50], imageBox })).toBe(rect);
+    });
+  });
+
   describe('rectContainsPoint', () => {
     const rect: Rectangle = { x: 100, y: 100, width: 200, height: 150 };
 
@@ -641,6 +701,25 @@ describe('crop-utils', () => {
 
       expect(result.x + result.width).toBeLessThanOrEqual(100);
       expect(result.y + result.height).toBeLessThanOrEqual(100);
+    });
+  });
+
+  /**
+   * `calculateMaxCenteredCropFrame` rounds the crop box, then clamps it back if the rounding pushed it past the
+   * source. With integer dimensions the clamps never fire — `Math.round((w - cw) / 2) <= w - cw` holds for every
+   * integer — so they are only reachable when the caller passes fractional sizes, which is what these cover.
+   */
+  describe('calculateMaxCenteredCropFrame rounding overflow', () => {
+    it('clamps the width when rounding pushes the crop past a fractional source width', () => {
+      const frame = calculateMaxCenteredCropFrame(1.75, 1, 1.5);
+
+      expect(frame.x + frame.width).toBeLessThanOrEqual(1.75);
+    });
+
+    it('clamps the height when rounding pushes the crop past a fractional source height', () => {
+      const frame = calculateMaxCenteredCropFrame(1.5, 1.5, 1);
+
+      expect(frame.y + frame.height).toBeLessThanOrEqual(1.5);
     });
   });
 

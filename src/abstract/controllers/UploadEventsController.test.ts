@@ -517,6 +517,35 @@ describe('UploadEventsController', () => {
   });
 
   describe('output flush + group', () => {
+    it('publishes a group failure and reruns collection validation', async () => {
+      const state = makeState({ totalCount: 1, status: 'success', allEntries: [{ uuid: 'u1' }] as never });
+      const t = setup({ collectionState: state });
+      t.config.set('groupOutput', true);
+      const error = new Error('group refused');
+      mockUploadFileGroup.mockRejectedValue(error);
+      const id = t.collection.add({ fileName: 'a.txt' });
+      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+      vi.mocked(t.deps.validation.runCollectionValidators).mockClear();
+      await vi.advanceTimersByTimeAsync(300);
+      expect(t.container.get(CollectionStateController).get('groupError')).toBe(error);
+      expect(t.deps.validation.runCollectionValidators).toHaveBeenCalled();
+    });
+
+    it('discards a group failure if membership changed before the next output flush', async () => {
+      const state = makeState({ totalCount: 1, status: 'success', allEntries: [{ uuid: 'u1' }] as never });
+      const t = setup({ collectionState: state });
+      t.config.set('groupOutput', true);
+      mockUploadFileGroup.mockImplementation(async () => {
+        const next = t.collection.add({ fileName: 'b.txt' });
+        t.fireCollection(t.collection.items(), entriesByUid(t.collection, [next]), new Set());
+        throw new Error('stale group refusal');
+      });
+      const id = t.collection.add({ fileName: 'a.txt' });
+      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+      await vi.advanceTimersByTimeAsync(300);
+      expect(t.container.get(CollectionStateController).get('groupError')).toBeNull();
+    });
+
     it('flushes collection state + emits CHANGE when output data matches collection size', () => {
       const t = setup({ collectionState: makeState({ totalCount: 1, status: 'idle' }) });
       const id = t.collection.add({ fileName: 'a.txt' });

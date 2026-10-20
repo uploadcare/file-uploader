@@ -6,6 +6,7 @@ import type { EventKey, InternalEventKey } from '../../blocks/UploadCtxProvider/
 import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import type { ConfigType } from '../../types/index';
+import { redactSecrets } from '../../utils/redactSecrets';
 import { UID } from '../../utils/UID';
 import { controllerLogger } from '../controllerLogger';
 import { AppInfo } from '../controllers/AppInfo';
@@ -35,6 +36,7 @@ type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config' | 'c
  * internally for change detection.
  */
 const SENSITIVE_CONFIG_KEYS: ReadonlySet<keyof ConfigType> = new Set([
+  'authToken',
   'secureSignature',
   'secureExpire',
   'secureDeliveryProxy',
@@ -137,7 +139,7 @@ export class TelemetryManager {
   }
 
   private _sanitizedConfig(): TelemetryState['config'] {
-    const sanitized: Record<string, unknown> = { ...this._config };
+    const sanitized: Record<string, unknown> = redactSecrets(this._config);
     for (const key of SENSITIVE_CONFIG_KEYS) {
       if (this._config[key] !== initialConfig[key]) {
         sanitized[key] = REDACTED_VALUE;

@@ -467,13 +467,18 @@ export abstract class ChildBlock extends ChildBlockBase {
    * `testId` while the ctx's `testMode` config is on (folded in from the former
    * reactive `TestModeController` + its `trySubscribeTestMode` hook). This
    * `@effect` replaces the controller's manual subscribe/retry lifecycle: it
-   * runs after every update (re-collecting newly rendered elements, as
-   * `hostUpdated` did) and, because it reads `testMode` via `getTracked`, re-runs
-   * when that signal flips — auto-disposed on release, so no hand-managed
+   * re-runs when `testMode` changes. `updated()` also collects newly rendered
+   * elements, since signal effects cache their results between signal changes.
+   * The effect is auto-disposed on release, so no hand-managed
    * subscribe/unsubscribe. (The HOST element's own `data-testid` is synced
    * separately at adoption — see `_syncTestId` — because e2e locators need it
    * synchronously, before the first post-render effect microtask.)
    */
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+    this._applyTestMode();
+  }
+
   @effect()
   protected _applyTestMode(): void {
     // Runs post-adoption (effects wire at adoption), so the container is present;
@@ -509,11 +514,16 @@ export abstract class ChildBlock extends ChildBlockBase {
     if (!root) {
       return;
     }
-    const hostTag = this.tagName?.toLowerCase();
+    const owningBlock = (el: Element): Element | null => {
+      for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+        if (isCustomElement(parent)) return parent;
+      }
+      return null;
+    };
     const candidates = Array.from(root.querySelectorAll('[data-testid]')).filter((el) => !isCustomElement(el));
 
     for (const el of candidates) {
-      if (hostTag && el.closest(hostTag) !== this) {
+      if (owningBlock(el) !== this) {
         continue;
       }
       if (!this._testModeTracked.has(el)) {
@@ -527,7 +537,7 @@ export abstract class ChildBlock extends ChildBlockBase {
     }
 
     for (const el of Array.from(this._testModeTracked)) {
-      if (!el.isConnected || (hostTag && el.closest(hostTag) !== this)) {
+      if (!el.isConnected || owningBlock(el) !== this) {
         this._testModeTracked.delete(el);
         this._testModeOriginal.delete(el);
       }

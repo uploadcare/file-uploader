@@ -82,6 +82,7 @@ export class UploadEventsController {
   // reconnect cycles; gates the debounced flush + deferred validation/group that
   // may fire after the host disconnects.
   private _active = false;
+  private _groupGeneration = 0;
   private _unobserveCollection?: Unsubscribe;
   private _unobserveProperties?: Unsubscribe;
 
@@ -103,6 +104,7 @@ export class UploadEventsController {
 
   public unobserve(): void {
     this._active = false;
+    this._groupGeneration += 1;
     this._unobserveProperties?.();
     this._unobserveCollection?.();
     this._unobserveProperties = undefined;
@@ -131,6 +133,7 @@ export class UploadEventsController {
   private _handleCollectionUpdate: CollectionObserver = (entries, added, removed) => {
     if (!this._active) return;
 
+    if (added.size || removed.size) this._groupGeneration += 1;
     this._collectionEvents.resetGroupIfMembershipChanged(added, removed);
 
     this._validation.runFileValidators(
@@ -229,7 +232,8 @@ export class UploadEventsController {
       collectionState.totalCount > 0 &&
       collectionState.status === 'success'
     ) {
-      void this._group.create(collectionState, () => this._active);
+      const generation = this._groupGeneration;
+      void this._group.create(collectionState, () => this._active && generation === this._groupGeneration);
     }
   }, 300);
 }

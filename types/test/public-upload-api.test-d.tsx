@@ -1,32 +1,31 @@
+import { test } from 'vitest';
 import '../jsx';
-
 import { UploadCtxProvider } from '../../dist/index.js';
 
-const instance = new UploadCtxProvider();
-const api = instance.getAPI();
+const api = new UploadCtxProvider().getAPI();
 
-api.addFileFromUrl('https://example.com/image.png');
-
-api.setCurrentActivity('camera');
-api.setCurrentActivity('cloud-image-edit', { internalId: 'id' });
-api.setCurrentActivity('external', {
-  externalSourceType: 'type',
+test('setCurrentActivity takes no params for activities that have none', () => {
+  api.setCurrentActivity('camera');
+  // @ts-expect-error camera has no params
+  api.setCurrentActivity('camera', { invalidParam: 'value' });
 });
 
-// @ts-expect-error - should not allow to set activity without params
-api.setCurrentActivity('cloud-image-edit');
-// @ts-expect-error - should not allow to set activity without params
-api.setCurrentActivity('external');
+test('setCurrentActivity requires the params of cloud-image-edit and external', () => {
+  api.setCurrentActivity('cloud-image-edit', { internalId: 'id' });
+  api.setCurrentActivity('external', { externalSourceType: 'type' });
+  // @ts-expect-error params are required
+  api.setCurrentActivity('cloud-image-edit');
+  // @ts-expect-error params are required
+  api.setCurrentActivity('external');
+});
 
-// @ts-expect-error - should not allow to set activity with invalid params
-api.setCurrentActivity('camera', {
-  invalidParam: 'value',
-});
-api.setCurrentActivity('cloud-image-edit', {
-  // @ts-expect-error - should not allow to set activity with invalid params
-  invalidParam: 'value',
-});
-api.setCurrentActivity('external', {
-  // @ts-expect-error - should not allow to set activity with invalid params
-  invalidParam: 'value',
+test('setCurrentActivity rejects unknown params', () => {
+  api.setCurrentActivity('cloud-image-edit', {
+    // @ts-expect-error unknown param
+    invalidParam: 'value',
+  });
+  api.setCurrentActivity('external', {
+    // @ts-expect-error unknown param
+    invalidParam: 'value',
+  });
 });

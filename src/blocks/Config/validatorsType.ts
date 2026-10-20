@@ -1,5 +1,6 @@
+import { isAuthTokenResolver } from '@uploadcare/upload-client';
 import type { PasteScope } from '../../abstract/controllers/ClipboardController';
-import type { Metadata, MetadataCallback, Tags, TagsCallback } from '../../types/index';
+import type { AuthToken, Metadata, MetadataCallback, Tags, TagsCallback } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
 import type { ModeCameraType } from '../CameraSource/constants';
 import { CameraSourceTypes } from '../CameraSource/constants';
@@ -89,6 +90,18 @@ const asTags = (value: unknown): Tags | TagsCallback => {
   throw new Error('Invalid tags value. Must be an array or function.');
 };
 
+const asAuthToken = (value: unknown): AuthToken => {
+  // A provider (`{ getToken, invalidate }`, an `AuthTokenCache` among them) is
+  // as valid as a plain token or a resolver. `isAuthTokenResolver` is the same
+  // guard upload-client uses to tell the callable forms from a string, so the
+  // two ends of the handoff cannot drift apart.
+  if (typeof value === 'string' || isAuthTokenResolver(value as AuthToken)) {
+    return value as AuthToken;
+  }
+
+  throw new Error('Invalid authToken value. Must be a string, a function, or a `{ getToken }` object.');
+};
+
 const asObject = <T>(value: unknown): T => {
   if (typeof value === 'object') {
     return value as T;
@@ -133,6 +146,7 @@ const asDynamicButtonViewMode = (value: unknown): DynamicButtonMode => {
 
 export {
   asArray,
+  asAuthToken,
   asBoolean,
   asCameraCapture,
   asCameraMode,

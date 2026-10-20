@@ -18,6 +18,7 @@ export type CollectionState = {
   collectionState: OutputCollectionState | null;
   collectionErrors: OutputErrorCollection[];
   groupInfo: UploadcareGroup | null;
+  groupError: Error | null;
 };
 
 /**
@@ -46,6 +47,7 @@ export class CollectionStateController implements ReactiveStore<CollectionState>
     collectionState: null,
     collectionErrors: [],
     groupInfo: null,
+    groupError: null,
   });
 
   /** Every key is seeded at construction, so the value is always present. */

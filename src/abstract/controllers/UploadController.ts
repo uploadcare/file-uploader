@@ -1,4 +1,5 @@
 import {
+  AuthTokenResolverError,
   CancelError,
   type FileFromOptions,
   Queue,
@@ -8,12 +9,14 @@ import {
 } from '@uploadcare/upload-client';
 import type { Uid } from '../../lit/Uid';
 import { fileIsImage } from '../../utils/fileTypes';
+import { redactSecrets } from '../../utils/redactSecrets';
 import { customUserAgent } from '../../utils/userAgent';
 import { controllerLogger } from '../controllerLogger';
 import { containerOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { lazy } from '../logger';
+import { AuthTokenManager } from '../managers/AuthTokenManager';
 import { PluginController } from '../managers/plugin';
 import { TelemetryManager } from '../managers/TelemetryManager';
 import { UploaderPublicApi } from '../UploaderPublicApi';
@@ -40,6 +43,7 @@ import { UploadCollectionController } from './UploadCollectionController';
  * subscriptions.
  */
 export class UploadController {
+  @inject(AuthTokenManager) private readonly _authToken!: AuthTokenManager;
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(SecureUploadsController) private readonly _secureUploads!: SecureUploadsController;
@@ -127,7 +131,8 @@ export class UploadController {
    * Public because group upload (`uploadFileGroup`) reuses the same options.
    */
   public async buildUploadOptions(): Promise<FileFromOptions> {
-    const secureToken = await this._secureUploads.getSecureToken().catch(() => null);
+    const authToken = this._authToken.getAuthToken();
+    const secureToken = authToken ? null : await this._secureUploads.getSecureToken().catch(() => null);
     const cfg = this._config.values;
 
     // Assigned to a local (not returned as a literal) so the extra
@@ -135,6 +140,7 @@ export class UploadController {
     // upload-client ignores keys it doesn't type, and a direct-literal return
     // would trip excess-property checking.
     const options = {
+      authToken,
       store: cfg.store,
       publicKey: cfg.pubkey,
       baseCDN: cfg.cdnCname,
@@ -262,9 +268,10 @@ export class UploadController {
         this._log.debug(
           lazy(() => [
             'upload options',
-            uploadClientOptions.secureSignature
-              ? { ...uploadClientOptions, secureSignature: '[redacted]' }
-              : uploadClientOptions,
+            {
+              ...redactSecrets(uploadClientOptions),
+              ...(uploadClientOptions.secureSignature ? { secureSignature: '[redacted]' } : {}),
+            },
           ]),
         );
         return uploadFile(fileInput, uploadClientOptions);
@@ -292,7 +299,7 @@ export class UploadController {
           isUploading: false,
           uploadProgress: 0,
         });
-      } else if (cause instanceof UploadcareError) {
+      } else if (cause instanceof UploadcareError || cause instanceof AuthTokenResolverError) {
         entry.setMany({
           isUploading: false,
           uploadProgress: 0,

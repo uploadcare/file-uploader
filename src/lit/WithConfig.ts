@@ -15,6 +15,7 @@ import {
 import { allConfigKeys, builtinAttrKeyMapping, plainConfigKeys } from '../blocks/Config/config-keys';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import type { ConfigType } from '../types';
+import { isSecretKey, REDACTED } from '../utils/redactSecrets';
 import { toKebabCase } from '../utils/toKebabCase';
 import type { ChildBlock } from './ChildBlock';
 import type { Constructor } from './Constructor';
@@ -162,7 +163,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
 
     private _flushValueToAttribute(key: string, descriptor: ConfigKeyDescriptor, value: unknown) {
       // Complex keys + `attribute: false` custom keys don't reflect to attributes.
-      if (!descriptor.attribute) {
+      if (!descriptor.attribute || key === 'authToken' || typeof value === 'function') {
         return;
       }
       // Serialize once via the descriptor (null ⇒ remove the attribute) — wire
@@ -263,8 +264,8 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         ) {
           this._log.warn(`Option "${key}" value is the same as the previous one but the reference is different`);
           this._log.warn(`You should avoid changing the reference of the object to prevent unnecessary calculations`);
-          this._log.warn(`"${key}" previous value:`, previousValue);
-          this._log.warn(`"${key}" new value:`, nextValue);
+          this._log.warn(`"${key}" previous value:`, isSecretKey(key) ? REDACTED : previousValue);
+          this._log.warn(`"${key}" new value:`, isSecretKey(key) ? REDACTED : nextValue);
         }
       }
     }
@@ -376,7 +377,11 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
               // Thunked so the `formatConfigLogValue` (JSON.stringify) only runs
               // when debug is on. Values are quoted for consistency and so an
               // empty string is visible as `""`.
-              this._log.debug(lazy(() => [`${key}: ${formatConfigLogValue(prev)} → ${formatConfigLogValue(curr)}`]));
+              this._log.debug(
+                lazy(() => [
+                  `${key}: ${formatConfigLogValue(isSecretKey(key) ? REDACTED : prev)} → ${formatConfigLogValue(isSecretKey(key) ? REDACTED : curr)}`,
+                ]),
+              );
             }
           }
           snapshot = { ...next };

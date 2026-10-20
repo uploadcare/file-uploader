@@ -104,6 +104,15 @@ describe('UploadController', () => {
     __resetLoggerForTests();
   });
 
+  it('passes the auth token and skips the legacy signature resolver', async () => {
+    const { controller, secureUploads } = setup({ cfg: { authToken: 'jwt-token', secureSignature: 'legacy' } });
+    const legacy = vi.spyOn(secureUploads, 'getSecureToken');
+    const options = await controller.buildUploadOptions();
+    expect(options.authToken).toBe('jwt-token');
+    expect(options.secureSignature).toBeUndefined();
+    expect(legacy).not.toHaveBeenCalled();
+  });
+
   describe('preconditions (no upload)', () => {
     it('returns when the entry does not exist', async () => {
       const { controller } = setup();

@@ -81,6 +81,17 @@ afterEach(() => {
 });
 
 describe('ChildBlock', () => {
+  it('prefixes test ids introduced by a later render without a config change', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const child = append('test-child-block', { 'ctx-name': ctxName });
+    await child.updateComplete;
+    child.render = () => html`<button data-testid="late">Late</button>`;
+    child.requestUpdate();
+    await child.updateComplete;
+    expect(child.querySelector('button')?.getAttribute('data-testid')).toBe('test-child-block--late');
+  });
+
   it('adopts the controller via its own ctx-name attribute and renders', async () => {
     const ctxName = getCtxName();
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
