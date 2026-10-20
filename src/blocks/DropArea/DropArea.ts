@@ -204,7 +204,8 @@ export class DropArea extends ChildBlock {
       },
     });
 
-    this.updateComplete.then(() => {
+    this.runTask(async () => {
+      await this.whileAdopted(this.updateComplete);
       this._setupContentWrapperDropzone();
       // Visibility depends on whether there is slotted content to hide, which is not rendered yet when
       // `_syncSourceList` first runs. Recompute once the element has rendered.
