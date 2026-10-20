@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CONTAINER, ControllerContainer, resolveToken, type Token } from './ControllerContainer';
+import { CONTAINER, ControllerContainer, lifetimeOf, resolveToken, type Token } from './ControllerContainer';
 
 describe('resolveToken', () => {
   it('returns a class token as-is', () => {
@@ -593,5 +593,58 @@ describe('ControllerContainer.whenController', () => {
 
     container.get(A);
     expect(kept).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('ControllerContainer.lifetime', () => {
+  it('is live until dispose() and ended before any controller destroy() runs', () => {
+    const seen: boolean[] = [];
+    class A {
+      public destroy(): void {
+        seen.push(lifetimeOf(this).signal.aborted);
+      }
+    }
+    const container = new ControllerContainer();
+    const a = container.get(A);
+
+    expect(lifetimeOf(a)).toBe(container.lifetime);
+    expect(container.lifetime.signal.aborted).toBe(false);
+
+    container.dispose();
+
+    expect(container.lifetime.signal.aborted).toBe(true);
+    expect(seen).toEqual([true]);
+  });
+
+  it('stops a guarded await that settles after dispose()', async () => {
+    class A {
+      public load(work: Promise<string>): Promise<string> {
+        return lifetimeOf(this).guard(work);
+      }
+    }
+    const container = new ControllerContainer();
+    let resolve!: (value: string) => void;
+    const pending = container.get(A).load(
+      new Promise<string>((r) => {
+        resolve = r;
+      }),
+    );
+
+    container.dispose();
+    resolve('late');
+
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
+  it('reaches bound factory instances too', () => {
+    class Bound {}
+    const container = new ControllerContainer();
+    container.bind(Bound, () => new Bound());
+
+    expect(lifetimeOf(container.get(Bound))).toBe(container.lifetime);
+  });
+
+  it('lifetimeOf throws for an instance no container built', () => {
+    expect(() => lifetimeOf({})).toThrow(/not created by a container/);
   });
 });
