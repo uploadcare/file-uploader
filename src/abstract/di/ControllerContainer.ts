@@ -11,6 +11,7 @@
  */
 
 import { logger } from '../logger';
+import { Lifetime } from './Lifetime';
 
 const log = logger.scope('controller-container');
 
@@ -35,6 +36,19 @@ export const CONTAINER = Symbol('uc.container');
  */
 export const containerOf = (instance: unknown): ControllerContainer | undefined =>
   (instance as { [CONTAINER]?: ControllerContainer })?.[CONTAINER];
+
+/**
+ * The {@link ControllerContainer.lifetime} of the container that built `instance` — what a controller's async work
+ * binds to (`lifetimeOf(this).guard(...)`), so it stops once the ctx is torn down instead of resuming against
+ * released peers. Throws, like `@inject`, for an instance no container built.
+ */
+export const lifetimeOf = (instance: unknown): Lifetime => {
+  const container = containerOf(instance);
+  if (!container) {
+    throw new Error('[uc] lifetimeOf: instance not created by a container');
+  }
+  return container.lifetime;
+};
 
 /**
  * A thunk `() => Ctor` has no `.prototype` (arrow functions never do), while a
@@ -97,6 +111,12 @@ export class ControllerContainer {
    * built directly (tests) rather than via the registry.
    */
   public ctxName?: string;
+
+  /**
+   * Live until {@link dispose}, which ends it before any controller's `destroy()` runs. Container-built instances
+   * reach it through {@link lifetimeOf}.
+   */
+  public readonly lifetime = new Lifetime();
 
   #instances = new Map<Ctor<unknown>, unknown>();
   #order: Ctor<unknown>[] = [];
@@ -282,6 +302,8 @@ export class ControllerContainer {
   }
 
   public dispose(): void {
+    // First, so in-flight async work stops at its next guarded await rather than resuming into the teardown below.
+    this.lifetime.end();
     // Clear pending `whenController` waiters BEFORE running destroys: a
     // `destroy()` may resolve a not-yet-built `@inject` peer via `get()`, which
     // flushes waiters — those must not fire against a container mid-teardown.
