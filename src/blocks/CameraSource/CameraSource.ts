@@ -2,14 +2,15 @@ import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import { inject, injectOrNull } from '../../abstract/di/inject';
+import { inject } from '../../abstract/di/inject';
+import { isAbortError } from '../../abstract/di/Lifetime';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { effect } from '../../lit/effect';
+import { debounced } from '../../lit/rate-limited-method';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
-import { debounce } from '../../utils/debounce';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
@@ -56,12 +57,14 @@ const DEFAULT_VIDEO_FORMAT = 'video/webm';
 export type CameraMode = 'photo' | 'video';
 export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pause' | 'resume';
 
+const stopTracks = (stream: MediaStream): void => {
+  for (const track of stream.getTracks()) track.stop();
+};
+
 export class CameraSource extends ChildBlock {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(RouterController) private readonly _router!: RouterController;
-  // Null-tolerant: the device/permission requests settle asynchronously and can
-  // report their failure after the block has left its ctx.
-  @injectOrNull(TelemetryManager) private readonly _telemetry!: TelemetryManager | null;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
   // `UploaderPublicApi` is read from `_toSend` (a capture handler that runs
   // post-adoption), so `@inject` resolves it safely.
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
@@ -171,7 +174,7 @@ export class CameraSource extends ChildBlock {
   private _mutableClassButton = 'uc-shot-btn uc-camera-action';
 
   private _chooseActionWithCamera = () => {
-    this._telemetry?.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -202,7 +205,7 @@ export class CameraSource extends ChildBlock {
       return;
     }
     this._selectedCameraId = target.value;
-    void this._capture();
+    this.runTask(() => this._capture());
   };
 
   private _handleAudioSelectChange = (event: Event): void => {
@@ -211,15 +214,15 @@ export class CameraSource extends ChildBlock {
       return;
     }
     this._selectedAudioId = target.value;
-    void this._capture();
+    this.runTask(() => this._capture());
   };
 
   private _handleRequestPermissions = (): void => {
-    void this._capture();
+    this.runTask(() => this._capture());
   };
 
   private _handleStartCamera = (): void => {
-    this._telemetry?.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -241,7 +244,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleRetake = (): void => {
-    this._telemetry?.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -255,7 +258,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleAccept = (): void => {
-    this._telemetry?.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -375,7 +378,7 @@ export class CameraSource extends ChildBlock {
       }
     } catch (error) {
       this._log.error('Failed to start recording', error);
-      this._telemetry?.sendEventError(error, 'camera recording. Failed to start recording');
+      this._telemetry.sendEventError(error, 'camera recording. Failed to start recording');
     }
   };
 
@@ -391,7 +394,7 @@ export class CameraSource extends ChildBlock {
     this._mediaRecorder?.stop();
     this.classList.remove('uc-recording');
 
-    this._telemetry?.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -449,7 +452,7 @@ export class CameraSource extends ChildBlock {
       this._attachPreviewListeners(videoElement);
     } catch (error) {
       this._log.error('Failed to preview video', error);
-      this._telemetry?.sendEventError(error, 'camera previewing. Failed to preview video');
+      this._telemetry.sendEventError(error, 'camera previewing. Failed to preview video');
     }
   };
 
@@ -640,7 +643,7 @@ export class CameraSource extends ChildBlock {
       this._audioToggleMicrophoneHidden = !enableAudioRecording;
     }
 
-    this._telemetry?.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -714,12 +717,9 @@ export class CameraSource extends ChildBlock {
     );
   }
 
-  private _setPermissionsState = debounce((state: 'granted' | 'denied' | 'prompt') => {
-    // The 300ms debounce can fire after disconnect (container already
-    // released) — bail rather than let the `@inject` reads below throw without
-    // an adopted container.
-    if (!this.useOrNull(ConfigController)) return;
-
+  // `@debounced` drops a call after release and cancels a pending one, so the body reads `@inject` fields freely.
+  @debounced(300)
+  protected _setPermissionsState(state: 'granted' | 'denied' | 'prompt'): void {
     this.classList.toggle('uc-initialized', state === 'granted');
 
     const visibleAudio = this._activeTab === CameraSourceTypes.VIDEO && this._config.get('enableAudioRecording');
@@ -754,7 +754,7 @@ export class CameraSource extends ChildBlock {
 
       this._stopCapture();
     }
-  }, 300);
+  }
 
   private _makeStreamInactive = (): boolean => {
     if (!this._stream) return false;
@@ -819,13 +819,7 @@ export class CameraSource extends ChildBlock {
 
     try {
       this._setPermissionsState('prompt');
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      // Disconnected while the request was pending: nothing will stop this stream later.
-      if (!this.isConnected) {
-        for (const track of stream.getTracks()) track.stop();
-        return;
-      }
-      this._stream = stream;
+      this._stream = await this.whileAdopted(navigator.mediaDevices.getUserMedia(constraints), stopTracks);
 
       this._stream.addEventListener('inactive', () => {
         this._setPermissionsState('denied');
@@ -835,23 +829,26 @@ export class CameraSource extends ChildBlock {
       this._capturing = true;
       this._setPermissionsState('granted');
     } catch (error) {
+      if (isAbortError(error)) throw error;
       this._setPermissionsState('denied');
       this._log.warn('Failed to capture camera', error);
-      this._telemetry?.sendEventError(error, 'camera capturing. Failed to capture camera');
+      this._telemetry.sendEventError(error, 'camera capturing. Failed to capture camera');
     }
   };
 
   private _handlePermissionsChange = (): void => {
-    this._capture();
+    this.runTask(() => this._capture());
   };
 
   private _permissionAccess = async (): Promise<void> => {
     try {
       this._teardownPermissionListeners();
       for (const permission of DEFAULT_PERMISSIONS) {
-        const response = await navigator.permissions.query({
-          name: permission as PermissionName,
-        });
+        const response = await this.whileAdopted(
+          navigator.permissions.query({
+            name: permission as PermissionName,
+          }),
+        );
         this._permissionResponses[permission] = response;
 
         response.addEventListener('change', this._handlePermissionsChange);
@@ -864,9 +861,10 @@ export class CameraSource extends ChildBlock {
       };
     } catch (error) {
       this._teardownPermissionListeners();
+      if (isAbortError(error)) throw error;
       this._log.warn('Failed to use permissions API. Fallback to manual request mode.', error);
-      this._telemetry?.sendEventError(error, 'camera permissions. Failed to use permissions API');
-      this._capture();
+      this._telemetry.sendEventError(error, 'camera permissions. Failed to use permissions API');
+      this.runTask(() => this._capture());
     }
   };
 
@@ -884,24 +882,29 @@ export class CameraSource extends ChildBlock {
   private _requestDeviceAccess = async (): Promise<void> => {
     try {
       // Only probes for permission so device labels are readable; `_capture` opens the real stream.
-      const probe = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: this._config.get('enableAudioRecording'),
-      });
-      for (const track of probe.getTracks()) track.stop();
-      if (!this.isConnected) return;
+      const probe = await this.whileAdopted(
+        navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: this._config.get('enableAudioRecording'),
+        }),
+        stopTracks,
+      );
+      stopTracks(probe);
       await this._getDevices();
 
-      navigator.mediaDevices.addEventListener('devicechange', this._getDevices);
+      navigator.mediaDevices.addEventListener('devicechange', () => this.runTask(() => this._getDevices()), {
+        signal: this.adoptionSignal,
+      });
     } catch (error) {
-      this._telemetry?.sendEventError(error, 'camera devices. Failed to get user media');
+      if (isAbortError(error)) throw error;
+      this._telemetry.sendEventError(error, 'camera devices. Failed to get user media');
       this._log.warn('Failed to get user media', error);
     }
   };
 
   private _getDevices = async (): Promise<void> => {
     try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
+      const devices = await this.whileAdopted(navigator.mediaDevices.enumerateDevices());
       const enableAudioRecording = this._config.get('enableAudioRecording');
 
       this._cameraDevices = devices
@@ -928,19 +931,16 @@ export class CameraSource extends ChildBlock {
       this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
       this._selectedAudioId = this._audioDevices[0]?.value ?? null;
     } catch (error) {
-      this._telemetry?.sendEventError(error, 'camera devices. Failed to get devices');
+      if (isAbortError(error)) throw error;
+      this._telemetry.sendEventError(error, 'camera devices. Failed to get devices');
       this._log.warn('Failed to get devices', error);
     }
   };
 
   private _onActivate = async (): Promise<void> => {
-    // Each step awaits the browser; stop once the block has left its ctx meanwhile.
     await this._permissionAccess();
-    if (!this.isConnected) return;
     await this._requestDeviceAccess();
-    if (!this.isConnected) return;
     await this._capture();
-    if (!this.isConnected) return;
 
     this._handleCameraModes(this._cameraModes);
   };
@@ -970,7 +970,7 @@ export class CameraSource extends ChildBlock {
   };
 
   protected override controllerReady(): void {
-    void this._onActivate();
+    this.runTask(() => this._onActivate());
   }
 
   // `cameraMirror` is a tracked render read (see `_videoTransformCss`). These two
@@ -1009,7 +1009,6 @@ export class CameraSource extends ChildBlock {
 
   private _destroy(): void {
     this._teardownPermissionListeners();
-    navigator.mediaDevices?.removeEventListener('devicechange', this._getDevices);
     this._detachPreviewListeners(this._videoRef.value);
     this._setVideoSource(null);
   }
