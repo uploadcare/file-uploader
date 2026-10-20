@@ -495,7 +495,7 @@ export class FileItem extends FileItemConfig {
           class="uc-file-name-wrapper"
           aria-label=${this._ariaLabelStatusFile}
         >
-          <span class="uc-file-name" ?hidden=${!this._showFileNames}>${this._itemName}</span>
+          <span class="uc-file-name" data-testid="file-name" ?hidden=${!this._showFileNames}>${this._itemName}</span>
           <span class="uc-file-error" ?hidden=${!this._errorText}>${this._errorText}</span>
           <span class="uc-file-hint" ?hidden=${!this._hint}>${this._hint}</span>
         </div>

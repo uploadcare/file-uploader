@@ -1,9 +1,9 @@
 <p align="center">
   <a href="https://uploadcare.com/?ref=github-readme">
     <picture>
-      <source media="(prefers-color-scheme: light)" srcset="https://ucarecdn.com/1b4714cd-53be-447b-bbde-e061f1e5a22f/logosafespacetransparent.svg">
-      <source media="(prefers-color-scheme: dark)" srcset="https://ucarecdn.com/3b610a0a-780c-4750-a8b4-3bf4a8c90389/logotransparentinverted.svg">
-      <img width=250 alt="Uploadcare logo" src="https://ucarecdn.com/1b4714cd-53be-447b-bbde-e061f1e5a22f/logosafespacetransparent.svg">
+      <source media="(prefers-color-scheme: light)" srcset="https://ucarecdn.com/27eed822-4a34-4347-b227-a89df2e7bf47/githubuploadcarelockuplight320x58.svg">
+      <source media="(prefers-color-scheme: dark)" srcset="https://ucarecdn.com/dfd6c07b-fd17-4559-8803-bc98f92b564b/githubuploadcarelockupdark320x58.svg">
+      <img width=250 alt="Uploadcare logo" src="https://ucarecdn.com/27eed822-4a34-4347-b227-a89df2e7bf47/githubuploadcarelockuplight320x58.svg">
     </picture>
   </a>
 </p>
@@ -63,7 +63,7 @@ Explore more tutorials in our [blog](https://uploadcare.com/blog/category/upload
 
 ```html
 <script type="module">
-  import * as UC from 'https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js';
+  import * as UC from "https://cdn.jsdelivr.net/npm/@uploadcare/file-uploader@1/web/file-uploader.min.js";
 
   UC.defineComponents(UC);
 </script>
@@ -88,7 +88,7 @@ Explore more tutorials in our [blog](https://uploadcare.com/blog/category/upload
 2. Connect File Uploader from your script file:
 
 ```js
-import * as UC from '@uploadcare/file-uploader';
+import * as UC from "@uploadcare/file-uploader";
 
 UC.defineComponents(UC);
 ```

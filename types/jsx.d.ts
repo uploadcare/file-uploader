@@ -24,6 +24,7 @@ type EditorImageFader = import('../dist/index.ts').EditorImageFader;
 type EditorScroller = import('../dist/index.ts').EditorScroller;
 type EditorSlider = import('../dist/index.ts').EditorSlider;
 type EditorToolbar = import('../dist/index.ts').EditorToolbar;
+type EditorIcon = import('../dist/index.ts').EditorIcon;
 type Icon = import('../dist/index.ts').Icon;
 type Img = import('../dist/index.ts').Img;
 type SimpleBtn = import('../dist/index.ts').SimpleBtn;
@@ -43,15 +44,25 @@ type ExternalSource = import('../dist/index.ts').ExternalSource;
 type CloudImageEditorActivity = import('../dist/index.ts').CloudImageEditorActivity;
 type FormInput = import('../dist/index.ts').FormInput;
 type CloudImageEditorBlock = import('../dist/index.ts').CloudImageEditorBlock;
-type PrimaryAction = import('../dist/index.ts').PrimaryAction;
+type ActivityHeader = import('../dist/index.ts').ActivityHeader;
 type DropDown = import('../dist/index.ts').DropDown;
+type DynamicBtn = import('../dist/index.ts').DynamicBtn;
+type FileActionButton = import('../dist/index.ts').FileActionButton;
+type NoWrapModeDynamicBtn = import('../dist/index.ts').NoWrapModeDynamicBtn;
+type PluginActivityRenderer = import('../dist/index.ts').PluginActivityRenderer;
+type PluginActivityHost = import('../dist/index.ts').PluginActivityHost;
+type PrimaryAction = import('../dist/index.ts').PrimaryAction;
 type Select = import('../dist/index.ts').Select;
 
 type CommonHtmlAttributes<T> = Partial<
   Pick<React.HTMLAttributes<T>, 'id' | 'children' | 'hidden'> & { class: React.HTMLAttributes<T>['className'] }
 >;
 
-type ReflectAttributes<T extends LitElement & { attributesMeta?: Record<string, unknown> }> = T['attributesMeta'];
+/**
+ * The attributes a tag accepts in JSX come from the block's `attributesMeta` declaration. A block that declares none
+ * takes only `ctx-name`, so a typo on any tag is a type error rather than a silently ignored attribute.
+ */
+type ReflectAttributes<T extends LitElement> = T extends { attributesMeta: infer Meta } ? Meta : { 'ctx-name': string };
 
 type CustomElement<C extends LitElement> = React.DetailedHTMLProps<CommonHtmlAttributes<C>, C> & ReflectAttributes<C>;
 
@@ -72,6 +83,7 @@ declare namespace JSX {
     'uc-line-loader-ui': CustomElement<LineLoaderUi>;
     'uc-presence-toggle': CustomElement<PresenceToggle>;
     'uc-slider-ui': CustomElement<SliderUi>;
+    'uc-editor-icon': CustomElement<EditorIcon>;
     'uc-icon': CustomElement<Icon>;
     'uc-copyright': CustomElement<Copyright>;
     'uc-img': CustomElement<Img> & React.DetailedHTMLProps<React.ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>;
@@ -93,6 +105,15 @@ declare namespace JSX {
     'uc-cloud-image-editor-activity': CustomElement<CloudImageEditorActivity>;
     'uc-cloud-image-editor-block': CustomElement<CloudImageEditorBlock>;
     'uc-cloud-image-editor': CustomElement<CloudImageEditorBlock>;
+    'uc-activity-header': CustomElement<ActivityHeader>;
+    'uc-drop-down': CustomElement<DropDown>;
+    'uc-dynamic-btn': CustomElement<DynamicBtn>;
+    'uc-file-action-button': CustomElement<FileActionButton>;
+    'uc-no-wrap-mode-dynamic-btn': CustomElement<NoWrapModeDynamicBtn>;
+    'uc-plugin-activity-renderer': CustomElement<PluginActivityRenderer>;
+    'uc-plugin-activity-host': CustomElement<PluginActivityHost>;
+    'uc-primary-action': CustomElement<PrimaryAction>;
+    'uc-select': CustomElement<Select>;
     'uc-form-input': CustomElement<FormInput>;
     'uc-file-uploader-regular': CustomElement<FileUploaderRegular>;
     'uc-file-uploader-minimal': CustomElement<FileUploaderMinimal>;
@@ -100,8 +121,5 @@ declare namespace JSX {
     'uc-uploader': CustomElement<Uploader>;
     'uc-upload-ctx-provider': CustomElement<UploadCtxProvider>;
     'uc-config': CustomElement<Config>;
-    'uc-primary-action': CustomElement<PrimaryAction>;
-    'uc-drop-down': CustomElement<DropDown>;
-    'uc-select': CustomElement<Select>;
   }
 }

@@ -335,6 +335,10 @@ export class EditorFilterControl extends EditorButtonControl {
 
   public override render() {
     const clickHandler = this.onClick;
+    // Prefixed like `ChildBlock` prefixes its inner test ids; editor blocks aren't `ChildBlock`s.
+    const previewTestId = this.editorControllerOrNull?.getConfig('testMode')
+      ? `${this.tagName.toLowerCase()}--preview`
+      : undefined;
     const previewStyles: Record<string, string> = {
       opacity: this._shouldShowPreview ? '1' : '0',
     };
@@ -355,7 +359,12 @@ export class EditorFilterControl extends EditorButtonControl {
         title=${ifDefined(this.titleProp)}
         @click=${clickHandler}
       >
-        <div class="uc-preview" ?data-loaded=${this._previewLoaded} style=${styleMap(previewStyles)}></div>
+        <div
+          class="uc-preview"
+          data-testid=${ifDefined(previewTestId)}
+          ?data-loaded=${this._previewLoaded}
+          style=${styleMap(previewStyles)}
+        ></div>
         <uc-editor-icon
           class=${classMap({ 'uc-original-icon': this.isOriginal })}
           name=${this.icon}

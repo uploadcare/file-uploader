@@ -455,6 +455,7 @@ export class UploadList extends ActivityChildBlock {
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
+        data-testid="close"
       @click=${() => this._router.traverse('onClose')}
       title=${this.l10n('a11y-activity-header-button-close')}
       aria-label=${this.l10n('a11y-activity-header-button-close')}
@@ -482,6 +483,7 @@ export class UploadList extends ActivityChildBlock {
     <button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
+      data-testid="add-more"
       @click=${this._handleAdd}
       ?disabled=${!this._addMoreBtnEnabled}
       ?hidden=${!this._addMoreBtnVisible}

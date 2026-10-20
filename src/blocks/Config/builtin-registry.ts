@@ -16,6 +16,7 @@ import { serializeCsv } from '../../utils/comma-separated';
 import { ALL_TABS } from '../CloudImageEditor/src/toolbar-constants';
 import {
   asArray,
+  asAuthToken,
   asBoolean,
   asCameraCapture,
   asCameraMode,
@@ -112,6 +113,7 @@ export const BUILTIN_REGISTRY = {
 
   localeName: { default: 'en', coerce: asString },
 
+  authToken: { default: null, coerce: asAuthToken },
   metadata: { default: null, coerce: asMetadata, attribute: false },
   tags: { default: null, coerce: asTags, attribute: false },
   secureUploadsExpireThreshold: { default: 10 * 60 * 1000, coerce: asNumber },

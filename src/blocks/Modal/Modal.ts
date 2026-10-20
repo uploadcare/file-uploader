@@ -164,7 +164,7 @@ export class Modal extends ChildBlock {
 
   public override render() {
     return html`
-  <dialog ${ref(this._handleDialogRef)}>
+  <dialog data-testid="dialog" ${ref(this._handleDialogRef)}>
     ${this.yield('')}
   </dialog>
 `;

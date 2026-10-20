@@ -9,6 +9,7 @@ import { waitForActivityBlock } from '../lit/hasBlockInCtx';
 import { createL10n } from '../lit/l10n';
 import type { Uid } from '../lit/Uid';
 import type {
+  AuthToken,
   ConfigType,
   OutputCollectionState,
   OutputCollectionStatus,
@@ -30,6 +31,7 @@ import { stringToArray } from '../utils/stringToArray';
 import { UploadSource } from '../utils/UploadSource';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
 import { controllerLogger } from './controllerLogger';
+import { CollectionStateController } from './controllers/CollectionStateController';
 import { ConfigController } from './controllers/ConfigController';
 import { LocaleController } from './controllers/LocaleController';
 import { RouterController } from './controllers/RouterController';
@@ -38,6 +40,7 @@ import { UploadController } from './controllers/UploadController';
 import { deriveEntryStatus } from './deriveEntryStatus';
 import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
 import { inject } from './di/inject';
+import { AuthTokenManager } from './managers/AuthTokenManager';
 import { PluginController } from './managers/plugin';
 import { TypedData } from './TypedData';
 import { type UploadEntryData, uploadcareFileToEntryData } from './uploadEntrySchema';
@@ -70,6 +73,12 @@ export type ApiAddFileCommonOptions = {
  * derived-collection controllers itself.
  */
 export class UploaderPublicApi {
+  @inject(AuthTokenManager) private readonly _authToken!: AuthTokenManager;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
+
+  public get _groupError(): Error | null {
+    return this._collectionState.get('groupError');
+  }
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
   // (resolved lazily at log time via the container that built this instance).
   private readonly _log = controllerLogger(this, 'public-api');
@@ -540,6 +549,39 @@ export class UploaderPublicApi {
 
   public on = <T extends EventKey>(type: T, handler: (payload: EventPayload[T]) => void): (() => void) => {
     return this._eventEmitter.on(type, handler);
+  };
+
+  /**
+   * The auth token as `@uploadcare/upload-client` receives it: the configured
+   * string, or a resolver whose result the uploader already caches.
+   *
+   * Forward this rather than `cfg.authToken` when something else has to
+   * authenticate with the same token — a plugin, say — so it shares this cache
+   * instead of calling your token endpoint again.
+   *
+   * Returns `undefined`, not the config's `null`, when no token is set: this is
+   * upload-client's `authToken?: AuthToken`, so it can be passed straight on.
+   *
+   * The value reflects `authToken` at the time of the call. Call it again after
+   * `authToken` changes, for example from a `config.subscribe('authToken')`
+   * handler.
+   */
+  public getAuthToken = (): AuthToken | undefined => {
+    return this._authToken.getAuthToken();
+  };
+
+  /**
+   * Drop the cached auth token, so the next request asks `authToken` for a new
+   * one.
+   *
+   * Assigning a different function to `authToken` does not do this: a new
+   * function identity is taken to be the same function, which is what lets a
+   * React component pass an inline resolver without refetching on every render.
+   * Call this when the change is real — the signed-in user changed, say — or
+   * rely on short-lived tokens.
+   */
+  public invalidateAuthToken = (): void => {
+    this._authToken.invalidate();
   };
 
   public getCurrentActivity = (): ActivityType => {
