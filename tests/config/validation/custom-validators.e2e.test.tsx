@@ -121,8 +121,10 @@ describe('validation: custom validators', () => {
         validationTimeout: 100,
         fileValidators: [
           // Fails only once the timeout has aborted it, so its result always comes too late.
-          (_entry, _api, { signal }) =>
-            new Promise((resolve) => signal.addEventListener('abort', () => resolve({ message: 'Bad image' }))),
+          (_entry, _api, options) =>
+            new Promise((resolve) =>
+              options?.signal?.addEventListener('abort', () => resolve({ message: 'Bad image' })),
+            ),
         ],
       });
       api.addFileFromObject(IMAGE.PIXEL);
@@ -146,8 +148,8 @@ describe('validation: custom validators', () => {
     it('aborts async validation when the file is removed', async () => {
       // Settles only when aborted, so the file is removed while it runs.
       const validator = vi.fn<FuncFileValidator>(
-        (_entry, _api, { signal }) =>
-          new Promise((resolve) => signal.addEventListener('abort', () => resolve({ message: 'Bad image' }))),
+        (_entry, _api, options) =>
+          new Promise((resolve) => options?.signal?.addEventListener('abort', () => resolve({ message: 'Bad image' }))),
       );
       const { api } = await renderSolution('regular', { fileValidators: [validator] });
       const entry = api.addFileFromObject(IMAGE.PIXEL);
