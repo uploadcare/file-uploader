@@ -7,6 +7,7 @@ import { LocaleController } from '../abstract/controllers/LocaleController';
 import { CONTAINER, type ControllerContainer, type Token } from '../abstract/di/ControllerContainer';
 import { Disposables } from '../abstract/di/Disposables';
 import { inject, injectOrNull } from '../abstract/di/inject';
+import { Lifetime } from '../abstract/di/Lifetime';
 import { logger } from '../abstract/logger';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
@@ -71,6 +72,8 @@ export abstract class ChildBlock extends ChildBlockBase {
   // container present), and the consumer-refcount anchor for teardown
   // (`addConsumer`/`removeConsumer`/`isUnreferenced`).
   private _container: ControllerContainer | null = null;
+  // One per adoption, ended on release; already ended while the block is not adopted.
+  private _lifetime = Lifetime.ended();
   private _watchedCtxName: string | undefined = undefined;
   private _registryUnsub?: () => void;
   // Teardown engine for this block's adoption-scoped subscriptions (config test
@@ -384,6 +387,7 @@ export abstract class ChildBlock extends ChildBlockBase {
     // same instant the registry subscription used to be the refcount, preserving
     // exact teardown timing (`isCtxUnreferenced` reads `container.isUnreferenced()`).
     this._container = container;
+    this._lifetime = new Lifetime();
     // Tag this element with the container so `@inject(Token)` fields on migrated
     // blocks resolve through the shared `inject.ts` getter (which reads
     // `this[CONTAINER]`) — the same mechanism controllers use. Only the adoption
@@ -436,6 +440,9 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   private _releaseController(): void {
     const container = this._container;
+    // First, so async work still in flight stops at its next `whileAdopted` await rather than running into the
+    // teardown below.
+    this._lifetime.end();
     // Isolate-and-warn drain (a throwing teardown must not stop the rest) lives
     // in `Disposables.run()`.
     this._disposables.run();
@@ -557,6 +564,33 @@ export abstract class ChildBlock extends ChildBlockBase {
    */
   protected addDisposer(unsub: () => void): void {
     this._disposables.add(unsub);
+  }
+
+  /**
+   * Aborted when this block is released (disconnect or re-adoption); already aborted before adoption. Pass it to APIs
+   * that take a signal — `addEventListener`, `fetch`, upload-client — and they clean up on their own.
+   */
+  protected get adoptionSignal(): AbortSignal {
+    return this._lifetime.signal;
+  }
+
+  /**
+   * Await `work` for as long as this block stays adopted. If the block is released first, the await throws an abort
+   * (swallowed by {@link runTask}) instead of resuming against a torn-down container, and a value that arrives too
+   * late goes to `dispose` — a media stream, say, that nothing else would stop.
+   *
+   * Use it for each await of outside work inside a {@link runTask}; code after it may use `@inject` fields freely.
+   */
+  protected whileAdopted<T>(work: PromiseLike<T>, dispose?: (value: T) => void): Promise<T> {
+    return this._lifetime.guard(work, dispose);
+  }
+
+  /**
+   * Run fire-and-forget async work bound to this adoption. Its `whileAdopted` awaits abort once the block is released,
+   * and that abort is swallowed; any other error is logged rather than left as an unhandled rejection.
+   */
+  protected runTask(task: (signal: AbortSignal) => unknown): void {
+    this._lifetime.run(task, (error) => this._log.error('an async task failed', error));
   }
 
   /** Called after the ctx's container is adopted (initial and on re-adoption). */

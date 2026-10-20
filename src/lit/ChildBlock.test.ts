@@ -1,5 +1,5 @@
 import { html } from 'lit';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../abstract/controllers/ConfigController';
 import type { Token } from '../abstract/di/ControllerContainer';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
@@ -18,6 +18,22 @@ class UseBlock extends ChildBlock {
   }
 }
 UseBlock.reg('uc-test-use-block');
+
+class TaskBlock extends ChildBlock {
+  public get signal(): AbortSignal {
+    return this.adoptionSignal;
+  }
+  public callWhileAdopted<T>(work: PromiseLike<T>, dispose?: (value: T) => void): Promise<T> {
+    return this.whileAdopted(work, dispose);
+  }
+  public callRunTask(task: (signal: AbortSignal) => unknown): void {
+    this.runTask(task);
+  }
+  public override render() {
+    return html``;
+  }
+}
+TaskBlock.reg('uc-test-task-block');
 
 // ─── Harness ──────────────────────────────────────────────────────────────────
 let seq = 0;
@@ -150,3 +166,56 @@ describe('ChildBlock consumer lifecycle (M-god step 6a)', () => {
 // `ChildBlock.subRouter()` was removed (signals migration) — blocks read router
 // state reactively via `SignalWatcher`; its former contract is covered by the
 // router's own tests.
+
+describe('ChildBlock adoption lifetime', () => {
+  it('aborts the adoption signal before adoption and once released', async () => {
+    const el = document.createElement('uc-test-task-block') as TaskBlock;
+    expect(el.signal.aborted).toBe(true);
+
+    const adopted = await mount<TaskBlock>('uc-test-task-block', freshCtxName());
+    const signal = adopted.signal;
+    expect(signal.aborted).toBe(false);
+
+    adopted.remove();
+    expect(signal.aborted).toBe(true);
+  });
+
+  it('stops a task at an await that settles after release and disposes the late value', async () => {
+    const el = await mount<TaskBlock>('uc-test-task-block', freshCtxName());
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let resolve!: (value: string) => void;
+    const work = new Promise<string>((res) => {
+      resolve = res;
+    });
+    const dispose = vi.fn();
+    const after = vi.fn();
+
+    el.callRunTask(async () => {
+      await el.callWhileAdopted(work, dispose);
+      after();
+    });
+    el.remove();
+    resolve('stream');
+    await flushTeardown();
+
+    expect(dispose).toHaveBeenCalledWith('stream');
+    expect(after).not.toHaveBeenCalled();
+    expect(error).not.toHaveBeenCalled();
+    error.mockRestore();
+  });
+
+  it('logs a task failure that is not an abort', async () => {
+    const el = await mount<TaskBlock>('uc-test-task-block', freshCtxName());
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const failure = new Error('boom');
+
+    el.callRunTask(async () => {
+      throw failure;
+    });
+
+    await vi.waitFor(() =>
+      expect(error).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), 'an async task failed', failure),
+    );
+    error.mockRestore();
+  });
+});
