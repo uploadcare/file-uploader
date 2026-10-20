@@ -124,7 +124,7 @@
     "@types/node": "^25",
     "@types/react": "^18.0.0",
     "@types/svg-sprite": "^0.0.39",
-    "@uploadcare/api-emulator": "file:/Users/nd0ut/workspace/uc-586-sync/packages/api-emulator",
+    "@uploadcare/api-emulator": "^6.24.0",
     "@vitest/browser": "^4.1.11",
     "@vitest/browser-playwright": "^4.1.11",
     "@vitest/coverage-v8": "^4.1.11",
