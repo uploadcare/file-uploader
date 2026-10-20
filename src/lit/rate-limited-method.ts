@@ -92,6 +92,14 @@ const makeDecorator =
   };
 
 /** Method decorator: rate-limit via `throttle`, adopted-guarded + release-cancelled. */
+/**
+ * Cancel a pending call of a `@throttled`/`@debounced` method, passed as `this._method`. The decorator swaps the method
+ * for its limiter at runtime, but the declared type stays the method signature, so the `cancel` lives behind this cast.
+ */
+export const cancelPending = (method: (...args: never[]) => void): void => {
+  (method as RateLimiter).cancel();
+};
+
 export const throttled = makeDecorator(throttle as RateLimiterFactory);
 
 /** Method decorator: rate-limit via `debounce`, adopted-guarded + release-cancelled. */

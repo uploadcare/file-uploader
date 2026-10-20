@@ -97,11 +97,9 @@ describe('FileItem (M-god step 6b-6 migration)', () => {
     const ctxName = freshCtxName();
     const { el, config } = await mount(ctxName);
     const container = UploaderRegistry.get(ctxName);
-    // Always-bound controllers become `@inject` fields resolving through the
-    // container the block adopted (tagged as `this[CONTAINER]`); the
-    // uploader-scope-bound `UploadCollectionController` / `UploaderPublicApi`
-    // (read via `useOrNull`) and the conditionally-bound `PluginController`
-    // (read via `whenController`) deliberately stay off `@inject`.
+    // Controllers resolve through `@inject` fields on the container the block
+    // adopted (tagged as `this[CONTAINER]`); the conditionally-bound
+    // `PluginController` (read via `whenController`) stays off `@inject`.
     const injected = el as unknown as {
       _config: ConfigController;
       _telemetry: TelemetryManager;

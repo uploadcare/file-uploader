@@ -7,7 +7,7 @@ import { inject } from '../../abstract/di/inject';
 import { isAbortError } from '../../abstract/di/Lifetime';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { effect } from '../../lit/effect';
-import { debounced } from '../../lit/rate-limited-method';
+import { cancelPending, debounced } from '../../lit/rate-limited-method';
 import { operationsFromModifiers } from '../../utils/cdn/operations';
 import { preloadImage } from '../../utils/preloadImage';
 import { generateThumb } from '../../utils/resizeImage';
@@ -184,11 +184,6 @@ export class Thumb extends FileItemConfig {
     this.runTask(() => this._generateThumbnail());
   }
 
-  private _cancelDebouncedGenerateThumb(): void {
-    // `@debounced` replaces the method with its limiter at runtime; the declared type stays the method signature.
-    (this._debouncedGenerateThumb as unknown as { cancel: () => void }).cancel();
-  }
-
   private _decodeImage(src: string, signal?: AbortSignal): Promise<void> {
     return new Promise((resolve, reject) => {
       let image: HTMLImageElement | null = new Image();
@@ -341,13 +336,13 @@ export class Thumb extends FileItemConfig {
     }
 
     if (entry.intersectionRatio === 0) {
-      this._cancelDebouncedGenerateThumb();
+      cancelPending(this._debouncedGenerateThumb);
     }
   }
 
   protected override reset(): void {
     super.reset();
-    this._cancelDebouncedGenerateThumb();
+    cancelPending(this._debouncedGenerateThumb);
     this._cancelPendingThumbUpdate();
     if (this._thumbUrl) {
       this._thumbUrl = '';
