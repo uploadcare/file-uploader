@@ -79,37 +79,37 @@ describe('events: sources', () => {
   });
 
   it('fires file-added for every file picked in an external source', { timeout: 60_000 }, async () => {
-    const { provider, root } = await renderSolution();
+    // The picker iframe would load the real social site, which posts its own empty selection once it loads and
+    // hides Done if that lands after the message below. `.invalid` never resolves, so nothing else posts.
+    const { provider, root } = await renderSolution('regular', { socialBaseUrl: 'https://social.invalid' });
     const recorder = recordEvents(provider);
 
     await clickSource(root, 'Dropbox');
     recorder.clear();
 
-    // Drive the remote picker through its message bridge instead of the real social app. The block mounts an
-    // iframe in `initCallback` and mounts a fresh one on the next tick when `*currentActivityParams` settles
-    // (ExternalSource.ts:92), and the bridge only accepts messages from the iframe it currently owns. So the message
-    // is re-sent to whatever iframe is mounted until the Done button reacts.
-    const selection = {
-      type: 'selected-files-change',
-      total: 2,
-      selectedCount: 2,
-      isReady: true,
-      isMultipleMode: true,
-      selectedFiles: [
-        { obj_type: 'selected_file', url: TEST_IMAGE_URL, filename: 'from-dropbox-1.jpg' },
-        { obj_type: 'selected_file', url: TEST_IMAGE_URL, filename: 'from-dropbox-2.jpg' },
-      ],
-    };
+    // Drive the remote picker through its message bridge, which only checks that a message comes from its iframe.
     const externalSource = within(root).getByTestId('uc-external-source');
+    await expect.element(externalSource).toBeVisible();
+    const iframe = externalSource.element().querySelector('iframe');
+    expect(iframe).not.toBeNull();
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        source: iframe?.contentWindow,
+        data: {
+          type: 'selected-files-change',
+          total: 2,
+          selectedCount: 2,
+          isReady: true,
+          isMultipleMode: true,
+          selectedFiles: [
+            { obj_type: 'selected_file', url: TEST_IMAGE_URL, filename: 'from-dropbox-1.jpg' },
+            { obj_type: 'selected_file', url: TEST_IMAGE_URL, filename: 'from-dropbox-2.jpg' },
+          ],
+        },
+      }),
+    );
     const done = externalSource.getByRole('button', { name: 'Done', exact: true });
-    await vi.waitFor(() => {
-      const iframe = externalSource.query()?.querySelector('iframe');
-      if (!iframe) throw new Error('External source iframe was not mounted');
-      window.dispatchEvent(new MessageEvent('message', { data: selection, source: iframe.contentWindow }));
-      // `getByRole` skips hidden elements, so this is null until the selection shows the button.
-      const button = done.query() as HTMLButtonElement | null;
-      if (!button || button.disabled) throw new Error('Done button is not clickable');
-    }, WAIT);
+    await expect.element(done).toBeEnabled();
     await done.click();
 
     await vi.waitFor(() => {
