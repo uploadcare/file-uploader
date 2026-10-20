@@ -155,18 +155,11 @@ describe('dropping', () => {
  * navigates straight there instead of showing the picker.
  */
 describe('when local uploads are not offered', () => {
-  // QUIRK(drop-area): removing `local` from `sourceList` is supposed to hide the area — `_updateVisibility` keeps it
-  // only when there is no default slot to hide (DropArea.ts:223). But visibility is computed from the `sourceList`
-  // subscription, which fires before the element has rendered its slotted content, so `querySelector` finds nothing,
-  // the area is judged slotless and stays visible. Nothing recomputes once the content appears. The result is a
-  // visible "Drop files here" target that silently refuses every drop (the next test). Reproduced through the
-  // attribute route too, so it is not a test-setup artefact. Pinned as current behaviour, not endorsed.
-  it('stays visible even though it no longer accepts anything', async () => {
+  it('hides the area that has content to hide', async () => {
+    // A slotless fullscreen zone stays in the DOM and simply refuses drops; one with a default slot is hidden outright.
     const { dropArea } = await openStartFrom({ sourceList: 'url, camera' });
 
-    // Negative wait: pins that no later recompute hides the area; there is nothing to wait on.
-    await delay(300);
-    expect(dropArea.hidden).toBe(false);
+    await expect.poll(() => dropArea.hidden).toBe(true);
   });
 
   it('ignores a drop while disabled', async () => {
