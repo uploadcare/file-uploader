@@ -60,12 +60,8 @@ describe('DynamicBtn (M-god step 6b-2 migration)', () => {
     const container = UploaderRegistry.get(ctxName);
     expect(container).toBeDefined();
 
-    // The always-bound controllers become `@inject` fields resolving through
-    // the container the block adopted (tagged as `this[CONTAINER]`). The
-    // uploader-scope-bound `UploadCollectionController` (read via
-    // `whenController`/`use()`) and the trailing-tick `UploaderPublicApi` (read
-    // via `useOrNull`) deliberately stay off `@inject` — an `@inject` field
-    // would throw in the pre-scope / post-release windows those reads tolerate.
+    // Controllers resolve through `@inject` fields on the container the block
+    // adopted (tagged as `this[CONTAINER]`); every read happens while adopted.
     const injected = el as unknown as {
       _config: ConfigController;
       _router: RouterController;
