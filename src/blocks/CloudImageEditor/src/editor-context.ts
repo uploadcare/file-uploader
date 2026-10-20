@@ -4,6 +4,7 @@ import type {
   CloudImageEditorController,
   CloudImageEditorControllerState,
 } from '../../../abstract/controllers/CloudImageEditorController';
+import { Lifetime } from '../../../abstract/di/Lifetime';
 import { logger } from '../../../abstract/logger';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
@@ -27,6 +28,8 @@ export const cloudImageEditorContext = createContext<CloudImageEditorController>
  */
 export class CloudImageEditorContextController implements ReactiveController {
   private _controller?: CloudImageEditorController;
+  // One per adopted controller, ended on detach (host disconnect or re-attach); already ended while none is adopted.
+  private _lifetime = Lifetime.ended();
   private _subscriptions = new Set<() => void>();
   // Attach listeners are persistent (unlike the spike's one-shot `onAttach`,
   // which existed only to gate a single `initCallback` run): `EditorBlock`
@@ -50,6 +53,8 @@ export class CloudImageEditorContextController implements ReactiveController {
   }
 
   public hostDisconnected(): void {
+    // First, so async work still in flight stops at its next guarded await rather than running into the teardown below.
+    this._lifetime.end();
     this._cleanupSubscriptions();
     // Forget the adopted controller (not just its subscriptions): the editor
     // base is light-DOM (`LightDomMixin`), and re-rendering an ancestor that
@@ -76,6 +81,11 @@ export class CloudImageEditorContextController implements ReactiveController {
     return this._controller ?? null;
   }
 
+  /** The span of the current adoption — see `EditorBlock.adoptionSignal`. */
+  public get lifetime(): Lifetime {
+    return this._lifetime;
+  }
+
   /** Subscribe to the adopted controller; auto-unsubscribes on host disconnect or controller re-attach. Throws if no controller is adopted yet (see `onAttach`). */
   public subscribe(callback: () => void): () => void {
     const unsubscribe = this.controller.subscribe(callback);
@@ -99,8 +109,10 @@ export class CloudImageEditorContextController implements ReactiveController {
     if (!controller || controller === this._controller) {
       return;
     }
+    this._lifetime.end();
     this._cleanupSubscriptions();
     this._controller = controller;
+    this._lifetime = new Lifetime();
     for (const cb of this._onAttachCallbacks) {
       cb();
     }
@@ -224,6 +236,32 @@ export abstract class EditorBlock extends EditorBlockBase {
    */
   protected subscribeEditor(callback: () => void): () => void {
     return this._editorCtx.subscribe(callback);
+  }
+
+  /**
+   * Aborted when the editor controller is released (host disconnect or re-attach to another controller); already
+   * aborted before the first attach. Pass it to APIs that take a signal — `addEventListener`, `fetch` — and they clean
+   * up on their own. Same contract as `ChildBlock.adoptionSignal`, one adoption being one attached controller.
+   */
+  protected get adoptionSignal(): AbortSignal {
+    return this._editorCtx.lifetime.signal;
+  }
+
+  /**
+   * Await `work` for as long as the current editor controller stays adopted. If it is released first, the await throws
+   * an abort (swallowed by {@link runTask}) instead of resuming against a detached block, and a value that arrives too
+   * late goes to `dispose`. After it, `editorController` is safe to read.
+   */
+  protected whileAdopted<T>(work: PromiseLike<T>, dispose?: (value: T) => void): Promise<T> {
+    return this._editorCtx.lifetime.guard(work, dispose);
+  }
+
+  /**
+   * Run fire-and-forget async work bound to the current adoption. Its `whileAdopted` awaits abort once the controller
+   * is released, and that abort is swallowed; any other error is logged rather than left as an unhandled rejection.
+   */
+  protected runTask(task: (signal: AbortSignal) => unknown): void {
+    this._editorCtx.lifetime.run(task, (error) => this._log.error('an async task failed', error));
   }
 
   /** Run `callback` once the editor controller is available (immediately if already attached, else on first/next attach). */
