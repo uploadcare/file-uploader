@@ -1,9 +1,9 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { Uid } from '../../lit/Uid';
-import { inject, injectOrNull } from '../di/inject';
+import { injectOrNull } from '../di/inject';
 import { UploaderEventType } from '../EventBus';
 import { TypedData } from '../TypedData';
-import { UploaderPublicApi } from '../UploaderPublicApi';
+import { toOutputFileEntry } from '../UploaderPublicApi';
 import type { UploadEntryData } from '../uploadEntrySchema';
 
 type Entry = TypedData<UploadEntryData>;
@@ -17,7 +17,6 @@ type Entry = TypedData<UploadEntryData>;
  */
 export class UploadFileEventsController {
   @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
-  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   // Guarded dispatch — matches the coordinator's `_emit` (a released container
   // resolves `null` → no-op). Rest-forwarded so the 2-/3-arg call arity reaches
@@ -29,7 +28,7 @@ export class UploadFileEventsController {
   /** `FILE_ADDED` for a newly added entry (unless it was added silently). */
   public added(entry: Entry): void {
     if (!entry.get('silent')) {
-      this._emit(UploaderEventType.FILE_ADDED, this._api.getOutputItem(entry.uid));
+      this._emit(UploaderEventType.FILE_ADDED, toOutputFileEntry(entry));
     }
   }
 
@@ -43,7 +42,7 @@ export class UploadFileEventsController {
     });
     const thumbUrl = entry.get('thumbUrl');
     thumbUrl && URL.revokeObjectURL(thumbUrl);
-    this._emit(UploaderEventType.FILE_REMOVED, this._api.getOutputItem(entry.uid));
+    this._emit(UploaderEventType.FILE_REMOVED, toOutputFileEntry(entry));
   }
 
   /** `FILE_UPLOAD_PROGRESS` for each entry that is actively (non-silently) uploading. */
@@ -53,7 +52,7 @@ export class UploadFileEventsController {
       if (!entry) continue;
       const { isUploading, silent } = entry.values;
       if (isUploading && !silent) {
-        this._emit(UploaderEventType.FILE_UPLOAD_PROGRESS, this._api.getOutputItem(id));
+        this._emit(UploaderEventType.FILE_UPLOAD_PROGRESS, toOutputFileEntry(entry));
       }
     }
   }
@@ -65,7 +64,7 @@ export class UploadFileEventsController {
       if (!entry) continue;
       const { isUploading, silent } = entry.values;
       if (isUploading && !silent) {
-        this._emit(UploaderEventType.FILE_UPLOAD_START, this._api.getOutputItem(id));
+        this._emit(UploaderEventType.FILE_UPLOAD_START, toOutputFileEntry(entry));
       }
     }
   }
@@ -77,7 +76,7 @@ export class UploadFileEventsController {
       if (!entry) continue;
       const { fileInfo, silent } = entry.values;
       if (fileInfo && !silent) {
-        this._emit(UploaderEventType.FILE_UPLOAD_SUCCESS, this._api.getOutputItem(id));
+        this._emit(UploaderEventType.FILE_UPLOAD_SUCCESS, toOutputFileEntry(entry));
       }
     }
   }
@@ -88,7 +87,7 @@ export class UploadFileEventsController {
     if (!entry || entry.values.errors.length === 0) {
       return false;
     }
-    this._emit(UploaderEventType.FILE_UPLOAD_FAILED, this._api.getOutputItem(id));
+    this._emit(UploaderEventType.FILE_UPLOAD_FAILED, toOutputFileEntry(entry));
     return true;
   }
 
@@ -97,7 +96,7 @@ export class UploadFileEventsController {
     for (const id of ids) {
       const entry = TypedData.getByUid<UploadEntryData>(id);
       if (!entry?.values.cdnUrl) continue;
-      this._emit(UploaderEventType.FILE_URL_CHANGED, this._api.getOutputItem(id));
+      this._emit(UploaderEventType.FILE_URL_CHANGED, toOutputFileEntry(entry));
     }
   }
 }

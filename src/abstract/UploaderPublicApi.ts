@@ -42,13 +42,54 @@ import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
 import { inject } from './di/inject';
 import { AuthTokenManager } from './managers/AuthTokenManager';
 import { PluginController } from './managers/plugin';
-import { TypedData } from './TypedData';
+import type { TypedData } from './TypedData';
 import { type UploadEntryData, uploadcareFileToEntryData } from './uploadEntrySchema';
 
 export type ApiAddFileCommonOptions = {
   silent?: boolean;
   fileName?: string;
   source?: string;
+};
+
+/** The documented `OutputFileEntry` shape of one upload entry. */
+export const toOutputFileEntry = <TStatus extends OutputFileStatus>(
+  entry: TypedData<UploadEntryData>,
+): OutputFileEntry<TStatus> => {
+  const uploadEntryData = entry.values;
+  const fileInfo = uploadEntryData.fileInfo as UploadcareFile | null;
+
+  // Shared status ladder (single source with UploadList's toolbar counts).
+  const status = deriveEntryStatus(uploadEntryData);
+
+  const outputItem = {
+    uuid: fileInfo?.uuid ?? uploadEntryData.uuid ?? null,
+    internalId: entry.uid as string,
+    // An explicit entry `fileName` (e.g. a caller-supplied name on add/replace)
+    // wins over the uploaded file's own name; otherwise fall back to it.
+    name: uploadEntryData.fileName ?? fileInfo?.originalFilename ?? null,
+    size: fileInfo?.size ?? uploadEntryData.fileSize,
+    isImage: fileInfo?.isImage ?? uploadEntryData.isImage,
+    mimeType: fileInfo?.mimeType ?? uploadEntryData.mimeType,
+    file: uploadEntryData.file,
+    externalUrl: uploadEntryData.externalUrl,
+    cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
+    cdnUrl: uploadEntryData.cdnUrl ?? fileInfo?.cdnUrl ?? null,
+    fullPath: uploadEntryData.fullPath,
+    uploadProgress: uploadEntryData.uploadProgress,
+    fileInfo: fileInfo ?? null,
+    metadata: uploadEntryData.metadata ?? fileInfo?.metadata ?? null,
+    tags: uploadEntryData.tags ?? fileInfo?.tags ?? null,
+    isSuccess: status === 'success',
+    isUploading: status === 'uploading',
+    isFailed: status === 'failed',
+    isRemoved: status === 'removed',
+    isValidationPending: uploadEntryData.isValidationPending,
+    errors: uploadEntryData.errors as OutputFileEntry['errors'],
+    status,
+    source: uploadEntryData?.source,
+  };
+
+  return outputItem as OutputFileEntry<TStatus>;
 };
 
 /**
@@ -393,45 +434,12 @@ export class UploaderPublicApi {
   };
 
   public getOutputItem<TStatus extends OutputFileStatus>(entryId: string): OutputFileEntry<TStatus> {
-    const entry = TypedData.getByUid<UploadEntryData>(entryId);
+    // This ctx's collection, not the global entry registry: another uploader's ids must not resolve here.
+    const entry = this._collection.read(entryId as Uid);
     if (!entry) {
       throw new Error(`UploaderPublicApi#getOutputItem: Entry with ID "${entryId}" not found in the upload collection`);
     }
-    const uploadEntryData = entry.values;
-    const fileInfo = uploadEntryData.fileInfo as UploadcareFile | null;
-
-    // Shared status ladder (single source with UploadList's toolbar counts).
-    const status = deriveEntryStatus(uploadEntryData);
-
-    const outputItem = {
-      uuid: fileInfo?.uuid ?? uploadEntryData.uuid ?? null,
-      internalId: entryId,
-      // An explicit entry `fileName` (e.g. a caller-supplied name on add/replace)
-      // wins over the uploaded file's own name; otherwise fall back to it.
-      name: uploadEntryData.fileName ?? fileInfo?.originalFilename ?? null,
-      size: fileInfo?.size ?? uploadEntryData.fileSize,
-      isImage: fileInfo?.isImage ?? uploadEntryData.isImage,
-      mimeType: fileInfo?.mimeType ?? uploadEntryData.mimeType,
-      file: uploadEntryData.file,
-      externalUrl: uploadEntryData.externalUrl,
-      cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
-      cdnUrl: uploadEntryData.cdnUrl ?? fileInfo?.cdnUrl ?? null,
-      fullPath: uploadEntryData.fullPath,
-      uploadProgress: uploadEntryData.uploadProgress,
-      fileInfo: fileInfo ?? null,
-      metadata: uploadEntryData.metadata ?? fileInfo?.metadata ?? null,
-      tags: uploadEntryData.tags ?? fileInfo?.tags ?? null,
-      isSuccess: status === 'success',
-      isUploading: status === 'uploading',
-      isFailed: status === 'failed',
-      isRemoved: status === 'removed',
-      isValidationPending: uploadEntryData.isValidationPending,
-      errors: uploadEntryData.errors as OutputFileEntry['errors'],
-      status,
-      source: uploadEntryData?.source,
-    };
-
-    return outputItem as OutputFileEntry<TStatus>;
+    return toOutputFileEntry<TStatus>(entry);
   }
 
   public getOutputCollectionState<TStatus extends OutputCollectionStatus>() {
