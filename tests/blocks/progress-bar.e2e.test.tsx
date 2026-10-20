@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { ProgressBar, ProgressBarCommon } from '@/index';
+import { IMAGE } from '~/tests/fixtures/files';
 import { createInCtx, renderSolution, within } from '~/tests/utils/render-solution';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
@@ -100,28 +101,31 @@ describe('uc-progress-bar', () => {
 describe('uc-progress-bar-common', () => {
   /** The common bar reads the ctx's upload state, so it sits next to a real uploader. */
   const renderCommon = async () => {
-    const { ctxName } = await renderSolution('regular');
+    const { ctxName, api } = await renderSolution('regular');
     const common = createInCtx<ProgressBarCommon>('uc-progress-bar-common', ctxName);
     page.render(common);
     await expect.poll(() => common.getAttribute('data-testid')).toBe('uc-progress-bar-common');
     await common.updateComplete;
 
-    return common;
+    return { common, api };
   };
 
   it('renders a progress bar', async () => {
-    const common = await renderCommon();
+    const { common } = await renderCommon();
 
     expect(within(common).getByTestId('uc-progress-bar').query()).not.toBe(null);
   });
 
-  // QUIRK(progress): `updated()` gates the `active` attribute on `changedProperties.has('visible')`, but the field is
-  // the private `@state() _visible` (ProgressBarCommon.ts:49) — Lit records `_visible`, so the branch never runs and
-  // `active` is never set or removed. The `'visible' as keyof ProgressBarCommon` cast in that line is what let the
-  // wrong key typecheck. Pinned as current behaviour, not endorsed.
-  it('never gets the active attribute, whatever the state', async () => {
-    const common = await renderCommon();
-
+  // The stylesheet hides the bar unless the host carries `active`, so the attribute is what makes it visible at all.
+  it('carries the active attribute only while an upload runs', async () => {
+    const { common, api } = await renderCommon();
     expect(common.hasAttribute('active')).toBe(false);
+
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
+
+    await expect.poll(() => common.hasAttribute('active')).toBe(true);
+    await expect.poll(() => api.getOutputCollectionState().successCount).toBe(1);
+    await expect.poll(() => common.hasAttribute('active')).toBe(false);
   });
 });
