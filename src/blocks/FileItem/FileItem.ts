@@ -2,7 +2,7 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import { inject, injectOrNull } from '../../abstract/di/inject';
+import { inject } from '../../abstract/di/inject';
 import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
@@ -57,15 +57,14 @@ const PLUGIN_ACTION_KEYS: ReadonlySet<UploadEntryKeys> = new Set<UploadEntryKeys
 ]);
 
 export class FileItem extends FileItemConfig {
-  // `ConfigController`/`TelemetryManager` are always-bound `@inject` fields.
-  // `UploadCollectionController` and `UploaderPublicApi` are uploader-scope-bound
-  // and read null-tolerantly (handlers can run outside an adopted scope / during
-  // a teardown race), so they are `@injectOrNull` (`?.`-read); `PluginController`
-  // is conditionally bound and wired via `whenController`.
+  // `@inject` fields, read only while adopted: from `controllerReady`, the
+  // render-gated `willUpdate`, the rendered row's click handlers, and plugin-action
+  // recomputes that bail once `controllerReleased` drops the plugin manager.
+  // `PluginController` is conditionally bound and wired via `whenController`.
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
-  @injectOrNull(UploadCollectionController) private readonly _collection!: UploadCollectionController | null;
-  @injectOrNull(UploaderPublicApi) private readonly _api!: UploaderPublicApi | null;
+  @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   // Off-screen render gate. Complements list virtualization rather than being
   // superseded by it: virtualization caps mounted rows in the bounded/steady
@@ -97,7 +96,7 @@ export class FileItem extends FileItemConfig {
 
   private _handleRemove = (): void => {
     const collection = this._collection;
-    if (!this.uid || !collection?.hasItem(this.uid)) {
+    if (!this.uid || !collection.hasItem(this.uid)) {
       return;
     }
     // Telemetry only for a real removal — guard first, so a stale/double
@@ -179,8 +178,7 @@ export class FileItem extends FileItemConfig {
   private _handleEntryId(id: Uid): void {
     this.reset();
 
-    // The uploader-scope controllers exist only once an uploader block initializes this ctx.
-    const entry = this._collection?.read(id) ?? null;
+    const entry = this._collection.read(id) ?? null;
     this.entry = entry;
 
     if (!entry) {
@@ -235,15 +233,8 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    // The uploader-scope controllers exist only once an uploader block initializes this ctx.
-    const api = this._api;
-    if (!api) {
-      this._pluginFileActions = [];
-      return;
-    }
-
     const allFileActions = pluginManager.snapshot().fileActions;
-    const outputFileEntry = api.getOutputItem(this.uid);
+    const outputFileEntry = this._api.getOutputItem(this.uid);
 
     if (!outputFileEntry) {
       this._pluginFileActions = [];
@@ -265,12 +256,7 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    const api = this._api;
-    if (!api) {
-      return;
-    }
-
-    const outputFileEntry = api.getOutputItem(this.uid);
+    const outputFileEntry = this._api.getOutputItem(this.uid);
     if (!outputFileEntry) {
       return;
     }
