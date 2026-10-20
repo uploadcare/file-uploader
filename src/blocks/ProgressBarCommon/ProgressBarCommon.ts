@@ -1,4 +1,4 @@
-import { html } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
@@ -52,6 +52,12 @@ export class ProgressBarCommon extends ChildBlock {
         collection.observeCollection(() => this._recomputeVisible(collection)),
       ];
     });
+  }
+
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+    // The stylesheet hides the host unless it carries `active`.
+    this.toggleAttribute('active', this._visible);
   }
 
   public override render() {
