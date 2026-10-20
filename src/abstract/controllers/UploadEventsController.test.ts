@@ -653,6 +653,29 @@ describe('UploadEventsController', () => {
       expect(mockUploadFileGroup).not.toHaveBeenCalled();
     });
 
+    it('cancels an in-flight group request when the ctx is torn down', async () => {
+      const state = makeState({
+        totalCount: 1,
+        status: 'success',
+        allEntries: [{ uuid: 'u1', cdnUrlModifiers: '' }] as never,
+      });
+      const t = setup({ collectionState: state });
+      t.config.set('groupOutput', true);
+      let signal: AbortSignal | undefined;
+      mockUploadFileGroup.mockImplementation(async (_uuids, options) => {
+        signal = options?.signal;
+        t.container.dispose();
+        return { uuid: 'group~1' } as UploadcareGroup;
+      });
+      const id = t.collection.add({ fileName: 'a.txt' });
+
+      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(signal?.aborted).toBe(true);
+      expect(t.emit).not.toHaveBeenCalledWith(UploaderEventType.GROUP_CREATED, expect.anything());
+    });
+
     it('aborts group creation if the collection state changed mid-flight', async () => {
       const state = makeState({
         totalCount: 1,
