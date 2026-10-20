@@ -3,11 +3,12 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import { inject, injectOrNull } from '../../abstract/di/inject';
+import { inject } from '../../abstract/di/inject';
+import { isAbortError } from '../../abstract/di/Lifetime';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { effect } from '../../lit/effect';
+import { debounced } from '../../lit/rate-limited-method';
 import { operationsFromModifiers } from '../../utils/cdn/operations';
-import { debounce } from '../../utils/debounce';
 import { preloadImage } from '../../utils/preloadImage';
 import { generateThumb } from '../../utils/resizeImage';
 import { FileItemConfig } from '../FileItem/FileItemConfig';
@@ -35,11 +36,11 @@ export class Thumb extends FileItemConfig {
   // (`.get()` / method calls). The thumb image itself renders from the per-entry
   // `thumbUrl` observer, which has no DI token and stays on the v1 `subEntry`
   // path (step 8). `UploadCollectionController` is the entry source for
-  // `_bindToEntry`, read null-tolerantly via `@injectOrNull` (a thumb can render
-  // outside an uploader scope, where it resolves `null`).
+  // `_bindToEntry`, which only runs while adopted (`controllerReady` and the
+  // render-gated `firstUpdated`/`updated`).
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
-  @injectOrNull(UploadCollectionController) private readonly _collection!: UploadCollectionController | null;
+  @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
 
   @property({ type: String })
   public badgeIcon = '';
@@ -82,6 +83,9 @@ export class Thumb extends FileItemConfig {
     return Math.min(Math.round(size), CDN_MAX_OUTPUT_DIMENSION);
   }
 
+  // Runs as an adoption task (`runTask`): each await of outside work goes through `whileAdopted`, so a thumb released
+  // mid-generation stops instead of reaching its `@inject` fields. A thumbnail that arrives late is still stored on the
+  // entry (its `dispose`), since the entry outlives this block — a row scrolled out of the virtualized list keeps it.
   // biome-ignore lint/style/noInferrableTypes: Here the type is needed because `_withEntry` could not infer it correctly
   private _generateThumbnail = this.withEntry(async (entry, force: boolean = false) => {
     const fileInfo = entry.get('fileInfo');
@@ -106,40 +110,46 @@ export class Thumb extends FileItemConfig {
         // Both inputs here can be malformed: `cdnUrlModifiers` is writable by
         // plugins (`buildPluginApi`) and `cdnCname` is user config. Thumbnail
         // generation runs fire-and-forget (`_debouncedGenerateThumb`, plus the
-        // forced call on resize), so a throw would escape as an unhandled
-        // rejection and leave no thumbnail at all. Fall through to the
-        // local-file/placeholder path below — where a broken CDN URL used to
-        // land anyway, via its preload failure.
+        // forced call on resize), so a throw would end the task and leave no
+        // thumbnail at all. Fall through to the local-file/placeholder path
+        // below — where a broken CDN URL used to land anyway, via its preload
+        // failure.
         this._telemetry.sendEventError(err, 'thumbnail generation. Failed to build a CDN thumbnail URL');
       }
 
       if (cdnThumbUrl) {
-        const thumbUrl = await this.proxyUrl(cdnThumbUrl);
+        const thumbUrl = await this.whileAdopted(this.proxyUrl(cdnThumbUrl));
 
         if (currentThumbUrl === thumbUrl) {
           return;
         }
 
         const { promise } = preloadImage(thumbUrl);
+        const storeThumb = () => {
+          entry.set('thumbUrl', thumbUrl);
+          currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
+        };
 
-        promise
-          .then(() => {
-            entry.set('thumbUrl', thumbUrl);
-            currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
-          })
-          .catch(async () => {
-            if (currentThumbUrl?.startsWith('blob:')) return;
-            try {
-              const file = entry.get('file');
-              if (!file) return;
-              const blobThumbUrl = await generateThumb(file, size);
-              entry.set('thumbUrl', blobThumbUrl);
-            } catch (err) {
-              this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
-              const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-              entry.set('thumbUrl', fileCssBg(color));
-            }
-          });
+        try {
+          await this.whileAdopted(promise, storeThumb);
+          storeThumb();
+        } catch (error) {
+          if (isAbortError(error)) throw error;
+          if (currentThumbUrl?.startsWith('blob:')) return;
+          try {
+            const file = entry.get('file');
+            if (!file) return;
+            const blobThumbUrl = await this.whileAdopted(Promise.resolve(generateThumb(file, size)), (url) =>
+              entry.set('thumbUrl', url),
+            );
+            entry.set('thumbUrl', blobThumbUrl);
+          } catch (err) {
+            if (isAbortError(err)) throw err;
+            this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
+            const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
+            entry.set('thumbUrl', fileCssBg(color));
+          }
+        }
 
         return;
       }
@@ -152,9 +162,12 @@ export class Thumb extends FileItemConfig {
     const file = entry.get('file');
     if (file?.type.includes('image')) {
       try {
-        const thumbUrl = await generateThumb(file, size);
+        const thumbUrl = await this.whileAdopted(Promise.resolve(generateThumb(file, size)), (url) =>
+          entry.set('thumbUrl', url),
+        );
         entry.set('thumbUrl', thumbUrl);
       } catch (err) {
+        if (isAbortError(err)) throw err;
         this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
         const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
         entry.set('thumbUrl', fileCssBg(color));
@@ -165,7 +178,16 @@ export class Thumb extends FileItemConfig {
     }
   });
 
-  private _debouncedGenerateThumb = debounce(this._generateThumbnail.bind(this), 100);
+  // `@debounced` drops a call after release and cancels a pending one on release.
+  @debounced(100)
+  protected _debouncedGenerateThumb(): void {
+    this.runTask(() => this._generateThumbnail());
+  }
+
+  private _cancelDebouncedGenerateThumb(): void {
+    // `@debounced` replaces the method with its limiter at runtime; the declared type stays the method signature.
+    (this._debouncedGenerateThumb as unknown as { cancel: () => void }).cancel();
+  }
 
   private _decodeImage(src: string, signal?: AbortSignal): Promise<void> {
     return new Promise((resolve, reject) => {
@@ -282,7 +304,7 @@ export class Thumb extends FileItemConfig {
     }
 
     if (force) {
-      this._generateThumbnail(true);
+      this.runTask(() => this._generateThumbnail(true));
       return;
     }
 
@@ -319,13 +341,13 @@ export class Thumb extends FileItemConfig {
     }
 
     if (entry.intersectionRatio === 0) {
-      this._debouncedGenerateThumb.cancel();
+      this._cancelDebouncedGenerateThumb();
     }
   }
 
   protected override reset(): void {
     super.reset();
-    this._debouncedGenerateThumb.cancel();
+    this._cancelDebouncedGenerateThumb();
     this._cancelPendingThumbUpdate();
     if (this._thumbUrl) {
       this._thumbUrl = '';
@@ -341,11 +363,7 @@ export class Thumb extends FileItemConfig {
       return;
     }
 
-    // The uploader-scope controllers exist only once an uploader block
-    // initializes this ctx — a thumb rendered outside that scope (e.g. an
-    // isolated composition, or a teardown-time tick after release) has no
-    // collection and therefore no entry; `useOrNull` returns null there.
-    const entry = this._collection?.read(id);
+    const entry = this._collection.read(id);
     if (!entry) {
       // The uid no longer resolves (entry removed, scope lost, or uid swapped
       // to an unknown id) — drop the previous entry's subscriptions and image
@@ -413,7 +431,6 @@ export class Thumb extends FileItemConfig {
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
-    this._debouncedGenerateThumb.cancel();
     this._cancelPendingThumbUpdate();
     this._observer?.disconnect();
   }
