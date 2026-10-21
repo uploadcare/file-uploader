@@ -115,9 +115,8 @@ describe('inline: no modal is ever used', () => {
     expect(api.getCurrentActivity()).toBe('upload-list');
   });
 
-  // QUIRK(activity): inline treats `null` as "go back to the init activity" (FileUploaderInline.ts:82), so the
-  // documented `setModalState(false)` — which sets the activity to null — cannot leave an inline uploader with
-  // nothing showing. Pinned as current behaviour, not endorsed.
+  // Documented (api.mdx, setModalState): inline has no modal, so `setModalState(false)` — which sets the activity to
+  // null — returns it to its initial activity (`FileUploaderInline` treats null as "back to the init activity").
   it('re-enters the init activity instead of closing', async () => {
     const { root, api } = await renderSolution('inline');
     await expectActivity(root, 'start-from');

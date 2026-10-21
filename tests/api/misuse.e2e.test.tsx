@@ -13,16 +13,13 @@ import '~/types/jsx';
  */
 
 describe('unknown internal ids', () => {
-  // QUIRK(api): api.mdx documents `getOutputItem(internalId: string) => OutputFileEntry` with no mention that it can
-  // throw, so a caller reading the docs would expect null/undefined for a stale id. Pinned as current behaviour,
-  // not endorsed (UploaderPublicApi.ts:295).
+  // Documented (api.mdx): `getOutputItem` throws for an id that is not in this uploader's list.
   it('getOutputItem throws rather than returning null', async () => {
     const { api } = await renderSolution();
     expect(() => api.getOutputItem('does-not-exist')).toThrow(/not found in the upload collection/);
   });
 
-  // QUIRK(api): same shape — documented as `=> void`, throws on an id it does not know
-  // (UploaderPublicApi.ts:193). Removing the same file twice is the realistic way to hit it.
+  // Documented (api.mdx): `removeFileByInternalId` throws for an unknown id — removing the same file twice hits it.
   it('removeFileByInternalId throws for an unknown id', async () => {
     const { api } = await renderSolution();
     expect(() => api.removeFileByInternalId('does-not-exist')).toThrow(/not found/);
@@ -213,9 +210,8 @@ describe('silent: true', () => {
 });
 
 describe('addFileFromUuid', () => {
-  // QUIRK(api): nothing validates the uuid at add time — unlike addFileFromCdnUrl, which throws on input it cannot
-  // parse (UploaderPublicApi.ts:85). A malformed uuid is accepted here and only surfaces later, when the entry is
-  // resolved. Pinned as current behaviour, not endorsed.
+  // Documented (api.mdx): the uuid is not validated at add time — unlike `addFileFromCdnUrl`, which throws on input
+  // it cannot parse. A malformed uuid is accepted and the entry fails once the upload runs.
   it('accepts a malformed uuid without complaint', async () => {
     const { api } = await renderSolution();
     const entry = api.addFileFromUuid('not-a-uuid');

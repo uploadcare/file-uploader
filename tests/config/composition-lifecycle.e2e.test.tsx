@@ -251,12 +251,9 @@ describe('documented attribute conventions', () => {
     expect((await renderConfig({ imgOnly: 'true' })).imgOnly).toBe(true);
   });
 
-  // QUIRK(config): configuration.mdx says "any other thruthy value means `true`
-  // (e.g. <uc-config this-is-boolean="value">)", but asBoolean throws `Invalid boolean: "value"` for anything that is
-  // not `true`, `false` or an empty string (Config/validatorsType.ts:19). The option keeps its default instead of
-  // becoming true, and the error surfaces on the console. Pinned as current behaviour, not endorsed — the docs and
-  // the code disagree and only a human can say which one is right.
-  it('does not follow the documented "any truthy value" rule', async () => {
+  // Documented (configuration.mdx): a boolean attribute accepts `true`, `false`, presence or an empty string; any other
+  // value is rejected by `asBoolean` (Config/validatorsType.ts), the option keeps its value and an error is logged.
+  it('rejects a boolean attribute value other than true, false or empty', async () => {
     const config = await renderConfig({ 'img-only': 'value' });
     expect(config.imgOnly).toBe(false);
   });
