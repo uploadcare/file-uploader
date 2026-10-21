@@ -86,7 +86,7 @@ const setup = (opts: SetupOpts = {}) => {
   const onUploadError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {});
   const secureUploads = container.get(SecureUploadsController);
   const controller = container.get(UploadController);
-  return { controller, config, collection, secureUploads, getFileHooks, getOutputItem, onUploadError };
+  return { container, controller, config, collection, secureUploads, getFileHooks, getOutputItem, onUploadError };
 };
 
 const queueConcurrency = (controller: UploadController): number =>
@@ -305,6 +305,27 @@ describe('UploadController', () => {
   });
 
   describe('beforeUpload hooks', () => {
+    it('invokes no further hook and uploads nothing once the ctx is disposed mid-hook', async () => {
+      let finishFirst: (() => void) | undefined;
+      const second = vi.fn(({ file }: { file: File | Blob }) => ({ file }));
+      const { container, controller, collection } = setup({
+        hooks: [
+          makeHook({ handler: ({ file }) => new Promise((resolve) => (finishFirst = () => resolve({ file }))) }),
+          makeHook({ handler: second }),
+        ],
+      });
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+
+      const pending = controller.uploadEntry(id);
+      await vi.waitFor(() => expect(finishFirst).toBeDefined());
+      container.dispose();
+      finishFirst?.();
+      await pending;
+
+      expect(second).not.toHaveBeenCalled();
+      expect(mockUploadFile).not.toHaveBeenCalled();
+    });
+
     // The success write-back overwrites fileName/mimeType with the server's
     // values, so the hook's re-derivation is verified by capturing the entry
     // state at upload time (after the hook ran, before the result lands).

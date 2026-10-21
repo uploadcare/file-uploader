@@ -360,6 +360,51 @@ describe('PluginController', () => {
       expect(entry.get('mimeType')).toBe('text/plain');
     });
 
+    it('invokes no further hook and applies nothing once the ctx is disposed mid-chain', async () => {
+      const t = setup();
+      let finishFirst: (() => void) | undefined;
+      const second = vi.fn();
+      await t.sync([
+        sourcePlugin('hooks', ({ pluginApi }) => {
+          pluginApi.registry.registerFileHook({
+            type: 'onAdd',
+            handler: (() =>
+              new Promise((resolve) => (finishFirst = () => resolve({ file: new File(['y'], 'new.png') })))) as never,
+            timeout: 30000,
+          });
+          pluginApi.registry.registerFileHook({ type: 'onAdd', handler: second as never, timeout: 30000 });
+        }),
+      ]);
+      const original = new File(['x'], 'a.txt');
+      const entry = makeEntry(original);
+      const set = vi.spyOn(entry, 'set');
+
+      const pending = t.controller.runOnAddHooks(entry);
+      t.container.dispose();
+      finishFirst?.();
+      await pending;
+
+      expect(second).not.toHaveBeenCalled();
+      expect(set).not.toHaveBeenCalled();
+    });
+
+    it('hands the hook a signal that aborts when the ctx is disposed', async () => {
+      const t = setup();
+      let received: AbortSignal | undefined;
+      await t.sync([
+        withOnAddHook(({ file, signal }) => {
+          received = signal;
+          return { file };
+        }),
+      ]);
+      await t.controller.runOnAddHooks(makeEntry(new File(['x'], 'a.txt')));
+      expect(received?.aborted).toBe(false);
+
+      t.container.dispose();
+
+      expect(received?.aborted).toBe(true);
+    });
+
     it('skips a hook that exceeds its timeout', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const t = setup();

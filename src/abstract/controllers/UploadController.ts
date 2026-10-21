@@ -232,6 +232,8 @@ export class UploadController {
           const fileHooks = containerOf(this)?.getOrNull(PluginController)?.snapshot().fileHooks ?? [];
           const beforeUploadHooks = fileHooks.filter((h) => h.type === 'beforeUpload');
           for (const hook of beforeUploadHooks) {
+            // A hook is a user callback: the next one is not invoked once the ctx is torn down.
+            lifetime.signal.throwIfAborted();
             try {
               const hookPromise = hook.handler({ file, signal: abortController.signal });
               const timeoutPromise = new Promise<never>((_, reject) =>

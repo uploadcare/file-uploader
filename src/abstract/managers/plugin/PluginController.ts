@@ -201,11 +201,12 @@ export class PluginController {
     if (onAddHooks.length === 0) return;
 
     let file: File | Blob = initialFile;
-    const abortController = new AbortController();
+    // Hooks are user callbacks: none is invoked, and no result applied, once the ctx is torn down.
+    const { signal } = lifetimeOf(this);
     for (const hook of onAddHooks) {
-      if (abortController.signal.aborted) break;
+      if (signal.aborted) return;
       try {
-        const hookPromise = hook.handler({ file, signal: abortController.signal });
+        const hookPromise = hook.handler({ file, signal });
         const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error(`onAdd hook timed out`)), hook.timeout),
         );
@@ -215,6 +216,7 @@ export class PluginController {
       }
     }
 
+    if (signal.aborted) return;
     if (file !== initialFile) {
       entry.set('file', file as File);
       entry.set('fileSize', file.size);

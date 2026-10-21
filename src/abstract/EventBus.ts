@@ -1,6 +1,7 @@
 import type { ActivityType, RegisteredActivityType } from '../lit/activity-constants';
 import type { OutputCollectionState, OutputFileEntry } from '../types/exported';
 import { controllerLogger } from './controllerLogger';
+import { lifetimeOf } from './di/ControllerContainer';
 import { lazy } from './logger';
 
 /**
@@ -99,8 +100,13 @@ export class EventBus {
    * Fire to every listener for `type`. Each handler runs in its own
    * try/catch — a single throwing listener must not cancel the emit loop or
    * bubble back to the code that triggered the event.
+   *
+   * Every event — the host's DOM events, `api.on` handlers, telemetry — leaves
+   * the uploader through here, so this is where an event raised once the ctx is
+   * torn down (by a controller's teardown or late async work) is dropped.
    */
   public emit<K extends UploaderEventKey>(type: K, payload: UploaderEventPayload[K]): void {
+    if (lifetimeOf(this).signal.aborted) return;
     // Central event logging (verbose/debug-gated) — one readable line per event,
     // moved here from the DOM event bridge so every emit is logged at the source.
     // `→ <type>` marks a dispatch (the `event-bus` scope already says it's an
