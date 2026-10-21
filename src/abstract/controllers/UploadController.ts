@@ -138,11 +138,9 @@ export class UploadController {
     const secureToken = authToken ? null : await this._secureUploads.getSecureToken().catch(() => null);
     const cfg = this._config.values;
 
-    // Assigned to a local (not returned as a literal) so the extra
-    // `multipartMaxAttempts` passthrough is preserved exactly as v1 had it —
-    // upload-client ignores keys it doesn't type, and a direct-literal return
-    // would trip excess-property checking.
-    const options = {
+    // Returned as a literal so excess-property checking catches a key upload-client doesn't take — an untyped local
+    // let `multipartMaxAttempts` reach it unchecked for years after upload-client 5 dropped it.
+    return {
       authToken,
       store: cfg.store,
       publicKey: cfg.pubkey,
@@ -157,12 +155,9 @@ export class UploadController {
       multipartMinFileSize: cfg.multipartMinFileSize,
       multipartChunkSize: cfg.multipartChunkSize,
       maxConcurrentRequests: cfg.multipartMaxConcurrentRequests,
-      multipartMaxAttempts: cfg.multipartMaxAttempts,
       checkForUrlDuplicates: !!cfg.checkForUrlDuplicates,
       saveUrlForRecurrentUploads: !!cfg.saveUrlForRecurrentUploads,
     };
-
-    return options;
   }
 
   /** Resolve the documented `metadata` config (static value or per-entry callback). */
