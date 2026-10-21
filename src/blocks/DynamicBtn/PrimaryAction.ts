@@ -139,7 +139,8 @@ export class PrimaryAction extends ChildBlock {
       return;
     }
 
-    void this.source.onClick();
+    const { source } = this;
+    this.runTask(() => source.onClick());
   }
 
   private _renderThumbnail() {

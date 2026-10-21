@@ -70,6 +70,18 @@ export default defineConfig([
     },
   },
   {
+    // AGENTS.md "Async work and lifetimes" rule 1: every promise is bound to a lifetime
+    // (`runTask` / `lifetime.run`), handled, or explicitly waived with a reason.
+    files: [SRC_GLOB],
+    ignores: ['src/**/*.test.ts'],
+    languageOptions: {
+      parserOptions: { project: './tsconfig.app.json', tsconfigRootDir: import.meta.dirname },
+    },
+    rules: {
+      '@typescript-eslint/no-floating-promises': ['error', { ignoreVoid: false }],
+    },
+  },
+  {
     // The logger itself is the single sanctioned `console.*` implementation.
     files: ['src/abstract/logger.ts'],
     rules: {

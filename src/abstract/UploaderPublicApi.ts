@@ -463,10 +463,10 @@ export class UploaderPublicApi {
 
             if (expandedIds.length === 1) {
               const target = sources.find((s) => s.id === expandedIds[0]) ?? registeredSource;
-              target.onSelect();
-            } else {
-              router.navigate(ACTIVITY_TYPES.START_FROM);
+              // Returned so the deferred navigation's task awaits the plugin hook and logs its failure.
+              return target.onSelect();
             }
+            router.navigate(ACTIVITY_TYPES.START_FROM);
             return;
           }
 
@@ -533,11 +533,13 @@ export class UploaderPublicApi {
     this._whenPluginsReady(() => {
       this._router.navigate(activityType, params[0] ?? {});
       if (activityType !== null) {
-        waitForActivityBlock(this._router, activityType, {
+        // Never rejects; returned so the wait belongs to the deferred navigation's task.
+        return waitForActivityBlock(this._router, activityType, {
           onTimeout: () => this._log.warn(`Activity type "${activityType}" not found in the context`),
           timeout: 100,
         });
       }
+      return;
     });
   };
 
@@ -564,7 +566,8 @@ export class UploaderPublicApi {
         return;
       }
       this._router.setActivity(activityType, params[0]);
-      waitForActivityBlock(this._router, activityType, {
+      // Never rejects; returned so the wait belongs to the deferred navigation's task.
+      return waitForActivityBlock(this._router, activityType, {
         onTimeout: () => this._log.warn(`Activity type "${activityType}" not found in the context`),
         timeout: 100,
       });

@@ -423,7 +423,8 @@ export class ImgBase extends ImgConfig {
     if (this._bgSelector) {
       this._renderBackground();
     } else {
-      this._renderImage();
+      // `<uc-img>` has no lifetime of its own; a detached element appending its image is harmless, a failure is not.
+      this._renderImage().catch((error: unknown) => log.error('Failed to render the image', error));
     }
   }
 }

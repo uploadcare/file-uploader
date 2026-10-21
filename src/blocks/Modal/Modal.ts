@@ -75,7 +75,7 @@ export class Modal extends ChildBlock {
   };
 
   protected async show(): Promise<void> {
-    await this.updateComplete;
+    await this.whileAdopted(this.updateComplete);
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       showModal?: () => void;
     };
@@ -145,7 +145,7 @@ export class Modal extends ChildBlock {
       this._releaseScrollLock = null;
     }
     if (isForeground) {
-      this.show();
+      this.runTask(() => this.show());
     } else {
       this.hide();
     }

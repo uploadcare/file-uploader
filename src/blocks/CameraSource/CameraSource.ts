@@ -415,7 +415,7 @@ export class CameraSource extends ChildBlock {
     if (!videoEl.paused && !videoEl.ended && videoEl.readyState > 2) {
       videoEl.pause();
     } else if (videoEl.paused) {
-      videoEl.play();
+      this.runTask(() => videoEl.play());
     }
   };
 
@@ -502,7 +502,10 @@ export class CameraSource extends ChildBlock {
       }
     }
 
-    void this._videoRef.value?.play?.();
+    const videoEl = this._videoRef.value;
+    if (videoEl) {
+      this.runTask(() => videoEl.play());
+    }
   };
 
   private _accept = (): void => {
@@ -945,7 +948,7 @@ export class CameraSource extends ChildBlock {
     this._handleCameraModes(this._cameraModes);
   };
 
-  private _onDeactivate = async (): Promise<void> => {
+  private _onDeactivate = (): void => {
     if (this._unsubPermissions) {
       this._unsubPermissions();
     }
@@ -1020,7 +1023,7 @@ export class CameraSource extends ChildBlock {
   // old disconnect-only path missed (re-adoption re-activated without first
   // deactivating).
   protected override controllerReleased(): void {
-    void this._onDeactivate();
+    this._onDeactivate();
     this._destroy();
   }
 
