@@ -5,6 +5,7 @@ import type { Ref } from 'lit/directives/ref.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { when } from 'lit/directives/when.js';
+import { debounced } from '../../../lit/rate-limited-method';
 import { debounce } from '../../../utils/debounce';
 import { batchPreloadImages } from '../../../utils/preloadImage';
 import type { FilterSelectEvent } from './EditorFilterControl';
@@ -129,12 +130,9 @@ export class EditorToolbar extends EditorBlock {
     this._showLoader = show;
   }, 500);
 
-  private readonly _updateInfoTooltip = debounce(() => {
-    // Debounced at 0ms: the timer can still fire once after the editor context
-    // has released its controller — bail out rather than throwing.
-    if (this.adoptionSignal.aborted) {
-      return;
-    }
+  // Debounced at 0ms; `@debounced` drops a tick that lands after the editor context released its controller.
+  @debounced(0)
+  private _updateInfoTooltip(): void {
     const controller = this.editorController;
     const transformations = controller.get('*editorTransformations');
     const currentOperation = this._currentOperation as keyof typeof COLOR_OPERATIONS_CONFIG | null;
@@ -158,7 +156,7 @@ export class EditorToolbar extends EditorBlock {
       this._operationTooltip = text;
     }
     this._tooltipVisible = visible;
-  }, 0);
+  }
 
   private readonly _subTopToolbarStyles = {
     hidden: 'uc-sub-toolbar--top-hidden',
