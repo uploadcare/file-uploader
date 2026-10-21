@@ -33,6 +33,7 @@ import { stringToArray } from '../utils/stringToArray';
 import { UploadSource } from '../utils/UploadSource';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
 import { controllerLogger } from './controllerLogger';
+import { AppInfo } from './controllers/AppInfo';
 import { CollectionStateController } from './controllers/CollectionStateController';
 import { ConfigController } from './controllers/ConfigController';
 import { LocaleController } from './controllers/LocaleController';
@@ -125,6 +126,7 @@ export const toOutputFileEntry = <TStatus extends OutputFileStatus>(
  * derived-collection controllers itself.
  */
 export class UploaderPublicApi {
+  @inject(AppInfo) private readonly _appInfo!: AppInfo;
   @inject(AuthTokenManager) private readonly _authToken!: AuthTokenManager;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
 
@@ -642,6 +644,13 @@ export class UploaderPublicApi {
     this._whenPluginsReady(() => {
       const router = this._router;
       if (!opened) {
+        // The inline uploader has no modal to close; nulling its activity would only reset it to the start screen.
+        if (this._appInfo.solutionName === 'uc-file-uploader-inline') {
+          this._log.warnOnce(
+            'setModalState(false) does nothing for the inline uploader, which has no modal. Use navigate() to change its activity.',
+          );
+          return;
+        }
         // Close everything (matches v1: close the modal + null the activity,
         // which also cleared history).
         router.navigate(null);
