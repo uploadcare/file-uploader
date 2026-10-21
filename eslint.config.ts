@@ -1,4 +1,4 @@
-import { defineConfig } from 'eslint/config';
+import { defineConfig, globalIgnores } from 'eslint/config';
 import { configs as litConfigs } from 'eslint-plugin-lit';
 import { configs as wcConfigs } from 'eslint-plugin-wc';
 import tseslint from 'typescript-eslint';
@@ -18,6 +18,8 @@ const BASE_CLASSES = [
 ];
 
 export default defineConfig([
+  // Agent worktrees are full second checkouts (with their own tsconfig, which also confuses the type-aware rules).
+  globalIgnores(['.claude/**']),
   {
     ...litConfigs['flat/recommended'],
     files: [SRC_GLOB],
