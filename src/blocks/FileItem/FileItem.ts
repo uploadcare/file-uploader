@@ -228,18 +228,15 @@ export class FileItem extends FileItemConfig {
 
   private _updatePluginFileActions(): void {
     const pluginManager = this._pluginManager;
-    if (!pluginManager || !this.uid) {
+    // A row can briefly hold the uid of an entry that is gone — e.g. right after a remount into a fresh ctx, before the
+    // list re-renders — and `getOutputItem` throws for those.
+    if (!pluginManager || !this.uid || !this._collection.hasItem(this.uid)) {
       this._pluginFileActions = [];
       return;
     }
 
     const allFileActions = pluginManager.snapshot().fileActions;
     const outputFileEntry = this._api.getOutputItem(this.uid);
-
-    if (!outputFileEntry) {
-      this._pluginFileActions = [];
-      return;
-    }
 
     this._pluginFileActions = allFileActions.filter((action) => {
       try {
