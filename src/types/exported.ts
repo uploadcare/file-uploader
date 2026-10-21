@@ -219,10 +219,6 @@ export type ConfigType = {
    */
   multipartMaxConcurrentRequests: number;
   /**
-   * Maximum number of attempts for multipart uploads.
-   */
-  multipartMaxAttempts: number;
-  /**
    * Check for URL duplicates.
    */
   checkForUrlDuplicates: boolean;
