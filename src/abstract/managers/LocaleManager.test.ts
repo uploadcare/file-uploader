@@ -287,4 +287,28 @@ describe('LocaleManager.activate', () => {
 
     expect(locale.get('upload')).toBe('FR upload');
   });
+
+  it('applies nothing from a resolution still in flight when the ctx is disposed', async () => {
+    const { container, config, locale, manager } = setup();
+    manager.activate(null);
+    let resolveFr!: (definition: Partial<LocaleDefinition>) => void;
+    const frPromise = new Promise<Partial<LocaleDefinition>>((resolve) => {
+      resolveFr = resolve;
+    });
+    vi.mocked(localeRegistry.resolveLocaleDefinition).mockImplementationOnce(
+      () => frPromise as Promise<LocaleDefinition>,
+    );
+    config.set('localeName', 'fr');
+    const setSpy = vi.spyOn(locale, 'set');
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    container.dispose();
+    resolveFr({ upload: 'FR upload' });
+    await delay(0);
+
+    expect(setSpy).not.toHaveBeenCalled();
+    // Nor does it reach for the released config (which would throw and be reported).
+    expect(error).not.toHaveBeenCalled();
+    error.mockRestore();
+  });
 });

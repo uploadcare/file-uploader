@@ -43,7 +43,6 @@ export class PluginController {
   // (resolved lazily at log time via the container that built this instance).
   private readonly _log = controllerLogger(this, 'plugin-manager');
   private _deps: PluginControllerDeps;
-  private _isDestroyed = false;
   private _plugins: Map<string, RegisteredPlugin> = new Map();
   private _subscribers: Set<Unsubscribe> = new Set();
   private _pluginsUpdate: Promise<void> = Promise.resolve();
@@ -65,10 +64,10 @@ export class PluginController {
     this.#disposables.add(
       deps.watchPlugins((pluginsPromise) => {
         this._pluginsUpdate = this._pluginsUpdate
-          .then(() => pluginsPromise)
+          // Bound to the ctx: a queued or late emission can't re-register on a torn-down controller.
+          .then(() => lifetimeOf(this).guard(pluginsPromise))
           .then((plugins) => {
-            // Skip once destroyed so a queued emission can't re-register on a dead controller.
-            if (this._isDestroyed || !plugins) return;
+            if (!plugins) return;
             return this._syncPlugins(plugins);
           })
           // Recover the queue: a rejected emission must not permanently poison the
@@ -228,7 +227,6 @@ export class PluginController {
   }
 
   public destroy(): void {
-    this._isDestroyed = true;
     // Stop new emissions first so a queued sync can't re-register on a dead
     // controller (`#disposables` holds only the `watchPlugins` teardown).
     this.#disposables.run();

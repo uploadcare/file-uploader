@@ -223,9 +223,9 @@ describe('PluginController', () => {
       expect(t.controller.snapshot().sources.map((s) => s.id)).toEqual(['a']);
     });
 
-    it('skips a queued emission that arrives after destroy()', async () => {
+    it('skips a queued emission that arrives after the ctx is disposed', async () => {
       const t = setup();
-      t.controller.destroy();
+      t.container.dispose();
 
       t.push(Promise.resolve([sourcePlugin('late')]));
       await t.controller.pluginsReady();
