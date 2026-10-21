@@ -251,10 +251,13 @@ describe('documented attribute conventions', () => {
     expect((await renderConfig({ imgOnly: 'true' })).imgOnly).toBe(true);
   });
 
-  // Documented (configuration.mdx): a boolean attribute accepts `true`, `false`, presence or an empty string; any other
-  // value is rejected by `asBoolean` (Config/validatorsType.ts), the option keeps its value and an error is logged.
-  it('rejects a boolean attribute value other than true, false or empty', async () => {
-    const config = await renderConfig({ 'img-only': 'value' });
+  // Documented (configuration.mdx): like an HTML boolean attribute, any value other than "false" means true.
+  it('reads any boolean attribute value other than "false" as true', async () => {
+    for (const value of ['value', '1', 'yes', '']) {
+      const config = await renderConfig({ 'img-only': value });
+      expect(config.imgOnly).toBe(true);
+    }
+    const config = await renderConfig({ 'img-only': 'false' });
     expect(config.imgOnly).toBe(false);
   });
 });
