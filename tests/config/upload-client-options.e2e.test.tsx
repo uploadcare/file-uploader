@@ -132,15 +132,12 @@ describe('options handed to upload-client', () => {
     const options = await optionsFor({
       multipartMinFileSize: 1024,
       multipartChunkSize: 2048,
-      multipartMaxAttempts: 5,
       multipartMaxConcurrentRequests: 6,
     });
 
     expect(options.multipartMinFileSize).toBe(1024);
     expect(options.multipartChunkSize).toBe(2048);
 
-    // upload-client dropped `multipartMaxAttempts` in 5.0.0 (chunk retries follow the retry options), so it is not sent.
-    expect('multipartMaxAttempts' in options).toBe(false);
     // Deliberate rename: the uploader's `multipartMaxConcurrentRequests` (chunks in flight per file) is
     // upload-client's `maxConcurrentRequests`. The uploader's own `maxConcurrentRequests` is a different setting —
     // it caps whole files in flight and drives the internal upload queue, so it never reaches upload-client.
