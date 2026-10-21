@@ -215,6 +215,9 @@ export class UploadController {
     try {
       const abortController = new AbortController();
       entry.set('abortController', abortController);
+      // Destroying the ctx cancels the request (and any `beforeUpload` hook) the way removing the file does: nothing
+      // is sent once the uploader is gone.
+      lifetime.signal.addEventListener('abort', () => abortController.abort(), { once: true });
 
       const uploadTask = async (): Promise<UploadcareFile> => {
         lifetime.signal.throwIfAborted();

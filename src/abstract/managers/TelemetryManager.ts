@@ -12,6 +12,7 @@ import { controllerLogger } from '../controllerLogger';
 import { AppInfo } from '../controllers/AppInfo';
 import { ConfigController } from '../controllers/ConfigController';
 import { RouterController } from '../controllers/RouterController';
+import { lifetimeOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { EventBus } from '../EventBus';
@@ -211,7 +212,9 @@ export class TelemetryManager {
   }
 
   public sendEvent(body: TelemetryEventBody): void {
-    if (!this._isEnabled) {
+    // Nothing leaves the uploader once its ctx is destroyed — not even an event a late caller reports.
+    const lifetime = lifetimeOf(this);
+    if (lifetime.signal.aborted || !this._isEnabled) {
       return;
     }
     const payload = this._formattingPayload({
@@ -244,7 +247,8 @@ export class TelemetryManager {
       // editor demo). One microtask lands after the seed; the opt-out is then
       // visible and the event is dropped instead of sent.
       await Promise.resolve();
-      if (!this._isEnabled) {
+      // Also drops events still queued when the ctx is destroyed.
+      if (lifetime.signal.aborted || !this._isEnabled) {
         return;
       }
       this._lastPayload = payload;

@@ -466,6 +466,28 @@ describe('TelemetryManager', () => {
     });
   });
 
+  describe('once the ctx is disposed', () => {
+    it('drops an event reported afterwards, without throwing', async () => {
+      const { manager, container } = setup();
+      container.dispose();
+
+      expect(() => manager.sendEvent({ eventType: EventType.MODAL_OPEN })).not.toThrow();
+      expect(() => manager.sendEventError(new Error('late'))).not.toThrow();
+      await flush();
+
+      expect(sendEventMock).not.toHaveBeenCalled();
+    });
+
+    it('drops an event still queued when the ctx is disposed', async () => {
+      const { manager, container } = setup();
+      manager.sendEvent({ eventType: EventType.MODAL_OPEN });
+      container.dispose();
+      await flush();
+
+      expect(sendEventMock).not.toHaveBeenCalled();
+    });
+  });
+
   it('dedupes payloads that differ only in key order', async () => {
     const { manager, enable } = setup();
     enable();
