@@ -189,8 +189,17 @@ How to bind work — reference conversions: `CameraSource.ts`, `Thumb.ts`, `Uplo
    cleans up on its own.
 4. A `catch` that wraps a guarded await opens with `if (isAbortError(error)) throw error;`, so the abort reaches
    `runTask` instead of being reported as a failure.
-5. Rate-limited block handlers use `@debounced` / `@throttled` (`src/lit/rate-limited-method.ts`): a call after release
-   no-ops and a pending one is cancelled; `cancelPending(this._method)` cancels one by hand.
+5. Rate-limited handlers on `ChildBlock` / `EditorBlock` use `@debounced` / `@throttled`
+   (`src/lit/rate-limited-method.ts`): a call after release no-ops and a pending one is cancelled;
+   `cancelPending(this._method)` cancels one by hand.
+
+**Nothing leaves a destroyed uploader** — no request, telemetry, DOM event, or user callback (validator, resolver,
+plugin hook). Each outlet drops at its single exit, so call sites stay plain: `EventBus.emit` (every DOM event, `api.on`
+and telemetry go through it), `TelemetryManager.sendEvent`, and the entry's `AbortController`, which the ctx lifetime
+aborts mid-upload. A new outlet gets the same guard at its exit. Reading a disposed container throws
+(`[uc] X read after the ctx container was disposed …`): that error marks work outliving its uploader — bind the work,
+don't catch the error. Pinned by `tests/flow/destroy.e2e.test.tsx`; moving the uploader in the DOM by
+`tests/flow/remount*.e2e.test.tsx`.
 
 A guard stays only where absence is normal rather than late: `@injectOrNull` / `useOrNull` for a dependency bound
 later or conditionally (uploader-scope tokens, `PluginController`), a render path that runs before adoption, a
@@ -199,8 +208,10 @@ synchronous check during connect. Watch out:
 - The guard checks when the awaited work settles. A request already on the network keeps running unless it received
   the signal.
 - An unguarded await still resumes after teardown — guard each one, not just the first.
-- `controller.destroy()` called directly (as some specs do) bypasses the container lifetime, which is why
-  `ValidationController`, `PluginController` and friends keep their `_destroyed` flags.
+- A synchronous DOM move keeps the ctx but releases and re-adopts every block, so block tasks restart; only a gap of
+  a macrotask destroys the ctx (`ChildBlock._teardownCtxIfUnreferenced`).
+- Only container-built instances have a ctx lifetime. `A11y` is also built with `new` by the standalone editor, so it
+  keeps its `_destroyed` flag.
 
 ## CDN URLs
 
