@@ -344,12 +344,9 @@ describe('regular: deferred move', () => {
     expect(uploader.config.multipleMax).toBe(7);
   });
 
-  // BUG(remount): a `<uc-file-item>` left in the upload list keeps the `uid` of an entry from the destroyed ctx. On
-  // re-attach it adopts the fresh container and `FileItem._updatePluginFileActions` (src/blocks/FileItem/FileItem.ts:237)
-  // calls `api.getOutputItem(uid)`, expecting `undefined` for a missing entry — but `getOutputItem` throws, so the
-  // `whenController(PluginController)` immediate callback warns "Entry with ID … not found in the upload collection"
-  // (src/abstract/di/ControllerContainer.ts:244).
-  it.fails('re-attaches a list that showed files from the old ctx without warnings', async () => {
+  // A `<uc-file-item>` left in the upload list keeps the `uid` of an entry from the destroyed ctx until the list
+  // re-renders; it must adopt the fresh container without asking it for that entry.
+  it('re-attaches a list that showed files from the old ctx without warnings', async () => {
     const uploader = await renderSolution('regular');
     uploader.api.addFileFromObject(IMAGE.PIXEL);
     uploader.api.setCurrentActivity('upload-list');
