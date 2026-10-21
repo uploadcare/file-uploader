@@ -139,12 +139,8 @@ describe('options handed to upload-client', () => {
     expect(options.multipartMinFileSize).toBe(1024);
     expect(options.multipartChunkSize).toBe(2048);
 
-    // QUIRK(config): `multipartMaxAttempts` is documented as "the maximum number of retry attempts for failed
-    // multipart upload chunks" and is forwarded to `uploadFile` (LitUploaderBlock.ts:440), but the option does not
-    // exist in @uploadcare/upload-client — the string appears nowhere in the package, and `FileFromOptions` has no
-    // such field. It arrives and is ignored, so setting it has no effect at all. The cast is deliberate: the option
-    // is genuinely not part of the upload-client type. Pinned as current behaviour, not endorsed.
-    expect((options as { multipartMaxAttempts?: unknown }).multipartMaxAttempts).toBe(5);
+    // upload-client dropped `multipartMaxAttempts` in 5.0.0 (chunk retries follow the retry options), so it is not sent.
+    expect('multipartMaxAttempts' in options).toBe(false);
     // Deliberate rename: the uploader's `multipartMaxConcurrentRequests` (chunks in flight per file) is
     // upload-client's `maxConcurrentRequests`. The uploader's own `maxConcurrentRequests` is a different setting —
     // it caps whole files in flight and drives the internal upload queue, so it never reaches upload-client.
