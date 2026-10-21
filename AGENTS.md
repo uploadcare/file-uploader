@@ -166,6 +166,42 @@ the state mechanism.
 
 ---
 
+## Async work and lifetimes
+
+Async work that can outlive its owner (a block unmounted mid-await, a ctx torn down while an upload is queued) binds
+to the owner's **lifetime** and stops at its next guarded await. Every owner holds one `Lifetime`
+(`src/abstract/di/Lifetime.ts`), ended first thing on teardown:
+
+| Owner | One lifetime per | API |
+|-------|------------------|-----|
+| `ChildBlock` | adoption | `runTask(task)`, `whileAdopted(work, dispose?)`, `adoptionSignal` |
+| `EditorBlock` | attached editor controller | same three names |
+| container-built controller | ctx container (ended in `dispose()`) | `lifetimeOf(this)` → `.run(task, onError)`, `.guard(work, dispose?)`, `.signal` |
+
+How to bind work — reference conversions: `CameraSource.ts`, `Thumb.ts`, `UploadController.ts`:
+
+1. Start every async entry point (event handler, `controllerReady`, observer callback, timer tick) with `runTask` /
+   `lifetime.run`. It starts synchronously, swallows the lifetime's abort and logs any other error.
+2. Wrap every await of outside work (browser API, `fetch`, image preload, `updateComplete`, a plugin hook) in
+   `whileAdopted` / `guard`. Pass `dispose` for a resource that leaks if it arrives late (a media stream, an object
+   URL). After the await, read `@inject` fields directly.
+3. Hand `adoptionSignal` / `.signal` to every API that takes one (`addEventListener`, `fetch`, upload-client) so it
+   cleans up on its own.
+4. A `catch` that wraps a guarded await opens with `if (isAbortError(error)) throw error;`, so the abort reaches
+   `runTask` instead of being reported as a failure.
+5. Rate-limited block handlers use `@debounced` / `@throttled` (`src/lit/rate-limited-method.ts`): a call after release
+   no-ops and a pending one is cancelled; `cancelPending(this._method)` cancels one by hand.
+
+A guard stays only where absence is normal rather than late: `@injectOrNull` / `useOrNull` for a dependency bound
+later or conditionally (uploader-scope tokens, `PluginController`), a render path that runs before adoption, a
+synchronous check during connect. Watch out:
+
+- The guard checks when the awaited work settles. A request already on the network keeps running unless it received
+  the signal.
+- An unguarded await still resumes after teardown — guard each one, not just the first.
+- `controller.destroy()` called directly (as some specs do) bypasses the container lifetime, which is why
+  `ValidationController`, `PluginController` and friends keep their `_destroyed` flags.
+
 ## CDN URLs
 
 Every CDN URL is built and read through **`@uploadcare/cdn-url`**. The v1 string
