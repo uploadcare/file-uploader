@@ -60,3 +60,26 @@ describe.each(cases)('$name activation across a reconnect', ({ Block, tag, tabId
     await vi.waitFor(() => expect(activate).toHaveBeenCalledTimes(2));
   });
 });
+
+describe('EditorImageCropper commit without a laid-out image box', () => {
+  it('keeps the committed crop and logs nothing', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const root = document.createElement('uc-test-activation-root') as ActivationRoot;
+    document.body.append(root);
+    mounted.push(root);
+    const controller = root.provider.value;
+    const crop = { dimensions: [50, 50], coords: [10, 10] } as const;
+    controller.set('*editorTransformations', { crop: { dimensions: [...crop.dimensions], coords: [...crop.coords] } });
+
+    const cropper = document.createElement('uc-test-activation-cropper') as EditorImageCropper;
+    root.append(cropper);
+    await cropper.updateComplete;
+    // An image is known but the box has not been measured yet: 0×0, as while the editor is detached mid-move.
+    const internals = cropper as unknown as { _imageSize: { width: number; height: number }; _commit(): void };
+    internals._imageSize = { width: 100, height: 100 };
+    internals._commit();
+
+    expect(controller.get('*editorTransformations').crop).toEqual({ dimensions: [50, 50], coords: [10, 10] });
+    expect(error).not.toHaveBeenCalled();
+  });
+});
