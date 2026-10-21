@@ -120,9 +120,10 @@ export class LocaleManager {
                 return;
               }
               this._definition = definition;
-              this._applyPluginLocales(localeName);
-
+              // Layered built-in < plugin < `localeDefinitionOverride`: the dictionary goes first so a plugin's
+              // translation of a built-in key survives a locale switch.
               this._applyOverrides(localeName, definition);
+              this._applyPluginLocales(localeName);
             },
             (error) => this._log.error(`Failed to resolve locale "${localeName}"`, error),
           );
@@ -200,7 +201,7 @@ export class LocaleManager {
     this._pluginKeys = new Set(supplied.keys());
 
     for (const [key, value] of supplied) {
-      this._setLocale(key, value, true);
+      this._setLocale(key, overrides?.[key] ?? value, true);
     }
   }
 

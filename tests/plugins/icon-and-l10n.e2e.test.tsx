@@ -119,4 +119,45 @@ describe('plugin l10n', () => {
     await expect.element(within(root).getByText('Translated Upload')).not.toBeInTheDocument();
     await expect.element(within(root).getByText('Upload files')).toBeVisible();
   });
+
+  it("keeps a plugin's translation of a built-in string across locale switches", async () => {
+    defineLocale('de', { 'upload-files': 'Dateien hochladen' } as never);
+    const plugin = createTestPlugin({
+      id: 'l10n-builtin',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerL10n({
+          en: { 'upload-files': 'Plugin upload' },
+          de: { 'upload-files': 'Plugin hochladen' },
+        });
+      },
+    });
+
+    const { config, api, root } = await renderSolution('regular', { plugins: [plugin] });
+    api.setModalState(true);
+    await expect.element(within(root).getByText('Plugin upload')).toBeVisible();
+
+    config.localeName = 'de';
+    await expect.element(within(root).getByText('Plugin hochladen')).toBeVisible();
+
+    config.localeName = 'en';
+    await expect.element(within(root).getByText('Plugin upload')).toBeVisible();
+  });
+
+  it('lets localeDefinitionOverride win over a plugin translation', async () => {
+    const plugin = createTestPlugin({
+      id: 'l10n-overridden',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerL10n({ en: { 'upload-files': 'Plugin upload' } });
+      },
+    });
+
+    const { api, root } = await renderSolution('regular', {
+      plugins: [plugin],
+      localeDefinitionOverride: { en: { 'upload-files': 'My upload' } },
+    });
+    api.setModalState(true);
+
+    await expect.element(within(root).getByText('My upload')).toBeVisible();
+    await expect.element(within(root).getByText('Plugin upload')).not.toBeInTheDocument();
+  });
 });
