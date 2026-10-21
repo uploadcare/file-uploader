@@ -21,13 +21,14 @@ const applyConfig = (config: ConfigController, overrides: Partial<ConfigType>): 
 
 describe('SecureUploadsController', () => {
   let controller: SecureUploadsController;
+  let container: ControllerContainer;
   // A resolver that throws is reported through the container-owned
   // `TelemetryManager.sendEventError` (the never-throwing error sink) — spied so
   // the test can assert the report without emitting real telemetry.
   let sendEventError: MockInstance<TelemetryManager['sendEventError']>;
 
   const createController = (cfgOverrides: Partial<ConfigType> = {}) => {
-    const container = new ControllerContainer();
+    container = new ControllerContainer();
     const config = container.get(ConfigController);
     applyConfig(config, cfgOverrides);
     sendEventError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {});
@@ -422,6 +423,43 @@ describe('SecureUploadsController', () => {
 
         await controller.getSecureToken(); // cache cleared → re-resolves
         expect(resolver).toHaveBeenCalledTimes(2);
+      });
+    });
+
+    describe('teardown while the resolver is pending', () => {
+      const pendingResolver = () => {
+        let settle: { resolve: (token: SecureUploadsSignatureAndExpire) => void; reject: (err: Error) => void } = {
+          resolve: () => {},
+          reject: () => {},
+        };
+        const resolver = vi.fn(
+          () => new Promise<SecureUploadsSignatureAndExpire>((resolve, reject) => (settle = { resolve, reject })),
+        );
+        createController({ secureUploadsSignatureResolver: resolver });
+        return { settle: () => settle };
+      };
+
+      it('drops a late failure: nothing is logged or reported', async () => {
+        const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const { settle } = pendingResolver();
+        const pending = controller.getSecureToken();
+
+        container.dispose();
+        settle().reject(new Error('resolver failed'));
+
+        await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+        expect(error).not.toHaveBeenCalled();
+        expect(sendEventError).not.toHaveBeenCalled();
+      });
+
+      it('drops a late token instead of handing it out', async () => {
+        const { settle } = pendingResolver();
+        const pending = controller.getSecureToken();
+
+        container.dispose();
+        settle().resolve({ secureSignature: 'late', secureExpire: String(Math.floor(Date.now() / 1000) + 3600) });
+
+        await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
       });
     });
   });
