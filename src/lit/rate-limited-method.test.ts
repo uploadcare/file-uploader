@@ -1,12 +1,26 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { debounced, registerHostRateLimited, throttled } from './rate-limited-method';
+import { Lifetime } from '../abstract/di/Lifetime';
+import { cancelPending, debounced, throttled } from './rate-limited-method';
 
-// A minimal `ChildBlock`-shaped host: the decorator reads only `containerOrNull`
-// (a truthy container means "adopted"). Methods are public here purely so the
-// tests can invoke them without bracket access.
+// A minimal `ChildBlock`-shaped host: the decorator reads only `adoptionSignal`
+// (aborted means "not adopted"). `adopt()` / `release()` mirror ChildBlock's
+// per-adoption `Lifetime`. Methods are public here purely so the tests can
+// invoke them without bracket access.
 class Host {
-  public containerOrNull: object | null = {};
+  private _lifetime = new Lifetime();
   public calls: string[] = [];
+
+  public get adoptionSignal(): AbortSignal {
+    return this._lifetime.signal;
+  }
+
+  public adopt(): void {
+    this._lifetime = new Lifetime();
+  }
+
+  public release(): void {
+    this._lifetime.end();
+  }
 
   @throttled(100)
   public onThrottled(tag: string): void {
@@ -66,49 +80,69 @@ describe('@throttled / @debounced', () => {
   it('adopted-guard: a tick that fires after release no-ops (body never runs)', () => {
     const host = new Host();
     host.onDebounced('a'); // scheduled while adopted
-    host.containerOrNull = null; // released before the timer fires
+    host.release(); // released before the timer fires
 
     vi.advanceTimersByTime(100);
     expect(host.calls).toEqual([]); // guard bailed — @inject reads would be unsafe
 
     // Re-adopting and firing again runs normally (same limiter reused).
-    host.containerOrNull = {};
+    host.adopt();
     host.onDebounced('b');
     vi.advanceTimersByTime(100);
     expect(host.calls).toEqual(['d:b']);
   });
 });
 
-describe('registerHostRateLimited', () => {
-  it('returns one teardown that cancels every pending limiter on the host', () => {
+describe('cancel on lifetime end', () => {
+  it('cancels every pending limiter on the host when its lifetime ends', () => {
     const host = new Host();
-    const [teardown] = registerHostRateLimited(host);
-    expect(teardown).toBeTypeOf('function');
 
     host.onDebounced('a'); // pending
-    teardown!(); // release → cancel
+    host.onThrottled('x'); // leading edge runs now
+    host.onThrottled('y'); // trailing pending
+    host.release(); // release → cancel
+    host.adopt(); // re-adopted before the timers would fire
     vi.advanceTimersByTime(100);
-    expect(host.calls).toEqual([]); // pending debounce was cancelled
+    expect(host.calls).toEqual(['t:x']); // both pending ticks were cancelled
   });
 
   it('reuses the same limiter across a release cycle (re-adoption does not re-create)', () => {
     const host = new Host();
     const ref = host.onDebounced;
-    const [teardown] = registerHostRateLimited(host);
 
     host.onDebounced('a');
-    teardown!(); // cancel pending
+    host.release(); // cancel pending
+    host.adopt();
     expect(host.onDebounced).toBe(ref); // same cached bound limiter
 
     host.onDebounced('b'); // works after the cancel
     vi.advanceTimersByTime(100);
     expect(host.calls).toEqual(['d:b']);
+
+    // The new lifetime is armed too: a call in it is cancelled when it ends.
+    host.onDebounced('c');
+    host.release();
+    host.adopt();
+    vi.advanceTimersByTime(100);
+    expect(host.calls).toEqual(['d:b']);
   });
 
-  it('returns an empty array for a host with no rate-limited methods', () => {
-    class Plain {
-      public containerOrNull: object | null = {};
-    }
-    expect(registerHostRateLimited(new Plain())).toEqual([]);
+  it('a call before adoption runs if the host is adopted by the time it fires', () => {
+    const host = new Host();
+    host.release();
+
+    host.onDebounced('a'); // not adopted yet
+    host.adopt();
+    vi.advanceTimersByTime(100);
+    expect(host.calls).toEqual(['d:a']);
+  });
+
+  it('cancelPending cancels a pending call by hand', () => {
+    const host = new Host();
+
+    host.onDebounced('a');
+    cancelPending(host.onDebounced);
+    vi.advanceTimersByTime(100);
+    expect(host.calls).toEqual([]);
   });
 });

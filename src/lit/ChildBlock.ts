@@ -21,7 +21,6 @@ import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { LightDomMixin } from './LightDomMixin';
 import { createL10n } from './l10n';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
-import { registerHostRateLimited } from './rate-limited-method';
 import { registerHostSubscriptions } from './subscription';
 
 // `SignalWatcher` sits at the base of the mixin chain so it wraps
@@ -421,18 +420,14 @@ export abstract class ChildBlock extends ChildBlockBase {
     }
     // Wire this block's declarative reactive methods now that the container is
     // adopted (so their `getTracked` / controller reads resolve): `@effect`
-    // (signal reactions; connected-guarded disposers — see `registerHostEffects`),
-    // `@subscription` (imperative subscribes returning a teardown), and
-    // `@throttled`/`@debounced` (rate-limited handlers whose pending timer is
-    // cancelled on release). All are auto-disposed on release, so a block never
-    // tracks a disposer by hand.
+    // (signal reactions; connected-guarded disposers — see `registerHostEffects`)
+    // and `@subscription` (imperative subscribes returning a teardown). Both are
+    // auto-disposed on release, so a block never tracks a disposer by hand.
+    // (`@throttled`/`@debounced` need no wiring: they follow `adoptionSignal`.)
     for (const dispose of registerHostEffects(this)) {
       this._disposables.add(dispose);
     }
     for (const teardown of registerHostSubscriptions(this)) {
-      this._disposables.add(teardown);
-    }
-    for (const teardown of registerHostRateLimited(this)) {
       this._disposables.add(teardown);
     }
     this.requestUpdate();

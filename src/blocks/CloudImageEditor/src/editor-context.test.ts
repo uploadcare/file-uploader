@@ -3,6 +3,7 @@ import { html, LitElement } from 'lit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
+import { debounced, throttled } from '../../../lit/rate-limited-method';
 import { cloudImageEditorContext, EditorBlock } from './editor-context';
 
 class LifetimeEditorRoot extends LightDomMixin(LitElement) {
@@ -18,6 +19,15 @@ class LifetimeEditorRoot extends LightDomMixin(LitElement) {
 customElements.define('uc-test-lifetime-editor-root', LifetimeEditorRoot);
 
 class LifetimeEditorChild extends EditorBlock {
+  public calls: string[] = [];
+  @debounced(100)
+  public onDebounced(tag: string): void {
+    this.calls.push(`d:${tag}:${this.editorController ? 'attached' : 'none'}`);
+  }
+  @throttled(100)
+  public onThrottled(tag: string): void {
+    this.calls.push(`t:${tag}`);
+  }
   public get signal(): AbortSignal {
     return this.adoptionSignal;
   }
@@ -118,5 +128,56 @@ describe('EditorBlock adoption lifetime', () => {
     await vi.waitFor(() =>
       expect(error).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), 'an async task failed', failure),
     );
+  });
+});
+
+describe('@debounced / @throttled on an EditorBlock', () => {
+  it('runs while attached', () => {
+    vi.useFakeTimers();
+    try {
+      const { child } = mount();
+      child.onDebounced('a');
+      vi.advanceTimersByTime(100);
+      expect(child.calls).toEqual(['d:a:attached']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('cancels a pending call on disconnect and no-ops calls while detached', () => {
+    vi.useFakeTimers();
+    try {
+      const { root, child } = mount();
+      child.onDebounced('a');
+      child.onThrottled('x'); // leading edge runs now
+      child.onThrottled('y'); // trailing pending
+      child.remove();
+      child.onDebounced('b'); // detached: would read a missing editorController
+      vi.advanceTimersByTime(100);
+      expect(child.calls).toEqual(['t:x']);
+
+      // Reconnect reuses the limiter and runs again.
+      const ref = child.onDebounced;
+      root.append(child);
+      expect(child.onDebounced).toBe(ref);
+      child.onDebounced('c');
+      vi.advanceTimersByTime(100);
+      expect(child.calls).toEqual(['t:x', 'd:c:attached']);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('cancels a pending call when the provider swaps in another controller', () => {
+    vi.useFakeTimers();
+    try {
+      const { root, child } = mount();
+      child.onDebounced('a');
+      root.provider.setValue(new CloudImageEditorController());
+      vi.advanceTimersByTime(100);
+      expect(child.calls).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
