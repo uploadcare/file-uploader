@@ -326,6 +326,30 @@ describe('UploadController', () => {
       expect(mockUploadFile).not.toHaveBeenCalled();
     });
 
+    it('does not warn about a hook that rejects because the upload was cancelled', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      let started = false;
+      const { controller, collection } = setup({
+        hooks: [
+          makeHook({
+            handler: ({ signal }) => {
+              started = true;
+              return new Promise((_, reject) => signal.addEventListener('abort', () => reject(signal.reason)));
+            },
+          }),
+        ],
+      });
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+
+      const pending = controller.uploadEntry(id);
+      await vi.waitFor(() => expect(started).toBe(true));
+      collection.read(id)?.get('abortController')?.abort();
+      await pending;
+
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
     // The success write-back overwrites fileName/mimeType with the server's
     // values, so the hook's re-derivation is verified by capturing the entry
     // state at upload time (after the hook ran, before the result lands).

@@ -388,6 +388,24 @@ describe('PluginController', () => {
       expect(set).not.toHaveBeenCalled();
     });
 
+    it('does not warn about a hook that rejects because the ctx was disposed', async () => {
+      const t = setup();
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      await t.sync([
+        withOnAddHook(
+          ({ signal }) =>
+            new Promise((_, reject) => signal.addEventListener('abort', () => reject(signal.reason))) as never,
+        ),
+      ]);
+
+      const pending = t.controller.runOnAddHooks(makeEntry(new File(['x'], 'a.txt')));
+      t.container.dispose();
+      await pending;
+
+      expect(warn).not.toHaveBeenCalled();
+      warn.mockRestore();
+    });
+
     it('hands the hook a signal that aborts when the ctx is disposed', async () => {
       const t = setup();
       let received: AbortSignal | undefined;
