@@ -1,8 +1,9 @@
 import { fileIsImage } from '../../../utils/fileTypes';
 import { controllerLogger } from '../../controllerLogger';
 import { ConfigController } from '../../controllers/ConfigController';
-import { containerOf } from '../../di/ControllerContainer';
+import { containerOf, lifetimeOf } from '../../di/ControllerContainer';
 import { Disposables } from '../../di/Disposables';
+import { isAbortError } from '../../di/Lifetime';
 import type { Logger } from '../../logger';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
@@ -73,7 +74,10 @@ export class PluginController {
           // Recover the queue: a rejected emission must not permanently poison the
           // chain so later emissions never run. (`_pluginsUpdate` always resolves.)
           .catch((error) => {
-            this._log.error('Failed to sync plugins', error);
+            // The ctx was torn down mid-sync: nothing left to report to.
+            if (!isAbortError(error)) {
+              this._log.error('Failed to sync plugins', error);
+            }
           });
       }),
     );
@@ -110,6 +114,7 @@ export class PluginController {
         try {
           await this._registerPlugin(plugin);
         } catch (error) {
+          if (isAbortError(error)) throw error;
           this._purgePlugin(plugin.id);
           this._notifySubscribers();
           this._log.error(`Plugin "${plugin.id}" setup() threw an error`, error);
@@ -138,7 +143,11 @@ export class PluginController {
     const uploaderApi = this._deps.getUploaderApi();
     let pluginDispose: Unsubscribe | undefined;
     try {
-      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
+      // A setup that settles after the ctx is torn down is disposed right away and never registered.
+      pluginDispose =
+        (await lifetimeOf(this).guard(Promise.resolve(plugin.setup({ pluginApi, uploaderApi })), (lateDispose) =>
+          this._disposePlugin(lateDispose ?? undefined),
+        )) ?? undefined;
     } catch (error) {
       for (const unsub of configSubscriptions) {
         try {
@@ -168,13 +177,17 @@ export class PluginController {
       }
     }
 
+    this._disposePlugin(registered.dispose);
+    this._plugins.delete(pluginId);
+    this._notifySubscribers();
+  }
+
+  private _disposePlugin(dispose: Unsubscribe | undefined): void {
     try {
-      registered.dispose?.();
+      dispose?.();
     } catch (error) {
       this._log.warn('Failed to dispose plugin', error);
     }
-    this._plugins.delete(pluginId);
-    this._notifySubscribers();
   }
 
   public snapshot(): PluginRegistrySnapshot {

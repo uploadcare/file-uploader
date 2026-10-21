@@ -1,9 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { ControllerContainer } from '../../di/ControllerContainer';
 import { TypedData } from '../../TypedData';
 import { initialUploadEntryData, type UploadEntryData, type UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginController, type PluginControllerDeps } from './PluginController';
 import type { PluginRegistry } from './PluginRegistry';
 import type { PluginApi, PluginUploaderApi, UploaderPlugin } from './PluginTypes';
+
+// Built through a container, as in production (`ensurePluginManager`), so the
+// controller reaches the ctx lifetime.
+const build = (deps: PluginControllerDeps) => {
+  const container = new ControllerContainer();
+  container.bind(PluginController, () => new PluginController(deps));
+  return { container, controller: container.get(PluginController) };
+};
 
 // A `buildApi` that wires the registry register* methods onto the real registry,
 // so registrations show up in `snapshot()` / get purged on unregister. Pushes a
@@ -37,7 +46,7 @@ const setup = () => {
     } as unknown as PluginApi;
   };
 
-  const controller = new PluginController({
+  const { container, controller } = build({
     buildApi,
     getUploaderApi,
     watchPlugins: (cb) => {
@@ -52,7 +61,7 @@ const setup = () => {
   };
   const push = (pluginsPromise: Promise<UploaderPlugin[] | undefined>) => onCompute?.(pluginsPromise);
 
-  return { controller, sync, push, getUploaderApi, unwatch, configUnsubs };
+  return { container, controller, sync, push, getUploaderApi, unwatch, configUnsubs };
 };
 
 const sourcePlugin = (id: string, setup?: UploaderPlugin['setup']): UploaderPlugin => ({
@@ -223,6 +232,28 @@ describe('PluginController', () => {
 
       expect(t.controller.snapshot().sources).toHaveLength(0);
     });
+
+    it('disposes a plugin whose async setup settles after teardown, without registering it', async () => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const t = setup();
+      const dispose = vi.fn();
+      let finishSetup: ((dispose: () => void) => void) | undefined;
+      t.push(
+        Promise.resolve([sourcePlugin('late', () => new Promise<() => void>((resolve) => (finishSetup = resolve)))]),
+      );
+      await vi.advanceTimersByTimeAsync(0);
+      expect(finishSetup).toBeDefined(); // setup is in flight
+      const onChange = vi.fn();
+      t.controller.onPluginsChange(onChange);
+
+      t.container.dispose();
+      finishSetup?.(dispose);
+      await t.controller.pluginsReady();
+
+      expect(dispose).toHaveBeenCalledTimes(1);
+      expect(onChange).not.toHaveBeenCalled(); // never registered
+      expect(error).not.toHaveBeenCalled(); // the teardown is not reported as a setup failure
+    });
   });
 
   describe('onPluginsChange', () => {
@@ -365,7 +396,7 @@ describe('PluginController', () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       let onCompute: ((p: Promise<UploaderPlugin[] | undefined>) => void) | undefined;
-      const controller = new PluginController({
+      const { controller } = build({
         buildApi: (_registry, _pluginId, subs) => {
           subs.push(() => {
             throw new Error('unsub boom');
@@ -401,7 +432,7 @@ describe('PluginController', () => {
     it('contains a config-subscription that throws during unregister', async () => {
       vi.spyOn(console, 'warn').mockImplementation(() => {});
       let onCompute: ((p: Promise<UploaderPlugin[] | undefined>) => void) | undefined;
-      const controller = new PluginController({
+      const { controller } = build({
         buildApi: (_registry, _pluginId, subs) => {
           subs.push(() => {
             throw new Error('unsub boom');
