@@ -30,6 +30,14 @@ type ImageSrcOptions = {
   value?: number;
 };
 
+type FaderActivation = {
+  url: string;
+  operation?: OperationKey;
+  value?: number;
+  filter?: FilterName;
+  fromViewer?: boolean;
+};
+
 function isOperationKey(value: unknown): value is OperationKey {
   return typeof value === 'string' && value in COLOR_OPERATIONS_CONFIG;
 }
@@ -131,6 +139,8 @@ export class EditorImageFader extends EditorBlock {
       this._lastOriginalUrl = controller.get('*originalUrl');
       this._lastColorPreview = controller.get('*colorPreview');
       this.subscribeEditor(() => this._syncFromState());
+      // A (re)attach can find the fader ready to show already — e.g. after an activation aborted by a reconnect.
+      this._syncFromState();
     });
   }
 
@@ -558,21 +568,28 @@ export class EditorImageFader extends EditorBlock {
     );
   }
 
-  public async activate({
-    url,
-    operation,
-    value,
-    filter,
-    fromViewer,
-  }: {
-    url: string;
-    operation?: OperationKey;
-    value?: number;
-    filter?: FilterName;
-    fromViewer?: boolean;
-  }): Promise<void> {
+  public async activate(activation: FaderActivation): Promise<void> {
+    if (this.adoptionSignal.aborted) {
+      return;
+    }
     this._isActive = true;
     this._hidden = false;
+    // Released before this activation finished (disconnect, controller swap): roll back right away, so the next
+    // attach's `_syncFromState` shows the fader again instead of treating it as shown.
+    const signal = this.adoptionSignal;
+    const rollback = () => {
+      this._isActive = false;
+      this._shown = false;
+    };
+    signal.addEventListener('abort', rollback, { once: true });
+    try {
+      await this._activate(activation);
+    } finally {
+      signal.removeEventListener('abort', rollback);
+    }
+  }
+
+  private async _activate({ url, operation, value, filter, fromViewer }: FaderActivation): Promise<void> {
     await this.whileAdopted(this.updateComplete);
     const controller = this.editorController;
     this._url = url;

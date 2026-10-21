@@ -120,6 +120,8 @@ export class EditorImageCropper extends EditorBlock {
       this._lastAspectRatio = this.editorController.get('*currentAspectRatio');
       this._lastNetworkProblems = this.editorController.get('*networkProblems');
       this._lastOriginalUrl = this.editorController.get('*originalUrl');
+      // A (re)attach can find the cropper ready to activate already — e.g. after an activation aborted by a reconnect.
+      this._syncActivation();
 
       this.subscribeEditor(() => {
         if (this._reacting) {
@@ -458,7 +460,7 @@ export class EditorImageCropper extends EditorBlock {
   }
 
   public async activate(imageSize: ImageSize, { fromViewer }: { fromViewer?: boolean } = {}): Promise<void> {
-    if (this._isActive) {
+    if (this._isActive || this.adoptionSignal.aborted) {
       return;
     }
     this._isActive = true;
@@ -466,6 +468,15 @@ export class EditorImageCropper extends EditorBlock {
     // below bumps it, so this fire-and-forget activation aborts instead of
     // drawing a superseded image (see `_activationGeneration`).
     const generation = this._activationGeneration;
+    // Released before this activation finished (disconnect, controller swap): roll back right away, so the next
+    // attach's `_syncActivation` activates again instead of seeing a cropper that never finished activating.
+    const signal = this.adoptionSignal;
+    const rollback = () => {
+      if (generation === this._activationGeneration) {
+        this._isActive = false;
+      }
+    };
+    signal.addEventListener('abort', rollback, { once: true });
     await this.whileAdopted(this.updateComplete);
     if (generation !== this._activationGeneration) {
       return;
@@ -502,6 +513,7 @@ export class EditorImageCropper extends EditorBlock {
       }
     });
     this._observer.observe(this);
+    signal.removeEventListener('abort', rollback);
   }
   public deactivate({ reset = false }: { reset?: boolean } = {}): void {
     if (!this._isActive) {
