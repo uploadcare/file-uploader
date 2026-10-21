@@ -181,7 +181,8 @@ to the owner's **lifetime** and stops at its next guarded await. Every owner hol
 How to bind work — reference conversions: `CameraSource.ts`, `Thumb.ts`, `UploadController.ts`:
 
 1. Start every async entry point (event handler, `controllerReady`, observer callback, timer tick) with `runTask` /
-   `lifetime.run`. It starts synchronously, swallows the lifetime's abort and logs any other error.
+   `lifetime.run`. It starts synchronously, swallows the lifetime's abort and logs any other error. Lint enforces it:
+   `@typescript-eslint/no-floating-promises` with `ignoreVoid: false` rejects an unhandled or `void`-ed promise in `src/`.
 2. Wrap every await of outside work (browser API, `fetch`, image preload, `updateComplete`, a plugin hook) in
    `whileAdopted` / `guard`. Pass `dispose` for a resource that leaks if it arrives late (a media stream, an object
    URL). After the await, read `@inject` fields directly.
