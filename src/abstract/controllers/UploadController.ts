@@ -109,7 +109,10 @@ export class UploadController {
     for (const uid of uids) {
       this.#activeBatch.add(uid);
       setTimeout(() => {
-        void this.uploadEntry(uid);
+        lifetimeOf(this).run(
+          () => this.uploadEntry(uid),
+          (error) => this._log.error('Upload failed', error),
+        );
       });
     }
   }

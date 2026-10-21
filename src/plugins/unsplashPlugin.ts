@@ -46,10 +46,10 @@ class UcUnsplashActivity extends LitElement {
 
   public override connectedCallback() {
     super.connectedCallback();
-    void this._load();
+    this._load();
   }
 
-  private async _load() {
+  private _load(): void {
     if (!this.accessKey) {
       this._error = 'No Unsplash API key configured.\nAdd unsplash-access-key="YOUR_KEY" to <uc-config>.';
       return;
@@ -58,19 +58,26 @@ class UcUnsplashActivity extends LitElement {
     this._loading = true;
     this._error = null;
 
-    try {
-      const params = new URLSearchParams({ count: '24', client_id: this.accessKey });
-      if (this._query) params.set('query', this._query);
+    this._fetchPhotos().then(
+      (photos) => {
+        this._photos = photos;
+        this._loading = false;
+      },
+      (err: unknown) => {
+        this._error = err instanceof Error ? err.message : 'Failed to load photos';
+        this._loading = false;
+      },
+    );
+  }
 
-      const res = await fetch(`https://api.unsplash.com/photos/random?${params}`);
-      if (!res.ok) throw new Error(`Unsplash API error: ${res.status} ${res.statusText}`);
+  private async _fetchPhotos(): Promise<UnsplashPhoto[]> {
+    const params = new URLSearchParams({ count: '24', client_id: this.accessKey });
+    if (this._query) params.set('query', this._query);
 
-      this._photos = (await res.json()) as UnsplashPhoto[];
-    } catch (err) {
-      this._error = err instanceof Error ? err.message : 'Failed to load photos';
-    } finally {
-      this._loading = false;
-    }
+    const res = await fetch(`https://api.unsplash.com/photos/random?${params}`);
+    if (!res.ok) throw new Error(`Unsplash API error: ${res.status} ${res.statusText}`);
+
+    return (await res.json()) as UnsplashPhoto[];
   }
 
   private _pick(photo: UnsplashPhoto) {
@@ -114,11 +121,11 @@ class UcUnsplashActivity extends LitElement {
               this._query = (e.target as HTMLInputElement).value;
             }}
             @keydown=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') void this._load();
+              if (e.key === 'Enter') this._load();
             }}
           />
         </div>
-        <button type="button" class="uc-ui-primary-btn" ?disabled=${this._loading} @click=${() => void this._load()}>
+        <button type="button" class="uc-ui-primary-btn" ?disabled=${this._loading} @click=${() => this._load()}>
           ${
             this._loading
               ? html`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation: uc-unsplash-spin 0.7s linear infinite">

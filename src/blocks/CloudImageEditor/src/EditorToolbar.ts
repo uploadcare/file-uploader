@@ -479,7 +479,10 @@ export class EditorToolbar extends EditorBlock {
     }
 
     if (changedProperties.has('activeTab') || changedProperties.has('tabList')) {
-      this.updateComplete.then(() => this._syncTabIndicator());
+      this.runTask(async () => {
+        await this.whileAdopted(this.updateComplete);
+        this._syncTabIndicator();
+      });
     }
   }
 

@@ -1,6 +1,7 @@
 import { debounce } from '../../utils/debounce';
 import { applyInitialCrop } from '../applyInitialCrop';
-import { containerOf } from '../di/ControllerContainer';
+import { controllerLogger } from '../controllerLogger';
+import { containerOf, lifetimeOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';
 import { PluginController } from '../managers/plugin';
 import { TypedData } from '../TypedData';
@@ -77,6 +78,7 @@ export class UploadEventsController {
   @inject(UploadFileEventsController) private readonly _fileEvents!: UploadFileEventsController;
   @inject(UploadCollectionEventsController) private readonly _collectionEvents!: UploadCollectionEventsController;
   @inject(UploadGroupController) private readonly _group!: UploadGroupController;
+  private readonly _log = controllerLogger(this, 'upload-events');
 
   // Active while observing (the v1 `isConnected` guard) — survives disconnect/
   // reconnect cycles; gates the debounced flush + deferred validation/group that
@@ -126,7 +128,10 @@ export class UploadEventsController {
   private _runPluginOnAdd(entry: Entry): void {
     containerOf(this)?.whenController(PluginController, (pluginManager) => {
       if (!this._active) return;
-      pluginManager.runOnAddHooks(entry);
+      lifetimeOf(this).run(
+        () => pluginManager.runOnAddHooks(entry),
+        (error) => this._log.error('Plugin onAdd hooks failed', error),
+      );
     });
   }
 
@@ -233,7 +238,10 @@ export class UploadEventsController {
       collectionState.status === 'success'
     ) {
       const generation = this._groupGeneration;
-      void this._group.create(collectionState, () => this._active && generation === this._groupGeneration);
+      lifetimeOf(this).run(
+        () => this._group.create(collectionState, () => this._active && generation === this._groupGeneration),
+        (error) => this._log.error('Failed to create the output file group', error),
+      );
     }
   }, 300);
 }

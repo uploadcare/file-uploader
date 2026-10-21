@@ -70,7 +70,8 @@ export class SourceBtn extends ChildBlock {
       },
     });
 
-    void this.source.onClick();
+    const { source } = this;
+    this.runTask(() => source.onClick());
   }
 
   public override render() {

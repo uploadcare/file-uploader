@@ -572,13 +572,18 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
-    void this.initEditor();
+    this._runTask(() => this.initEditor());
 
     const hasInitialSource = Boolean(this.uuid || this.cdnUrl);
     const alreadyRequested = changedProperties.has('uuid') || changedProperties.has('cdnUrl');
     if (hasInitialSource && !alreadyRequested) {
-      void this.updateImage();
+      this._runTask(() => this.updateImage());
     }
+  }
+
+  /** Fire-and-forget work bound to this connection — the root's counterpart of `EditorBlock.runTask`. */
+  private _runTask(task: () => unknown): void {
+    this._lifetime.run(task, (error) => this._log.error('an async task failed', error));
   }
 
   public override disconnectedCallback(): void {
@@ -726,11 +731,11 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     super.updated(changedProperties);
 
     if (changedProperties.has('uuid') && this.uuid) {
-      void this.updateImage();
+      this._runTask(() => this.updateImage());
     }
 
     if (changedProperties.has('cdnUrl') && this.cdnUrl) {
-      void this.updateImage();
+      this._runTask(() => this.updateImage());
     }
   }
 

@@ -268,11 +268,13 @@ export class FileItem extends FileItemConfig {
       },
     });
 
-    try {
-      action.onClick(outputFileEntry);
-    } catch (error) {
-      this._log.error(`Error in plugin file action onClick (${action.id}):`, error);
-    }
+    this.runTask(async () => {
+      try {
+        await action.onClick(outputFileEntry);
+      } catch (error) {
+        this._log.error(`Error in plugin file action onClick (${action.id}):`, error);
+      }
+    });
   }
 
   // Host `[mode]` attribute: the `uc-file-item[mode="grid"]` CSS selectors key off

@@ -161,13 +161,17 @@ export class ValidationController {
   }
 
   public runFileValidators(runOn: FileValidatorDescriptor['runOn'], entryIds?: Uid[]): void {
-    if (lifetimeOf(this).signal.aborted) return;
+    const lifetime = lifetimeOf(this);
+    if (lifetime.signal.aborted) return;
 
     const ids = entryIds ?? this._collection.items();
     for (const id of ids) {
       const entry = this._collection.read(id);
       if (entry) {
-        void this._runFileValidatorsForEntry(entry, runOn);
+        lifetime.run(
+          () => this._runFileValidatorsForEntry(entry, runOn),
+          (error) => this._log.error('File validation failed', error),
+        );
       }
     }
   }
