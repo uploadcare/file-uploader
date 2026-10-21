@@ -1,7 +1,7 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState } from '../../types';
-import { inject, injectOrNull } from '../di/inject';
+import { inject } from '../di/inject';
 import { UploaderEventType } from '../EventBus';
 import type { TypedData } from '../TypedData';
 import { UploaderPublicApi } from '../UploaderPublicApi';
@@ -22,14 +22,14 @@ type Entry = TypedData<UploadEntryData>;
  * `UploadGroupController`.
  */
 export class UploadCollectionEventsController {
-  @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
+  @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(UploadController) private readonly _upload!: UploadController;
 
   private _emit = (...args: Parameters<EventEmitter['emit']>): void => {
-    this._eventEmitter?.emit(...args);
+    this._eventEmitter.emit(...args);
   };
 
   /** Membership changed → the current group no longer describes the collection. */

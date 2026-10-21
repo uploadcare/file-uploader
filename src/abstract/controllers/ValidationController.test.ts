@@ -75,7 +75,7 @@ function setup(overrides: { onValidatorError?: (error: unknown, context?: string
   } as unknown as UploaderPublicApi;
   container.bind(UploaderPublicApi, () => api);
   // `common-upload-failed` is emitted through the per-ctx `EventEmitter` the
-  // controller `@injectOrNull`s; bind a fake with an `emit` spy so the old
+  // controller `@inject`s; bind a fake with an `emit` spy so the old
   // `emitCommonUploadFailed` assertions become "emit fired with that type".
   const emit = vi.fn();
   container.bind(EventEmitter, () => ({ emit }) as unknown as EventEmitter);
