@@ -18,15 +18,10 @@ const asNumber = (value: unknown): number => {
 };
 
 const asBoolean = (value: unknown): boolean => {
-  if (typeof value === 'undefined' || value === null) return false;
-  if (typeof value === 'boolean') return value;
-  // for attr like multiple="true" (react will pass it as string)
-  if (value === 'true') return true;
-  // for attr flags like multiple="" (some other libs will pass it as empty string)
-  if (value === '') return true;
-  // for attr like multiple="false" (react will pass it as string)
-  if (value === 'false') return false;
-  throw new Error(`Invalid boolean: "${value}"`);
+  // Attribute values are strings. Like an HTML boolean attribute, any value means true (`multiple`, `multiple=""`,
+  // `multiple="value"`) except `"false"`, which frameworks such as React pass for a false prop (documented).
+  if (typeof value === 'string') return value !== 'false';
+  return Boolean(value);
 };
 
 const asStore = (value: unknown): boolean | 'auto' => (value === 'auto' ? value : asBoolean(value));
