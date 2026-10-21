@@ -1,5 +1,6 @@
 // @ts-check
 
+import { parseFileUrl } from '@uploadcare/cdn-url';
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
 import { EventEmitter, type EventKey, type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
@@ -18,6 +19,7 @@ import type {
   UploadcareFile,
 } from '../types/index';
 import { applyStyles } from '../utils/applyStyles';
+import { DEFAULT_CDN_ORIGIN } from '../utils/cdn/origin';
 import { serializeCsv } from '../utils/comma-separated';
 import {
   BASIC_IMAGE_WILDCARD,
@@ -49,6 +51,15 @@ export type ApiAddFileCommonOptions = {
   silent?: boolean;
   fileName?: string;
   source?: string;
+};
+
+/** Whether `value` is exactly a file uuid — checked by the same parser that backs `addFileFromCdnUrl`'s validation. */
+const isFileUuid = (value: string): boolean => {
+  try {
+    return parseFileUrl(`${DEFAULT_CDN_ORIGIN}/${value}/`).uuid === value;
+  } catch {
+    return false;
+  }
 };
 
 /** The documented `OutputFileEntry` shape of one upload entry. */
@@ -193,6 +204,9 @@ export class UploaderPublicApi {
     uuid: string,
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'idle'> => {
+    if (!isFileUuid(uuid)) {
+      throw new Error('Invalid UUID');
+    }
     const internalId = this._uploadCollection.add({
       uuid,
       fileName: fileName ?? null,

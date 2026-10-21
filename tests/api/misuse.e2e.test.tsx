@@ -210,13 +210,20 @@ describe('silent: true', () => {
 });
 
 describe('addFileFromUuid', () => {
-  // Documented (api.mdx): the uuid is not validated at add time — unlike `addFileFromCdnUrl`, which throws on input
-  // it cannot parse. A malformed uuid is accepted and the entry fails once the upload runs.
-  it('accepts a malformed uuid without complaint', async () => {
+  // Like `addFileFromCdnUrl`, a value that is not exactly a file uuid is rejected up front and nothing is added.
+  it('throws for a value that is not a uuid', async () => {
     const { api } = await renderSolution();
-    const entry = api.addFileFromUuid('not-a-uuid');
 
-    expect(entry.uuid).toBe('not-a-uuid');
-    expect(entry.status).toBe('idle');
+    for (const value of ['not-a-uuid', '', 'f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f/-/resize/100x/']) {
+      expect(() => api.addFileFromUuid(value)).toThrow('Invalid UUID');
+    }
+    expect(api.getOutputCollectionState().totalCount).toBe(0);
+  });
+
+  it('adds a valid uuid', async () => {
+    const { api } = await renderSolution();
+    const entry = api.addFileFromUuid('f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f');
+
+    expect(entry.uuid).toBe('f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f');
   });
 });
