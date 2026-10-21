@@ -82,7 +82,13 @@ export class Modal extends ChildBlock {
     // Idempotent + null-safe (matching `hide()`): `subRouter` fires on every
     // change, but `showModal()` throws on an already-open dialog, and the ref
     // may be cleared by a teardown racing this async method.
-    if (!dialog || dialog.open) return;
+    if (!dialog) return;
+    if (dialog.open) {
+      // Moving an open dialog in the DOM takes it out of the top layer but keeps `open`, leaving it in-flow with no
+      // backdrop or Escape. Re-enter the top layer; dropping the attribute (unlike `close()`) fires no `close`.
+      if (typeof dialog.showModal !== 'function' || dialog.matches(':modal')) return;
+      dialog.removeAttribute('open');
+    }
     if (typeof dialog.showModal === 'function') {
       this.setAttribute('aria-modal', 'true');
       dialog.showModal();

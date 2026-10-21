@@ -86,11 +86,9 @@ const expectTopLayerModal = async (root: HTMLElement, id: string) => {
 };
 
 describe('regular: moving with the modal open', () => {
-  // BUG(remount): removing an open modal `<dialog>` from the document drops it out of the top layer but leaves its
-  // `open` attribute set (HTML "dialog removing steps"). On re-attach `Modal.show()` early-returns on `dialog.open`
-  // (src/blocks/Modal/Modal.ts:83), so `showModal()` is never called again: the dialog renders in-flow, without a
-  // backdrop, focus trap or Escape-to-close.
-  it.fails('keeps start-from shown as a top-layer modal', async () => {
+  // Removing an open modal `<dialog>` drops it out of the top layer but keeps its `open` attribute (HTML "dialog
+  // removing steps"); `Modal.show()` puts it back on re-attach, so it keeps its backdrop, focus trap and Escape.
+  it('keeps start-from shown as a top-layer modal', async () => {
     const uploader = await renderSolution('regular');
     uploader.api.initFlow();
     await expectTopLayerModal(uploader.root, 'start-from');
@@ -132,9 +130,8 @@ describe('regular: moving with the modal open', () => {
     await expectModal(uploader.root, 'start-from', 'open');
   });
 
-  // BUG(remount): same mechanism as the top-layer case above (src/blocks/Modal/Modal.ts:83) — the re-attached dialog
-  // is no longer modal, so it has no close watcher and Escape does nothing.
-  it.fails('closes on Escape after the move', async () => {
+  // Same mechanism as the top-layer case above: only a modal dialog has the close watcher Escape goes through.
+  it('closes on Escape after the move', async () => {
     const uploader = await renderSolution('regular');
     uploader.api.initFlow();
     await expectModal(uploader.root, 'start-from', 'open');
