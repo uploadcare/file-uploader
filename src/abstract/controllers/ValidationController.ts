@@ -24,7 +24,7 @@ import {
 import { controllerLogger } from '../controllerLogger';
 import { lifetimeOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
-import { inject, injectOrNull } from '../di/inject';
+import { inject } from '../di/inject';
 import { TelemetryManager } from '../managers/TelemetryManager';
 import type { TypedData } from '../TypedData';
 import { UploaderPublicApi } from '../UploaderPublicApi';
@@ -91,9 +91,7 @@ export class ValidationController {
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
-  // `@injectOrNull`: a teardown-time emit (released container) resolves `null` →
-  // no-op, matching the guard the removed host `emit` closure carried.
-  @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
+  @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
 
   private _commonFileValidators: FuncFileValidator[] = [
     validateIsImage,
@@ -203,7 +201,7 @@ export class ValidationController {
     if (errors.length > 0) {
       // Inlined from the removed bridge's `emitCommonUploadFailed`: the debounced
       // `common-upload-failed` with a thunked failed-collection-state payload.
-      this._eventEmitter?.emit(
+      this._eventEmitter.emit(
         EventType.COMMON_UPLOAD_FAILED,
         () => this._api.getOutputCollectionState() as OutputCollectionState<'failed'>,
         { debounce: true },

@@ -3,7 +3,7 @@ import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { OutputCollectionState } from '../../types';
 import { controllerLogger } from '../controllerLogger';
 import { lifetimeOf } from '../di/ControllerContainer';
-import { inject, injectOrNull } from '../di/inject';
+import { inject } from '../di/inject';
 import { UploaderEventType } from '../EventBus';
 import { UploaderPublicApi } from '../UploaderPublicApi';
 import { CollectionStateController } from './CollectionStateController';
@@ -19,14 +19,14 @@ import { ValidationController } from './ValidationController';
  */
 export class UploadGroupController {
   @inject(ValidationController) private readonly _validation!: ValidationController;
-  @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
+  @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(UploadController) private readonly _upload!: UploadController;
   private readonly _log = controllerLogger(this, 'upload-group');
 
   private _emit = (...args: Parameters<EventEmitter['emit']>): void => {
-    this._eventEmitter?.emit(...args);
+    this._eventEmitter.emit(...args);
   };
 
   public async create(collectionState: OutputCollectionState, isActive: () => boolean): Promise<void> {

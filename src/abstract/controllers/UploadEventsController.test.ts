@@ -62,7 +62,7 @@ const setup = (opts: { collectionState?: OutputCollectionState; deferPlugin?: bo
   container.bind(UploadController, () => upload);
 
   // Invoke thunk payloads like the real EventEmitter does, so deferred-payload
-  // bodies run. Bound to the per-ctx `EventEmitter` the controller `@injectOrNull`s.
+  // bodies run. Bound to the per-ctx `EventEmitter` the controller `@inject`s.
   const emit = vi.fn((_type: unknown, payload?: unknown) => {
     if (typeof payload === 'function') (payload as () => unknown)();
   }) as Mock & EventEmitter['emit'];

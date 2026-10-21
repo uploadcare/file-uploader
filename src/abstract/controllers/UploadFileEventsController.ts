@@ -1,6 +1,6 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { Uid } from '../../lit/Uid';
-import { injectOrNull } from '../di/inject';
+import { inject } from '../di/inject';
 import { UploaderEventType } from '../EventBus';
 import { TypedData } from '../TypedData';
 import { toOutputFileEntry } from '../UploaderPublicApi';
@@ -16,13 +16,11 @@ type Entry = TypedData<UploadEntryData>;
  * documented event ordering is unchanged.
  */
 export class UploadFileEventsController {
-  @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
+  @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
 
-  // Guarded dispatch — matches the coordinator's `_emit` (a released container
-  // resolves `null` → no-op). Rest-forwarded so the 2-/3-arg call arity reaches
-  // `EventEmitter.emit` unchanged.
+  // Rest-forwarded so the 2-/3-arg call arity reaches `EventEmitter.emit` unchanged.
   private _emit = (...args: Parameters<EventEmitter['emit']>): void => {
-    this._eventEmitter?.emit(...args);
+    this._eventEmitter.emit(...args);
   };
 
   /** `FILE_ADDED` for a newly added entry (unless it was added silently). */
