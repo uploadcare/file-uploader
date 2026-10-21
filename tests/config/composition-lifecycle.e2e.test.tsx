@@ -154,9 +154,9 @@ describe('disconnect and reconnect', () => {
   });
 
   // QUIRK(lifecycle): the ctx is torn down in a `setTimeout(0)` once the last block disconnects
-  // (LitBlock.ts:166), so whether state survives a remove/re-insert depends on whether a macrotask ran in between.
-  // Moving a node synchronously keeps everything; the same move deferred by a tick silently starts from scratch.
-  // Pinned as current behaviour, not endorsed.
+  // (`ChildBlock._teardownCtxIfUnreferenced`), so whether state survives a remove/re-insert depends on whether a
+  // macrotask ran in between. Moving a node synchronously keeps everything; the same move deferred by a tick starts
+  // from scratch with a new api. Pinned as current behaviour, not endorsed.
   it('drops the collection when a macrotask passes between removal and re-insertion', async () => {
     const { ctxName, api } = await renderSolution();
     api.addFileFromObject(IMAGE.PIXEL);
@@ -176,7 +176,10 @@ describe('disconnect and reconnect', () => {
       parent.appendChild(element);
     }
 
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(0);
+    const fresh = (provider as UploadCtxProvider).getAPI();
+    await expect.poll(() => fresh.getOutputCollectionState().totalCount).toBe(0);
+    // The old api belonged to the destroyed uploader: it says so instead of acting on an invisible copy.
+    expect(() => api.getOutputCollectionState()).toThrow(/was destroyed\. Call getAPI\(\)/);
   });
 });
 

@@ -15,7 +15,8 @@ import { type Logger, logger } from './logger';
 export const scopedLogger = (scope: string, getContainer: () => ControllerContainer | undefined): Logger =>
   logger.scope(scope, {
     ctxName: () => getContainer()?.ctxName,
-    isVerbose: () => getContainer()?.get(ConfigController).get('debug') ?? false,
+    // `getOrNull`: a message logged while (or after) its ctx is torn down prints at the always-on tier.
+    isVerbose: () => getContainer()?.getOrNull(ConfigController)?.get('debug') ?? false,
   });
 
 /**

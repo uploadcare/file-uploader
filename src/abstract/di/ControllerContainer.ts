@@ -124,6 +124,8 @@ export class ControllerContainer {
   #consumers = new Set<unknown>();
   #boundValues = new Map<Ctor<unknown>, (c: ControllerContainer) => unknown>();
   #controllerWaiters = new Map<Ctor<unknown>, Set<(inst: unknown) => void>>();
+  // Set once `dispose()` has drained: a later read is work outliving its ctx, not a lazy first resolve.
+  #disposed = false;
 
   /** Register a factory for a host/boundary value. Only valid before resolution. */
   public bind<T>(token: Token<T>, factory: (c: ControllerContainer) => T): void {
@@ -136,6 +138,12 @@ export class ControllerContainer {
 
   public get<T>(token: Token<T>): T {
     const Ctrl = resolveToken(token);
+    if (this.#disposed) {
+      throw new Error(
+        `[uc] ${Ctrl.name} read after the ctx container was disposed: the uploader for ctx-name "${this.ctxName}" ` +
+          'was destroyed. Call getAPI() on the current <uc-upload-ctx-provider> instead of keeping an old api object.',
+      );
+    }
     // `has()` (not `get() !== undefined`): a bound factory may legitimately
     // yield `undefined`, and treating that as a miss would re-run the factory
     // on every access, breaking the singleton-per-token contract.
@@ -329,5 +337,6 @@ export class ControllerContainer {
     this.#boundValues.clear();
     this.#consumers.clear();
     this.#controllerWaiters.clear();
+    this.#disposed = true;
   }
 }
