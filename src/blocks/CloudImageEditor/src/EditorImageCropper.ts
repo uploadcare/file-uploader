@@ -416,7 +416,9 @@ export class EditorImageCropper extends EditorBlock {
   }
 
   private _commit(): void {
-    if (!this._imageSize) {
+    // A box that was never laid out (0×0 — e.g. while the editor is detached mid-move) has no crop to read: the
+    // preview/source ratio is 0 and the coordinates come out NaN, which would replace the current crop with none.
+    if (!this._imageSize || !this._imageBox.width || !this._imageBox.height) {
       return;
     }
     const operations = this._operations;
