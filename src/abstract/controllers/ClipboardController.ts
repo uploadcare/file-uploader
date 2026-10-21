@@ -43,7 +43,6 @@ export class ClipboardController {
   private _scopes: Set<Node> = new Set();
   private _listener: (event: ClipboardEvent) => void;
   private _armed = false;
-  private _destroyed = false;
 
   public constructor() {
     // Isolate-and-warn (AGENTS.md #3): a rejection from the injected api's
@@ -70,7 +69,7 @@ export class ClipboardController {
    * `window.dispatchEvent`).
    */
   private _arm(): void {
-    if (this._armed || this._destroyed) {
+    if (this._armed || lifetimeOf(this).signal.aborted) {
       return;
     }
     this._armed = true;
@@ -239,7 +238,7 @@ export class ClipboardController {
    * must merely be connected). Returns an unregister fn.
    */
   public registerScope(scope: Node): () => void {
-    if (this._destroyed) {
+    if (lifetimeOf(this).signal.aborted) {
       return () => {};
     }
 
@@ -258,7 +257,6 @@ export class ClipboardController {
   }
 
   public destroy(): void {
-    this._destroyed = true;
     this._disarm();
     this._scopes.clear();
   }

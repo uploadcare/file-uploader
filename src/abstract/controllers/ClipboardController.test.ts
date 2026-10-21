@@ -454,15 +454,15 @@ describe('ClipboardController', () => {
     expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(2);
   });
 
-  it('destroy() disarms unconditionally, and registrations after destroy() do not re-arm', async () => {
+  it('disposing the ctx disarms unconditionally, and registrations after it do not re-arm', async () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
-    const { layer, api } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
+    const { layer, api, container } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
 
     layer.registerScope(connectedScope());
-    layer.destroy();
+    container.dispose();
     addSpy.mockClear();
 
-    // registerScope after destroy returns an inert no-op unregister — calling
+    // registerScope after dispose returns an inert no-op unregister — calling
     // it must be safe (and it arms nothing).
     const unregister = layer.registerScope(connectedScope());
     expect(() => unregister()).not.toThrow();
@@ -494,16 +494,16 @@ describe('ClipboardController', () => {
   // defensive behavior — a redundant or post-destroy arm attaches no listener.
   it('_arm short-circuits when already armed or destroyed (defensive guard)', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
-    const { layer } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
+    const { layer, container } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
     const armable = layer as unknown as { _arm(): void };
 
     armable._arm(); // first arm attaches the listener
     armable._arm(); // already armed → early return, no second listener
     expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(1);
 
-    layer.destroy(); // disarms (clears `_armed`) and sets `_destroyed`
+    container.dispose(); // ends the ctx lifetime, then destroy() disarms (clears `_armed`)
     addSpy.mockClear();
-    armable._arm(); // destroyed → early return
+    armable._arm(); // lifetime ended → early return
     expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(0);
   });
 
