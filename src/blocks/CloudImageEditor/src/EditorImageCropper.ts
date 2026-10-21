@@ -4,9 +4,8 @@ import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
 import { isAbortError } from '../../../abstract/di/Lifetime';
-import { debounce } from '../../../utils/debounce.js';
+import { debounced, throttled } from '../../../lit/rate-limited-method';
 import { preloadImage } from '../../../utils/preloadImage.js';
-import { throttle } from '../../../utils/throttle.js';
 import type { CropBoxChangeEvent, CropFrame } from './CropFrame';
 import {
   clamp,
@@ -96,8 +95,6 @@ export class EditorImageCropper extends EditorBlock {
   @property({ attribute: false })
   public imageSize: ImageSize | null = null;
 
-  private _commitDebounced: ReturnType<typeof debounce>;
-  private _handleResizeThrottled: ReturnType<typeof throttle>;
   private _imageSize: ImageSize = { width: 0, height: 0 };
   private _canvas?: HTMLCanvasElement;
   private _ctx: CanvasRenderingContext2D | null = null;
@@ -115,24 +112,6 @@ export class EditorImageCropper extends EditorBlock {
 
   public constructor() {
     super();
-
-    // The trailing calls can fire after the controller is released.
-    this._commitDebounced = debounce(() => {
-      if (!this.adoptionSignal.aborted) {
-        this._commit();
-      }
-    }, 300);
-
-    this._handleResizeThrottled = throttle(() => {
-      if (this.adoptionSignal.aborted || !this._isActive) {
-        return;
-      }
-      this._initCanvas();
-      this._syncTransformations();
-      this._alignImage();
-      this._alignCrop();
-      this._draw();
-    }, 100);
 
     // Controller-dependent setup (mirrors `ChildBlock.controllerReady` /
     // `initCallback` from the v1 base): runs immediately if the editor
@@ -192,6 +171,23 @@ export class EditorImageCropper extends EditorBlock {
         }
       });
     });
+  }
+
+  @debounced(300)
+  private _commitDebounced(): void {
+    this._commit();
+  }
+
+  @throttled(100)
+  private _handleResizeThrottled(): void {
+    if (!this._isActive) {
+      return;
+    }
+    this._initCanvas();
+    this._syncTransformations();
+    this._alignImage();
+    this._alignCrop();
+    this._draw();
   }
 
   protected override firstUpdated(changedProperties: PropertyValues<this>): void {

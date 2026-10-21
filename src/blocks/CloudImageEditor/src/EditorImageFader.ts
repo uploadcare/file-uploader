@@ -4,7 +4,7 @@ import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
-import { debounce } from '../../../utils/debounce.js';
+import { debounced } from '../../../lit/rate-limited-method';
 import { batchPreloadImages } from '../../../utils/preloadImage.js';
 import { EditorBlock } from './editor-context';
 import { classNames } from './lib/classNames.js';
@@ -28,10 +28,6 @@ type ImageSrcOptions = {
   filter?: FilterName;
   operation?: OperationKey;
   value?: number;
-};
-
-type DebouncedKeypointHandler = ((operation: OperationKey, filter: FilterName | undefined, value: number) => void) & {
-  cancel: () => void;
 };
 
 function isOperationKey(value: unknown): value is OperationKey {
@@ -97,7 +93,6 @@ export class EditorImageFader extends EditorBlock {
   private _url?: string;
   private _fromViewer?: boolean;
   private _raf = 0;
-  private _addKeypointDebounced!: DebouncedKeypointHandler;
   private readonly _previewHostRef = createRef<HTMLDivElement>();
   private readonly _layersHostRef = createRef<HTMLDivElement>();
 
@@ -125,12 +120,6 @@ export class EditorImageFader extends EditorBlock {
     super();
 
     this.classList.add('uc-inactive_to_cropper');
-    this._addKeypointDebounced = debounce((operation, filter, value) => {
-      // The timer can fire once the controller is released.
-      if (!this.adoptionSignal.aborted) {
-        this.runTask(() => this._addKeypoint(operation, filter, value));
-      }
-    }, 600);
 
     // Controller-dependent setup (mirrors EditorImageCropper): the fader now
     // drives itself from state instead of the toolbar/root/slider calling its
@@ -143,6 +132,11 @@ export class EditorImageFader extends EditorBlock {
       this._lastColorPreview = controller.get('*colorPreview');
       this.subscribeEditor(() => this._syncFromState());
     });
+  }
+
+  @debounced(600)
+  private _addKeypointDebounced(operation: OperationKey, filter: FilterName | undefined, value: number): void {
+    this.runTask(() => this._addKeypoint(operation, filter, value));
   }
 
   private async _addKeypoint(operation: OperationKey, filter: FilterName | undefined, value: number): Promise<void> {
