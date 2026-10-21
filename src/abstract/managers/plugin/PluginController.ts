@@ -212,6 +212,8 @@ export class PluginController {
         );
         ({ file } = await Promise.race([hookPromise, timeoutPromise]));
       } catch (error) {
+        // A hook that gave up because its signal aborted did what it was asked; only a real failure is worth a warning.
+        if (signal.aborted) return;
         this._log.warn(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
       }
     }

@@ -250,6 +250,11 @@ export class UploadController {
                 }
               }
             } catch (error) {
+              // Aborted by a cancel or by the ctx going away: the hook did what its signal asked, and the aborted
+              // signal ends the upload below the same way it always has.
+              if (abortController.signal.aborted) {
+                break;
+              }
               this._log.warn(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
             }
           }
