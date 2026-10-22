@@ -291,21 +291,13 @@ describe('UploadEventsController', () => {
       expect(t.deps.setCommonProgress).toHaveBeenCalled();
     });
 
-    it('emits FILE_UPLOAD_START only for uploading + non-silent', () => {
+    it('leaves FILE_UPLOAD_START to UploadController, which emits it where the upload starts', () => {
       const t = setup();
       const uploading = addUploadingEntry(t);
-      const silent = t.collection.add({ isUploading: true, silent: true });
 
-      t.fireProperties({ isUploading: new Set([uploading, silent]) });
+      t.fireProperties({ isUploading: new Set([uploading]) });
 
-      expect(t.emit).toHaveBeenCalledWith(
-        UploaderEventType.FILE_UPLOAD_START,
-        expect.objectContaining({ internalId: uploading }),
-      );
-      expect(t.emit).not.toHaveBeenCalledWith(
-        UploaderEventType.FILE_UPLOAD_START,
-        expect.objectContaining({ internalId: silent }),
-      );
+      expect(t.emit).not.toHaveBeenCalledWith(UploaderEventType.FILE_UPLOAD_START, expect.anything());
     });
 
     it('emits FILE_UPLOAD_SUCCESS for entries with fileInfo and applies crop when cropPreset set', () => {

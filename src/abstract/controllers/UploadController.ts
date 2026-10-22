@@ -23,6 +23,7 @@ import { UploaderPublicApi } from '../UploaderPublicApi';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
+import { UploadFileEventsController } from './UploadFileEventsController';
 
 /**
  * DOM-free upload engine — owns the upload-client queue and the per-entry
@@ -46,6 +47,7 @@ export class UploadController {
   @inject(AuthTokenManager) private readonly _authToken!: AuthTokenManager;
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
+  @inject(UploadFileEventsController) private readonly _fileEvents!: UploadFileEventsController;
   @inject(SecureUploadsController) private readonly _secureUploads!: SecureUploadsController;
   // Token thunk: `UploaderPublicApi` `@inject`s `UploadController` back, so a
   // direct token reference here would form a value-import cycle that leaves one
@@ -209,6 +211,7 @@ export class UploadController {
       errors: [],
       isQueuedForUploading: true,
     });
+    this._fileEvents.start(entry);
 
     try {
       const abortController = new AbortController();

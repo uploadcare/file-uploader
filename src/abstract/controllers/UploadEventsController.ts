@@ -176,9 +176,6 @@ export class UploadEventsController {
       this._fileEvents.progress(changeMap.uploadProgress);
       this._collectionEvents.flushCommonProgress();
     }
-    if (changeMap.isUploading) {
-      this._fileEvents.start(changeMap.isUploading);
-    }
     if (changeMap.fileInfo) {
       this._fileEvents.success(changeMap.fileInfo);
       if (this._config.get('cropPreset')) {
