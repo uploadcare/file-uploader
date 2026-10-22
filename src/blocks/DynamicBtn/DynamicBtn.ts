@@ -8,6 +8,7 @@ import { UploadCollectionController } from '../../abstract/controllers/UploadCol
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { throttled } from '../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
@@ -70,7 +71,7 @@ export class DynamicBtn extends ChildBlock {
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
   @inject(UploadCollectionController) private readonly _uploadCollection!: UploadCollectionController;
 
-  @property({ attribute: 'dropzone', type: Boolean })
+  @property({ converter: booleanAttribute })
   public dropzone = true;
 
   // Tracked read: `dynamicButtonViewMode` auto-tracks under `SignalWatcher`, so a

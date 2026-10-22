@@ -1,6 +1,7 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import type { ApiHostEventListenerMap } from '../../lit/api-host-types';
+import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { ConfigHostAttributesMeta } from '../../lit/config-host-types';
 import { WithApi } from '../../lit/WithApi';
@@ -47,11 +48,11 @@ export class Uploader extends WithConfig(WithApi(ChildBlock)) {
   public mode: UploaderMode = 'regular';
 
   /** Regular-only: hide the open button (modal-only composition). */
-  @property({ type: Boolean })
+  @property({ converter: booleanAttribute })
   public headless = false;
 
   /** Regular-only: use `<uc-dynamic-btn>` instead of `<uc-simple-btn>`. */
-  @property({ attribute: 'dynamic-button', type: Boolean })
+  @property({ attribute: 'dynamic-button', converter: booleanAttribute })
   public dynamicButton = false;
 
   public override connectedCallback(): void {
