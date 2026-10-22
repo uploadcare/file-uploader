@@ -266,6 +266,7 @@ export class ExternalSource extends ChildBlock {
   private _mountIframe(): void {
     const iframe = document.createElement('iframe');
     iframe.src = this._remoteUrl();
+    iframe.title = this.l10n(`src-type-${(this._router.params as ActivityParams).externalSourceType}`);
     // @ts-expect-error
     iframe.marginHeight = 0;
     // @ts-expect-error

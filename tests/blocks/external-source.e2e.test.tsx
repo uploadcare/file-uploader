@@ -80,6 +80,15 @@ describe('uc-external-source (parity, render surface)', () => {
       .toMatch(/^https:\/\/social\.uploadcare\.com\/window4\/dropbox\?/);
   });
 
+  it('names the iframe after the selected source', async () => {
+    renderRegularHost();
+    const externalSource = await navigateToExternalSource();
+
+    await expect
+      .poll(() => (externalSource.query() as HTMLElement | null)?.querySelector('iframe')?.title ?? null)
+      .toBe('Dropbox');
+  });
+
   it('clicking close closes the modal entirely (onClose, not onBack)', async () => {
     renderRegularHost();
     await navigateToExternalSource();
