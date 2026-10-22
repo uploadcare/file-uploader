@@ -28,6 +28,10 @@ export class BtnUi extends EditorBlock {
   @property({ attribute: 'aria-controls' })
   public ariaControls = '';
 
+  /** `aria-selected` of the inner button, for `aria-role="tab"`; unset renders none. */
+  @property({ type: Boolean, attribute: false })
+  public selected: boolean | undefined = undefined;
+
   @property({ attribute: 'title-prop' })
   public titleProp = '';
 
@@ -84,12 +88,18 @@ export class BtnUi extends EditorBlock {
     return !this.text && !this._computedIconHidden;
   }
 
+  private get _ariaSelected(): 'true' | 'false' | undefined {
+    if (this.selected === undefined) return undefined;
+    return this.selected ? 'true' : 'false';
+  }
+
   public override render() {
     return html`
       <button
         type="button"
         role=${ifDefined(this.ariaRole || undefined)}
         aria-controls=${ifDefined(this.ariaControls || undefined)}
+        aria-selected=${ifDefined(this._ariaSelected)}
         aria-label=${ifDefined(this.l10nSafe(this.titleProp))}
         title=${ifDefined(this.l10nSafe(this.titleProp))}
       >
