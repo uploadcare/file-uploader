@@ -115,8 +115,9 @@ describe('DynamicBtn remove/abort action', () => {
     const { dynamicBtn, api } = renderDynamicBtn();
     await expect.element(dynamicBtn).toBeVisible();
 
-    commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
+    const chooser = commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
     await dynamicBtn.click();
+    await chooser;
 
     await expect.element(dynamicBtn.getByText('1 file uploaded')).toBeVisible();
     await expect.poll(() => api.getOutputCollectionState().successCount).toBe(1);
