@@ -37,11 +37,6 @@ export class SliderUi extends SliderUiBase {
   @state()
   private _currentValue = 0;
 
-  public constructor() {
-    super();
-    this.setAttribute('with-effects', '');
-  }
-
   private _emitSliderEvent(type: 'uc-internal:slider-input', value: number): void {
     this.dispatchEvent(
       new CustomEvent(type, {
@@ -197,6 +192,8 @@ export class SliderUi extends SliderUiBase {
 
   public override connectedCallback(): void {
     super.connectedCallback();
+    // Not in the constructor: an element created by `document.createElement` must not have attributes yet.
+    if (!this.hasAttribute('with-effects')) this.setAttribute('with-effects', '');
     // Created in `firstUpdated`; a reconnect (DOM move) re-observes what `disconnectedCallback` disconnected.
     this._observer?.observe(this);
   }

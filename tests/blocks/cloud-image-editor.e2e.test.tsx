@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
+import { EditorImageFader } from '@/blocks/CloudImageEditor/src/EditorImageFader';
+import { SliderUi } from '@/blocks/CloudImageEditor/src/elements/slider/SliderUi';
 import type { ApplyResult } from '@/blocks/CloudImageEditor/src/types';
 import { delay } from '@/utils/delay';
 import '~/types/jsx';
@@ -191,6 +193,15 @@ describe('uc-cloud-image-editor', () => {
     await expect.element(thumbnail).toBeVisible();
     const thumbnailStyle = () => thumbnail.element().querySelector('.uc-preview')?.getAttribute('style') ?? '';
     await expect.poll(thumbnailStyle, { timeout: 5000 }).toContain('blur/20');
+  });
+});
+
+describe('editor elements created with document.createElement', () => {
+  it.each([
+    ['uc-slider-ui', SliderUi],
+    ['uc-editor-image-fader', EditorImageFader],
+  ] as const)('%s is an instance of its class', (tag, Class) => {
+    expect(document.createElement(tag)).toBeInstanceOf(Class);
   });
 });
 
