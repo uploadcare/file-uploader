@@ -23,7 +23,7 @@ export class FormInput extends ChildBlock {
   // a re-render (which `willUpdate` also runs for unrelated updates, e.g. `ctx-name`).
   private _lastSyncedState: OutputCollectionState | null = null;
 
-  @property({ type: String, noAccessor: true, attribute: 'name' })
+  @property({ type: String, attribute: 'name' })
   public nameAttrValue?: string;
 
   private get _inputName(): string {
@@ -62,6 +62,13 @@ export class FormInput extends ChildBlock {
     // fire) of the v1 sub is preserved by the initial `null` state falling
     // through the early-return in `_syncFormInputs`.
     this._syncFormInputs(this._collectionState.getTracked('collectionState'));
+    // Kept current on every update, not just at creation: the name attribute and
+    // `multipleMin` can change after mount (tracked read re-runs this update).
+    const required = this._config.getTracked('multipleMin') > 0;
+    if (this._validationInputElement) {
+      this._validationInputElement.name = this._inputName;
+      this._validationInputElement.required = required;
+    }
   }
 
   private _syncFormInputs(collectionState: OutputCollectionState | null): void {
