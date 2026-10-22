@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { unsplashPlugin } from '@/plugins/unsplashPlugin';
+import { delay } from '@/utils/delay';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -128,5 +129,59 @@ describe('unsplash plugin', () => {
     const [entry] = api.getOutputCollectionState().allEntries;
     expect(entry.name).toBe(`unsplash-${PHOTO.id}.jpg`);
     expect(entry.externalUrl).toBe(PHOTO.urls.full);
+  });
+
+  it('keeps the native accessKey of the activity element working', async () => {
+    fetchSpy.mockResolvedValue(okResponse());
+    const { activity } = await openUnsplash('my-key');
+
+    activity.setAttribute('accesskey', 'u');
+
+    // The API key used to live on HTMLElement's own `accessKey`, which shadowed the `accesskey` attribute.
+    expect(activity.accessKey).toBe('u');
+    await vi.waitFor(() => expect(unsplashCalls()[0]).toContain('client_id=my-key'));
+  });
+
+  it('shows the latest search when an earlier one answers last', async () => {
+    fetchSpy.mockResolvedValue(okResponse());
+    const { activity } = await openUnsplash();
+    await expect.poll(() => activity.querySelectorAll('img').length).toBeGreaterThan(0);
+
+    // Each search waits until the test answers it, and rejects like real fetch when its signal aborts.
+    const pending = new Map<string, (photos: unknown[]) => void>();
+    fetchSpy.mockImplementation((input, init) => {
+      const url = String(input);
+      if (!isUnsplashApi(url)) return Promise.resolve(okResponse([]));
+      return new Promise((resolve, reject) => {
+        init?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+        pending.set(new URL(url).searchParams.get('query') ?? '', (photos) => resolve(okResponse(photos)));
+      });
+    });
+
+    const input = activity.querySelector('input.search-input') as HTMLInputElement;
+    await userEvent.fill(input, 'cats');
+    await userEvent.keyboard('{Enter}');
+    await userEvent.fill(input, 'dogs');
+    await userEvent.keyboard('{Enter}');
+    await vi.waitFor(() => expect([...pending.keys()]).toEqual(['cats', 'dogs']));
+
+    pending.get('dogs')?.([{ ...PHOTO, id: 'dog', alt_description: 'a dog' }]);
+    await expect.poll(() => activity.querySelector('img')?.alt).toBe('a dog');
+    pending.get('cats')?.([{ ...PHOTO, id: 'cat', alt_description: 'a cat' }]);
+
+    await delay(100);
+    expect(activity.querySelector('img')?.alt).toBe('a dog');
+    expect(activity.querySelector('.status.error')).toBeNull();
+  });
+
+  it('picks a photo from the keyboard', async () => {
+    fetchSpy.mockResolvedValue(okResponse());
+    const { activity, api } = await openUnsplash();
+
+    await expect.poll(() => activity.querySelector('button.photo')).not.toBeNull();
+    (activity.querySelector('button.photo') as HTMLButtonElement).focus();
+    await userEvent.keyboard('{Enter}');
+
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
   });
 });

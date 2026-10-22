@@ -85,6 +85,10 @@
 
   uc-unsplash-activity .photo {
     position: relative;
+    display: block;
+    width: 100%;
+    padding: 0;
+    border: 0;
     aspect-ratio: 4 / 3;
     border-radius: var(--uc-radius);
     overflow: hidden;

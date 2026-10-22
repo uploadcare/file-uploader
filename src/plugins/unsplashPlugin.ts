@@ -30,7 +30,7 @@ class UcUnsplashActivity extends LitElement {
   public routerApi!: PluginRouterApi;
 
   @property({ attribute: false })
-  public override accessKey = '';
+  public unsplashKey = '';
 
   @state()
   private _photos: UnsplashPhoto[] = [];
@@ -44,37 +44,49 @@ class UcUnsplashActivity extends LitElement {
   @state()
   private _query = '';
 
+  /** Aborts the in-flight search, so a slower earlier one cannot overwrite a later one. */
+  private _searchAbort: AbortController | null = null;
+
   public override connectedCallback() {
     super.connectedCallback();
     this._load();
   }
 
+  public override disconnectedCallback() {
+    super.disconnectedCallback();
+    this._searchAbort?.abort();
+  }
+
   private _load(): void {
-    if (!this.accessKey) {
+    if (!this.unsplashKey) {
       this._error = 'No Unsplash API key configured.\nAdd unsplash-access-key="YOUR_KEY" to <uc-config>.';
       return;
     }
 
     this._loading = true;
     this._error = null;
+    this._searchAbort?.abort();
+    const abort = new AbortController();
+    this._searchAbort = abort;
 
-    this._fetchPhotos().then(
+    this._fetchPhotos(abort.signal).then(
       (photos) => {
         this._photos = photos;
         this._loading = false;
       },
       (err: unknown) => {
+        if (abort.signal.aborted) return;
         this._error = err instanceof Error ? err.message : 'Failed to load photos';
         this._loading = false;
       },
     );
   }
 
-  private async _fetchPhotos(): Promise<UnsplashPhoto[]> {
-    const params = new URLSearchParams({ count: '24', client_id: this.accessKey });
+  private async _fetchPhotos(signal: AbortSignal): Promise<UnsplashPhoto[]> {
+    const params = new URLSearchParams({ count: '24', client_id: this.unsplashKey });
     if (this._query) params.set('query', this._query);
 
-    const res = await fetch(`https://api.unsplash.com/photos/random?${params}`);
+    const res = await fetch(`https://api.unsplash.com/photos/random?${params}`, { signal });
     if (!res.ok) throw new Error(`Unsplash API error: ${res.status} ${res.statusText}`);
 
     return (await res.json()) as UnsplashPhoto[];
@@ -149,7 +161,7 @@ class UcUnsplashActivity extends LitElement {
               <div class="grid">
                 ${this._photos.map(
                   (photo) => html`
-                    <div class="photo" title=${photo.alt_description ?? ''} @click=${() => this._pick(photo)}>
+                    <button type="button" class="photo" title=${photo.alt_description ?? ''} @click=${() => this._pick(photo)}>
                       <img src=${photo.urls.small} alt=${photo.alt_description ?? ''} loading="lazy" />
                       <span class="add-icon">
                         <svg
@@ -167,7 +179,7 @@ class UcUnsplashActivity extends LitElement {
                           <line x1="8" y1="12" x2="16" y2="12" />
                         </svg>
                       </span>
-                    </div>
+                    </button>
                   `,
                 )}
               </div>
@@ -183,7 +195,9 @@ class UcUnsplashActivity extends LitElement {
   }
 }
 
-customElements.define('uc-unsplash-activity', UcUnsplashActivity);
+if (!customElements.get('uc-unsplash-activity')) {
+  customElements.define('uc-unsplash-activity', UcUnsplashActivity);
+}
 
 export const unsplashPlugin: UploaderPlugin = {
   id: 'unsplash',
@@ -218,10 +232,10 @@ export const unsplashPlugin: UploaderPlugin = {
         const activityEl = document.createElement('uc-unsplash-activity') as UcUnsplashActivity;
         activityEl.uploaderApi = uploaderApi;
         activityEl.routerApi = pluginApi.router;
-        activityEl.accessKey = pluginApi.config.get('unsplashAccessKey');
+        activityEl.unsplashKey = pluginApi.config.get('unsplashAccessKey');
 
         const unsubscribe = pluginApi.config.subscribe('unsplashAccessKey', (value) => {
-          activityEl.accessKey = value;
+          activityEl.unsplashKey = value;
         });
 
         el.replaceChildren(activityEl);
