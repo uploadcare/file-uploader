@@ -104,4 +104,19 @@ describe('PrimaryAction (M-god step 6b-1 migration)', () => {
 
     expect(spy).toHaveBeenCalledWith('upload-list');
   });
+
+  it('takes source and entries as properties only, ignoring same-named attributes', async () => {
+    const { el } = await mountWithConfig(freshCtxName());
+    expect(el.source).toBeNull();
+    const entries = makeEntries({ status: 'success', isSuccess: true, totalCount: 1, allEntries: [{}] });
+    el.entries = entries;
+    await el.updateComplete;
+
+    el.setAttribute('entries', 'not json');
+    el.setAttribute('source', '{"id":"url","label":"src-type-from-url"}');
+    await el.updateComplete;
+
+    expect(el.entries).toBe(entries);
+    expect(el.source).toBeNull();
+  });
 });
