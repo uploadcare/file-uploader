@@ -15,7 +15,7 @@ describe('uc-file-uploader-inline', () => {
   it('opens the url source when clicked', async () => {
     const { root } = await renderSolution('inline');
 
-    await within(root).getByText('From link', { exact: true }).click();
+    await within(root).getByRole('button', { name: 'From link', exact: true }).click();
 
     await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
   });
@@ -25,16 +25,16 @@ describe('uc-file-uploader-inline', () => {
     // media-recorder interactions are flaky in CI and may close the browser connection.
     // This test focuses on camera source availability and primary controls rendering.
     const { root } = await renderSolution('inline');
-    await within(root).getByTestId('uc-start-from').getByText('Camera', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Camera', exact: true }).click();
 
     const cameraSource = within(root).getByTestId('uc-camera-source');
     await expect.element(cameraSource).toBeVisible();
 
-    const tabVideo = cameraSource.getByTestId('uc-camera-source--tab-video');
+    const tabVideo = cameraSource.getByRole('button', { name: 'Video', exact: true });
     await userEvent.click(tabVideo);
-    await expect.element(tabVideo).toHaveClass('uc-active');
+    await expect.element(tabVideo).toHaveAttribute('aria-pressed', 'true');
 
     await expect.element(cameraSource.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
-    await expect.element(cameraSource.getByTestId('uc-camera-source--shot')).toBeInTheDocument();
+    await expect.element(cameraSource.getByRole('button', { name: 'Shot', exact: true })).toBeInTheDocument();
   });
 });

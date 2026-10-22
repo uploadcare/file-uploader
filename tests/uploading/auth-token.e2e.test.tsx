@@ -1,8 +1,10 @@
 import { AuthTokenResolverError } from '@uploadcare/upload-client';
-import { describe, expect, it, vi } from 'vitest';
+import { assert, describe, expect, it, vi } from 'vitest';
 import { commands } from 'vitest/browser';
 import type { Config } from '@/index';
 import { IMAGE } from '~/tests/fixtures/files';
+import type { AuthTokenKind } from '~/tests/utils/commands';
+import { resetEmulator } from '~/tests/utils/emulator.browser';
 import { inCtx, renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -11,17 +13,33 @@ import '~/types/jsx';
  * only matter because it is a bearer token.
  *
  * Where it must not appear — the DOM, the console — and whether Upload API
- * actually accepts what the uploader sends, which no stub can answer.
+ * accepts what the uploader sends.
  * `upload-client-options.e2e` covers the value reaching the upload call, and
  * `upload-errors.e2e` how a failure is classified.
  *
- * The real uploads need a project with Signed Uploads enabled, which rejects
- * every unsigned request. Tokens are minted by a Node-side command, since the
- * project secret key must never reach the page, and the tests skip where its
- * credentials are absent.
+ * The uploads need a project with Signed Uploads enabled, which rejects every
+ * unsigned request: one the emulator turns it on for, a real one when `E2E_NET=live`.
+ * Tokens are minted by a Node-side command, since the project secret key must
+ * never reach the page. A live run without its credentials skips them, except
+ * under `E2E_REQUIRE_SECURE_UPLOADS=1` (the CI step that runs them live), where
+ * the missing credentials fail the whole file.
  */
 
 const TOKEN = 'eyJ.a-real-looking-token.sig';
+
+/**
+ * Whether this run can mint tokens: always against the emulator, live only with the project's keys set. Under
+ * `E2E_REQUIRE_SECURE_UPLOADS=1` the probe throws instead, which fails the whole file.
+ */
+const hasCredentials = (await commands.mintSecureUploadsCredentials()) !== null;
+
+/** Mints credentials, and against the emulator starts the test on a session whose project enforces them. */
+const signedProject = async (kind?: AuthTokenKind) => {
+  const credentials = await commands.mintSecureUploadsCredentials(kind);
+  if (!credentials) throw new Error('No Signed Uploads credentials, though the probe minted some');
+  (await resetEmulator())?.use('signedUploads', { publicKey: credentials.publicKey });
+  return credentials;
+};
 
 const entry = (api: Awaited<ReturnType<typeof renderSolution>>['api']) => api.getOutputCollectionState().allEntries[0];
 
@@ -38,37 +56,31 @@ describe('authToken is not exposed', () => {
     expect(config.getAttribute('auth-token')).toBeNull();
   });
 
-  it('stays out of the debug log', async (ctx) => {
-    const credentials = await commands.mintSecureUploadsCredentials();
-    if (!credentials) return ctx.skip();
+  it.skipIf(!hasCredentials)('stays out of the debug log', async () => {
+    const credentials = await signedProject();
 
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    try {
-      const { ctxName, api } = await renderSolution(
-        'regular',
-        { debug: true, store: false },
-        { pubkey: credentials.publicKey },
-      );
-      inCtx<Config>('uc-config', ctxName).authToken = credentials.authToken;
-      api.addFileFromObject(IMAGE.PIXEL);
-      api.uploadAll();
-      await expect.poll(() => entry(api)?.status, { timeout: 20_000 }).toBe('success');
+    const { ctxName, api } = await renderSolution(
+      'regular',
+      { debug: true, store: false },
+      { pubkey: credentials.publicKey },
+    );
+    inCtx<Config>('uc-config', ctxName).authToken = credentials.authToken;
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
+    await expect.poll(() => entry(api)?.status, { timeout: 20_000 }).toBe('success');
 
-      // Debug mode prints the config assignment and the upload options; both
-      // used to carry the token verbatim.
-      const printed = log.mock.calls.map((args) => JSON.stringify(args)).join('\n');
-      expect(printed).toContain('authToken');
-      expect(printed).not.toContain(credentials.authToken);
-    } finally {
-      log.mockRestore();
-    }
+    // Debug mode prints the config assignment and the upload options; both
+    // used to carry the token verbatim.
+    const printed = log.mock.calls.map((args) => JSON.stringify(args)).join('\n');
+    expect(printed).toContain('authToken');
+    expect(printed).not.toContain(credentials.authToken);
   });
 });
 
-describe('authToken against the real Upload API', () => {
-  it('uploads a file the project would otherwise refuse', async (ctx) => {
-    const credentials = await commands.mintSecureUploadsCredentials();
-    if (!credentials) return ctx.skip();
+describe.skipIf(!hasCredentials)('authToken against Upload API', () => {
+  it('uploads a file the project would otherwise refuse', async () => {
+    const credentials = await signedProject();
 
     const { api } = await renderSolution(
       'regular',
@@ -83,11 +95,10 @@ describe('authToken against the real Upload API', () => {
     expect(entry(api).cdnUrl).toContain(entry(api).uuid);
   });
 
-  it('fails the upload when the same project gets no token', async (ctx) => {
+  it('fails the upload when the same project gets no token', async () => {
     // Without this the rest proves nothing: a project that does not enforce
     // signed uploads would accept every upload below, token or not.
-    const credentials = await commands.mintSecureUploadsCredentials();
-    if (!credentials) return ctx.skip();
+    const credentials = await signedProject();
 
     const { api } = await renderSolution('regular', { store: false }, { pubkey: credentials.publicKey });
     api.addFileFromObject(IMAGE.PIXEL);
@@ -96,13 +107,11 @@ describe('authToken against the real Upload API', () => {
     await expect.poll(() => entry(api)?.status, { timeout: 20_000 }).toBe('failed');
     const [error] = entry(api).errors;
 
-    expect(error.type).toBe('UPLOAD_ERROR');
-    expect(error.type === 'UPLOAD_ERROR' ? error.payload?.error.code : undefined).toBe('SignatureRequiredError');
+    expect(error).toMatchObject({ type: 'UPLOAD_ERROR', payload: { error: { code: 'SignatureRequiredError' } } });
   });
 
-  it('uploads with a token function, asking it once for the whole upload', async (ctx) => {
-    const credentials = await commands.mintSecureUploadsCredentials();
-    if (!credentials) return ctx.skip();
+  it('uploads with a token function, asking it once for the whole upload', async () => {
+    const credentials = await signedProject();
 
     // upload-client asks before every request, so without the uploader's cache
     // this would call an app's token endpoint several times for one file.
@@ -159,32 +168,27 @@ describe('authToken against the real Upload API', () => {
     ['wrong-key', 'AccessTokenInvalidError'],
   ] as const;
 
-  for (const [kind, code] of rejectedTokens) {
-    it(`surfaces the ${kind} token as its Upload API error code`, async (ctx) => {
-      const credentials = await commands.mintSecureUploadsCredentials(kind);
-      if (!credentials) return ctx.skip();
+  it.each(rejectedTokens)('surfaces the %s token as its Upload API error code', async (kind, code) => {
+    const credentials = await signedProject(kind);
 
-      const { api } = await renderSolution(
-        'regular',
-        { authToken: credentials.authToken, store: false },
-        { pubkey: credentials.publicKey },
-      );
-      api.addFileFromObject(IMAGE.PIXEL);
-      api.uploadAll();
+    const { api } = await renderSolution(
+      'regular',
+      { authToken: credentials.authToken, store: false },
+      { pubkey: credentials.publicKey },
+    );
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
 
-      await expect.poll(() => entry(api)?.status, { timeout: 20_000 }).toBe('failed');
-      const [error] = entry(api).errors;
+    await expect.poll(() => entry(api)?.status, { timeout: 20_000 }).toBe('failed');
+    const [error] = entry(api).errors;
 
-      // An `AuthError` is an `UploadError`, so it classifies as UPLOAD_ERROR
-      // and the distinguishing detail is the code the API sent.
-      expect(error.type).toBe('UPLOAD_ERROR');
-      expect(error.type === 'UPLOAD_ERROR' ? error.payload?.error.code : undefined).toBe(code);
-    });
-  }
+    // An `AuthError` is an `UploadError`, so it classifies as UPLOAD_ERROR
+    // and the distinguishing detail is the code the API sent.
+    expect(error).toMatchObject({ type: 'UPLOAD_ERROR', payload: { error: { code } } });
+  });
 
-  it('reports a token function that throws as AUTH_TOKEN_ERROR, without reaching the API', async (ctx) => {
-    const credentials = await commands.mintSecureUploadsCredentials();
-    if (!credentials) return ctx.skip();
+  it('reports a token function that throws as AUTH_TOKEN_ERROR, without reaching the API', async () => {
+    const credentials = await signedProject();
 
     const cause = new Error('token endpoint is down');
     const { ctxName, api } = await renderSolution('regular', { store: false }, { pubkey: credentials.publicKey });
@@ -199,9 +203,9 @@ describe('authToken against the real Upload API', () => {
     const [error] = entry(api).errors;
 
     // Their endpoint, not ours: its own type, with the original on `cause`.
-    expect(error.type).toBe('AUTH_TOKEN_ERROR');
-    const reported = error.type === 'AUTH_TOKEN_ERROR' ? error.payload?.error : undefined;
-    expect(reported).toBeInstanceOf(AuthTokenResolverError);
-    expect(reported?.cause).toBe(cause);
+    assert(error.type === 'AUTH_TOKEN_ERROR', `expected AUTH_TOKEN_ERROR, got ${error.type}`);
+    expect(error.payload?.error).toBeInstanceOf(AuthTokenResolverError);
+    expect(error.payload?.error.cause).toBe(cause);
+    expect(error.message).toBe(error.payload?.error.message);
   });
 });

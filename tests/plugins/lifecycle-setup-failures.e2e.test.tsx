@@ -69,8 +69,6 @@ describe('plugin lifecycle: setup failures', () => {
     expect(setup2).not.toHaveBeenCalled();
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"dup-id"'));
     expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('duplicate'));
-
-    warnSpy.mockRestore();
   });
 
   it('logs an error when setup() throws', async () => {
@@ -88,8 +86,6 @@ describe('plugin lifecycle: setup failures', () => {
     await vi.waitFor(() => {
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"setup-throws"'), expect.any(Error));
     });
-
-    errorSpy.mockRestore();
   });
 
   it('logs an error when an async setup() rejects', async () => {
@@ -108,8 +104,6 @@ describe('plugin lifecycle: setup failures', () => {
     await vi.waitFor(() => {
       expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"async-setup-rejects"'), expect.any(Error));
     });
-
-    errorSpy.mockRestore();
   });
 
   it('warns and skips a plugin without an id', async () => {
@@ -125,7 +119,5 @@ describe('plugin lifecycle: setup failures', () => {
     });
 
     expect(setupFn).not.toHaveBeenCalled();
-
-    warnSpy.mockRestore();
   });
 });

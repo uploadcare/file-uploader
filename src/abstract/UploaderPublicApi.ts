@@ -365,7 +365,7 @@ export class UploaderPublicApi extends SharedInstance {
       if (this._sourceList?.length === 1) {
         const srcKey = this._sourceList[0];
 
-        void this._pluginsReady().then(() => {
+        this._whenPluginsReady(() => {
           const sources = this._sharedInstancesBag.pluginManager.snapshot().sources;
           const registeredSource = sources.find((s) => s.id === srcKey);
 
@@ -408,9 +408,14 @@ export class UploaderPublicApi extends SharedInstance {
     }
   };
 
-  private async _pluginsReady(): Promise<void> {
-    const pluginManager = await this._sharedInstancesBag.wait('pluginManager');
-    return pluginManager.pluginsReady();
+  /** Runs `fn` once the plugins are ready, unless the API was destroyed while it waited. */
+  private _whenPluginsReady(fn: () => void): void {
+    void this._sharedInstancesBag
+      .wait('pluginManager')
+      .then((pluginManager) => pluginManager.pluginsReady())
+      .then(() => {
+        if (!this._isDestroyed) fn();
+      });
   }
 
   public setCurrentActivity = <T extends ActivityType>(
@@ -421,7 +426,7 @@ export class UploaderPublicApi extends SharedInstance {
         : [ActivityParamsMap[T]]
       : []
   ) => {
-    void this._pluginsReady().then(() => {
+    this._whenPluginsReady(() => {
       this._ctx.pub('*currentActivityParams', params[0] ?? {});
       this._ctx.pub('*currentActivity', activityType);
       waitForBlockInCtx(
@@ -482,7 +487,7 @@ export class UploaderPublicApi extends SharedInstance {
   };
 
   public setModalState = (opened: boolean): void => {
-    void this._pluginsReady().then(() => {
+    this._whenPluginsReady(() => {
       if (!opened) {
         this._sharedInstancesBag.modalManager?.close(this._ctx.read('*currentActivity'));
         this._ctx.pub('*currentActivity', null);
@@ -502,6 +507,7 @@ export class UploaderPublicApi extends SharedInstance {
           onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
         },
       ).then(() => {
+        if (this._isDestroyed) return;
         this._sharedInstancesBag.modalManager?.open(activityType);
       });
     });

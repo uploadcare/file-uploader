@@ -11,3 +11,5 @@ tests/__coverage__
 tsconfig.types.tsbuildinfo
 dist/**
 specs/npm/.types-matrix/
+__screenshots__
+.vitest-attachments

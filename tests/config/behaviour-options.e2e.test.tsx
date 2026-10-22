@@ -1,8 +1,8 @@
-import type { UploadcareFile } from '@uploadcare/upload-client';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { FuncFileValidator } from '@/index';
-import { delay } from '@/utils/delay';
+import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE } from '~/tests/fixtures/files';
+import { emulatorSession, isLive } from '~/tests/utils/emulator.browser';
 import { renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -14,65 +14,59 @@ import '~/types/jsx';
  * single source — with none, the default upload icon renders regardless (PrimaryAction.ts:155) — and driving the
  * button to that state needs the dynamic-button attribute set at parse time plus the plugin manager ready. A test
  * that skips that setup asserts the wrong branch and passes for the wrong reason.
- *
- * `uploadFile` is stubbed so the shrink assertions can inspect the file that would have been sent, with no network.
  */
 
-const uploadFile = vi.hoisted(() => vi.fn());
-
-vi.mock('@uploadcare/upload-client', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@uploadcare/upload-client')>();
-  return { ...actual, uploadFile };
-});
-
-const UPLOADED = {
-  uuid: '00000000-0000-4000-8000-000000000000',
-  originalFilename: 'square.jpg',
-  size: 1,
-  isImage: true,
-  mimeType: 'image/jpeg',
-} as unknown as UploadcareFile;
-
-beforeEach(() => {
-  uploadFile.mockReset();
-  uploadFile.mockResolvedValue(UPLOADED);
-});
-
-describe('imageShrink', () => {
-  /** The file that actually reached the upload call. */
-  const uploadedFile = async (imageShrink?: string): Promise<File> => {
-    uploadFile.mockClear();
+// Fake-only: the bytes are read back from what the emulator stored, and a live run has no emulator.
+describe.skipIf(isLive)('imageShrink', () => {
+  /** The file the emulator stored for one upload of the 512×512 square. */
+  const storedFile = async (imageShrink?: string) => {
     const { api } = await renderSolution('regular', imageShrink ? { imageShrink } : {});
     api.addFileFromObject(IMAGE.SQUARE);
     api.uploadAll();
 
-    await vi.waitFor(() => expect(uploadFile).toHaveBeenCalled(), { timeout: 20_000 });
-    return uploadFile.mock.calls[0][0] as File;
+    await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.status, { timeout: 20_000 }).toBe('success');
+    const { uuid } = api.getOutputCollectionState().allEntries[0];
+    const stored = emulatorSession().files.get(uuid ?? '');
+    if (!stored) throw new Error(`The emulator stored no file ${uuid}`);
+    return stored;
   };
 
+  const original = async () => new Uint8Array(await IMAGE.SQUARE.arrayBuffer());
+
   it('uploads the original file when unset', async () => {
-    expect(await uploadedFile()).toBe(IMAGE.SQUARE);
+    expect((await storedFile()).bytes).toEqual(await original());
   });
 
   it('replaces the file with a shrunk one when set', async () => {
-    const file = await uploadedFile('100x100');
+    const { image, size } = await storedFile('100x100');
 
-    expect(file).not.toBe(IMAGE.SQUARE);
-    expect(file.size).toBeLessThan(IMAGE.SQUARE.size);
+    expect(size).toBeLessThan(IMAGE.SQUARE.size);
+    expect(image).toMatchObject({ width: 100, height: 100 });
   });
 
   it('leaves the file alone when the setting cannot be parsed', async () => {
     // The plugin warns and passes the file through rather than failing the upload
     // (src/plugins/imageShrinkPlugin.ts:17).
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      expect(await uploadedFile('not-a-size')).toBe(IMAGE.SQUARE);
-    } finally {
-      warn.mockRestore();
-    }
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect((await storedFile('not-a-size')).bytes).toEqual(await original());
   });
 });
 
+/** The sentinel url: a paste of it that is accepted lands after the paste under test, through the same handler. */
+const SENTINEL_URL = 'https://example.com/sentinel.jpg';
+
+const pasteSentinel = (target: Element) => {
+  const data = new DataTransfer();
+  data.items.add(SENTINEL_URL, 'text/plain');
+  target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, composed: true }));
+};
+
+/** Everything in the collection, by url or file name; the sentinel shows up as its url. */
+const added = (api: Awaited<ReturnType<typeof renderSolution>>['api']) =>
+  api.getOutputCollectionState().allEntries.map((entry) => entry.externalUrl ?? entry.name);
+
+// Which pastes are taken (url schemes, editable targets, scopes, activities) is in the happy-dom spec,
+// `src/abstract/features/ClipboardLayer.test.ts`. These check the option and the paste reach a real uploader.
 describe('pasteScope', () => {
   const pasteInto = async (target: Element) => {
     const data = new DataTransfer();
@@ -89,46 +83,34 @@ describe('pasteScope', () => {
     await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
   });
 
-  it("ignores a paste outside the uploader on 'local'", async () => {
-    const { api } = await renderSolution('regular');
-
-    await pasteInto(document.body);
-
-    // Negative wait: nothing should be added, so there is no signal to wait for.
-    await delay(300);
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
-  });
-
-  it("accepts a paste anywhere on 'global'", async () => {
-    const { api } = await renderSolution('regular', { pasteScope: 'global' });
-
-    await pasteInto(document.body);
-
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
-  });
-
   it('ignores paste entirely when disabled', async () => {
-    const { root, api } = await renderSolution('regular', { pasteScope: false });
+    const { root, api, config } = await renderSolution('regular', { pasteScope: false });
 
     await pasteInto(root);
+    config.pasteScope = 'local';
+    pasteSentinel(root);
 
-    // Negative wait: nothing should be added, so there is no signal to wait for.
-    await delay(300);
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
+    await expect.poll(() => added(api)).toEqual([SENTINEL_URL]);
   });
 });
 
 describe('validationConcurrency', () => {
-  /** Runs three files through a slow async validator and reports the highest number in flight at once. */
+  /**
+   * Runs three files through a validator and reports the highest number in flight at once. Every validator holds until
+   * `validationConcurrency` of them are running, so the runs overlap as far as the setting allows; a manager that let
+   * fewer run at once would never get there, and the test would time out.
+   */
   const peakConcurrency = async (validationConcurrency: number): Promise<number> => {
     let inFlight = 0;
     let peak = 0;
     let finished = 0;
+    const allowedRunning = withResolvers();
 
     const validator: FuncFileValidator = async () => {
       inFlight += 1;
       peak = Math.max(peak, inFlight);
-      await delay(150);
+      if (inFlight >= validationConcurrency) allowedRunning.resolve();
+      await allowedRunning.promise;
       inFlight -= 1;
       finished += 1;
       return undefined;
@@ -143,20 +125,18 @@ describe('validationConcurrency', () => {
     return peak;
   };
 
+  // The cap itself, over more settings and files, is in `src/abstract/managers/__tests__/ValidationManager.test.ts`.
+  // This checks the option reaches a real uploader's validation.
   it('runs validators one at a time when set to 1', async () => {
     expect(await peakConcurrency(1)).toBe(1);
-  });
-
-  it('runs them in parallel when allowed', async () => {
-    expect(await peakConcurrency(3)).toBeGreaterThan(1);
   });
 });
 
 describe('pasting urls and text', () => {
-  const pasteText = async (root: HTMLElement, text: string, type = 'text/plain', target: Element = root) => {
+  const pasteText = async (root: HTMLElement, text: string) => {
     const data = new DataTransfer();
-    data.items.add(text, type);
-    target.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, composed: true }));
+    data.items.add(text, 'text/plain');
+    root.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, composed: true }));
   };
 
   it('adds a file from a pasted http url', async () => {
@@ -166,57 +146,5 @@ describe('pasting urls and text', () => {
 
     await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
     expect(api.getOutputCollectionState().allEntries[0].externalUrl).toBe('https://example.com/photo.jpg');
-  });
-
-  it('accepts a url pasted as text/uri-list', async () => {
-    const { root, api } = await renderSolution('regular');
-
-    await pasteText(root, 'https://example.com/photo.jpg', 'text/uri-list');
-
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
-  });
-
-  it('ignores plain text that is not a url', async () => {
-    const { root, api } = await renderSolution('regular');
-
-    await pasteText(root, 'just some words');
-
-    // Negative wait: nothing should be added, so there is no signal to wait for.
-    await delay(400);
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
-  });
-
-  it('ignores a url with a scheme it will not fetch', async () => {
-    // `_getPastedUrl` only lets http and https through (ClipboardLayer.ts:76).
-    const { root, api } = await renderSolution('regular');
-
-    await pasteText(root, 'ftp://example.com/photo.jpg');
-
-    // Negative wait: nothing should be added, so there is no signal to wait for.
-    await delay(400);
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
-  });
-
-  it('ignores a paste into a text field', async () => {
-    // Otherwise pasting a link into the url-source input would also add it to the collection.
-    const { root, api } = await renderSolution('regular');
-    const input = document.createElement('input');
-    root.appendChild(input);
-
-    await pasteText(root, 'https://example.com/photo.jpg', 'text/plain', input);
-
-    // Negative wait: nothing should be added, so there is no signal to wait for.
-    await delay(400);
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
-  });
-
-  it('takes both a file and a url from one paste', async () => {
-    const { root, api } = await renderSolution('regular');
-    const data = new DataTransfer();
-    data.items.add(IMAGE.PIXEL);
-    data.items.add('https://example.com/photo.jpg', 'text/plain');
-    root.dispatchEvent(new ClipboardEvent('paste', { clipboardData: data, bubbles: true, composed: true }));
-
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(2);
   });
 });

@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
-import { recordEvents } from '~/tests/utils/event-recorder';
+import { type EventRecorder, recordEvents } from '~/tests/utils/event-recorder';
 import { renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -48,15 +47,24 @@ describe('unknown internal ids', () => {
   });
 });
 
+/**
+ * The end of a negative wait on events: opening the flow fires activity-change and a debounced modal-open, so once
+ * modal-open lands, anything the call under test fired, debounced or not, has landed before it.
+ */
+const openFlowAsSentinel = async (api: Awaited<ReturnType<typeof renderSolution>>['api'], recorder: EventRecorder) => {
+  api.initFlow();
+  await recorder.waitFor('modal-open');
+};
+
 describe('no-op calls', () => {
   it('removeAllFiles on an empty collection does nothing', async () => {
     const { api, provider } = await renderSolution();
     const recorder = recordEvents(provider);
 
     expect(() => api.removeAllFiles()).not.toThrow();
-    // Negative wait: no event is expected, so there is nothing to wait for.
-    await delay(50);
-    expect(recorder.types).toEqual([]);
+    await openFlowAsSentinel(api, recorder);
+
+    expect(recorder.types).toEqual(['activity-change', 'modal-open']);
   });
 
   it('uploadAll on an empty collection emits nothing', async () => {
@@ -64,9 +72,9 @@ describe('no-op calls', () => {
     const recorder = recordEvents(provider);
 
     api.uploadAll();
-    // Negative wait: no event is expected, so there is nothing to wait for.
-    await delay(50);
-    expect(recorder.detailsOf('common-upload-start')).toEqual([]);
+    await openFlowAsSentinel(api, recorder);
+
+    expect(recorder.types).toEqual(['activity-change', 'modal-open']);
   });
 
   it('doneFlow before initFlow does not throw', async () => {
@@ -87,10 +95,13 @@ describe('no-op calls', () => {
 
     unsubscribe();
     expect(() => unsubscribe()).not.toThrow();
+    // The sentinel: a handler still subscribed hears the same file-added the removed one would have.
+    const sentinel = vi.fn();
+    api.on('file-added', sentinel);
 
     api.addFileFromObject(IMAGE.PIXEL);
-    // Negative wait: the handler must stay uncalled, so there is nothing to wait for.
-    await delay(50);
+    await vi.waitFor(() => expect(sentinel).toHaveBeenCalledOnce());
+
     expect(handler).not.toHaveBeenCalled();
   });
 });
@@ -98,30 +109,22 @@ describe('no-op calls', () => {
 describe('setCurrentActivity / setModalState misuse', () => {
   it('warns instead of throwing for an activity nothing registered', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      const { api } = await renderSolution();
-      api.setCurrentActivity('no-such-activity' as 'start-from');
+    const { api } = await renderSolution();
+    api.setCurrentActivity('no-such-activity' as 'start-from');
 
-      await vi.waitFor(() => {
-        expect(warn).toHaveBeenCalledWith(expect.stringContaining('not found in the context'));
-      });
-    } finally {
-      warn.mockRestore();
-    }
+    await vi.waitFor(() => {
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('not found in the context'));
+    });
   });
 
   it('warns when asked to open the modal with no current activity', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      const { api } = await renderSolution();
-      api.setModalState(true);
+    const { api } = await renderSolution();
+    api.setModalState(true);
 
-      await vi.waitFor(() => {
-        expect(warn).toHaveBeenCalledWith(expect.stringContaining("Can't open modal without current activity"));
-      });
-    } finally {
-      warn.mockRestore();
-    }
+    await vi.waitFor(() => {
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Can't open modal without current activity"));
+    });
   });
 });
 
@@ -183,9 +186,8 @@ describe('silent: true', () => {
     api.addFileFromObject(IMAGE.PIXEL, { silent: true });
     api.uploadAll();
 
-    await recorder.waitFor('common-upload-success');
-    // Negative wait: the per-file events must stay absent; long enough for the debounced trailing `change` to land.
-    await delay(500);
+    // The trailing `change` after common-upload-success is the upload's last event.
+    await recorder.waitForAfter('change', 'common-upload-success');
 
     // api.mdx: "events file-added, file-upload-start, file-upload-progress, file-upload-success won't be triggered".
     expect(recorder.detailsOf('file-added')).toEqual([]);
