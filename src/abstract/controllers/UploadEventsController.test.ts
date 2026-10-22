@@ -366,6 +366,28 @@ describe('UploadEventsController', () => {
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.COMMON_UPLOAD_SUCCESS, expect.anything());
     });
 
+    it('emits COMMON_UPLOAD_SUCCESS once when the validation results land in separate batches', () => {
+      const t = setup();
+      const a = t.collection.add({ fileName: 'a.txt' });
+      const b = t.collection.add({ fileName: 'b.txt' });
+      t.collection.publishProp(a, 'fileInfo', { uuid: 'u1' } as never);
+      t.collection.publishProp(b, 'fileInfo', { uuid: 'u2' } as never);
+      const successes = () =>
+        t.emit.mock.calls.filter(([type]) => type === UploaderEventType.COMMON_UPLOAD_SUCCESS).length;
+
+      // Each uploaded file is validated again; both batches see the whole collection done.
+      t.fireProperties({ errors: new Set([a]) });
+      t.fireProperties({ errors: new Set([b]) });
+      expect(successes()).toBe(1);
+
+      // A file added and removed starts it over: the collection that is done now is a new one.
+      const c = t.collection.add({ fileName: 'c.txt' });
+      t.fireCollection([a, b, c], entriesByUid(t.collection, [c]), new Set());
+      t.collection.remove(c);
+      t.fireProperties({ errors: new Set([a]) });
+      expect(successes()).toBe(2);
+    });
+
     it('emits FILE_URL_CHANGED for entries that now have a cdnUrl and clears groupInfo', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });
