@@ -1,8 +1,10 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { ChildBlock } from '../../lit/ChildBlock';
+import type { AriaRole } from '../../types/dom';
 import './source-btn.css';
 
 import '../Icon/Icon';
@@ -20,6 +22,10 @@ export class SourceBtn extends ChildBlock {
 
   @property({ attribute: false })
   public source?: SourceButtonConfig;
+
+  /** Role for the inner `<button>`, the element that takes focus (e.g. `menuitem` inside a menu). */
+  @property({ attribute: false })
+  public buttonRole?: AriaRole;
 
   @property({ type: Boolean })
   public textOnly = false;
@@ -76,7 +82,12 @@ export class SourceBtn extends ChildBlock {
 
   public override render() {
     return html`
-      <button aria-label=${this.l10n(this._srcTypeKey)} type="button" @click=${this.activate}>
+      <button
+        aria-label=${this.l10n(this._srcTypeKey)}
+        role=${ifDefined(this.buttonRole)}
+        type="button"
+        @click=${this.activate}
+      >
         ${this.textOnly ? '' : html`<uc-icon name=${this._iconName}></uc-icon>`}
         ${this.iconOnly ? '' : html`<div class="uc-txt">${this.l10n(this._srcTypeKey)}</div>`}
       </button>

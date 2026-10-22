@@ -249,7 +249,7 @@ export class DynamicBtn extends ChildBlock {
     return html`
       <uc-no-wrap-mode-dynamic-btn>
         ${this._mainAndRemainSources?.remain?.map(
-          (source) => html`<uc-source-btn .iconOnly=${true} role="menuitem" .source=${source}></uc-source-btn>`,
+          (source) => html`<uc-source-btn .iconOnly=${true} .source=${source}></uc-source-btn>`,
         )}
       </uc-no-wrap-mode-dynamic-btn>
     `;
@@ -289,7 +289,7 @@ export class DynamicBtn extends ChildBlock {
       <uc-icon content-for="dd-header-button" name=${this._dropdownIconName}></uc-icon>
       <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
         ${this._mainAndRemainSources?.remain?.map(
-          (source) => html`<uc-source-btn role="menuitem" .source=${source}></uc-source-btn>`,
+          (source) => html`<uc-source-btn .buttonRole=${'menuitem'} .source=${source}></uc-source-btn>`,
         )}
       </div>
     </uc-drop-down>`;
