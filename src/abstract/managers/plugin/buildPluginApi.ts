@@ -56,7 +56,7 @@ export function buildPluginApi(
 
   const configApi: PluginConfigApi = {
     get: <TKey extends keyof (ConfigType & CustomConfig)>(configName: TKey): (ConfigType & CustomConfig)[TKey] => {
-      return config.get(configName as string) as (ConfigType & CustomConfig)[TKey];
+      return config.get(configName);
     },
 
     subscribe: <TKey extends keyof (ConfigType & CustomConfig)>(
@@ -65,7 +65,7 @@ export function buildPluginApi(
     ): (() => void) => {
       // Immediate fire + per-key `Object.is` dedup via the atomic `observe`
       // — the same semantics the `ctx.sub('*cfg/<name>', …)` facade gave.
-      const unsub = config.observe(configName as string, callback as (value: unknown) => void, { immediate: true });
+      const unsub = config.observe(configName, callback, { immediate: true });
       configSubscriptions.push(unsub);
       return unsub;
     },

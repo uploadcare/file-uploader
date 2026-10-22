@@ -185,7 +185,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     }
 
     private _flushValueToState(key: string, value: unknown) {
-      const current = this._config.get(key);
+      const current = this._config.getDynamic(key);
       if (current === value) {
         return;
       }
@@ -196,9 +196,9 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         // behavior. NB: uses `initialConfig`, NOT `descriptor.defaultValue`, so a
         // custom key clears rather than resetting to its registered default.
         const dflt = initialConfig[key as keyof ConfigType];
-        this._config.set(key, dflt !== undefined ? dflt : value);
+        this._config.setDynamic(key, dflt !== undefined ? dflt : value);
       } else {
-        this._config.set(key, value);
+        this._config.setDynamic(key, value);
       }
     }
 
@@ -263,7 +263,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         // Detached: do not resolve `@inject`/`_config` — local cache only.
         return local;
       }
-      return local ?? this._config.get(key);
+      return local ?? this._config.getDynamic(key);
     }
 
     private _assertSameValueDifferentReference(key: string, previousValue: unknown, nextValue: unknown) {
@@ -358,7 +358,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         // Subscribe to state changes (once) — atomic per-key observe, change-only
         // (no immediate). `_setValue`'s early-return guard prevents circular updates.
         if (!this._customConfigSubscriptions.has(name)) {
-          const unsub = this._config.observe(name, (nextValue) => this._setValue(name, nextValue));
+          const unsub = this._config.observeDynamic(name, (nextValue) => this._setValue(name, nextValue));
           this._customConfigSubscriptions.set(name, unsub);
           this.addDisposer(unsub);
         }
