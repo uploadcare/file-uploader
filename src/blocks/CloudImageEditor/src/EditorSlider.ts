@@ -145,6 +145,7 @@ export class EditorSlider extends EditorBlock {
         .max=${this.state.max}
         .defaultValue=${this.state.defaultValue}
         .zero=${this.state.zero}
+        .label=${this.state.operation === 'filter' ? (this.state.filter ?? '') : this.l10nSafe(this.state.operation)}
         @uc-internal:slider-input=${this._handleInput}
       ></uc-slider-ui>
     `;
