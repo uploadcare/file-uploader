@@ -1,12 +1,10 @@
+import { EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import { delay } from '@/utils/delay';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
-import { openModal, renderSolution, within } from '~/tests/utils/render-solution';
-import { actionEvents, bodiesWithAction, clearSent, installTelemetryStub, waitForType } from './stub';
-
-beforeEach(installTelemetryStub);
+import { clickSource, inCtx, renderSolution, waitForBlocks, within } from '~/tests/utils/render-solution';
+import { actionEvents, bodiesWithAction, clearSent, waitForType } from './sink';
 
 describe('telemetry: cloud image editor', () => {
   /** The standalone editor is not one of `renderSolution`'s solutions, so it is rendered by hand. */
@@ -14,12 +12,11 @@ describe('telemetry: cloud image editor', () => {
     const ctxName = getCtxName();
     page.render(
       <>
-        <uc-cloud-image-editor uuid="f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f" ctx-name={ctxName}></uc-cloud-image-editor>
+        <uc-cloud-image-editor uuid={EDITOR_IMAGE_UUID} ctx-name={ctxName}></uc-cloud-image-editor>
         <uc-config cdn-cname="https://ucarecdn.com/" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
       </>,
     );
-    // One tick so the editor's blocks register with the ctx before a test drives them.
-    await delay(0);
+    await waitForBlocks(inCtx('uc-cloud-image-editor', ctxName), inCtx('uc-config', ctxName));
   });
 
   it('reports the editor as its own solution', async () => {
@@ -58,24 +55,13 @@ describe('telemetry: cloud image editor', () => {
 describe('telemetry: sources', () => {
   const WAIT = { timeout: 20_000, interval: 50 };
 
-  /** Picks a source button out of the start-from list by its registered id. */
-  const clickSource = async (root: HTMLElement, sourceId: string) => {
-    await openModal(root);
-    const button = await vi.waitFor(() => {
-      const found = root.querySelector<HTMLButtonElement>(`uc-source-btn[data-source-id="${sourceId}"] button`);
-      if (!found) throw new Error(`Source button "${sourceId}" was not rendered`);
-      return found;
-    }, WAIT);
-    button.click();
-  };
-
   it('reports an action-event carrying the source id when a source is picked', async () => {
     // `qualityInsights` back on: the shared helper disables telemetry, which is the thing under test here.
     const { root } = await renderSolution('regular', { qualityInsights: true });
     await waitForType('init-solution');
     clearSent();
 
-    await clickSource(root, 'dropbox');
+    await clickSource(root, 'Dropbox');
     const action = await waitForType('action-event');
 
     // SourceBtn puts the id straight on the payload, not inside `metadata`.
@@ -84,19 +70,18 @@ describe('telemetry: sources', () => {
 
   it('reports the camera action events in order', { timeout: 60_000 }, async () => {
     const { root } = await renderSolution('regular', { qualityInsights: true });
-    await clickSource(root, 'camera');
-    const shot = within(root).getByTestId('uc-camera-source--shot');
+    await clickSource(root, 'Camera');
+    const shot = within(root).getByRole('button', { name: 'Shot', exact: true });
     await expect.element(shot).toBeVisible();
     clearSent();
 
-    await within(root).getByTestId('uc-camera-source--tab-video').click();
-    await within(root).getByTestId('uc-camera-source--tab-photo').click();
+    await within(root).getByRole('button', { name: 'Video', exact: true }).click();
+    await within(root).getByRole('button', { name: 'Photo', exact: true }).click();
     await shot.click();
 
-    const accept = within(root).getByTestId('uc-camera-source--accept');
+    const accept = within(root).getByRole('button', { name: 'Accept', exact: true });
     await expect.element(accept).toBeVisible();
-    const retake = root.querySelector<HTMLButtonElement>('uc-camera-source .uc-camera-actions .uc-secondary-btn')!;
-    retake.click();
+    await within(root).getByTestId('uc-camera-source').getByRole('button', { name: 'Retake', exact: true }).click();
 
     await shot.click();
     await expect.element(accept).toBeVisible();

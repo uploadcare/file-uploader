@@ -598,10 +598,10 @@ describe('v1-free lifecycle (ChildBlock-only composition, M9o Task 3d)', () => {
     await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
     // M-god step 8e: the ctx's `ControllerContainer` is the teardown unit — its
-    // `dispose()` destroys the container-owned controllers. Spy on it to assert
-    // the ctx is disposed exactly once (not twice).
-    const destroySpy = vi.spyOn(ControllerContainer.prototype, 'dispose');
-    destroySpy.mockClear();
+    // `dispose()` destroys the container-owned controllers. Spy on this ctx's
+    // own container (not the prototype, which another test's deferred teardown
+    // would also hit) to assert the ctx is disposed exactly once (not twice).
+    const destroySpy = vi.spyOn(containerOf(ctxName), 'dispose');
 
     // Both the only v1 block and the only ChildBlock disconnect in the same
     // tick: both schedule a deferred unified-predicate check, and both will

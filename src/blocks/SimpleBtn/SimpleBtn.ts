@@ -33,7 +33,7 @@ export class SimpleBtn extends ChildBlock {
       <uc-icon name="upload"></uc-icon>
       <span>${this.l10n(buttonTextKey)}</span>
       ${this.yield('')}
-      <div class="uc-visual-drop-area">${this.l10n('drop-files-here')}</div>
+      <div class="uc-visual-drop-area" aria-hidden="true">${this.l10n('drop-files-here')}</div>
     </button>
   </uc-drop-area>
     `;

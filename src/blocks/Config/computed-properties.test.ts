@@ -1,12 +1,10 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { computeProperty } from './computed-properties';
 
 type AnyRecord = Record<string, any>;
 const makeGetter = (values: AnyRecord) => (key: string) => values[key] as any;
 
 describe('computeProperty', () => {
-  afterEach(() => vi.restoreAllMocks());
-
   describe('cameraModes / enableVideoRecording', () => {
     it('adds video when enableVideoRecording is true and video not present', () => {
       const setValue = vi.fn();

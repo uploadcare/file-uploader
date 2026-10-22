@@ -1,5 +1,4 @@
 import { describe, expect, it, vi } from 'vitest';
-import { delay } from '@/utils/delay';
 import { testFile } from '~/tests/fixtures/files';
 import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
 
@@ -161,16 +160,23 @@ describe('file hook: onAdd', () => {
       },
     });
 
-    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
-    config.plugins = [];
+    // The sentinel: a hook that stays registered, after the removed one, runs where the removed one would have.
+    const sentinel = vi.fn(({ file }) => ({ file }));
+    const sentinelPlugin = createTestPlugin({
+      id: 'hook-unregister-sentinel',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerFileHook({ type: 'onAdd', handler: sentinel });
+      },
+    });
+
+    const { config, api } = await renderSolution('regular', { plugins: [plugin, sentinelPlugin] });
+    config.plugins = [sentinelPlugin];
     await vi.waitFor(() => {
       expect(dispose).toHaveBeenCalledOnce();
     });
 
     const entry = api.addFileFromObject(testFile('test.jpg'));
-
-    // Negative wait: gives a still-registered hook time to run before asserting it did not.
-    await delay(50);
+    await vi.waitFor(() => expect(sentinel).toHaveBeenCalledOnce());
 
     expect(api.getOutputItem(entry.internalId).mimeType).toBe('image/jpeg');
   });
@@ -216,17 +222,24 @@ describe('file hook: beforeUpload', () => {
       },
     });
 
-    const { config, api } = await renderSolution('regular', { plugins: [plugin] });
-    config.plugins = [];
+    // The sentinel: a hook that stays registered, after the removed one, runs where the removed one would have.
+    const sentinel = vi.fn(({ file }) => ({ file }));
+    const sentinelPlugin = createTestPlugin({
+      id: 'hook-beforeupload-unreg-sentinel',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerFileHook({ type: 'beforeUpload', handler: sentinel });
+      },
+    });
+
+    const { config, api } = await renderSolution('regular', { plugins: [plugin, sentinelPlugin] });
+    config.plugins = [sentinelPlugin];
     await vi.waitFor(() => {
       expect(dispose).toHaveBeenCalledOnce();
     });
 
     api.addFileFromObject(testFile('test.jpg'));
     api.uploadAll();
-
-    // Negative wait: gives a still-registered hook time to run before asserting it did not.
-    await delay(100);
+    await vi.waitFor(() => expect(sentinel).toHaveBeenCalledOnce(), { timeout: 20_000 });
 
     expect(handler).not.toHaveBeenCalled();
   });

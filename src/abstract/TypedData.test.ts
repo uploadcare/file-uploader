@@ -1,11 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { TypedData } from './TypedData';
 
 describe('TypedData (ReactiveStore)', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-
   const make = () => new TypedData<{ a: number; b: string }>({ a: 0, b: '' });
 
   it('creates a unique uid and is discoverable via the registry', () => {

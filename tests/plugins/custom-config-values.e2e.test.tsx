@@ -218,8 +218,6 @@ describe('custom config: values', () => {
     });
 
     await expect.poll(() => config.throwingNormOption).toBe('safe');
-
-    warnSpy.mockRestore();
   });
 
   it('warns and keeps the first definition when two plugins register the same name', async () => {
@@ -252,8 +250,6 @@ describe('custom config: values', () => {
       expect.stringMatching(/\[uc].*\[plugin:cfg-dup-b]/),
       'Config option "dupOption" is already registered',
     );
-
-    warnSpy.mockRestore();
   });
 
   it('ignores a write to a custom option once <uc-config> moves to a ctx without the plugin', async () => {

@@ -2,6 +2,10 @@ name: checks
 
 on:
   pull_request:
+  # Runs the whole e2e suite against the real API on demand (Actions > checks >
+  # Run workflow), e.g. on master between releases, to find API drift before a
+  # release branch does.
+  workflow_dispatch:
 
 # The checks only read the repo; keep the GITHUB_TOKEN least-privilege
 # (the repo default is write-all).
@@ -37,6 +41,17 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    env:
+      # e2e talks to the emulator in @uploadcare/api-emulator by default, so a
+      # normal PR needs neither API access nor luck with timing. Release
+      # branches run against the real service instead — a fake cannot tell
+      # you the upload API changed under you — and any PR can opt in by
+      # carrying the `e2e-live` label, as does a manual run.
+      E2E_NET: >-
+        ${{ (github.event_name == 'workflow_dispatch'
+          || startsWith(github.head_ref, 'releases/v')
+          || contains(github.event.pull_request.labels.*.name, 'e2e-live'))
+          && 'live' || 'fake' }}
     steps:
       - uses: actions/checkout@1af3b93b6815bc44a9784bd300feb67ff0d1eeb3 # v6.0.0
         with:
@@ -67,16 +82,23 @@ jobs:
         run: npm run build
       # `test:coverage` runs both vitest projects in one pass, so coverage is
       # merged across specs and e2e instead of each run overwriting the other.
+      # Without the Signed Uploads secrets: a fake run never reads them, and a
+      # live one skips the auth token tests, which the next step runs.
       - name: Run tests
+        run: npm run test:coverage && npm run test:locales
+      # The emulator only knows the token rules it was written with, so the auth
+      # token tests also run against the real API on every PR, on purpose: only
+      # it can say Upload API still accepts the tokens the uploader sends.
+      # The only step that sees the secrets of that project, a real one with
+      # Signed Uploads enabled. E2E_REQUIRE_SECURE_UPLOADS turns missing or
+      # rotated secrets (or a fork PR, which gets none) into a failed step
+      # instead of a green one where every test skipped.
+      - name: Run auth token tests against the real API
         env:
-          # A project with Signed Uploads enabled, which rejects every unsigned
-          # request — so it cannot be the default test project. Without these
-          # the auth token tests in `tests/uploading/auth-token.e2e.test.tsx`
-          # skip, and nothing checks that a token the uploader sends is one
-          # Upload API accepts.
+          E2E_REQUIRE_SECURE_UPLOADS: '1'
           UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY }}
           UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY: ${{ secrets.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY }}
-        run: npm run test:coverage && npm run test:locales
+        run: E2E_NET=live npx vitest run --project e2e tests/uploading/auth-token.e2e.test.tsx
       - name: Archive artifacts
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
         if: always()

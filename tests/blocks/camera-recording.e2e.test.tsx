@@ -14,16 +14,17 @@ const openCamera = async (configProps: Parameters<typeof renderSolution>[1] = {}
   rendered.api.initFlow();
   await expectActivity(rendered.root, 'start-from');
 
-  await within(rendered.root).getByTestId('uc-start-from').getByText('Camera', { exact: true }).click();
+  await within(rendered.root).getByTestId('uc-start-from').getByRole('button', { name: 'Camera', exact: true }).click();
   await expectActivity(rendered.root, 'camera');
 
   const camera = within(rendered.root).getByTestId('uc-camera-source');
   return {
     ...rendered,
     camera,
+    // By test id: the shutter is named after what it does next, which changes with the mode.
     shot: () => camera.getByTestId('uc-camera-source--shot').click(),
-    accept: () => camera.getByTestId('uc-camera-source--accept').click(),
-    openVideoTab: () => camera.getByTestId('uc-camera-source--tab-video').click(),
+    accept: () => camera.getByRole('button', { name: 'Accept', exact: true }).click(),
+    openVideoTab: () => camera.getByRole('button', { name: 'Video', exact: true }).click(),
   };
 };
 
@@ -32,7 +33,7 @@ describe('photo capture', () => {
     const { api, camera, shot } = await openCamera();
     await shot();
 
-    await expect.element(camera.getByTestId('uc-camera-source--accept')).toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Accept', exact: true })).toBeVisible();
     await expect.element(camera.getByText('Retake', { exact: true })).toBeVisible();
     expect(api.getOutputCollectionState().totalCount).toBe(0);
   });
@@ -44,7 +45,7 @@ describe('photo capture', () => {
     await camera.getByText('Retake', { exact: true }).click();
 
     // Back to the live view: the shutter is offered again and nothing was added.
-    await expect.element(camera.getByTestId('uc-camera-source--shot')).toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Shot', exact: true })).toBeVisible();
     expect(api.getOutputCollectionState().totalCount).toBe(0);
   });
 
@@ -135,7 +136,9 @@ describe('video recording', () => {
     await expect.element(camera.getByTestId('uc-camera-source--recording-timer')).toBeVisible();
 
     // No second shutter click: the recording has to end by itself.
-    await expect.element(camera.getByTestId('uc-camera-source--accept'), { timeout: 20_000 }).toBeVisible();
+    await expect
+      .element(camera.getByRole('button', { name: 'Accept', exact: true }), { timeout: 20_000 })
+      .toBeVisible();
 
     await accept();
     await expect.poll(() => api.getOutputCollectionState().totalCount, { timeout: 20_000 }).toBe(1);
