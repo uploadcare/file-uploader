@@ -16,7 +16,12 @@ import { PROPS_MAP } from './props-map';
  * than like a bag of nulls (`$$` returning null would put `format/null` in URLs,
  * which cannot happen in production).
  */
-class TestImgBase extends ImgBase {}
+class TestImgBase extends ImgBase {
+  public readTypo(): unknown {
+    // @ts-expect-error `$$` only takes `PROPS_MAP` keys, so an attribute-name typo fails to compile.
+    return this.$$('not-a-prop');
+  }
+}
 TestImgBase.reg('uc-test-img-base');
 
 type UrlBaseAccess = {
@@ -324,5 +329,60 @@ describe('_getUrlBase — secure delivery proxy', () => {
     });
 
     expect(el._getUrlBase()).toBe(`https://cdn.example.com/${UUID}/${ANALYTICS}`);
+  });
+});
+
+describe('no URL to emit', () => {
+  /** A garbage uuid makes `_getUrlBase` degrade to `undefined` for every size. */
+  const broken = { src: '', uuid: 'not-a-uuid', 'cdn-cname': 'https://cdn.example.com' };
+
+  type RenderAccess = UrlBaseAccess & {
+    _getElSize: (node: HTMLElement, k?: number) => string | null;
+    _renderBg: (el: HTMLElement) => void;
+    _renderImage: () => Promise<void>;
+    _imgPreview: HTMLImageElement;
+    initIntersection: (el: HTMLElement, cb: () => void) => void;
+  };
+
+  const brokenImg = (config: Record<string, unknown> = {}): RenderAccess => {
+    const el = makeImg({ ...broken, ...config }) as RenderAccess;
+    el._getElSize = (_node, k = 1) => `${300 * k}x`;
+    return el;
+  };
+
+  it('emits an empty srcset rather than "undefined 1x"', () => {
+    expect(brokenImg()._getSrcset()).toBe('');
+    expect(brokenImg({ breakpoints: '200' })._getSrcset()).toBe('');
+  });
+
+  it('clears the background image rather than setting url("undefined")', () => {
+    const target = document.createElement('div');
+    target.style.setProperty('background-image', 'url("stale.png")');
+
+    brokenImg()._renderBg(target);
+
+    expect(target.style.getPropertyValue('background-image')).toBe('');
+  });
+
+  it('leaves the lazy preview without a src rather than src="undefined"', async () => {
+    const el = brokenImg({ intersection: 1 });
+    // happy-dom never intersects; run the intersection callback straight away.
+    el.initIntersection = (_node, cb) => cb();
+
+    await el._renderImage();
+
+    expect(el._imgPreview.hasAttribute('src')).toBe(false);
+  });
+
+  it('clears a stale src/srcset from the image when the new config has no URL', async () => {
+    const el = brokenImg({ intersection: 1, 'is-preview-blur': '' }) as RenderAccess & { _img: HTMLImageElement };
+    el.initIntersection = (_node, cb) => cb();
+    el._img.src = 'https://cdn.example.com/stale.jpg';
+    el._img.srcset = 'https://cdn.example.com/stale.jpg 1x';
+
+    await el._renderImage();
+
+    expect(el._img.hasAttribute('src')).toBe(false);
+    expect(el._img.hasAttribute('srcset')).toBe(false);
   });
 });
