@@ -57,6 +57,14 @@ describe('Thumb (M-god step 6b-6 migration)', () => {
     expect(injected._telemetry).toBe(container?.get(TelemetryManager));
   });
 
+  it('renders the preview as a decorative image, since the file name sits next to it', async () => {
+    const { el } = await mount(freshCtxName());
+    const img = el.querySelector('img');
+    // A fixed English alt was announced for every row in every locale; `role="img"` on an <img> is redundant.
+    expect(img?.getAttribute('alt')).toBe('');
+    expect(img?.hasAttribute('role')).toBe(false);
+  });
+
   it('adopts the controller (reading filesViewMode via use(ConfigController)) without throwing in grid mode', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);

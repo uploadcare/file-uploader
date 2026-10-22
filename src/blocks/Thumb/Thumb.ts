@@ -436,8 +436,7 @@ export class Thumb extends FileItemConfig {
     <img
       class="uc-thumb__img"
       src=${this._thumbUrl || TRANSPARENT_PIXEL_SRC}
-      role="img"
-      alt="Preview of uploaded image"
+      alt=""
       ?hidden=${!this._thumbUrl}
       draggable="false"
     />
