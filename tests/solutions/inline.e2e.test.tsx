@@ -37,4 +37,13 @@ describe('uc-file-uploader-inline', () => {
     await expect.element(cameraSource.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
     await expect.element(cameraSource.getByTestId('uc-camera-source--shot')).toBeInTheDocument();
   });
+
+  it('renders the drop area, source list and upload list in place, with no modal', async () => {
+    const { root } = await renderSolution('inline');
+
+    await expect.element(within(root).getByTestId('uc-drop-area').first()).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-source-list')).toBeVisible();
+    expect(within(root).getByTestId('uc-upload-list').query()).not.toBeNull();
+    expect(within(root).getByTestId('uc-modal').query()).toBeNull();
+  });
 });

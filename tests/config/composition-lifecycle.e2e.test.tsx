@@ -183,6 +183,59 @@ describe('disconnect and reconnect', () => {
   });
 });
 
+/** A provider alone on a fresh ctx — the ctx's public api, with no `<uc-config>` of its own yet. */
+const renderProvider = async () => {
+  const ctxName = getCtxName();
+  const provider = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
+  page.render(<div ctx-name={ctxName}></div>);
+  inCtx('div', ctxName).append(provider);
+  await delay(0);
+  return { ctxName, api: provider.getAPI() };
+};
+
+describe('<uc-config> moving between ctxs', () => {
+  it('applies an attribute set before it is connected', async () => {
+    const { ctxName, api } = await renderProvider();
+    const config = createInCtx<Config>('uc-config', ctxName, { pubkey: 'pre-connect-key' });
+    expect(config.pubkey).toBe('pre-connect-key');
+
+    inCtx('div', ctxName).append(config);
+
+    await expect.poll(() => api.cfg.pubkey).toBe('pre-connect-key');
+  });
+
+  it('carries its values to the new ctx when ctx-name changes', async () => {
+    const a = await renderProvider();
+    const b = await renderProvider();
+    const config = createInCtx<Config>('uc-config', a.ctxName, { pubkey: 'moved-key' });
+    inCtx('div', a.ctxName).append(config);
+    await expect.poll(() => a.api.cfg.pubkey).toBe('moved-key');
+
+    config.setAttribute('ctx-name', b.ctxName);
+
+    await expect.poll(() => b.api.cfg.pubkey).toBe('moved-key');
+  });
+
+  it('tolerates a custom attribute arriving before the new ctx exists', async () => {
+    const a = await renderProvider();
+    const config = createInCtx<Config>('uc-config', a.ctxName);
+    inCtx('div', a.ctxName).append(config);
+    await config.updateComplete;
+    const ctxNameB = getCtxName();
+
+    // Adoption of the new ctx runs a microtask later; this is how the custom-attribute observer forwards in that gap.
+    config.setAttribute('ctx-name', ctxNameB);
+    expect(() => config.attributeChangedCallback('a-custom-plugin-config', '', 'mid-switch')).not.toThrow();
+
+    // ...and the switch still completes: the new ctx gets the config's values.
+    config.pubkey = 'after-switch';
+    const providerB = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxNameB);
+    inCtx('div', a.ctxName).append(providerB);
+    await delay(0);
+    await expect.poll(() => providerB.getAPI().cfg.pubkey).toBe('after-switch');
+  });
+});
+
 describe('config values set after render', () => {
   it('takes a JS property that overrides the declared attribute', async () => {
     const { config } = await renderSolution('regular', { multipleMax: 3 });

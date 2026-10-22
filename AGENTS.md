@@ -77,7 +77,7 @@ Pre-commit (husky + lint-staged) runs `biome check --write` on staged
 `*.{ts,js,cjs,tsx}`. The husky "DEPRECATED" warning on commit is benign.
 
 ### Known e2e flake
-`tests/cloud-image-editor.e2e.test.tsx` (`getByTestId('uc-crop-frame')`) can
+`tests/solutions/bundles.e2e.test.tsx` (`getByTestId('uc-crop-frame')`) can
 lose a render race under full parallel load but passes in isolation. The e2e
 project has `retry: 1` so a transient flake won't fail the gate while a genuine
 regression still fails both attempts. Don't "fix" it by loosening assertions.

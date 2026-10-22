@@ -7,6 +7,29 @@ import '~/types/jsx';
 import { renderSolution, within } from '~/tests/utils/render-solution';
 
 describe('UploadCtxProvider api', () => {
+  it('reports the idle collection state before any file is added', async () => {
+    const { api } = await renderSolution();
+
+    expect(api.getOutputCollectionState()).toMatchObject({
+      status: 'idle',
+      totalCount: 0,
+      successCount: 0,
+      failedCount: 0,
+      uploadingCount: 0,
+      progress: 0,
+      errors: [],
+      group: null,
+      isFailed: false,
+      isUploading: false,
+      isSuccess: false,
+      allEntries: [],
+      successEntries: [],
+      failedEntries: [],
+      uploadingEntries: [],
+      idleEntries: [],
+    });
+  });
+
   it('adds an already-uploaded file from an UploadcareFile instance and fires the success events without uploading', async () => {
     const { api, provider } = await renderSolution();
     // Upload a real local image via the upload client to get a genuine UploadcareFile.

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { PluginConfigApi } from '@/index.ts';
 import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
+import { getCtxName } from '~/tests/utils/test-renderer';
 
 describe('custom config: values', () => {
   it('applies defaultValue from the config definition', async () => {
@@ -254,6 +255,25 @@ describe('custom config: values', () => {
 
     warnSpy.mockRestore();
   });
+
+  it('ignores a write to a custom option once <uc-config> moves to a ctx without the plugin', async () => {
+    const plugin = createTestPlugin({
+      id: 'cfg-readopt',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerConfig({ name: 'readoptOption', defaultValue: 'a' });
+      },
+    });
+    const { config } = await renderSolution('regular', { plugins: [plugin] });
+    await expect.poll(() => config.readoptOption).toBe('a');
+
+    // The accessor defined for the plugin's option outlives the move; the new ctx has no plugin manager behind it.
+    config.setAttribute('ctx-name', getCtxName());
+    await config.updateComplete;
+
+    expect(() => {
+      config.readoptOption = 'b';
+    }).not.toThrow();
+  });
 });
 
 declare module '@/types/index' {
@@ -268,5 +288,6 @@ declare module '@/types/index' {
     normalizedOption: number;
     throwingNormOption: string;
     dupOption: string;
+    readoptOption: string;
   }
 }
