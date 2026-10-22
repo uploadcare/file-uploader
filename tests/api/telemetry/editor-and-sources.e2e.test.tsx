@@ -1,6 +1,7 @@
 import { EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
+import { hasCtx } from '~/tests/utils/registry';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
 import { clickSource, inCtx, renderSolution, waitForBlocks, within } from '~/tests/utils/render-solution';
@@ -49,6 +50,39 @@ describe('telemetry: cloud image editor', () => {
       tab_id: 'tuning',
       operation: { filter: 'filter', value: 0 },
     });
+  });
+});
+
+describe('telemetry: cloud image editor moved to a ctx that does not exist yet', () => {
+  it('holds an action back until the new ctx is up, then reports it there', async () => {
+    const ctxName = getCtxName();
+    page.render(
+      <div>
+        <uc-cloud-image-editor uuid={EDITOR_IMAGE_UUID} ctx-name={ctxName}></uc-cloud-image-editor>
+        <uc-config cdn-cname="https://ucarecdn.com/" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+      </div>,
+    );
+    const editor = inCtx('uc-cloud-image-editor', ctxName);
+    const config = inCtx('uc-config', ctxName);
+    await waitForBlocks(editor, config);
+    await waitForType('init-solution');
+    await userEvent.click(page.getByRole('tab', { name: /tuning/i }));
+    await waitForType('action-event');
+
+    // Both leave, and the ctx is torn down with its telemetry manager.
+    const parent = editor.parentElement as HTMLElement;
+    editor.remove();
+    config.remove();
+    await expect.poll(() => hasCtx(ctxName)).toBe(false);
+    clearSent();
+
+    // The editor comes back first: its ctx, and so a telemetry manager, only exists again once the config does.
+    parent.append(editor);
+    await userEvent.click(page.getByRole('tab', { name: /crop/i }));
+    parent.append(config);
+
+    const action = await waitForType('action-event');
+    expect(action.payload.metadata).toMatchObject({ tab_id: 'crop', event: 'click' });
   });
 });
 

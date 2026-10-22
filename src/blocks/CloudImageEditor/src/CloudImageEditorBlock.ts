@@ -597,6 +597,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     this._lifetime.end();
     this._configChangeUnsub?.();
     this._configChangeUnsub = undefined;
+    // What the bridge handed over belongs to the ctx this editor leaves, which may be disposed before it reconnects:
+    // drop it, so a reconnect buffers telemetry and falls back to the default locale until the next ctx supplies its own.
+    this._telemetryManager = undefined;
+    this._compatL10n = undefined;
     this._editorController.destroy();
     this._pendingTelemetry = [];
 
