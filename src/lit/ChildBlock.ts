@@ -490,6 +490,10 @@ export abstract class ChildBlock extends ChildBlockBase {
       return;
     }
     const enabled = Boolean(config.getTracked('testMode'));
+    // Production path: nothing to prefix and nothing to strip, so skip the subtree scan on every update.
+    if (!enabled && this._testModeTracked.size === 0) {
+      return;
+    }
 
     this._collectTestModeElements();
     const prefix = this.testId || '';
