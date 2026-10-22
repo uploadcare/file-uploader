@@ -254,6 +254,9 @@ export class TelemetryManager {
     if (hasExcludedEvents) {
       return;
     }
+    // Copied now, while the config waits for the send: event payloads such as `OutputCollectionState` are getters over
+    // live state, and read after the yield below they would describe a later moment than the event.
+    const eventPayload = body.payload ? { ...body.payload } : undefined;
 
     lifetime.run(
       () =>
@@ -279,7 +282,7 @@ export class TelemetryManager {
           // at send time reports the config the page actually configured.
           const payload = this._formattingPayload({
             eventType: body.eventType,
-            payload: body.payload,
+            payload: eventPayload,
             config: body.config,
             component: body.component,
           });

@@ -264,6 +264,24 @@ describe('TelemetryManager', () => {
     expect(sendEventMock.mock.calls[0]?.[0].projectPubkey).toBe('demopublickey');
   });
 
+  it('reports the event payload as it was when the event was emitted, not when it ships', async () => {
+    const { manager, enable } = setup();
+    enable();
+    // Event payloads such as OutputCollectionState are lazy: their fields are getters over live state.
+    let totalCount = 1;
+    const payload = {
+      get totalCount() {
+        return totalCount;
+      },
+    };
+
+    manager.sendEvent({ eventType: EventType.COMMON_UPLOAD_SUCCESS, payload });
+    totalCount = 2;
+    await flush();
+
+    expect(sendEventMock.mock.calls.at(-1)?.[0].payload).toMatchObject({ totalCount: 1 });
+  });
+
   it('skips a change-config whose config already shipped with the event ahead of it', async () => {
     const { manager, enable, setConfig } = setup();
     enable();
