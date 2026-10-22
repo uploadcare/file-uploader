@@ -36,19 +36,8 @@ describe('telemetry: session', () => {
     expect(init.app_name).toBe('blocks');
     expect(init.component).toBe('uc-file-uploader-regular');
     expect(init.payload.location).toBe(location.origin);
-    // The config has not reached TelemetryManager at init time, and the payload is a snapshot rather than a live
-    // reference to it, so init-solution reports the defaults. Pinned as current behaviour, not an endorsement of it;
-    // `quality_insights` is there because it is what enabled telemetry in the first place.
-    expect(init.config).toMatchObject({ pubkey: '', quality_insights: true });
-    expect(init.project_pubkey).toBe('');
-
-    // Each configured value arrives with its own change-config, each a snapshot at that moment, so the effective
-    // config is what the changes add up to rather than any single payload.
-    await expect
-      .poll(() =>
-        bodiesOf('change-config').some((body) => body.config?.pubkey === 'demopublickey' && body.config?.test_mode),
-      )
-      .toBe(true);
+    expect(init.config).toMatchObject({ pubkey: 'demopublickey', test_mode: true, quality_insights: true });
+    expect(init.project_pubkey).toBe('demopublickey');
   });
 
   it('sends change-config when a config value changes after init', async () => {

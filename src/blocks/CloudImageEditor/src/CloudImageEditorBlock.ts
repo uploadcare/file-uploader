@@ -463,21 +463,26 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     // keeps its original position, which matters to the CDN for a few pairs
     // (`stretch` applies to a following resize) — enforced by `editorAppliedUrl`
     // composing the operation list once for both `cdnUrl` and `cdnUrlModifiers`.
-    const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, sourceOperations });
+    try {
+      const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, sourceOperations });
 
-    const eventData: ApplyResult = {
-      originalUrl,
-      cdnUrlModifiers,
-      cdnUrl,
-      transformations,
-    };
-    this.dispatchEvent(
-      new CustomEvent<ApplyResult>('apply', {
-        detail: eventData,
-        bubbles: true,
-        composed: true,
-      }),
-    );
+      const eventData: ApplyResult = {
+        originalUrl,
+        cdnUrlModifiers,
+        cdnUrl,
+        transformations,
+      };
+      this.dispatchEvent(
+        new CustomEvent<ApplyResult>('apply', {
+          detail: eventData,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    } catch (err) {
+      this._log.error('Failed to apply editor transformations', err);
+      return;
+    }
     this.remove();
   }
 
@@ -592,7 +597,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     this._lifetime.end();
     this._configChangeUnsub?.();
     this._configChangeUnsub = undefined;
+    // What the bridge handed over belongs to the ctx this editor leaves, which may be disposed before it reconnects:
+    // drop it, so a reconnect buffers telemetry and falls back to the default locale until the next ctx supplies its own.
+    this._telemetryManager = undefined;
+    this._compatL10n = undefined;
     this._editorController.destroy();
+    this._pendingTelemetry = [];
 
     super.disconnectedCallback();
   }

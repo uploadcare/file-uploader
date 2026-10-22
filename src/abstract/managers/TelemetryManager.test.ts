@@ -250,6 +250,51 @@ describe('TelemetryManager', () => {
     expect(sendEventMock).toHaveBeenCalledTimes(1);
   });
 
+  it('builds the payload at send time, so config seeded after the emit still lands in it', async () => {
+    const { manager, enable, setConfig } = setup();
+    enable();
+
+    // Mirrors the real startup order: the solution block sends `init-solution` from `controllerReady`, a task before
+    // `<uc-config>` has seeded its attributes.
+    manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
+    setConfig('pubkey', 'demopublickey');
+    await flush();
+
+    expect(sendEventMock.mock.calls[0]?.[0].config).toMatchObject({ pubkey: 'demopublickey' });
+    expect(sendEventMock.mock.calls[0]?.[0].projectPubkey).toBe('demopublickey');
+  });
+
+  it('reports the event payload as it was when the event was emitted, not when it ships', async () => {
+    const { manager, enable } = setup();
+    enable();
+    // Event payloads such as OutputCollectionState are lazy: their fields are getters over live state.
+    let totalCount = 1;
+    const payload = {
+      get totalCount() {
+        return totalCount;
+      },
+    };
+
+    manager.sendEvent({ eventType: EventType.COMMON_UPLOAD_SUCCESS, payload });
+    totalCount = 2;
+    await flush();
+
+    expect(sendEventMock.mock.calls.at(-1)?.[0].payload).toMatchObject({ totalCount: 1 });
+  });
+
+  it('skips a change-config whose config already shipped with the event ahead of it', async () => {
+    const { manager, enable, setConfig } = setup();
+    enable();
+
+    manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
+    // The seed both lands in `init-solution` above and triggers its own `change-config`, which then carries nothing new.
+    setConfig('pubkey', 'demopublickey');
+    await flush();
+
+    expect(sendEventMock).toHaveBeenCalledTimes(1);
+    expect(sendEventMock.mock.calls[0]?.[0].eventType).toBe(InternalEventType.INIT_SOLUTION);
+  });
+
   it('sends again when the payload differs (new timestamp)', async () => {
     const { manager, enable } = setup();
     enable();
@@ -462,6 +507,23 @@ describe('TelemetryManager', () => {
       emitOnBus(EventType.UPLOAD_CLICK); // bus event → observer detached
       await flush();
 
+      expect(sendEventMock).not.toHaveBeenCalled();
+    });
+
+    it('an in-flight queued send survives container disposal without an unhandled rejection', async () => {
+      // `sendEvent` enqueues a task that yields one microtask before re-reading
+      // `qualityInsights`. If the container disposes during that yield it clears
+      // the instance's CONTAINER tag, so every `@inject` getter throws — and the
+      // queued task's rejection is floating, which fails the whole vitest run.
+      const { manager, enable, container } = setup();
+      enable();
+
+      manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
+      container.dispose(); // synchronous: lands before the queued task resumes
+
+      await expect(flush()).resolves.toBeUndefined();
+      expect(() => manager.sendEvent({ eventType: EventType.UPLOAD_CLICK })).not.toThrow();
+      await flush();
       expect(sendEventMock).not.toHaveBeenCalled();
     });
   });

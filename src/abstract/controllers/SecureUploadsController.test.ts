@@ -249,6 +249,33 @@ describe('SecureUploadsController', () => {
         expect(debug).toHaveBeenCalled();
       });
 
+      it('drops an expired token when the resolver then returns an invalid result, and recovers on the next call', async () => {
+        vi.spyOn(console, 'error').mockImplementation(() => {});
+        const nowUnix = Math.floor(Date.now() / 1000);
+        const cached: SecureUploadsSignatureAndExpire = {
+          secureSignature: 'cached-signature',
+          secureExpire: String(nowUnix + 5),
+        };
+        const fresh: SecureUploadsSignatureAndExpire = {
+          secureSignature: 'fresh-signature',
+          secureExpire: String(nowUnix + 3600),
+        };
+        const resolver = vi
+          .fn()
+          .mockResolvedValueOnce(cached)
+          .mockResolvedValueOnce({ secureExpire: String(nowUnix + 3600) })
+          .mockResolvedValueOnce(fresh);
+        createController({ secureUploadsSignatureResolver: resolver, secureUploadsExpireThreshold: 10000 });
+
+        expect(await controller.getSecureToken()).toEqual(cached);
+        vi.advanceTimersByTime(6000);
+
+        // The cached token has expired; an invalid answer must not leave it handed out.
+        expect(await controller.getSecureToken()).toBeNull();
+        expect(await controller.getSecureToken()).toEqual(fresh);
+        expect(resolver).toHaveBeenCalledTimes(3);
+      });
+
       it('should log error when resolver returns invalid result (missing secureSignature)', async () => {
         const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         const invalidToken = { secureExpire: '1234567890' };
