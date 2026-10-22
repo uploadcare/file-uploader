@@ -81,6 +81,15 @@ describe('uc-cloud-image-editor', () => {
     await expect.element(tuningTab).toBeVisible();
   });
 
+  it('names its slider after the operation', async () => {
+    const { editor } = renderEditor();
+    await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
+
+    await userEvent.click(editor.getByRole('option', { name: /Brightness/i }));
+
+    await expect.element(editor.getByRole('slider', { name: 'Brightness' })).toBeVisible();
+  });
+
   it('logs a timeout without an unhandled rejection when the container size stays zero', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 

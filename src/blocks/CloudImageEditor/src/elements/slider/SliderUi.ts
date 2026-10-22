@@ -1,5 +1,6 @@
 import { html, LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { LightDomMixin } from '../../../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../../../lit/RegisterableElementMixin';
@@ -33,6 +34,10 @@ export class SliderUi extends SliderUiBase {
 
   @property({ type: Number })
   public zero = 0;
+
+  /** Accessible name of the range input (the operation it adjusts). */
+  @property({ attribute: false })
+  public label = '';
 
   @state()
   private _currentValue = 0;
@@ -237,6 +242,7 @@ export class SliderUi extends SliderUiBase {
       <input
         class="uc-input"
         type="range"
+        aria-label=${ifDefined(this.label || undefined)}
         ${ref(this._inputRef)}
         .min=${String(this.min)}
         .max=${String(this.max)}
