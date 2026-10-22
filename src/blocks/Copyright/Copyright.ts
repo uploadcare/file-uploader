@@ -35,7 +35,8 @@ export class Copyright extends ChildBlock {
     return html`
       <a
         href="https://uploadcare.com/?utm_source=copyright&amp;utm_medium=referral&amp;utm_campaign=v4"
-        target="_blank noopener"
+        target="_blank"
+        rel="noopener noreferrer"
         class="uc-credits"
         >Powered by Uploadcare</a
       >

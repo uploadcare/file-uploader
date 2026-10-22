@@ -96,4 +96,14 @@ describe('Copyright (M-god step 6a probe)', () => {
     // `static uses` + `this.use()`.
     expect((el as unknown as { _config: ConfigController })._config).toBe(config);
   });
+
+  it('opens the credits link in a new browsing context without an opener', async () => {
+    const el = await mount(freshCtxName());
+    const a = link(el);
+    // `target` is a single browsing-context name: `_blank noopener` would be a
+    // named, reused window that keeps `window.opener`.
+    expect(a?.getAttribute('target')).toBe('_blank');
+    expect(a?.relList.contains('noopener')).toBe(true);
+    expect(a?.relList.contains('noreferrer')).toBe(true);
+  });
 });
