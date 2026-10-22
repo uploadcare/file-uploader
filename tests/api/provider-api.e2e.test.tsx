@@ -185,8 +185,6 @@ describe('UploadCtxProvider api', () => {
       await vi.waitFor(() => {
         expect(openSystemDialogSpy).toHaveBeenCalled();
       });
-
-      openSystemDialogSpy.mockRestore();
     });
 
     it('opens the single activity in the source list', async () => {

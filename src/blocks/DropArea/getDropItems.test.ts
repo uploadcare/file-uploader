@@ -63,7 +63,6 @@ describe('getDropItems', () => {
 
     it('drops an item that reads as a directory', async () => {
       // A directory dragged into a browser without the entry API surfaces as a File that fails to read.
-      const OriginalFileReader = window.FileReader;
       class FailingFileReader {
         public onerror: (() => void) | null = null;
         public onloadend: (() => void) | null = null;
@@ -74,11 +73,7 @@ describe('getDropItems', () => {
         }
       }
       vi.stubGlobal('FileReader', FailingFileReader);
-      try {
-        expect(await drop([fileItem(png())])).toEqual([]);
-      } finally {
-        vi.stubGlobal('FileReader', OriginalFileReader);
-      }
+      expect(await drop([fileItem(png())])).toEqual([]);
     });
   });
 
@@ -122,24 +117,16 @@ describe('getDropItems', () => {
 
     it('warns and yields nothing for an empty entry', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      try {
-        expect(await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => null }])).toEqual([]);
-        // A null entry short-circuits before `readEntryContentAsync`, so nothing is logged for it.
-        expect(warn).not.toHaveBeenCalled();
-      } finally {
-        warn.mockRestore();
-      }
+      expect(await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => null }])).toEqual([]);
+      // A null entry short-circuits before `readEntryContentAsync`, so nothing is logged for it.
+      expect(warn).not.toHaveBeenCalled();
     });
 
     it('warns when a directory reader yields an empty entry', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      try {
-        const tree = directoryEntry([null]);
-        expect(await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => tree }])).toEqual([]);
-        expect(warn).toHaveBeenCalledWith('Unexpectedly received empty content entry', { scope: 'drag-and-drop' });
-      } finally {
-        warn.mockRestore();
-      }
+      const tree = directoryEntry([null]);
+      expect(await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => tree }])).toEqual([]);
+      expect(warn).toHaveBeenCalledWith('Unexpectedly received empty content entry', { scope: 'drag-and-drop' });
     });
   });
 

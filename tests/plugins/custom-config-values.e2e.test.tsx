@@ -213,8 +213,6 @@ describe('custom config: values', () => {
     });
 
     await expect.poll(() => config.throwingNormOption).toBe('safe');
-
-    warnSpy.mockRestore();
   });
 
   it('warns and keeps the first definition when two plugins register the same name', async () => {
@@ -244,8 +242,6 @@ describe('custom config: values', () => {
 
     await expect.poll(() => config.dupOption).toBe('first');
     expect(warnSpy).toHaveBeenCalledWith('[CustomConfig] Config option "dupOption" is already registered');
-
-    warnSpy.mockRestore();
   });
 });
 

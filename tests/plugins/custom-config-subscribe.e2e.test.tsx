@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { PluginConfigApi } from '@/index.ts';
-import { delay } from '@/utils/delay';
 import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
 
 describe('custom config: subscribe', () => {
@@ -60,34 +59,49 @@ describe('custom config: subscribe', () => {
   it('drops config subscriptions when the plugin is unregistered', async () => {
     const callback = vi.fn<(value: string) => void>();
     const dispose = vi.fn();
-
-    const plugin = createTestPlugin({
-      id: 'cfg-cleanup',
+    // The sentinel: a plugin that stays owns the option and subscribes after the removed one, so a change reaches it
+    // after it would have reached the removed subscription.
+    const sentinel = vi.fn<(value: string) => void>();
+    const owner = createTestPlugin({
+      id: 'cfg-cleanup-owner',
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerConfig({
           name: 'cleanupOption',
           defaultValue: 'start',
         });
+      },
+    });
+
+    const plugin = createTestPlugin({
+      id: 'cfg-cleanup',
+      setup: ({ pluginApi }) => {
         pluginApi.config.subscribe('cleanupOption', callback);
         return dispose;
       },
     });
+    const kept = createTestPlugin({
+      id: 'cfg-cleanup-sentinel',
+      setup: ({ pluginApi }) => {
+        pluginApi.config.subscribe('cleanupOption', sentinel);
+      },
+    });
 
-    const { config } = await renderSolution('regular', { plugins: [plugin] });
+    const { config } = await renderSolution('regular', { plugins: [owner, plugin, kept] });
 
     await vi.waitFor(() => {
       expect(callback).toHaveBeenCalled();
+      expect(sentinel).toHaveBeenCalled();
     });
 
-    config.plugins = [];
+    config.plugins = [owner, kept];
     await vi.waitFor(() => {
       expect(dispose).toHaveBeenCalledOnce();
     });
 
     callback.mockClear();
+    config.cleanupOption = 'changed';
+    await vi.waitFor(() => expect(sentinel).toHaveBeenLastCalledWith('changed'));
 
-    // Negative wait: nothing signals "the old subscription did not fire".
-    await delay(100);
     expect(callback).not.toHaveBeenCalled();
   });
 

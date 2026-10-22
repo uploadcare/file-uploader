@@ -1,6 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 import { userEvent } from 'vitest/browser';
-import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { expectActivity, expectModal, modalDialog, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
@@ -11,8 +10,24 @@ import '~/types/jsx';
  */
 
 const openUrlSource = async (root: HTMLElement) => {
-  await within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }).click();
+  await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'From link', exact: true }).click();
   await expectActivity(root, 'url');
+};
+
+/** Inline's own Cancel button on start-from. Found even while hidden, since several tests assert that it is. */
+const inlineCancel = (root: HTMLElement) =>
+  within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Cancel', includeHidden: true });
+
+/**
+ * Every change to `element.hidden` from now on, as 'shown'/'hidden', with the test's own markers mixed in so a log can
+ * say what happened before which step.
+ */
+const logHidden = (element: HTMLElement) => {
+  const log: string[] = [];
+  const observer = new MutationObserver(() => log.push(element.hidden ? 'hidden' : 'shown'));
+  observer.observe(element, { attributes: true, attributeFilter: ['hidden'] });
+  onTestFinished(() => observer.disconnect());
+  return { log, mark: (step: string) => log.push(step) };
 };
 
 describe('regular', () => {
@@ -21,7 +36,7 @@ describe('regular', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Cancel', exact: true }).click();
 
     await expectModal(root, 'start-from', 'closed');
     expect(api.getCurrentActivity()).toBe(null);
@@ -58,7 +73,7 @@ describe('regular', () => {
     api.initFlow();
     await expectModal(root, 'upload-list', 'open');
 
-    await within(root).getByTestId('uc-activity-header--close').click();
+    await within(root).getByTestId('uc-upload-list').getByRole('button', { name: 'Close', exact: true }).click();
 
     await expectModal(root, 'upload-list', 'closed');
     await expect.poll(() => api.getCurrentActivity()).toBe(null);
@@ -101,10 +116,14 @@ describe('regular', () => {
     inside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     dialog.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
 
-    // Negative wait: the assertion is that the dialog does NOT close, and a close would have no other signal.
-    await delay(200);
+    // The mouseup handler decides on the spot, so the dialog is still open now; the sentinel below closes it through
+    // the same handlers, which shows the release above reached them.
     expect(dialog.open).toBe(true);
     expect(api.getCurrentActivity()).toBe('start-from');
+
+    dialog.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
+    dialog.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+    await expectModal(root, 'start-from', 'closed');
   });
 });
 
@@ -120,7 +139,7 @@ describe('minimal', () => {
     api.setModalState(true);
     await expectModal(root, 'start-from', 'open');
 
-    await within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Cancel', exact: true }).click();
 
     await expectModal(root, 'start-from', 'closed');
     await expectActivity(root, 'upload-list');
@@ -132,7 +151,7 @@ describe('minimal', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Cancel', exact: true }).click();
 
     await expectModal(root, 'start-from', 'closed');
     await expect.poll(() => api.getCurrentActivity()).toBe('start-from');
@@ -144,12 +163,11 @@ describe('inline', () => {
     const { root } = await renderSolution('inline');
     await expectActivity(root, 'start-from');
 
-    const cancel = root.querySelector('.uc-cancel-btn') as HTMLButtonElement;
-    expect(cancel.hidden).toBe(true);
+    await expect.element(inlineCancel(root)).not.toBeVisible();
   });
 
   it('keeps cancel hidden after coming back to an empty start-from', async () => {
-    const { root } = await renderSolution('inline');
+    const { root, api } = await renderSolution('inline');
     await expectActivity(root, 'start-from');
     await openUrlSource(root);
 
@@ -158,9 +176,16 @@ describe('inline', () => {
 
     // Correct here: history is back at start-from and the collection is empty, so cancelling would have nowhere to
     // go (`_couldHistoryBack` and `_couldShowList` are both false — FileUploaderInline.ts:52).
-    // Negative wait: the button has to stay hidden after the history update settles; no event marks that.
-    await delay(200);
-    expect((root.querySelector('.uc-cancel-btn') as HTMLButtonElement).hidden).toBe(true);
+    const cancel = inlineCancel(root);
+    await expect.element(cancel).not.toBeVisible();
+    // The sentinel: with a file in the list, the next history reset (the activity going to null) recomputes the
+    // button and shows it. Nothing may have shown it before the file arrived.
+    const hidden = logHidden(cancel.element() as HTMLElement);
+    hidden.mark('file added');
+    api.addFileFromObject(IMAGE.PIXEL);
+    await expectActivity(root, 'upload-list');
+    api.setModalState(false);
+    await expect.poll(() => hidden.log).toEqual(['file added', 'shown']);
   });
 
   // QUIRK(inline): `_couldCancel` is recomputed only inside the `*history` subscription
@@ -174,16 +199,22 @@ describe('inline', () => {
     api.addFileFromObject(IMAGE.PIXEL);
     await expectActivity(root, 'upload-list');
 
-    (within(root).getByTestId('uc-upload-list--add-more').element() as HTMLButtonElement).click();
+    await within(root).getByRole('button', { name: 'Add more', exact: true }).click();
     await expectActivity(root, 'start-from');
 
-    const cancel = root.querySelector('.uc-cancel-btn') as HTMLButtonElement;
-    // Negative wait: pins that the button stays hidden; a recompute that never happens has no signal to wait on.
-    await delay(200);
-    expect(cancel.hidden).toBe(true);
+    const cancel = inlineCancel(root);
+    await expect.element(cancel).not.toBeVisible();
+    const hidden = logHidden(cancel.element() as HTMLElement);
 
-    cancel.click();
+    // Clicked through the DOM on purpose: the button is hidden, and this checks that its handler would still work.
+    (cancel.element() as HTMLButtonElement).click();
     await expectActivity(root, 'upload-list');
     expect(api.getCurrentActivity()).toBe('upload-list');
+
+    // The sentinel: a history reset (the activity going to null) is what does recompute the button, and with files in
+    // the list it shows it. Nothing may have shown it before.
+    hidden.mark('history reset');
+    api.setModalState(false);
+    await expect.poll(() => hidden.log).toEqual(['history reset', 'shown']);
   });
 });

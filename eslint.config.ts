@@ -4,6 +4,7 @@ import { configs as wcConfigs } from 'eslint-plugin-wc';
 import tseslint from 'typescript-eslint';
 
 const SRC_GLOB = 'src/**/*.ts';
+const TESTS_GLOB = 'tests/**/*.{ts,tsx}';
 
 const BASE_CLASSES = [
   'LitElement',
@@ -46,6 +47,19 @@ export default defineConfig([
     rules: {
       'wc/no-self-class': 'warn', // TODO: We should get rid of self class assignment
       'wc/no-constructor-attributes': 'warn', // TODO: We should move attribute definitions out of constructor
+    },
+  },
+  {
+    // An `expect.poll` / `expect.element` / `click()` without `await` passes before it has checked anything.
+    files: [TESTS_GLOB],
+    ignores: ['tests/__coverage__/**'],
+    languageOptions: {
+      parser: tseslint.parser,
+      parserOptions: { project: './tsconfig.e2e-test.json', tsconfigRootDir: import.meta.dirname },
+    },
+    plugins: { '@typescript-eslint': tseslint.plugin },
+    rules: {
+      '@typescript-eslint/no-floating-promises': 'error',
     },
   },
 ]);

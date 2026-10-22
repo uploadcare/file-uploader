@@ -16,6 +16,7 @@ import { fileIsImage } from '../../utils/fileTypes';
 import { redactSecrets } from '../../utils/redactSecrets';
 import { throttle } from '../../utils/throttle';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
+import { EventType } from '../UploadCtxProvider/EventEmitter';
 import './file-item.css';
 import type { Uid } from '../../lit/Uid';
 import { FileItemConfig } from './FileItemConfig';
@@ -420,6 +421,11 @@ export class FileItem extends FileItemConfig {
       errors: [],
       isQueuedForUploading: true,
     });
+    // Here rather than in the collection observer: its changes arrive batched, and an upload that finishes inside one
+    // batch would never be seen uploading.
+    if (!entry.getValue('silent')) {
+      this.emit(EventType.FILE_UPLOAD_START, this.api.getOutputItem(entry.uid));
+    }
 
     this._debouncedCalculateState();
 

@@ -35,6 +35,9 @@ export class LocaleManager extends SharedInstance {
         }
         this._localeName = localeName;
         const definition = await resolveLocaleDefinition(localeName);
+        if (this._isDestroyed) {
+          return;
+        }
         if (localeName !== DEFAULT_LOCALE && this._localeName !== localeName) {
           return;
         }

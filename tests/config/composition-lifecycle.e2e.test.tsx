@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index';
-import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { recordEvents } from '~/tests/utils/event-recorder';
-import { createInCtx, inCtx, renderSolution } from '~/tests/utils/render-solution';
+import { createInCtx, inCtx, renderSolution, waitForBlocks } from '~/tests/utils/render-solution';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
 
@@ -42,10 +41,21 @@ const mount = async ({
 
   page.render(<div ctx-name={ctxName}></div>);
   inCtx('div', ctxName).append(...(configFirst ? [config, uploader] : [uploader, config]));
-  // Connection order is the subject, so there is no single signal to wait for: let every block settle.
-  await delay(50);
+  await waitForBlocks(config, uploader);
 
   return { ctxName, config };
+};
+
+/** Resolves after every `setTimeout(0)` already set: timers of equal delay run in the order they were set. */
+const afterPendingZeroTimers = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+/**
+ * The sentinel for "this value was not reflected": a reflected option set afterwards, through the same flush, does reach
+ * its attribute.
+ */
+const expectReflectedAfter = async (config: Config) => {
+  config.multipleMax = 7;
+  await expect.poll(() => config.getAttribute('multiple-max')).toBe('7');
 };
 
 describe('tag order', () => {
@@ -67,13 +77,11 @@ describe('tag order', () => {
         <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
       </>,
     );
-    // "Settled" is the precondition under test; nothing observable marks it, so wait it out.
-    await delay(50);
+    await waitForBlocks(inCtx('uc-file-uploader-regular', ctxName), inCtx('uc-config', ctxName));
 
     const provider = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
     inCtx('uc-config', ctxName).after(provider);
-    // One tick for the late provider to connect and register with the ctx.
-    await delay(0);
+    await waitForBlocks(provider);
 
     const api = provider.getAPI();
     const entry = api.addFileFromObject(IMAGE.PIXEL);
@@ -112,8 +120,7 @@ describe('two uploaders on one page', () => {
 
     const sibling = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
     inCtx('uc-upload-ctx-provider', ctxName).after(sibling);
-    // One tick for the sibling provider to connect and register with the ctx.
-    await delay(0);
+    await waitForBlocks(sibling);
 
     api.addFileFromObject(IMAGE.PIXEL);
 
@@ -131,8 +138,9 @@ describe('disconnect and reconnect', () => {
     const parent = uploader.parentElement as HTMLElement;
     uploader.remove();
     parent.appendChild(uploader);
-    // Negative wait: a ctx teardown, had one been scheduled, lands in a `setTimeout(0)` (LitBlock.ts:166).
-    await delay(50);
+    // A ctx teardown, had one been scheduled, lands in a `setTimeout(0)` (LitBlock.ts:166). Timers of equal delay run
+    // in the order they were set, so this one ends after it.
+    await afterPendingZeroTimers();
 
     expect(api.getOutputCollectionState().totalCount).toBe(1);
   });
@@ -171,7 +179,7 @@ describe('disconnect and reconnect', () => {
       element.remove();
     }
     // The macrotask gap is the subject: it lets the `setTimeout(0)` teardown run.
-    await delay(50);
+    await afterPendingZeroTimers();
     for (const element of [config, uploader, provider]) {
       parent.appendChild(element);
     }
@@ -215,7 +223,7 @@ describe('authToken', () => {
     // Stringifying a function would put source code in the DOM.
     const { config } = await mount({});
     config.authToken = async () => 'resolved.token.sig';
-    await delay(50);
+    await expectReflectedAfter(config);
     expect(config.getAttribute('auth-token')).toBe(null);
   });
 
@@ -223,7 +231,7 @@ describe('authToken', () => {
     // A bearer credential is not something we put in the markup unasked.
     const { config } = await mount({});
     config.authToken = 'eyJ.secret.sig';
-    await delay(50);
+    await expectReflectedAfter(config);
     expect(config.getAttribute('auth-token')).toBe(null);
   });
 });

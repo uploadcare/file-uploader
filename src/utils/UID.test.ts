@@ -29,7 +29,6 @@ describe('UID', () => {
       const spy = vi.spyOn(cryptoObj, 'randomUUID').mockReturnValue(fakeUuid);
       expect(UID.generateRandomUUID()).toBe(fakeUuid);
       expect(spy).toHaveBeenCalledTimes(1);
-      spy.mockRestore();
     });
 
     it('falls back to fast uid when crypto.randomUUID is not available', () => {
@@ -40,21 +39,9 @@ describe('UID', () => {
         return;
       }
 
-      try {
-        Object.defineProperty(globalThis, 'crypto', {
-          value: {},
-          configurable: true,
-        });
+      vi.stubGlobal('crypto', {});
 
-        const value = UID.generateRandomUUID();
-        expect(value).toMatch(FAST_UID_RE);
-      } finally {
-        if (cryptoDesc) {
-          Object.defineProperty(globalThis, 'crypto', cryptoDesc);
-        } else {
-          delete (globalThis as any).crypto;
-        }
-      }
+      expect(UID.generateRandomUUID()).toMatch(FAST_UID_RE);
     });
   });
 });

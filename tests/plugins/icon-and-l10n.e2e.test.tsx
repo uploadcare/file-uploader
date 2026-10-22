@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import type { PluginApi } from '@/abstract/managers/plugin/PluginTypes';
 import { defineLocale } from '@/index';
-import { delay } from '@/utils/delay';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
 
@@ -60,9 +60,10 @@ describe('plugin l10n', () => {
   });
 
   it('applies l10n registered asynchronously after a locale switch to a rendered source label', async () => {
-    // The uploader needs a `de` definition so the locale switch resolves cleanly.
-    defineLocale('de', {} as never);
+    // One visible `de` string, so the test can see the switch has been applied.
+    defineLocale('de', { 'locale-id': 'de', 'start-from-cancel': 'Abbrechen' } as never);
 
+    let lazyRegistry: PluginApi['registry'] | undefined;
     const plugin = createTestPlugin({
       id: 'lazy-l10n',
       setup: ({ pluginApi }) => {
@@ -72,17 +73,7 @@ describe('plugin l10n', () => {
           label: 'lazy-source-label',
           onSelect: () => {},
         });
-        // Register the locale's strings lazily — AFTER the LocaleManager has
-        // already applied plugin locales for the switch (mimics a real plugin
-        // awaiting a dynamic locale import). This only reaches the rendered
-        // label if `registerL10n` notifies subscribers.
-        pluginApi.config.subscribe('localeName', (name) => {
-          if (name === 'de') {
-            void delay(0).then(() => {
-              pluginApi.registry.registerL10n({ de: { 'lazy-source-label': 'Erzeugen' } });
-            });
-          }
-        });
+        lazyRegistry = pluginApi.registry;
       },
     });
 
@@ -93,6 +84,11 @@ describe('plugin l10n', () => {
     await expect.element(within(root).getByText('Generate')).toBeVisible();
 
     config.localeName = 'de';
+    await expect.element(within(root).getByText('Abbrechen')).toBeVisible();
+    // Registered only now, after the LocaleManager has applied plugin locales for the switch (as a plugin awaiting a
+    // dynamic locale import would). This reaches the rendered label only if `registerL10n` notifies subscribers.
+    lazyRegistry?.registerL10n({ de: { 'lazy-source-label': 'Erzeugen' } });
+
     await expect.element(within(root).getByText('Erzeugen')).toBeVisible();
   });
 
