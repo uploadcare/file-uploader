@@ -90,6 +90,22 @@ describe('uc-cloud-image-editor', () => {
     await expect.element(editor.getByRole('slider', { name: 'Brightness' })).toBeVisible();
   });
 
+  it('exposes its tab toggles as focusable tabs in a tablist of tabs only', async () => {
+    const { element, editor } = renderEditor();
+    const tuningTab = editor.getByRole('tab', { name: /tuning/i });
+    await userEvent.click(tuningTab);
+
+    await expect.element(editor.getByRole('tab', { name: /tuning/i, selected: true })).toBeVisible();
+    await expect.element(editor.getByRole('tab', { name: /crop/i, selected: false })).toBeVisible();
+    expect(tuningTab.element().tagName).toBe('BUTTON');
+    const tablist = editor.getByRole('tablist').element();
+    expect(tablist.querySelector('.uc-tab-content')).toBeNull();
+    // Every tab's aria-controls points at a panel that exists.
+    for (const tab of element.querySelectorAll('[role="tab"][aria-controls]')) {
+      expect(document.getElementById(tab.getAttribute('aria-controls') ?? '')).not.toBeNull();
+    }
+  });
+
   it('logs a timeout without an unhandled rejection when the container size stays zero', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 

@@ -606,9 +606,9 @@ export class EditorToolbar extends EditorBlock {
           theme="tab"
           data-id=${id}
           icon=${id}
-          role="tab"
-          aria-controls=${`tab_${id}`}
-          aria-selected=${isActive ? 'true' : 'false'}
+          aria-role="tab"
+          aria-controls=${isActive ? `tab_${id}` : ''}
+          .selected=${isActive}
           title-prop=${`a11y-editor-tab-${id}`}
           .active=${isActive}
           style=${style}
@@ -654,7 +654,6 @@ export class EditorToolbar extends EditorBlock {
       </div>
       <div class="uc-toolbar-container">
         <uc-presence-toggle
-          role="tablist"
           class="uc-sub-toolbar"
           .visible=${this.showMainToolbar}
           .styles=${this._subTopToolbarStyles}
@@ -664,6 +663,7 @@ export class EditorToolbar extends EditorBlock {
           </div>
           <div class="uc-controls-row">
             <uc-presence-toggle
+              role="tablist"
               class="uc-tab-toggles"
               .visible=${this._showTabToggles}
               .styles=${this._tabTogglesStyles}
