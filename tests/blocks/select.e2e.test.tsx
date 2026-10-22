@@ -56,6 +56,38 @@ describe('uc-select', () => {
     await expect.poll(() => innerSelect()?.value).toBe('v2');
   });
 
+  it('shows .value when it is set together with the options', async () => {
+    const { select } = renderSelect();
+    select.value = 'v2';
+    select.options = [
+      { text: 'One', value: 'v1' },
+      { text: 'Two', value: 'v2' },
+    ];
+    await select.updateComplete;
+
+    expect(innerSelect()?.value).toBe('v2');
+  });
+
+  it('keeps showing .value when the options are reordered', async () => {
+    const { select } = renderSelect();
+    select.options = [
+      { text: 'One', value: 'v1' },
+      { text: 'Two', value: 'v2' },
+    ];
+    await select.updateComplete;
+    select.value = 'v2';
+    await select.updateComplete;
+
+    select.options = [
+      { text: 'Two', value: 'v2' },
+      { text: 'One', value: 'v1' },
+      { text: 'Three', value: 'v3' },
+    ];
+    await select.updateComplete;
+
+    expect(innerSelect()?.value).toBe('v2');
+  });
+
   it('user-selecting an option updates .value and dispatches a change event on the host', async () => {
     const { select } = renderSelect();
     select.options = [
