@@ -189,7 +189,7 @@ describe('resolveSecureDeliveryProxyUrl', () => {
       expect(callArgs![1]!.fileName).toBe(longFileName);
     });
 
-    it('handles URLs with fragment identifiers (#)', async () => {
+    it('ignores a fragment when extracting the file details, and hands the resolver the URL as given', async () => {
       const urlWithFragment =
         'https://ucarecdn.com/c2499162-eb07-4b93-b31e-94a89a47e858/-/preview/300x300/photo.jpg#section';
       const resolver = vi.fn().mockResolvedValue('https://resolved.example.com/file');
@@ -198,15 +198,15 @@ describe('resolveSecureDeliveryProxyUrl', () => {
         secureDeliveryProxyUrlResolver: resolver,
       };
 
-      // URL parsing should handle or reject fragment
-      try {
-        await resolveSecureDeliveryProxyUrl(config, onResolverError, urlWithFragment);
-        // If it succeeds, resolver was called
-        expect(resolver).toHaveBeenCalledOnce();
-      } catch {
-        // If it fails, that's also acceptable for security
-        expect(resolver).not.toHaveBeenCalled();
-      }
+      const result = await resolveSecureDeliveryProxyUrl(config, onResolverError, urlWithFragment);
+
+      expect(result).toBe('https://resolved.example.com/file');
+      expect(resolver).toHaveBeenCalledExactlyOnceWith(urlWithFragment, {
+        uuid: 'c2499162-eb07-4b93-b31e-94a89a47e858',
+        cdnUrlModifiers: '-/preview/300x300/',
+        fileName: 'photo.jpg',
+      });
+      expect(onResolverError).not.toHaveBeenCalled();
     });
 
     it('rejects or handles null URL input safely', async () => {
@@ -219,11 +219,12 @@ describe('resolveSecureDeliveryProxyUrl', () => {
       // Pass null as url (type assertion to bypass TS)
       const nullUrl = null as unknown as string;
 
-      try {
-        await resolveSecureDeliveryProxyUrl(config, onResolverError, nullUrl);
-      } catch {
-        // Expected: either throws or handles gracefully
-      }
+      // Unparseable: the resolver is skipped, the failure is reported, and the input comes back unchanged.
+      const result = await resolveSecureDeliveryProxyUrl(config, onResolverError, nullUrl);
+
+      expect(result).toBeNull();
+      expect(resolver).not.toHaveBeenCalled();
+      expect(onResolverError).toHaveBeenCalledOnce();
     });
 
     it('rejects or handles empty string URL safely', async () => {
@@ -251,13 +252,14 @@ describe('resolveSecureDeliveryProxyUrl', () => {
 
       const result = await resolveSecureDeliveryProxyUrl(config, onResolverError, urlWithParams);
 
-      // Query params might cause parse to fail (acceptable for security)
-      // or succeed (resolver gets called)
-      if (resolver.mock.calls.length > 0) {
-        expect(result).toBe('https://resolved.example.com/file');
-      } else {
-        expect(result).toBe(urlWithParams);
-      }
+      // The query string is not part of the file details; the resolver still gets the URL as given.
+      expect(result).toBe('https://resolved.example.com/file');
+      expect(resolver).toHaveBeenCalledExactlyOnceWith(urlWithParams, {
+        uuid: 'c2499162-eb07-4b93-b31e-94a89a47e858',
+        cdnUrlModifiers: '-/preview/300x300/',
+        fileName: 'photo.jpg',
+      });
+      expect(onResolverError).not.toHaveBeenCalled();
     });
 
     it('resolver receives correctly extracted modifiers from complex URLs', async () => {
@@ -271,14 +273,11 @@ describe('resolveSecureDeliveryProxyUrl', () => {
 
       await resolveSecureDeliveryProxyUrl(config, onResolverError, complexUrl);
 
-      expect(resolver).toHaveBeenCalledOnce();
-      const callArgs = resolver.mock.calls[0]![1];
-      expect(callArgs!.uuid).toBe('12345678-1234-1234-1234-123456789012');
-      expect(callArgs!.fileName).toBe('complex-image.png');
-      expect(callArgs!.cdnUrlModifiers).toContain('quality');
-      expect(callArgs!.cdnUrlModifiers).toContain('format');
-      expect(callArgs!.cdnUrlModifiers).toContain('progressive');
-      expect(callArgs!.cdnUrlModifiers).toContain('preview');
+      expect(resolver).toHaveBeenCalledExactlyOnceWith(complexUrl, {
+        uuid: '12345678-1234-1234-1234-123456789012',
+        cdnUrlModifiers: '-/quality/best/-/format/auto/-/progressive/yes/-/preview/500x500/',
+        fileName: 'complex-image.png',
+      });
     });
 
     it('proxy template expansion handles URL-like values safely', async () => {
