@@ -8,6 +8,7 @@ import { inject } from '../../abstract/di/inject';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../SourceBtn/SourceBtn';
+import './source-list.css';
 import { ChildBlock } from '../../lit/ChildBlock';
 
 export class SourceList extends ChildBlock {
@@ -55,15 +56,12 @@ export class SourceList extends ChildBlock {
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
-    // Imperative `updated()` read (host inline-style side-effect) — `get()`, not
+    // Imperative `updated()` read (host attribute side-effect) — `get()`, not
     // the tracked `getTracked()`: v1 re-evaluated this only on re-render (driven
     // by `_sources`), not as its own reactive trigger, so keep it untracked to
-    // preserve behavior exactly.
-    if (this._config.get('sourceListWrap')) {
-      this.style.removeProperty('display');
-    } else {
-      this.style.display = 'contents';
-    }
+    // preserve behavior exactly. `[nowrap]` maps to `display: contents` in the
+    // stylesheet, so a consumer's inline `display` still wins.
+    this.toggleAttribute('nowrap', !this._config.get('sourceListWrap'));
   }
 
   public override render() {

@@ -48,24 +48,36 @@ describe('SourceList (M-god step 6b-3 migration)', () => {
     expect((el as unknown as { _config: ConfigController })._config).toBe(config);
   });
 
-  it('drives the host display style from the sourceListWrap config resolved via use(ConfigController)', async () => {
+  it('drives the host [nowrap] attribute from the sourceListWrap config resolved via use(ConfigController)', async () => {
     const ctxName = freshCtxName();
     const { el, config } = await mount(ctxName);
 
-    // Default sourceListWrap is true -> no inline `display: contents`.
-    expect(el.style.display).toBe('');
+    // Default sourceListWrap is true -> no `[nowrap]` (the stylesheet's `display: contents` hook).
+    expect(el.hasAttribute('nowrap')).toBe(false);
 
     config.set('sourceListWrap', false);
     // `updated()` reads the value on the next render; force one and let it settle.
     el.requestUpdate();
     await el.updateComplete;
     await delay(0);
-    expect(el.style.display).toBe('contents');
+    expect(el.hasAttribute('nowrap')).toBe(true);
 
     config.set('sourceListWrap', true);
     el.requestUpdate();
     await el.updateComplete;
     await delay(0);
-    expect(el.style.display).toBe('');
+    expect(el.hasAttribute('nowrap')).toBe(false);
+  });
+
+  it("leaves the consumer's inline display alone on every update", async () => {
+    const { el, config } = await mount(freshCtxName());
+    el.style.display = 'grid';
+
+    for (const wrap of [false, true]) {
+      config.set('sourceListWrap', wrap);
+      el.requestUpdate();
+      await el.updateComplete;
+      expect(el.style.display).toBe('grid');
+    }
   });
 });

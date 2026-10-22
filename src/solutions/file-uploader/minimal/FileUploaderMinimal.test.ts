@@ -151,26 +151,26 @@ describe('FileUploaderMinimal (M-god step 6b-4 migration)', () => {
     expect(el.getAttribute('mode')).toBe('list');
   });
 
-  it('reactively toggles --uc-grid-col and the drop-area [single] attr for grid + non-multiple', async () => {
+  it('reactively toggles the host [single-grid] attr (one-column --uc-grid-col) and the drop-area [single] attr for grid + non-multiple', async () => {
     const ctxName = freshCtxName();
     const { el, config } = await mount(ctxName);
     config.set('filesViewMode', 'grid');
     config.set('multiple', false);
     await settle(el);
-    expect(el.style.getPropertyValue('--uc-grid-col')).toBe('1');
+    expect(el.hasAttribute('single-grid')).toBe(true);
     expect(inlineDropArea(el)?.hasAttribute('single')).toBe(true);
 
     // Turning on multiple drops the single-column constraint.
     config.set('multiple', true);
     await settle(el);
-    expect(el.style.getPropertyValue('--uc-grid-col')).toBe('');
+    expect(el.hasAttribute('single-grid')).toBe(false);
     expect(inlineDropArea(el)?.hasAttribute('single')).toBe(false);
 
     // Leaving grid mode also drops it.
     config.set('multiple', false);
     config.set('filesViewMode', 'list');
     await settle(el);
-    expect(el.style.getPropertyValue('--uc-grid-col')).toBe('');
+    expect(el.hasAttribute('single-grid')).toBe(false);
     expect(inlineDropArea(el)?.hasAttribute('single')).toBe(false);
   });
 });

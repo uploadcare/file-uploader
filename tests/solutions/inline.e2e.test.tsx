@@ -12,6 +12,16 @@ describe('uc-file-uploader-inline', () => {
       .toBeVisible();
   });
 
+  it('wraps the source buttons by default and lays them into the parent when sourceListWrap is off', async () => {
+    const wrapped = await renderSolution('inline');
+    const unwrapped = await renderSolution('inline', { sourceListWrap: false });
+    const display = (root: HTMLElement) => () =>
+      getComputedStyle(within(root).getByTestId('uc-source-list').element()).display;
+
+    await expect.poll(display(unwrapped.root)).toBe('contents');
+    expect(display(wrapped.root)()).not.toBe('contents');
+  });
+
   it('opens the url source when clicked', async () => {
     const { root } = await renderSolution('inline');
 

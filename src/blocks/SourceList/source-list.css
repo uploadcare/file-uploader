@@ -1,0 +1,5 @@
+@layer uc.components {
+  :where(uc-source-list[nowrap]) {
+    display: contents;
+  }
+}

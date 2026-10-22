@@ -7,6 +7,10 @@
     display: block;
   }
 
+  :where([uc-file-uploader-minimal][single-grid]) {
+    --uc-grid-col: 1;
+  }
+
   [uc-file-uploader-minimal] > uc-start-from .uc-content {
     display: flex;
     flex-direction: column;
