@@ -84,6 +84,9 @@ export class TelemetryManager {
   private _config: ConfigType = structuredClone(initialConfig);
   private _initialized = false;
   private _lastPayload: TelemetryState | null = null;
+  /** The config as last shipped — what a `CHANGE_CONFIG` has to differ from to be worth sending. */
+  private _reportedConfig: TelemetryState['config'] | null = null;
+  #configChangePending = false;
   private readonly _queue: Queue = new Queue(10);
   readonly #disposables = new Disposables();
 
@@ -133,10 +136,37 @@ export class TelemetryManager {
       }
     }
     if (changed && this._initialized) {
-      this.sendEvent({
-        eventType: InternalEventType.CHANGE_CONFIG,
-      });
+      this._reportConfigChange();
     }
+  }
+
+  /**
+   * `CHANGE_CONFIG` reports the snapshot, so it is worth an event only once that
+   * snapshot differs from the one telemetry last shipped. The check waits a
+   * microtask because the events that carry a config are formatted on one too:
+   * a `<uc-config>` seed lands in the `init-solution` already queued ahead of it,
+   * and reporting the same values again right behind it says nothing.
+   */
+  private _reportConfigChange(): void {
+    if (this.#configChangePending) {
+      return;
+    }
+    this.#configChangePending = true;
+    const lifetime = lifetimeOf(this);
+    lifetime.run(
+      async () => {
+        await Promise.resolve();
+        this.#configChangePending = false;
+        if (lifetime.signal.aborted || !this._isEnabled) {
+          return;
+        }
+        if (this._reportedConfig && this._checkObj(this._reportedConfig, this._sanitizedConfig())) {
+          return;
+        }
+        this.sendEvent({ eventType: InternalEventType.CHANGE_CONFIG });
+      },
+      (error) => this._log.debug('failed to report a config change', error),
+    );
   }
 
   private _sanitizedConfig(): TelemetryState['config'] {
@@ -217,12 +247,6 @@ export class TelemetryManager {
     if (lifetime.signal.aborted || !this._isEnabled) {
       return;
     }
-    const payload = this._formattingPayload({
-      eventType: body.eventType,
-      payload: body.payload,
-      config: body.config,
-      component: body.component,
-    });
 
     this._init(body.eventType);
 
@@ -230,11 +254,9 @@ export class TelemetryManager {
     if (hasExcludedEvents) {
       return;
     }
-
-    const hasDataSame = this._lastPayload && this._checkObj(this._lastPayload, payload);
-    if (hasDataSame) {
-      return;
-    }
+    // Copied now, while the config waits for the send: event payloads such as `OutputCollectionState` are getters over
+    // live state, and read after the yield below they would describe a later moment than the event.
+    const eventPayload = body.payload ? { ...body.payload } : undefined;
 
     lifetime.run(
       () =>
@@ -253,7 +275,26 @@ export class TelemetryManager {
           if (lifetime.signal.aborted || !this._isEnabled) {
             return;
           }
+          // Format AFTER the yield, not at emit time: `controllerReady` sends
+          // `init-solution` while the solution element connects — one task before
+          // `<uc-config>` has upgraded and seeded its attributes — so a payload built
+          // eagerly ships the default config and an empty `projectPubkey`. Building it
+          // at send time reports the config the page actually configured.
+          const payload = this._formattingPayload({
+            eventType: body.eventType,
+            payload: eventPayload,
+            config: body.config,
+            component: body.component,
+          });
+          // The repeat-event dedup moved down here with it — it has to compare what
+          // actually ships, not two different pre-seed snapshots.
+          if (this._lastPayload && this._checkObj(this._lastPayload, payload)) {
+            return;
+          }
           this._lastPayload = payload;
+          if (payload.config) {
+            this._reportedConfig = payload.config;
+          }
           await this._telemetryInstance.sendEvent(payload);
         }),
       // Telemetry is best-effort (often blocked by the page): a failed send is verbose-only noise, not an error.

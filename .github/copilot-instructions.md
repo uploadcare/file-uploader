@@ -7,7 +7,7 @@ treat it as the source of truth. Key rules for code generation and PR review:
 `@uploadcare/file-uploader` — a framework-agnostic Web Components file uploader
 built on **Lit**, with state via a **nanostores**-backed shim
 (`SymbioteCompatMixin`). Single package; canonical source is root `src/`. A
-v2 **strangler migration** is in progress (see `MIGRATION-PLAN.md`): DOM-free
+v2 **strangler migration** is in progress (see `AGENTS.md`): DOM-free
 `UploaderController` + sub-controllers / `EventBus` / `Listeners` under the
 existing public tags, one milestone per PR.
 

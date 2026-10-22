@@ -285,8 +285,7 @@ under the existing v1 public tags — one testable milestone per PR. The
 monolithic `UploaderController` god object that once fronted these controllers
 has been dissolved (M-god step 8e): blocks resolve the controllers they need via
 `ChildBlock.use(Token)`, and the ctx's `ControllerContainer` (registered in
-`UploaderRegistry`) is the ownership/teardown unit. **Full plan:
-[`MIGRATION-PLAN.md`](./MIGRATION-PLAN.md).**
+`UploaderRegistry`) is the ownership/teardown unit.
 
 - Integration branch: **`feat/v2-migration`**; each milestone branches off it
   and PRs back into it (`feat/v2-m<N>-<name>` → `feat/v2-migration`).
