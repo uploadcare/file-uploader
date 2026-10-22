@@ -114,6 +114,8 @@ export default {
   'file-item-edit-button': 'تحرير',
   'file-item-remove-button': 'إزالة',
   'a11y-activity-header-button-close': 'إغلاق',
+  'a11y-camera-microphone': 'الميكروفون',
+  'a11y-camera-stop-recording': 'إيقاف التسجيل',
   'a11y-editor-tab-filters': 'فلاتر',
   'a11y-editor-tab-tuning': 'ضبط',
   'a11y-editor-tab-crop': 'قص',

@@ -104,6 +104,8 @@ export default {
   'file-item-edit-button': 'Өңдеу',
   'file-item-remove-button': 'Жою',
   'a11y-activity-header-button-close': 'Жабу',
+  'a11y-camera-microphone': 'Микрофон',
+  'a11y-camera-stop-recording': 'Жазуды тоқтату',
   'a11y-editor-tab-filters': 'Фильтрлер',
   'a11y-editor-tab-tuning': 'Тюнинг',
   'a11y-editor-tab-crop': 'Қырқу',

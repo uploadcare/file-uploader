@@ -104,6 +104,8 @@ export default {
   'file-item-edit-button': 'Redigera',
   'file-item-remove-button': 'Ta bort',
   'a11y-activity-header-button-close': 'Stäng',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Stoppa inspelning',
   'a11y-editor-tab-filters': 'Filter',
   'a11y-editor-tab-tuning': 'Inställning',
   'a11y-editor-tab-crop': 'Beskär',

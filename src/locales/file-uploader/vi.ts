@@ -104,6 +104,8 @@ export default {
   'file-item-edit-button': 'Chỉnh sửa',
   'file-item-remove-button': 'Gỡ bỏ',
   'a11y-activity-header-button-close': 'Đóng',
+  'a11y-camera-microphone': 'Micrô',
+  'a11y-camera-stop-recording': 'Dừng ghi',
   'a11y-editor-tab-filters': 'Bộ lọc',
   'a11y-editor-tab-tuning': 'Tuning',
   'a11y-editor-tab-crop': 'Cắt',

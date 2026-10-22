@@ -60,6 +60,38 @@ describe('photo capture', () => {
   });
 });
 
+describe('accessible names', () => {
+  // Every control below renders only a `uc-icon`, which is `aria-hidden`, so the name has to come from `aria-label`.
+  it('names the mode tabs and the photo shutter', async () => {
+    const { camera } = await openCamera();
+
+    await expect.element(camera.getByTestId('uc-camera-source--tab-photo')).toHaveAccessibleName('Photo');
+    await expect.element(camera.getByTestId('uc-camera-source--tab-video')).toHaveAccessibleName('Video');
+    await expect.element(camera.getByTestId('uc-camera-source--shot')).toHaveAccessibleName('Shot');
+  });
+
+  it('names the video shutter by what it does next', async () => {
+    const { camera, shot, openVideoTab } = await openCamera();
+    await openVideoTab();
+    const shutter = camera.getByTestId('uc-camera-source--shot');
+
+    await expect.element(shutter).toHaveAccessibleName('Record Video');
+    await shot();
+    await expect.element(shutter).toHaveAccessibleName('Stop recording');
+  });
+
+  it('names the microphone toggle and exposes whether it is on', async () => {
+    const { camera, openVideoTab } = await openCamera();
+    await openVideoTab();
+    const toggle = camera.getByTestId('uc-camera-source--toggle-microphone');
+
+    await expect.element(toggle).toHaveAccessibleName('Microphone');
+    await expect.element(toggle).toHaveAttribute('aria-pressed', 'true');
+    await toggle.click();
+    await expect.element(toggle).toHaveAttribute('aria-pressed', 'false');
+  });
+});
+
 describe('video recording', () => {
   it('records, stops and adds the clip', async () => {
     const { api, camera, shot, accept, openVideoTab } = await openCamera();

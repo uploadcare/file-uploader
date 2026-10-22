@@ -104,6 +104,8 @@ export default {
   'file-item-edit-button': '编辑',
   'file-item-remove-button': '移除',
   'a11y-activity-header-button-close': '关闭',
+  'a11y-camera-microphone': '麦克风',
+  'a11y-camera-stop-recording': '停止录制',
   'a11y-editor-tab-filters': '过滤器',
   'a11y-editor-tab-tuning': '调整',
   'a11y-editor-tab-crop': '裁剪',

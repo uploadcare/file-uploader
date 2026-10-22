@@ -104,6 +104,8 @@ export default {
   'file-item-edit-button': 'Düzenle',
   'file-item-remove-button': 'Kaldır',
   'a11y-activity-header-button-close': 'Kapat',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Kaydı durdur',
   'a11y-editor-tab-filters': 'Filtreler',
   'a11y-editor-tab-tuning': 'Ayar',
   'a11y-editor-tab-crop': 'Kırp',

@@ -111,6 +111,8 @@ export default {
   'file-item-edit-button': 'Upravit',
   'file-item-remove-button': 'Odstranit',
   'a11y-activity-header-button-close': 'Zavřít',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Zastavit nahrávání',
   'a11y-editor-tab-filters': 'Filtry',
   'a11y-editor-tab-tuning': 'Ladění',
   'a11y-editor-tab-crop': 'Oříznutí',

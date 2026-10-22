@@ -1033,6 +1033,15 @@ export class CameraSource extends ChildBlock {
     this._destroy();
   }
 
+  /** Names the shutter after its icon, which is what tells sighted users what a press does next. */
+  private get _shotLabel(): string {
+    if (this._currentIcon === 'square') return this.l10n('a11y-camera-stop-recording');
+    if (this._currentIcon === 'video-camera-full') {
+      return this.l10n('record', { source: this.l10n('src-type-mobile-video-camera') });
+    }
+    return this.l10n('camera-shot');
+  }
+
   public override render() {
     return html`
      <uc-activity-header>
@@ -1101,6 +1110,7 @@ export class CameraSource extends ChildBlock {
             })}
             @click=${this._handleClickTab}
             ?hidden=${this._tabCameraHidden}
+            aria-label=${this.l10n('src-type-mobile-photo-camera')}
             data-testid="tab-photo"
           >
             <uc-icon name="camera"></uc-icon>
@@ -1115,6 +1125,7 @@ export class CameraSource extends ChildBlock {
             })}
             @click=${this._handleClickTab}
             ?hidden=${this._tabVideoHidden}
+            aria-label=${this.l10n('src-type-mobile-video-camera')}
             data-testid="tab-video"
           >
             <uc-icon name="video-camera"></uc-icon>
@@ -1159,6 +1170,7 @@ export class CameraSource extends ChildBlock {
           @click=${this._handleStartCamera}
           class=${this._mutableClassButton}
           ?hidden=${this._cameraHidden}
+          aria-label=${this._shotLabel}
         >
           <uc-icon name=${this._currentIcon}></uc-icon>
         </button>
@@ -1169,6 +1181,8 @@ export class CameraSource extends ChildBlock {
             class="uc-mini-btn uc-btn-microphone"
             @click=${this._handleToggleAudio}
             ?hidden=${this._audioToggleMicrophoneHidden}
+            aria-label=${this.l10n('a11y-camera-microphone')}
+            aria-pressed=${this._toggleMicrophoneIcon === 'microphone' ? 'true' : 'false'}
             data-testid="toggle-microphone"
           >
             <uc-icon name=${this._toggleMicrophoneIcon}></uc-icon>

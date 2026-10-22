@@ -106,6 +106,8 @@ export default {
   'file-item-edit-button': 'Redigeeri',
   'file-item-remove-button': 'Eemalda',
   'a11y-activity-header-button-close': 'Sulge',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Peata salvestamine',
   'a11y-editor-tab-filters': 'Filtrid',
   'a11y-editor-tab-tuning': 'Häälestus',
   'a11y-editor-tab-crop': 'Kärbi',

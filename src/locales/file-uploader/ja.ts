@@ -104,6 +104,8 @@ export default {
   'file-item-edit-button': '編集',
   'file-item-remove-button': '削除',
   'a11y-activity-header-button-close': '閉じる',
+  'a11y-camera-microphone': 'マイク',
+  'a11y-camera-stop-recording': '録画を停止',
   'a11y-editor-tab-filters': 'フィルター',
   'a11y-editor-tab-tuning': '調整',
   'a11y-editor-tab-crop': '切り抜き',
