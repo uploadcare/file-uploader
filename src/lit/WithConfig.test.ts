@@ -141,13 +141,13 @@ describe('WithConfig (block-agnostic config host)', () => {
     await delay(0);
 
     el.setAttribute('my-plugin-opt', 'kebab');
-    expect(config?.get('myPluginOpt')).toBe('kebab');
+    expect(config?.getDynamic('myPluginOpt')).toBe('kebab');
 
     el.setAttribute('mypluginopt', 'lower');
-    expect(config?.get('myPluginOpt')).toBe('lower');
+    expect(config?.getDynamic('myPluginOpt')).toBe('lower');
 
     el.setAttribute('myPluginOpt', 'camel');
-    expect(config?.get('myPluginOpt')).toBe('camel');
+    expect(config?.getDynamic('myPluginOpt')).toBe('camel');
   });
 
   it('writes a config property into the ctx ConfigController from a non-<uc-config> host', async () => {

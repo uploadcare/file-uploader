@@ -3,7 +3,7 @@ import { EventEmitter, EventType, InternalEventType } from '../../blocks/UploadC
 import type { ActivityId } from '../../lit/activity-constants';
 import type { ConfigType } from '../../types/index';
 import { AppInfo } from '../controllers/AppInfo';
-import { ConfigController } from '../controllers/ConfigController';
+import { ConfigController, type KnownConfig } from '../controllers/ConfigController';
 import { RouterController } from '../controllers/RouterController';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { TelemetryManager } from './TelemetryManager';
@@ -46,7 +46,7 @@ const setup = ({
   }
   const manager = container.get(TelemetryManager); // init() → config + bus subscriptions
 
-  const setConfig = <K extends keyof ConfigType>(key: K, value: ConfigType[K]) => config.set(key, value);
+  const setConfig = <K extends keyof KnownConfig>(key: K, value: KnownConfig[K]) => config.set(key, value);
   const enable = () => setConfig('qualityInsights', true);
   // Emit through the container's real EventEmitter → the bus the manager
   // observes, exercising the observer path end-to-end.
