@@ -107,6 +107,19 @@ describe('pasteScope', () => {
     await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
   });
 
+  it('stops taking pastes once the solution is removed, even while the ctx lives on', async () => {
+    const { root, api } = await renderSolution('regular', { pasteScope: 'global' });
+
+    // The provider and config stay, so the ctx survives; only the solution's paste scope goes.
+    root.remove();
+    await delay(0);
+    await pasteInto(document.body);
+
+    // Negative wait: nothing should be added, so there is no signal to wait for.
+    await delay(300);
+    expect(api.getOutputCollectionState().totalCount).toBe(0);
+  });
+
   it('ignores paste entirely when disabled', async () => {
     const { root, api } = await renderSolution('regular', { pasteScope: false });
 

@@ -106,6 +106,51 @@ describe('regular', () => {
     expect(dialog.open).toBe(true);
     expect(api.getCurrentActivity()).toBe('start-from');
   });
+
+  it('closes the upload list once its last file is removed', async () => {
+    const { root, api } = await renderSolution('regular');
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.initFlow();
+    await expectModal(root, 'upload-list', 'open');
+
+    api.removeAllFiles();
+
+    await expectModal(root, 'upload-list', 'closed');
+  });
+
+  it('returns to the upload list when start-from is cancelled over it', async () => {
+    const { root, api } = await renderSolution('regular');
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.initFlow();
+    await expectModal(root, 'upload-list', 'open');
+
+    await within(root).getByTestId('uc-upload-list').getByRole('button', { name: 'Add more' }).click();
+    await expectModal(root, 'start-from', 'open');
+    await expectModal(root, 'upload-list', 'closed');
+
+    await within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
+
+    await expectModal(root, 'upload-list', 'open');
+    await expectModal(root, 'start-from', 'closed');
+  });
+
+  it('swaps the open modal when setCurrentActivity + setModalState(true) name another activity', async () => {
+    const { root, api } = await renderSolution('regular');
+    // A file keeps the upload list allowed; adding through the api opens nothing by itself.
+    api.addFileFromObject(IMAGE.PIXEL);
+
+    api.setCurrentActivity('start-from');
+    api.setModalState(true);
+    await expectModal(root, 'start-from', 'open');
+
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+    await expectModal(root, 'upload-list', 'open');
+    await expectModal(root, 'start-from', 'closed');
+
+    api.setModalState(false);
+    await expectModal(root, 'upload-list', 'closed');
+  });
 });
 
 describe('minimal', () => {
@@ -178,5 +223,15 @@ describe('inline', () => {
     cancel.click();
     await expectActivity(root, 'upload-list');
     expect(api.getCurrentActivity()).toBe('upload-list');
+  });
+
+  it('lands on start-from on doneFlow, its configured done activity', async () => {
+    const { root, api } = await renderSolution('inline');
+    api.addFileFromObject(IMAGE.PIXEL);
+    await expectActivity(root, 'upload-list');
+
+    api.doneFlow();
+
+    await expectActivity(root, 'start-from');
   });
 });
