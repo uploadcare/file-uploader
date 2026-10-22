@@ -109,6 +109,8 @@ export default {
   'a11y-editor-tab-tuning': 'Tuning',
   'a11y-editor-tab-crop': 'Crop',
   'a11y-activity-header-button-close': 'Close',
+  'a11y-camera-microphone': 'Microphone',
+  'a11y-camera-stop-recording': 'Stop recording',
   flip: 'Flip',
   mirror: 'Mirror',
   'a11y-cloud-editor-apply-filter': 'Apply {{name}} filter',

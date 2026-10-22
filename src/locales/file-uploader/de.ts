@@ -108,6 +108,8 @@ export default {
   'file-item-edit-button': 'Bearbeiten',
   'file-item-remove-button': 'Entfernen',
   'a11y-activity-header-button-close': 'Schließen',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Aufnahme beenden',
   'a11y-editor-tab-filters': 'Filter',
   'a11y-editor-tab-tuning': 'Feinabstimmung',
   'a11y-editor-tab-crop': 'Zuschneiden',

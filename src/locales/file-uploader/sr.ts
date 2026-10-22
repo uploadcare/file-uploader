@@ -106,6 +106,8 @@ export default {
   'file-item-edit-button': 'Izmeni',
   'file-item-remove-button': 'Ukloni',
   'a11y-activity-header-button-close': 'Zatvori',
+  'a11y-camera-microphone': 'Микрофон',
+  'a11y-camera-stop-recording': 'Заустави снимање',
   'a11y-editor-tab-filters': 'Filteri',
   'a11y-editor-tab-tuning': 'Podešavanje',
   'a11y-editor-tab-crop': 'Iseci',

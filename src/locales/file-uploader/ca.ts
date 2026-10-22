@@ -109,6 +109,8 @@ export default {
   'file-item-edit-button': 'Editar',
   'file-item-remove-button': 'Eliminar',
   'a11y-activity-header-button-close': 'Tancar',
+  'a11y-camera-microphone': 'Micròfon',
+  'a11y-camera-stop-recording': 'Atura la gravació',
   'a11y-editor-tab-filters': 'Filtres',
   'a11y-editor-tab-tuning': 'Ajust',
   'a11y-editor-tab-crop': 'Retallar',

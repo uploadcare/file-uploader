@@ -104,6 +104,8 @@ export default {
   'file-item-edit-button': 'რედაქტირება',
   'file-item-remove-button': 'ამოღება',
   'a11y-activity-header-button-close': 'დახურვა',
+  'a11y-camera-microphone': 'მიკროფონი',
+  'a11y-camera-stop-recording': 'ჩაწერის შეწყვეტა',
   'a11y-editor-tab-filters': 'ფილტრები',
   'a11y-editor-tab-tuning': 'რეგულირება',
   'a11y-editor-tab-crop': 'მოჭრა',
