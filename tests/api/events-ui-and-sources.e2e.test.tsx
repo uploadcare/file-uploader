@@ -21,6 +21,8 @@ describe('events: UI interaction', () => {
     const recorder = recordEvents(provider);
 
     await openModal(root);
+    // The dialog can be on screen before modal-open is reported, so the sentinel waits for it.
+    await recorder.waitFor('modal-open');
     // The sentinel: closing it fires modal-close, so the exact list below says nothing else fired before it.
     api.setModalState(false);
     await recorder.waitFor('modal-close');
