@@ -5,9 +5,19 @@ import { inject, injectOrNull } from '../../abstract/di/inject';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './modal.css';
 import { property } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { RegisteredActivityType } from '../../lit/activity-constants';
 import { getScrollLock } from '../../utils/scroll-lock';
+
+/** l10n keys naming the `<dialog>` of each built-in activity's modal; custom activities stay unnamed. */
+const DIALOG_LABEL_KEYS: Partial<Record<RegisteredActivityType, string>> = {
+  'start-from': 'select-file-source',
+  'upload-list': 'upload-files',
+  camera: 'caption-camera',
+  url: 'caption-from-url',
+  'cloud-image-edit': 'caption-edit-file',
+};
 
 export class Modal extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
@@ -90,7 +100,6 @@ export class Modal extends ChildBlock {
       dialog.removeAttribute('open');
     }
     if (typeof dialog.showModal === 'function') {
-      this.setAttribute('aria-modal', 'true');
       dialog.showModal();
     } else {
       dialog.setAttribute('open', '');
@@ -103,7 +112,6 @@ export class Modal extends ChildBlock {
     };
     if (!dialog || !dialog.open) return;
     if (typeof dialog.close === 'function') {
-      this.setAttribute('aria-modal', 'false');
       dialog.close();
     } else {
       dialog.removeAttribute('open');
@@ -169,8 +177,9 @@ export class Modal extends ChildBlock {
   }
 
   public override render() {
+    const labelKey = DIALOG_LABEL_KEYS[this.id as RegisteredActivityType];
     return html`
-  <dialog data-testid="dialog" ${ref(this._handleDialogRef)}>
+  <dialog data-testid="dialog" aria-label=${ifDefined(labelKey && this.l10n(labelKey))} ${ref(this._handleDialogRef)}>
     ${this.yield('')}
   </dialog>
 `;
