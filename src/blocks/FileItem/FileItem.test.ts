@@ -97,11 +97,9 @@ describe('FileItem (M-god step 6b-6 migration)', () => {
     const ctxName = freshCtxName();
     const { el, config } = await mount(ctxName);
     const container = UploaderRegistry.get(ctxName);
-    // Always-bound controllers become `@inject` fields resolving through the
-    // container the block adopted (tagged as `this[CONTAINER]`); the
-    // uploader-scope-bound `UploadCollectionController` / `UploaderPublicApi`
-    // (read via `useOrNull`) and the conditionally-bound `PluginController`
-    // (read via `whenController`) deliberately stay off `@inject`.
+    // Controllers resolve through `@inject` fields on the container the block
+    // adopted (tagged as `this[CONTAINER]`); the conditionally-bound
+    // `PluginController` (read via `whenController`) stays off `@inject`.
     const injected = el as unknown as {
       _config: ConfigController;
       _telemetry: TelemetryManager;
@@ -284,6 +282,19 @@ describe('FileItem entry-state rendering', () => {
     expect(btn.uploading).toBe(true);
     expect(btn.hideRemove).toBe(true);
     expect(btn.progress).toBe(0.42);
+  });
+
+  it('is not its own live region and names its status on a role that allows a name', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    await bindEntry(el, getCollection(ctxName), { fileName: 'photo.png', isUploading: true });
+
+    // One polite region per row queues an announcement per row on every state change; the list header announces.
+    expect(el.querySelector('[aria-live]')).toBeNull();
+    // ARIA prohibits naming the generic role, so the status label sits on a group.
+    const wrapper = el.querySelector('.uc-file-name-wrapper');
+    expect(wrapper?.getAttribute('role')).toBe('group');
+    expect(wrapper?.getAttribute('aria-label')).toBe('File photo.png in status uploading');
   });
 
   it('QUEUED-UPLOADING entry: remove hidden, progress NOT zeroed', async () => {

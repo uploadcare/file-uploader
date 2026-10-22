@@ -16,6 +16,7 @@ import { serializeCsv } from '../../utils/comma-separated';
 import { ALL_TABS } from '../CloudImageEditor/src/toolbar-constants';
 import {
   asArray,
+  asAuthToken,
   asBoolean,
   asCameraCapture,
   asCameraMode,
@@ -102,7 +103,6 @@ export const BUILTIN_REGISTRY = {
   multipartChunkSize: { default: 5242880, coerce: asNumber },
   maxConcurrentRequests: { default: 10, coerce: asNumber },
   multipartMaxConcurrentRequests: { default: 4, coerce: asNumber },
-  multipartMaxAttempts: { default: 3, coerce: asNumber },
   checkForUrlDuplicates: { default: false, coerce: asBoolean },
   saveUrlForRecurrentUploads: { default: false, coerce: asBoolean },
 
@@ -112,6 +112,7 @@ export const BUILTIN_REGISTRY = {
 
   localeName: { default: 'en', coerce: asString },
 
+  authToken: { default: null, coerce: asAuthToken },
   metadata: { default: null, coerce: asMetadata, attribute: false },
   tags: { default: null, coerce: asTags, attribute: false },
   secureUploadsExpireThreshold: { default: 10 * 60 * 1000, coerce: asNumber },

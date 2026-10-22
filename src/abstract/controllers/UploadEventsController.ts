@@ -1,6 +1,7 @@
 import { debounce } from '../../utils/debounce';
 import { applyInitialCrop } from '../applyInitialCrop';
-import { containerOf } from '../di/ControllerContainer';
+import { controllerLogger } from '../controllerLogger';
+import { containerOf, lifetimeOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';
 import { PluginController } from '../managers/plugin';
 import { TypedData } from '../TypedData';
@@ -77,11 +78,13 @@ export class UploadEventsController {
   @inject(UploadFileEventsController) private readonly _fileEvents!: UploadFileEventsController;
   @inject(UploadCollectionEventsController) private readonly _collectionEvents!: UploadCollectionEventsController;
   @inject(UploadGroupController) private readonly _group!: UploadGroupController;
+  private readonly _log = controllerLogger(this, 'upload-events');
 
   // Active while observing (the v1 `isConnected` guard) — survives disconnect/
   // reconnect cycles; gates the debounced flush + deferred validation/group that
   // may fire after the host disconnects.
   private _active = false;
+  private _groupGeneration = 0;
   private _unobserveCollection?: Unsubscribe;
   private _unobserveProperties?: Unsubscribe;
 
@@ -103,6 +106,7 @@ export class UploadEventsController {
 
   public unobserve(): void {
     this._active = false;
+    this._groupGeneration += 1;
     this._unobserveProperties?.();
     this._unobserveCollection?.();
     this._unobserveProperties = undefined;
@@ -124,13 +128,17 @@ export class UploadEventsController {
   private _runPluginOnAdd(entry: Entry): void {
     containerOf(this)?.whenController(PluginController, (pluginManager) => {
       if (!this._active) return;
-      pluginManager.runOnAddHooks(entry);
+      lifetimeOf(this).run(
+        () => pluginManager.runOnAddHooks(entry),
+        (error) => this._log.error('Plugin onAdd hooks failed', error),
+      );
     });
   }
 
   private _handleCollectionUpdate: CollectionObserver = (entries, added, removed) => {
     if (!this._active) return;
 
+    if (added.size || removed.size) this._groupGeneration += 1;
     this._collectionEvents.resetGroupIfMembershipChanged(added, removed);
 
     this._validation.runFileValidators(
@@ -167,9 +175,6 @@ export class UploadEventsController {
     if (changeMap.uploadProgress) {
       this._fileEvents.progress(changeMap.uploadProgress);
       this._collectionEvents.flushCommonProgress();
-    }
-    if (changeMap.isUploading) {
-      this._fileEvents.start(changeMap.isUploading);
     }
     if (changeMap.fileInfo) {
       this._fileEvents.success(changeMap.fileInfo);
@@ -229,7 +234,11 @@ export class UploadEventsController {
       collectionState.totalCount > 0 &&
       collectionState.status === 'success'
     ) {
-      void this._group.create(collectionState, () => this._active);
+      const generation = this._groupGeneration;
+      lifetimeOf(this).run(
+        () => this._group.create(collectionState, () => this._active && generation === this._groupGeneration),
+        (error) => this._log.error('Failed to create the output file group', error),
+      );
     }
   }, 300);
 }

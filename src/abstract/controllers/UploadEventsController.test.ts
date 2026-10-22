@@ -62,7 +62,7 @@ const setup = (opts: { collectionState?: OutputCollectionState; deferPlugin?: bo
   container.bind(UploadController, () => upload);
 
   // Invoke thunk payloads like the real EventEmitter does, so deferred-payload
-  // bodies run. Bound to the per-ctx `EventEmitter` the controller `@injectOrNull`s.
+  // bodies run. Bound to the per-ctx `EventEmitter` the controller `@inject`s.
   const emit = vi.fn((_type: unknown, payload?: unknown) => {
     if (typeof payload === 'function') (payload as () => unknown)();
   }) as Mock & EventEmitter['emit'];
@@ -291,21 +291,13 @@ describe('UploadEventsController', () => {
       expect(t.deps.setCommonProgress).toHaveBeenCalled();
     });
 
-    it('emits FILE_UPLOAD_START only for uploading + non-silent', () => {
+    it('leaves FILE_UPLOAD_START to UploadController, which emits it where the upload starts', () => {
       const t = setup();
       const uploading = addUploadingEntry(t);
-      const silent = t.collection.add({ isUploading: true, silent: true });
 
-      t.fireProperties({ isUploading: new Set([uploading, silent]) });
+      t.fireProperties({ isUploading: new Set([uploading]) });
 
-      expect(t.emit).toHaveBeenCalledWith(
-        UploaderEventType.FILE_UPLOAD_START,
-        expect.objectContaining({ internalId: uploading }),
-      );
-      expect(t.emit).not.toHaveBeenCalledWith(
-        UploaderEventType.FILE_UPLOAD_START,
-        expect.objectContaining({ internalId: silent }),
-      );
+      expect(t.emit).not.toHaveBeenCalledWith(UploaderEventType.FILE_UPLOAD_START, expect.anything());
     });
 
     it('emits FILE_UPLOAD_SUCCESS for entries with fileInfo and applies crop when cropPreset set', () => {
@@ -384,6 +376,28 @@ describe('UploadEventsController', () => {
 
       const successCalls = t.emit.mock.calls.filter((c: unknown[]) => c[0] === UploaderEventType.COMMON_UPLOAD_SUCCESS);
       expect(successCalls).toHaveLength(1);
+    });
+
+    it('emits COMMON_UPLOAD_SUCCESS once when the validation results land in separate batches', () => {
+      const t = setup();
+      const a = t.collection.add({ fileName: 'a.txt' });
+      const b = t.collection.add({ fileName: 'b.txt' });
+      t.collection.publishProp(a, 'fileInfo', { uuid: 'u1' } as never);
+      t.collection.publishProp(b, 'fileInfo', { uuid: 'u2' } as never);
+      const successes = () =>
+        t.emit.mock.calls.filter(([type]) => type === UploaderEventType.COMMON_UPLOAD_SUCCESS).length;
+
+      // Each uploaded file is validated again; both batches see the whole collection done.
+      t.fireProperties({ errors: new Set([a]) });
+      t.fireProperties({ errors: new Set([b]) });
+      expect(successes()).toBe(1);
+
+      // A file added and removed starts it over: the collection that is done now is a new one.
+      const c = t.collection.add({ fileName: 'c.txt' });
+      t.fireCollection([a, b, c], entriesByUid(t.collection, [c]), new Set());
+      t.collection.remove(c);
+      t.fireProperties({ errors: new Set([a]) });
+      expect(successes()).toBe(2);
     });
 
     it('emits FILE_URL_CHANGED for entries that now have a cdnUrl and clears groupInfo', () => {
@@ -529,6 +543,35 @@ describe('UploadEventsController', () => {
   });
 
   describe('output flush + group', () => {
+    it('publishes a group failure and reruns collection validation', async () => {
+      const state = makeState({ totalCount: 1, status: 'success', allEntries: [{ uuid: 'u1' }] as never });
+      const t = setup({ collectionState: state });
+      t.config.set('groupOutput', true);
+      const error = new Error('group refused');
+      mockUploadFileGroup.mockRejectedValue(error);
+      const id = t.collection.add({ fileName: 'a.txt' });
+      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+      vi.mocked(t.deps.validation.runCollectionValidators).mockClear();
+      await vi.advanceTimersByTimeAsync(300);
+      expect(t.container.get(CollectionStateController).get('groupError')).toBe(error);
+      expect(t.deps.validation.runCollectionValidators).toHaveBeenCalled();
+    });
+
+    it('discards a group failure if membership changed before the next output flush', async () => {
+      const state = makeState({ totalCount: 1, status: 'success', allEntries: [{ uuid: 'u1' }] as never });
+      const t = setup({ collectionState: state });
+      t.config.set('groupOutput', true);
+      mockUploadFileGroup.mockImplementation(async () => {
+        const next = t.collection.add({ fileName: 'b.txt' });
+        t.fireCollection(t.collection.items(), entriesByUid(t.collection, [next]), new Set());
+        throw new Error('stale group refusal');
+      });
+      const id = t.collection.add({ fileName: 'a.txt' });
+      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+      await vi.advanceTimersByTimeAsync(300);
+      expect(t.container.get(CollectionStateController).get('groupError')).toBeNull();
+    });
+
     it('flushes collection state + emits CHANGE when output data matches collection size', () => {
       const t = setup({ collectionState: makeState({ totalCount: 1, status: 'idle' }) });
       const id = t.collection.add({ fileName: 'a.txt' });
@@ -634,6 +677,29 @@ describe('UploadEventsController', () => {
       await vi.advanceTimersByTimeAsync(300);
 
       expect(mockUploadFileGroup).not.toHaveBeenCalled();
+    });
+
+    it('cancels an in-flight group request when the ctx is torn down', async () => {
+      const state = makeState({
+        totalCount: 1,
+        status: 'success',
+        allEntries: [{ uuid: 'u1', cdnUrlModifiers: '' }] as never,
+      });
+      const t = setup({ collectionState: state });
+      t.config.set('groupOutput', true);
+      let signal: AbortSignal | undefined;
+      mockUploadFileGroup.mockImplementation(async (_uuids, options) => {
+        signal = options?.signal;
+        t.container.dispose();
+        return { uuid: 'group~1' } as UploadcareGroup;
+      });
+      const id = t.collection.add({ fileName: 'a.txt' });
+
+      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(signal?.aborted).toBe(true);
+      expect(t.emit).not.toHaveBeenCalledWith(UploaderEventType.GROUP_CREATED, expect.anything());
     });
 
     it('aborts group creation if the collection state changed mid-flight', async () => {

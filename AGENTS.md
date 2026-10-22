@@ -76,11 +76,14 @@ under its own compiler options, so a public type that only resolves under
 Pre-commit (husky + lint-staged) runs `biome check --write` on staged
 `*.{ts,js,cjs,tsx}`. The husky "DEPRECATED" warning on commit is benign.
 
-### Known e2e flake
-`tests/cloud-image-editor.e2e.test.tsx` (`getByTestId('uc-crop-frame')`) can
-lose a render race under full parallel load but passes in isolation. The e2e
-project has `retry: 1` so a transient flake won't fail the gate while a genuine
-regression still fails both attempts. Don't "fix" it by loosening assertions.
+### e2e network
+The e2e suite talks to `@uploadcare/api-emulator`, run inside the page by
+`tests/utils/emulator.browser.ts` and reset before every test, so a run needs no
+API access and answers the same way every time. The e2e project therefore has
+`retry: 0`: a flake fails the gate. End a negative wait on a sentinel that does
+happen, not on a sleep. `E2E_NET=live` runs against the real API instead (with
+`retry: 1`); tests that read or steer the emulator skip there via
+`it.skipIf(isLive)`.
 
 ---
 
@@ -166,6 +169,54 @@ the state mechanism.
 
 ---
 
+## Async work and lifetimes
+
+Async work that can outlive its owner (a block unmounted mid-await, a ctx torn down while an upload is queued) binds
+to the owner's **lifetime** and stops at its next guarded await. Every owner holds one `Lifetime`
+(`src/abstract/di/Lifetime.ts`), ended first thing on teardown:
+
+| Owner | One lifetime per | API |
+|-------|------------------|-----|
+| `ChildBlock` | adoption | `runTask(task)`, `whileAdopted(work, dispose?)`, `adoptionSignal` |
+| `EditorBlock` | attached editor controller | same three names |
+| container-built controller | ctx container (ended in `dispose()`) | `lifetimeOf(this)` → `.run(task, onError)`, `.guard(work, dispose?)`, `.signal` |
+
+How to bind work — reference conversions: `CameraSource.ts`, `Thumb.ts`, `UploadController.ts`:
+
+1. Start every async entry point (event handler, `controllerReady`, observer callback, timer tick) with `runTask` /
+   `lifetime.run`. It starts synchronously, swallows the lifetime's abort and logs any other error. Lint enforces it:
+   `@typescript-eslint/no-floating-promises` with `ignoreVoid: false` rejects an unhandled or `void`-ed promise in `src/`.
+2. Wrap every await of outside work (browser API, `fetch`, image preload, `updateComplete`, a plugin hook) in
+   `whileAdopted` / `guard`. Pass `dispose` for a resource that leaks if it arrives late (a media stream, an object
+   URL). After the await, read `@inject` fields directly.
+3. Hand `adoptionSignal` / `.signal` to every API that takes one (`addEventListener`, `fetch`, upload-client) so it
+   cleans up on its own.
+4. A `catch` that wraps a guarded await opens with `if (isAbortError(error)) throw error;`, so the abort reaches
+   `runTask` instead of being reported as a failure.
+5. Rate-limited handlers on `ChildBlock` / `EditorBlock` use `@debounced` / `@throttled`
+   (`src/lit/rate-limited-method.ts`): a call after release no-ops and a pending one is cancelled;
+   `cancelPending(this._method)` cancels one by hand.
+
+**Nothing leaves a destroyed uploader** — no request, telemetry, DOM event, or user callback (validator, resolver,
+plugin hook). Each outlet drops at its single exit, so call sites stay plain: `EventBus.emit` (every DOM event, `api.on`
+and telemetry go through it), `TelemetryManager.sendEvent`, and the entry's `AbortController`, which the ctx lifetime
+aborts mid-upload. A new outlet gets the same guard at its exit. Reading a disposed container throws
+(`[uc] X read after the ctx container was disposed …`): that error marks work outliving its uploader — bind the work,
+don't catch the error. Pinned by `tests/flow/destroy.e2e.test.tsx`; moving the uploader in the DOM by
+`tests/flow/remount*.e2e.test.tsx`.
+
+A guard stays only where absence is normal rather than late: `@injectOrNull` / `useOrNull` for a dependency bound
+later or conditionally (uploader-scope tokens, `PluginController`), a render path that runs before adoption, a
+synchronous check during connect. Watch out:
+
+- The guard checks when the awaited work settles. A request already on the network keeps running unless it received
+  the signal.
+- An unguarded await still resumes after teardown — guard each one, not just the first.
+- A synchronous DOM move keeps the ctx but releases and re-adopts every block, so block tasks restart; only a gap of
+  a macrotask destroys the ctx (`ChildBlock._teardownCtxIfUnreferenced`).
+- Only container-built instances have a ctx lifetime. `A11y` is also built with `new` by the standalone editor, so it
+  keeps its `_destroyed` flag.
+
 ## CDN URLs
 
 Every CDN URL is built and read through **`@uploadcare/cdn-url`**. The v1 string
@@ -216,7 +267,7 @@ and one of them corrupted any path whose last segment recurred earlier.
   which the editor's merge needs because it matches operations by name. Re-measure
   before revisiting.
 - **Bundle budgets are tight and `size-limit` runs inside `npm run build`.** The
-  editor sits near 49.2 KB of 50, the IIFE near 98.6 of 100, `<uc-img>` near 8.9 of
+  editor sits near 50.0 KB of 51, the IIFE near 101.5 of 102, `<uc-img>` near 9.0 of
   10. Treat ~100 B as build-to-build variance and do not quote a single run to tighter
   precision. If a change crosses a limit, that is a decision to raise the budget or
   trim, not something to work around.

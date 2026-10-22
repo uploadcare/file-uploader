@@ -1,6 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { delay } from '../../utils/delay';
@@ -76,5 +77,75 @@ describe('DropArea (M-god step 6b-3 migration)', () => {
     await el.updateComplete;
     await delay(0);
     expect(el.hidden).toBe(false);
+  });
+
+  it('exposes a clickable drop area as a focusable button, and only while clickable and enabled', async () => {
+    const { el } = await mount(freshCtxName());
+    expect(el.hasAttribute('role')).toBe(false);
+    expect(el.hasAttribute('tabindex')).toBe(false);
+
+    el.clickable = true;
+    await el.updateComplete;
+    expect(el.getAttribute('role')).toBe('button');
+    expect(el.getAttribute('tabindex')).toBe('0');
+
+    el.disabled = true;
+    await el.updateComplete;
+    expect(el.hasAttribute('role')).toBe(false);
+    expect(el.hasAttribute('tabindex')).toBe(false);
+
+    el.disabled = false;
+    await el.updateComplete;
+    expect(el.getAttribute('role')).toBe('button');
+
+    el.clickable = false;
+    await el.updateComplete;
+    expect(el.hasAttribute('role')).toBe(false);
+    expect(el.hasAttribute('tabindex')).toBe(false);
+  });
+
+  it('opens the dialog on Enter, NumpadEnter and Space, and keeps Space from scrolling the page', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    el.clickable = true;
+    await el.updateComplete;
+    const api = UploaderRegistry.get(ctxName)?.get(UploaderPublicApi);
+    if (!api) throw new Error('api not resolved');
+    const open = vi.spyOn(api, 'openSystemDialog').mockImplementation(() => {});
+
+    const press = (init: KeyboardEventInit): KeyboardEvent => {
+      const event = new KeyboardEvent('keydown', { ...init, bubbles: true, cancelable: true });
+      el.dispatchEvent(event);
+      return event;
+    };
+
+    press({ key: 'Enter', code: 'Enter' });
+    press({ key: 'Enter', code: 'NumpadEnter' });
+    const space = press({ key: ' ', code: 'Space' });
+    press({ key: 'a', code: 'KeyA' });
+
+    expect(open).toHaveBeenCalledTimes(3);
+    expect(space.defaultPrevented).toBe(true);
+  });
+
+  it('reads a "false" flag attribute as off and drops it, so the [flag] styles do not apply either', async () => {
+    const { el } = await mount(freshCtxName());
+    el.setAttribute('clickable', 'false');
+    el.setAttribute('with-icon', 'false');
+    el.setAttribute('disabled', 'false');
+    el.setAttribute('ghost', 'false');
+    await el.updateComplete;
+
+    expect(el.clickable).toBe(false);
+    expect(el.withIcon).toBe(false);
+    expect(el.disabled).toBe(false);
+    for (const name of ['clickable', 'with-icon', 'disabled', 'ghost']) {
+      expect(el.hasAttribute(name)).toBe(false);
+    }
+
+    el.setAttribute('fullscreen', 'true');
+    await el.updateComplete;
+    expect(el.fullscreen).toBe(true);
+    expect(el.hasAttribute('fullscreen')).toBe(true);
   });
 });

@@ -1,5 +1,6 @@
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { controllerLogger } from '../controllerLogger';
+import { lifetimeOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';
 import { UploaderPublicApi } from '../UploaderPublicApi';
 import { ConfigController } from './ConfigController';
@@ -42,16 +43,17 @@ export class ClipboardController {
   private _scopes: Set<Node> = new Set();
   private _listener: (event: ClipboardEvent) => void;
   private _armed = false;
-  private _destroyed = false;
 
   public constructor() {
     // Isolate-and-warn (AGENTS.md #3): a rejection from the injected api's
     // add-file path must stay contained here, not surface as an unhandled
-    // rejection.
+    // rejection. Bound to the ctx lifetime, so a paste still resolving its URLs
+    // when the ctx is torn down stops instead of adding to it.
     this._listener = (event) => {
-      this._handlePasteEvent(event).catch((err) => {
-        this._log.warn('clipboard paste handling failed', err);
-      });
+      lifetimeOf(this).run(
+        () => this._handlePasteEvent(event),
+        (err) => this._log.warn('clipboard paste handling failed', err),
+      );
     };
   }
 
@@ -67,7 +69,7 @@ export class ClipboardController {
    * `window.dispatchEvent`).
    */
   private _arm(): void {
-    if (this._armed || this._destroyed) {
+    if (this._armed || lifetimeOf(this).signal.aborted) {
       return;
     }
     this._armed = true;
@@ -213,7 +215,9 @@ export class ClipboardController {
     }
 
     if (urlItems.length > 0) {
-      const resolvedUrls = (await Promise.all(urlItems)).filter((url): url is string => url !== null);
+      const resolvedUrls = (await lifetimeOf(this).guard(Promise.all(urlItems))).filter(
+        (url): url is string => url !== null,
+      );
       if (resolvedUrls.length > 0) {
         const api = this._api;
         resolvedUrls.forEach((url) => {
@@ -234,7 +238,7 @@ export class ClipboardController {
    * must merely be connected). Returns an unregister fn.
    */
   public registerScope(scope: Node): () => void {
-    if (this._destroyed) {
+    if (lifetimeOf(this).signal.aborted) {
       return () => {};
     }
 
@@ -253,7 +257,6 @@ export class ClipboardController {
   }
 
   public destroy(): void {
-    this._destroyed = true;
     this._disarm();
     this._scopes.clear();
   }

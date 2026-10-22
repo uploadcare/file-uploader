@@ -4,6 +4,7 @@ import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { styleMap } from 'lit/directives/style-map.js';
+import { isAbortError } from '../../../abstract/di/Lifetime';
 import { operationsFromModifiers } from '../../../utils/cdn/operations';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
@@ -128,10 +129,10 @@ export class EditorFilterControl extends EditorButtonControl {
     });
   }
 
-  private async _observerCallback(entries: IntersectionObserverEntry[], observer: IntersectionObserver): Promise<void> {
+  private _observerCallback(entries: IntersectionObserverEntry[], observer: IntersectionObserver): void {
     const intersectionEntry = entries[0];
     if (intersectionEntry?.isIntersecting) {
-      await this._loadPreview(observer);
+      this.runTask(() => this._loadPreview(observer));
     } else {
       this._cancelPreload?.();
     }
@@ -154,12 +155,12 @@ export class EditorFilterControl extends EditorButtonControl {
       }
     });
 
-    this.subEditorKey('*networkProblems', async (networkProblems: boolean) => {
+    this.subEditorKey('*networkProblems', (networkProblems: boolean) => {
       if (networkProblems) {
         return;
       }
       if (this._previewImage) {
-        await this._loadPreview();
+        this.runTask(() => this._loadPreview());
       } else {
         this._schedulePreviewVisibilityCheck();
       }
@@ -228,10 +229,9 @@ export class EditorFilterControl extends EditorButtonControl {
   }
 
   private async _loadPreview(observer?: IntersectionObserver): Promise<void> {
-    if (!this.isConnected) {
-      observer?.unobserve(this);
-      this._cancelPreload?.();
-      this._cancelPreload = undefined;
+    // An observer entry queued before disconnect can still be delivered after it; `disconnectedCallback` has already
+    // disconnected the observer and cancelled the preload.
+    if (this.adoptionSignal.aborted) {
       return;
     }
 
@@ -244,8 +244,9 @@ export class EditorFilterControl extends EditorButtonControl {
     const requestId = ++this._lastPreviewRequestId;
     let src = '';
     try {
-      src = await this.editorController.proxyUrl(this._previewSrc());
+      src = await this.whileAdopted(this.editorController.proxyUrl(this._previewSrc()));
     } catch (err) {
+      if (isAbortError(err)) throw err;
       this.editorController.set('*networkProblems', true);
       this._log.error('Failed to resolve preview URL', { error: err });
       return;
@@ -262,8 +263,8 @@ export class EditorFilterControl extends EditorButtonControl {
     };
 
     try {
-      await promise;
-      if (this._lastPreviewRequestId !== requestId || !this.isConnected) {
+      await this.whileAdopted(promise);
+      if (this._lastPreviewRequestId !== requestId) {
         return;
       }
       this._previewImage = src;
@@ -271,6 +272,7 @@ export class EditorFilterControl extends EditorButtonControl {
       this._clearPreviewVisibilityChecks();
       (observer ?? this._observer)?.unobserve(this);
     } catch (err) {
+      if (isAbortError(err)) throw err;
       this.editorController.set('*networkProblems', true);
       this._log.error('Failed to load image', { error: err });
       this._schedulePreviewVisibilityCheck();
@@ -283,7 +285,7 @@ export class EditorFilterControl extends EditorButtonControl {
 
   private _schedulePreviewVisibilityCheck(): void {
     if (
-      !this.isConnected ||
+      this.adoptionSignal.aborted ||
       this._previewImage ||
       this._previewLoaded ||
       this.isOriginal ||
@@ -297,7 +299,8 @@ export class EditorFilterControl extends EditorButtonControl {
     }
     this._previewVisibilityCheckRaf = requestAnimationFrame(() => {
       this._previewVisibilityCheckRaf = undefined;
-      if (!this.isConnected || this._previewImage || this._previewLoaded || this.isOriginal) {
+      // No adoption check: `disconnectedCallback` cancels this frame.
+      if (this._previewImage || this._previewLoaded || this.isOriginal) {
         this._clearPreviewVisibilityChecks();
         return;
       }
@@ -308,7 +311,7 @@ export class EditorFilterControl extends EditorButtonControl {
       const isVisible =
         hasSize && rect.bottom > 0 && rect.right > 0 && rect.top < viewportHeight && rect.left < viewportWidth;
       if (isVisible) {
-        void this._loadPreview();
+        this.runTask(() => this._loadPreview());
         return;
       }
       this._previewVisibilityCheckTimeout = window.setTimeout(() => {
@@ -335,6 +338,10 @@ export class EditorFilterControl extends EditorButtonControl {
 
   public override render() {
     const clickHandler = this.onClick;
+    // Prefixed like `ChildBlock` prefixes its inner test ids; editor blocks aren't `ChildBlock`s.
+    const previewTestId = this.editorControllerOrNull?.getConfig('testMode')
+      ? `${this.tagName.toLowerCase()}--preview`
+      : undefined;
     const previewStyles: Record<string, string> = {
       opacity: this._shouldShowPreview ? '1' : '0',
     };
@@ -349,13 +356,19 @@ export class EditorFilterControl extends EditorButtonControl {
     return html`
       <button
         role="option"
+        aria-selected=${this.active ? 'true' : 'false'}
         type="button"
         class=${classMap(this.buttonClasses)}
         aria-label=${ifDefined(this.titleProp)}
         title=${ifDefined(this.titleProp)}
         @click=${clickHandler}
       >
-        <div class="uc-preview" ?data-loaded=${this._previewLoaded} style=${styleMap(previewStyles)}></div>
+        <div
+          class="uc-preview"
+          data-testid=${ifDefined(previewTestId)}
+          ?data-loaded=${this._previewLoaded}
+          style=${styleMap(previewStyles)}
+        ></div>
         <uc-editor-icon
           class=${classMap({ 'uc-original-icon': this.isOriginal })}
           name=${this.icon}

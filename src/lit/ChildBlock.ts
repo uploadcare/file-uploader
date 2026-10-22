@@ -7,6 +7,7 @@ import { LocaleController } from '../abstract/controllers/LocaleController';
 import { CONTAINER, type ControllerContainer, type Token } from '../abstract/di/ControllerContainer';
 import { Disposables } from '../abstract/di/Disposables';
 import { inject, injectOrNull } from '../abstract/di/inject';
+import { Lifetime } from '../abstract/di/Lifetime';
 import { logger } from '../abstract/logger';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
@@ -20,7 +21,6 @@ import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { LightDomMixin } from './LightDomMixin';
 import { createL10n } from './l10n';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
-import { registerHostRateLimited } from './rate-limited-method';
 import { registerHostSubscriptions } from './subscription';
 
 // `SignalWatcher` sits at the base of the mixin chain so it wraps
@@ -71,6 +71,8 @@ export abstract class ChildBlock extends ChildBlockBase {
   // container present), and the consumer-refcount anchor for teardown
   // (`addConsumer`/`removeConsumer`/`isUnreferenced`).
   private _container: ControllerContainer | null = null;
+  // One per adoption, ended on release; already ended while the block is not adopted.
+  private _lifetime = Lifetime.ended();
   private _watchedCtxName: string | undefined = undefined;
   private _registryUnsub?: () => void;
   // Teardown engine for this block's adoption-scoped subscriptions (config test
@@ -384,6 +386,7 @@ export abstract class ChildBlock extends ChildBlockBase {
     // same instant the registry subscription used to be the refcount, preserving
     // exact teardown timing (`isCtxUnreferenced` reads `container.isUnreferenced()`).
     this._container = container;
+    this._lifetime = new Lifetime();
     // Tag this element with the container so `@inject(Token)` fields on migrated
     // blocks resolve through the shared `inject.ts` getter (which reads
     // `this[CONTAINER]`) — the same mechanism controllers use. Only the adoption
@@ -417,18 +420,14 @@ export abstract class ChildBlock extends ChildBlockBase {
     }
     // Wire this block's declarative reactive methods now that the container is
     // adopted (so their `getTracked` / controller reads resolve): `@effect`
-    // (signal reactions; connected-guarded disposers — see `registerHostEffects`),
-    // `@subscription` (imperative subscribes returning a teardown), and
-    // `@throttled`/`@debounced` (rate-limited handlers whose pending timer is
-    // cancelled on release). All are auto-disposed on release, so a block never
-    // tracks a disposer by hand.
+    // (signal reactions; connected-guarded disposers — see `registerHostEffects`)
+    // and `@subscription` (imperative subscribes returning a teardown). Both are
+    // auto-disposed on release, so a block never tracks a disposer by hand.
+    // (`@throttled`/`@debounced` need no wiring: they follow `adoptionSignal`.)
     for (const dispose of registerHostEffects(this)) {
       this._disposables.add(dispose);
     }
     for (const teardown of registerHostSubscriptions(this)) {
-      this._disposables.add(teardown);
-    }
-    for (const teardown of registerHostRateLimited(this)) {
       this._disposables.add(teardown);
     }
     this.requestUpdate();
@@ -436,6 +435,9 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   private _releaseController(): void {
     const container = this._container;
+    // First, so async work still in flight stops at its next `whileAdopted` await rather than running into the
+    // teardown below.
+    this._lifetime.end();
     // Isolate-and-warn drain (a throwing teardown must not stop the rest) lives
     // in `Disposables.run()`.
     this._disposables.run();
@@ -467,13 +469,18 @@ export abstract class ChildBlock extends ChildBlockBase {
    * `testId` while the ctx's `testMode` config is on (folded in from the former
    * reactive `TestModeController` + its `trySubscribeTestMode` hook). This
    * `@effect` replaces the controller's manual subscribe/retry lifecycle: it
-   * runs after every update (re-collecting newly rendered elements, as
-   * `hostUpdated` did) and, because it reads `testMode` via `getTracked`, re-runs
-   * when that signal flips — auto-disposed on release, so no hand-managed
+   * re-runs when `testMode` changes. `updated()` also collects newly rendered
+   * elements, since signal effects cache their results between signal changes.
+   * The effect is auto-disposed on release, so no hand-managed
    * subscribe/unsubscribe. (The HOST element's own `data-testid` is synced
    * separately at adoption — see `_syncTestId` — because e2e locators need it
    * synchronously, before the first post-render effect microtask.)
    */
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+    this._applyTestMode();
+  }
+
   @effect()
   protected _applyTestMode(): void {
     // Runs post-adoption (effects wire at adoption), so the container is present;
@@ -483,6 +490,10 @@ export abstract class ChildBlock extends ChildBlockBase {
       return;
     }
     const enabled = Boolean(config.getTracked('testMode'));
+    // Production path: nothing to prefix and nothing to strip, so skip the subtree scan on every update.
+    if (!enabled && this._testModeTracked.size === 0) {
+      return;
+    }
 
     this._collectTestModeElements();
     const prefix = this.testId || '';
@@ -509,11 +520,16 @@ export abstract class ChildBlock extends ChildBlockBase {
     if (!root) {
       return;
     }
-    const hostTag = this.tagName?.toLowerCase();
+    const owningBlock = (el: Element): Element | null => {
+      for (let parent = el.parentElement; parent; parent = parent.parentElement) {
+        if (isCustomElement(parent)) return parent;
+      }
+      return null;
+    };
     const candidates = Array.from(root.querySelectorAll('[data-testid]')).filter((el) => !isCustomElement(el));
 
     for (const el of candidates) {
-      if (hostTag && el.closest(hostTag) !== this) {
+      if (owningBlock(el) !== this) {
         continue;
       }
       if (!this._testModeTracked.has(el)) {
@@ -527,7 +543,7 @@ export abstract class ChildBlock extends ChildBlockBase {
     }
 
     for (const el of Array.from(this._testModeTracked)) {
-      if (!el.isConnected || (hostTag && el.closest(hostTag) !== this)) {
+      if (!el.isConnected || owningBlock(el) !== this) {
         this._testModeTracked.delete(el);
         this._testModeOriginal.delete(el);
       }
@@ -547,6 +563,33 @@ export abstract class ChildBlock extends ChildBlockBase {
    */
   protected addDisposer(unsub: () => void): void {
     this._disposables.add(unsub);
+  }
+
+  /**
+   * Aborted when this block is released (disconnect or re-adoption); already aborted before adoption. Pass it to APIs
+   * that take a signal — `addEventListener`, `fetch`, upload-client — and they clean up on their own.
+   */
+  protected get adoptionSignal(): AbortSignal {
+    return this._lifetime.signal;
+  }
+
+  /**
+   * Await `work` for as long as this block stays adopted. If the block is released first, the await throws an abort
+   * (swallowed by {@link runTask}) instead of resuming against a torn-down container, and a value that arrives too
+   * late goes to `dispose` — a media stream, say, that nothing else would stop.
+   *
+   * Use it for each await of outside work inside a {@link runTask}; code after it may use `@inject` fields freely.
+   */
+  protected whileAdopted<T>(work: PromiseLike<T>, dispose?: (value: T) => void): Promise<T> {
+    return this._lifetime.guard(work, dispose);
+  }
+
+  /**
+   * Run fire-and-forget async work bound to this adoption. Its `whileAdopted` awaits abort once the block is released,
+   * and that abort is swallowed; any other error is logged rather than left as an unhandled rejection.
+   */
+  protected runTask(task: (signal: AbortSignal) => unknown): void {
+    this._lifetime.run(task, (error) => this._log.error('an async task failed', error));
   }
 
   /** Called after the ctx's container is adopted (initial and on re-adoption). */

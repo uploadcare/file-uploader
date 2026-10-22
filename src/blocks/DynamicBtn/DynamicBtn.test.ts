@@ -60,12 +60,8 @@ describe('DynamicBtn (M-god step 6b-2 migration)', () => {
     const container = UploaderRegistry.get(ctxName);
     expect(container).toBeDefined();
 
-    // The always-bound controllers become `@inject` fields resolving through
-    // the container the block adopted (tagged as `this[CONTAINER]`). The
-    // uploader-scope-bound `UploadCollectionController` (read via
-    // `whenController`/`use()`) and the trailing-tick `UploaderPublicApi` (read
-    // via `useOrNull`) deliberately stay off `@inject` — an `@inject` field
-    // would throw in the pre-scope / post-release windows those reads tolerate.
+    // Controllers resolve through `@inject` fields on the container the block
+    // adopted (tagged as `this[CONTAINER]`); every read happens while adopted.
     const injected = el as unknown as {
       _config: ConfigController;
       _router: RouterController;
@@ -98,6 +94,26 @@ describe('DynamicBtn (M-god step 6b-2 migration)', () => {
     await el.updateComplete;
     await delay(0);
     expect(hasPrimaryAction(el)).toBe(true);
+  });
+
+  it('drops a hidden primary action instead of keeping it detached for reuse', async () => {
+    const ctxName = freshCtxName();
+    const { el, config } = await mountWithConfig(ctxName);
+    const setMode = async (mode: 'auto' | 'compact') => {
+      config.set('dynamicButtonViewMode', mode);
+      await el.updateComplete;
+      await delay(0);
+    };
+
+    await setMode('auto');
+    const first = el.querySelector('uc-primary-action');
+    expect(first).not.toBeNull();
+
+    await setMode('compact');
+    await setMode('auto');
+    const second = el.querySelector('uc-primary-action');
+    expect(second).not.toBeNull();
+    expect(second).not.toBe(first);
   });
 
   it('reactively updates the abort action progress via CollectionStateController.getTracked (no ctx.sub mirror)', async () => {
@@ -141,5 +157,13 @@ describe('DynamicBtn (M-god step 6b-2 migration)', () => {
     await el.updateComplete;
     await delay(0);
     expect(abortAction?.progress).toBe(100);
+  });
+
+  it('turns its dropzone off with dropzone="false"', async () => {
+    const { el } = await mountWithConfig(freshCtxName());
+    el.setAttribute('dropzone', 'false');
+    await el.updateComplete;
+    expect(el.dropzone).toBe(false);
+    expect(el.querySelector('uc-drop-area')?.disabled).toBe(true);
   });
 });

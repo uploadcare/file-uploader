@@ -3,6 +3,7 @@ import { property } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './simple-btn.css';
 
@@ -17,7 +18,7 @@ export class SimpleBtn extends ChildBlock {
   // it is container-resolved (M-god step 8a), injected here via `@inject`.
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
-  @property({ attribute: 'dropzone', type: Boolean })
+  @property({ converter: booleanAttribute })
   public dropzone = true;
 
   private readonly _handleClick = () => {
@@ -32,7 +33,7 @@ export class SimpleBtn extends ChildBlock {
       <uc-icon name="upload"></uc-icon>
       <span>${this.l10n(buttonTextKey)}</span>
       ${this.yield('')}
-      <div class="uc-visual-drop-area">${this.l10n('drop-files-here')}</div>
+      <div class="uc-visual-drop-area" aria-hidden="true">${this.l10n('drop-files-here')}</div>
     </button>
   </uc-drop-area>
     `;

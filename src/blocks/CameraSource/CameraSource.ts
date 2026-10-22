@@ -3,13 +3,14 @@ import { state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject } from '../../abstract/di/inject';
+import { isAbortError } from '../../abstract/di/Lifetime';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { effect } from '../../lit/effect';
+import { debounced } from '../../lit/rate-limited-method';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
-import { debounce } from '../../utils/debounce';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
@@ -50,11 +51,19 @@ function formatTime(time: number): string {
   return `${minutes}:${seconds}`;
 }
 
+/** The current device stays selected while it is still listed; otherwise the first one takes over. */
+const keepListedDeviceId = (devices: { value: string }[], currentId: string | null): string | null =>
+  devices.some((device) => device.value === currentId) ? currentId : (devices[0]?.value ?? null);
+
 const DEFAULT_PICTURE_FORMAT = 'image/jpeg';
 const DEFAULT_VIDEO_FORMAT = 'video/webm';
 
 export type CameraMode = 'photo' | 'video';
 export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pause' | 'resume';
+
+const stopTracks = (stream: MediaStream): void => {
+  for (const track of stream.getTracks()) track.stop();
+};
 
 export class CameraSource extends ChildBlock {
   @inject(ConfigController) private readonly _config!: ConfigController;
@@ -74,8 +83,10 @@ export class CameraSource extends ChildBlock {
 
   private _stream: MediaStream | null = null;
 
+  @state()
   private _selectedAudioId: string | null = null;
 
+  @state()
   private _selectedCameraId: string | null = null;
 
   private _activeTab: CameraMode | null = null;
@@ -200,7 +211,7 @@ export class CameraSource extends ChildBlock {
       return;
     }
     this._selectedCameraId = target.value;
-    void this._capture();
+    this.runTask(() => this._capture());
   };
 
   private _handleAudioSelectChange = (event: Event): void => {
@@ -209,11 +220,11 @@ export class CameraSource extends ChildBlock {
       return;
     }
     this._selectedAudioId = target.value;
-    void this._capture();
+    this.runTask(() => this._capture());
   };
 
   private _handleRequestPermissions = (): void => {
-    void this._capture();
+    this.runTask(() => this._capture());
   };
 
   private _handleStartCamera = (): void => {
@@ -410,7 +421,7 @@ export class CameraSource extends ChildBlock {
     if (!videoEl.paused && !videoEl.ended && videoEl.readyState > 2) {
       videoEl.pause();
     } else if (videoEl.paused) {
-      videoEl.play();
+      this.runTask(() => videoEl.play());
     }
   };
 
@@ -497,7 +508,10 @@ export class CameraSource extends ChildBlock {
       }
     }
 
-    void this._videoRef.value?.play?.();
+    const videoEl = this._videoRef.value;
+    if (videoEl) {
+      this.runTask(() => videoEl.play());
+    }
   };
 
   private _accept = (): void => {
@@ -712,12 +726,9 @@ export class CameraSource extends ChildBlock {
     );
   }
 
-  private _setPermissionsState = debounce((state: 'granted' | 'denied' | 'prompt') => {
-    // The 300ms debounce can fire after disconnect (container already
-    // released) — bail rather than let the `@inject` reads below throw without
-    // an adopted container.
-    if (!this.useOrNull(ConfigController)) return;
-
+  // `@debounced` drops a call after release and cancels a pending one, so the body reads `@inject` fields freely.
+  @debounced(300)
+  protected _setPermissionsState(state: 'granted' | 'denied' | 'prompt'): void {
     this.classList.toggle('uc-initialized', state === 'granted');
 
     const visibleAudio = this._activeTab === CameraSourceTypes.VIDEO && this._config.get('enableAudioRecording');
@@ -752,7 +763,7 @@ export class CameraSource extends ChildBlock {
 
       this._stopCapture();
     }
-  }, 300);
+  }
 
   private _makeStreamInactive = (): boolean => {
     if (!this._stream) return false;
@@ -817,7 +828,7 @@ export class CameraSource extends ChildBlock {
 
     try {
       this._setPermissionsState('prompt');
-      this._stream = await navigator.mediaDevices.getUserMedia(constraints);
+      this._stream = await this.whileAdopted(navigator.mediaDevices.getUserMedia(constraints), stopTracks);
 
       this._stream.addEventListener('inactive', () => {
         this._setPermissionsState('denied');
@@ -827,6 +838,7 @@ export class CameraSource extends ChildBlock {
       this._capturing = true;
       this._setPermissionsState('granted');
     } catch (error) {
+      if (isAbortError(error)) throw error;
       this._setPermissionsState('denied');
       this._log.warn('Failed to capture camera', error);
       this._telemetry.sendEventError(error, 'camera capturing. Failed to capture camera');
@@ -834,16 +846,18 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handlePermissionsChange = (): void => {
-    this._capture();
+    this.runTask(() => this._capture());
   };
 
   private _permissionAccess = async (): Promise<void> => {
     try {
       this._teardownPermissionListeners();
       for (const permission of DEFAULT_PERMISSIONS) {
-        const response = await navigator.permissions.query({
-          name: permission as PermissionName,
-        });
+        const response = await this.whileAdopted(
+          navigator.permissions.query({
+            name: permission as PermissionName,
+          }),
+        );
         this._permissionResponses[permission] = response;
 
         response.addEventListener('change', this._handlePermissionsChange);
@@ -856,9 +870,10 @@ export class CameraSource extends ChildBlock {
       };
     } catch (error) {
       this._teardownPermissionListeners();
+      if (isAbortError(error)) throw error;
       this._log.warn('Failed to use permissions API. Fallback to manual request mode.', error);
       this._telemetry.sendEventError(error, 'camera permissions. Failed to use permissions API');
-      this._capture();
+      this.runTask(() => this._capture());
     }
   };
 
@@ -875,14 +890,22 @@ export class CameraSource extends ChildBlock {
 
   private _requestDeviceAccess = async (): Promise<void> => {
     try {
-      await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: this._config.get('enableAudioRecording'),
-      });
+      // Only probes for permission so device labels are readable; `_capture` opens the real stream.
+      const probe = await this.whileAdopted(
+        navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: this._config.get('enableAudioRecording'),
+        }),
+        stopTracks,
+      );
+      stopTracks(probe);
       await this._getDevices();
 
-      navigator.mediaDevices.addEventListener('devicechange', this._getDevices);
+      navigator.mediaDevices.addEventListener('devicechange', () => this.runTask(() => this._getDevices()), {
+        signal: this.adoptionSignal,
+      });
     } catch (error) {
+      if (isAbortError(error)) throw error;
       this._telemetry.sendEventError(error, 'camera devices. Failed to get user media');
       this._log.warn('Failed to get user media', error);
     }
@@ -890,7 +913,7 @@ export class CameraSource extends ChildBlock {
 
   private _getDevices = async (): Promise<void> => {
     try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
+      const devices = await this.whileAdopted(navigator.mediaDevices.enumerateDevices());
       const enableAudioRecording = this._config.get('enableAudioRecording');
 
       this._cameraDevices = devices
@@ -911,12 +934,13 @@ export class CameraSource extends ChildBlock {
 
       this._cameraSelectOptions = this._cameraDevices;
       this._cameraSelectHidden = this._cameraDevices.length <= 1;
-      this._selectedCameraId = this._cameraDevices[0]?.value ?? null;
+      this._selectedCameraId = keepListedDeviceId(this._cameraDevices, this._selectedCameraId);
 
       this._audioSelectOptions = this._audioDevices;
       this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
-      this._selectedAudioId = this._audioDevices[0]?.value ?? null;
+      this._selectedAudioId = keepListedDeviceId(this._audioDevices, this._selectedAudioId);
     } catch (error) {
+      if (isAbortError(error)) throw error;
       this._telemetry.sendEventError(error, 'camera devices. Failed to get devices');
       this._log.warn('Failed to get devices', error);
     }
@@ -930,7 +954,7 @@ export class CameraSource extends ChildBlock {
     this._handleCameraModes(this._cameraModes);
   };
 
-  private _onDeactivate = async (): Promise<void> => {
+  private _onDeactivate = (): void => {
     if (this._unsubPermissions) {
       this._unsubPermissions();
     }
@@ -955,7 +979,7 @@ export class CameraSource extends ChildBlock {
   };
 
   protected override controllerReady(): void {
-    void this._onActivate();
+    this.runTask(() => this._onActivate());
   }
 
   // `cameraMirror` is a tracked render read (see `_videoTransformCss`). These two
@@ -994,7 +1018,6 @@ export class CameraSource extends ChildBlock {
 
   private _destroy(): void {
     this._teardownPermissionListeners();
-    navigator.mediaDevices?.removeEventListener('devicechange', this._getDevices);
     this._detachPreviewListeners(this._videoRef.value);
     this._setVideoSource(null);
   }
@@ -1006,8 +1029,17 @@ export class CameraSource extends ChildBlock {
   // old disconnect-only path missed (re-adoption re-activated without first
   // deactivating).
   protected override controllerReleased(): void {
-    void this._onDeactivate();
+    this._onDeactivate();
     this._destroy();
+  }
+
+  /** Names the shutter after its icon, which is what tells sighted users what a press does next. */
+  private get _shotLabel(): string {
+    if (this._currentIcon === 'square') return this.l10n('a11y-camera-stop-recording');
+    if (this._currentIcon === 'video-camera-full') {
+      return this.l10n('record', { source: this.l10n('src-type-mobile-video-camera') });
+    }
+    return this.l10n('camera-shot');
   }
 
   public override render() {
@@ -1028,6 +1060,7 @@ export class CameraSource extends ChildBlock {
         <uc-select
           class="uc-camera-select"
           .options=${this._cameraSelectOptions}
+          .value=${this._selectedCameraId ?? ''}
           ?hidden=${this._cameraSelectHidden}
           @change=${this._handleCameraSelectChange}
         >
@@ -1075,6 +1108,8 @@ export class CameraSource extends ChildBlock {
               'uc-mini-btn': true,
               'uc-active': this._activeTab === CameraSourceTypes.PHOTO,
             })}
+            aria-label=${this.l10n('src-type-mobile-photo-camera')}
+            aria-pressed=${this._activeTab === CameraSourceTypes.PHOTO}
             @click=${this._handleClickTab}
             ?hidden=${this._tabCameraHidden}
             data-testid="tab-photo"
@@ -1089,6 +1124,8 @@ export class CameraSource extends ChildBlock {
               'uc-mini-btn': true,
               'uc-active': this._activeTab === CameraSourceTypes.VIDEO,
             })}
+            aria-label=${this.l10n('src-type-mobile-video-camera')}
+            aria-pressed=${this._activeTab === CameraSourceTypes.VIDEO}
             @click=${this._handleClickTab}
             ?hidden=${this._tabVideoHidden}
             data-testid="tab-video"
@@ -1135,6 +1172,7 @@ export class CameraSource extends ChildBlock {
           @click=${this._handleStartCamera}
           class=${this._mutableClassButton}
           ?hidden=${this._cameraHidden}
+          aria-label=${this._shotLabel}
         >
           <uc-icon name=${this._currentIcon}></uc-icon>
         </button>
@@ -1145,6 +1183,8 @@ export class CameraSource extends ChildBlock {
             class="uc-mini-btn uc-btn-microphone"
             @click=${this._handleToggleAudio}
             ?hidden=${this._audioToggleMicrophoneHidden}
+            aria-label=${this.l10n('a11y-camera-microphone')}
+            aria-pressed=${this._toggleMicrophoneIcon === 'microphone' ? 'true' : 'false'}
             data-testid="toggle-microphone"
           >
             <uc-icon name=${this._toggleMicrophoneIcon}></uc-icon>
@@ -1153,6 +1193,7 @@ export class CameraSource extends ChildBlock {
           <uc-select
             class="uc-audio-select"
             .options=${this._audioSelectOptions}
+            .value=${this._selectedAudioId ?? ''}
             ?hidden=${this._audioSelectHidden}
             ?disabled=${this._audioSelectDisabled}
             @change=${this._handleAudioSelectChange}

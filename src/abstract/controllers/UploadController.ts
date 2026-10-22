@@ -1,4 +1,5 @@
 import {
+  AuthTokenResolverError,
   CancelError,
   type FileFromOptions,
   Queue,
@@ -8,18 +9,21 @@ import {
 } from '@uploadcare/upload-client';
 import type { Uid } from '../../lit/Uid';
 import { fileIsImage } from '../../utils/fileTypes';
+import { redactSecrets } from '../../utils/redactSecrets';
 import { customUserAgent } from '../../utils/userAgent';
 import { controllerLogger } from '../controllerLogger';
-import { containerOf } from '../di/ControllerContainer';
+import { containerOf, lifetimeOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { lazy } from '../logger';
+import { AuthTokenManager } from '../managers/AuthTokenManager';
 import { PluginController } from '../managers/plugin';
 import { TelemetryManager } from '../managers/TelemetryManager';
 import { UploaderPublicApi } from '../UploaderPublicApi';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
+import { UploadFileEventsController } from './UploadFileEventsController';
 
 /**
  * DOM-free upload engine — owns the upload-client queue and the per-entry
@@ -40,8 +44,10 @@ import { UploadCollectionController } from './UploadCollectionController';
  * subscriptions.
  */
 export class UploadController {
+  @inject(AuthTokenManager) private readonly _authToken!: AuthTokenManager;
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
+  @inject(UploadFileEventsController) private readonly _fileEvents!: UploadFileEventsController;
   @inject(SecureUploadsController) private readonly _secureUploads!: SecureUploadsController;
   // Token thunk: `UploaderPublicApi` `@inject`s `UploadController` back, so a
   // direct token reference here would form a value-import cycle that leaves one
@@ -105,7 +111,10 @@ export class UploadController {
     for (const uid of uids) {
       this.#activeBatch.add(uid);
       setTimeout(() => {
-        void this.uploadEntry(uid);
+        lifetimeOf(this).run(
+          () => this.uploadEntry(uid),
+          (error) => this._log.error('Upload failed', error),
+        );
       });
     }
   }
@@ -127,14 +136,14 @@ export class UploadController {
    * Public because group upload (`uploadFileGroup`) reuses the same options.
    */
   public async buildUploadOptions(): Promise<FileFromOptions> {
-    const secureToken = await this._secureUploads.getSecureToken().catch(() => null);
+    const authToken = this._authToken.getAuthToken();
+    const secureToken = authToken ? null : await this._secureUploads.getSecureToken().catch(() => null);
     const cfg = this._config.values;
 
-    // Assigned to a local (not returned as a literal) so the extra
-    // `multipartMaxAttempts` passthrough is preserved exactly as v1 had it —
-    // upload-client ignores keys it doesn't type, and a direct-literal return
-    // would trip excess-property checking.
-    const options = {
+    // Returned as a literal so excess-property checking catches a key upload-client doesn't take — an untyped local
+    // let `multipartMaxAttempts` reach it unchecked for years after upload-client 5 dropped it.
+    return {
+      authToken,
       store: cfg.store,
       publicKey: cfg.pubkey,
       baseCDN: cfg.cdnCname,
@@ -148,12 +157,9 @@ export class UploadController {
       multipartMinFileSize: cfg.multipartMinFileSize,
       multipartChunkSize: cfg.multipartChunkSize,
       maxConcurrentRequests: cfg.multipartMaxConcurrentRequests,
-      multipartMaxAttempts: cfg.multipartMaxAttempts,
       checkForUrlDuplicates: !!cfg.checkForUrlDuplicates,
       saveUrlForRecurrentUploads: !!cfg.saveUrlForRecurrentUploads,
     };
-
-    return options;
   }
 
   /** Resolve the documented `metadata` config (static value or per-entry callback). */
@@ -175,6 +181,12 @@ export class UploadController {
   }
 
   public async uploadEntry(uid: Uid): Promise<void> {
+    // Bound to the ctx: once it is torn down nothing here may touch a peer, so an entry deferred by
+    // `uploadEntries` or still queued does not start, and a late result or failure is dropped.
+    const lifetime = lifetimeOf(this);
+    if (lifetime.signal.aborted) {
+      return;
+    }
     const entry = this._collection.read(uid);
     if (!entry) {
       return;
@@ -199,12 +211,17 @@ export class UploadController {
       errors: [],
       isQueuedForUploading: true,
     });
+    this._fileEvents.start(entry);
 
     try {
       const abortController = new AbortController();
       entry.set('abortController', abortController);
+      // Destroying the ctx cancels the request (and any `beforeUpload` hook) the way removing the file does: nothing
+      // is sent once the uploader is gone.
+      lifetime.signal.addEventListener('abort', () => abortController.abort(), { once: true });
 
       const uploadTask = async (): Promise<UploadcareFile> => {
+        lifetime.signal.throwIfAborted();
         entry.set('isQueuedForUploading', false);
         let file: File | Blob | null = entry.get('file');
 
@@ -216,6 +233,8 @@ export class UploadController {
           const fileHooks = containerOf(this)?.getOrNull(PluginController)?.snapshot().fileHooks ?? [];
           const beforeUploadHooks = fileHooks.filter((h) => h.type === 'beforeUpload');
           for (const hook of beforeUploadHooks) {
+            // A hook is a user callback: the next one is not invoked once the ctx is torn down.
+            lifetime.signal.throwIfAborted();
             try {
               const hookPromise = hook.handler({ file, signal: abortController.signal });
               const timeoutPromise = new Promise<never>((_, reject) =>
@@ -232,16 +251,23 @@ export class UploadController {
                 }
               }
             } catch (error) {
+              // Aborted by a cancel or by the ctx going away: the hook did what its signal asked, and the aborted
+              // signal ends the upload below the same way it always has.
+              if (abortController.signal.aborted) {
+                break;
+              }
               this._log.warn(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
             }
           }
         }
 
+        // The hooks above may have outlived the ctx.
+        lifetime.signal.throwIfAborted();
         const fileInput = file || entry.get('externalUrl') || entry.get('uuid');
         if (!fileInput) {
           throw new Error('No file input');
         }
-        const baseUploadClientOptions = await this.buildUploadOptions();
+        const baseUploadClientOptions = await lifetime.guard(this.buildUploadOptions());
         const uploadClientOptions: FileFromOptions = {
           ...baseUploadClientOptions,
           fileName: entry.get('fileName') ?? undefined,
@@ -253,8 +279,8 @@ export class UploadController {
             }
           },
           signal: abortController.signal,
-          metadata: await this.getMetadataFor(uid),
-          tags: await this.getTagsFor(uid),
+          metadata: await lifetime.guard(this.getMetadataFor(uid)),
+          tags: await lifetime.guard(this.getTagsFor(uid)),
         };
         // Redact the signing credential from debug output — never print
         // `secureSignature` to the console. Lazy so the redacted copy is only
@@ -262,15 +288,16 @@ export class UploadController {
         this._log.debug(
           lazy(() => [
             'upload options',
-            uploadClientOptions.secureSignature
-              ? { ...uploadClientOptions, secureSignature: '[redacted]' }
-              : uploadClientOptions,
+            {
+              ...redactSecrets(uploadClientOptions),
+              ...(uploadClientOptions.secureSignature ? { secureSignature: '[redacted]' } : {}),
+            },
           ]),
         );
         return uploadFile(fileInput, uploadClientOptions);
       };
 
-      const fileInfo = await this._queue.add(uploadTask);
+      const fileInfo = await lifetime.guard(this._queue.add(uploadTask));
       entry.setMany({
         fileInfo,
         isQueuedForUploading: false,
@@ -286,13 +313,16 @@ export class UploadController {
         source: entry.get('source') ?? null,
       });
     } catch (cause) {
+      if (lifetime.signal.aborted) {
+        return;
+      }
       const isCancelError = cause instanceof CancelError && cause.isCancel;
       if (isCancelError) {
         entry.setMany({
           isUploading: false,
           uploadProgress: 0,
         });
-      } else if (cause instanceof UploadcareError) {
+      } else if (cause instanceof UploadcareError || cause instanceof AuthTokenResolverError) {
         entry.setMany({
           isUploading: false,
           uploadProgress: 0,

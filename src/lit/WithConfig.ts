@@ -15,6 +15,7 @@ import {
 import { allConfigKeys, builtinAttrKeyMapping, plainConfigKeys } from '../blocks/Config/config-keys';
 import { initialConfig } from '../blocks/Config/initialConfig';
 import type { ConfigType } from '../types';
+import { isSecretKey, REDACTED } from '../utils/redactSecrets';
 import { toKebabCase } from '../utils/toKebabCase';
 import type { ChildBlock } from './ChildBlock';
 import type { Constructor } from './Constructor';
@@ -118,6 +119,10 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     // survives `controllerReleased` (a re-adoption re-seeds against it), so it is
     // NOT cleared there. Replaces the former `__${key}` own-props + `as any`.
     private readonly _localValues = new Map<string, unknown>();
+    // Built-in keys written while detached. The next seed flushes them even when
+    // the value is the default, since a ctx kept across a synchronous move still
+    // holds the old value.
+    private readonly _detachedWrites = new Set<string>();
     // Built-in accessors are installed once per element lifetime (they're own,
     // non-configurable, and never removed) — this skips re-checking all ~55 keys
     // on every re-adoption.
@@ -162,7 +167,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
 
     private _flushValueToAttribute(key: string, descriptor: ConfigKeyDescriptor, value: unknown) {
       // Complex keys + `attribute: false` custom keys don't reflect to attributes.
-      if (!descriptor.attribute) {
+      if (!descriptor.attribute || key === 'authToken' || typeof value === 'function') {
         return;
       }
       // Serialize once via the descriptor (null ⇒ remove the attribute) — wire
@@ -180,7 +185,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     }
 
     private _flushValueToState(key: string, value: unknown) {
-      const current = this._config.get(key);
+      const current = this._config.getDynamic(key);
       if (current === value) {
         return;
       }
@@ -191,17 +196,20 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         // behavior. NB: uses `initialConfig`, NOT `descriptor.defaultValue`, so a
         // custom key clears rather than resetting to its registered default.
         const dflt = initialConfig[key as keyof ConfigType];
-        this._config.set(key, dflt !== undefined ? dflt : value);
+        this._config.setDynamic(key, dflt !== undefined ? dflt : value);
       } else {
-        this._config.set(key, value);
+        this._config.setDynamic(key, value);
       }
     }
 
     private _setValue(key: string, value: unknown) {
-      // Detached / not-yet-adopted with accessors already installed: never touch
-      // the controller (`@inject` would throw). happy-dom may invoke the property
-      // setter from `setAttribute`; real browsers leave the live attr for seed.
+      // Detached with accessors already installed: never touch the controller
+      // (`@inject` would throw). Keep a built-in write in the local cache and the
+      // attribute so the next adoption's seed applies it instead of the stale
+      // value. A custom key's descriptor lives on the released controller, so a
+      // detached custom write is still dropped.
       if (!this.containerOrNull) {
+        this._stashDetachedValue(key, value);
         return;
       }
 
@@ -239,13 +247,23 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       }
     }
 
+    private _stashDetachedValue(key: string, value: unknown) {
+      const descriptor = BUILTIN_DESCRIPTORS.get(key);
+      if (!descriptor) return;
+      // Built-in normalizers can't throw (they catch internally).
+      const normalizedValue = descriptor.normalize(value);
+      this._localValues.set(key, normalizedValue);
+      this._detachedWrites.add(key);
+      this._flushValueToAttribute(key, descriptor, normalizedValue);
+    }
+
     private _getValue(key: string) {
       const local = this._localValues.get(key);
       if (!this.containerOrNull) {
         // Detached: do not resolve `@inject`/`_config` — local cache only.
         return local;
       }
-      return local ?? this._config.get(key);
+      return local ?? this._config.getDynamic(key);
     }
 
     private _assertSameValueDifferentReference(key: string, previousValue: unknown, nextValue: unknown) {
@@ -263,8 +281,8 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         ) {
           this._log.warn(`Option "${key}" value is the same as the previous one but the reference is different`);
           this._log.warn(`You should avoid changing the reference of the object to prevent unnecessary calculations`);
-          this._log.warn(`"${key}" previous value:`, previousValue);
-          this._log.warn(`"${key}" new value:`, nextValue);
+          this._log.warn(`"${key}" previous value:`, isSecretKey(key) ? REDACTED : previousValue);
+          this._log.warn(`"${key}" new value:`, isSecretKey(key) ? REDACTED : nextValue);
         }
       }
     }
@@ -340,7 +358,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         // Subscribe to state changes (once) — atomic per-key observe, change-only
         // (no immediate). `_setValue`'s early-return guard prevents circular updates.
         if (!this._customConfigSubscriptions.has(name)) {
-          const unsub = this._config.observe(name, (nextValue) => this._setValue(name, nextValue));
+          const unsub = this._config.observeDynamic(name, (nextValue) => this._setValue(name, nextValue));
           this._customConfigSubscriptions.set(name, unsub);
           this.addDisposer(unsub);
         }
@@ -376,7 +394,11 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
               // Thunked so the `formatConfigLogValue` (JSON.stringify) only runs
               // when debug is on. Values are quoted for consistency and so an
               // empty string is visible as `""`.
-              this._log.debug(lazy(() => [`${key}: ${formatConfigLogValue(prev)} → ${formatConfigLogValue(curr)}`]));
+              this._log.debug(
+                lazy(() => [
+                  `${key}: ${formatConfigLogValue(isSecretKey(key) ? REDACTED : prev)} → ${formatConfigLogValue(isSecretKey(key) ? REDACTED : curr)}`,
+                ]),
+              );
             }
           }
           snapshot = { ...next };
@@ -565,7 +587,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
             ? fromAttr.value
             : (Reflect.get(this, key) ?? this._config.get(key));
 
-        if (initialValue !== initialConfig[key]) {
+        if (this._detachedWrites.has(key) || initialValue !== initialConfig[key]) {
           this._setValue(key, initialValue);
           // `_setValue`'s no-op guard (skip when the local cache already equals
           // the normalized value) must not skip seeding a freshly-adopted
@@ -584,6 +606,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       }
 
       this._builtInAccessorsInstalled = true;
+      this._detachedWrites.clear();
     }
 
     /**

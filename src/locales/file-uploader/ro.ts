@@ -107,6 +107,8 @@ export default {
   'file-item-edit-button': 'Editează',
   'file-item-remove-button': 'Elimină',
   'a11y-activity-header-button-close': 'Închide',
+  'a11y-camera-microphone': 'Microfon',
+  'a11y-camera-stop-recording': 'Oprește înregistrarea',
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Ajustare',
   'a11y-editor-tab-crop': 'Decupare',

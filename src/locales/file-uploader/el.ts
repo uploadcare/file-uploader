@@ -108,6 +108,8 @@ export default {
   'file-item-edit-button': 'Επεξεργασία',
   'file-item-remove-button': 'Αφαίρεση',
   'a11y-activity-header-button-close': 'Κλείσιμο',
+  'a11y-camera-microphone': 'Μικρόφωνο',
+  'a11y-camera-stop-recording': 'Διακοπή εγγραφής',
   'a11y-editor-tab-filters': 'Φίλτρα',
   'a11y-editor-tab-tuning': 'Ρύθμιση',
   'a11y-editor-tab-crop': 'Περικοπή',

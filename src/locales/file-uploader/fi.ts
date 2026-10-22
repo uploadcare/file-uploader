@@ -108,6 +108,8 @@ export default {
   'a11y-editor-tab-tuning': 'Säätö',
   'a11y-editor-tab-crop': 'Rajaus',
   'a11y-activity-header-button-close': 'Sulje',
+  'a11y-camera-microphone': 'Mikrofoni',
+  'a11y-camera-stop-recording': 'Lopeta tallennus',
   flip: 'Käännä',
   mirror: 'Peilaa',
   'a11y-cloud-editor-apply-filter': 'Käytä {{name}} suodatin',

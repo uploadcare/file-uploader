@@ -1,3 +1,4 @@
+import { delay } from '../../utils/delay';
 import { getTopLevelOrigin } from '../../utils/get-top-level-origin';
 import { stringToArray } from '../../utils/stringToArray';
 import { ExternalUploadSource } from '../../utils/UploadSource';
@@ -96,10 +97,8 @@ export class ExternalSource extends ChildBlock {
     // params subscription for exactly this — its pre-render direct
     // `_mountIframe()` call was a no-op against an empty ref).
     this._lastActivityParams = this._router.params;
-    setTimeout(() => {
-      if (!this.isConnected) {
-        return;
-      }
+    this.runTask(async () => {
+      await this.whileAdopted(delay(0));
       const { externalSourceType } = this._router.params as ActivityParams;
       if (!externalSourceType) {
         this._log.error(`Param "externalSourceType" is required for external source activity`);
@@ -119,15 +118,13 @@ export class ExternalSource extends ChildBlock {
         return;
       }
       this._lastActivityParams = params;
-      setTimeout(() => {
+      this.runTask(async () => {
         // Defer a tick before reacting to a params change: the router updates
         // params and the current activity together in one transition, so a
         // params change that coincides with navigating *away* from this activity
         // would otherwise remount the iframe just as this block is being torn
-        // down. Waiting a tick lets that disconnect settle so we can bail here.
-        if (!this.isConnected) {
-          return;
-        }
+        // down. Waiting a tick lets that release settle so the await aborts.
+        await this.whileAdopted(delay(0));
         this._unmountIframe();
         this._mountIframe();
       });
@@ -269,6 +266,7 @@ export class ExternalSource extends ChildBlock {
   private _mountIframe(): void {
     const iframe = document.createElement('iframe');
     iframe.src = this._remoteUrl();
+    iframe.title = this.l10n(`src-type-${(this._router.params as ActivityParams).externalSourceType}`);
     // @ts-expect-error
     iframe.marginHeight = 0;
     // @ts-expect-error

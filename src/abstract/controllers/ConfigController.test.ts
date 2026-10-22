@@ -24,6 +24,26 @@ describe('ConfigController', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
+  it('type-checks keys against ConfigType & CustomConfig, leaving runtime names to the *Dynamic methods', () => {
+    const config = new ConfigController();
+
+    // @ts-expect-error a built-in key takes only its own value type
+    config.set('multiple', 'abc');
+    // @ts-expect-error same for observe: `thumbSize` is a number
+    config.observe('thumbSize', (value: string) => value);
+    // @ts-expect-error a misspelt key does not compile
+    config.get('pubkye');
+    // @ts-expect-error neither does a custom key nobody declared in CustomConfig
+    config.set('undeclaredKey', 1);
+    const multiple: boolean = config.get('multiple');
+
+    config.setDynamic('customKey', 1);
+    config.observeDynamic('customKey', (value) => value);
+    const custom: unknown = config.getDynamic('customKey');
+
+    expect([multiple, custom]).toEqual(['abc', 1]);
+  });
+
   it('unsubscribe stops notifications', () => {
     const config = new ConfigController();
     const listener = vi.fn();
@@ -41,26 +61,26 @@ describe('ConfigController', () => {
     config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
 
     expect(config.hasKey('unsplashApiKey')).toBe(true);
-    expect(config.get('unsplashApiKey')).toBe('default-key');
+    expect(config.getDynamic('unsplashApiKey')).toBe('default-key');
   });
 
   it('register() keeps a value that was set before registration', () => {
     const config = new ConfigController();
-    config.set('unsplashApiKey', 'preset');
+    config.setDynamic('unsplashApiKey', 'preset');
 
     config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
 
-    expect(config.get('unsplashApiKey')).toBe('preset');
+    expect(config.getDynamic('unsplashApiKey')).toBe('preset');
   });
 
   it('re-register is idempotent and does not clobber the current value', () => {
     const config = new ConfigController();
     config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
-    config.set('unsplashApiKey', 'changed');
+    config.setDynamic('unsplashApiKey', 'changed');
 
     config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
 
-    expect(config.get('unsplashApiKey')).toBe('changed');
+    expect(config.getDynamic('unsplashApiKey')).toBe('changed');
   });
 
   it('hasKey uses own-property semantics, not the prototype chain', () => {
@@ -72,7 +92,7 @@ describe('ConfigController', () => {
 
   it('does not pollute the prototype when a custom key is named __proto__', () => {
     const config = new ConfigController();
-    config.set('__proto__', { polluted: true });
+    config.setDynamic('__proto__', { polluted: true });
     config.register({ name: '__proto__', defaultValue: { polluted: true } });
 
     expect(({} as Record<string, unknown>).polluted).toBeUndefined();
@@ -83,12 +103,12 @@ describe('ConfigController', () => {
     const config = new ConfigController();
     // Set then clear so an own property with value `undefined` exists — the
     // case where own-property vs `=== undefined` detection diverges.
-    config.set('unsplashApiKey', 'preset');
-    config.set('unsplashApiKey', undefined);
+    config.setDynamic('unsplashApiKey', 'preset');
+    config.setDynamic('unsplashApiKey', undefined);
 
     config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
 
-    expect(config.get('unsplashApiKey')).toBeUndefined();
+    expect(config.getDynamic('unsplashApiKey')).toBeUndefined();
   });
 
   it('destroy() clears custom keys and listeners', () => {
@@ -101,7 +121,7 @@ describe('ConfigController', () => {
     config.destroy();
 
     expect(config.hasKey('unsplashApiKey')).toBe(false);
-    config.set('unsplashApiKey', 'y');
+    config.setDynamic('unsplashApiKey', 'y');
     expect(listener).not.toHaveBeenCalled();
   });
 
@@ -215,15 +235,15 @@ describe('ConfigController', () => {
 
   it('set() on a custom key does not notify when the value is unchanged', () => {
     const config = new ConfigController();
-    config.set('unsplashApiKey', 'v');
+    config.setDynamic('unsplashApiKey', 'v');
 
     const listener = vi.fn();
     config.subscribe(listener);
 
-    config.set('unsplashApiKey', 'v'); // unchanged → no notify
+    config.setDynamic('unsplashApiKey', 'v'); // unchanged → no notify
     expect(listener).not.toHaveBeenCalled();
 
-    config.set('unsplashApiKey', 'w'); // changed → notify
+    config.setDynamic('unsplashApiKey', 'w'); // changed → notify
     expect(listener).toHaveBeenCalledTimes(1);
   });
 

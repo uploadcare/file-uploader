@@ -81,6 +81,17 @@ afterEach(() => {
 });
 
 describe('ChildBlock', () => {
+  it('prefixes test ids introduced by a later render without a config change', async () => {
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const child = append('test-child-block', { 'ctx-name': ctxName });
+    await child.updateComplete;
+    child.render = () => html`<button data-testid="late">Late</button>`;
+    child.requestUpdate();
+    await child.updateComplete;
+    expect(child.querySelector('button')?.getAttribute('data-testid')).toBe('test-child-block--late');
+  });
+
   it('adopts the controller via its own ctx-name attribute and renders', async () => {
     const ctxName = getCtxName();
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
@@ -587,10 +598,10 @@ describe('v1-free lifecycle (ChildBlock-only composition, M9o Task 3d)', () => {
     await expect.poll(() => hasCtx(ctxName)).toBe(true);
 
     // M-god step 8e: the ctx's `ControllerContainer` is the teardown unit — its
-    // `dispose()` destroys the container-owned controllers. Spy on it to assert
-    // the ctx is disposed exactly once (not twice).
-    const destroySpy = vi.spyOn(ControllerContainer.prototype, 'dispose');
-    destroySpy.mockClear();
+    // `dispose()` destroys the container-owned controllers. Spy on this ctx's
+    // own container (not the prototype, which another test's deferred teardown
+    // would also hit) to assert the ctx is disposed exactly once (not twice).
+    const destroySpy = vi.spyOn(containerOf(ctxName), 'dispose');
 
     // Both the only v1 block and the only ChildBlock disconnect in the same
     // tick: both schedule a deferred unified-predicate check, and both will

@@ -1,14 +1,14 @@
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { cache } from 'lit/directives/cache.js';
 import { SourceListController } from '../../abstract/controllers';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
-import { inject, injectOrNull } from '../../abstract/di/inject';
+import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { throttled } from '../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
@@ -65,15 +65,13 @@ export class DynamicBtn extends ChildBlock {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(RouterController) private readonly _router!: RouterController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
-  // `UploadCollectionController` and `UploaderPublicApi` are `@injectOrNull`
-  // (not `@inject`): the former is uploader-scope-bound and can race this block's
-  // adoption; the latter is read from a trailing throttle tick that can outlive
-  // release. Both would throw as `@inject` in those windows, so they resolve
-  // `null` and are read with `?.`. (Observer wiring goes through `whenController`.)
-  @injectOrNull(UploaderPublicApi) private readonly _api!: UploaderPublicApi | null;
-  @injectOrNull(UploadCollectionController) private readonly _uploadCollection!: UploadCollectionController | null;
+  // Read only while adopted: `_api` from the adopted-guarded `@throttled` tick,
+  // `_uploadCollection` from the rendered buttons' click handlers. (Observer
+  // wiring goes through `whenController`.)
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+  @inject(UploadCollectionController) private readonly _uploadCollection!: UploadCollectionController;
 
-  @property({ attribute: 'dropzone', type: Boolean })
+  @property({ converter: booleanAttribute })
   public dropzone = true;
 
   // Tracked read: `dynamicButtonViewMode` auto-tracks under `SignalWatcher`, so a
@@ -187,9 +185,7 @@ export class DynamicBtn extends ChildBlock {
   }
 
   private _updateButtonBasedOnCollectionState() {
-    // Reached only through the adopted-guarded throttled tick, so `_api` is live
-    // here; the `?.` remains only because the field is `@injectOrNull`-typed.
-    const collectionState = this._api?.getOutputCollectionState();
+    const collectionState = this._api.getOutputCollectionState();
 
     if (!collectionState) {
       this._log.warn('Collection state is undefined');
@@ -253,19 +249,18 @@ export class DynamicBtn extends ChildBlock {
     return html`
       <uc-no-wrap-mode-dynamic-btn>
         ${this._mainAndRemainSources?.remain?.map(
-          (source) => html`<uc-source-btn .iconOnly=${true} role="menuitem" .source=${source}></uc-source-btn>`,
+          (source) => html`<uc-source-btn .iconOnly=${true} .source=${source}></uc-source-btn>`,
         )}
       </uc-no-wrap-mode-dynamic-btn>
     `;
   }
 
   private _clearAllEntries() {
-    this._uploadCollection?.clearAll();
+    this._uploadCollection.clearAll();
   }
 
   private _clearAllFailedEntries() {
     const collection = this._uploadCollection;
-    if (!collection) return;
     this._collection.failedEntries.forEach((it) => {
       if (it && collection.hasItem(it.internalId as Uid)) {
         collection.remove(it.internalId as Uid);
@@ -273,7 +268,7 @@ export class DynamicBtn extends ChildBlock {
     });
   }
   private _abortAllEntries() {
-    this._uploadCollection?.abortAll();
+    this._uploadCollection.abortAll();
   }
 
   private _handleRemove() {
@@ -294,7 +289,7 @@ export class DynamicBtn extends ChildBlock {
       <uc-icon content-for="dd-header-button" name=${this._dropdownIconName}></uc-icon>
       <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
         ${this._mainAndRemainSources?.remain?.map(
-          (source) => html`<uc-source-btn role="menuitem" .source=${source}></uc-source-btn>`,
+          (source) => html`<uc-source-btn .buttonRole=${'menuitem'} .source=${source}></uc-source-btn>`,
         )}
       </div>
     </uc-drop-down>`;
@@ -366,12 +361,12 @@ export class DynamicBtn extends ChildBlock {
     return html`
       <uc-drop-area .disabled=${!this.dropzone}>
         <div class=${this._getInnerClassMap()}>
-          ${cache(this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null)}
-          ${cache(!this.isPlainMode && this.shouldShowInline ? this._renderInline() : null)}
-          ${cache(!this.isPlainMode && this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null)}
-          ${cache(!this.isPlainMode && this.shouldShowDropdown ? this._renderDropdown() : null)}
-          ${cache(this.shouldShowAbortAction || this.hasCollectionEntries ? this._renderAbortAction() : null)}
-          ${cache(this._renderVisualDropArea())}
+          ${this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null}
+          ${!this.isPlainMode && this.shouldShowInline ? this._renderInline() : null}
+          ${!this.isPlainMode && this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null}
+          ${!this.isPlainMode && this.shouldShowDropdown ? this._renderDropdown() : null}
+          ${this.shouldShowAbortAction || this.hasCollectionEntries ? this._renderAbortAction() : null}
+          ${this._renderVisualDropArea()}
         </div>
       </uc-drop-area>
     `;

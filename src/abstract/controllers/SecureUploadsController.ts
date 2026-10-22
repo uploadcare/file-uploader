@@ -1,7 +1,9 @@
 import type { SecureUploadsSignatureAndExpire } from '../../types/index';
 import { isSecureTokenExpired } from '../../utils/isSecureTokenExpired';
 import { controllerLogger } from '../controllerLogger';
+import { lifetimeOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';
+import { isAbortError } from '../di/Lifetime';
 import { TelemetryManager } from '../managers/TelemetryManager';
 import { ConfigController } from './ConfigController';
 
@@ -43,7 +45,8 @@ export class SecureUploadsController {
           } else {
             this._log.debug('Secure signature is expired. Resolving a new one...');
           }
-          const result = await secureUploadsSignatureResolver();
+          // Bound to the ctx: a resolver that settles after teardown neither reports nor caches anything.
+          const result = await lifetimeOf(this).guard(Promise.resolve(secureUploadsSignatureResolver()));
           if (!result) {
             this._log.debug('Secure signature resolver returned nothing.');
             this._secureToken = null;
@@ -59,6 +62,7 @@ export class SecureUploadsController {
             this._secureToken = result;
           }
         } catch (err) {
+          if (isAbortError(err)) throw err;
           this._log.error('Secure signature resolving failed. Falling back to the previous one.', err);
           this._telemetry.sendEventError(
             err,

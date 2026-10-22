@@ -3,6 +3,7 @@ import { commands, page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index.js';
 import { TEST_IMAGE_URL } from '../utils/constants';
 import { getCtxName } from '../utils/getCtxName';
+import { renderSolution, within } from '../utils/render-solution';
 import '../../types/jsx';
 
 beforeAll(async () => {
@@ -114,8 +115,9 @@ describe('DynamicBtn remove/abort action', () => {
     const { dynamicBtn, api } = renderDynamicBtn();
     await expect.element(dynamicBtn).toBeVisible();
 
-    commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
+    const chooser = commands.waitFileChooserAndUpload(['../fixtures/test_image.jpeg']);
     await dynamicBtn.click();
+    await chooser;
 
     await expect.element(dynamicBtn.getByText('1 file uploaded')).toBeVisible();
     await expect.poll(() => api.getOutputCollectionState().successCount).toBe(1);
@@ -125,5 +127,31 @@ describe('DynamicBtn remove/abort action', () => {
     await removeBtn.click();
 
     await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(0);
+  });
+});
+
+describe('DynamicBtn source buttons', () => {
+  const renderWithMode = async (mode: 'toolbar' | 'menu') => {
+    const { root } = await renderSolution('regular', { dynamicButtonViewMode: mode, sourceList: 'local, url, camera' });
+    root.setAttribute('dynamic-button', '');
+    const dynamicBtn = within(root).getByTestId('uc-dynamic-btn');
+    await expect.element(dynamicBtn).toBeVisible();
+    return dynamicBtn.element();
+  };
+
+  it('exposes no orphan menuitems in the inline toolbar', async () => {
+    const dynamicBtn = await renderWithMode('toolbar');
+    await expect.poll(() => dynamicBtn.querySelectorAll('uc-source-btn').length).toBeGreaterThan(1);
+    expect(dynamicBtn.querySelector('[role="menu"]')).toBeNull();
+    expect(dynamicBtn.querySelectorAll('[role="menuitem"]')).toHaveLength(0);
+  });
+
+  it('puts the menuitem role on the focusable button inside the drop-down menu', async () => {
+    const dynamicBtn = await renderWithMode('menu');
+    await expect.poll(() => dynamicBtn.querySelectorAll('[role="menu"] uc-source-btn').length).toBeGreaterThan(0);
+    for (const sourceBtn of dynamicBtn.querySelectorAll('[role="menu"] uc-source-btn')) {
+      expect(sourceBtn.hasAttribute('role')).toBe(false);
+      expect(sourceBtn.querySelector('button')?.getAttribute('role')).toBe('menuitem');
+    }
   });
 });

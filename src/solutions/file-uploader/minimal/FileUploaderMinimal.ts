@@ -123,24 +123,14 @@ export class FileUploaderMinimal extends SolutionChildBlock {
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
 
-    // Host `[mode]` attribute + `--uc-grid-col` style side-effects: the CSS
-    // `[uc-file-uploader-minimal][mode="list"|"grid"]` selectors key off the
-    // host attribute, so drive it here from the tracked config signals (the
-    // Modal `willUpdate` + `getTracked` recipe, replacing the v1
-    // `subConfigValue('filesViewMode')` with a nested `subConfigValue('multiple')`).
-    // Reading both keys via `getTracked` auto-tracks them under `SignalWatcher`,
-    // so a config change re-runs this update and re-applies the attribute/style —
-    // matching the v1 subscription's reactivity. Neither is a reactive property,
-    // so toggling them schedules no further update.
-    const config = this._config;
-    const mode = config.getTracked('filesViewMode');
-    const multiple = config.getTracked('multiple');
-    this.setAttribute('mode', mode);
-    if (mode === 'grid' && !multiple) {
-      this.style.setProperty('--uc-grid-col', '1');
-    } else {
-      this.style.removeProperty('--uc-grid-col');
-    }
+    // Host `[mode]` + `[single-grid]` attributes: the stylesheet keys the
+    // list/grid layout and the one-column `--uc-grid-col` off them, so a
+    // consumer's inline `--uc-grid-col` still wins. Reading both keys via
+    // `getTracked` auto-tracks them under `SignalWatcher`, so a config change
+    // re-runs this update. Neither is a reactive property, so toggling them
+    // schedules no further update.
+    this.setAttribute('mode', this._config.getTracked('filesViewMode'));
+    this.toggleAttribute('single-grid', this._singleUpload);
   }
 
   public override render() {

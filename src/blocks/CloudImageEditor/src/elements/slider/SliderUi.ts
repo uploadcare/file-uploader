@@ -1,5 +1,6 @@
 import { html, LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { LightDomMixin } from '../../../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../../../lit/RegisterableElementMixin';
@@ -34,13 +35,12 @@ export class SliderUi extends SliderUiBase {
   @property({ type: Number })
   public zero = 0;
 
+  /** Accessible name of the range input (the operation it adjusts). */
+  @property({ attribute: false })
+  public label = '';
+
   @state()
   private _currentValue = 0;
-
-  public constructor() {
-    super();
-    this.setAttribute('with-effects', '');
-  }
 
   private _emitSliderEvent(type: 'uc-internal:slider-input', value: number): void {
     this.dispatchEvent(
@@ -91,10 +91,6 @@ export class SliderUi extends SliderUiBase {
       this._updateValue(this._currentValue);
     });
     this._observer.observe(this);
-
-    const inputEl = this._inputRef.value;
-    inputEl?.addEventListener('focus', this._handleInputFocus);
-    inputEl?.addEventListener('blur', this._handleInputBlur);
 
     window.setTimeout(() => {
       this._updateValue(this._currentValue);
@@ -199,13 +195,17 @@ export class SliderUi extends SliderUiBase {
     this._stepsCount = count;
   }
 
+  public override connectedCallback(): void {
+    super.connectedCallback();
+    // Not in the constructor: an element created by `document.createElement` must not have attributes yet.
+    if (!this.hasAttribute('with-effects')) this.setAttribute('with-effects', '');
+    // Created in `firstUpdated`; a reconnect (DOM move) re-observes what `disconnectedCallback` disconnected.
+    this._observer?.observe(this);
+  }
+
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    const inputEl = this._inputRef.value;
-    inputEl?.removeEventListener('focus', this._handleInputFocus);
-    inputEl?.removeEventListener('blur', this._handleInputBlur);
     this._observer?.disconnect();
-    this._observer = undefined;
   }
 
   private _setCurrentValue(value: number): void {
@@ -242,6 +242,7 @@ export class SliderUi extends SliderUiBase {
       <input
         class="uc-input"
         type="range"
+        aria-label=${ifDefined(this.label || undefined)}
         ${ref(this._inputRef)}
         .min=${String(this.min)}
         .max=${String(this.max)}
@@ -249,6 +250,8 @@ export class SliderUi extends SliderUiBase {
         ?disabled=${this.disabled}
         @input=${this._handleSliderInput}
         @change=${this._handleSliderChange}
+        @focus=${this._handleInputFocus}
+        @blur=${this._handleInputBlur}
       />
     `;
   }

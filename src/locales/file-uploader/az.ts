@@ -106,6 +106,8 @@ export default {
   'file-item-edit-button': 'Dəyişdir',
   'file-item-remove-button': 'Sil',
   'a11y-activity-header-button-close': 'Bağla',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Yazmanı dayandır',
   'a11y-editor-tab-filters': 'Filtrlər',
   'a11y-editor-tab-tuning': 'Tənzimləmə',
   'a11y-editor-tab-crop': 'Kəsmə',

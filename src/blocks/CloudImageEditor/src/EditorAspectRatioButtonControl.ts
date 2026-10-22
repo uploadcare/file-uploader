@@ -71,6 +71,7 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
     return html`
       <button
         role="option"
+        aria-selected=${this.active ? 'true' : 'false'}
         type="button"
         class=${classMap(this.buttonClasses)}
         aria-label=${ifDefined(this.titleProp)}
@@ -207,6 +208,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     return html`
       <button
         role="option"
+        aria-selected=${this.active ? 'true' : 'false'}
         type="button"
         class=${classMap(this.buttonClasses)}
         aria-label=${ifDefined(this.titleProp)}

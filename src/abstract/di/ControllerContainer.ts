@@ -11,6 +11,7 @@
  */
 
 import { logger } from '../logger';
+import { Lifetime } from './Lifetime';
 
 const log = logger.scope('controller-container');
 
@@ -35,6 +36,19 @@ export const CONTAINER = Symbol('uc.container');
  */
 export const containerOf = (instance: unknown): ControllerContainer | undefined =>
   (instance as { [CONTAINER]?: ControllerContainer })?.[CONTAINER];
+
+/**
+ * The {@link ControllerContainer.lifetime} of the container that built `instance` — what a controller's async work
+ * binds to (`lifetimeOf(this).guard(...)`), so it stops once the ctx is torn down instead of resuming against
+ * released peers. Throws, like `@inject`, for an instance no container built.
+ */
+export const lifetimeOf = (instance: unknown): Lifetime => {
+  const container = containerOf(instance);
+  if (!container) {
+    throw new Error('[uc] lifetimeOf: instance not created by a container');
+  }
+  return container.lifetime;
+};
 
 /**
  * A thunk `() => Ctor` has no `.prototype` (arrow functions never do), while a
@@ -98,12 +112,20 @@ export class ControllerContainer {
    */
   public ctxName?: string;
 
+  /**
+   * Live until {@link dispose}, which ends it before any controller's `destroy()` runs. Container-built instances
+   * reach it through {@link lifetimeOf}.
+   */
+  public readonly lifetime = new Lifetime();
+
   #instances = new Map<Ctor<unknown>, unknown>();
   #order: Ctor<unknown>[] = [];
   #resolving = new Set<Ctor<unknown>>();
   #consumers = new Set<unknown>();
   #boundValues = new Map<Ctor<unknown>, (c: ControllerContainer) => unknown>();
   #controllerWaiters = new Map<Ctor<unknown>, Set<(inst: unknown) => void>>();
+  // Set once `dispose()` has drained: a later read is work outliving its ctx, not a lazy first resolve.
+  #disposed = false;
 
   /** Register a factory for a host/boundary value. Only valid before resolution. */
   public bind<T>(token: Token<T>, factory: (c: ControllerContainer) => T): void {
@@ -116,6 +138,12 @@ export class ControllerContainer {
 
   public get<T>(token: Token<T>): T {
     const Ctrl = resolveToken(token);
+    if (this.#disposed) {
+      throw new Error(
+        `[uc] ${Ctrl.name} read after the ctx container was disposed: the uploader for ctx-name "${this.ctxName}" ` +
+          'was destroyed. Call getAPI() on the current <uc-upload-ctx-provider> instead of keeping an old api object.',
+      );
+    }
     // `has()` (not `get() !== undefined`): a bound factory may legitimately
     // yield `undefined`, and treating that as a miss would re-run the factory
     // on every access, breaking the singleton-per-token contract.
@@ -282,6 +310,8 @@ export class ControllerContainer {
   }
 
   public dispose(): void {
+    // First, so in-flight async work stops at its next guarded await rather than resuming into the teardown below.
+    this.lifetime.end();
     // Clear pending `whenController` waiters BEFORE running destroys: a
     // `destroy()` may resolve a not-yet-built `@inject` peer via `get()`, which
     // flushes waiters — those must not fire against a container mid-teardown.
@@ -301,16 +331,12 @@ export class ControllerContainer {
         // rest of the disposal chain (mirrors EventBus/Listeners fan-out).
         log.warn(`${Ctrl.name}.destroy() threw`, err);
       }
-      // Clear the CONTAINER tag after destroy to signal disposed state and prevent
-      // @inject from accessing stale container references in post-disposal closures.
-      if (inst && typeof inst === 'object' && CONTAINER in inst) {
-        delete (inst as Destroyable & { [CONTAINER]?: ControllerContainer })[CONTAINER];
-      }
     }
     this.#instances.clear();
     this.#order = [];
     this.#boundValues.clear();
     this.#consumers.clear();
     this.#controllerWaiters.clear();
+    this.#disposed = true;
   }
 }

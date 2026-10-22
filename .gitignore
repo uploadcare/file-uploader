@@ -24,3 +24,6 @@ docs/superpowers/
 # second copy of every spec joins the suite.
 .claude/
 .superpowers/
+specs/npm/.types-matrix/
+__screenshots__
+.vitest-attachments

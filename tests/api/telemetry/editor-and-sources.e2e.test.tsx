@@ -1,0 +1,108 @@
+import { EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { page, userEvent } from 'vitest/browser';
+import { getCtxName } from '~/tests/utils/test-renderer';
+import '~/types/jsx';
+import { clickSource, inCtx, renderSolution, waitForBlocks, within } from '~/tests/utils/render-solution';
+import { actionEvents, bodiesWithAction, clearSent, waitForType } from './sink';
+
+describe('telemetry: cloud image editor', () => {
+  /** The standalone editor is not one of `renderSolution`'s solutions, so it is rendered by hand. */
+  beforeEach(async () => {
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-cloud-image-editor uuid={EDITOR_IMAGE_UUID} ctx-name={ctxName}></uc-cloud-image-editor>
+        <uc-config cdn-cname="https://ucarecdn.com/" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+      </>,
+    );
+    await waitForBlocks(inCtx('uc-cloud-image-editor', ctxName), inCtx('uc-config', ctxName));
+  });
+
+  it('reports the editor as its own solution', async () => {
+    const init = await waitForType('init-solution');
+
+    expect(init.component).toBe('uc-cloud-image-editor');
+  });
+
+  it('reports an action-event when a toolbar tab is clicked', async () => {
+    await waitForType('init-solution');
+    clearSent();
+
+    await userEvent.click(page.getByRole('tab', { name: /tuning/i }));
+    const action = await waitForType('action-event');
+
+    expect(action.payload.metadata).toMatchObject({ tab_id: 'tuning', event: 'click' });
+  });
+
+  it('reports an action-event when a tuning operation is picked', async () => {
+    await userEvent.click(page.getByRole('tab', { name: /tuning/i }));
+    await waitForType('action-event');
+    clearSent();
+
+    await userEvent.click(page.getByRole('option', { name: /Brightness/i }));
+    const action = await waitForType('action-event');
+
+    // `operation` is read from `*operationTooltip`, which still holds the pre-click value — so it reports the stale
+    // tooltip rather than the operation just picked. Pinned as current behaviour, not an endorsement of it.
+    expect(action.payload.metadata).toMatchObject({
+      tab_id: 'tuning',
+      operation: { filter: 'filter', value: 0 },
+    });
+  });
+});
+
+describe('telemetry: sources', () => {
+  const WAIT = { timeout: 20_000, interval: 50 };
+
+  it('reports an action-event carrying the source id when a source is picked', async () => {
+    // `qualityInsights` back on: the shared helper disables telemetry, which is the thing under test here.
+    const { root } = await renderSolution('regular', { qualityInsights: true });
+    await waitForType('init-solution');
+    clearSent();
+
+    await clickSource(root, 'Dropbox');
+    const action = await waitForType('action-event');
+
+    // SourceBtn puts the id straight on the payload, not inside `metadata`.
+    expect(action.payload.source_id).toBe('dropbox');
+  });
+
+  it('reports the camera action events in order', { timeout: 60_000 }, async () => {
+    const { root } = await renderSolution('regular', { qualityInsights: true });
+    await clickSource(root, 'Camera');
+    const shot = within(root).getByRole('button', { name: 'Shot', exact: true });
+    await expect.element(shot).toBeVisible();
+    clearSent();
+
+    await within(root).getByRole('button', { name: 'Video', exact: true }).click();
+    await within(root).getByRole('button', { name: 'Photo', exact: true }).click();
+    await shot.click();
+
+    const accept = within(root).getByRole('button', { name: 'Accept', exact: true });
+    await expect.element(accept).toBeVisible();
+    await within(root).getByTestId('uc-camera-source').getByRole('button', { name: 'Retake', exact: true }).click();
+
+    await shot.click();
+    await expect.element(accept).toBeVisible();
+    await accept.click();
+
+    await vi.waitFor(() => expect(actionEvents()).toContain('accept-camera'), WAIT);
+    // Every shot reports twice: `shot-camera` from the button handler, then `start-camera` from the shared camera
+    // action dispatcher it calls.
+    expect(actionEvents()).toEqual([
+      'camera-tab-switch',
+      'camera-tab-switch',
+      'shot-camera',
+      'start-camera',
+      'retake-camera',
+      'shot-camera',
+      'start-camera',
+      'accept-camera',
+    ]);
+    expect(bodiesWithAction('camera-tab-switch')[0].payload.metadata).toMatchObject({
+      tab_id: 'video',
+      node: 'UC-CAMERA-SOURCE',
+    });
+  });
+});

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CONTAINER, ControllerContainer, resolveToken, type Token } from './ControllerContainer';
+import { CONTAINER, ControllerContainer, lifetimeOf, resolveToken, type Token } from './ControllerContainer';
 
 describe('resolveToken', () => {
   it('returns a class token as-is', () => {
@@ -483,15 +483,14 @@ describe('ControllerContainer.whenController', () => {
     expect(cb).toHaveBeenCalledWith(a);
   });
 
-  it('dispose() clears pending waiters so a rebuilt token does not fire a stale waiter', () => {
+  it('dispose() clears pending waiters, and a later read throws instead of firing them', () => {
     class A {}
     const container = new ControllerContainer();
     const cb = vi.fn();
     container.whenController(A, cb);
     container.dispose();
-    // After dispose the container is reusable; a fresh get() must not fire the
-    // waiter registered before dispose.
-    container.get(A);
+    // A disposed container is never reused (the registry builds a fresh one per ctx), so the read throws.
+    expect(() => container.get(A)).toThrow(/disposed/);
     expect(cb).not.toHaveBeenCalled();
   });
 
@@ -593,5 +592,100 @@ describe('ControllerContainer.whenController', () => {
 
     container.get(A);
     expect(kept).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('ControllerContainer.lifetime', () => {
+  it('is live until dispose() and ended before any controller destroy() runs', () => {
+    const seen: boolean[] = [];
+    class A {
+      public destroy(): void {
+        seen.push(lifetimeOf(this).signal.aborted);
+      }
+    }
+    const container = new ControllerContainer();
+    const a = container.get(A);
+
+    expect(lifetimeOf(a)).toBe(container.lifetime);
+    expect(container.lifetime.signal.aborted).toBe(false);
+
+    container.dispose();
+
+    expect(container.lifetime.signal.aborted).toBe(true);
+    expect(seen).toEqual([true]);
+  });
+
+  it('stops a guarded await that settles after dispose()', async () => {
+    class A {
+      public load(work: Promise<string>): Promise<string> {
+        return lifetimeOf(this).guard(work);
+      }
+    }
+    const container = new ControllerContainer();
+    let resolve!: (value: string) => void;
+    const pending = container.get(A).load(
+      new Promise<string>((r) => {
+        resolve = r;
+      }),
+    );
+
+    container.dispose();
+    resolve('late');
+
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
+  it('reaches bound factory instances too', () => {
+    class Bound {}
+    const container = new ControllerContainer();
+    container.bind(Bound, () => new Bound());
+
+    expect(lifetimeOf(container.get(Bound))).toBe(container.lifetime);
+  });
+
+  it('lifetimeOf throws for an instance no container built', () => {
+    expect(() => lifetimeOf({})).toThrow(/not created by a container/);
+  });
+});
+
+describe('ControllerContainer after dispose', () => {
+  class Peer {}
+  class Owner {
+    public late?: () => Peer;
+    public init(): void {
+      this.late = () => (this as { [CONTAINER]?: ControllerContainer })[CONTAINER]!.get(Peer);
+    }
+  }
+
+  it('throws on a read instead of building a fresh controller on the dead container', () => {
+    const container = new ControllerContainer();
+    const owner = container.get(Owner);
+    container.dispose();
+
+    expect(() => owner.late!()).toThrow(/Peer.*disposed/);
+    expect(container.has(Peer)).toBe(false);
+  });
+
+  it('still lets a destroy() resolve a peer while the teardown runs', () => {
+    const resolvedDuringTeardown = vi.fn();
+    class Teardown {
+      public destroy(): void {
+        resolvedDuringTeardown((this as { [CONTAINER]?: ControllerContainer })[CONTAINER]!.get(Peer));
+      }
+    }
+    const container = new ControllerContainer();
+    container.get(Teardown);
+
+    container.dispose();
+
+    expect(resolvedDuringTeardown).toHaveBeenCalledWith(expect.any(Peer));
+  });
+
+  it('returns null from getOrNull', () => {
+    const container = new ControllerContainer();
+    container.get(Peer);
+    container.dispose();
+
+    expect(container.getOrNull(Peer)).toBeNull();
   });
 });

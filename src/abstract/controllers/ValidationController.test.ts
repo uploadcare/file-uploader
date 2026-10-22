@@ -75,7 +75,7 @@ function setup(overrides: { onValidatorError?: (error: unknown, context?: string
   } as unknown as UploaderPublicApi;
   container.bind(UploaderPublicApi, () => api);
   // `common-upload-failed` is emitted through the per-ctx `EventEmitter` the
-  // controller `@injectOrNull`s; bind a fake with an `emit` spy so the old
+  // controller `@inject`s; bind a fake with an `emit` spy so the old
   // `emitCommonUploadFailed` assertions become "emit fired with that type".
   const emit = vi.fn();
   container.bind(EventEmitter, () => ({ emit }) as unknown as EventEmitter);
@@ -92,6 +92,7 @@ function setup(overrides: { onValidatorError?: (error: unknown, context?: string
   const controller = container.get(ValidationController);
   active.push(controller);
   return {
+    container,
     controller,
     config,
     collection,
@@ -292,17 +293,21 @@ describe('ValidationController', () => {
     expect(errors.some((e) => e.message === 'add-err')).toBe(true);
   });
 
-  it('short-circuits a run when destroyed before it settles', async () => {
-    const { controller, config, collection } = setup();
+  it('short-circuits a run when the ctx is disposed before it settles', async () => {
+    const { container, controller, config, collection } = setup();
     await flush(20);
-    config.set('fileValidators', [() => ({ message: 'x' })]);
+    const validator = vi.fn(() => ({ message: 'x' }));
+    config.set('fileValidators', [validator]);
     const id = collection.add({ fileName: 'a.txt', mimeType: 'text/plain' });
+    // The disposed collection releases its entries, so watch the writes rather than read the entry back.
+    const setMany = vi.spyOn(collection.read(id)!, 'setMany');
 
     controller.runFileValidators('change', [id]); // IIFE awaits the (resolved) previous promise
-    controller.destroy(); // before the microtask resumes → post-await guard returns
+    container.dispose(); // before the microtask resumes → post-await guard returns
     await flush();
 
-    expect(collection.read(id)?.get('isValidationPending')).toBe(false);
+    expect(setMany).not.toHaveBeenCalledWith(expect.objectContaining({ isValidationPending: true }));
+    expect(validator).not.toHaveBeenCalled();
   });
 
   it('syncs queue concurrency from config without throwing', () => {
@@ -350,13 +355,13 @@ describe('ValidationController', () => {
     expect(collection.read(id)?.get('isValidationPending')).toBe(false);
   });
 
-  it('is inert after destroy', async () => {
-    const { controller, collection, setCollectionErrors } = setup();
+  it('is inert after the ctx is disposed', async () => {
+    const { container, controller, collection, setCollectionErrors } = setup();
     await flush(20);
-    controller.destroy();
+    const id = collection.add({ fileName: 'a.txt' });
+    container.dispose();
     setCollectionErrors.mockClear();
 
-    const id = collection.add({ fileName: 'a.txt' });
     controller.runFileValidators('change', [id]);
     controller.runCollectionValidators();
     await flush();

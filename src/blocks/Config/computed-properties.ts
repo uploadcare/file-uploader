@@ -128,6 +128,9 @@ export const computeProperty = <TKey extends ConfigKey>({
       args[dep] = () => getValue(dep);
     }
     const abortController = new AbortController();
+    // Captured before the computation runs, so an async result can tell whether the value it was derived from is
+    // still current. Otherwise a resolution in flight overwrites a value the caller set meanwhile.
+    const valueAtStart = getValue(computed.key);
 
     computationControllers.get(computed.fn)?.abort();
     computationControllers.set(computed.fn, abortController);
@@ -147,7 +150,7 @@ export const computeProperty = <TKey extends ConfigKey>({
     if (isPromiseLike(result)) {
       result
         .then((resolvedValue) => {
-          if (abortController.signal.aborted) {
+          if (abortController.signal.aborted || getValue(computed.key) !== valueAtStart) {
             return;
           }
           setValue(computed.key, resolvedValue);

@@ -2,9 +2,16 @@ import { BUILTIN_DESCRIPTORS } from '../../blocks/Config/builtin-descriptors';
 import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { ConfigType } from '../../types/exported';
 import { type ConfigKeyDescriptor, resolveConfigDescriptor } from '../config-descriptor';
-import type { CustomConfigDefinition } from '../customConfigOptions';
+import type { CustomConfig, CustomConfigDefinition } from '../customConfigOptions';
 import type { ReactiveStore } from '../di/ReactiveStore';
 import { type ObserveOptions, SignalMap } from '../di/SignalMap';
+
+/**
+ * Every key known at compile time: the built-ins plus the plugin keys declared by augmenting `CustomConfig`. A key
+ * outside it — a typo, or an undeclared custom key — does not compile; names that only exist at runtime go through
+ * the `*Dynamic` methods.
+ */
+export type KnownConfig = ConfigType & CustomConfig;
 
 /**
  * Pure-logic config store. Knows nothing about DOM, attributes, or Lit.
@@ -19,8 +26,9 @@ import { type ObserveOptions, SignalMap } from '../di/SignalMap';
  * finally retired).
  *
  * Custom (plugin-registered) keys live in the same signal-backed map as
- * built-ins — `register()` adds them; `get`/`set`/`observe` accept custom
- * string keys the same way as built-ins.
+ * built-ins — `register()` adds them. `get`/`set`/`observe` take the keys known
+ * at compile time (built-ins plus `CustomConfig` augmentation); a name only known
+ * at runtime goes through `getDynamic`/`setDynamic`/`observeDynamic`.
  *
  * Backed by a composed `SignalMap` (has-a, not a base class): reads auto-track
  * under a `SignalWatcher`, `set()` dedups with `Object.is` and fires the map's
@@ -55,12 +63,14 @@ export class ConfigController implements ReactiveStore<ConfigType> {
     return this.#state.values;
   }
 
-  public get<K extends keyof ConfigType>(key: K): ConfigType[K];
-  /** Read a dynamically-registered (custom) key. */
-  public get(key: string): unknown;
-  public get(key: string): unknown {
+  public get<K extends keyof KnownConfig>(key: K): KnownConfig[K] {
     // Every built-in is seeded at construction, so the value is always present.
-    return this.#state.get(key);
+    return this.#state.get(key as string) as KnownConfig[K];
+  }
+
+  /** Read a key whose name is only known at runtime (a registered custom option iterated by name). */
+  public getDynamic(name: string): unknown {
+    return this.#state.get(name);
   }
 
   /**
@@ -81,11 +91,13 @@ export class ConfigController implements ReactiveStore<ConfigType> {
   }
 
   /** Notifies only when the value actually changes (`Object.is` dedup). */
-  public set<K extends keyof ConfigType>(key: K, value: ConfigType[K]): void;
-  /** Write a dynamically-registered (custom) key. */
-  public set(key: string, value: unknown): void;
-  public set(key: string, value: unknown): void {
-    this.#state.set(key, value);
+  public set<K extends keyof KnownConfig>(key: K, value: KnownConfig[K]): void {
+    this.#state.set(key as string, value);
+  }
+
+  /** Write a key whose name is only known at runtime. */
+  public setDynamic(name: string, value: unknown): void {
+    this.#state.set(name, value);
   }
 
   /** Batch set built-in keys — one coalesced notify (see `SignalMap.setMany`). */
@@ -106,17 +118,18 @@ export class ConfigController implements ReactiveStore<ConfigType> {
    * render reads (a value recomputed elsewhere, or pushed to a non-reactive
    * sink); pair with `@subscription` for auto-teardown.
    */
-  public observe<K extends keyof ConfigType>(
+  public observe<K extends keyof KnownConfig>(
     key: K,
-    listener: (value: ConfigType[K]) => void,
+    listener: (value: KnownConfig[K]) => void,
     options?: ObserveOptions,
-  ): () => void;
-  /** Atomic per-key subscription for a dynamically-registered (custom) key. */
-  public observe(key: string, listener: (value: unknown) => void, options?: ObserveOptions): () => void;
-  public observe(key: string, listener: (value: unknown) => void, options?: ObserveOptions): () => void {
-    // Built-ins are always seeded, so the map's `| undefined` value arm never
-    // materializes for a `ConfigType` key — narrowed at the typed overload above.
-    return this.#state.observe(key, listener, options);
+  ): () => void {
+    // Built-ins are always seeded, so the map's `| undefined` value arm never materializes for a `ConfigType` key.
+    return this.#state.observe(key as string, listener as (value: unknown) => void, options);
+  }
+
+  /** Atomic per-key subscription for a key whose name is only known at runtime. */
+  public observeDynamic(name: string, listener: (value: unknown) => void, options?: ObserveOptions): () => void {
+    return this.#state.observe(name, listener, options);
   }
 
   /** Coarse notify with no state change — for a re-render on a non-keyed change. */

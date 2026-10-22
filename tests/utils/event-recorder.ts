@@ -56,6 +56,23 @@ export function recordEvents(target: EventTarget) {
       }, WAIT_TIMEOUT);
     },
 
+    /**
+     * Payload of the first `type` recorded after the latest `earlier`, waiting for it to fire. The end of a negative
+     * wait: `change` is debounced behind the output flush, so a `change` after the last event of interest means
+     * everything that event set off has landed.
+     */
+    waitForAfter<T extends EventKey>(type: T, earlier: EventKey): Promise<EventPayload[T]> {
+      return vi.waitFor(() => {
+        const start = events.map((event) => event.type).lastIndexOf(earlier);
+        const found = start < 0 ? undefined : events.slice(start + 1).find((event) => event.type === type);
+        if (!found) {
+          const recorded = events.map((event) => event.type).join(', ');
+          throw new Error(`Event "${type}" was not fired after "${earlier}". Recorded: ${recorded}`);
+        }
+        return found.detail as EventPayload[T];
+      }, WAIT_TIMEOUT);
+    },
+
     clear(): void {
       events.length = 0;
     },

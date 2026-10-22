@@ -1,8 +1,9 @@
 import { fileIsImage } from '../../../utils/fileTypes';
 import { controllerLogger } from '../../controllerLogger';
 import { ConfigController } from '../../controllers/ConfigController';
-import { containerOf } from '../../di/ControllerContainer';
+import { containerOf, lifetimeOf } from '../../di/ControllerContainer';
 import { Disposables } from '../../di/Disposables';
+import { isAbortError } from '../../di/Lifetime';
 import type { Logger } from '../../logger';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
@@ -42,7 +43,6 @@ export class PluginController {
   // (resolved lazily at log time via the container that built this instance).
   private readonly _log = controllerLogger(this, 'plugin-manager');
   private _deps: PluginControllerDeps;
-  private _isDestroyed = false;
   private _plugins: Map<string, RegisteredPlugin> = new Map();
   private _subscribers: Set<Unsubscribe> = new Set();
   private _pluginsUpdate: Promise<void> = Promise.resolve();
@@ -64,16 +64,19 @@ export class PluginController {
     this.#disposables.add(
       deps.watchPlugins((pluginsPromise) => {
         this._pluginsUpdate = this._pluginsUpdate
-          .then(() => pluginsPromise)
+          // Bound to the ctx: a queued or late emission can't re-register on a torn-down controller.
+          .then(() => lifetimeOf(this).guard(pluginsPromise))
           .then((plugins) => {
-            // Skip once destroyed so a queued emission can't re-register on a dead controller.
-            if (this._isDestroyed || !plugins) return;
+            if (!plugins) return;
             return this._syncPlugins(plugins);
           })
           // Recover the queue: a rejected emission must not permanently poison the
           // chain so later emissions never run. (`_pluginsUpdate` always resolves.)
           .catch((error) => {
-            this._log.error('Failed to sync plugins', error);
+            // The ctx was torn down mid-sync: nothing left to report to.
+            if (!isAbortError(error)) {
+              this._log.error('Failed to sync plugins', error);
+            }
           });
       }),
     );
@@ -110,6 +113,7 @@ export class PluginController {
         try {
           await this._registerPlugin(plugin);
         } catch (error) {
+          if (isAbortError(error)) throw error;
           this._purgePlugin(plugin.id);
           this._notifySubscribers();
           this._log.error(`Plugin "${plugin.id}" setup() threw an error`, error);
@@ -138,7 +142,11 @@ export class PluginController {
     const uploaderApi = this._deps.getUploaderApi();
     let pluginDispose: Unsubscribe | undefined;
     try {
-      pluginDispose = (await plugin.setup({ pluginApi, uploaderApi })) ?? undefined;
+      // A setup that settles after the ctx is torn down is disposed right away and never registered.
+      pluginDispose =
+        (await lifetimeOf(this).guard(Promise.resolve(plugin.setup({ pluginApi, uploaderApi })), (lateDispose) =>
+          this._disposePlugin(lateDispose ?? undefined),
+        )) ?? undefined;
     } catch (error) {
       for (const unsub of configSubscriptions) {
         try {
@@ -168,13 +176,17 @@ export class PluginController {
       }
     }
 
+    this._disposePlugin(registered.dispose);
+    this._plugins.delete(pluginId);
+    this._notifySubscribers();
+  }
+
+  private _disposePlugin(dispose: Unsubscribe | undefined): void {
     try {
-      registered.dispose?.();
+      dispose?.();
     } catch (error) {
       this._log.warn('Failed to dispose plugin', error);
     }
-    this._plugins.delete(pluginId);
-    this._notifySubscribers();
   }
 
   public snapshot(): PluginRegistrySnapshot {
@@ -189,20 +201,24 @@ export class PluginController {
     if (onAddHooks.length === 0) return;
 
     let file: File | Blob = initialFile;
-    const abortController = new AbortController();
+    // Hooks are user callbacks: none is invoked, and no result applied, once the ctx is torn down.
+    const { signal } = lifetimeOf(this);
     for (const hook of onAddHooks) {
-      if (abortController.signal.aborted) break;
+      if (signal.aborted) return;
       try {
-        const hookPromise = hook.handler({ file, signal: abortController.signal });
+        const hookPromise = hook.handler({ file, signal });
         const timeoutPromise = new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error(`onAdd hook timed out`)), hook.timeout),
         );
         ({ file } = await Promise.race([hookPromise, timeoutPromise]));
       } catch (error) {
+        // A hook that gave up because its signal aborted did what it was asked; only a real failure is worth a warning.
+        if (signal.aborted) return;
         this._log.warn(`File hook "onAdd" from plugin "${hook.pluginId}" failed`, error);
       }
     }
 
+    if (signal.aborted) return;
     if (file !== initialFile) {
       entry.set('file', file as File);
       entry.set('fileSize', file.size);
@@ -215,7 +231,6 @@ export class PluginController {
   }
 
   public destroy(): void {
-    this._isDestroyed = true;
     // Stop new emissions first so a queued sync can't re-register on a dead
     // controller (`#disposables` holds only the `watchPlugins` teardown).
     this.#disposables.run();

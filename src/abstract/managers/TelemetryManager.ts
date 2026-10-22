@@ -6,11 +6,13 @@ import type { EventKey, InternalEventKey } from '../../blocks/UploadCtxProvider/
 import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import type { ConfigType } from '../../types/index';
+import { redactSecrets } from '../../utils/redactSecrets';
 import { UID } from '../../utils/UID';
 import { controllerLogger } from '../controllerLogger';
 import { AppInfo } from '../controllers/AppInfo';
 import { ConfigController } from '../controllers/ConfigController';
 import { RouterController } from '../controllers/RouterController';
+import { lifetimeOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { EventBus } from '../EventBus';
@@ -35,6 +37,7 @@ type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config' | 'c
  * internally for change detection.
  */
 const SENSITIVE_CONFIG_KEYS: ReadonlySet<keyof ConfigType> = new Set([
+  'authToken',
   'secureSignature',
   'secureExpire',
   'secureDeliveryProxy',
@@ -86,14 +89,6 @@ export class TelemetryManager {
   #configChangePending = false;
   private readonly _queue: Queue = new Queue(10);
   readonly #disposables = new Disposables();
-  /**
-   * Set by `destroy()`. The queued `sendEvent` task resumes on a microtask that
-   * can land AFTER the owning container disposed this instance — at which point
-   * the container has cleared its `CONTAINER` tag and every `@inject` getter
-   * throws. Guarding on this flag (rather than catching) also stops a disposed
-   * uploader from shipping a trailing event.
-   */
-  #destroyed = false;
 
   /**
    * Container lifecycle hook — runs after the container has tagged + cached this
@@ -157,20 +152,25 @@ export class TelemetryManager {
       return;
     }
     this.#configChangePending = true;
-    void Promise.resolve().then(() => {
-      this.#configChangePending = false;
-      if (this.#destroyed || !this._isEnabled) {
-        return;
-      }
-      if (this._reportedConfig && this._checkObj(this._reportedConfig, this._sanitizedConfig())) {
-        return;
-      }
-      this.sendEvent({ eventType: InternalEventType.CHANGE_CONFIG });
-    });
+    const lifetime = lifetimeOf(this);
+    lifetime.run(
+      async () => {
+        await Promise.resolve();
+        this.#configChangePending = false;
+        if (lifetime.signal.aborted || !this._isEnabled) {
+          return;
+        }
+        if (this._reportedConfig && this._checkObj(this._reportedConfig, this._sanitizedConfig())) {
+          return;
+        }
+        this.sendEvent({ eventType: InternalEventType.CHANGE_CONFIG });
+      },
+      (error) => this._log.debug('failed to report a config change', error),
+    );
   }
 
   private _sanitizedConfig(): TelemetryState['config'] {
-    const sanitized: Record<string, unknown> = { ...this._config };
+    const sanitized: Record<string, unknown> = redactSecrets(this._config);
     for (const key of SENSITIVE_CONFIG_KEYS) {
       if (this._config[key] !== initialConfig[key]) {
         sanitized[key] = REDACTED_VALUE;
@@ -242,10 +242,9 @@ export class TelemetryManager {
   }
 
   public sendEvent(body: TelemetryEventBody): void {
-    if (this.#destroyed) {
-      return;
-    }
-    if (!this._isEnabled) {
+    // Nothing leaves the uploader once its ctx is destroyed — not even an event a late caller reports.
+    const lifetime = lifetimeOf(this);
+    if (lifetime.signal.aborted || !this._isEnabled) {
       return;
     }
 
@@ -256,44 +255,48 @@ export class TelemetryManager {
       return;
     }
 
-    this._queue.add(async () => {
-      // Yield once, then RE-CHECK: `Queue` runs a task synchronously while below
-      // its concurrency limit, and a startup event can be emitted from inside
-      // `UploaderRegistry.ensure()` — which `<uc-config>` itself triggers, from
-      // its own adoption, BEFORE `_seedBuiltInConfig` has applied its attributes.
-      // At that instant `qualityInsights` still reads its `true` default, so
-      // without this yield an explicit `quality-insights="false"` page still
-      // ships its whole startup burst (verified: 5 events on the standalone
-      // editor demo). One microtask lands after the seed; the opt-out is then
-      // visible and the event is dropped instead of sent.
-      await Promise.resolve();
-      // The container may have disposed us during that yield; bail before
-      // touching any `@inject` field (see `#destroyed`).
-      if (this.#destroyed || !this._isEnabled) {
-        return;
-      }
-      // Format AFTER the yield, not at emit time: `controllerReady` sends
-      // `init-solution` while the solution element connects — one task before
-      // `<uc-config>` has upgraded and seeded its attributes — so a payload built
-      // eagerly ships the default config and an empty `projectPubkey`. Building it
-      // at send time reports the config the page actually configured.
-      const payload = this._formattingPayload({
-        eventType: body.eventType,
-        payload: body.payload,
-        config: body.config,
-        component: body.component,
-      });
-      // The repeat-event dedup moved down here with it — it has to compare what
-      // actually ships, not two different pre-seed snapshots.
-      if (this._lastPayload && this._checkObj(this._lastPayload, payload)) {
-        return;
-      }
-      this._lastPayload = payload;
-      if (payload.config) {
-        this._reportedConfig = payload.config;
-      }
-      await this._telemetryInstance.sendEvent(payload);
-    });
+    lifetime.run(
+      () =>
+        this._queue.add(async () => {
+          // Yield once, then RE-CHECK: `Queue` runs a task synchronously while below
+          // its concurrency limit, and a startup event can be emitted from inside
+          // `UploaderRegistry.ensure()` — which `<uc-config>` itself triggers, from
+          // its own adoption, BEFORE `_seedBuiltInConfig` has applied its attributes.
+          // At that instant `qualityInsights` still reads its `true` default, so
+          // without this yield an explicit `quality-insights="false"` page still
+          // ships its whole startup burst (verified: 5 events on the standalone
+          // editor demo). One microtask lands after the seed; the opt-out is then
+          // visible and the event is dropped instead of sent.
+          await Promise.resolve();
+          // Also drops events still queued when the ctx is destroyed.
+          if (lifetime.signal.aborted || !this._isEnabled) {
+            return;
+          }
+          // Format AFTER the yield, not at emit time: `controllerReady` sends
+          // `init-solution` while the solution element connects — one task before
+          // `<uc-config>` has upgraded and seeded its attributes — so a payload built
+          // eagerly ships the default config and an empty `projectPubkey`. Building it
+          // at send time reports the config the page actually configured.
+          const payload = this._formattingPayload({
+            eventType: body.eventType,
+            payload: body.payload,
+            config: body.config,
+            component: body.component,
+          });
+          // The repeat-event dedup moved down here with it — it has to compare what
+          // actually ships, not two different pre-seed snapshots.
+          if (this._lastPayload && this._checkObj(this._lastPayload, payload)) {
+            return;
+          }
+          this._lastPayload = payload;
+          if (payload.config) {
+            this._reportedConfig = payload.config;
+          }
+          await this._telemetryInstance.sendEvent(payload);
+        }),
+      // Telemetry is best-effort (often blocked by the page): a failed send is verbose-only noise, not an error.
+      (error) => this._log.debug('failed to send a telemetry event', error),
+    );
   }
 
   /**
@@ -379,9 +382,6 @@ export class TelemetryManager {
   }
 
   public destroy(): void {
-    // Flip BEFORE the teardowns run: any already-queued `sendEvent` task must
-    // see the disposed state when its microtask resumes.
-    this.#destroyed = true;
     // Runs the config-subscription and bus-observer teardowns. Detaching the bus
     // observer is safe even if the container already disposed the EventBus (its
     // `destroy()` cleared listeners): the returned unsubscribe is an idempotent

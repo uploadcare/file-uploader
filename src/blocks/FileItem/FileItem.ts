@@ -2,7 +2,7 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import { inject, injectOrNull } from '../../abstract/di/inject';
+import { inject } from '../../abstract/di/inject';
 import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
@@ -57,15 +57,14 @@ const PLUGIN_ACTION_KEYS: ReadonlySet<UploadEntryKeys> = new Set<UploadEntryKeys
 ]);
 
 export class FileItem extends FileItemConfig {
-  // `ConfigController`/`TelemetryManager` are always-bound `@inject` fields.
-  // `UploadCollectionController` and `UploaderPublicApi` are uploader-scope-bound
-  // and read null-tolerantly (handlers can run outside an adopted scope / during
-  // a teardown race), so they are `@injectOrNull` (`?.`-read); `PluginController`
-  // is conditionally bound and wired via `whenController`.
+  // `@inject` fields, read only while adopted: from `controllerReady`, the
+  // render-gated `willUpdate`, the rendered row's click handlers, and plugin-action
+  // recomputes that bail once `controllerReleased` drops the plugin manager.
+  // `PluginController` is conditionally bound and wired via `whenController`.
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
-  @injectOrNull(UploadCollectionController) private readonly _collection!: UploadCollectionController | null;
-  @injectOrNull(UploaderPublicApi) private readonly _api!: UploaderPublicApi | null;
+  @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   // Off-screen render gate. Complements list virtualization rather than being
   // superseded by it: virtualization caps mounted rows in the bounded/steady
@@ -97,7 +96,7 @@ export class FileItem extends FileItemConfig {
 
   private _handleRemove = (): void => {
     const collection = this._collection;
-    if (!this.uid || !collection?.hasItem(this.uid)) {
+    if (!this.uid || !collection.hasItem(this.uid)) {
       return;
     }
     // Telemetry only for a real removal — guard first, so a stale/double
@@ -179,8 +178,7 @@ export class FileItem extends FileItemConfig {
   private _handleEntryId(id: Uid): void {
     this.reset();
 
-    // The uploader-scope controllers exist only once an uploader block initializes this ctx.
-    const entry = this._collection?.read(id) ?? null;
+    const entry = this._collection.read(id) ?? null;
     this.entry = entry;
 
     if (!entry) {
@@ -230,25 +228,15 @@ export class FileItem extends FileItemConfig {
 
   private _updatePluginFileActions(): void {
     const pluginManager = this._pluginManager;
-    if (!pluginManager || !this.uid) {
-      this._pluginFileActions = [];
-      return;
-    }
-
-    // The uploader-scope controllers exist only once an uploader block initializes this ctx.
-    const api = this._api;
-    if (!api) {
+    // A row can briefly hold the uid of an entry that is gone — e.g. right after a remount into a fresh ctx, before the
+    // list re-renders — and `getOutputItem` throws for those.
+    if (!pluginManager || !this.uid || !this._collection.hasItem(this.uid)) {
       this._pluginFileActions = [];
       return;
     }
 
     const allFileActions = pluginManager.snapshot().fileActions;
-    const outputFileEntry = api.getOutputItem(this.uid);
-
-    if (!outputFileEntry) {
-      this._pluginFileActions = [];
-      return;
-    }
+    const outputFileEntry = this._api.getOutputItem(this.uid);
 
     this._pluginFileActions = allFileActions.filter((action) => {
       try {
@@ -265,12 +253,7 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    const api = this._api;
-    if (!api) {
-      return;
-    }
-
-    const outputFileEntry = api.getOutputItem(this.uid);
+    const outputFileEntry = this._api.getOutputItem(this.uid);
     if (!outputFileEntry) {
       return;
     }
@@ -285,11 +268,13 @@ export class FileItem extends FileItemConfig {
       },
     });
 
-    try {
-      action.onClick(outputFileEntry);
-    } catch (error) {
-      this._log.error(`Error in plugin file action onClick (${action.id}):`, error);
-    }
+    this.runTask(async () => {
+      try {
+        await action.onClick(outputFileEntry);
+      } catch (error) {
+        this._log.error(`Error in plugin file action onClick (${action.id}):`, error);
+      }
+    });
   }
 
   // Host `[mode]` attribute: the `uc-file-item[mode="grid"]` CSS selectors key off
@@ -465,7 +450,7 @@ export class FileItem extends FileItemConfig {
     return '';
   }
 
-  private get _ariaLabelStatusFile(): string {
+  private get _statusText(): string {
     const fileName = this.entry?.getTracked('fileName') ?? null;
     if (!fileName) {
       return '';
@@ -489,13 +474,8 @@ export class FileItem extends FileItemConfig {
       >
         <uc-thumb .uid=${this.uid} .badgeIcon=${this._badgeIcon}></uc-thumb>
 
-        <div
-          aria-atomic="true"
-          aria-live="polite"
-          class="uc-file-name-wrapper"
-          aria-label=${this._ariaLabelStatusFile}
-        >
-          <span class="uc-file-name" ?hidden=${!this._showFileNames}>${this._itemName}</span>
+        <div class="uc-file-name-wrapper" role="group" aria-label=${this._statusText}>
+          <span class="uc-file-name" data-testid="file-name" ?hidden=${!this._showFileNames}>${this._itemName}</span>
           <span class="uc-file-error" ?hidden=${!this._errorText}>${this._errorText}</span>
           <span class="uc-file-hint" ?hidden=${!this._hint}>${this._hint}</span>
         </div>

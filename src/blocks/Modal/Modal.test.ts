@@ -72,13 +72,23 @@ describe('Modal (M-god step 6b-3 migration)', () => {
     await el.updateComplete;
     await delay(0);
     expect(dialog?.open).toBe(true);
-    expect(el.getAttribute('aria-modal')).toBe('true');
+    // `showModal()` already makes the <dialog> modal; the role-less host carries no `aria-modal`.
+    expect(el.hasAttribute('aria-modal')).toBe(false);
 
     router.closeModal();
     await el.updateComplete;
     await delay(0);
     expect(dialog?.open).toBe(false);
-    expect(el.getAttribute('aria-modal')).toBe('false');
+    expect(el.hasAttribute('aria-modal')).toBe(false);
+  });
+
+  it('names the <dialog> after the activity it hosts', async () => {
+    const ctxName = freshCtxName();
+    const { el: startFrom } = await mount(ctxName, 'start-from');
+    const { el: camera } = await mount(ctxName, 'camera');
+
+    expect(dialogOf(startFrom)?.getAttribute('aria-label')).toBe('Select file source');
+    expect(dialogOf(camera)?.getAttribute('aria-label')).toBe('Camera');
   });
 
   it('does not open for a modal slot that is not this modal id', async () => {

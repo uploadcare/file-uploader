@@ -5,6 +5,7 @@ import type { Ref } from 'lit/directives/ref.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { when } from 'lit/directives/when.js';
+import { debounced } from '../../../lit/rate-limited-method';
 import { debounce } from '../../../utils/debounce';
 import { batchPreloadImages } from '../../../utils/preloadImage';
 import type { FilterSelectEvent } from './EditorFilterControl';
@@ -129,14 +130,10 @@ export class EditorToolbar extends EditorBlock {
     this._showLoader = show;
   }, 500);
 
-  private readonly _updateInfoTooltip = debounce(() => {
-    // Debounced at 0ms: the timer can still fire once after this element has
-    // disconnected (and the editor context has released its controller) —
-    // bail out rather than throwing.
-    const controller = this.editorControllerOrNull;
-    if (!controller) {
-      return;
-    }
+  // Debounced at 0ms; `@debounced` drops a tick that lands after the editor context released its controller.
+  @debounced(0)
+  private _updateInfoTooltip(): void {
+    const controller = this.editorController;
     const transformations = controller.get('*editorTransformations');
     const currentOperation = this._currentOperation as keyof typeof COLOR_OPERATIONS_CONFIG | null;
     let text = '';
@@ -159,7 +156,7 @@ export class EditorToolbar extends EditorBlock {
       this._operationTooltip = text;
     }
     this._tooltipVisible = visible;
-  }, 0);
+  }
 
   private readonly _subTopToolbarStyles = {
     hidden: 'uc-sub-toolbar--top-hidden',
@@ -371,12 +368,14 @@ export class EditorToolbar extends EditorBlock {
     // ref). Skip if it isn't laid out yet (width 0).
     const width = this.imageContainer?.offsetWidth ?? 0;
     if (originalUrl && width > 0) {
-      const src = await this.editorController.proxyUrl(
-        viewerImageSrc(
-          originalUrl,
-          width,
-          this.editorController.get('*editorTransformations'),
-          this.editorController.get('*sourceOperations'),
+      const src = await this.whileAdopted(
+        this.editorController.proxyUrl(
+          viewerImageSrc(
+            originalUrl,
+            width,
+            this.editorController.get('*editorTransformations'),
+            this.editorController.get('*sourceOperations'),
+          ),
         ),
       );
       this._cancelPreload?.();
@@ -398,7 +397,7 @@ export class EditorToolbar extends EditorBlock {
         this._currentFilter = appliedFilter ?? '';
       }
       this._updateInfoTooltip();
-      this._preloadEditedImage();
+      this.runTask(() => this._preloadEditedImage());
       // The fader reacts to `*editorTransformations` itself now.
     });
 
@@ -472,16 +471,18 @@ export class EditorToolbar extends EditorBlock {
     if (changedProperties.has('imageSize') && this.imageSize) {
       setTimeout(() => {
         // Guard the deferred callback: the editor may be torn down within this
-        // macrotask (apply/cancel, router nav), nulling the adopted controller.
-        const ctrl = this.editorControllerOrNull;
-        if (ctrl) {
-          this._activateTab(ctrl.get('*tabId'));
+        // macrotask (apply/cancel, router nav), releasing the adopted controller.
+        if (!this.adoptionSignal.aborted) {
+          this._activateTab(this.editorController.get('*tabId'));
         }
       }, 0);
     }
 
     if (changedProperties.has('activeTab') || changedProperties.has('tabList')) {
-      this.updateComplete.then(() => this._syncTabIndicator());
+      this.runTask(async () => {
+        await this.whileAdopted(this.updateComplete);
+        this._syncTabIndicator();
+      });
     }
   }
 
@@ -605,9 +606,9 @@ export class EditorToolbar extends EditorBlock {
           theme="tab"
           data-id=${id}
           icon=${id}
-          role="tab"
-          aria-controls=${`tab_${id}`}
-          aria-selected=${isActive ? 'true' : 'false'}
+          aria-role="tab"
+          aria-controls=${isActive ? `tab_${id}` : ''}
+          .selected=${isActive}
           title-prop=${`a11y-editor-tab-${id}`}
           .active=${isActive}
           style=${style}
@@ -653,7 +654,6 @@ export class EditorToolbar extends EditorBlock {
       </div>
       <div class="uc-toolbar-container">
         <uc-presence-toggle
-          role="tablist"
           class="uc-sub-toolbar"
           .visible=${this.showMainToolbar}
           .styles=${this._subTopToolbarStyles}
@@ -663,6 +663,7 @@ export class EditorToolbar extends EditorBlock {
           </div>
           <div class="uc-controls-row">
             <uc-presence-toggle
+              role="tablist"
               class="uc-tab-toggles"
               .visible=${this._showTabToggles}
               .styles=${this._tabTogglesStyles}

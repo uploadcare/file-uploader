@@ -5,9 +5,19 @@ import { inject, injectOrNull } from '../../abstract/di/inject';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './modal.css';
 import { property } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { RegisteredActivityType } from '../../lit/activity-constants';
 import { getScrollLock } from '../../utils/scroll-lock';
+
+/** l10n keys naming the `<dialog>` of each built-in activity's modal; custom activities stay unnamed. */
+const DIALOG_LABEL_KEYS: Partial<Record<RegisteredActivityType, string>> = {
+  'start-from': 'select-file-source',
+  'upload-list': 'upload-files',
+  camera: 'caption-camera',
+  url: 'caption-from-url',
+  'cloud-image-edit': 'caption-edit-file',
+};
 
 export class Modal extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
@@ -75,16 +85,21 @@ export class Modal extends ChildBlock {
   };
 
   protected async show(): Promise<void> {
-    await this.updateComplete;
+    await this.whileAdopted(this.updateComplete);
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       showModal?: () => void;
     };
     // Idempotent + null-safe (matching `hide()`): `subRouter` fires on every
     // change, but `showModal()` throws on an already-open dialog, and the ref
     // may be cleared by a teardown racing this async method.
-    if (!dialog || dialog.open) return;
+    if (!dialog) return;
+    if (dialog.open) {
+      // Moving an open dialog in the DOM takes it out of the top layer but keeps `open`, leaving it in-flow with no
+      // backdrop or Escape. Re-enter the top layer; dropping the attribute (unlike `close()`) fires no `close`.
+      if (typeof dialog.showModal !== 'function' || dialog.matches(':modal')) return;
+      dialog.removeAttribute('open');
+    }
     if (typeof dialog.showModal === 'function') {
-      this.setAttribute('aria-modal', 'true');
       dialog.showModal();
     } else {
       dialog.setAttribute('open', '');
@@ -97,7 +112,6 @@ export class Modal extends ChildBlock {
     };
     if (!dialog || !dialog.open) return;
     if (typeof dialog.close === 'function') {
-      this.setAttribute('aria-modal', 'false');
       dialog.close();
     } else {
       dialog.removeAttribute('open');
@@ -139,7 +153,7 @@ export class Modal extends ChildBlock {
       this._releaseScrollLock = null;
     }
     if (isForeground) {
-      this.show();
+      this.runTask(() => this.show());
     } else {
       this.hide();
     }
@@ -163,8 +177,9 @@ export class Modal extends ChildBlock {
   }
 
   public override render() {
+    const labelKey = DIALOG_LABEL_KEYS[this.id as RegisteredActivityType];
     return html`
-  <dialog ${ref(this._handleDialogRef)}>
+  <dialog data-testid="dialog" aria-label=${ifDefined(labelKey && this.l10n(labelKey))} ${ref(this._handleDialogRef)}>
     ${this.yield('')}
   </dialog>
 `;

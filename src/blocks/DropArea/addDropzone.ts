@@ -31,6 +31,9 @@ function distance(point: [number, number], rect: DOMRect): number {
 
 export function addDropzone(desc: DropzoneDescriptor): () => void {
   let eventCounter = 0;
+  // Aborted by the returned teardown: removes every listener, and tells a drop still reading its items to drop them.
+  const listeners = new AbortController();
+  const { signal } = listeners;
 
   const body = document.body;
   const switchHandlers = new Set<(state: DropzoneStateValue) => void>();
@@ -116,28 +119,24 @@ export function addDropzone(desc: DropzoneDescriptor): () => void {
       return;
     }
     const items = await getDropItems(dataTransfer);
+    if (signal.aborted) {
+      return;
+    }
     desc.onItems(items);
     setState(DropzoneState.INACTIVE);
   };
 
-  body.addEventListener('drop', onDrop);
-  body.addEventListener('dragleave', onDragLeave);
-  body.addEventListener('dragenter', onDragEnter);
-  body.addEventListener('dragover', onDragOver);
-  desc.element.addEventListener('drop', onElementDrop);
+  body.addEventListener('drop', onDrop, { signal });
+  body.addEventListener('dragleave', onDragLeave, { signal });
+  body.addEventListener('dragenter', onDragEnter, { signal });
+  body.addEventListener('dragover', onDragOver, { signal });
+  desc.element.addEventListener('drop', onElementDrop, { signal });
   RESET_EVENTS.forEach((eventName) => {
-    window.addEventListener(eventName, onResetEvent);
+    window.addEventListener(eventName, onResetEvent, { signal });
   });
 
   return () => {
     nearnessRegistry.delete(desc.element);
-    body.removeEventListener('drop', onDrop);
-    body.removeEventListener('dragleave', onDragLeave);
-    body.removeEventListener('dragenter', onDragEnter);
-    body.removeEventListener('dragover', onDragOver);
-    desc.element.removeEventListener('drop', onElementDrop);
-    RESET_EVENTS.forEach((eventName) => {
-      window.removeEventListener(eventName, onResetEvent);
-    });
+    listeners.abort();
   };
 }

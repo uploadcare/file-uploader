@@ -5,15 +5,15 @@ import { RegisterableElementMixin } from '../../lit/RegisterableElementMixin.js'
 import { operationsFromModifiers } from '../../utils/cdn/operations';
 import { CssDataMixin } from './CssDataMixin.js';
 import { CSS_PREF } from './configurations.js';
-import { PROPS_MAP } from './props-map.js';
+import { type ImgPropKey, PROPS_MAP } from './props-map.js';
 
-type CssPropValue = string | number | undefined | null;
+export type CssPropValue = string | number | undefined | null;
 type CssPropRecord = Record<string, CssPropValue>;
-type PropConfig = { default?: CssPropValue } | Record<string, never>;
+type PropConfig = { default?: CssPropValue; flag?: boolean };
 
 export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)) {
   private _state: CssPropRecord = {};
-  private _subscribers: Map<string, Set<(val: unknown) => void>> = new Map();
+  private _subscribers: Map<string, Set<(val: CssPropValue) => void>> = new Map();
   private _isnObserver: IntersectionObserver | null = null;
   private _observed: Set<Element> | null = null;
 
@@ -29,33 +29,46 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
     }
   }
 
-  protected $$(key: string): unknown {
+  /**
+   * Attribute values arrive as strings, so a number flag set to `"0"` would read as truthy and could only be switched
+   * off through the CSS property, which already yields a number. Non-numeric values are left as-is, not made NaN.
+   */
+  private static _coerceAttributeValue(name: string, value: string | null): CssPropValue {
+    const config: PropConfig | undefined = PROPS_MAP[name as keyof typeof PROPS_MAP];
+    if (!config?.flag || value === null || value.trim() === '') {
+      return value;
+    }
+    const asNumber = Number(value);
+    return Number.isFinite(asNumber) ? asNumber : value;
+  }
+
+  protected $$(key: ImgPropKey): CssPropValue {
     return this._state[CSS_PREF + key];
   }
 
-  protected set$$(kvObj: Record<string, CssPropValue>): void {
+  protected set$$(kvObj: Partial<Record<ImgPropKey, CssPropValue>>): void {
     for (const key in kvObj) {
       const fullKey = CSS_PREF + key;
-      const val = kvObj[key];
+      const val = kvObj[key as ImgPropKey];
       this._state[fullKey] = val;
       this._notify(fullKey, val);
     }
   }
 
-  protected sub$$<T = unknown>(key: string, kbFn: (val: T) => void): void {
+  protected sub$$(key: ImgPropKey, kbFn: (val: CssPropValue) => void): void {
     const fullKey = CSS_PREF + key;
     if (!this._subscribers.has(fullKey)) {
       this._subscribers.set(fullKey, new Set());
     }
-    this._subscribers.get(fullKey)?.add(kbFn as any);
+    this._subscribers.get(fullKey)?.add(kbFn);
 
     const currentVal = this._state[fullKey];
     if (currentVal !== null && currentVal !== '') {
-      kbFn(currentVal as T);
+      kbFn(currentVal);
     }
   }
 
-  private _notify(key: string, val: unknown) {
+  private _notify(key: string, val: CssPropValue) {
     if (this._subscribers.has(key)) {
       this._subscribers.get(key)?.forEach((cb) => {
         if (val === null || val === '') {
@@ -141,8 +154,9 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
   public override attributeChangedCallback(name: string, _oldVal: string | null, newVal: string | null): void {
     window.setTimeout(() => {
       const fullKey = CSS_PREF + name;
-      this._state[fullKey] = newVal;
-      this._notify(fullKey, newVal);
+      const value = ImgConfig._coerceAttributeValue(name, newVal);
+      this._state[fullKey] = value;
+      this._notify(fullKey, value);
     });
   }
 }

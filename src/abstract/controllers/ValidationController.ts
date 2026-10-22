@@ -10,7 +10,11 @@ import type {
   OutputFileErrorType,
 } from '../../types';
 import { debounce } from '../../utils/debounce';
-import { validateCollectionUploadError, validateMultiple } from '../../utils/validators/collection/index';
+import {
+  validateCollectionUploadError,
+  validateGroupError,
+  validateMultiple,
+} from '../../utils/validators/collection/index';
 import {
   validateFileType,
   validateIsImage,
@@ -18,8 +22,9 @@ import {
   validateUploadError,
 } from '../../utils/validators/file/index';
 import { controllerLogger } from '../controllerLogger';
+import { lifetimeOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
-import { inject, injectOrNull } from '../di/inject';
+import { inject } from '../di/inject';
 import { TelemetryManager } from '../managers/TelemetryManager';
 import type { TypedData } from '../TypedData';
 import { UploaderPublicApi } from '../UploaderPublicApi';
@@ -86,9 +91,7 @@ export class ValidationController {
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
-  // `@injectOrNull`: a teardown-time emit (released container) resolves `null` →
-  // no-op, matching the guard the removed host `emit` closure carried.
-  @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
+  @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
 
   private _commonFileValidators: FuncFileValidator[] = [
     validateIsImage,
@@ -97,14 +100,17 @@ export class ValidationController {
     validateUploadError,
   ];
 
-  private _commonCollectionValidators: FuncCollectionValidator[] = [validateMultiple, validateCollectionUploadError];
+  private _commonCollectionValidators: FuncCollectionValidator[] = [
+    validateMultiple,
+    validateCollectionUploadError,
+    validateGroupError,
+  ];
 
   private _queue = new Queue(20);
   private _runQueueDebounced = debounce(() => {
     this._queue.run();
   }, 500);
 
-  private _isDestroyed = false;
   private _entryValidationState = new Map<string, EntryValidationState>();
   readonly #disposables = new Disposables();
   private _lastRerunSnapshot = '';
@@ -155,19 +161,24 @@ export class ValidationController {
   }
 
   public runFileValidators(runOn: FileValidatorDescriptor['runOn'], entryIds?: Uid[]): void {
-    if (this._isDestroyed) return;
+    const lifetime = lifetimeOf(this);
+    if (lifetime.signal.aborted) return;
 
     const ids = entryIds ?? this._collection.items();
     for (const id of ids) {
       const entry = this._collection.read(id);
       if (entry) {
-        void this._runFileValidatorsForEntry(entry, runOn);
+        lifetime.run(
+          () => this._runFileValidatorsForEntry(entry, runOn),
+          (error) => this._log.error('File validation failed', error),
+        );
       }
     }
   }
 
   public runCollectionValidators(): void {
-    if (this._isDestroyed) return;
+    // Collection validators are user callbacks: none runs once the ctx is torn down.
+    if (lifetimeOf(this).signal.aborted) return;
 
     const api = this._api;
     const collection = api.getOutputCollectionState();
@@ -194,7 +205,7 @@ export class ValidationController {
     if (errors.length > 0) {
       // Inlined from the removed bridge's `emitCommonUploadFailed`: the debounced
       // `common-upload-failed` with a thunked failed-collection-state payload.
-      this._eventEmitter?.emit(
+      this._eventEmitter.emit(
         EventType.COMMON_UPLOAD_FAILED,
         () => this._api.getOutputCollectionState() as OutputCollectionState<'failed'>,
         { debounce: true },
@@ -214,16 +225,17 @@ export class ValidationController {
     entry: TypedData<UploadEntryData>,
     runOn: FileValidatorDescriptor['runOn'],
   ): Promise<void> {
-    // The only caller (`runFileValidators`) already guards `_isDestroyed`, and
+    // The only caller (`runFileValidators`) already checks the lifetime, and
     // there is no async boundary between there and here, so no re-check is
     // needed until after the first `await` below.
+    const lifetime = lifetimeOf(this);
     const api = this._api;
     const state = this._getEntryValidationState(entry);
 
     const previousPromise = state.promise ?? Promise.resolve();
     const runPromise = (async () => {
       await previousPromise;
-      if (this._isDestroyed) return;
+      if (lifetime.signal.aborted) return;
       const entryDescriptors = this._getValidatorDescriptorsForEntry(entry, runOn);
       if (entryDescriptors.length === 0 || !this._collection.hasItem(entry.uid)) {
         return;
@@ -287,10 +299,11 @@ export class ValidationController {
 
       this._runQueueDebounced();
 
-      // `destroy()` cancels `_runQueueDebounced`, so this queued task never
-      // runs after teardown — no in-task `_isDestroyed` guard is reachable.
       await this._queue.add(
         async () => {
+          // `destroy()` cancels `_runQueueDebounced`, but a queue already running drains into this task: the
+          // validators are user callbacks, so none is invoked once the ctx is torn down.
+          if (lifetime.signal.aborted) return;
           entry.set('isQueuedForValidation', false);
           await Promise.all(tasks.map((task) => task())).catch(() => {});
         },
@@ -367,7 +380,6 @@ export class ValidationController {
   }
 
   public destroy(): void {
-    this._isDestroyed = true;
     // Runs the config-subscription teardown + the two debounce cancels.
     this.#disposables.run();
 

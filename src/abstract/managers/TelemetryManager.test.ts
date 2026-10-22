@@ -3,7 +3,7 @@ import { EventEmitter, EventType, InternalEventType } from '../../blocks/UploadC
 import type { ActivityId } from '../../lit/activity-constants';
 import type { ConfigType } from '../../types/index';
 import { AppInfo } from '../controllers/AppInfo';
-import { ConfigController } from '../controllers/ConfigController';
+import { ConfigController, type KnownConfig } from '../controllers/ConfigController';
 import { RouterController } from '../controllers/RouterController';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { TelemetryManager } from './TelemetryManager';
@@ -46,7 +46,7 @@ const setup = ({
   }
   const manager = container.get(TelemetryManager); // init() → config + bus subscriptions
 
-  const setConfig = <K extends keyof ConfigType>(key: K, value: ConfigType[K]) => config.set(key, value);
+  const setConfig = <K extends keyof KnownConfig>(key: K, value: KnownConfig[K]) => config.set(key, value);
   const enable = () => setConfig('qualityInsights', true);
   // Emit through the container's real EventEmitter → the bus the manager
   // observes, exercising the observer path end-to-end.
@@ -506,6 +506,28 @@ describe('TelemetryManager', () => {
       await expect(flush()).resolves.toBeUndefined();
       expect(() => manager.sendEvent({ eventType: EventType.UPLOAD_CLICK })).not.toThrow();
       await flush();
+      expect(sendEventMock).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('once the ctx is disposed', () => {
+    it('drops an event reported afterwards, without throwing', async () => {
+      const { manager, container } = setup();
+      container.dispose();
+
+      expect(() => manager.sendEvent({ eventType: EventType.MODAL_OPEN })).not.toThrow();
+      expect(() => manager.sendEventError(new Error('late'))).not.toThrow();
+      await flush();
+
+      expect(sendEventMock).not.toHaveBeenCalled();
+    });
+
+    it('drops an event still queued when the ctx is disposed', async () => {
+      const { manager, container } = setup();
+      manager.sendEvent({ eventType: EventType.MODAL_OPEN });
+      container.dispose();
+      await flush();
+
       expect(sendEventMock).not.toHaveBeenCalled();
     });
   });

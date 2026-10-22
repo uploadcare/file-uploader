@@ -2,11 +2,13 @@ import { uploadFileGroup } from '@uploadcare/upload-client';
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { OutputCollectionState } from '../../types';
 import { controllerLogger } from '../controllerLogger';
-import { inject, injectOrNull } from '../di/inject';
+import { lifetimeOf } from '../di/ControllerContainer';
+import { inject } from '../di/inject';
 import { UploaderEventType } from '../EventBus';
 import { UploaderPublicApi } from '../UploaderPublicApi';
 import { CollectionStateController } from './CollectionStateController';
 import { UploadController } from './UploadController';
+import { ValidationController } from './ValidationController';
 
 /**
  * Output-group creation — split out of {@link UploadEventsController}. Given a
@@ -16,21 +18,21 @@ import { UploadController } from './UploadController';
  * collection state must not have moved on) before committing the result.
  */
 export class UploadGroupController {
-  @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
+  @inject(ValidationController) private readonly _validation!: ValidationController;
+  @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(UploadController) private readonly _upload!: UploadController;
   private readonly _log = controllerLogger(this, 'upload-group');
 
   private _emit = (...args: Parameters<EventEmitter['emit']>): void => {
-    this._eventEmitter?.emit(...args);
+    this._eventEmitter.emit(...args);
   };
 
   public async create(collectionState: OutputCollectionState, isActive: () => boolean): Promise<void> {
     const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
-    // Callers invoke this fire-and-forget (`void create(...)`) and `uploadFileGroup`
-    // REJECTS on network/server failure, so swallow-and-log here rather than leak an
-    // unhandled rejection; a failed group leaves `groupInfo` unset (documented).
+    // Callers invoke this fire-and-forget. Report a current request's failure
+    // through collection validation instead of leaking an unhandled rejection.
     try {
       const uploadClientOptions = await this._upload.buildUploadOptions();
       // Building options awaits (secure signature etc.); bail before the network
@@ -42,22 +44,28 @@ export class UploadGroupController {
       const uuidList = collectionState.allEntries.map((entry) => {
         return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
       });
-      const abortController = new AbortController();
+      // Cancelled if the ctx is torn down mid-flight; the result would be discarded below anyway.
       const resp = await uploadFileGroup(uuidList, {
         ...uploadClientOptions,
-        signal: abortController.signal,
+        signal: lifetimeOf(this).signal,
       });
       // Bail if the stack was unobserved mid-flight or the collection state moved on.
       if (!isActive() || this._collectionState.get('collectionState') !== collectionState) {
-        abortController.abort();
         return;
       }
       this._collectionState.set('groupInfo', resp);
+      this._collectionState.set('groupError', null);
       const collectionStateWithGroup = getOutputCollectionState() as OutputCollectionState<'success', 'has-group'>;
       this._emit(UploaderEventType.GROUP_CREATED, collectionStateWithGroup);
       this._emit(UploaderEventType.CHANGE, () => getOutputCollectionState(), { debounce: true });
       this._collectionState.set('collectionState', collectionStateWithGroup);
     } catch (err) {
+      if (!isActive() || this._collectionState.get('collectionState') !== collectionState) return;
+      this._collectionState.set(
+        'groupError',
+        err instanceof Error ? err : new Error('Failed to create a group', { cause: err }),
+      );
+      this._validation.runCollectionValidators();
       this._log.error('Failed to create the output file group', err);
     }
   }

@@ -106,6 +106,8 @@ export default {
   'file-item-edit-button': 'Rediģēt',
   'file-item-remove-button': 'Noņemt',
   'a11y-activity-header-button-close': 'Aizvērt',
+  'a11y-camera-microphone': 'Mikrofons',
+  'a11y-camera-stop-recording': 'Apturēt ierakstīšanu',
   'a11y-editor-tab-filters': 'Filtri',
   'a11y-editor-tab-tuning': 'Pielāgošana',
   'a11y-editor-tab-crop': 'Apgriezt',

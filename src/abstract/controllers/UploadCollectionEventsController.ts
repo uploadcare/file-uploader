@@ -1,7 +1,7 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState } from '../../types';
-import { inject, injectOrNull } from '../di/inject';
+import { inject } from '../di/inject';
 import { UploaderEventType } from '../EventBus';
 import type { TypedData } from '../TypedData';
 import { UploaderPublicApi } from '../UploaderPublicApi';
@@ -22,34 +22,33 @@ type Entry = TypedData<UploadEntryData>;
  * `UploadGroupController`.
  */
 export class UploadCollectionEventsController {
-  @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
+  @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(UploadController) private readonly _upload!: UploadController;
 
+  /**
+   * Whether `COMMON_UPLOAD_SUCCESS` has fired for the collection as it is. Every file is validated again once uploaded,
+   * and validations that land in separate batches would each see the whole collection done and report it again.
+   */
+  private _isUploadSuccessReported = false;
+
   private _emit = (...args: Parameters<EventEmitter['emit']>): void => {
-    this._eventEmitter?.emit(...args);
+    this._eventEmitter.emit(...args);
   };
 
-  /**
-   * `COMMON_UPLOAD_SUCCESS` is emitted from the `errors` change flush, which can run
-   * more than once while the collection stays complete — latch it so a completion
-   * reports exactly once. Cleared when the collection stops being complete or its
-   * membership changes.
-   */
-  private _commonSuccessEmitted = false;
-
-  /** Membership changed → the current group no longer describes the collection. */
+  /** Membership changed → the current group no longer describes the collection, and its success is not reported yet. */
   public resetGroupIfMembershipChanged(added: Set<Entry>, removed: Set<Entry>): void {
     if (added.size || removed.size) {
-      this._collectionState.set('groupInfo', null);
-      this._commonSuccessEmitted = false;
+      this.resetGroup();
+      this._isUploadSuccessReported = false;
     }
   }
 
   public resetGroup(): void {
     this._collectionState.set('groupInfo', null);
+    this._collectionState.set('groupError', null);
   }
 
   public setUploadList(entries: Uid[]): void {
@@ -111,7 +110,10 @@ export class UploadCollectionEventsController {
     );
   }
 
-  /** `COMMON_UPLOAD_SUCCESS` when every entry is loaded, none errored, and there are no collection errors. */
+  /**
+   * `COMMON_UPLOAD_SUCCESS` when every entry is loaded, none errored, and there are no collection errors — once per
+   * change into that state.
+   */
   public emitCommonSuccessIfComplete(): void {
     const collection = this._collection;
     // One pass: "all loaded, none errored".
@@ -127,22 +129,17 @@ export class UploadCollectionEventsController {
         loadedCount++;
       }
     }
-    const complete =
+    const isUploadSuccess =
       collection.size > 0 &&
       !hasErrored &&
       collection.size === loadedCount &&
       this._collectionState.get('collectionErrors').length === 0;
-    if (!complete) {
-      this._commonSuccessEmitted = false;
-      return;
+    if (isUploadSuccess && !this._isUploadSuccessReported) {
+      this._emit(
+        UploaderEventType.COMMON_UPLOAD_SUCCESS,
+        this._api.getOutputCollectionState() as OutputCollectionState<'success'>,
+      );
     }
-    if (this._commonSuccessEmitted) {
-      return;
-    }
-    this._commonSuccessEmitted = true;
-    this._emit(
-      UploaderEventType.COMMON_UPLOAD_SUCCESS,
-      this._api.getOutputCollectionState() as OutputCollectionState<'success'>,
-    );
+    this._isUploadSuccessReported = isUploadSuccess;
   }
 }

@@ -103,6 +103,8 @@ export default {
   'file-item-edit-button': '편집',
   'file-item-remove-button': '제거',
   'a11y-activity-header-button-close': '닫기',
+  'a11y-camera-microphone': '마이크',
+  'a11y-camera-stop-recording': '녹화 중지',
   'a11y-editor-tab-filters': '필터',
   'a11y-editor-tab-tuning': '튜닝',
   'a11y-editor-tab-crop': '자르기',

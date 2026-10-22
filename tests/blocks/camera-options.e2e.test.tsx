@@ -1,0 +1,161 @@
+import { describe, expect, it, vi } from 'vitest';
+import type { Locator } from 'vitest/browser';
+import type { Config } from '@/index';
+import { browserFeatures } from '@/utils/browser-info';
+import { expectActivity, openModal, renderSolution, within } from '~/tests/utils/render-solution';
+import '~/types/jsx';
+
+/**
+ * Camera-related options, none of which had a test. The chromium instance runs with
+ * `--use-fake-device-for-media-stream` (vitest.config.ts), so the camera activity opens with a working stream and
+ * these can be asserted on the rendered controls rather than mocked.
+ *
+ * Nested test ids are prefixed with the host tag by TestModeController, hence `uc-camera-source--toggle-microphone`.
+ */
+
+/** Opens the camera activity and returns the solution root once it is really on screen. */
+const openCamera = async (configProps: Partial<Config> = {}) => {
+  const rendered = await renderSolution('regular', configProps);
+  rendered.api.initFlow();
+  await expectActivity(rendered.root, 'start-from');
+
+  await within(rendered.root).getByTestId('uc-start-from').getByRole('button', { name: 'Camera', exact: true }).click();
+  await expectActivity(rendered.root, 'camera');
+
+  const camera = within(rendered.root).getByTestId('uc-camera-source');
+  // The controls stay `display: none` until the stream starts, so a "hidden" check made earlier passes whatever the
+  // option says. The shutter shows in every mode, which makes it the sign the controls are up. Found by test id, as its
+  // name changes with the mode.
+  await expect.element(camera.getByTestId('uc-camera-source--shot'), { timeout: 20_000 }).toBeVisible();
+
+  return { ...rendered, camera };
+};
+
+describe('cameraMirror', () => {
+  /**
+   * The preview's transform as rendered, so the check holds however the mirroring is applied. Read once the preview is
+   * showing: a hidden `<video>` reports `none` whatever its style says. A `<video>` has no ARIA role and no test id,
+   * hence the tag lookup.
+   */
+  const previewTransform = async (camera: Locator) => {
+    const video = await vi.waitFor(
+      () => {
+        const found = camera.element().querySelector('video');
+        if (!found?.checkVisibility()) throw new Error('The camera preview is not showing');
+        return found;
+      },
+      { timeout: 20_000 },
+    );
+    return getComputedStyle(video).transform;
+  };
+
+  it('leaves the preview unmirrored by default', async () => {
+    const { camera } = await openCamera();
+
+    expect(await previewTransform(camera)).toBe('none');
+  });
+
+  it('mirrors the preview when set', async () => {
+    const { camera } = await openCamera({ cameraMirror: true });
+
+    expect(await previewTransform(camera)).toBe('matrix(-1, 0, 0, 1, 0, 0)');
+  });
+});
+
+describe('enableAudioRecording', () => {
+  // The microphone controls belong to video recording: the photo tab forces them hidden regardless of the option
+  // (CameraSource.ts:610), and only the video tab consults `enableAudioRecording` (CameraSource.ts:618).
+  it('hides the microphone toggle on the photo tab whatever the setting', async () => {
+    const { camera } = await openCamera({ enableAudioRecording: true });
+
+    await expect.element(camera.getByTestId('uc-camera-source--toggle-microphone')).not.toBeVisible();
+  });
+
+  it('shows the microphone toggle on the video tab, which is the default', async () => {
+    const { camera } = await openCamera();
+    await camera.getByRole('button', { name: 'Video', exact: true }).click();
+
+    await expect.element(camera.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
+  });
+
+  it('hides the microphone toggle on the video tab when disabled', async () => {
+    const { camera } = await openCamera({ enableAudioRecording: false });
+    await camera.getByRole('button', { name: 'Video', exact: true }).click();
+
+    await expect.element(camera.getByTestId('uc-camera-source--toggle-microphone')).not.toBeVisible();
+  });
+});
+
+describe('cameraModes', () => {
+  it('offers both tabs by default', async () => {
+    const { camera } = await openCamera();
+
+    await expect.element(camera.getByRole('button', { name: 'Photo', exact: true })).toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Video', exact: true })).toBeVisible();
+  });
+
+  it('hides the video tab when only photo is allowed', async () => {
+    const { camera } = await openCamera({ cameraModes: 'photo' });
+
+    await expect
+      .element(camera.getByRole('button', { name: 'Video', exact: true, includeHidden: true }))
+      .not.toBeVisible();
+  });
+
+  it('hides the photo tab when only video is allowed', async () => {
+    const { camera } = await openCamera({ cameraModes: 'video' });
+
+    await expect
+      .element(camera.getByRole('button', { name: 'Photo', exact: true, includeHidden: true }))
+      .not.toBeVisible();
+  });
+});
+
+describe('enableVideoRecording (deprecated)', () => {
+  // The option is documented as deprecated in favour of `cameraModes`, and feeds it through a computed property
+  // (Config/computed-properties.ts:41): `false` strips `video` from the mode list, `true` adds it.
+  it('drops the video tab when disabled', async () => {
+    const { camera } = await openCamera({ enableVideoRecording: false });
+
+    await expect
+      .element(camera.getByRole('button', { name: 'Video', exact: true, includeHidden: true }))
+      .not.toBeVisible();
+  });
+
+  it('leaves both tabs when enabled', async () => {
+    const { camera } = await openCamera({ enableVideoRecording: true });
+
+    await expect.element(camera.getByRole('button', { name: 'Video', exact: true })).toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Photo', exact: true })).toBeVisible();
+  });
+});
+
+describe('defaultCameraMode', () => {
+  it('opens on the photo tab by default', async () => {
+    const { camera } = await openCamera();
+
+    await expect
+      .element(camera.getByRole('button', { name: 'Photo', exact: true }))
+      .toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('opens on video when asked', async () => {
+    const { camera } = await openCamera({ defaultCameraMode: 'video' });
+
+    await expect
+      .element(camera.getByRole('button', { name: 'Video', exact: true }))
+      .toHaveAttribute('aria-pressed', 'true');
+  });
+});
+
+describe('htmlMediaCapture', () => {
+  it('offers Photo and Video buttons on mobile', async () => {
+    vi.spyOn(browserFeatures, 'htmlMediaCapture', 'get').mockReturnValue(true);
+
+    const { root } = await renderSolution('regular');
+    await openModal(root);
+
+    await expect.element(within(root).getByText('Photo')).toBeVisible();
+    await expect.element(within(root).getByText('Video')).toBeVisible();
+  });
+});
