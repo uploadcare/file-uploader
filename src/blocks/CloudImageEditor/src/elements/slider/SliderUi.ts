@@ -92,10 +92,6 @@ export class SliderUi extends SliderUiBase {
     });
     this._observer.observe(this);
 
-    const inputEl = this._inputRef.value;
-    inputEl?.addEventListener('focus', this._handleInputFocus);
-    inputEl?.addEventListener('blur', this._handleInputBlur);
-
     window.setTimeout(() => {
       this._updateValue(this._currentValue);
     }, 0);
@@ -199,13 +195,15 @@ export class SliderUi extends SliderUiBase {
     this._stepsCount = count;
   }
 
+  public override connectedCallback(): void {
+    super.connectedCallback();
+    // Created in `firstUpdated`; a reconnect (DOM move) re-observes what `disconnectedCallback` disconnected.
+    this._observer?.observe(this);
+  }
+
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    const inputEl = this._inputRef.value;
-    inputEl?.removeEventListener('focus', this._handleInputFocus);
-    inputEl?.removeEventListener('blur', this._handleInputBlur);
     this._observer?.disconnect();
-    this._observer = undefined;
   }
 
   private _setCurrentValue(value: number): void {
@@ -249,6 +247,8 @@ export class SliderUi extends SliderUiBase {
         ?disabled=${this.disabled}
         @input=${this._handleSliderInput}
         @change=${this._handleSliderChange}
+        @focus=${this._handleInputFocus}
+        @blur=${this._handleInputBlur}
       />
     `;
   }
