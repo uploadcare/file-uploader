@@ -35,6 +35,13 @@ class TaskBlock extends ChildBlock {
 }
 TaskBlock.reg('uc-test-task-block');
 
+class TestIdBlock extends ChildBlock {
+  public override render() {
+    return html`<span class="inner" data-testid="inner"></span>`;
+  }
+}
+TestIdBlock.reg('uc-test-testid-block');
+
 // ─── Harness ──────────────────────────────────────────────────────────────────
 let seq = 0;
 const mounted: HTMLElement[] = [];
@@ -217,5 +224,34 @@ describe('ChildBlock adoption lifetime', () => {
       expect(error).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), 'an async task failed', failure),
     );
     error.mockRestore();
+  });
+});
+
+describe('ChildBlock test mode', () => {
+  it('does not scan its subtree for [data-testid] on update while testMode is off', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount<TestIdBlock>('uc-test-testid-block', ctxName);
+    const scan = vi.spyOn(el, 'querySelectorAll');
+
+    for (let i = 0; i < 3; i++) {
+      el.requestUpdate();
+      await el.updateComplete;
+    }
+
+    expect(scan).not.toHaveBeenCalledWith('[data-testid]');
+  });
+
+  it('still prefixes inner test ids when testMode is turned on later', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount<TestIdBlock>('uc-test-testid-block', ctxName);
+    el.requestUpdate();
+    await el.updateComplete;
+
+    UploaderRegistry.get(ctxName)?.get(ConfigController).set('testMode', true);
+    await el.updateComplete;
+    await Promise.resolve();
+
+    expect(el.getAttribute('data-testid')).toBe('uc-test-testid-block');
+    expect(el.querySelector('.inner')?.getAttribute('data-testid')).toBe('uc-test-testid-block--inner');
   });
 });
