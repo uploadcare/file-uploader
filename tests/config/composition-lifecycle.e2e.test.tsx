@@ -234,6 +234,21 @@ describe('<uc-config> moving between ctxs', () => {
     await delay(0);
     await expect.poll(() => providerB.getAPI().cfg.pubkey).toBe('after-switch');
   });
+
+  it('keeps a property written while it is detached', async () => {
+    const { ctxName, config, api } = await renderSolution();
+    const parent = inCtx('uc-config', ctxName).parentElement as HTMLElement;
+    const metadata = { source: 'detached' };
+
+    config.remove();
+    config.pubkey = 'detached-key';
+    config.metadata = metadata;
+    parent.append(config);
+
+    await expect.poll(() => api.cfg.pubkey).toBe('detached-key');
+    expect(api.cfg.metadata).toBe(metadata);
+    expect(config.getAttribute('pubkey')).toBe('detached-key');
+  });
 });
 
 describe('config values set after render', () => {

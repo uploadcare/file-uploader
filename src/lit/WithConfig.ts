@@ -119,6 +119,10 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     // survives `controllerReleased` (a re-adoption re-seeds against it), so it is
     // NOT cleared there. Replaces the former `__${key}` own-props + `as any`.
     private readonly _localValues = new Map<string, unknown>();
+    // Built-in keys written while detached. The next seed flushes them even when
+    // the value is the default, since a ctx kept across a synchronous move still
+    // holds the old value.
+    private readonly _detachedWrites = new Set<string>();
     // Built-in accessors are installed once per element lifetime (they're own,
     // non-configurable, and never removed) — this skips re-checking all ~55 keys
     // on every re-adoption.
@@ -199,10 +203,13 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     }
 
     private _setValue(key: string, value: unknown) {
-      // Detached / not-yet-adopted with accessors already installed: never touch
-      // the controller (`@inject` would throw). happy-dom may invoke the property
-      // setter from `setAttribute`; real browsers leave the live attr for seed.
+      // Detached with accessors already installed: never touch the controller
+      // (`@inject` would throw). Keep a built-in write in the local cache and the
+      // attribute so the next adoption's seed applies it instead of the stale
+      // value. A custom key's descriptor lives on the released controller, so a
+      // detached custom write is still dropped.
       if (!this.containerOrNull) {
+        this._stashDetachedValue(key, value);
         return;
       }
 
@@ -238,6 +245,16 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       if (BUILTIN_DESCRIPTORS.has(key)) {
         runAssertions(this._config.values);
       }
+    }
+
+    private _stashDetachedValue(key: string, value: unknown) {
+      const descriptor = BUILTIN_DESCRIPTORS.get(key);
+      if (!descriptor) return;
+      // Built-in normalizers can't throw (they catch internally).
+      const normalizedValue = descriptor.normalize(value);
+      this._localValues.set(key, normalizedValue);
+      this._detachedWrites.add(key);
+      this._flushValueToAttribute(key, descriptor, normalizedValue);
     }
 
     private _getValue(key: string) {
@@ -570,7 +587,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
             ? fromAttr.value
             : (Reflect.get(this, key) ?? this._config.get(key));
 
-        if (initialValue !== initialConfig[key]) {
+        if (this._detachedWrites.has(key) || initialValue !== initialConfig[key]) {
           this._setValue(key, initialValue);
           // `_setValue`'s no-op guard (skip when the local cache already equals
           // the normalized value) must not skip seeding a freshly-adopted
@@ -589,6 +606,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       }
 
       this._builtInAccessorsInstalled = true;
+      this._detachedWrites.clear();
     }
 
     /**
