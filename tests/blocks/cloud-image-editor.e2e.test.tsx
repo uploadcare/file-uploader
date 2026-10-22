@@ -261,4 +261,42 @@ describe('uc-cloud-image-editor without <uc-config>', () => {
       warnSpy.mockRestore();
     }
   });
+
+  it('keeps firing change after it is moved to another parent', async () => {
+    const { element, editor } = renderStandalone();
+    const cropper = () => activeClass(element.querySelector('uc-editor-image-cropper'));
+    await expect.poll(cropper).toMatch(/uc-active_from_/);
+    const changes: ApplyResult[] = [];
+    element.addEventListener('change', (event) => {
+      changes.push((event as CustomEvent<ApplyResult>).detail);
+    });
+
+    const other = document.createElement('div');
+    element.after(other);
+    other.append(element);
+    await expect.poll(cropper).toMatch(/uc-active_from_/);
+    await userEvent.click(editor.getByTestId('uc-editor-crop-button-control').nth(0));
+
+    await expect.poll(() => changes.at(-1)?.transformations.rotate).toBe(90);
+  });
+
+  it('becomes visible when moved out of a zero-sized parent while it waits for a size', async () => {
+    page.render(
+      <div style="width: 0; height: 0; overflow: hidden;">
+        <uc-cloud-image-editor uuid={UUID} cdn-cname="https://ucarecdn.com/" test-mode></uc-cloud-image-editor>
+      </div>,
+    );
+    const element = document.querySelector<HTMLElement>('uc-cloud-image-editor')!;
+    await delay(50);
+    expect(element.classList.contains('uc-editor_ON')).toBe(false);
+
+    const sized = document.createElement('div');
+    document.body.append(sized);
+    try {
+      sized.append(element);
+      await expect.poll(() => element.classList.contains('uc-editor_ON')).toBe(true);
+    } finally {
+      sized.remove();
+    }
+  });
 });
