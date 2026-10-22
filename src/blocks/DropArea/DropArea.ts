@@ -19,6 +19,7 @@ import type { DropItem } from './getDropItems';
 import '../Icon/Icon';
 
 const dropAreaRegistry = new Set<DropArea>();
+const ACTIVATION_CODES = new Set(['Enter', 'NumpadEnter', 'Space']);
 
 export class DropArea extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
@@ -98,9 +99,13 @@ export class DropArea extends ChildBlock {
   private _contentWrapperRef: Ref<HTMLDivElement> = createRef();
   private readonly _handleAreaInteraction = (event: Event) => {
     if (event instanceof KeyboardEvent) {
-      if (event.code !== 'Space' && event.code !== 'Enter') {
+      // `key` covers NumpadEnter; `code` keeps synthetic events that only set it working.
+      const isActivation = event.key === 'Enter' || event.key === ' ' || ACTIVATION_CODES.has(event.code);
+      if (!isActivation) {
         return;
       }
+      // Space would otherwise scroll the page, as it does on any non-native button.
+      event.preventDefault();
     } else if (!(event instanceof MouseEvent)) {
       return;
     }
@@ -253,6 +258,20 @@ export class DropArea extends ChildBlock {
 
     if (changedProperties.has('clickable')) {
       this._updateClickableListeners();
+    }
+    if (changedProperties.has('clickable') || changedProperties.has('disabled')) {
+      this._updateButtonSemantics();
+    }
+  }
+
+  /** A clickable, enabled drop area is a button: reachable by Tab and announced as one. */
+  private _updateButtonSemantics(): void {
+    if (this.clickable && !this.disabled) {
+      this.setAttribute('role', 'button');
+      this.setAttribute('tabindex', '0');
+    } else {
+      this.removeAttribute('role');
+      this.removeAttribute('tabindex');
     }
   }
 
