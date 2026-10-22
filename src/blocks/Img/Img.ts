@@ -19,7 +19,7 @@ export class Img extends ImgBase {
       this.init();
     });
 
-    this.sub$$<string | number | boolean>('lazy', (val) => {
+    this.sub$$('lazy', (val) => {
       if (!this.$$('is-background-for') && !this.$$('is-preview-blur')) {
         this.img.loading = val ? 'lazy' : 'eager';
       }

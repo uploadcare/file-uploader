@@ -36,3 +36,5 @@ export const PROPS_MAP = Object.freeze({
     flag: true,
   },
 });
+
+export type ImgPropKey = keyof typeof PROPS_MAP;
