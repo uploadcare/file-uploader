@@ -310,6 +310,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       if (!this.hasAttribute(attr)) this.setAttribute(attr, '');
     }
     this._setupEditor();
+    // Per connection: `disconnectedCallback` ends the lifetime and destroys the controller's listeners, so a
+    // reconnected editor (a DOM move) must re-subscribe and re-wait for a size.
+    this._runTask(() => this.initEditor());
   }
 
   private _setupEditor(): void {
@@ -572,7 +575,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
-    this._runTask(() => this.initEditor());
 
     const hasInitialSource = Boolean(this.uuid || this.cdnUrl);
     const alreadyRequested = changedProperties.has('uuid') || changedProperties.has('cdnUrl');
