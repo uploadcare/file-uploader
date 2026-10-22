@@ -127,4 +127,25 @@ describe('DropArea (M-god step 6b-3 migration)', () => {
     expect(open).toHaveBeenCalledTimes(3);
     expect(space.defaultPrevented).toBe(true);
   });
+
+  it('reads a "false" flag attribute as off and drops it, so the [flag] styles do not apply either', async () => {
+    const { el } = await mount(freshCtxName());
+    el.setAttribute('clickable', 'false');
+    el.setAttribute('with-icon', 'false');
+    el.setAttribute('disabled', 'false');
+    el.setAttribute('ghost', 'false');
+    await el.updateComplete;
+
+    expect(el.clickable).toBe(false);
+    expect(el.withIcon).toBe(false);
+    expect(el.disabled).toBe(false);
+    for (const name of ['clickable', 'with-icon', 'disabled', 'ghost']) {
+      expect(el.hasAttribute(name)).toBe(false);
+    }
+
+    el.setAttribute('fullscreen', 'true');
+    await el.updateComplete;
+    expect(el.fullscreen).toBe(true);
+    expect(el.hasAttribute('fullscreen')).toBe(true);
+  });
 });

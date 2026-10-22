@@ -3,6 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { AriaRole } from '../../types/dom';
 import './source-btn.css';
@@ -27,10 +28,10 @@ export class SourceBtn extends ChildBlock {
   @property({ attribute: false })
   public buttonRole?: AriaRole;
 
-  @property({ type: Boolean })
+  @property({ converter: booleanAttribute })
   public textOnly = false;
 
-  @property({ type: Boolean })
+  @property({ converter: booleanAttribute })
   public iconOnly = false;
 
   @state()

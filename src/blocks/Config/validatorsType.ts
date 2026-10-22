@@ -1,5 +1,6 @@
 import { isAuthTokenResolver } from '@uploadcare/upload-client';
 import type { PasteScope } from '../../abstract/controllers/ClipboardController';
+import { parseBooleanAttribute } from '../../lit/boolean-attribute';
 import type { AuthToken, Metadata, MetadataCallback, Tags, TagsCallback } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
 import type { ModeCameraType } from '../CameraSource/constants';
@@ -18,9 +19,8 @@ const asNumber = (value: unknown): number => {
 };
 
 const asBoolean = (value: unknown): boolean => {
-  // Attribute values are strings. Like an HTML boolean attribute, any value means true (`multiple`, `multiple=""`,
-  // `multiple="value"`) except `"false"`, which frameworks such as React pass for a false prop (documented).
-  if (typeof value === 'string') return value !== 'false';
+  // Attribute values are strings: the shared boolean-attribute rule (documented).
+  if (typeof value === 'string') return parseBooleanAttribute(value);
   return Boolean(value);
 };
 

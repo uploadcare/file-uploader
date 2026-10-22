@@ -7,6 +7,7 @@ import { UploadCollectionController } from '../../abstract/controllers/UploadCol
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { effect } from '../../lit/effect';
 import { ensureUploaderScope } from '../../lit/ensureUploaderScope';
@@ -20,6 +21,7 @@ import '../Icon/Icon';
 
 const dropAreaRegistry = new Set<DropArea>();
 const ACTIVATION_CODES = new Set(['Enter', 'NumpadEnter', 'Space']);
+const FLAG_ATTRIBUTES = new Set(['single', 'ghost', 'disabled', 'clickable', 'with-icon', 'fullscreen', 'initflow']);
 
 export class DropArea extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
@@ -49,28 +51,28 @@ export class DropArea extends ChildBlock {
   /**
    * CSS-only attribute
    */
-  @property({ type: Boolean, noAccessor: true })
+  @property({ converter: booleanAttribute, noAccessor: true })
   public single = false;
 
   /**
    * CSS-only attribute
    */
-  @property({ type: Boolean, noAccessor: true })
+  @property({ converter: booleanAttribute, noAccessor: true })
   public ghost = false;
 
-  @property({ type: Boolean, reflect: true })
+  @property({ converter: booleanAttribute, reflect: true })
   public disabled = false;
 
-  @property({ type: Boolean, reflect: true })
+  @property({ converter: booleanAttribute, reflect: true })
   public clickable = false;
 
-  @property({ type: Boolean, attribute: 'with-icon', reflect: true })
+  @property({ converter: booleanAttribute, attribute: 'with-icon', reflect: true })
   public withIcon = false;
 
-  @property({ type: Boolean, reflect: true })
+  @property({ converter: booleanAttribute, reflect: true })
   public fullscreen = false;
 
-  @property({ type: Boolean, reflect: true })
+  @property({ converter: booleanAttribute, reflect: true })
   public initflow = false;
 
   @property({ type: String })
@@ -119,6 +121,15 @@ export class DropArea extends ChildBlock {
   };
   private _sourceListAllowsLocal = true;
   private _clickableListenersAttached = false;
+
+  // The stylesheet keys off flag presence (`[with-icon]`, `[ghost]`, …), so a flag written as `"false"` is dropped
+  // to keep the styles in line with the property, which already reads it as off.
+  public override attributeChangedCallback(name: string, old: string | null, value: string | null): void {
+    super.attributeChangedCallback(name, old, value);
+    if (value === 'false' && FLAG_ATTRIBUTES.has(name)) {
+      this.removeAttribute(name);
+    }
+  }
 
   public isActive(): boolean {
     if (!this._isEnabled) {

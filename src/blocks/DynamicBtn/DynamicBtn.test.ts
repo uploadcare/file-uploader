@@ -158,4 +158,12 @@ describe('DynamicBtn (M-god step 6b-2 migration)', () => {
     await delay(0);
     expect(abortAction?.progress).toBe(100);
   });
+
+  it('turns its dropzone off with dropzone="false"', async () => {
+    const { el } = await mountWithConfig(freshCtxName());
+    el.setAttribute('dropzone', 'false');
+    await el.updateComplete;
+    expect(el.dropzone).toBe(false);
+    expect(el.querySelector('uc-drop-area')?.disabled).toBe(true);
+  });
 });

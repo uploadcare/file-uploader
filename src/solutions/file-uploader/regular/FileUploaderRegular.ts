@@ -5,6 +5,7 @@ import type { ControllerContainer } from '../../../abstract/di/ControllerContain
 import { inject } from '../../../abstract/di/inject';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
+import { booleanAttribute } from '../../../lit/boolean-attribute';
 import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
 import './index.css';
 import { renderModalSourcePicker } from '../layout-fragments.js';
@@ -37,10 +38,10 @@ export class FileUploaderRegular extends SolutionChildBlock {
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-regular'];
 
-  @property({ type: Boolean })
+  @property({ converter: booleanAttribute })
   public headless = false;
 
-  @property({ attribute: 'dynamic-button', type: Boolean })
+  @property({ attribute: 'dynamic-button', converter: booleanAttribute })
   public dynamicButton = false;
 
   protected override controllerReady(container: ControllerContainer): void {

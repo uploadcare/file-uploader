@@ -134,4 +134,18 @@ describe('Uploader (unified <uc-uploader>)', () => {
     expect(nested?.headless).toBe(true);
     expect(nested?.querySelector('uc-simple-btn')).toBeNull();
   });
+
+  it('reads headless="false" and dynamic-button="false" as off', async () => {
+    const { el } = await mount({
+      'ctx-name': freshCtxName(),
+      headless: 'false',
+      'dynamic-button': 'false',
+      pubkey: 'k',
+    });
+    expect(el.headless).toBe(false);
+    expect(el.dynamicButton).toBe(false);
+    const nested = el.querySelector('uc-file-uploader-regular') as FileUploaderRegular | null;
+    expect(nested?.headless).toBe(false);
+    expect(nested?.querySelector('uc-simple-btn')).not.toBeNull();
+  });
 });

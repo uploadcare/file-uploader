@@ -81,4 +81,17 @@ describe('SourceBtn (M-god step 6b-1 migration)', () => {
 
     expect(spy).not.toHaveBeenCalled();
   });
+
+  it('reads textonly="false" / icononly="false" as off', async () => {
+    const el = await mount(freshCtxName());
+    el.setAttribute('textonly', 'false');
+    el.setAttribute('icononly', 'false');
+    await el.updateComplete;
+    expect(el.textOnly).toBe(false);
+    expect(el.iconOnly).toBe(false);
+
+    el.setAttribute('textonly', '');
+    await el.updateComplete;
+    expect(el.textOnly).toBe(true);
+  });
 });

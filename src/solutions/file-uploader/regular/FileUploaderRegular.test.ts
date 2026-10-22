@@ -101,4 +101,17 @@ describe('FileUploaderRegular (M-god step 6b-4 migration)', () => {
     cancelBtn?.click();
     expect(traverse).toHaveBeenCalledWith('onCancel');
   });
+
+  it('reads headless="false" and dynamic-button="false" as off, like <uc-config> booleans', async () => {
+    const { el } = await mount(freshCtxName(), { headless: 'false', 'dynamic-button': 'false' });
+    expect(el.headless).toBe(false);
+    expect(el.dynamicButton).toBe(false);
+    expect(el.querySelector('uc-simple-btn')).not.toBeNull();
+    expect(el.querySelector('uc-dynamic-btn')).toBeNull();
+
+    el.setAttribute('headless', 'true');
+    await el.updateComplete;
+    expect(el.headless).toBe(true);
+    expect(el.querySelector('uc-simple-btn')).toBeNull();
+  });
 });
