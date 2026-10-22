@@ -24,6 +24,22 @@ describe('ConfigController', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
+  it('type-checks built-in keys against ConfigType, leaving the untyped overloads to custom keys', () => {
+    const config = new ConfigController();
+
+    // @ts-expect-error a built-in key cannot fall through to the custom-key overload with a wrong value type
+    config.set('multiple', 'abc');
+    // @ts-expect-error same for observe: `thumbSize` is a number
+    config.observe('thumbSize', (value: string) => value);
+    const multiple: boolean = config.get('multiple');
+
+    config.set('customKey', 1);
+    config.observe('customKey', (value) => value);
+    const custom: unknown = config.get('customKey');
+
+    expect([multiple, custom]).toEqual(['abc', 1]);
+  });
+
   it('unsubscribe stops notifications', () => {
     const config = new ConfigController();
     const listener = vi.fn();
