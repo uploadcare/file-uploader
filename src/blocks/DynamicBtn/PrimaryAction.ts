@@ -31,11 +31,11 @@ export class PrimaryAction extends ChildBlock {
     [UploadSource.MOBILE_VIDEO_CAMERA]: { action: 'record' },
   };
 
-  @property({ type: Object })
-  public source!: SourceButtonConfig | null;
+  @property({ attribute: false })
+  public source: SourceButtonConfig | null = null;
 
-  @property({ type: Object })
-  public entries!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
+  @property({ attribute: false })
+  public entries: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'> | null = null;
 
   // Config-derived render inputs read through the tracked signal path: reading
   // them in `render()`/`_renderThumbnail()` auto-tracks the key under
@@ -101,7 +101,7 @@ export class PrimaryAction extends ChildBlock {
       return this._translate('header-succeed', { count: this.entries.successCount });
     }
 
-    if (this.entries?.totalCount > 0) {
+    if ((this.entries?.totalCount ?? 0) > 0) {
       return this._translate('header-total', { count: this.entries?.totalCount ?? 0 });
     } else {
       return undefined;
@@ -145,7 +145,7 @@ export class PrimaryAction extends ChildBlock {
 
   private _renderThumbnail() {
     if (!this._isMultiple && this.hasSingleSuccessImage) {
-      const entry = this.entries.allEntries[0];
+      const entry = this.entries?.allEntries[0];
       if (!entry) return null;
       return html`<uc-thumb .uid=${entry.internalId as Uid}></uc-thumb>`;
     }
