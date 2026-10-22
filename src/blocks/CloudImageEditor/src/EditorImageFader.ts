@@ -127,8 +127,6 @@ export class EditorImageFader extends EditorBlock {
   public constructor() {
     super();
 
-    this.classList.add('uc-inactive_to_cropper');
-
     // Controller-dependent setup (mirrors EditorImageCropper): the fader now
     // drives itself from state instead of the toolbar/root/slider calling its
     // methods. It reacts to `*tabId`/`*originalUrl`/`*editorTransformations`/
@@ -142,6 +140,13 @@ export class EditorImageFader extends EditorBlock {
       // A (re)attach can find the fader ready to show already — e.g. after an activation aborted by a reconnect.
       this._syncFromState();
     });
+  }
+
+  public override connectedCallback(): void {
+    super.connectedCallback();
+    // The initial state class. Not in the constructor: an element created by `document.createElement` must not have
+    // attributes yet.
+    if (!this.hasUpdated) this.classList.add('uc-inactive_to_cropper');
   }
 
   @debounced(600)
