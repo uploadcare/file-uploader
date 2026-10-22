@@ -450,7 +450,7 @@ export class FileItem extends FileItemConfig {
     return '';
   }
 
-  private get _ariaLabelStatusFile(): string {
+  private get _statusText(): string {
     const fileName = this.entry?.getTracked('fileName') ?? null;
     if (!fileName) {
       return '';
@@ -474,12 +474,7 @@ export class FileItem extends FileItemConfig {
       >
         <uc-thumb .uid=${this.uid} .badgeIcon=${this._badgeIcon}></uc-thumb>
 
-        <div
-          aria-atomic="true"
-          aria-live="polite"
-          class="uc-file-name-wrapper"
-          aria-label=${this._ariaLabelStatusFile}
-        >
+        <div class="uc-file-name-wrapper" role="group" aria-label=${this._statusText}>
           <span class="uc-file-name" data-testid="file-name" ?hidden=${!this._showFileNames}>${this._itemName}</span>
           <span class="uc-file-error" ?hidden=${!this._errorText}>${this._errorText}</span>
           <span class="uc-file-hint" ?hidden=${!this._hint}>${this._hint}</span>
