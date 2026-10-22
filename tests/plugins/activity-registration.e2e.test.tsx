@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { PluginRender } from '@/index.ts';
-import { delay } from '@/utils/delay';
+import { withResolvers } from '@/utils/withResolvers';
 import { addSource, createTestPlugin, renderSolution, within } from '~/tests/utils/render-solution';
 
 describe('plugin activities', () => {
@@ -200,11 +200,12 @@ describe('plugin activities', () => {
   });
 
   it('renders an activity registered by an async setup() without awaiting pluginsReady', async () => {
+    // setup() holds until setCurrentActivity has been called, so the activity is registered after it.
+    const activityRequested = withResolvers();
     const plugin = createTestPlugin({
       id: 'act-async-setup',
       setup: async ({ pluginApi }) => {
-        // Deliberate: a slow async setup() so setCurrentActivity runs before the activity is registered.
-        await delay(50);
+        await activityRequested.promise;
         pluginApi.registry.registerActivity({
           id: 'async-setup-activity',
           render: (el) => {
@@ -222,6 +223,7 @@ describe('plugin activities', () => {
     // setCurrentActivity internally waits for pluginsReady, so no explicit await needed
     api.setCurrentActivity('async-setup-activity');
     api.setModalState(true);
+    activityRequested.resolve();
 
     await expect.element(within(root).getByText('Async Setup Activity Content')).toBeVisible();
   });

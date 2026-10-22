@@ -1,11 +1,7 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { getTopLevelOrigin } from './get-top-level-origin';
 
 describe('getTopLevelOrigin', () => {
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
   it('should return the top-level origin', () => {
     const origin = getTopLevelOrigin();
     expect(origin).toBe(window.location.origin);

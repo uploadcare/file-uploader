@@ -8,7 +8,7 @@ describe('parseCropPreset', () => {
     const uniqueIds = 4;
     let uidCallCount = 0;
 
-    const generateSpy = vi.spyOn(UID, 'generateFastUid').mockImplementation(() => {
+    vi.spyOn(UID, 'generateFastUid').mockImplementation(() => {
       const id = `id-${(uidCallCount % uniqueIds) + 1}`;
       uidCallCount += 1;
       return id as Uid;
@@ -32,7 +32,5 @@ describe('parseCropPreset', () => {
       type: 'aspect-ratio',
       width: 3,
     });
-
-    generateSpy.mockRestore();
   });
 });

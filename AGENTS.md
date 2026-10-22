@@ -76,11 +76,14 @@ under its own compiler options, so a public type that only resolves under
 Pre-commit (husky + lint-staged) runs `biome check --write` on staged
 `*.{ts,js,cjs,tsx}`. The husky "DEPRECATED" warning on commit is benign.
 
-### Known e2e flake
-`tests/solutions/bundles.e2e.test.tsx` (`getByTestId('uc-crop-frame')`) can
-lose a render race under full parallel load but passes in isolation. The e2e
-project has `retry: 1` so a transient flake won't fail the gate while a genuine
-regression still fails both attempts. Don't "fix" it by loosening assertions.
+### e2e network
+The e2e suite talks to `@uploadcare/api-emulator`, run inside the page by
+`tests/utils/emulator.browser.ts` and reset before every test, so a run needs no
+API access and answers the same way every time. The e2e project therefore has
+`retry: 0`: a flake fails the gate. End a negative wait on a sentinel that does
+happen, not on a sleep. `E2E_NET=live` runs against the real API instead (with
+`retry: 1`); tests that read or steer the emulator skip there via
+`it.skipIf(isLive)`.
 
 ---
 

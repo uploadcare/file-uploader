@@ -1108,9 +1108,10 @@ export class CameraSource extends ChildBlock {
               'uc-mini-btn': true,
               'uc-active': this._activeTab === CameraSourceTypes.PHOTO,
             })}
+            aria-label=${this.l10n('src-type-mobile-photo-camera')}
+            aria-pressed=${this._activeTab === CameraSourceTypes.PHOTO}
             @click=${this._handleClickTab}
             ?hidden=${this._tabCameraHidden}
-            aria-label=${this.l10n('src-type-mobile-photo-camera')}
             data-testid="tab-photo"
           >
             <uc-icon name="camera"></uc-icon>
@@ -1123,9 +1124,10 @@ export class CameraSource extends ChildBlock {
               'uc-mini-btn': true,
               'uc-active': this._activeTab === CameraSourceTypes.VIDEO,
             })}
+            aria-label=${this.l10n('src-type-mobile-video-camera')}
+            aria-pressed=${this._activeTab === CameraSourceTypes.VIDEO}
             @click=${this._handleClickTab}
             ?hidden=${this._tabVideoHidden}
-            aria-label=${this.l10n('src-type-mobile-video-camera')}
             data-testid="tab-video"
           >
             <uc-icon name="video-camera"></uc-icon>

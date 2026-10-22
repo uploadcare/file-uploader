@@ -25,3 +25,5 @@ docs/superpowers/
 .claude/
 .superpowers/
 specs/npm/.types-matrix/
+__screenshots__
+.vitest-attachments

@@ -2,8 +2,9 @@ import type { FileFromOptions, UploadcareFile } from '@uploadcare/upload-client'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { delay } from '@/utils/delay';
-import { clearSent, installTelemetryStub, SETTLE_MS, sent, waitForType } from '~/tests/api/telemetry/stub';
+import { clearSent, sent, waitForType } from '~/tests/api/telemetry/sink';
 import { IMAGE } from '~/tests/fixtures/files';
+import { isLive } from '~/tests/utils/emulator.browser';
 import { recordEvents } from '~/tests/utils/event-recorder';
 import {
   expectActivity,
@@ -14,6 +15,9 @@ import {
 } from '~/tests/utils/render-solution';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
+
+/** Longer than the 300ms output flush, so trailing telemetry has been queued and sent. */
+const SETTLE_MS = 1000;
 
 /**
  * Re-mounting: sortable lists, framework re-parenting and SPA routers move the uploader's elements around. A move that
@@ -364,8 +368,8 @@ describe('regular: deferred move', () => {
     }
   });
 
-  it('sends nothing from the old ctx once it is gone', async () => {
-    installTelemetryStub();
+  // Fake-only: telemetry is read back from the emulator, and a live run has none.
+  it.skipIf(isLive)('sends nothing from the old ctx once it is gone', async () => {
     const uploader = await renderSolution('regular', { qualityInsights: true });
     await waitForType('init-solution');
     const upload = deferredUpload();
@@ -386,14 +390,14 @@ describe('regular: deferred move', () => {
     await delay(SETTLE_MS);
 
     expect(signal?.aborted).toBe(true);
-    expect(sent).toEqual([]);
+    expect(sent()).toEqual([]);
     expect(recorder.events).toEqual([]);
 
     // Re-attach: the fresh ctx reports its own init, not anything from the old one.
     newParent().append(...elements);
     await waitForType('init-solution');
     await delay(SETTLE_MS);
-    expect(sent.every((body) => body.session_id === sent[0].session_id)).toBe(true);
+    expect(sent().every((body) => body.session_id === sent()[0].session_id)).toBe(true);
     expect(recorder.detailsOf('file-upload-success')).toEqual([]);
     expect(uploader.provider.getAPI().getOutputCollectionState().totalCount).toBe(0);
   });

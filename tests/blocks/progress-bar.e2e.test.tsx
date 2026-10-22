@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { ProgressBar, ProgressBarCommon } from '@/index';
+import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE } from '~/tests/fixtures/files';
+import { emulatorSession, isLive } from '~/tests/utils/emulator.browser';
 import { createInCtx, renderSolution, within } from '~/tests/utils/render-solution';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
@@ -120,11 +122,21 @@ describe('uc-progress-bar-common', () => {
   it('carries the active attribute only while an upload runs', async () => {
     const { common, api } = await renderCommon();
     expect(common.hasAttribute('active')).toBe(false);
+    // The emulator answers within a task, before a poll would see the upload running, so it holds the upload until
+    // the bar has been seen active. Live, the real API is slow enough on its own.
+    const released = withResolvers();
+    if (!isLive) {
+      emulatorSession().on('POST /base/', async ({ next }) => {
+        await released.promise;
+        return next();
+      });
+    }
 
     api.addFileFromObject(IMAGE.PIXEL);
     api.uploadAll();
 
     await expect.poll(() => common.hasAttribute('active')).toBe(true);
+    released.resolve();
     await expect.poll(() => api.getOutputCollectionState().successCount).toBe(1);
     await expect.poll(() => common.hasAttribute('active')).toBe(false);
   });

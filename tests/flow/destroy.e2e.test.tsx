@@ -1,11 +1,15 @@
 import type { FileFromOptions } from '@uploadcare/upload-client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { delay } from '@/utils/delay';
-import { clearSent, installTelemetryStub, SETTLE_MS, sent, waitForType } from '~/tests/api/telemetry/stub';
+import { clearSent, sent, waitForType } from '~/tests/api/telemetry/sink';
 import { IMAGE } from '~/tests/fixtures/files';
+import { isLive } from '~/tests/utils/emulator.browser';
 import { recordEvents } from '~/tests/utils/event-recorder';
 import { inCtx, renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
+
+/** Longer than the 300ms output flush, so trailing telemetry has been queued and sent. */
+const SETTLE_MS = 1000;
 
 /**
  * Once the uploader is destroyed — every block of its ctx removed and the deferred teardown run — nothing may leave
@@ -37,7 +41,6 @@ const destroy = async (ctxName: string) => {
 beforeEach(() => {
   uploadFile.mockReset();
   uploadFile.mockImplementation(pendingUntilAborted);
-  installTelemetryStub();
 });
 
 describe('after the uploader is destroyed', () => {
@@ -53,7 +56,8 @@ describe('after the uploader is destroyed', () => {
     expect(signal?.aborted).toBe(true);
   });
 
-  it('dispatches no event and sends no telemetry for the cancelled upload', async () => {
+  // Fake-only: telemetry is read back from the emulator, and a live run has none.
+  it.skipIf(isLive)('dispatches no event and sends no telemetry for the cancelled upload', async () => {
     const { ctxName, api, provider } = await renderSolution('regular', { qualityInsights: true });
     await waitForType('init-solution');
     const recorder = recordEvents(provider);
@@ -69,7 +73,7 @@ describe('after the uploader is destroyed', () => {
     // Negative wait: longer than the telemetry flush, and nothing marks "nothing happened".
     await delay(SETTLE_MS);
 
-    expect(sent).toEqual([]);
+    expect(sent()).toEqual([]);
     expect(recorder.types.slice(eventsBefore)).toEqual([]);
   });
 

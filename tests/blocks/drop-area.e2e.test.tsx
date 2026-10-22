@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { delay } from '@/utils/delay';
 import { expectActivity, modalDialog, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -29,6 +28,10 @@ const transfer = (build: (data: DataTransfer) => void) => {
   build(data);
   return data;
 };
+
+/** The dropped urls in the collection, in order. */
+const droppedUrls = (api: Awaited<ReturnType<typeof openStartFrom>>['api']) =>
+  api.getOutputCollectionState().allEntries.map((entry) => entry.externalUrl);
 
 const dragOver = (dropArea: HTMLElement) => {
   const rect = dropArea.getBoundingClientRect();
@@ -119,34 +122,36 @@ describe('dropping', () => {
     const { dropArea, api } = await openStartFrom();
 
     dropArea.dispatchEvent(new DragEvent('drop', { bubbles: true, composed: true, dataTransfer: new DataTransfer() }));
-    // Negative wait: a drop that adds nothing fires no event, so give the async drop handler time to have run.
-    await delay(300);
+    // The sentinel: a drop that does add goes through the same async handler, after the empty one.
+    dropUrl(dropArea, 'https://example.com/sentinel.jpg');
 
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
+    await expect.poll(() => droppedUrls(api)).toEqual(['https://example.com/sentinel.jpg']);
   });
 
   it('refuses a second item when multiple is off', async () => {
     const { dropArea, api } = await openStartFrom({ multiple: false });
     dropUrl(dropArea, 'https://example.com/first.jpg');
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
+    await expect.poll(() => droppedUrls(api)).toEqual(['https://example.com/first.jpg']);
 
     dropUrl(dropArea, 'https://example.com/second.jpg');
-    // Negative wait: the refused drop has no signal; the first drop landed well within this window.
-    await delay(400);
+    // The sentinel: with the first file gone the area accepts again, and its drop lands after the refused one.
+    api.removeFileByInternalId(api.getOutputCollectionState().allEntries[0].internalId);
+    dropUrl(dropArea, 'https://example.com/sentinel.jpg');
 
-    expect(api.getOutputCollectionState().totalCount).toBe(1);
+    await expect.poll(() => droppedUrls(api)).toEqual(['https://example.com/sentinel.jpg']);
   });
 
   it('refuses more items than multipleMax allows', async () => {
     const { dropArea, api } = await openStartFrom({ multiple: true, multipleMax: 1 });
     dropUrl(dropArea, 'https://example.com/first.jpg');
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
+    await expect.poll(() => droppedUrls(api)).toEqual(['https://example.com/first.jpg']);
 
     dropUrl(dropArea, 'https://example.com/second.jpg');
-    // Negative wait: the refused drop has no signal; the first drop landed well within this window.
-    await delay(400);
+    // The sentinel: with the first file gone the area accepts again, and its drop lands after the refused one.
+    api.removeFileByInternalId(api.getOutputCollectionState().allEntries[0].internalId);
+    dropUrl(dropArea, 'https://example.com/sentinel.jpg');
 
-    expect(api.getOutputCollectionState().totalCount).toBe(1);
+    await expect.poll(() => droppedUrls(api)).toEqual(['https://example.com/sentinel.jpg']);
   });
 });
 
@@ -163,10 +168,14 @@ describe('when local uploads are not offered', () => {
   });
 
   it('ignores a drop while disabled', async () => {
-    const { root, api } = await openStartFrom({ sourceList: 'url, camera' });
+    const { root, api, config } = await openStartFrom({ sourceList: 'url, camera' });
     // Every area in the solution is disabled, so any of them proves the point — `.elements()` rather than `.query()`
-    // because the strict locator refuses an ambiguous match, which is the behaviour worth keeping elsewhere.
-    const [area] = within(root).getByTestId('uc-drop-area').elements();
+    // because the strict locator refuses an ambiguous match, which is the behaviour worth keeping elsewhere. The one
+    // with content to hide, because its `hidden` shows when it is enabled again.
+    const area = within(root)
+      .getByTestId('uc-drop-area')
+      .elements()
+      .find((element) => element.querySelector('[data-default-slot]')) as HTMLElement;
 
     area.dispatchEvent(
       new DragEvent('drop', {
@@ -175,9 +184,17 @@ describe('when local uploads are not offered', () => {
         dataTransfer: transfer((d) => d.items.add('https://example.com/photo.jpg', 'text/uri-list')),
       }),
     );
-    // Negative wait: a refused drop has no signal.
-    await delay(400);
+    // The sentinel: with local uploads back the area accepts, and its drop lands after the refused one.
+    config.sourceList = 'local, url, camera';
+    await expect.poll(() => area.hidden).toBe(false);
+    area.dispatchEvent(
+      new DragEvent('drop', {
+        bubbles: true,
+        composed: true,
+        dataTransfer: transfer((d) => d.items.add('https://example.com/sentinel.jpg', 'text/uri-list')),
+      }),
+    );
 
-    expect(api.getOutputCollectionState().totalCount).toBe(0);
+    await expect.poll(() => droppedUrls(api)).toEqual(['https://example.com/sentinel.jpg']);
   });
 });

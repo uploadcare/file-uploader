@@ -1,6 +1,8 @@
 import { createHash, createHmac } from 'node:crypto';
 import path from 'node:path';
+import { SIGNED_UPLOADS_PUBLIC_KEY, SIGNED_UPLOADS_SECRET_KEY } from '@uploadcare/api-emulator';
 import type { BrowserCommand } from 'vitest/node';
+import { isLive } from './network';
 
 export const waitFileChooserAndUpload: BrowserCommand<[string[]]> = async ({ page, testPath }, relativePaths) => {
   if (!testPath) {
@@ -33,22 +35,30 @@ export type AuthTokenKind =
   | 'wrong-key';
 
 /**
- * Mints a real Upload API token, in Node, where the project secret key is.
+ * Mints an Upload API token, in Node, where the project secret key is.
  *
  * The browser must never see that key, which is the whole point of the scheme,
- * so this is the only way an e2e test can prove the uploader's token actually
- * works against the real API rather than against a stub.
+ * so this is the only way an e2e test can get a token the API verifies. Against
+ * the emulator that is a project the test turns Signed Uploads on for, with the
+ * `signedUploads` preset; live, it is a real one.
  *
- * Returns `null` when the credentials are not configured, and the tests that
- * need them skip.
+ * Returns `null` when a live run has no credentials configured, and the tests
+ * that need them skip. With `E2E_REQUIRE_SECURE_UPLOADS=1`, which the CI step
+ * that exists to run them sets, it throws instead: missing or rotated secrets
+ * must fail that step, not leave it green with every test skipped.
  */
 export const mintSecureUploadsCredentials: BrowserCommand<[AuthTokenKind?]> = async (
   _ctx,
   kind: AuthTokenKind = 'valid',
 ): Promise<SecureUploadsCredentials | null> => {
-  const publicKey = process.env.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY;
-  const secretKey = process.env.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY;
+  const publicKey = isLive ? process.env.UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY : SIGNED_UPLOADS_PUBLIC_KEY;
+  const secretKey = isLive ? process.env.UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY : SIGNED_UPLOADS_SECRET_KEY;
   if (!publicKey || !secretKey) {
+    if (process.env.E2E_REQUIRE_SECURE_UPLOADS === '1') {
+      throw new Error(
+        'E2E_REQUIRE_SECURE_UPLOADS=1, but UPLOAD_CLIENT_SECURE_UPLOADS_PUBLIC_KEY or UPLOAD_CLIENT_SECURE_UPLOADS_SECRET_KEY is not set',
+      );
+    }
     return null;
   }
 

@@ -56,27 +56,19 @@ describe('browser-info', () => {
   describe('safariDesktop flag', () => {
     it('should be true for desktop safari', () => {
       const userAgentGetter = vi.spyOn(window.navigator, 'userAgent', 'get');
-      try {
-        for (const ua of DESKTOP_SAFARI_USER_AGENTS) {
-          userAgentGetter.mockReturnValue(ua);
-          const browserInfo = calcBrowserInfo();
-          expect(browserInfo.safariDesktop).toBe(true);
-        }
-      } finally {
-        userAgentGetter.mockRestore();
+      for (const ua of DESKTOP_SAFARI_USER_AGENTS) {
+        userAgentGetter.mockReturnValue(ua);
+        const browserInfo = calcBrowserInfo();
+        expect(browserInfo.safariDesktop).toBe(true);
       }
     });
 
     it('should be false for other browsers', () => {
       const userAgentGetter = vi.spyOn(window.navigator, 'userAgent', 'get');
-      try {
-        for (const ua of [...OTHER_DESKTOP_USER_AGENTS, ...OTHER_MOBILE_USER_AGENTS, ...MOBILE_SAFARI_USER_AGENTS]) {
-          userAgentGetter.mockReturnValue(ua);
-          const browserInfo = calcBrowserInfo();
-          expect(browserInfo.safariDesktop).toBe(false);
-        }
-      } finally {
-        userAgentGetter.mockRestore();
+      for (const ua of [...OTHER_DESKTOP_USER_AGENTS, ...OTHER_MOBILE_USER_AGENTS, ...MOBILE_SAFARI_USER_AGENTS]) {
+        userAgentGetter.mockReturnValue(ua);
+        const browserInfo = calcBrowserInfo();
+        expect(browserInfo.safariDesktop).toBe(false);
       }
     });
   });
@@ -86,32 +78,24 @@ describe('browser-features', () => {
   describe('htmlMediaCapture', () => {
     it('should be true if capture is supported', () => {
       const originalDocumentCreateElement = document.createElement.bind(document);
-      const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation(() => {
+      vi.spyOn(document, 'createElement').mockImplementation(() => {
         const input = originalDocumentCreateElement('input');
         input.capture = '';
         return input;
       });
-      try {
-        const browserFeatures = calcBrowserFeatures();
-        expect(browserFeatures.htmlMediaCapture).toBe(true);
-      } finally {
-        createElementSpy.mockRestore();
-      }
+      const browserFeatures = calcBrowserFeatures();
+      expect(browserFeatures.htmlMediaCapture).toBe(true);
     });
     it('should be false if capture is not supported', () => {
       const originalDocumentCreateElement = document.createElement.bind(document);
-      const createElementSpy = vi.spyOn(document, 'createElement').mockImplementation(() => {
+      vi.spyOn(document, 'createElement').mockImplementation(() => {
         const input = originalDocumentCreateElement('input');
         // @ts-expect-error
         delete input.capture;
         return input;
       });
-      try {
-        const browserFeatures = calcBrowserFeatures();
-        expect(browserFeatures.htmlMediaCapture).toBe(false);
-      } finally {
-        createElementSpy.mockRestore();
-      }
+      const browserFeatures = calcBrowserFeatures();
+      expect(browserFeatures.htmlMediaCapture).toBe(false);
     });
   });
 });

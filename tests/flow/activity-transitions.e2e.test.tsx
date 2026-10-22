@@ -23,7 +23,7 @@ describe('regular: entering the flow', () => {
     await expectModal(root, 'start-from', 'open');
     // Not just state: the source list is rendered inside the dialog that is actually open.
     await expect
-      .element(within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }))
+      .element(within(root).getByTestId('uc-start-from').getByRole('button', { name: 'From link', exact: true }))
       .toBeVisible();
     expect(api.getCurrentActivity()).toBe('start-from');
     expect(recorder.detailsOf('activity-change').at(-1)).toEqual({ activity: 'start-from' });
@@ -49,7 +49,7 @@ describe('regular: start-from to a source', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await within(root).getByTestId('uc-start-from').getByText('From link', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'From link', exact: true }).click();
 
     await expectActivity(root, 'url');
     await expectModal(root, 'start-from', 'closed');
@@ -61,7 +61,7 @@ describe('regular: start-from to a source', () => {
     api.initFlow();
     await expectModal(root, 'start-from', 'open');
 
-    await within(root).getByTestId('uc-start-from').getByText('Camera', { exact: true }).click();
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Camera', exact: true }).click();
 
     await expectActivity(root, 'camera');
     expect(api.getCurrentActivity()).toBe('camera');
@@ -118,20 +118,17 @@ describe('inline: no modal is ever used', () => {
   // used to null the activity, which inline turns into a reset to the start screen.
   it('leaves the inline uploader where it is and warns', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    try {
-      const { root, api } = await renderSolution('inline');
-      api.addFileFromObject(IMAGE.PIXEL);
-      await expectActivity(root, 'upload-list');
+    const { root, api } = await renderSolution('inline');
+    api.addFileFromObject(IMAGE.PIXEL);
+    await expectActivity(root, 'upload-list');
 
-      api.setModalState(false);
+    api.setModalState(false);
 
-      await vi.waitFor(() =>
-        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), expect.stringContaining('navigate()')),
-      );
-      expect(api.getCurrentActivity()).toBe('upload-list');
-    } finally {
-      warn.mockRestore();
-    }
+    // The warning is the last thing setModalState(false) does, so the activity is final once it fires.
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), expect.stringContaining('navigate()')),
+    );
+    expect(api.getCurrentActivity()).toBe('upload-list');
   });
 });
 
