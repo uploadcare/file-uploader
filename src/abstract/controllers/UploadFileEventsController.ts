@@ -55,15 +55,14 @@ export class UploadFileEventsController {
     }
   }
 
-  /** `FILE_UPLOAD_START` for each entry that just started (non-silently) uploading. */
-  public start(ids: Iterable<Uid>): void {
-    for (const id of ids) {
-      const entry = TypedData.getByUid<UploadEntryData>(id);
-      if (!entry) continue;
-      const { isUploading, silent } = entry.values;
-      if (isUploading && !silent) {
-        this._emit(UploaderEventType.FILE_UPLOAD_START, toOutputFileEntry(entry));
-      }
+  /**
+   * `FILE_UPLOAD_START` for an entry whose upload starts now (unless it was added silently). Called by
+   * `UploadController` where the upload starts rather than from the collection observer: its changes arrive batched,
+   * and an upload that finishes inside one batch would never be seen uploading.
+   */
+  public start(entry: Entry): void {
+    if (!entry.get('silent')) {
+      this._emit(UploaderEventType.FILE_UPLOAD_START, toOutputFileEntry(entry));
     }
   }
 

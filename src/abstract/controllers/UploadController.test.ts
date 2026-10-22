@@ -1,8 +1,10 @@
 import { CancelError, UploadcareError, type UploadcareFile, uploadFile } from '@uploadcare/upload-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { Uid } from '../../lit/Uid';
 import type { ConfigType, OutputFileEntry } from '../../types';
 import { ControllerContainer, containerOf } from '../di/ControllerContainer';
+import { UploaderEventType } from '../EventBus';
 import { __resetLoggerForTests } from '../logger';
 import { PluginController } from '../managers/plugin';
 import type { Owned, PluginFileHookRegistration } from '../managers/plugin/PluginTypes';
@@ -167,6 +169,26 @@ describe('UploadController', () => {
       expect(entry?.get('uuid')).toBe('u1');
       expect(entry?.get('uploadProgress')).toBe(100);
       expect(entry?.get('cdnUrl')).toBe('https://cdn/u1/');
+    });
+
+    it('emits FILE_UPLOAD_START as the upload starts, not when the collection reports it', async () => {
+      // The collection reports changes in batches; an upload that finishes inside one would never be seen starting.
+      const { container, controller, collection } = setup();
+      const emit = vi.spyOn(container.get(EventEmitter), 'emit');
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+      const silent = collection.add({ file: new File(['x'], 'b.txt'), silent: true });
+      let startedBeforeRequest = false;
+      mockUploadFile.mockImplementation(async () => {
+        startedBeforeRequest = emit.mock.calls.some(([type]) => type === UploaderEventType.FILE_UPLOAD_START);
+        return makeFileInfo();
+      });
+
+      await controller.uploadEntry(id);
+      await controller.uploadEntry(silent);
+
+      expect(startedBeforeRequest).toBe(true);
+      const starts = emit.mock.calls.filter(([type]) => type === UploaderEventType.FILE_UPLOAD_START);
+      expect(starts).toEqual([[UploaderEventType.FILE_UPLOAD_START, expect.objectContaining({ internalId: id })]]);
     });
 
     it('prefers an existing entry cdnUrl over the server one', async () => {
