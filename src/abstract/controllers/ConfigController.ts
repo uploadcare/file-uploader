@@ -7,6 +7,13 @@ import type { ReactiveStore } from '../di/ReactiveStore';
 import { type ObserveOptions, SignalMap } from '../di/SignalMap';
 
 /**
+ * A custom (plugin-registered) config key: any string except a built-in name, so
+ * a built-in key can't fall through to the untyped overloads below — its value
+ * type and spelling are checked by the typed ones.
+ */
+export type CustomConfigKey<K extends string> = K extends keyof ConfigType ? never : K;
+
+/**
  * Pure-logic config store. Knows nothing about DOM, attributes, or Lit.
  *
  * In the v1 → v2 strangler this is the source of truth for the `*cfg/*` state
@@ -57,7 +64,7 @@ export class ConfigController implements ReactiveStore<ConfigType> {
 
   public get<K extends keyof ConfigType>(key: K): ConfigType[K];
   /** Read a dynamically-registered (custom) key. */
-  public get(key: string): unknown;
+  public get<K extends string>(key: CustomConfigKey<K>): unknown;
   public get(key: string): unknown {
     // Every built-in is seeded at construction, so the value is always present.
     return this.#state.get(key);
@@ -83,7 +90,7 @@ export class ConfigController implements ReactiveStore<ConfigType> {
   /** Notifies only when the value actually changes (`Object.is` dedup). */
   public set<K extends keyof ConfigType>(key: K, value: ConfigType[K]): void;
   /** Write a dynamically-registered (custom) key. */
-  public set(key: string, value: unknown): void;
+  public set<K extends string>(key: CustomConfigKey<K>, value: unknown): void;
   public set(key: string, value: unknown): void {
     this.#state.set(key, value);
   }
@@ -112,7 +119,11 @@ export class ConfigController implements ReactiveStore<ConfigType> {
     options?: ObserveOptions,
   ): () => void;
   /** Atomic per-key subscription for a dynamically-registered (custom) key. */
-  public observe(key: string, listener: (value: unknown) => void, options?: ObserveOptions): () => void;
+  public observe<K extends string>(
+    key: CustomConfigKey<K>,
+    listener: (value: unknown) => void,
+    options?: ObserveOptions,
+  ): () => void;
   public observe(key: string, listener: (value: unknown) => void, options?: ObserveOptions): () => void {
     // Built-ins are always seeded, so the map's `| undefined` value arm never
     // materializes for a `ConfigType` key — narrowed at the typed overload above.
