@@ -1,4 +1,4 @@
-import { html } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import type { ApiHostEventListenerMap } from '../../lit/api-host-types';
 import { booleanAttribute } from '../../lit/boolean-attribute';
@@ -55,13 +55,28 @@ export class Uploader extends WithConfig(WithApi(ChildBlock)) {
   @property({ attribute: 'dynamic-button', converter: booleanAttribute })
   public dynamicButton = false;
 
+  private _mintedCtxName: string | undefined = undefined;
+
   public override connectedCallback(): void {
     // Single-tag convenience: if the user never set `ctx-name`, mint one so the
     // host + nested solution share a private ctx without boilerplate.
     if (!this.ctxName && !this.hasAttribute('ctx-name')) {
-      this.setAttribute('ctx-name', `uc-uploader-${UID.generateRandomUUID().slice(0, 8)}`);
+      this._mintedCtxName = `uc-uploader-${UID.generateRandomUUID().slice(0, 8)}`;
+      this.setAttribute('ctx-name', this._mintedCtxName);
     }
     super.connectedCallback();
+  }
+
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+    // A `ctxName` property replaced the minted name: Lit restores one set
+    // before upgrade only in the first update, after `connectedCallback`
+    // minted. Point the attribute at the real ctx instead of the minted one.
+    const minted = this._mintedCtxName;
+    if (minted && this.ctxName && this.ctxName !== minted && this.getAttribute('ctx-name') === minted) {
+      this._mintedCtxName = undefined;
+      this.setAttribute('ctx-name', this.ctxName);
+    }
   }
 
   public override render() {
