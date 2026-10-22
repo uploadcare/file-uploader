@@ -28,14 +28,21 @@ export class UploadCollectionEventsController {
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(UploadController) private readonly _upload!: UploadController;
 
+  /**
+   * Whether `COMMON_UPLOAD_SUCCESS` has fired for the collection as it is. Every file is validated again once uploaded,
+   * and validations that land in separate batches would each see the whole collection done and report it again.
+   */
+  private _isUploadSuccessReported = false;
+
   private _emit = (...args: Parameters<EventEmitter['emit']>): void => {
     this._eventEmitter.emit(...args);
   };
 
-  /** Membership changed → the current group no longer describes the collection. */
+  /** Membership changed → the current group no longer describes the collection, and its success is not reported yet. */
   public resetGroupIfMembershipChanged(added: Set<Entry>, removed: Set<Entry>): void {
     if (added.size || removed.size) {
       this.resetGroup();
+      this._isUploadSuccessReported = false;
     }
   }
 
@@ -103,7 +110,10 @@ export class UploadCollectionEventsController {
     );
   }
 
-  /** `COMMON_UPLOAD_SUCCESS` when every entry is loaded, none errored, and there are no collection errors. */
+  /**
+   * `COMMON_UPLOAD_SUCCESS` when every entry is loaded, none errored, and there are no collection errors — once per
+   * change into that state.
+   */
   public emitCommonSuccessIfComplete(): void {
     const collection = this._collection;
     // One pass: "all loaded, none errored".
@@ -119,16 +129,17 @@ export class UploadCollectionEventsController {
         loadedCount++;
       }
     }
-    if (
+    const isUploadSuccess =
       collection.size > 0 &&
       !hasErrored &&
       collection.size === loadedCount &&
-      this._collectionState.get('collectionErrors').length === 0
-    ) {
+      this._collectionState.get('collectionErrors').length === 0;
+    if (isUploadSuccess && !this._isUploadSuccessReported) {
       this._emit(
         UploaderEventType.COMMON_UPLOAD_SUCCESS,
         this._api.getOutputCollectionState() as OutputCollectionState<'success'>,
       );
     }
+    this._isUploadSuccessReported = isUploadSuccess;
   }
 }
