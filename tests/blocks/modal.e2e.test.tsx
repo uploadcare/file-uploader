@@ -39,9 +39,8 @@ describe('uc-modal native close routing', () => {
 
     await expect.poll(() => modalCloseHandler.mock.calls.length).toBe(1);
     expect(modalCloseHandler.mock.calls[0][0].detail).toMatchObject({ hasActiveModals: false });
-    // The router's foreground modal slot cleared: the Modal block reflects
-    // that back onto the dialog's a11y state.
-    await expect.poll(() => document.querySelector('uc-modal')?.getAttribute('aria-modal')).toBe('false');
+    // The router's foreground modal slot cleared: the Modal block closes the dialog.
+    await expect.poll(() => dialog.open).toBe(false);
   });
 });
 
