@@ -51,6 +51,10 @@ function formatTime(time: number): string {
   return `${minutes}:${seconds}`;
 }
 
+/** The current device stays selected while it is still listed; otherwise the first one takes over. */
+const keepListedDeviceId = (devices: { value: string }[], currentId: string | null): string | null =>
+  devices.some((device) => device.value === currentId) ? currentId : (devices[0]?.value ?? null);
+
 const DEFAULT_PICTURE_FORMAT = 'image/jpeg';
 const DEFAULT_VIDEO_FORMAT = 'video/webm';
 
@@ -928,11 +932,11 @@ export class CameraSource extends ChildBlock {
 
       this._cameraSelectOptions = this._cameraDevices;
       this._cameraSelectHidden = this._cameraDevices.length <= 1;
-      this._selectedCameraId = this._cameraDevices[0]?.value ?? null;
+      this._selectedCameraId = keepListedDeviceId(this._cameraDevices, this._selectedCameraId);
 
       this._audioSelectOptions = this._audioDevices;
       this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
-      this._selectedAudioId = this._audioDevices[0]?.value ?? null;
+      this._selectedAudioId = keepListedDeviceId(this._audioDevices, this._selectedAudioId);
     } catch (error) {
       if (isAbortError(error)) throw error;
       this._telemetry.sendEventError(error, 'camera devices. Failed to get devices');
