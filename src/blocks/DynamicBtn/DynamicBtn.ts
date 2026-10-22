@@ -1,6 +1,5 @@
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { cache } from 'lit/directives/cache.js';
 import { SourceListController } from '../../abstract/controllers';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
@@ -361,12 +360,12 @@ export class DynamicBtn extends ChildBlock {
     return html`
       <uc-drop-area .disabled=${!this.dropzone}>
         <div class=${this._getInnerClassMap()}>
-          ${cache(this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null)}
-          ${cache(!this.isPlainMode && this.shouldShowInline ? this._renderInline() : null)}
-          ${cache(!this.isPlainMode && this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null)}
-          ${cache(!this.isPlainMode && this.shouldShowDropdown ? this._renderDropdown() : null)}
-          ${cache(this.shouldShowAbortAction || this.hasCollectionEntries ? this._renderAbortAction() : null)}
-          ${cache(this._renderVisualDropArea())}
+          ${this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null}
+          ${!this.isPlainMode && this.shouldShowInline ? this._renderInline() : null}
+          ${!this.isPlainMode && this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null}
+          ${!this.isPlainMode && this.shouldShowDropdown ? this._renderDropdown() : null}
+          ${this.shouldShowAbortAction || this.hasCollectionEntries ? this._renderAbortAction() : null}
+          ${this._renderVisualDropArea()}
         </div>
       </uc-drop-area>
     `;
