@@ -124,4 +124,18 @@ describe('uc-camera-source (device selection)', () => {
     await expect.poll(() => getUserMedia.mock.calls.length).toBe(1);
     expect(requestedCameraId(getUserMedia)).toBe('cam-b');
   });
+
+  it('keeps showing the camera in use when a devicechange reorders the list', async () => {
+    const getUserMedia = stubDevices();
+    renderRegularHost();
+    await navigateToCameraSource();
+    await expect.poll(() => cameraSelect()?.querySelectorAll('option').length).toBe(2);
+    await expect.poll(() => requestedCameraId(getUserMedia)).toBe('cam-a');
+
+    devices = [devices[1]!, devices[0]!];
+    navigator.mediaDevices.dispatchEvent(new Event('devicechange'));
+    await expect.poll(() => cameraSelect().options[0]?.value).toBe('cam-b');
+
+    expect(cameraSelect().value).toBe('cam-a');
+  });
 });
