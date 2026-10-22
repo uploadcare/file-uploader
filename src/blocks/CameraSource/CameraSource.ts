@@ -83,8 +83,10 @@ export class CameraSource extends ChildBlock {
 
   private _stream: MediaStream | null = null;
 
+  @state()
   private _selectedAudioId: string | null = null;
 
+  @state()
   private _selectedCameraId: string | null = null;
 
   private _activeTab: CameraMode | null = null;
@@ -1049,6 +1051,7 @@ export class CameraSource extends ChildBlock {
         <uc-select
           class="uc-camera-select"
           .options=${this._cameraSelectOptions}
+          .value=${this._selectedCameraId ?? ''}
           ?hidden=${this._cameraSelectHidden}
           @change=${this._handleCameraSelectChange}
         >
@@ -1174,6 +1177,7 @@ export class CameraSource extends ChildBlock {
           <uc-select
             class="uc-audio-select"
             .options=${this._audioSelectOptions}
+            .value=${this._selectedAudioId ?? ''}
             ?hidden=${this._audioSelectHidden}
             ?disabled=${this._audioSelectDisabled}
             @change=${this._handleAudioSelectChange}
