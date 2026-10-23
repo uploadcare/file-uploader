@@ -262,17 +262,26 @@ export class ValidationController {
       }
 
       const tasks = entryDescriptors.map((validatorDescriptor) => async () => {
+        // Its own signal, so a timeout ignores only this validator's result; removing the entry still aborts it.
+        const validatorAbort = new AbortController();
+        const abortValidator = () => validatorAbort.abort();
+        abortController.signal.addEventListener('abort', abortValidator, { once: true });
+        // Stop waiting once aborted: a validator that ignores its signal must not hold the entry pending.
+        const aborted = new Promise<undefined>((resolve) => {
+          validatorAbort.signal.addEventListener('abort', () => resolve(undefined), { once: true });
+        });
         const timeoutId = setTimeout(() => {
           state.skippedValidators.add(validatorDescriptor.validator);
-          abortController.abort();
+          validatorAbort.abort();
           this._log.warn(LOG_TEXT.FILE_VALIDATION_TIMEOUT);
         }, timeoutMs);
 
         try {
-          const error = await validatorDescriptor.validator(outputEntry, api, {
-            signal: abortController.signal,
-          });
-          if (!error || abortController.signal.aborted) {
+          const error = await Promise.race([
+            validatorDescriptor.validator(outputEntry, api, { signal: validatorAbort.signal }),
+            aborted,
+          ]);
+          if (!error || validatorAbort.signal.aborted) {
             state.lastErrorThrownByValidator.set(validatorDescriptor.validator, undefined);
             return;
           }
@@ -284,13 +293,14 @@ export class ValidationController {
             this._log.warn(LOG_TEXT.MISSING_ERROR_MESSAGE);
           }
         } catch (error) {
-          if (!abortController.signal.aborted) {
+          if (!validatorAbort.signal.aborted) {
             state.skippedValidators.add(validatorDescriptor.validator);
             this._log.warn(LOG_TEXT.FILE_VALIDATION_FAILED, error);
             this._telemetry.sendEventError(error, `file validator. ${LOG_TEXT.FILE_VALIDATION_FAILED}`);
           }
         } finally {
           clearTimeout(timeoutId);
+          abortController.signal.removeEventListener('abort', abortValidator);
           if (validatorDescriptor.runOn !== 'change') {
             state.skippedValidators.add(validatorDescriptor.validator);
           }
