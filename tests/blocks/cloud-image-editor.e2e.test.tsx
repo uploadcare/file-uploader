@@ -146,6 +146,17 @@ describe('uc-cloud-image-editor', () => {
     expect(rejections).toEqual([]);
   });
 
+  // Fake-only: the error answer comes from the emulator.
+  it.skipIf(isLive)('reports a failed image info request even when the error body is JSON', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    emulatorSession().on('GET /:uuid/-/json/', () => Response.json({ detail: 'Not found.' }, { status: 404 }));
+    renderEditor();
+
+    await expect
+      .poll(() => errorSpy.mock.calls.filter((args) => args.includes('Failed to load image info')))
+      .toHaveLength(1);
+  });
+
   it('logs a timeout without an unhandled rejection when the container size stays zero', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
