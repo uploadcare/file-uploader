@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index.ts';
 import { getCtxName } from '../utils/getCtxName';
@@ -103,6 +103,28 @@ describe('uc-camera-source (device selection)', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('stops the previous stream when another camera is picked', async () => {
+    const getUserMedia = stubDevices();
+    // Opened ahead and handed back at once, as a camera that is already warm answers: the switch must not rely on
+    // `getUserMedia` being slow for the old stream to be stopped.
+    const warm = await navigator.mediaDevices.getUserMedia({ video: true });
+    onTestFinished(() => {
+      for (const track of warm.getTracks()) track.stop();
+    });
+    renderRegularHost();
+    await navigateToCameraSource();
+    const video = () => document.querySelector('uc-camera-source video') as HTMLVideoElement | null;
+    await expect.poll(() => video()?.srcObject instanceof MediaStream).toBe(true);
+    const first = video()?.srcObject as MediaStream;
+    getUserMedia.mockImplementation(async () => warm);
+
+    await pickCamera('cam-b');
+    // The sentinel: the new stream is on the video, so the switch has fully happened.
+    await expect.poll(() => video()?.srcObject).toBe(warm);
+
+    expect(first.getTracks().map((track) => track.readyState)).toEqual(first.getTracks().map(() => 'ended'));
   });
 
   it('keeps the picked camera across a devicechange that still lists it', async () => {
