@@ -234,6 +234,22 @@ describe('uc-cloud-image-editor', () => {
     await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
   });
 
+  it('keeps the classes on the cropper while it activates and deactivates', async () => {
+    const { element, editor } = renderEditor();
+    const cropper = editor.getByTestId('uc-editor-image-cropper');
+    const fader = () => activeClass(element.querySelector('uc-editor-image-fader'));
+    await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+    cropper.element().classList.add('my-cropper');
+
+    await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
+    await expect.poll(fader, { timeout: 5000 }).toMatch(/uc-active_from_/);
+    expect(activeClass(cropper.element())).toMatch(/\bmy-cropper\b/);
+
+    await userEvent.click(editor.getByRole('tab', { name: /crop/i }));
+    await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+    expect(activeClass(cropper.element())).toMatch(/\bmy-cropper\b/);
+  });
+
   it('renders its icons', async () => {
     const { element } = renderEditor();
 

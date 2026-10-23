@@ -17,7 +17,7 @@ import {
 } from './crop-utils.js';
 import { CROP_PADDING } from './cropper-constants.js';
 import { EditorBlock } from './editor-context';
-import { classNames } from './lib/classNames.js';
+import { applyClassNames } from './lib/classNames.js';
 import { pick } from './lib/pick.js';
 import { TabId } from './toolbar-constants';
 import type { CropAspectRatio, ImageSize, Rectangle, Transformations } from './types';
@@ -355,7 +355,7 @@ export class EditorImageCropper extends EditorBlock {
       this._frameRef.value?.toggleThumbs(true);
       this._transitionToImage();
       setTimeout(() => {
-        this.className = classNames({
+        applyClassNames(this, {
           'uc-active_from_viewer': fromViewer,
           'uc-active_from_editor': !fromViewer,
           'uc-inactive_to_editor': false,
@@ -532,7 +532,7 @@ export class EditorImageCropper extends EditorBlock {
 
     this._transitionToCrop();
 
-    this.className = classNames({
+    applyClassNames(this, {
       'uc-active_from_viewer': false,
       'uc-active_from_editor': false,
       'uc-inactive_to_editor': true,
