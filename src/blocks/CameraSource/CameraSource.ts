@@ -149,6 +149,9 @@ export class CameraSource extends ChildBlock {
   private _cameraHidden = true;
 
   @state()
+  private _hasVideoFrame = false;
+
+  @state()
   private _cameraActionsHidden = true;
 
   @state()
@@ -524,6 +527,16 @@ export class CameraSource extends ChildBlock {
     if (videoEl) {
       this.runTask(() => videoEl.play());
     }
+  };
+
+  // The shutter waits for a frame: a shot before the first one draws an empty canvas, which accepting turns into
+  // nothing at all.
+  private _handleVideoFrame = (): void => {
+    this._hasVideoFrame = true;
+  };
+
+  private _handleVideoEmptied = (): void => {
+    this._hasVideoFrame = false;
   };
 
   private _accept = (): void => {
@@ -1100,6 +1113,8 @@ export class CameraSource extends ChildBlock {
             transform: this._videoTransformCss,
           })}
           ?hidden=${this._videoHidden}
+          @loadeddata=${this._handleVideoFrame}
+          @emptied=${this._handleVideoEmptied}
           ${ref(this._videoRef)}
         ></video>
         <div class="uc-message-box" ?hidden=${this._messageHidden}>
@@ -1188,6 +1203,7 @@ export class CameraSource extends ChildBlock {
           @click=${this._handleStartCamera}
           class=${this._mutableClassButton}
           ?hidden=${this._cameraHidden}
+          ?disabled=${!this._hasVideoFrame}
           aria-label=${this._shotLabel}
         >
           <uc-icon name=${this._currentIcon}></uc-icon>

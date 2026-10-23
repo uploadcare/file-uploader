@@ -64,6 +64,33 @@ describe('uc-camera-source (parity, render surface + permissions)', () => {
     await expect.poll(() => video?.hasAttribute('hidden')).toBe(false);
   });
 
+  it('keeps the shutter disabled until the video has a frame', async () => {
+    // A canvas captured at 0 fps sends no frame until asked, standing in for a camera that is slow to deliver one.
+    // A shot taken before then drew an empty canvas, and accepting it added nothing.
+    const canvas = document.createElement('canvas');
+    canvas.width = 64;
+    canvas.height = 48;
+    const stream = canvas.captureStream(0);
+    const [track] = stream.getVideoTracks() as CanvasCaptureMediaStreamTrack[];
+    onTestFinished(() => track?.stop());
+    vi.spyOn(navigator.mediaDevices, 'getUserMedia').mockImplementation(async () => stream.clone());
+    renderRegularHost();
+    const cameraSource = await navigateToCameraSource();
+    const shutter = cameraSource.getByTestId('uc-camera-source--shot');
+    await expect.element(shutter).toBeVisible();
+    await expect.element(shutter).toBeDisabled();
+
+    const context = canvas.getContext('2d');
+    if (context) context.fillRect(0, 0, 64, 48);
+    const video = document.querySelector('uc-camera-source video') as HTMLVideoElement;
+    for (const live of (video.srcObject as MediaStream).getVideoTracks() as CanvasCaptureMediaStreamTrack[]) {
+      live.requestFrame();
+    }
+    track?.requestFrame();
+
+    await expect.element(shutter).toBeEnabled();
+  });
+
   it('reflects data-testid under testMode', async () => {
     renderRegularHost();
     await navigateToCameraSource();
