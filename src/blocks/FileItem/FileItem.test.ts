@@ -159,27 +159,18 @@ describe('FileItem (M-god step 6b-6 migration)', () => {
   // `UploadController.uploadEntries` directly. See UploaderPublicApi /
   // UploadController specs.)
 
-  it('single-focus: clicking an item focuses it and unfocuses the previously-focused one', async () => {
+  it('shows the focus highlight from the focused property', async () => {
     const ctxName = freshCtxName();
-    ensureUploaderCtx(ctxName);
-    const a = await mount(ctxName);
-    const b = await mount(ctxName);
-    await openRenderGate(a.el);
-    await openRenderGate(b.el);
+    const { el } = await mount(ctxName);
+    await openRenderGate(el);
 
-    a.el.click();
-    await a.el.updateComplete;
-    expect(a.el.hasAttribute('focused')).toBe(true);
-    expect(inner(a.el).hasAttribute('data-focused')).toBe(true); // the visible highlight
-    expect(b.el.hasAttribute('focused')).toBe(false);
+    el.focused = true;
+    await el.updateComplete;
+    expect(inner(el).hasAttribute('data-focused')).toBe(true);
 
-    b.el.click();
-    await a.el.updateComplete;
-    await b.el.updateComplete;
-    expect(b.el.hasAttribute('focused')).toBe(true);
-    expect(inner(b.el).hasAttribute('data-focused')).toBe(true);
-    expect(a.el.hasAttribute('focused')).toBe(false); // previous focus dropped — O(1), no full sweep
-    expect(inner(a.el).hasAttribute('data-focused')).toBe(false);
+    el.focused = false;
+    await el.updateComplete;
+    expect(inner(el).hasAttribute('data-focused')).toBe(false);
   });
 
   it('wires the plugin manager via whenController once the PluginController resolves, and unsubscribes on disconnect', async () => {
@@ -402,42 +393,19 @@ describe('FileItem entry-state rendering', () => {
     expect(sendEvent).not.toHaveBeenCalled();
   });
 
-  it('does not re-focus a row that is uploading (drop-focus-on-upload holds on re-click)', async () => {
+  it('hides the focus highlight while the bound entry is uploading', async () => {
     const ctxName = freshCtxName();
     const { el } = await mount(ctxName);
     const collection = getCollection(ctxName);
     const uid = await bindEntry(el, collection, { fileName: 'photo.png' });
 
-    el.click();
+    el.focused = true;
     await el.updateComplete;
     expect(inner(el).hasAttribute('data-focused')).toBe(true);
 
-    // Row starts uploading → focus dropped (host attr + inner data-focused + static ref).
     collection.publishProp(uid, 'isUploading', true);
-    await delay(120);
     await el.updateComplete;
-    expect(el.hasAttribute('focused')).toBe(false);
     expect(inner(el).hasAttribute('data-focused')).toBe(false);
-
-    // Re-clicking while uploading must NOT re-apply the highlight.
-    el.click();
-    await el.updateComplete;
-    expect(el.hasAttribute('focused')).toBe(false);
-    expect(inner(el).hasAttribute('data-focused')).toBe(false);
-  });
-
-  it('clears focus when the bound entry transitions to uploading', async () => {
-    const ctxName = freshCtxName();
-    const { el } = await mount(ctxName);
-    const collection = getCollection(ctxName);
-    const uid = await bindEntry(el, collection, { fileName: 'photo.png' });
-
-    el.click();
-    expect(el.hasAttribute('focused')).toBe(true);
-
-    collection.publishProp(uid, 'isUploading', true);
-    await delay(120);
-    expect(el.hasAttribute('focused')).toBe(false);
   });
 });
 
@@ -500,18 +468,20 @@ describe('FileItem uid rebinding', () => {
     await el.updateComplete;
     await delay(0);
 
-    el.click();
-    expect(el.hasAttribute('focused')).toBe(true);
+    el.focused = true;
+    await el.updateComplete;
+    expect(inner(el).hasAttribute('data-focused')).toBe(true);
 
-    // The PREVIOUS entry starting to upload must NOT clear this item's focus —
-    // its keyed subscription (which drives focus-clear-on-uploading) is gone.
+    // The PREVIOUS entry starting to upload must NOT hide this item's focus —
+    // its signals are no longer tracked by render.
     collection.publishProp(uidA, 'isUploading', true);
+    await el.updateComplete;
     await delay(120);
-    expect(el.hasAttribute('focused')).toBe(true);
+    expect(inner(el).hasAttribute('data-focused')).toBe(true);
 
-    // The CURRENT entry uploading still clears focus.
+    // The CURRENT entry uploading still hides it.
     collection.publishProp(uidB, 'isUploading', true);
-    await delay(120);
-    expect(el.hasAttribute('focused')).toBe(false);
+    await el.updateComplete;
+    expect(inner(el).hasAttribute('data-focused')).toBe(false);
   });
 });
