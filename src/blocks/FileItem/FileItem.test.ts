@@ -288,6 +288,21 @@ describe('FileItem entry-state rendering', () => {
     expect(wrapper?.getAttribute('aria-label')).toBe('File photo.png in status uploading');
   });
 
+  it.each([
+    [{ errors: [{ message: 'boom' }] as never }, 'File photo.png in status failed'],
+    [{ isQueuedForUploading: true }, 'File photo.png in status queued for upload'],
+    [{ isQueuedForValidation: true }, 'File photo.png in status queued for validation'],
+    [{ isValidationPending: true }, 'File photo.png in status validating'],
+    [{ isUploading: true }, 'File photo.png in status uploading'],
+    [{ fileInfo: { uuid: 'srv' } as never }, 'File photo.png in status finished'],
+    [{}, 'File photo.png in status idle'],
+  ] satisfies [Partial<UploadEntryData>, string][])('names the status of an entry with %o', async (fields, label) => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    await bindEntry(el, getCollection(ctxName), { fileName: 'photo.png', ...fields });
+    expect(el.querySelector('.uc-file-name-wrapper')?.getAttribute('aria-label')).toBe(label);
+  });
+
   it('QUEUED-UPLOADING entry: remove hidden, progress NOT zeroed', async () => {
     const ctxName = freshCtxName();
     const { el } = await mount(ctxName);
