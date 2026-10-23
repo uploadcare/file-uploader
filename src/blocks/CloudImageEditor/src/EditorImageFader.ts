@@ -7,7 +7,7 @@ import type { CloudImageEditorController } from '../../../abstract/controllers/C
 import { debounced } from '../../../lit/rate-limited-method';
 import { batchPreloadImages } from '../../../utils/preloadImage.js';
 import { EditorBlock } from './editor-context';
-import { classNames } from './lib/classNames.js';
+import { applyClassNames } from './lib/classNames.js';
 import { linspace } from './lib/linspace.js';
 import { COLOR_OPERATIONS_CONFIG, type ColorPreview, TabId } from './toolbar-constants.js';
 import type { ImageSize, Transformations } from './types';
@@ -536,7 +536,7 @@ export class EditorImageFader extends EditorBlock {
       image.style.opacity = '1';
       image.style.transform = 'scale(1)';
 
-      this.className = classNames({
+      applyClassNames(this, {
         'uc-active_from_viewer': this._fromViewer,
         'uc-active_from_cropper': !this._fromViewer,
         'uc-inactive_to_cropper': false,
@@ -555,7 +555,7 @@ export class EditorImageFader extends EditorBlock {
           image.style.opacity = '1';
           image.style.transform = 'scale(1)';
 
-          this.className = classNames({
+          applyClassNames(this, {
             'uc-active_from_viewer': this._fromViewer,
             'uc-active_from_cropper': !this._fromViewer,
             'uc-inactive_to_cropper': false,
@@ -635,7 +635,7 @@ export class EditorImageFader extends EditorBlock {
         this._previewImage.style.transform = 'scale(1)';
       }
 
-      this.className = classNames({
+      applyClassNames(this, {
         'uc-active_from_viewer': false,
         'uc-active_from_cropper': false,
         'uc-inactive_to_cropper': true,

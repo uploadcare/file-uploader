@@ -250,6 +250,23 @@ describe('uc-cloud-image-editor', () => {
     expect(activeClass(cropper.element())).toMatch(/\bmy-cropper\b/);
   });
 
+  it('keeps the classes on the fader while it activates and deactivates', async () => {
+    const { element, editor } = renderEditor();
+    const cropper = editor.getByTestId('uc-editor-image-cropper');
+    const faderEl = () => element.querySelector('uc-editor-image-fader');
+    const fader = () => activeClass(faderEl());
+    await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+    faderEl()?.classList.add('my-fader');
+
+    await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
+    await expect.poll(fader, { timeout: 5000 }).toMatch(/uc-active_from_/);
+    expect(fader()).toMatch(/\bmy-fader\b/);
+
+    await userEvent.click(editor.getByRole('tab', { name: /crop/i }));
+    await expect.poll(fader).toMatch(/uc-inactive_to_cropper/);
+    expect(fader()).toMatch(/\bmy-fader\b/);
+  });
+
   it('renders its icons', async () => {
     const { element } = renderEditor();
 
