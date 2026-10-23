@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index.ts';
 import { getCtxName } from '../utils/getCtxName';
+import { clickSource, renderSolution, within } from '../utils/render-solution';
 import '../../types/jsx';
 
 // M9g Task 1 — additive parity e2e pinning current v1 behavior of
@@ -105,5 +106,60 @@ describe('uc-external-source (parity, render surface)', () => {
     await navigateToExternalSource();
 
     expect(document.querySelector('uc-external-source')?.getAttribute('data-testid')).toBe('uc-external-source');
+  });
+});
+
+describe('uc-external-source (preferred types)', () => {
+  const JPEG_URL = 'https://example.com/photo.jpg';
+  const PNG_URL = 'https://example.com/photo.png';
+  const ORIGINAL_URL = 'https://example.com/original.heic';
+
+  /** Picks one file in Dropbox that the remote picker offers in several formats, and returns the url that was added. */
+  const pickWithAlternatives = async (preferredTypes: string) => {
+    // `.invalid` never resolves, so the picker iframe posts nothing of its own over the message below.
+    const { api, root } = await renderSolution('regular', {
+      socialBaseUrl: 'https://social.invalid',
+      externalSourcesPreferredTypes: preferredTypes,
+    });
+    await clickSource(root, 'Dropbox');
+    const externalSource = within(root).getByTestId('uc-external-source');
+    await expect.element(externalSource).toBeVisible();
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        source: externalSource.element().querySelector('iframe')?.contentWindow,
+        data: {
+          type: 'selected-files-change',
+          total: 1,
+          selectedCount: 1,
+          isReady: true,
+          isMultipleMode: true,
+          selectedFiles: [
+            {
+              obj_type: 'selected_file',
+              url: ORIGINAL_URL,
+              filename: 'photo.heic',
+              alternatives: { 'image/jpeg': JPEG_URL, 'image/png': PNG_URL },
+            },
+          ],
+        },
+      }),
+    );
+    const done = externalSource.getByRole('button', { name: 'Done', exact: true });
+    await expect.element(done).toBeEnabled();
+    await done.click();
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
+    return api.getOutputCollectionState().allEntries[0]?.externalUrl;
+  };
+
+  it('takes the alternative of the first preferred type that has one', async () => {
+    expect(await pickWithAlternatives('application/pdf, image/png, image/*')).toBe(PNG_URL);
+  });
+
+  it('matches a wildcard preferred type', async () => {
+    expect(await pickWithAlternatives('video/*, image/*')).toBe(JPEG_URL);
+  });
+
+  it('keeps the original when no preferred type matches', async () => {
+    expect(await pickWithAlternatives('video/*')).toBe(ORIGINAL_URL);
   });
 });
