@@ -318,6 +318,31 @@ describe('uc-cloud-image-editor', () => {
     await expect.poll(layout).toEqual(settled('1'));
   });
 
+  it('keeps the tab indicator under the active tab, also when a new image arrives', async () => {
+    const { element, editor } = renderEditor();
+    const cropper = editor.getByTestId('uc-editor-image-cropper');
+    const indicatorOffBy = (tabId: string) => {
+      const tab = element.querySelector(`uc-btn-ui[data-id="${tabId}"]`)?.getBoundingClientRect();
+      const indicator = element.querySelector('.uc-tab-toggles_indicator')?.getBoundingClientRect();
+      if (!tab?.width || !indicator) return null;
+      return {
+        left: Math.abs(Math.round(indicator.left - tab.left)),
+        width: Math.abs(Math.round(indicator.width - tab.width)),
+      };
+    };
+    await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+    await expect.poll(() => indicatorOffBy('crop')).toEqual({ left: 0, width: 0 });
+
+    await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
+    await expect.poll(() => indicatorOffBy('tuning')).toEqual({ left: 0, width: 0 });
+
+    element.setAttribute('uuid', DEMO_IMAGE_UUID);
+    await expect
+      .poll(() => activeClass(element.querySelector('uc-editor-image-fader')), { timeout: 5000 })
+      .toMatch(/uc-active_from_/);
+    await expect.poll(() => indicatorOffBy('tuning')).toEqual({ left: 0, width: 0 });
+  });
+
   it('renders its icons', async () => {
     const { element } = renderEditor();
 
