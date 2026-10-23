@@ -1,8 +1,9 @@
 import { afterEach, beforeAll, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
-import type { RouterController } from '@/abstract/controllers/RouterController';
+import { RouterController } from '@/abstract/controllers/RouterController';
 import type { PluginActivityHost } from '@/index.ts';
 import { getCtxName } from '../utils/getCtxName';
+import { containerOf } from '../utils/registry';
 import '../../types/jsx';
 
 beforeAll(async () => {
@@ -24,7 +25,7 @@ afterEach(() => {
   appended.length = 0;
 });
 
-const routerOf = (host: PluginActivityHost): RouterController => host.router;
+const routerOf = (ctxName: string): RouterController => containerOf(ctxName).get(RouterController);
 
 describe('PluginActivityHost — dynamic registration (gap-fill ahead of ChildBlock port)', () => {
   it('stays inert (no activity attribute, no [active]) when created without a registration', async () => {
@@ -43,18 +44,10 @@ describe('PluginActivityHost — dynamic registration (gap-fill ahead of ChildBl
     const host = append(ctxName);
     await host.updateComplete;
 
-    const router = routerOf(host);
-    // The activity is already current before the registration is known — this
-    // is the scenario `updated()`'s "Keep activityType in sync if the
-    // registration arrives/changes late" comment guards: nothing in the
-    // existing plugin nets constructs a host that starts registration-less
-    // and only later receives its `.registration` (the Renderer's keyed
-    // `repeat()` only ever creates hosts with `.registration` already
-    // populated). We only pin what's observably correct today — the `activity`
-    // attribute sync and the plugin's render() being invoked — not the
-    // `[active]` attribute, whose reflection races the activityType update
-    // within the same `updated()` pass (a pre-existing v1 quirk the Task 2
-    // re-report redesign is expected to address, not preserve).
+    const router = routerOf(ctxName);
+    // The activity is already current before the registration is known. The
+    // Renderer's keyed `repeat()` only ever creates hosts with `.registration`
+    // already set, so nothing else covers a host that gets it later.
     router.setActivity('late-activity');
 
     let renderedEl: HTMLElement | undefined;
@@ -72,15 +65,16 @@ describe('PluginActivityHost — dynamic registration (gap-fill ahead of ChildBl
 
     await expect.poll(() => host.getAttribute('activity')).toBe('late-activity');
     await expect.poll(() => renderedEl?.textContent).toBe('late content');
+    expect(host.hasAttribute('active')).toBe(true);
+    expect(router.hasMountedActivity('late-activity')).toBe(true);
 
     // Regression: a host that adopted before its `.registration` arrived must
-    // still have a router subscription wired (`subRouter` in
-    // `ActivityChildBlock.controllerReady`), even though `activityType` was
-    // null at adoption time. Otherwise, once the late registration mounts the
-    // plugin, navigating away never re-renders the host and the plugin content
-    // stays mounted forever.
+    // still re-render on navigation, even though `activityType` was null at
+    // adoption time. Otherwise navigating away never unmounts the plugin and
+    // its content stays mounted forever.
     router.setActivity(null);
     await expect.poll(() => renderedEl?.textContent).toBe('');
+    expect(host.hasAttribute('active')).toBe(false);
   });
 });
 
