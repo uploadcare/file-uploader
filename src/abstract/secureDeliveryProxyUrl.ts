@@ -18,7 +18,7 @@ export async function resolveSecureDeliveryProxyUrl(
   url: string,
 ): Promise<string> {
   if (config.secureDeliveryProxy && config.secureDeliveryProxyUrlResolver) {
-    log.warn(
+    log.warnOnce(
       'Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. The secureDeliveryProxyUrlResolver will be used.',
     );
   }
