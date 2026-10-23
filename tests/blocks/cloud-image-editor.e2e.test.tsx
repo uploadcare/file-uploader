@@ -557,3 +557,147 @@ describe('uc-cloud-image-editor without <uc-config>', () => {
     }
   });
 });
+
+// Fake-only: each image's size comes from the emulator, so the cropper's `imageSize` says which image is open.
+describe.skipIf(isLive)('uc-cloud-image-editor container size', () => {
+  const SIZE_TIMEOUT = '[cloud-image-editor] timeout waiting for non-zero container size';
+  const widthOf: Record<string, number> = { [EDITOR_IMAGE_UUID]: 300, [DEMO_IMAGE_UUID]: 640 };
+
+  /** Answers each image's info with its own width, after `hold` settles when one is given. */
+  const serveImageSizes = (hold?: Promise<void>) => {
+    const served: string[] = [];
+    emulatorSession().on('GET /:uuid/-/json/', async ({ params }) => {
+      await hold;
+      served.push(params.uuid);
+      return Response.json({ width: widthOf[params.uuid] ?? 10, height: 200 });
+    });
+    return served;
+  };
+
+  /** The editor in a container that has no size until `show()`. */
+  const renderInContainer = ({ sized = false, image }: { sized?: boolean; image?: string } = {}) => {
+    const ctxName = getCtxName();
+    const element = createInCtx<HTMLElement>('uc-cloud-image-editor', ctxName, image ? { uuid: image } : {});
+    const config = createInCtx('uc-config', ctxName, {
+      'cdn-cname': 'https://ucarecdn.com/',
+      'quality-insights': 'false',
+      pubkey: 'demopublickey',
+      'test-mode': 'true',
+    });
+    page.render(<div ctx-name={ctxName}></div>);
+    const container = inCtx<HTMLElement>('div', ctxName);
+    container.style.overflow = 'hidden';
+    const show = () => {
+      container.style.width = '';
+      container.style.height = '';
+    };
+    const hide = () => {
+      container.style.width = '0';
+      container.style.height = '0';
+    };
+    if (!sized) hide();
+    container.append(element, config);
+    const openWidth = () =>
+      (element.querySelector('uc-editor-image-cropper') as { imageSize?: { width: number } } | null)?.imageSize?.width;
+    const isOn = () => element.classList.contains('uc-editor_ON');
+    return { element, show, hide, openWidth, isOn };
+  };
+
+  const spyErrors = () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    return () => errorSpy.mock.calls.filter((args) => args.includes(SIZE_TIMEOUT)).length;
+  };
+
+  it('opens the image once the container gets a size after a while', async () => {
+    const sizeTimeouts = spyErrors();
+    serveImageSizes();
+    const { show, openWidth, isOn } = renderInContainer({ image: EDITOR_IMAGE_UUID });
+
+    await delay(500);
+    expect(isOn()).toBe(false);
+    expect(openWidth()).toBeUndefined();
+
+    show();
+    await expect.poll(isOn).toBe(true);
+    await expect.poll(openWidth).toBe(300);
+    expect(sizeTimeouts()).toBe(0);
+  });
+
+  it('opens an image set while the container has no size, once it gets one', async () => {
+    serveImageSizes();
+    const { element, show, openWidth } = renderInContainer();
+
+    element.setAttribute('uuid', DEMO_IMAGE_UUID);
+    await delay(100);
+    expect(openWidth()).toBeUndefined();
+
+    show();
+    await expect.poll(openWidth).toBe(640);
+  });
+
+  it('opens an image set after the container got its size', async () => {
+    serveImageSizes();
+    const { element, show, openWidth, isOn } = renderInContainer();
+    show();
+    await expect.poll(isOn).toBe(true);
+
+    element.setAttribute('uuid', DEMO_IMAGE_UUID);
+    await expect.poll(openWidth).toBe(640);
+  });
+
+  it('opens the image when the image and the size arrive in the same task', async () => {
+    serveImageSizes();
+    const { element, show, openWidth } = renderInContainer();
+
+    element.setAttribute('uuid', DEMO_IMAGE_UUID);
+    show();
+    await expect.poll(openWidth).toBe(640);
+  });
+
+  it('opens the latest of two images set while the container has no size', async () => {
+    const served = serveImageSizes();
+    const { element, show, openWidth } = renderInContainer({ image: EDITOR_IMAGE_UUID });
+
+    element.setAttribute('uuid', DEMO_IMAGE_UUID);
+    show();
+    await expect.poll(openWidth).toBe(640);
+    // Each update reads the image after its wait, so only the latest one is asked for.
+    expect(served).toEqual([DEMO_IMAGE_UUID]);
+  });
+
+  it('opens the image when the container loses its size while the image info is loading', async () => {
+    const release = withResolvers<void>();
+    const served = serveImageSizes(release.promise);
+    const { show, hide, openWidth, isOn } = renderInContainer({ sized: true, image: EDITOR_IMAGE_UUID });
+    await expect.poll(isOn).toBe(true);
+
+    hide();
+    release.resolve();
+    await expect.poll(() => served.length).toBe(1);
+    show();
+    await expect.poll(openWidth).toBe(300);
+  });
+
+  it('opens a new image once the container gets a size after the first wait timed out', async () => {
+    const sizeTimeouts = spyErrors();
+    serveImageSizes();
+    const { element, show, openWidth } = renderInContainer({ image: EDITOR_IMAGE_UUID });
+    await vi.waitFor(() => expect(sizeTimeouts()).toBeGreaterThan(0), { timeout: 5000 });
+
+    show();
+    element.setAttribute('uuid', DEMO_IMAGE_UUID);
+    await expect.poll(openWidth).toBe(640);
+  });
+
+  it('logs nothing for an editor removed while it waits for a size', async () => {
+    const sizeTimeouts = spyErrors();
+    serveImageSizes();
+    const { element } = renderInContainer({ image: EDITOR_IMAGE_UUID });
+    element.remove();
+    // The sentinel: the editor started its 3s size timer while connecting, so a 3s timer started now fires after it.
+    await delay(3000);
+    await delay(0);
+
+    expect(sizeTimeouts()).toBe(0);
+  });
+});
