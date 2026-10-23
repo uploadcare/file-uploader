@@ -1,8 +1,10 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, Thumb, UploadCtxProvider } from '@/index.ts';
 import type { Uid } from '../../src/lit/Uid';
+import { generateThumb } from '../../src/utils/resizeImage';
 import { TRANSPARENT_PIXEL_SRC } from '../../src/utils/transparentPixelSrc';
+import { IMAGE } from '../fixtures/files';
 import { TEST_IMAGE_URL } from '../utils/constants';
 import { getCtxName } from '../utils/getCtxName';
 import '../../types/jsx';
@@ -129,5 +131,22 @@ describe('uc-thumb (parity, real upload flow)', () => {
     }
 
     expect(errors).toEqual([]);
+  });
+});
+
+describe('generateThumb', () => {
+  it.each([
+    ['decodes', IMAGE.SQUARE],
+    ['fails to decode', new File(['not an image'], 'broken.jpg', { type: 'image/jpeg' })],
+  ])('releases the source image url once it %s', async (_, file) => {
+    const create = vi.spyOn(URL, 'createObjectURL');
+    const revoke = vi.spyOn(URL, 'revokeObjectURL');
+    onTestFinished(() => {
+      vi.restoreAllMocks();
+    });
+
+    await Promise.resolve(generateThumb(file)).catch(() => {});
+
+    expect(revoke).toHaveBeenCalledWith(create.mock.results[0]?.value);
   });
 });
