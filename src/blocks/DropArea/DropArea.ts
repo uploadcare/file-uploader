@@ -361,7 +361,9 @@ export class DropArea extends ChildBlock {
         const stateText = Object.entries(DropzoneState)
           .find(([, value]) => value === state)?.[0]
           .toLowerCase();
-        stateText && contentWrapperEl.setAttribute('drag-state', stateText);
+        if (stateText) {
+          contentWrapperEl.setAttribute('drag-state', stateText);
+        }
       },
       onItems: () => {},
       shouldIgnore: () => this._shouldIgnore(),

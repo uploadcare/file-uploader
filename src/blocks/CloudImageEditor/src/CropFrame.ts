@@ -172,7 +172,9 @@ export class CropFrame extends EditorBlock {
     const cropBox = this.cropBox;
     const { x, y, width, height } = cropBox;
 
-    this._backdropMaskInner && setSvgNodeAttrs(this._backdropMaskInner, { x, y, width, height });
+    if (this._backdropMaskInner) {
+      setSvgNodeAttrs(this._backdropMaskInner, { x, y, width, height });
+    }
   }
 
   private _updateFrame(): void {

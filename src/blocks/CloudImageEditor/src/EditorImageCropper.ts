@@ -525,7 +525,9 @@ export class EditorImageCropper extends EditorBlock {
     }
     // Invalidate any in-flight `activate()` (see `_activationGeneration`).
     this._activationGeneration += 1;
-    !reset && this._commit();
+    if (!reset) {
+      this._commit();
+    }
     this._isActive = false;
 
     this._transitionToCrop();
