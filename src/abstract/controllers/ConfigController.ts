@@ -2,6 +2,7 @@ import { BUILTIN_DESCRIPTORS } from '../../blocks/Config/builtin-descriptors';
 import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { ConfigType } from '../../types/exported';
 import { type ConfigKeyDescriptor, resolveConfigDescriptor } from '../config-descriptor';
+import { controllerLogger } from '../controllerLogger';
 import type { CustomConfig, CustomConfigDefinition } from '../customConfigOptions';
 import type { ReactiveStore } from '../di/ReactiveStore';
 import { type ObserveOptions, SignalMap } from '../di/SignalMap';
@@ -38,6 +39,7 @@ export type KnownConfig = ConfigType & CustomConfig;
  * string index so runtime custom keys type cleanly.
  */
 export class ConfigController implements ReactiveStore<ConfigType> {
+  private readonly _log = controllerLogger(this, 'config');
   // Signal-backed store, seeded with the built-in defaults. The `Record<string,
   // unknown>` arm models the dynamic plugin-registered keyspace so custom-key
   // access needs no per-call cast.
@@ -166,7 +168,12 @@ export class ConfigController implements ReactiveStore<ConfigType> {
 
   #notifySchemaChange(): void {
     for (const listener of this.#schemaListeners) {
-      listener();
+      // Isolate-and-warn: one throwing listener must not stop the rest.
+      try {
+        listener();
+      } catch (error) {
+        this._log.warn('A config schema listener threw', error);
+      }
     }
   }
 

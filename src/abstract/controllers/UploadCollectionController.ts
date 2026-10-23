@@ -1,5 +1,6 @@
 import type { Uid } from '../../lit/Uid';
 import { debounce } from '../../utils/debounce';
+import { controllerLogger } from '../controllerLogger';
 import { TypedData } from '../TypedData';
 import { initialUploadEntryData, type UploadEntryData } from '../uploadEntrySchema';
 
@@ -38,6 +39,7 @@ export type CollectionObserver = (
  * (re-arm on call, `.cancel()` on teardown).
  */
 export class UploadCollectionController {
+  private readonly _log = controllerLogger(this, 'collection');
   private static readonly _destroyDelayMs = 10_000;
 
   private _data = new Map<Uid, TypedData<UploadEntryData>>();
@@ -118,7 +120,12 @@ export class UploadCollectionController {
         }
       }
       if (any) {
-        handler(scoped);
+        // Isolate-and-warn: a throwing observer must not stop the rest, whose changes are already flushed.
+        try {
+          handler(scoped);
+        } catch (error) {
+          this._log.warn('A collection property observer threw', error);
+        }
       }
     }
   }
@@ -130,7 +137,11 @@ export class UploadCollectionController {
     this._removed.clear();
     const list = [...this._items];
     for (const handler of this._collectionObservers) {
-      handler(list, added, removed);
+      try {
+        handler(list, added, removed);
+      } catch (error) {
+        this._log.warn('A collection observer threw', error);
+      }
     }
   }
 
