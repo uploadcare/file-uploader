@@ -313,6 +313,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     // Per connection: `disconnectedCallback` ends the lifetime and destroys the controller's listeners, so a
     // reconnected editor (a DOM move) must re-subscribe and re-wait for a size.
     this._runTask(() => this.initEditor());
+    // The ended lifetime also aborted an image load still in flight, so a reconnect restarts one that hadn't finished.
+    if (this.hasUpdated && !this._imageSize && (this.uuid || this.cdnUrl)) {
+      this._runTask(() => this.updateImage());
+    }
   }
 
   private _setupEditor(): void {

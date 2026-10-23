@@ -544,6 +544,7 @@ describe('uc-cloud-image-editor without <uc-config>', () => {
       </div>,
     );
     const element = document.querySelector<HTMLElement>('uc-cloud-image-editor')!;
+    const cropperClass = () => activeClass(element.querySelector('uc-editor-image-cropper'));
     await delay(50);
     expect(element.classList.contains('uc-editor_ON')).toBe(false);
 
@@ -552,6 +553,8 @@ describe('uc-cloud-image-editor without <uc-config>', () => {
     try {
       sized.append(element);
       await expect.poll(() => element.classList.contains('uc-editor_ON')).toBe(true);
+      // The move aborted the image load that was waiting for a size; the reconnected editor loads it again.
+      await expect.poll(cropperClass).toMatch(/uc-active_from_/);
     } finally {
       sized.remove();
     }
