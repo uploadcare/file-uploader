@@ -525,6 +525,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     if (this._pendingSizeWait) {
       return this._pendingSizeWait;
     }
+    const { width, height } = this.getBoundingClientRect();
+    if (width > 0 && height > 0) {
+      return Promise.resolve();
+    }
 
     const TIMEOUT = 3000;
     this._pendingSizeWait = new Promise<void>((resolve, reject) => {
@@ -532,11 +536,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         window.clearTimeout(timeoutId);
         resizeObserver.disconnect();
         this._pendingSizeWait = null;
-      };
-
-      const hasNonZeroSize = () => {
-        const { width, height } = this.getBoundingClientRect();
-        return width > 0 && height > 0;
       };
 
       const resolveWait = () => {
@@ -566,11 +565,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       const timeoutId = window.setTimeout(() => {
         rejectWait();
       }, TIMEOUT);
-
-      if (hasNonZeroSize()) {
-        resolveWait();
-        return;
-      }
 
       resizeObserver.observe(this);
     });

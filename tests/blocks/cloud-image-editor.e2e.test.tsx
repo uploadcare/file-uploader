@@ -226,6 +226,35 @@ describe('uc-cloud-image-editor', () => {
     );
   });
 
+  // Fake-only: the image sizes come from the emulator.
+  it.skipIf(isLive)('waits for a size again when a new image arrives after the editor lost its size', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    emulatorSession().on('GET /:uuid/-/json/', ({ params }) =>
+      Response.json(params.uuid === DEMO_IMAGE_UUID ? { width: 640, height: 480 } : { width: 300, height: 200 }),
+    );
+    const { element, editor } = renderEditor();
+    const cropper = editor.getByTestId('uc-editor-image-cropper');
+    await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+    // A new image while the editor has its size: this wait sees the size at once.
+    const imageSize = () =>
+      (element.querySelector('uc-editor-image-cropper') as { imageSize?: { width: number } } | null)?.imageSize;
+    element.setAttribute('uuid', DEMO_IMAGE_UUID);
+    await expect.poll(() => imageSize()?.width).toBe(640);
+
+    element.style.display = 'none';
+    element.setAttribute('uuid', EDITOR_IMAGE_UUID);
+
+    // The editor gives up on a zero-sized container after its own 3s timeout, so the log is the signal.
+    await vi.waitFor(
+      () =>
+        expect(errorSpy).toHaveBeenCalledWith(
+          '[uc][cloud-image-editor]',
+          '[cloud-image-editor] timeout waiting for non-zero container size',
+        ),
+      { timeout: 5000 },
+    );
+  });
+
   it('activates the cropper on the crop tab', async () => {
     const { editor } = renderEditor();
     const cropper = editor.getByTestId('uc-editor-image-cropper');
