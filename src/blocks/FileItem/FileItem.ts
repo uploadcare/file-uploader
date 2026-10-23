@@ -37,19 +37,6 @@ const FileItemState = Object.freeze({
 
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
 
-// Entry keys the state-machine verdict (`_deriveState`) reads. A change to one of
-// these is the only trigger for the imperative focus-clear side-effect
-// (`_syncUploadingFocus`); everything else the state feeds — badge, flags, hint,
-// progress, aria, name — is a pure `getTracked` read in `render()`, so Lit
-// re-renders those on the exact keys read with no imperative mirror.
-const STATE_KEYS: ReadonlySet<UploadEntryKeys> = new Set<UploadEntryKeys>([
-  'errors',
-  'isQueuedForUploading',
-  'isQueuedForValidation',
-  'isValidationPending',
-  'isUploading',
-  'fileInfo',
-]);
 // Entry keys whose change re-evaluates plugin file actions.
 const PLUGIN_ACTION_KEYS: ReadonlySet<UploadEntryKeys> = new Set<UploadEntryKeys>([
   'fileInfo',
@@ -83,10 +70,9 @@ export class FileItem extends FileItemConfig {
   })
   public uid: Uid = '' as Uid;
 
-  // UI focus flag (drives `[data-focused]`). Not entry-derived — set by the click
-  // handler and cleared imperatively when the entry starts uploading.
-  @state()
-  private _isFocused = false;
+  // Set by the parent `<uc-upload-list>`, which keeps one focused row per list.
+  @property({ attribute: false })
+  public focused = false;
 
   @state()
   private _pluginFileActions: Owned<PluginFileActionRegistration>[] = [];
@@ -116,9 +102,8 @@ export class FileItem extends FileItemConfig {
     collection.remove(this.uid);
   };
 
-  // Single source of truth for the state-machine verdict. `read` is `getTracked`
-  // in `render()` (so `SignalWatcher` re-renders on the exact keys read) and the
-  // plain `get` in the imperative focus-sync path (no tracking off the render).
+  // The state-machine verdict. `read` is `getTracked`, so `SignalWatcher`
+  // re-renders on the exact keys read.
   private _deriveState(read: <K extends UploadEntryKeys>(key: K) => UploadEntryData[K]): FileItemStateValue {
     if (read('errors').length > 0) {
       return FileItemState.FAILED;
@@ -139,26 +124,6 @@ export class FileItem extends FileItemConfig {
       return FileItemState.FINISHED;
     }
     return FileItemState.IDLE;
-  }
-
-  // The one genuine side-effect the entry state drives that is NOT pure render:
-  // an item that starts uploading drops its focus. Reads imperatively (`get`), so
-  // it never tracks off a render pass.
-  private _syncUploadingFocus(): void {
-    const entry = this.entry;
-    if (!entry) {
-      return;
-    }
-    if (this._deriveState((key) => entry.get(key)) === FileItemState.UPLOADING) {
-      this._isFocused = false;
-      this.removeAttribute('focused');
-      // Also drop the static single-focus ref, otherwise re-clicking this row
-      // while it uploads hits the `previous === this` short-circuit and re-focuses
-      // it — undoing the drop-focus-on-upload rule.
-      if (FileItem._focusedInstance === this) {
-        FileItem._focusedInstance = null;
-      }
-    }
   }
 
   private _observerCallback(entries: IntersectionObserverEntry[]): void {
@@ -188,22 +153,17 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    // ONE keyed subscription drives only the genuine side-effects that are NOT
-    // pure render: the focus-clear-on-uploading transition and the plugin
-    // file-action recompute. Everything the row *displays* (name, badge, flags,
-    // hint, progress, aria) is a `getTracked` read in `render()`, so Lit
-    // re-renders on the exact entry keys it reads — no imperative mirror.
+    // ONE keyed subscription drives the only side-effect that is NOT pure
+    // render: the plugin file-action recompute. Everything the row *displays*
+    // (name, badge, flags, hint, progress, aria) is a `getTracked` read in
+    // `render()`, so Lit re-renders on the exact entry keys it reads.
     this.subEntryKeys((key) => {
-      if (STATE_KEYS.has(key)) {
-        this._syncUploadingFocus();
-      }
       if (PLUGIN_ACTION_KEYS.has(key)) {
         this._updatePluginFileActions();
       }
     });
 
-    // Seed the initial side-effects (subscribeKeys does not replay current state).
-    this._syncUploadingFocus();
+    // Seed the initial side-effect (subscribeKeys does not replay current state).
     this._updatePluginFileActions();
   }
 
@@ -292,31 +252,6 @@ export class FileItem extends FileItemConfig {
 
   protected override controllerReady(): void {
     this._handleEntryId(this.uid);
-
-    // Single-focus: unfocus the previously-focused item and focus this one — O(1)
-    // per click. Replaces an O(N) sweep over every connected FileItem (which
-    // mutated `[focused]` on all rows, dirtying style for the whole list at large
-    // N) and the static `Set` of all instances (which pinned every row from GC).
-    this.onclick = () => {
-      // An uploading row does not take focus (consistent with the
-      // drop-focus-on-upload rule in `_syncUploadingFocus`) — otherwise clicking
-      // it would re-apply the highlight mid-upload.
-      const entry = this.entry;
-      if (entry && this._deriveState((key) => entry.get(key)) === FileItemState.UPLOADING) {
-        return;
-      }
-      const previous = FileItem._focusedInstance;
-      if (previous && previous !== this) {
-        previous._isFocused = false;
-        previous.removeAttribute('focused');
-      }
-      // `_isFocused` drives `.uc-inner[data-focused]` (the actual focus style);
-      // the host `[focused]` attribute is kept for compat. Both must be set —
-      // setting only the attribute left the visible highlight dead.
-      this._isFocused = true;
-      this.setAttribute('focused', '');
-      FileItem._focusedInstance = this;
-    };
   }
 
   // The uploader-scope `PluginController` is bound + resolved only once an
@@ -334,11 +269,6 @@ export class FileItem extends FileItemConfig {
 
   protected override controllerReleased(): void {
     this._pluginManager = null;
-    // Release the static focus reference if it points at this row, so a removed/
-    // re-adopted item isn't retained (and a later click doesn't touch a stale one).
-    if (FileItem._focusedInstance === this) {
-      FileItem._focusedInstance = null;
-    }
   }
 
   public override connectedCallback(): void {
@@ -364,8 +294,6 @@ export class FileItem extends FileItemConfig {
   // handling) live in the DOM-free UploadController. This block reflects the
   // resulting entry mutations through `getTracked` reads in `render()`
   // (state/badge/progress/…) plus the keyed side-effect subscription.
-  // The currently-focused item (single-focus model — see the click handler).
-  private static _focusedInstance: FileItem | null = null;
 
   protected override shouldUpdate(changedProperties: PropertyValues<this>): boolean {
     if (this._pauseRender) {
@@ -473,7 +401,7 @@ export class FileItem extends FileItemConfig {
         ?data-finished=${this._isFinished}
         ?data-uploading=${this._isUploading}
         ?data-failed=${this._isFailed}
-        ?data-focused=${this._isFocused}
+        ?data-focused=${this.focused && !this._isUploading}
       >
         <uc-thumb .uid=${this.uid} .badgeIcon=${this._badgeIcon}></uc-thumb>
 
