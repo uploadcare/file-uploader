@@ -491,10 +491,12 @@ export class EditorImageCropper extends EditorBlock {
       const controller = this.editorController;
       const originalUrl = controller.get('*originalUrl') as string;
       const transformations = controller.get('*editorTransformations');
-      this._image = await this._waitForImage(controller, originalUrl, transformations);
+      const image = await this._waitForImage(controller, originalUrl, transformations);
+      // A newer activation superseded this one (and cancelled its preload): its image is not ours to keep.
       if (generation !== this._activationGeneration) {
         return;
       }
+      this._image = image;
       this._syncTransformations();
       this._handleResizeThrottled();
       this._animateIn({ fromViewer });
