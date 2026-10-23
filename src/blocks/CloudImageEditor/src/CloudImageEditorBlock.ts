@@ -311,8 +311,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     }
     this._setupEditor();
     // Per connection: `disconnectedCallback` ends the lifetime and destroys the controller's listeners, so a
-    // reconnected editor (a DOM move) must re-subscribe and re-wait for a size.
-    this._runTask(() => this.initEditor());
+    // reconnected editor (a DOM move) must re-subscribe.
+    this.initEditor();
     // The ended lifetime also aborted an image load still in flight, so a reconnect restarts one that hadn't finished.
     if (this.hasUpdated && !this._imageSize && (this.uuid || this.cdnUrl)) {
       this._runTask(() => this.updateImage());
@@ -879,13 +879,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     this._scheduleInitialization();
   }
 
-  public async initEditor(): Promise<void> {
-    try {
-      await this._lifetime.guard(this._waitForSize());
-    } catch {
-      return;
-    }
-
+  // No size needed here, only for loading an image (`updateImage` waits for one). Waiting here meant a container
+  // without a size for the wait's timeout left the editor without its `change` event for good.
+  public initEditor(): void {
     this.classList.add('uc-editor_ON');
 
     const editorController = this._editorController;
