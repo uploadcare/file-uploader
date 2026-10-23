@@ -39,7 +39,9 @@ export class UploadFileEventsController {
       uploadProgress: 0,
     });
     const thumbUrl = entry.get('thumbUrl');
-    thumbUrl && URL.revokeObjectURL(thumbUrl);
+    if (thumbUrl) {
+      URL.revokeObjectURL(thumbUrl);
+    }
     this._emit(UploaderEventType.FILE_REMOVED, toOutputFileEntry(entry));
   }
 

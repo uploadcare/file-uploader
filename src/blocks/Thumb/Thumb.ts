@@ -127,7 +127,9 @@ export class Thumb extends FileItemConfig {
         const { promise } = preloadImage(thumbUrl);
         const storeThumb = () => {
           entry.set('thumbUrl', thumbUrl);
-          currentThumbUrl?.startsWith('blob:') && URL.revokeObjectURL(currentThumbUrl);
+          if (currentThumbUrl?.startsWith('blob:')) {
+            URL.revokeObjectURL(currentThumbUrl);
+          }
         };
 
         try {
