@@ -36,10 +36,6 @@ export function addDropzone(desc: DropzoneDescriptor): () => void {
   const { signal } = listeners;
 
   const body = document.body;
-  const switchHandlers = new Set<(state: DropzoneStateValue) => void>();
-  const handleSwitch = (fn: (state: DropzoneStateValue) => void) => {
-    switchHandlers.add(fn);
-  };
   let state: DropzoneStateValue = DropzoneState.INACTIVE;
 
   const setState = (newState: DropzoneStateValue) => {
@@ -47,16 +43,12 @@ export function addDropzone(desc: DropzoneDescriptor): () => void {
       return;
     }
     if (state !== newState) {
-      switchHandlers.forEach((fn) => {
-        fn(newState);
-      });
+      desc.onChange(newState);
     }
     state = newState;
   };
 
   const isDragging = () => eventCounter > 0;
-
-  handleSwitch((newState) => desc.onChange(newState));
 
   const onResetEvent = () => {
     eventCounter = 0;
