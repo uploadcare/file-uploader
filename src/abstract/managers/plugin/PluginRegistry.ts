@@ -74,7 +74,7 @@ export class PluginRegistry {
   }
 
   public addFileHook(pluginId: string, item: PluginFileHookRegistration): void {
-    this._fileHooks.push(this._own(pluginId, { timeout: 30_000, ...item }));
+    this._fileHooks.push(this._own(pluginId, { ...item, timeout: item.timeout ?? 30_000 }));
     this._scheduleNotify();
   }
 
