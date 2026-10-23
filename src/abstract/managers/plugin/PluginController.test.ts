@@ -281,6 +281,19 @@ describe('PluginController', () => {
     });
   });
 
+  it('warns about a throwing subscriber', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const t = setup();
+    const error = new Error('subscriber boom');
+    t.controller.onPluginsChange(() => {
+      throw error;
+    });
+
+    await t.sync([sourcePlugin('a')]);
+
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('[plugin-manager]'), expect.any(String), error);
+  });
+
   describe('runOnAddHooks', () => {
     const makeEntry = (file: File | null): UploadEntryTypedData => {
       const entry = new TypedData<UploadEntryData>(initialUploadEntryData);
