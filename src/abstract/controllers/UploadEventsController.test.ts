@@ -182,7 +182,7 @@ describe('UploadEventsController', () => {
       expect(t.deps.setUploadList).toHaveBeenCalledWith([id]);
     });
 
-    it('does not run onAdd hooks against a released scope when PluginController resolves after unobserve', () => {
+    it('does not run onAdd hooks against a released scope when PluginController resolves after teardown began', () => {
       // Deferred path: PluginController is unconstructed at add-time, so
       // `whenController` registers a waiter instead of firing synchronously.
       const t = setup({ deferPlugin: true });
@@ -191,9 +191,10 @@ describe('UploadEventsController', () => {
       t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
       expect(t.deps.runOnAddHooks).not.toHaveBeenCalled(); // waiter pending, not fired
 
-      // Tear down, THEN resolve the plugin manager — the waiter now fires, but
-      // the `_active` guard must stop it running hooks against the released scope.
-      t.controller.unobserve();
+      // Start the teardown (the first thing `dispose()` does), THEN resolve the plugin
+      // manager — the waiter now fires, but the ended lifetime must stop it running
+      // hooks against the released scope.
+      t.container.lifetime.end();
       t.container.get(PluginController);
 
       expect(t.deps.runOnAddHooks).not.toHaveBeenCalled();
@@ -227,10 +228,10 @@ describe('UploadEventsController', () => {
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.FILE_REMOVED, expect.objectContaining({ internalId: id }));
     });
 
-    it('does nothing once unobserved (inactive guard)', () => {
+    it('does nothing once the ctx is torn down', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });
-      t.controller.unobserve();
+      t.container.dispose();
 
       t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
 
@@ -245,16 +246,6 @@ describe('UploadEventsController', () => {
 
       expect(t.deps.setGroupInfo).not.toHaveBeenCalled();
       expect(t.deps.setUploadList).toHaveBeenCalledWith([id]);
-    });
-
-    it('destroy() stops the controller', () => {
-      const t = setup();
-      const id = t.collection.add({ fileName: 'a.txt' });
-      t.controller.destroy();
-
-      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
-
-      expect(t.emit).not.toHaveBeenCalled();
     });
 
     it('handles a removed entry without a thumbUrl', () => {
@@ -492,13 +483,13 @@ describe('UploadEventsController', () => {
       expect(t.deps.validation.runFileValidators).not.toHaveBeenCalledWith('upload', expect.anything());
     });
 
-    it('skips deferred validation if unobserved before the microtask fires', () => {
+    it('skips deferred validation if the ctx is torn down before the timer fires', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });
       t.collection.publishProp(id, 'fileInfo', { uuid: 'u1' } as never);
 
       t.fireProperties({ fileInfo: new Set([id]) });
-      t.controller.unobserve();
+      t.container.dispose();
       vi.advanceTimersByTime(1);
 
       expect(t.deps.validation.runFileValidators).not.toHaveBeenCalledWith('change', expect.anything());
@@ -518,10 +509,10 @@ describe('UploadEventsController', () => {
       expect(() => t.fireProperties({ file: undefined } as never)).not.toThrow();
     });
 
-    it('does nothing once unobserved (inactive guard)', () => {
+    it('does nothing once the ctx is torn down', () => {
       const t = setup();
       const id = t.collection.add({ isUploading: true });
-      t.controller.unobserve();
+      t.container.dispose();
 
       t.fireProperties({ isUploading: new Set([id]) });
 
@@ -617,7 +608,7 @@ describe('UploadEventsController', () => {
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.GROUP_CREATED, expect.anything());
     });
 
-    it('does not finalize the group if the controller is unobserved mid-flight', async () => {
+    it('does not finalize the group if the ctx is torn down mid-flight', async () => {
       const state = makeState({
         totalCount: 1,
         status: 'success',
@@ -626,7 +617,7 @@ describe('UploadEventsController', () => {
       const t = setup({ collectionState: state });
       t.config.set('groupOutput', true);
       mockUploadFileGroup.mockImplementation(async () => {
-        t.controller.unobserve(); // host disconnects while the group upload is in-flight
+        t.container.dispose(); // host disconnects while the group upload is in-flight
         return { uuid: 'group~1' } as UploadcareGroup;
       });
       const id = t.collection.add({ fileName: 'a.txt' });
@@ -668,7 +659,7 @@ describe('UploadEventsController', () => {
       t.config.set('groupOutput', true);
       const upload = t.container.get(UploadController);
       vi.spyOn(upload, 'buildUploadOptions').mockImplementation(async () => {
-        t.controller.unobserve(); // torn down before the network call
+        t.container.dispose(); // torn down before the network call
         return {} as never;
       });
       const id = t.collection.add({ fileName: 'a.txt' });
