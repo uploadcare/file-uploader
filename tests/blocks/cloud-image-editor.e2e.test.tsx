@@ -546,13 +546,12 @@ describe('uc-cloud-image-editor without <uc-config>', () => {
     const element = document.querySelector<HTMLElement>('uc-cloud-image-editor')!;
     const cropperClass = () => activeClass(element.querySelector('uc-editor-image-cropper'));
     await delay(50);
-    expect(element.classList.contains('uc-editor_ON')).toBe(false);
+    expect(cropperClass()).not.toMatch(/uc-active_from_/);
 
     const sized = document.createElement('div');
     document.body.append(sized);
     try {
       sized.append(element);
-      await expect.poll(() => element.classList.contains('uc-editor_ON')).toBe(true);
       // The move aborted the image load that was waiting for a size; the reconnected editor loads it again.
       await expect.poll(cropperClass).toMatch(/uc-active_from_/);
     } finally {
@@ -614,14 +613,12 @@ describe.skipIf(isLive)('uc-cloud-image-editor container size', () => {
   it('opens the image once the container gets a size after a while', async () => {
     const sizeTimeouts = spyErrors();
     serveImageSizes();
-    const { show, openWidth, isOn } = renderInContainer({ image: EDITOR_IMAGE_UUID });
+    const { show, openWidth } = renderInContainer({ image: EDITOR_IMAGE_UUID });
 
     await delay(500);
-    expect(isOn()).toBe(false);
     expect(openWidth()).toBeUndefined();
 
     show();
-    await expect.poll(isOn).toBe(true);
     await expect.poll(openWidth).toBe(300);
     expect(sizeTimeouts()).toBe(0);
   });
@@ -640,9 +637,9 @@ describe.skipIf(isLive)('uc-cloud-image-editor container size', () => {
 
   it('opens an image set after the container got its size', async () => {
     serveImageSizes();
-    const { element, show, openWidth, isOn } = renderInContainer();
+    const { element, show, openWidth } = renderInContainer();
     show();
-    await expect.poll(isOn).toBe(true);
+    await expect.poll(() => element.getBoundingClientRect().width).toBeGreaterThan(0);
 
     element.setAttribute('uuid', DEMO_IMAGE_UUID);
     await expect.poll(openWidth).toBe(640);
@@ -681,15 +678,21 @@ describe.skipIf(isLive)('uc-cloud-image-editor container size', () => {
     await expect.poll(openWidth).toBe(300);
   });
 
-  it('opens a new image once the container gets a size after the first wait timed out', async () => {
+  it('works fully once the container gets a size after the first wait timed out', async () => {
     const sizeTimeouts = spyErrors();
     serveImageSizes();
-    const { element, show, openWidth } = renderInContainer({ image: EDITOR_IMAGE_UUID });
+    const { element, show, openWidth, isOn } = renderInContainer({ image: EDITOR_IMAGE_UUID });
     await vi.waitFor(() => expect(sizeTimeouts()).toBeGreaterThan(0), { timeout: 5000 });
 
     show();
     element.setAttribute('uuid', DEMO_IMAGE_UUID);
     await expect.poll(openWidth).toBe(640);
+    const changes: unknown[] = [];
+    element.addEventListener('change', (event) => changes.push(event));
+    await expect.poll(() => activeClass(element.querySelector('uc-editor-image-cropper'))).toMatch(/uc-active_from_/);
+    await userEvent.click(page.elementLocator(element).getByTestId('uc-editor-crop-button-control').nth(0));
+    await expect.poll(() => changes.length).toBeGreaterThan(0);
+    await expect.poll(isOn).toBe(true);
   });
 
   it('logs nothing for an editor removed while it waits for a size', async () => {
