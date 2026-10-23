@@ -8,6 +8,7 @@ import type { Logger } from '../../logger';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
 import type { PluginApi, PluginRegistrySnapshot, PluginUploaderApi, UploaderPlugin } from './PluginTypes';
+import { runFileHook } from './runFileHook';
 
 type Unsubscribe = () => void;
 
@@ -206,11 +207,7 @@ export class PluginController {
     for (const hook of onAddHooks) {
       if (signal.aborted) return;
       try {
-        const hookPromise = hook.handler({ file, signal });
-        const timeoutPromise = new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`onAdd hook timed out`)), hook.timeout),
-        );
-        ({ file } = await Promise.race([hookPromise, timeoutPromise]));
+        ({ file } = await runFileHook(hook, file, signal));
       } catch (error) {
         // A hook that gave up because its signal aborted did what it was asked; only a real failure is worth a warning.
         if (signal.aborted) return;

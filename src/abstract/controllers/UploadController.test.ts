@@ -467,6 +467,32 @@ describe('UploadController', () => {
       expect(mockUploadFile).toHaveBeenCalledTimes(1);
     });
 
+    it('aborts the signal of a hook that times out, and leaves no timer behind', async () => {
+      vi.useFakeTimers();
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      let received: AbortSignal | undefined;
+      const { controller, collection } = setup({
+        hooks: [
+          makeHook({
+            timeout: 50,
+            handler: ({ signal }) => {
+              received = signal;
+              return new Promise<never>(() => {});
+            },
+          }),
+          makeHook({ pluginId: 'p2' }),
+        ],
+      });
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+
+      const promise = controller.uploadEntry(id);
+      await vi.advanceTimersByTimeAsync(60);
+      await promise;
+
+      expect(received?.aborted).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+    });
+
     it('skips a hook that exceeds its timeout and still uploads', async () => {
       vi.useFakeTimers();
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
