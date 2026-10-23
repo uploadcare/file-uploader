@@ -13,6 +13,7 @@ import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
+import { getLocaleDirection } from '../utils/getLocaleDirection';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import { destroyCtx, isCtxUnreferenced } from './ctx-lifecycle';
 import { ctxNameContext } from './ctx-name-context';
@@ -479,6 +480,18 @@ export abstract class ChildBlock extends ChildBlockBase {
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
     this._applyTestMode();
+  }
+
+  /** Lay the host out in the ctx locale's text direction; `ltr` clears it so the page's own direction applies. */
+  @effect()
+  protected _applyLocaleDirection(): void {
+    // Null-tolerant for the teardown-race tick, like `_applyTestMode`.
+    const locale = this.useOrNull(LocaleController);
+    if (!locale) {
+      return;
+    }
+    const direction = getLocaleDirection(locale.getTracked('locale-id') || 'en');
+    this.style.direction = direction === 'ltr' ? '' : direction;
   }
 
   @effect()
