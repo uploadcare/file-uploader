@@ -213,12 +213,13 @@ export class UploadController {
     });
     this._fileEvents.start(entry);
 
+    const abortController = new AbortController();
+    // Destroying the ctx cancels the request (and any `beforeUpload` hook) the way removing the file does: nothing
+    // is sent once the uploader is gone. Removed once the upload settles, so listeners don't pile up on the ctx.
+    const abortOnTeardown = () => abortController.abort();
+    lifetime.signal.addEventListener('abort', abortOnTeardown, { once: true });
     try {
-      const abortController = new AbortController();
       entry.set('abortController', abortController);
-      // Destroying the ctx cancels the request (and any `beforeUpload` hook) the way removing the file does: nothing
-      // is sent once the uploader is gone.
-      lifetime.signal.addEventListener('abort', () => abortController.abort(), { once: true });
 
       const uploadTask = async (): Promise<UploadcareFile> => {
         lifetime.signal.throwIfAborted();
@@ -343,6 +344,8 @@ export class UploadController {
       if (!isCancelError) {
         this._telemetry.sendEventError(cause, 'file upload. Failed to upload file');
       }
+    } finally {
+      lifetime.signal.removeEventListener('abort', abortOnTeardown);
     }
   }
 
