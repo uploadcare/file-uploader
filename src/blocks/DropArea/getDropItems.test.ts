@@ -31,12 +31,20 @@ const fileEntry = (file: File, fullPath: string) => ({
   file: (cb: (f: File) => void) => cb(file),
 });
 
-const directoryEntry = (children: unknown[]) => ({
+/** Like a real reader, hands the children out in `batches` and then an empty batch to say it is done. */
+const directoryEntry = (children: unknown[], batchSize = children.length || 1) => ({
   isFile: false,
   isDirectory: true,
-  createReader: () => ({
-    readEntries: (cb: (entries: unknown[]) => void) => cb(children),
-  }),
+  createReader: () => {
+    let offset = 0;
+    return {
+      readEntries: (cb: (entries: unknown[]) => void) => {
+        const batch = children.slice(offset, offset + batchSize);
+        offset += batchSize;
+        cb(batch);
+      },
+    };
+  },
 });
 
 describe('getDropItems', () => {
@@ -107,6 +115,44 @@ describe('getDropItems', () => {
         '/dir/a.png',
         '/dir/sub/b.png',
       ]);
+    });
+
+    it('reads every batch of a large directory', async () => {
+      // Chromium hands out at most 100 entries per `readEntries` call.
+      const files = Array.from({ length: 250 }, (_, i) => fileEntry(png(), `/dir/${i}.png`));
+      const items = await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => directoryEntry(files, 100) }]);
+
+      expect(items).toHaveLength(250);
+    });
+
+    it('keeps the readable files of a directory when one cannot be read', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const unreadable = {
+        isFile: true,
+        isDirectory: false,
+        fullPath: '/dir/locked.png',
+        file: (_cb: unknown, onError: (error: DOMException) => void) =>
+          onError(new DOMException('', 'NotReadableError')),
+      };
+      const tree = directoryEntry([fileEntry(png(), '/dir/a.png'), unreadable]);
+      const items = await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => tree }]);
+
+      expect(items.map((item) => (item as { fullPath: string }).fullPath)).toEqual(['/dir/a.png']);
+    });
+
+    it('settles when a directory cannot be listed', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const unlistable = {
+        isFile: false,
+        isDirectory: true,
+        createReader: () => ({
+          readEntries: (_cb: unknown, onError: (error: DOMException) => void) =>
+            onError(new DOMException('', 'NotReadableError')),
+        }),
+      };
+      const tree = directoryEntry([fileEntry(png(), '/dir/a.png'), unlistable]);
+
+      expect(await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => tree }])).toHaveLength(1);
     });
 
     it('uses getAsEntry when webkitGetAsEntry is absent', async () => {
