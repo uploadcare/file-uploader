@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import type { Icon } from '@/index';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
@@ -112,6 +112,28 @@ describe('video recording', () => {
     const [entry] = api.getOutputCollectionState().allEntries;
     expect(entry.name).toMatch(/^video-\d+\.\w+$/);
     expect(entry.mimeType).toMatch(/^video\//);
+  });
+
+  it('releases the preview of a recording that is retaken', async () => {
+    const { camera, shot, openVideoTab } = await openCamera();
+    await openVideoTab();
+    const create = vi.spyOn(URL, 'createObjectURL');
+    const revoke = vi.spyOn(URL, 'revokeObjectURL');
+    onTestFinished(() => {
+      vi.restoreAllMocks();
+    });
+
+    await shot();
+    const timer = camera.getByTestId('uc-camera-source--recording-timer');
+    await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
+    await shot();
+    await expect.element(camera.getByText('Retake', { exact: true })).toBeVisible();
+    const previewUrl = create.mock.results[0]?.value;
+    expect(previewUrl).toMatch(/^blob:/);
+
+    await camera.getByText('Retake', { exact: true }).click();
+
+    expect(revoke).toHaveBeenCalledWith(previewUrl);
   });
 
   it('counts the elapsed time while recording', async () => {
