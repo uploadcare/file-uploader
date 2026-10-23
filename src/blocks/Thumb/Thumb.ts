@@ -133,6 +133,8 @@ export class Thumb extends FileItemConfig {
         };
 
         try {
+          // `dispose` here commits rather than releases, on purpose: the entry outlives this row, so a thumbnail that
+          // finishes after the row went away is still the entry's. The `generateThumb` awaits below do the same.
           await this.whileAdopted(promise, storeThumb);
           storeThumb();
         } catch (error) {
