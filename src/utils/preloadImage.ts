@@ -10,7 +10,7 @@ export function preloadImage(src: string): {
   const promise: Promise<void> = new Promise<void>((resolve, reject) => {
     image.src = src;
     image.onload = () => resolve();
-    image.onerror = (err) => reject(err);
+    image.onerror = () => reject(new Error(`Failed to load image ${src}`));
   });
 
   const cancel = () => {
