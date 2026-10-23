@@ -9,8 +9,10 @@ export function generateThumb(imgFile: File, size = 40): string | Promise<string
     return Promise.reject(new Error('Canvas context not supported'));
   }
   const img = new Image();
+  const srcUrl = URL.createObjectURL(imgFile);
   const promise: Promise<string> = new Promise<string>((resolve, reject) => {
     img.onload = () => {
+      URL.revokeObjectURL(srcUrl);
       const ratio = img.height / img.width;
       if (ratio > 1) {
         canvas.width = size;
@@ -32,9 +34,10 @@ export function generateThumb(imgFile: File, size = 40): string | Promise<string
       });
     };
     img.onerror = (err: unknown) => {
+      URL.revokeObjectURL(srcUrl);
       reject(err);
     };
   });
-  img.src = URL.createObjectURL(imgFile);
+  img.src = srcUrl;
   return promise;
 }
