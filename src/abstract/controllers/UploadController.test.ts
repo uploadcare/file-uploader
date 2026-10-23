@@ -171,6 +171,26 @@ describe('UploadController', () => {
       expect(entry?.get('cdnUrl')).toBe('https://cdn/u1/');
     });
 
+    it.each([
+      ['succeeds', () => mockUploadFile.mockResolvedValue(makeFileInfo())],
+      ['fails', () => mockUploadFile.mockRejectedValue(new Error('network'))],
+    ])('leaves no abort listener on the ctx lifetime once an upload %s', async (_, arrange) => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      arrange();
+      const { container, controller, collection } = setup();
+      const signal = container.lifetime.signal;
+      const add = vi.spyOn(signal, 'addEventListener');
+      const remove = vi.spyOn(signal, 'removeEventListener');
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+
+      await controller.uploadEntry(id);
+
+      const added = add.mock.calls.filter(([type]) => type === 'abort').map(([, listener]) => listener);
+      const removed = remove.mock.calls.filter(([type]) => type === 'abort').map(([, listener]) => listener);
+      expect(added).toHaveLength(1);
+      expect(removed).toEqual(added);
+    });
+
     it('emits FILE_UPLOAD_START as the upload starts, not when the collection reports it', async () => {
       // The collection reports changes in batches; an upload that finishes inside one would never be seen starting.
       const { container, controller, collection } = setup();
