@@ -66,6 +66,7 @@ export class CropFrame extends EditorBlock {
   private _draggingValue = false;
   private readonly _svgRef = createRef<SVGSVGElement>();
   private _svgReady = false;
+  private _renderFrame = 0;
   private _pendingMaskHref: string | null = null;
 
   private get _svgElement(): SVGSVGElement | null {
@@ -592,21 +593,23 @@ export class CropFrame extends EditorBlock {
 
     if (changedProperties.has('imageBox')) {
       this._resizeBackdrop();
-      if (this._svgReady) {
-        window.requestAnimationFrame(() => {
-          this._render();
-        });
-      }
     }
 
     if (changedProperties.has('cropBox')) {
       this._guidesHidden = this.cropBox.height <= MIN_CROP_SIZE || this.cropBox.width <= MIN_CROP_SIZE;
       this._applyGuidesDragState();
-      if (this._svgReady) {
-        window.requestAnimationFrame(() => {
-          this._render();
-        });
-      }
+    }
+
+    // One draw per frame, however many boxes changed.
+    if (
+      (changedProperties.has('imageBox') || changedProperties.has('cropBox')) &&
+      this._svgReady &&
+      !this._renderFrame
+    ) {
+      this._renderFrame = window.requestAnimationFrame(() => {
+        this._renderFrame = 0;
+        this._render();
+      });
     }
   }
 
