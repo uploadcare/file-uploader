@@ -67,6 +67,19 @@ describe('@throttled / @debounced', () => {
     expect(host.calls).toEqual(['t:a', 't:c']);
   });
 
+  it('throttles: a call after the window has passed runs immediately again', () => {
+    const host = new Host();
+    host.onThrottled('a');
+    vi.advanceTimersByTime(500); // idle well past the window
+    host.onThrottled('b');
+    expect(host.calls).toEqual(['t:a', 't:b']);
+
+    host.onThrottled('c'); // inside the new window → trailing edge
+    expect(host.calls).toEqual(['t:a', 't:b']);
+    vi.advanceTimersByTime(100);
+    expect(host.calls).toEqual(['t:a', 't:b', 't:c']);
+  });
+
   it('debounces: only the trailing call runs after the wait', () => {
     const host = new Host();
     host.onDebounced('a');
