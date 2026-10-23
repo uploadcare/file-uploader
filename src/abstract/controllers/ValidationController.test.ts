@@ -207,6 +207,40 @@ describe('ValidationController', () => {
     expect(collection.read(id)?.get('isValidationPending')).toBe(false);
   });
 
+  it('settles after validationTimeout even when the validator ignores its signal', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { controller, config, collection } = setup();
+    await flush(20);
+    config.set('validationTimeout', 50);
+    config.set('fileValidators', [() => new Promise<undefined>(() => {})]);
+    const id = collection.add({ fileName: 'a.txt', mimeType: 'text/plain' });
+
+    controller.runFileValidators('change', [id]);
+    await flush(800);
+
+    expect(collection.read(id)?.get('isValidationPending')).toBe(false);
+  });
+
+  it("keeps the other validators' errors when one times out", async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { controller, config, collection } = setup();
+    await flush(20);
+    config.set('validationTimeout', 50);
+    config.set('fileValidators', [
+      () => ({ message: 'nope' }),
+      (_entry, _api, opts) =>
+        new Promise<undefined>((_resolve, reject) => {
+          opts?.signal?.addEventListener('abort', () => reject(new DOMException('Aborted', 'AbortError')));
+        }),
+    ]);
+    const id = collection.add({ fileName: 'a.txt', mimeType: 'text/plain' });
+
+    controller.runFileValidators('change', [id]);
+    await flush(800);
+
+    expect(collection.read(id)?.get('errors')).toMatchObject([{ message: 'nope' }]);
+  });
+
   it('isolates a throwing async validator (reports via onValidatorError) without crashing', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { controller, config, collection, onValidatorError } = setup();
