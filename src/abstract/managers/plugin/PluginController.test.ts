@@ -419,21 +419,50 @@ describe('PluginController', () => {
       warn.mockRestore();
     });
 
-    it('hands the hook a signal that aborts when the ctx is disposed', async () => {
+    it('hands the hook a signal that aborts when the ctx is disposed while it runs', async () => {
       const t = setup();
       let received: AbortSignal | undefined;
       await t.sync([
-        withOnAddHook(({ file, signal }) => {
+        withOnAddHook(({ signal }) => {
           received = signal;
-          return { file };
+          return new Promise(() => {});
         }),
       ]);
-      await t.controller.runOnAddHooks(makeEntry(new File(['x'], 'a.txt')));
+      const running = t.controller.runOnAddHooks(makeEntry(new File(['x'], 'a.txt')));
       expect(received?.aborted).toBe(false);
 
       t.container.dispose();
 
       expect(received?.aborted).toBe(true);
+      await running;
+    });
+
+    it('aborts the signal of a hook that times out', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const t = setup();
+      let received: AbortSignal | undefined;
+      await t.sync([
+        withOnAddHook(({ signal }) => {
+          received = signal;
+          return new Promise(() => {});
+        }, 50),
+      ]);
+
+      const promise = t.controller.runOnAddHooks(makeEntry(new File(['x'], 'a.txt')));
+      await vi.advanceTimersByTimeAsync(60);
+      await promise;
+
+      expect(received?.aborted).toBe(true);
+    });
+
+    it('leaves no timer behind once a hook finishes', async () => {
+      const t = setup();
+      await t.sync([withOnAddHook(({ file }) => ({ file }))]);
+      const before = vi.getTimerCount();
+
+      await t.controller.runOnAddHooks(makeEntry(new File(['x'], 'a.txt')));
+
+      expect(vi.getTimerCount()).toBe(before);
     });
 
     it('skips a hook that exceeds its timeout', async () => {

@@ -18,6 +18,7 @@ import { inject } from '../di/inject';
 import { lazy } from '../logger';
 import { AuthTokenManager } from '../managers/AuthTokenManager';
 import { PluginController } from '../managers/plugin';
+import { runFileHook } from '../managers/plugin/runFileHook';
 import { TelemetryManager } from '../managers/TelemetryManager';
 import { UploaderPublicApi } from '../UploaderPublicApi';
 import { ConfigController } from './ConfigController';
@@ -237,11 +238,7 @@ export class UploadController {
             // A hook is a user callback: the next one is not invoked once the ctx is torn down.
             lifetime.signal.throwIfAborted();
             try {
-              const hookPromise = hook.handler({ file, signal: abortController.signal });
-              const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error(`beforeUpload hook timed out`)), hook.timeout),
-              );
-              const { file: newFile } = await Promise.race([hookPromise, timeoutPromise]);
+              const { file: newFile } = await runFileHook(hook, file, abortController.signal);
               if (newFile !== file) {
                 file = newFile;
                 entry.set('mimeType', file.type || null);
