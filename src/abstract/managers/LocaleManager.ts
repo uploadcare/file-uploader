@@ -8,9 +8,6 @@ import { inject } from '../di/inject';
 import { type LocaleDefinition, resolveLocaleDefinition } from '../localeRegistry';
 import type { PluginController } from './plugin';
 
-export const localeStateKey = <T extends keyof LocaleDefinition>(key: T): `*l10n/${T}` => `*l10n/${key}`;
-export const DEFAULT_LOCALE = 'en';
-
 /**
  * DOM-free locale orchestration: reads/writes the `ConfigController`/
  * `LocaleController` directly. Container-resolved with a zero-arg ctor,
