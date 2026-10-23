@@ -11,13 +11,11 @@ import { RegisterableElementMixin } from '../../../../../lit/RegisterableElement
 // `ChildBlockBase`/`EditorBlockBase`.
 const SliderUiBase = RegisterableElementMixin(LightDomMixin(LitElement));
 
+const STEP_GAP = 15;
+
 export class SliderUi extends SliderUiBase {
   private _observer?: ResizeObserver;
-  private _thumbSize = 0;
-  private _zeroDotEl?: HTMLDivElement;
-  private _stepsCount?: number;
   private readonly _inputRef = createRef<HTMLInputElement>();
-  private readonly _thumbRef = createRef<HTMLDivElement>();
   private readonly _stepsRef = createRef<HTMLDivElement>();
 
   @property({ type: Boolean, reflect: true })
@@ -41,6 +39,10 @@ export class SliderUi extends SliderUiBase {
 
   @state()
   private _currentValue = 0;
+
+  // Minor ticks on each side of the middle one, from the measured width.
+  @state()
+  private _stepsCount = 0;
 
   private _emitSliderEvent(type: 'uc-internal:slider-input', value: number): void {
     this.dispatchEvent(
@@ -82,19 +84,11 @@ export class SliderUi extends SliderUiBase {
   protected override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
 
-    this._thumbSize = Number.parseInt(window.getComputedStyle(this).getPropertyValue('--l-thumb-size'), 10) || 0;
     this._syncInputValue(this._currentValue);
-    this._updateSteps();
 
-    this._observer = new ResizeObserver(() => {
-      this._updateSteps();
-      this._updateValue(this._currentValue);
-    });
+    // Also reports the first size, so it sets the first tick count too.
+    this._observer = new ResizeObserver(() => this._updateSteps());
     this._observer.observe(this);
-
-    window.setTimeout(() => {
-      this._updateValue(this._currentValue);
-    }, 0);
   }
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
@@ -103,96 +97,19 @@ export class SliderUi extends SliderUiBase {
     if (changedProperties.has('defaultValue') && this.defaultValue !== this._currentValue) {
       this._setCurrentValue(this.defaultValue);
     }
-
-    const boundsChanged = changedProperties.has('min') || changedProperties.has('max');
-    if (boundsChanged && this.hasUpdated) {
-      this._updateSteps();
-      this._updateValue(this._currentValue);
-    }
-
-    if (changedProperties.has('zero') && this.hasUpdated) {
-      this._updateZeroDot(this._currentValue);
-    }
-  }
-
-  private _updateValue(value: number): void {
-    this._updateZeroDot(value);
-
-    const range = this.max - this.min;
-    if (range === 0) {
-      return;
-    }
-    const { width } = this.getBoundingClientRect();
-    const slope = 100 / range;
-    const mappedValue = slope * (value - this.min);
-    const offset = (mappedValue * (width - this._thumbSize)) / 100;
-
-    window.requestAnimationFrame(() => {
-      const thumbEl = this._thumbRef.value;
-      if (thumbEl) {
-        thumbEl.style.transform = `translateX(${offset}px)`;
-      }
-    });
-  }
-
-  private _updateZeroDot(value: number): void {
-    if (!this._zeroDotEl) {
-      return;
-    }
-    const range = this.max - this.min;
-    if (range === 0) {
-      return;
-    }
-    this._zeroDotEl.style.opacity = value === this.zero ? '0' : '1';
-    const { width } = this.getBoundingClientRect();
-    const slope = 100 / range;
-    const mappedValue = slope * (this.zero - this.min);
-    const offset = (mappedValue * (width - this._thumbSize)) / 100;
-    window.requestAnimationFrame(() => {
-      if (this._zeroDotEl) {
-        this._zeroDotEl.style.transform = `translateX(${offset}px)`;
-      }
-    });
   }
 
   private _updateSteps(): void {
-    const STEP_GAP = 15;
     const stepsEl = this._stepsRef.value;
-    if (!stepsEl) {
-      return;
+    if (stepsEl) {
+      this._stepsCount = Math.max(0, Math.ceil(Math.ceil(stepsEl.getBoundingClientRect().width / 2) / STEP_GAP) - 2);
     }
+  }
 
-    const { width } = stepsEl.getBoundingClientRect();
-    const half = Math.ceil(width / 2);
-    const count = Math.ceil(half / STEP_GAP) - 2;
-
-    if (this._stepsCount === count) {
-      return;
-    }
-
-    const fragment = document.createDocumentFragment();
-    const minorStepEl = document.createElement('div');
-    const borderStepEl = document.createElement('div');
-    minorStepEl.className = 'uc-minor-step';
-    borderStepEl.className = 'uc-border-step';
-    fragment.appendChild(borderStepEl);
-    for (let i = 0; i < count; i += 1) {
-      fragment.appendChild(minorStepEl.cloneNode());
-    }
-    fragment.appendChild(borderStepEl.cloneNode());
-    for (let i = 0; i < count; i += 1) {
-      fragment.appendChild(minorStepEl.cloneNode());
-    }
-    fragment.appendChild(borderStepEl.cloneNode());
-
-    const zeroDotEl = document.createElement('div');
-    zeroDotEl.className = 'uc-zero-dot';
-    fragment.appendChild(zeroDotEl);
-    this._zeroDotEl = zeroDotEl;
-
-    stepsEl.innerHTML = '';
-    stepsEl.appendChild(fragment);
-    this._stepsCount = count;
+  /** Where `value` sits between `min` and `max`, from 0 to 1. The CSS turns it into a position. */
+  private _fraction(value: number): number {
+    const range = this.max - this.min;
+    return range === 0 ? 0 : (value - this.min) / range;
   }
 
   public override connectedCallback(): void {
@@ -215,7 +132,6 @@ export class SliderUi extends SliderUiBase {
     this._currentValue = value;
     if (this.hasUpdated) {
       this._syncInputValue(value);
-      this._updateValue(value);
     }
   }
 
@@ -235,10 +151,24 @@ export class SliderUi extends SliderUiBase {
     return Number.isFinite(parsedValue) ? parsedValue : null;
   }
 
+  private _renderMinorSteps() {
+    return Array.from({ length: this._stepsCount }, () => html`<div class="uc-minor-step"></div>`);
+  }
+
   public override render() {
     return html`
-      <div class="uc-steps" ${ref(this._stepsRef)}></div>
-      <div class="uc-thumb" ${ref(this._thumbRef)}></div>
+      <div class="uc-steps" ${ref(this._stepsRef)}>
+        <div class="uc-border-step"></div>
+        ${this._renderMinorSteps()}
+        <div class="uc-border-step"></div>
+        ${this._renderMinorSteps()}
+        <div class="uc-border-step"></div>
+        <div
+          class="uc-zero-dot"
+          style="--l-fraction: ${this._fraction(this.zero)}; opacity: ${this._currentValue === this.zero ? 0 : 1}"
+        ></div>
+      </div>
+      <div class="uc-thumb" style="--l-fraction: ${this._fraction(this._currentValue)}"></div>
       <input
         class="uc-input"
         type="range"
