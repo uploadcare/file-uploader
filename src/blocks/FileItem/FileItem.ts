@@ -25,14 +25,15 @@ import './FileActionButton';
 // (badge, flags, hint, progress, name, aria) — is UI/presentation logic and
 // lives in the element; only file/upload/collection *side-effects* (aborting an
 // upload, removing an entry, telemetry) belong in the controller layer.
+// Each value is also the l10n key of the state's name in the row's aria label.
 const FileItemState = Object.freeze({
-  FINISHED: Symbol('FINISHED'),
-  FAILED: Symbol('FAILED'),
-  UPLOADING: Symbol('UPLOADING'),
-  VALIDATION: Symbol('VALIDATION'),
-  QUEUED_UPLOADING: Symbol('QUEUED-UPLOADING'),
-  QUEUED_VALIDATION: Symbol('QUEUED-VALIDATION'),
-  IDLE: Symbol('IDLE'),
+  FINISHED: 'finished',
+  FAILED: 'failed',
+  UPLOADING: 'uploading',
+  VALIDATION: 'validation',
+  QUEUED_UPLOADING: 'queued-uploading',
+  QUEUED_VALIDATION: 'queued-validation',
+  IDLE: 'idle',
 } as const);
 
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
@@ -388,7 +389,7 @@ export class FileItem extends FileItemConfig {
     }
     return this.l10n('a11y-file-item-status', {
       fileName,
-      status: this.l10n(this._state.description?.toLocaleLowerCase() ?? '').toLocaleLowerCase(),
+      status: this.l10n(this._state).toLocaleLowerCase(),
     });
   }
 
