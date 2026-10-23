@@ -468,14 +468,9 @@ export class EditorToolbar extends EditorBlock {
       }
     }
 
-    if (changedProperties.has('imageSize') && this.imageSize) {
-      setTimeout(() => {
-        // Guard the deferred callback: the editor may be torn down within this
-        // macrotask (apply/cancel, router nav), releasing the adopted controller.
-        if (!this.adoptionSignal.aborted) {
-          this._activateTab(this.editorController.get('*tabId'));
-        }
-      }, 0);
+    const controller = this.editorControllerOrNull;
+    if (changedProperties.has('imageSize') && this.imageSize && controller) {
+      this._activateTab(controller.get('*tabId'));
     }
 
     if (changedProperties.has('activeTab') || changedProperties.has('tabList')) {
