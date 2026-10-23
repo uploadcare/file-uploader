@@ -443,6 +443,7 @@ describe('TelemetryManager', () => {
     const { manager, enable } = setup();
     enable();
 
+    // @ts-expect-error `eventType` is required; an untyped caller still gets ''.
     manager.sendEvent({});
     await flush();
 

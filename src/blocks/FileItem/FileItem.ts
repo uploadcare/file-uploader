@@ -9,6 +9,7 @@ import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryData, UploadEntryKeys } from '../../abstract/uploadEntrySchema';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
+import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './file-item.css';
 import { effect } from '../../lit/effect';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
@@ -102,6 +103,7 @@ export class FileItem extends FileItemConfig {
     // Telemetry only for a real removal — guard first, so a stale/double
     // `uc:remove` (or an unset uid) doesn't record a phantom `remove-file`.
     this._telemetry.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
           event: 'remove-file',
@@ -259,6 +261,7 @@ export class FileItem extends FileItemConfig {
     }
 
     this._telemetry.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
           event: action.id,
