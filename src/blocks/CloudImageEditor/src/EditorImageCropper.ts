@@ -81,10 +81,10 @@ export class EditorImageCropper extends EditorBlock {
   // notifies synchronously, so without this a commit would re-fire the reaction
   // (e.g. deactivate commits before flipping `_isActive`, recursing forever).
   private _reacting = false;
-  // Bumped on every deactivate (incl. the new-image reset). A fire-and-forget
-  // `activate()` captures the value at its start and bails after each `await` if
-  // it no longer matches, so a stale image load can't finish over a newer one.
-  private _activationGeneration = 0;
+  // One per `activate()`, aborted by `deactivate` (incl. the new-image reset): the
+  // activation's image load stops, and it bails after each `await`, so a stale
+  // image can't finish over a newer one.
+  private _activation?: AbortController;
 
   /**
    * Loaded image size, passed down from the root (`<uc-cloud-image-editor>`) as
@@ -102,7 +102,6 @@ export class EditorImageCropper extends EditorBlock {
   private _observer?: ResizeObserver;
   @state()
   private _image: HTMLImageElement | null = null;
-  private _cancelPreload?: () => void;
   private readonly _canvasRef = createRef<HTMLCanvasElement>();
   private readonly _frameRef = createRef<CropFrame>();
 
@@ -467,21 +466,19 @@ export class EditorImageCropper extends EditorBlock {
       return;
     }
     this._isActive = true;
-    // Snapshot the generation: a deactivate/new-image reset during the awaits
-    // below bumps it, so this fire-and-forget activation aborts instead of
-    // drawing a superseded image (see `_activationGeneration`).
-    const generation = this._activationGeneration;
+    const activation = new AbortController();
+    this._activation = activation;
     // Released before this activation finished (disconnect, controller swap): roll back right away, so the next
     // attach's `_syncActivation` activates again instead of seeing a cropper that never finished activating.
     const signal = this.adoptionSignal;
     const rollback = () => {
-      if (generation === this._activationGeneration) {
+      if (!activation.signal.aborted) {
         this._isActive = false;
       }
     };
     signal.addEventListener('abort', rollback, { once: true });
     await this.whileAdopted(this.updateComplete);
-    if (generation !== this._activationGeneration) {
+    if (activation.signal.aborted) {
       return;
     }
     this._initCanvas();
@@ -492,9 +489,9 @@ export class EditorImageCropper extends EditorBlock {
       const controller = this.editorController;
       const originalUrl = controller.get('*originalUrl') as string;
       const transformations = controller.get('*editorTransformations');
-      const image = await this._waitForImage(controller, originalUrl, transformations);
-      // A newer activation superseded this one (and cancelled its preload): its image is not ours to keep.
-      if (generation !== this._activationGeneration) {
+      const image = await this._waitForImage(controller, originalUrl, transformations, activation.signal);
+      // Deactivated while the image loaded: its image is not ours to keep.
+      if (activation.signal.aborted) {
         return;
       }
       this._image = image;
@@ -524,8 +521,7 @@ export class EditorImageCropper extends EditorBlock {
     if (!this._isActive) {
       return;
     }
-    // Invalidate any in-flight `activate()` (see `_activationGeneration`).
-    this._activationGeneration += 1;
+    this._activation?.abort();
     if (!reset) {
       this._commit();
     }
@@ -578,6 +574,7 @@ export class EditorImageCropper extends EditorBlock {
     controller: CloudImageEditorController,
     originalUrl: string,
     transformations: Transformations,
+    signal: AbortSignal,
   ): Promise<HTMLImageElement> {
     const width = this.offsetWidth;
     transformations = {
@@ -590,14 +587,15 @@ export class EditorImageCropper extends EditorBlock {
     const src = await this.whileAdopted(
       controller.proxyUrl(viewerImageSrc(originalUrl, width, transformations, controller.get('*sourceOperations'))),
     );
-    const { promise, cancel, image } = preloadImage(src);
+    // Before the loading flag goes up: an image that never starts loading would never clear it.
+    signal.throwIfAborted();
+    const { promise, image } = preloadImage(src, { signal });
 
     // Not bound to the adoption: the loading flag lives on the controller and must clear even if the load lands late.
+    // An abort cancels the load to a transparent pixel, whose `load` clears it too.
     const stop = this._handleImageLoading(controller, src);
     image.addEventListener('load', stop, { once: true });
     image.addEventListener('error', stop, { once: true });
-    this._cancelPreload?.();
-    this._cancelPreload = cancel;
 
     try {
       await this.whileAdopted(promise);
