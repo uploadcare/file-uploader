@@ -2,8 +2,6 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
-import type { RouterController } from '../../abstract/controllers/RouterController';
-import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { Owned, PluginActivityRegistration, PluginRenderDispose } from '../../abstract/managers/plugin';
 import { PluginController } from '../../abstract/managers/plugin';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
@@ -21,31 +19,16 @@ export class PluginActivityHost extends ActivityChildBlock {
   private _containerRef = createRef<HTMLDivElement>();
   private _isMounted = false;
 
-  /** Test-only public surface (`plugin-activity-host.e2e.test.tsx`) mirroring v1's `LitBlock.router` getter. */
-  public get router(): RouterController {
-    return this._router;
-  }
-
-  protected override controllerReady(container: ControllerContainer): void {
-    this.activityType = (this.registration?.id as ActivityType) ?? null;
-    super.controllerReady(container);
+  // Before `super`, which reports the type and sets the `activity` attribute when it changes.
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    if (changed.has('registration')) {
+      this.activityType = (this.registration?.id as ActivityType) ?? null;
+    }
+    super.willUpdate(changed);
   }
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed); // reflects [active] for the current slot
-
-    // Keep activityType in sync if the registration arrives/changes late.
-    const id = (this.registration?.id as ActivityType) ?? null;
-    if (id !== this.activityType) {
-      this.activityType = id;
-      if (id) {
-        this.setAttribute('activity', id);
-      }
-      // Move the mounted-activity signal from the stale id to the new one so
-      // API waits (navigate/setModalState) find this host under its current
-      // activityType right away, rather than after the next render cycle.
-      this.reportActivityMounted();
-    }
 
     // Own the plugin's render()/dispose() lifecycle: mount when this activity
     // becomes the current one, tear down when navigation moves away.

@@ -28,8 +28,8 @@ class ModalActivityBlock extends ActivityChildBlock {
 ModalActivityBlock.reg('uc-test-modal-activity');
 
 // A null-`activityType` host (e.g. a `PluginActivityHost` before its
-// registration arrives): the base wires the router subscription but skips all
-// activity-id-dependent work. Exposes the protected surface for direct probing.
+// registration arrives): the base skips all activity-id-dependent work.
+// Exposes the protected surface for direct probing.
 class NullActivityBlock extends ActivityChildBlock {
   public override render() {
     return html``;
@@ -187,7 +187,7 @@ describe('ActivityChildBlock [active] host attribute', () => {
 });
 
 describe('ActivityChildBlock with a null activityType', () => {
-  it('wires the router subscription but reports nothing and never activates', async () => {
+  it('reports nothing and never activates', async () => {
     const ctxName = freshCtxName();
     const el = document.createElement('uc-test-null-activity') as NullActivityBlock & {
       updateComplete: Promise<unknown>;
@@ -208,15 +208,56 @@ describe('ActivityChildBlock with a null activityType', () => {
     el.callReport();
     expect(el.params).toEqual({});
 
-    // A router transition still re-renders it (subscription wired even for a
-    // null activityType) without ever toggling `[active]`.
+    // A router transition never toggles `[active]`.
     router(ctxName).setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
     await flush(el);
     expect(el.hasAttribute('active')).toBe(false);
   });
 });
 
-describe('ActivityChildBlock _wireActivityRerender gating', () => {
+describe('ActivityChildBlock with an activityType set after adoption', () => {
+  const mountNull = async () => {
+    const ctxName = freshCtxName();
+    const el = document.createElement('uc-test-null-activity') as NullActivityBlock & {
+      updateComplete: Promise<unknown>;
+    };
+    el.setAttribute('ctx-name', ctxName);
+    document.body.append(el);
+    mounted.push(el);
+    await el.updateComplete;
+    return { el, ctxName };
+  };
+
+  it('takes the type: sets the activity attribute, reports it and follows the router', async () => {
+    const { el, ctxName } = await mountNull();
+    router(ctxName).setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
+    await flush(el);
+
+    el.activityType = ACTIVITY_TYPES.UPLOAD_LIST;
+    await flush(el);
+    expect(el.getAttribute('activity')).toBe(ACTIVITY_TYPES.UPLOAD_LIST);
+    expect(router(ctxName).hasMountedActivity(ACTIVITY_TYPES.UPLOAD_LIST)).toBe(true);
+    expect(el.hasAttribute('active')).toBe(true);
+
+    router(ctxName).setActivity(null);
+    await flush(el);
+    expect(el.hasAttribute('active')).toBe(false);
+  });
+
+  it('moves the attribute and the report when the type changes again', async () => {
+    const { el, ctxName } = await mountNull();
+    el.activityType = ACTIVITY_TYPES.UPLOAD_LIST;
+    await flush(el);
+
+    el.activityType = ACTIVITY_TYPES.START_FROM;
+    await flush(el);
+    expect(el.getAttribute('activity')).toBe(ACTIVITY_TYPES.START_FROM);
+    expect(router(ctxName).hasMountedActivity(ACTIVITY_TYPES.START_FROM)).toBe(true);
+    expect(router(ctxName).hasMountedActivity(ACTIVITY_TYPES.UPLOAD_LIST)).toBe(false);
+  });
+});
+
+describe('ActivityChildBlock router reactivity', () => {
   afterEach(() => {
     vi.restoreAllMocks();
   });
@@ -236,19 +277,5 @@ describe('ActivityChildBlock _wireActivityRerender gating', () => {
     router(ctxName).setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
     await flush(el);
     expect(el.hasAttribute('active')).toBe(true);
-  });
-
-  it('DOES subscribe to the router when adopted with a null activityType (a late-registering PluginActivityHost)', async () => {
-    const ctxName = freshCtxName();
-    const subscribeSpy = vi.spyOn(RouterController.prototype, 'subscribe');
-    const el = document.createElement('uc-test-null-activity') as ActivityChildBlock & {
-      updateComplete: Promise<unknown>;
-    };
-    el.setAttribute('ctx-name', ctxName);
-    document.body.append(el);
-    mounted.push(el);
-    await el.updateComplete;
-
-    expect(subscribeSpy).toHaveBeenCalledTimes(1);
   });
 });
