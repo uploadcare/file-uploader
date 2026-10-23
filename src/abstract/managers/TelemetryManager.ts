@@ -25,7 +25,7 @@ type TelemetryState = TelemetryRequest & {
 };
 type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config' | 'component'>> & {
   modalId?: string;
-  eventType?: CommonEventType;
+  eventType: CommonEventType;
 };
 
 /**

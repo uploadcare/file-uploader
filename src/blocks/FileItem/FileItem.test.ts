@@ -378,7 +378,10 @@ describe('FileItem entry-state rendering', () => {
       new CustomEvent('uc:remove', { bubbles: true, composed: true }),
     );
     expect(sendEvent).toHaveBeenCalledWith(
-      expect.objectContaining({ payload: { metadata: { event: 'remove-file', node: 'UC-FILE-ITEM' } } }),
+      expect.objectContaining({
+        eventType: 'action-event',
+        payload: { metadata: { event: 'remove-file', node: 'UC-FILE-ITEM' } },
+      }),
     );
     expect(remove).toHaveBeenCalledWith(uid);
   });
