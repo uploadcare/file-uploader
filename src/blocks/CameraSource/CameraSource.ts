@@ -98,6 +98,8 @@ export class CameraSource extends ChildBlock {
   private _permissionResponses: Partial<Record<(typeof DEFAULT_PERMISSIONS)[number], PermissionStatus>> = {};
   private _permissionCleanupFns: Array<() => void> = [];
   private _currentVideoSource: MediaStream | null = null;
+  /** Object URL of the recorded clip being previewed; revoked when the preview is replaced or the camera released. */
+  private _previewUrl: string | null = null;
 
   private readonly _handlePreviewPlay = (): void => {
     this._startTimeline();
@@ -443,12 +445,14 @@ export class CameraSource extends ChildBlock {
         type: this._mediaRecorder?.mimeType,
       });
 
-      const videoURL = URL.createObjectURL(blob);
-
       const videoElement = this._videoRef.value as HTMLVideoElement | undefined;
       if (!videoElement) {
         return;
       }
+
+      this._revokePreviewUrl();
+      const videoURL = URL.createObjectURL(blob);
+      this._previewUrl = videoURL;
 
       videoElement.muted = false;
       videoElement.volume = 1;
@@ -471,6 +475,13 @@ export class CameraSource extends ChildBlock {
   private _detachPreviewListeners(videoElement?: HTMLVideoElement | null): void {
     videoElement?.removeEventListener('play', this._handlePreviewPlay);
     videoElement?.removeEventListener('pause', this._handlePreviewPause);
+  }
+
+  private _revokePreviewUrl(): void {
+    if (this._previewUrl) {
+      URL.revokeObjectURL(this._previewUrl);
+      this._previewUrl = null;
+    }
   }
 
   private _setVideoSource(stream: MediaStream | null): void {
@@ -501,6 +512,7 @@ export class CameraSource extends ChildBlock {
 
     /** Reset video */
     if (this._activeTab === CameraSourceTypes.VIDEO) {
+      this._revokePreviewUrl();
       this._setVideoSource(this._stream);
       const videoElement = this._videoRef.value as HTMLVideoElement | undefined;
       if (videoElement) {
@@ -1020,6 +1032,7 @@ export class CameraSource extends ChildBlock {
     this._teardownPermissionListeners();
     this._detachPreviewListeners(this._videoRef.value);
     this._setVideoSource(null);
+    this._revokePreviewUrl();
   }
 
   // Camera activation is adoption-scoped (`_onActivate` runs in `controllerReady`),
