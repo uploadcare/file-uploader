@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { __resetLoggerForTests } from './logger';
 import { resolveSecureDeliveryProxyUrl, type SecureDeliveryProxyConfig } from './secureDeliveryProxyUrl';
 
 const cdnUrl =
@@ -10,6 +11,7 @@ describe('resolveSecureDeliveryProxyUrl', () => {
   let onResolverError: Mock<(error: unknown, context: string) => void>;
 
   beforeEach(() => {
+    __resetLoggerForTests();
     warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
     errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     onResolverError = vi.fn<(error: unknown, context: string) => void>();
@@ -48,6 +50,18 @@ describe('resolveSecureDeliveryProxyUrl', () => {
       'Both secureDeliveryProxy and secureDeliveryProxyUrlResolver are set. The secureDeliveryProxyUrlResolver will be used.',
     );
     expect(result).toBe('https://resolved.example.com/photo.jpg');
+  });
+
+  it('warns about both being set once, not once per url', async () => {
+    const config: SecureDeliveryProxyConfig = {
+      secureDeliveryProxy: 'https://proxy.example.com/{{previewUrl}}',
+      secureDeliveryProxyUrlResolver: vi.fn().mockResolvedValue('https://resolved.example.com/photo.jpg'),
+    };
+
+    await resolveSecureDeliveryProxyUrl(config, onResolverError, cdnUrl);
+    await resolveSecureDeliveryProxyUrl(config, onResolverError, cdnUrl);
+
+    expect(warnSpy).toHaveBeenCalledOnce();
   });
 
   it('calls the resolver with uuid, cdnUrlModifiers, and fileName extracted from the url', async () => {
