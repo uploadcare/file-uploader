@@ -130,6 +130,7 @@ export class UploaderPublicApi {
   @inject(AuthTokenManager) private readonly _authToken!: AuthTokenManager;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
 
+  /** @internal Mangled in the build, so it is kept out of the published types. */
   public get _groupError(): Error | null {
     return this._collectionState.get('groupError');
   }
@@ -169,6 +170,7 @@ export class UploaderPublicApi {
     return container;
   }
 
+  /** @internal Mangled in the build, so it is kept out of the published types. */
   public get _uploadCollection(): UploadCollectionController {
     return this._collection;
   }

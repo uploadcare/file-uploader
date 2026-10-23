@@ -74,7 +74,9 @@ async function build(buildItem: BuildItem) {
     splitting: false,
     treeshake: true,
     shims: false,
-    dts: true,
+    // `stripInternal` drops `@internal` members: `mangleProps` renames `_`-prefixed ones, so a published type for
+    // them would compile and read `undefined`.
+    dts: { compilerOptions: { stripInternal: true } },
     env: {
       NODE_ENV: 'production',
     },
