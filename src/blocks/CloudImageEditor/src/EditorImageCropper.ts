@@ -354,6 +354,7 @@ export class EditorImageCropper extends EditorBlock {
     if (this._image) {
       this._frameRef.value?.toggleThumbs(true);
       this._transitionToImage();
+      // A later task, so the browser styles the transform above before the class change starts the CSS transition.
       setTimeout(() => {
         applyClassNames(this, {
           'uc-active_from_viewer': fromViewer,
