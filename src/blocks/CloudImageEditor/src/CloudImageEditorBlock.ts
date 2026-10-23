@@ -541,7 +541,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
       const resolveWait = () => {
         cleanup();
-        window.setTimeout(() => resolve(), 0);
+        resolve();
       };
 
       const rejectWait = () => {
