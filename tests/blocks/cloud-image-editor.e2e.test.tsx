@@ -267,6 +267,57 @@ describe('uc-cloud-image-editor', () => {
     expect(fader()).toMatch(/\bmy-fader\b/);
   });
 
+  it('places the slider thumb, zero dot and step ticks from the value and the width', async () => {
+    const { element, editor } = renderEditor();
+    await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
+    await userEvent.click(editor.getByRole('option', { name: /Brightness/i }));
+    await expect.element(editor.getByTestId('uc-editor-slider')).toBeVisible();
+    const slider = element.querySelector('uc-slider-ui') as SliderUi;
+    const input = slider.querySelector('input') as HTMLInputElement;
+
+    const layout = () => {
+      const host = slider.getBoundingClientRect();
+      const thumb = slider.querySelector('.uc-thumb')?.getBoundingClientRect();
+      const dot = slider.querySelector('.uc-zero-dot');
+      const dotBox = dot?.getBoundingClientRect();
+      const track = host.width - (thumb?.width ?? 0);
+      const at = (value: number) => (track * (value - slider.min)) / (slider.max - slider.min);
+      const stepsWidth = slider.querySelector('.uc-steps')?.getBoundingClientRect().width ?? 0;
+      return {
+        // Whole pixels, and `abs` so a hair to the left (-0) still equals 0.
+        thumbOffBy: Math.abs(Math.round((thumb?.left ?? 0) - host.left - at(Number(input.value)))),
+        dotOffBy: Math.abs(
+          Math.round(
+            (dotBox?.left ?? 0) - host.left - ((thumb?.width ?? 0) / 2 - (dotBox?.width ?? 0) / 2 + at(slider.zero)),
+          ),
+        ),
+        dotOpacity: dot ? getComputedStyle(dot).opacity : null,
+        minorSteps: slider.querySelectorAll('.uc-minor-step').length,
+        expectedMinorSteps: 2 * (Math.ceil(Math.ceil(stepsWidth / 2) / 15) - 2),
+        borderSteps: slider.querySelectorAll('.uc-border-step').length,
+      };
+    };
+    const settled = (dotOpacity: string) => ({
+      thumbOffBy: 0,
+      dotOffBy: 0,
+      dotOpacity,
+      minorSteps: layout().expectedMinorSteps,
+      expectedMinorSteps: layout().expectedMinorSteps,
+      borderSteps: 3,
+    });
+
+    expect(input.value).toBe(String(slider.zero));
+    await expect.poll(layout).toEqual(settled('0'));
+
+    input.value = String(slider.max - 10);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    await expect.poll(layout).toEqual(settled('1'));
+
+    slider.style.width = '200px';
+    await expect.poll(() => slider.getBoundingClientRect().width).toBe(200);
+    await expect.poll(layout).toEqual(settled('1'));
+  });
+
   it('renders its icons', async () => {
     const { element } = renderEditor();
 
