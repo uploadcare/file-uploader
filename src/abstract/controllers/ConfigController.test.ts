@@ -285,4 +285,19 @@ describe('ConfigController', () => {
       expect(c.getWriters()).toEqual([]);
     });
   });
+
+  it('keeps notifying schema listeners when one throws, and warns', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const config = new ConfigController();
+    const listener = vi.fn();
+    config.onSchemaChange(() => {
+      throw new Error('listener boom');
+    });
+    config.onSchemaChange(listener);
+
+    config.register({ name: 'unsplashApiKey', defaultValue: 'default-key' });
+
+    expect(listener).toHaveBeenCalled();
+    expect(warn).toHaveBeenCalled();
+  });
 });

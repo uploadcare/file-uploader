@@ -9,6 +9,8 @@ import { logger } from '../../../abstract/logger';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 
+const log = logger.scope('cloud-image-editor');
+
 /**
  * The editor's own `@lit/context` — resolved by DOM ancestry, distinct from
  * (and coexisting with) the uploader ctx's `ctxNameContext`. The root
@@ -114,7 +116,12 @@ export class CloudImageEditorContextController implements ReactiveController {
     this._controller = controller;
     this._lifetime = new Lifetime();
     for (const cb of this._onAttachCallbacks) {
-      cb();
+      // Isolate-and-warn: one throwing callback must not stop the rest.
+      try {
+        cb();
+      } catch (error) {
+        log.warn('An editor attach callback threw', error);
+      }
     }
   }
 

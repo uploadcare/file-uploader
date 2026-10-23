@@ -351,4 +351,26 @@ describe('UploadCollectionController', () => {
     collection.destroy(); // must force-destroy the marked entry now, not wait 10s
     expect(TypedData.getByUid(id)).toBeNull();
   });
+
+  it('keeps notifying the other observers when one throws, and warns', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const collection = new UploadCollectionController();
+    const boom = () => {
+      throw new Error('observer boom');
+    };
+    const membership = vi.fn();
+    const property = vi.fn();
+    collection.observeCollection(boom);
+    collection.observeCollection(membership);
+    collection.observeProperties(['uploadProgress'], boom);
+    collection.observeProperties(['uploadProgress'], property);
+
+    collection.add({ uploadProgress: 0 });
+    vi.runOnlyPendingTimers();
+
+    expect(membership).toHaveBeenCalled();
+    expect(property).toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledTimes(2);
+    collection.destroy();
+  });
 });
