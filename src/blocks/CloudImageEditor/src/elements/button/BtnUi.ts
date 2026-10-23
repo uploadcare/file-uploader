@@ -55,7 +55,7 @@ export class BtnUi extends EditorBlock {
     }
 
     if (changed.has('theme')) {
-      this._applyThemeClass();
+      this._applyThemeClass(changed.get('theme'));
     }
   }
 
@@ -63,9 +63,12 @@ export class BtnUi extends EditorBlock {
     this.style.flexDirection = this.reverse ? 'row-reverse' : '';
   }
 
-  private _applyThemeClass(): void {
+  private _applyThemeClass(previous?: Theme): void {
+    if (previous) {
+      this.classList.remove(`uc-${previous}`);
+    }
     if (this.theme && this.theme !== 'custom') {
-      this.className = `uc-${this.theme}`;
+      this.classList.add(`uc-${this.theme}`);
     }
   }
 
