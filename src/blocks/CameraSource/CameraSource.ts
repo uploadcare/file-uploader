@@ -811,6 +811,9 @@ export class CameraSource extends ChildBlock {
   };
 
   private _capture = async (): Promise<void> => {
+    // Release the current stream first. The `'prompt'` state below used to do it, but that setter is debounced and a
+    // quick `'granted'` supersedes it, which left the previous camera running after a device switch.
+    this._stopCapture();
     const enableAudioRecording = this._config.get('enableAudioRecording');
     const constraints: MediaStreamConstraints = {
       video: { ...DEFAULT_VIDEO_CONFIG },
