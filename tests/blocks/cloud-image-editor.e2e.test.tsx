@@ -347,6 +347,62 @@ describe('uc-cloud-image-editor', () => {
     await expect.poll(layout).toEqual(settled('1'));
   });
 
+  describe.skipIf(isLive)('while the cropper image loads', () => {
+    /** Holds the editor's CDN image requests (not the image info) until `release()`. */
+    const holdImages = () => {
+      const release = withResolvers<void>();
+      let held = 0;
+      emulatorSession().on('GET /:uuid/*', async ({ request, next }) => {
+        if (new URL(request.url).pathname.includes('/-/json/')) return undefined;
+        held += 1;
+        await release.promise;
+        return next();
+      });
+      return { release: () => release.resolve(), held: () => held };
+    };
+    /**
+     * The image URL carries the cropper's width. A width no other test uses keeps the browser from answering from the
+     * cache an earlier test filled, which would never reach the hold.
+     */
+    const renderUncachedEditor = (width: number) => {
+      const rendered = renderEditor();
+      rendered.element.style.width = `${width}px`;
+      return rendered;
+    };
+    const loaderActive = (element: HTMLElement) =>
+      (element.querySelector('uc-line-loader-ui') as { active?: boolean } | null)?.active;
+
+    it('leaves a cropper deactivated before its image arrived inactive', async () => {
+      const images = holdImages();
+      const { element, editor } = renderUncachedEditor(611);
+      const cropper = editor.getByTestId('uc-editor-image-cropper');
+      const fader = () => activeClass(element.querySelector('uc-editor-image-fader'));
+      await expect.poll(images.held).toBeGreaterThan(0);
+
+      await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
+      images.release();
+      await expect.poll(fader, { timeout: 5000 }).toMatch(/uc-active_from_/);
+      await expect.poll(() => loaderActive(element)).toBe(false);
+      expect(activeClass(cropper.element())).not.toMatch(/uc-active_from_/);
+
+      await userEvent.click(editor.getByRole('tab', { name: /crop/i }));
+      await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+    });
+
+    it('activates a cropper re-activated before its first image arrived', async () => {
+      const images = holdImages();
+      const { element, editor } = renderUncachedEditor(617);
+      const cropper = editor.getByTestId('uc-editor-image-cropper');
+      await expect.poll(images.held).toBeGreaterThan(0);
+
+      await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
+      await userEvent.click(editor.getByRole('tab', { name: /crop/i }));
+      images.release();
+      await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+      await expect.poll(() => loaderActive(element)).toBe(false);
+    });
+  });
+
   it('keeps the tab indicator under the active tab, also when a new image arrives', async () => {
     const { element, editor } = renderEditor();
     const cropper = editor.getByTestId('uc-editor-image-cropper');
