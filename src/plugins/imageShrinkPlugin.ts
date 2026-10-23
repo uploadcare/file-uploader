@@ -20,7 +20,8 @@ export const imageShrinkPlugin: UploaderPlugin = {
         try {
           const shrunk = await shrinkFile(file, settings);
           return { file: shrunk };
-        } catch {
+        } catch (error) {
+          pluginApi.logger.warn('Image shrink failed, uploading the original', error);
           return { file };
         }
       },
