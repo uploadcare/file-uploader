@@ -29,6 +29,7 @@ export class PresenceToggle extends PresenceToggleBase {
   private _hiddenStyle: string = DEFAULT_STYLE.hidden;
   private _externalTransitions = false;
   private _initialRenderComplete = false;
+  private _initialTimer?: ReturnType<typeof setTimeout>;
 
   @property({ type: Boolean })
   public set visible(value: boolean) {
@@ -85,10 +86,17 @@ export class PresenceToggle extends PresenceToggleBase {
     }
 
     this._handleVisible();
-    setTimeout(() => {
+    // `uc-initial` hides the element with transitions off, so it shows in its first state instead of animating into
+    // it. A task later the first state has been styled, and the transitions can come back.
+    this._initialTimer = setTimeout(() => {
       this.classList.toggle('uc-initial', false);
       this._dispatchInitialRenderEvent();
     }, 0);
+  }
+
+  public override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    clearTimeout(this._initialTimer);
   }
 }
 
