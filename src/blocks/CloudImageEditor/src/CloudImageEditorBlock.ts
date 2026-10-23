@@ -863,6 +863,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         }),
       )) as { width: number; height: number };
 
+      // The image changed while this request was in flight: its own `updateImage` sets the size and initializes.
+      if (editorController.get('*originalUrl') !== originalUrlValue) {
+        return;
+      }
       const { width, height } = json;
       this._imageSize = { width, height };
     } catch (err) {
@@ -870,10 +874,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       if (isAbortError(err)) {
         return;
       }
-      if (err) {
-        editorController.telemetry.sendEventError(err, 'cloud editor image. Failed to load image info');
-        this._log.error('Failed to load image info', err);
-      }
+      editorController.telemetry.sendEventError(err, 'cloud editor image. Failed to load image info');
+      this._log.error('Failed to load image info', err);
     }
 
     this._scheduleInitialization();

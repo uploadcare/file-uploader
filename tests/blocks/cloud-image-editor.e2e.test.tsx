@@ -146,6 +146,42 @@ describe('uc-cloud-image-editor', () => {
     expect(rejections).toEqual([]);
   });
 
+  // Fake-only: the first image's info request is held at the emulator.
+  it.skipIf(isLive)('keeps the size of the current image when an older image info response lands last', async () => {
+    const released = withResolvers();
+    const parsed = withResolvers();
+    // Marks when the editor has parsed the held body: the point after which it would apply it.
+    const json = Response.prototype.json;
+    vi.spyOn(Response.prototype, 'json').mockImplementation(async function (this: Response) {
+      const value = await json.call(this);
+      if (this.url.includes(EDITOR_IMAGE_UUID)) parsed.resolve();
+      return value;
+    });
+    let held = false;
+    emulatorSession().on('GET /:uuid/-/json/', async ({ params }) => {
+      if (params.uuid === EDITOR_IMAGE_UUID) {
+        held = true;
+        await released.promise;
+        return Response.json({ width: 11, height: 11 });
+      }
+      return Response.json({ width: 640, height: 480 });
+    });
+    const { element } = renderEditor();
+    const cropperSize = () =>
+      (element.querySelector('uc-editor-image-cropper') as { imageSize?: { width: number } } | null)?.imageSize;
+    await expect.poll(() => held).toBe(true);
+
+    element.setAttribute('uuid', DEMO_IMAGE_UUID);
+    await expect.poll(() => cropperSize()?.width).toBe(640);
+    released.resolve();
+    // The sentinel: the held body is parsed; a task later anything that would apply it has run.
+    await parsed.promise;
+    await delay(0);
+    await (element as HTMLElement & { updateComplete: Promise<unknown> }).updateComplete;
+
+    expect(cropperSize()?.width).toBe(640);
+  });
+
   // Fake-only: the error answer comes from the emulator.
   it.skipIf(isLive)('reports a failed image info request even when the error body is JSON', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
