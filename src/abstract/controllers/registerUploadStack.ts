@@ -38,7 +38,7 @@ export type UploadStackControllers = {
  *
  * Resolution order is load-bearing: it fixes the container's insertion order and
  * therefore its reverse-insertion `dispose()` order — `UploadEventsController`
- * (resolved last) tears down first (`unobserve()`), then validation, upload, and
+ * (resolved last) tears down first (`destroy()`), then validation, upload, and
  * secure-uploads, matching v1's `UploaderController.destroy()` teardown. The
  * `UploadCollectionController` is resolved earlier (by `ensureUploaderScope`,
  * before this call), so it disposes AFTER the whole upload stack — the
@@ -55,7 +55,7 @@ export function registerUploadStack(container: ControllerContainer, controllers:
 
   // Resolve the collection FIRST so it is inserted before the upload stack and
   // therefore disposed AFTER it (reverse-insertion order) — guaranteeing
-  // `UploadEventsController.unobserve()` detaches its collection observers while
+  // `UploadEventsController.destroy()` detaches its collection observers while
   // the collection is still alive. In production `ensureUploaderScope` already
   // resolved it (this is idempotent); doing it here keeps the ordering correct
   // even for a direct caller.

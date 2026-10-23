@@ -80,10 +80,7 @@ export class UploadEventsController {
   @inject(UploadGroupController) private readonly _group!: UploadGroupController;
   private readonly _log = controllerLogger(this, 'upload-events');
 
-  // Active while observing (the v1 `isConnected` guard) — survives disconnect/
-  // reconnect cycles; gates the debounced flush + deferred validation/group that
-  // may fire after the host disconnects.
-  private _active = false;
+  // Bumped when the collection's membership changes: a group created for the old members is stale.
   private _groupGeneration = 0;
   private _unobserveCollection?: Unsubscribe;
   private _unobserveProperties?: Unsubscribe;
@@ -93,10 +90,14 @@ export class UploadEventsController {
     applyInitialCrop(this._collection, this._config.get('cropPreset'));
   }
 
+  /** Whether the ctx is being torn down; work that fires after that must not run. */
+  private get _ended(): boolean {
+    return lifetimeOf(this).signal.aborted;
+  }
+
   /** Start observing the collection. Idempotent. */
   public observe(): void {
-    this.unobserve();
-    this._active = true;
+    this._detach();
     this._unobserveCollection = this._collection.observeCollection(this._handleCollectionUpdate);
     this._unobserveProperties = this._collection.observeProperties(
       PROPERTY_OBSERVE_KEYS,
@@ -104,9 +105,7 @@ export class UploadEventsController {
     );
   }
 
-  public unobserve(): void {
-    this._active = false;
-    this._groupGeneration += 1;
+  private _detach(): void {
     this._unobserveProperties?.();
     this._unobserveCollection?.();
     this._unobserveProperties = undefined;
@@ -114,20 +113,19 @@ export class UploadEventsController {
     this._flushOutputItems.cancel();
   }
 
-  /** Final teardown — alias for {@link unobserve}. */
   public destroy(): void {
-    this.unobserve();
+    this._detach();
   }
 
   // Plugin `onAdd` hooks live on the conditionally-bound `PluginController` (bound
   // by `ensurePluginManager`); fire now-or-when-available via the container. It is
   // bound at scope-attach (before any file is added), so this normally fires
-  // synchronously; the `_active` re-check guards the rare deferred case where the
-  // manager resolves only after `unobserve()`, so a stale waiter can't run hooks
+  // synchronously; the `_ended` re-check guards the rare deferred case where the
+  // manager resolves only after teardown began, so a stale waiter can't run hooks
   // against a released scope.
   private _runPluginOnAdd(entry: Entry): void {
     containerOf(this)?.whenController(PluginController, (pluginManager) => {
-      if (!this._active) return;
+      if (this._ended) return;
       lifetimeOf(this).run(
         () => pluginManager.runOnAddHooks(entry),
         (error) => this._log.error('Plugin onAdd hooks failed', error),
@@ -136,7 +134,7 @@ export class UploadEventsController {
   }
 
   private _handleCollectionUpdate: CollectionObserver = (entries, added, removed) => {
-    if (!this._active) return;
+    if (this._ended) return;
 
     if (added.size || removed.size) this._groupGeneration += 1;
     this._collectionEvents.resetGroupIfMembershipChanged(added, removed);
@@ -167,7 +165,7 @@ export class UploadEventsController {
   };
 
   private _handleCollectionPropertiesUpdate = (changeMap: UploadCollectionChangeMap): void => {
-    if (!this._active) return;
+    if (this._ended) return;
 
     this._flushOutputItems();
     this._scheduleValidation(changeMap);
@@ -200,7 +198,7 @@ export class UploadEventsController {
   };
 
   // Deferred file validation for the keys that trigger it — a tick later, since we
-  // can't mutate entry properties in the same tick. Guards `_active` (a released
+  // can't mutate entry properties in the same tick. Guards `_ended` (a released
   // scope must not run validators).
   private _scheduleValidation(changeMap: UploadCollectionChangeMap): void {
     const entriesToRunValidation = [
@@ -212,7 +210,7 @@ export class UploadEventsController {
     ];
     if (entriesToRunValidation.length === 0) return;
     setTimeout(() => {
-      if (!this._active) return;
+      if (this._ended) return;
       const entriesToRunOnUpload = entriesToRunValidation.filter(
         (entryId) =>
           changeMap.fileInfo?.has(entryId) && !!TypedData.getByUid<UploadEntryData>(entryId)?.values.fileInfo,
@@ -225,7 +223,7 @@ export class UploadEventsController {
   }
 
   // Debounced: publish the derived collection state + `CHANGE`, then create the
-  // output group when configured and fully successful. Cancelled on `unobserve()`.
+  // output group when configured and fully successful. Cancelled on `destroy()`.
   private _flushOutputItems = debounce(() => {
     const collectionState = this._collectionEvents.flushOutput();
     if (
@@ -236,7 +234,7 @@ export class UploadEventsController {
     ) {
       const generation = this._groupGeneration;
       lifetimeOf(this).run(
-        () => this._group.create(collectionState, () => this._active && generation === this._groupGeneration),
+        () => this._group.create(collectionState, () => !this._ended && generation === this._groupGeneration),
         (error) => this._log.error('Failed to create the output file group', error),
       );
     }
