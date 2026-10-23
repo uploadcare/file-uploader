@@ -244,8 +244,9 @@ export class PluginController {
     for (const callback of this._subscribers) {
       try {
         callback();
-      } catch {
-        // Ignore subscriber errors
+      } catch (error) {
+        // Isolate-and-warn: one throwing subscriber must not stop the rest.
+        this._log.warn('A plugins-change subscriber threw', error);
       }
     }
   }
