@@ -855,7 +855,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         this.proxyUrl(editorImageInfoUrl(originalUrlValue, editorController.get('*sourceOperations'))),
       );
       const json = (await this._lifetime.guard(
-        fetch(cdnUrl, { signal: this._lifetime.signal }).then((response) => response.json()),
+        fetch(cdnUrl, { signal: this._lifetime.signal }).then((response) => {
+          if (!response.ok) {
+            throw new Error(`Image info request failed with status ${response.status}`);
+          }
+          return response.json();
+        }),
       )) as { width: number; height: number };
 
       const { width, height } = json;
