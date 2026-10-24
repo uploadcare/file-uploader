@@ -17,6 +17,13 @@ declare const fileError: OutputError<OutputFileErrorType>;
 declare const collectionError: OutputError<OutputCollectionErrorType>;
 declare const state: OutputCollectionState;
 
+test('snapshot() returns the same shape, and a spread copy still has it', () => {
+  expectTypeOf(state.snapshot()).toEqualTypeOf<OutputCollectionState>();
+  expectTypeOf({ ...state }.snapshot()).toEqualTypeOf<OutputCollectionState>();
+  const success = state as OutputCollectionState<'success'>;
+  expectTypeOf(success.snapshot().status).toEqualTypeOf<'success'>();
+});
+
 test('a success entry has its upload result and no errors', () => {
   if (entry.status === 'success') {
     expectTypeOf(entry.fileInfo).toEqualTypeOf<UploadcareFile>();

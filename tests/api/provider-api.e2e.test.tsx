@@ -243,6 +243,25 @@ describe('UploadCtxProvider api', () => {
         }),
       );
 
+    it('keeps what the event saw when the handler takes a snapshot()', async () => {
+      const { api, provider } = await renderSolution('regular', { multiple: true, confirmUpload: true });
+      const snapshot = new Promise<EventPayload['change']>((resolve) =>
+        provider.addEventListener(
+          'change',
+          (e) => resolve((e as CustomEvent<EventPayload['change']>).detail.snapshot()),
+          {
+            once: true,
+          },
+        ),
+      );
+      api.addFileFromObject(IMAGE.PIXEL);
+      const seen = await snapshot;
+      api.addFileFromObject(IMAGE.SQUARE);
+      await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(2);
+
+      expect([seen.totalCount, seen.allEntries.length]).toEqual([1, 1]);
+    });
+
     it('warns about file entries first read after the event', async () => {
       __resetLoggerForTests();
       const warn = vi.spyOn(console, 'warn');

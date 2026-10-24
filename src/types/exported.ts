@@ -579,6 +579,12 @@ export type OutputCollectionState<
   failedEntries: OutputFileEntry<'failed'>[];
   uploadingEntries: OutputFileEntry<'uploading'>[];
   idleEntries: OutputFileEntry<'idle'>[];
+
+  /**
+   * A plain copy of every field, read now. Call it synchronously, in the event handler, to keep the state as the
+   * event saw it; `{...state}` does the same.
+   */
+  snapshot(): OutputCollectionState<TStatus, TGroupFlag>;
 } & (TGroupFlag extends 'has-group'
   ? { group: UploadcareGroup }
   : TGroupFlag extends 'maybe-has-group'

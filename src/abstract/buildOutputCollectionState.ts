@@ -14,8 +14,8 @@ import { logger } from './logger';
 const log = logger.scope('output-collection-state');
 
 const KEEP_A_COPY =
-  'Read it synchronously, or keep a copy in the handler with the spread operator: `{...outputCollectionState}` or ' +
-  '`{...e.detail}`.';
+  'Read it synchronously, or keep a copy in the handler with `state.snapshot()` or the spread operator ' +
+  '(`{...e.detail}`).';
 
 const LATE_READ_WARNING =
   "You've read an OutputCollectionState's file entries after the task that created it, so they are newer than " +
@@ -44,6 +44,11 @@ const taskNow = (): number => {
 export const __resetTaskClockForTests = (): void => {
   taskEndScheduled = false;
 };
+
+// Enumerable and `this`-based, so a spread copy carries it and calling it there just copies the copy.
+function snapshot<T extends object>(this: T): T {
+  return { ...this };
+}
 
 /** Cheap to read, so they are read when the state is built. */
 const BUILD_TIME_FIELDS = [
@@ -190,5 +195,6 @@ export function buildOutputCollectionState<
       enumerable: true,
     });
   }
+  Object.defineProperty(state, 'snapshot', { value: snapshot, enumerable: true });
   return state;
 }

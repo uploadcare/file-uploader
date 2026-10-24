@@ -158,6 +158,7 @@ describe('buildOutputCollectionState', () => {
         'isSuccess',
         'isUploading',
         'progress',
+        'snapshot',
         'status',
         'successCount',
         'successEntries',
@@ -187,6 +188,41 @@ describe('buildOutputCollectionState', () => {
 
     expect(state.allEntries).toBe(state.allEntries);
     expect(state.successEntries[0]).toBe(state.allEntries[0]);
+  });
+
+  describe('snapshot()', () => {
+    it('returns a plain copy of every field, equal to a spread', () => {
+      addSuccess();
+      addUploading();
+      const state = buildOutputCollectionState(container);
+
+      const copy = state.snapshot();
+      expect(Object.getOwnPropertyDescriptor(copy, 'status')?.get).toBeUndefined();
+      expect(copy).toEqual({ ...state });
+      expect(copy.status).toBe('uploading');
+    });
+
+    it('keeps the values it read once the collection moves on', () => {
+      addSuccess();
+      const copy = buildOutputCollectionState(container).snapshot();
+      addUploading();
+
+      expect([copy.totalCount, copy.allEntries.length, copy.status]).toEqual([1, 1, 'success']);
+    });
+
+    it('on a spread copy, or a snapshot, copies that copy without a warning', () => {
+      vi.useFakeTimers();
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      addSuccess();
+      const state = buildOutputCollectionState(container);
+      const spread = { ...state };
+      vi.advanceTimersByTime(0);
+      addUploading();
+
+      expect(spread.snapshot()).toEqual(spread);
+      expect(spread.snapshot().snapshot().totalCount).toBe(1);
+      expect(warn).not.toHaveBeenCalled();
+    });
   });
 
   describe('late-read warning', () => {
@@ -224,7 +260,7 @@ describe('buildOutputCollectionState', () => {
       void state.status;
       vi.advanceTimersByTime(0);
 
-      void [state.allEntries, state.successEntries, { ...state }];
+      void [state.allEntries, state.successEntries, state.snapshot()];
       expect(warn).not.toHaveBeenCalled();
     });
 
