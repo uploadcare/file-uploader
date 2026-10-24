@@ -25,11 +25,8 @@ export function signalState() {
         return sig(this).get();
       },
       set(this: object, v: unknown): void {
-        const s = sig(this);
-        if (Object.is(s.get(), v)) {
-          return;
-        }
-        s.set(v);
+        // Signal.State already skips a write that is Object.is-equal to the current value.
+        sig(this).set(v);
       },
       enumerable: true,
       configurable: true,
