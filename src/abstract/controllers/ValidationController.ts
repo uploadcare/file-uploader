@@ -21,6 +21,7 @@ import {
   validateMaxSizeLimit,
   validateUploadError,
 } from '../../utils/validators/file/index';
+import { withResolvers } from '../../utils/withResolvers';
 import { controllerLogger } from '../controllerLogger';
 import { lifetimeOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
@@ -68,6 +69,9 @@ type EntryValidationState = {
   skippedValidators: WeakSet<FuncFileValidator>;
   promise?: Promise<void>;
   lastErrorThrownByValidator: WeakMap<FuncFileValidator, OutputErrorFile | undefined>;
+  // The entry's first `add` and `change` runs (both start from its add): `firstPass` settles once both have.
+  firstRuns: Set<FileValidatorDescriptor['runOn']>;
+  firstPass: ReturnType<typeof withResolvers<void>>;
 };
 
 /**
@@ -89,7 +93,9 @@ export class ValidationController {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
-  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+  // Thunk: `UploaderPublicApi` reaches this class back through `UploadController`, so a direct token is still
+  // uninitialized when the decorator runs.
+  @inject(() => UploaderPublicApi) private readonly _api!: UploaderPublicApi;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
   @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
 
@@ -217,7 +223,20 @@ export class ValidationController {
     const state = this._entryValidationState.get(entry.uid);
     if (state) {
       state.abortController?.abort();
+      state.firstPass.resolve();
       this._entryValidationState.delete(entry.uid);
+    }
+  }
+
+  /**
+   * Settles once the entry has been through its first `add` and `change` validator runs, and through any run queued
+   * after them. An upload waits on this, so a file added in the same tick is validated before anything is sent.
+   */
+  public async whenValidated(entry: TypedData<UploadEntryData>): Promise<void> {
+    const state = this._getEntryValidationState(entry);
+    await state.firstPass.promise;
+    while (state.promise) {
+      await state.promise;
     }
   }
 
@@ -345,6 +364,12 @@ export class ValidationController {
       if (state.promise === runPromise) {
         state.promise = undefined;
       }
+      if (runOn !== 'upload') {
+        state.firstRuns.add(runOn);
+        if (state.firstRuns.size === 2) {
+          state.firstPass.resolve();
+        }
+      }
     }
   }
 
@@ -369,6 +394,8 @@ export class ValidationController {
       skippedValidators: new WeakSet<FuncFileValidator>(),
       promise: undefined,
       lastErrorThrownByValidator: new WeakMap<FuncFileValidator, OutputErrorFile | undefined>(),
+      firstRuns: new Set(),
+      firstPass: withResolvers<void>(),
     };
     this._entryValidationState.set(entry.uid, newState);
     return newState;
@@ -395,6 +422,7 @@ export class ValidationController {
 
     for (const state of this._entryValidationState.values()) {
       state.abortController?.abort();
+      state.firstPass.resolve();
       state.promise = undefined;
     }
     this._entryValidationState.clear();

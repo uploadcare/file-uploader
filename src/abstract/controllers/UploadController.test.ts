@@ -15,6 +15,7 @@ import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
 import { UploadController } from './UploadController';
+import { ValidationController } from './ValidationController';
 
 vi.mock('@uploadcare/upload-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@uploadcare/upload-client')>();
@@ -63,6 +64,7 @@ const makeOutputItem = (uid: Uid): OutputFileEntry => ({ internalId: uid }) as u
 type SetupOpts = {
   cfg?: Partial<ConfigType>;
   hooks?: readonly FileHook[];
+  whenValidated?: () => Promise<void>;
 };
 
 const setup = (opts: SetupOpts = {}) => {
@@ -85,10 +87,23 @@ const setup = (opts: SetupOpts = {}) => {
   container.get(PluginController);
   const getOutputItem = vi.fn<(uid: Uid) => OutputFileEntry>((uid) => makeOutputItem(uid));
   container.bind(UploaderPublicApi, () => ({ getOutputItem }) as unknown as UploaderPublicApi);
+  // Validation is its own controller with its own spec: here every entry counts as validated unless a test says not.
+  const whenValidated = vi.fn(opts.whenValidated ?? (() => Promise.resolve()));
+  container.bind(ValidationController, () => ({ whenValidated }) as unknown as ValidationController);
   const onUploadError = vi.spyOn(container.get(TelemetryManager), 'sendEventError').mockImplementation(() => {});
   const secureUploads = container.get(SecureUploadsController);
   const controller = container.get(UploadController);
-  return { container, controller, config, collection, secureUploads, getFileHooks, getOutputItem, onUploadError };
+  return {
+    container,
+    controller,
+    config,
+    collection,
+    secureUploads,
+    getFileHooks,
+    getOutputItem,
+    onUploadError,
+    whenValidated,
+  };
 };
 
 const queueConcurrency = (controller: UploadController): number =>
@@ -149,6 +164,66 @@ describe('UploadController', () => {
       collection.add({ file: new File(['x'], 'a.txt') });
       const id = collection.add({ file: new File(['y'], 'b.txt') });
       await controller.uploadEntry(id);
+      expect(mockUploadFile).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('waiting for validation', () => {
+    it("starts the upload only once the entry's validators have run", async () => {
+      let validated = () => {};
+      const { controller, collection, whenValidated } = setup({
+        whenValidated: () =>
+          new Promise<void>((resolve) => {
+            validated = resolve;
+          }),
+      });
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+
+      const upload = controller.uploadEntry(id);
+      await Promise.resolve();
+      expect(whenValidated).toHaveBeenCalledWith(collection.read(id));
+      expect(mockUploadFile).not.toHaveBeenCalled();
+
+      validated();
+      await upload;
+      expect(mockUploadFile).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not upload a file its validators rejected', async () => {
+      const { controller, collection } = setup({
+        whenValidated: async () => {
+          collection.read(id)?.set('errors', [{ type: 'CUSTOM_ERROR', message: 'nope' }]);
+        },
+      });
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+
+      await controller.uploadEntry(id);
+      expect(mockUploadFile).not.toHaveBeenCalled();
+    });
+
+    it('does not upload a file removed while its validators ran', async () => {
+      const { controller, collection } = setup({
+        whenValidated: async () => {
+          collection.remove(id);
+        },
+      });
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+
+      await controller.uploadEntry(id);
+      expect(mockUploadFile).not.toHaveBeenCalled();
+    });
+
+    it('uploads once when asked twice while the validators run', async () => {
+      let validated = () => {};
+      const pending = new Promise<void>((resolve) => {
+        validated = resolve;
+      });
+      const { controller, collection } = setup({ whenValidated: () => pending });
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+
+      const uploads = [controller.uploadEntry(id), controller.uploadEntry(id)];
+      validated();
+      await Promise.all(uploads);
       expect(mockUploadFile).toHaveBeenCalledTimes(1);
     });
   });
@@ -280,14 +355,14 @@ describe('UploadController', () => {
 
       controller.uploadEntries([a, b]);
 
-      // The batch is populated synchronously; the uploads are deferred a macrotask.
+      // The batch is populated synchronously; each upload starts once its entry is validated.
       expect([...controller.uploadBatch].sort()).toEqual([a, b].sort());
       await vi.runAllTimersAsync();
       expect(mockUploadFile).toHaveBeenCalledTimes(2);
     });
 
     it('excludes removed entries from the active batch', () => {
-      // Fake timers so the deferred `uploadEntry` calls don't leak into later tests.
+      // Fake timers so the started `uploadEntry` calls don't leak into later tests.
       vi.useFakeTimers();
       const { controller, collection } = setup({ cfg: { multiple: true, multipleMax: 0 } });
       const a = collection.add({ file: new File(['a'], 'a.txt') });

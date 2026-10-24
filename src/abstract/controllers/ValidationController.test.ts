@@ -274,6 +274,85 @@ describe('ValidationController', () => {
     expect(() => controller.cleanupValidationForEntry(entry)).not.toThrow(); // no state now
   });
 
+  describe('whenValidated', () => {
+    const track = (promise: Promise<void>) => {
+      const result = {
+        settled: false,
+        done: promise.then(() => {
+          result.settled = true;
+        }),
+      };
+      return result;
+    };
+
+    const addEntry = (collection: UploadCollectionController) => {
+      const id = collection.add({ fileName: 'a.txt', mimeType: 'text/plain' });
+      const entry = collection.read(id);
+      if (!entry) throw new Error('no entry');
+      return { id, entry };
+    };
+
+    it("settles only once the entry's first add and change runs have finished", async () => {
+      const { controller, collection } = setup();
+      await flush(20);
+      const { id, entry } = addEntry(collection);
+      const wait = track(controller.whenValidated(entry));
+
+      controller.runFileValidators('add', [id]);
+      await flush();
+      expect(wait.settled).toBe(false);
+
+      controller.runFileValidators('change', [id]);
+      await flush();
+      expect(wait.settled).toBe(true);
+      await wait.done;
+    });
+
+    it('waits for a run queued after the first pass', async () => {
+      const { controller, config, collection } = setup();
+      await flush(20);
+      const { id, entry } = addEntry(collection);
+      controller.runFileValidators('add', [id]);
+      controller.runFileValidators('change', [id]);
+      await flush();
+
+      let finish = () => {};
+      config.set('fileValidators', [
+        () =>
+          new Promise<undefined>((resolve) => {
+            finish = () => resolve(undefined);
+          }),
+      ]);
+      controller.runFileValidators('change', [id]);
+      const wait = track(controller.whenValidated(entry));
+      await flush();
+      expect(wait.settled).toBe(false);
+
+      finish();
+      await wait.done;
+    });
+
+    it('settles when the entry is cleaned up before its first pass', async () => {
+      const { controller, collection } = setup();
+      await flush(20);
+      const { entry } = addEntry(collection);
+      const wait = track(controller.whenValidated(entry));
+
+      controller.cleanupValidationForEntry(entry);
+      await wait.done;
+    });
+
+    it('settles when the controller is destroyed before the first pass', async () => {
+      const { controller, collection } = setup();
+      await flush(20);
+      const { entry } = addEntry(collection);
+      const wait = track(controller.whenValidated(entry));
+
+      controller.destroy();
+      await wait.done;
+    });
+  });
+
   it('re-runs validators when a relevant config key changes', async () => {
     const { config, collection, setCollectionErrors } = setup();
     await flush(20);

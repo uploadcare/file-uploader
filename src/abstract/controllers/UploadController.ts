@@ -25,6 +25,7 @@ import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
 import { UploadFileEventsController } from './UploadFileEventsController';
+import { ValidationController } from './ValidationController';
 
 /**
  * DOM-free upload engine — owns the upload-client queue and the per-entry
@@ -56,6 +57,8 @@ export class UploadController {
   // resolution time (lazy field), breaking the cycle.
   @inject(() => UploaderPublicApi) private readonly _api!: UploaderPublicApi;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  // Thunk for the same reason: `ValidationController` reaches this class through `UploaderPublicApi`.
+  @inject(() => ValidationController) private readonly _validation!: ValidationController;
 
   // Per-ctx gated logger: the verbose tier prints only when THIS ctx's `debug`
   // config is on; ctx-name + gate resolve lazily at log time via the container
@@ -101,20 +104,14 @@ export class UploadController {
    * Upload the given entries. Each uid is added to the active batch and uploaded
    * via `uploadEntry` (which is precondition-guarded + idempotent), whether or not
    * any item is rendered.
-   *
-   * The `uploadEntry` call is deferred a macrotask: a file added in the same tick kicks off
-   * async validation that sets `isValidationPending`, and `uploadEntry` bails on
-   * a pending entry — so we let that settle first rather than racing it.
    */
   public uploadEntries(uids: Uid[]): void {
     for (const uid of uids) {
       this.#activeBatch.add(uid);
-      setTimeout(() => {
-        lifetimeOf(this).run(
-          () => this.uploadEntry(uid),
-          (error) => this._log.error('Upload failed', error),
-        );
-      });
+      lifetimeOf(this).run(
+        () => this.uploadEntry(uid),
+        (error) => this._log.error('Upload failed', error),
+      );
     }
   }
 
@@ -180,23 +177,26 @@ export class UploadController {
   }
 
   public async uploadEntry(uid: Uid): Promise<void> {
-    // Bound to the ctx: once it is torn down nothing here may touch a peer, so an entry deferred by
-    // `uploadEntries` or still queued does not start, and a late result or failure is dropped.
+    // Bound to the ctx: once it is torn down nothing here may touch a peer, so an entry still waiting for its
+    // validators or still queued does not start, and a late result or failure is dropped.
     const lifetime = lifetimeOf(this);
     if (lifetime.signal.aborted) {
       return;
     }
     const entry = this._collection.read(uid);
-    if (!entry) {
+    // A failed upload is final: `uploadError` turns into `errors` only on the next validation run, so until then
+    // the entry would otherwise look ready to send again.
+    if (!entry || entry.get('fileInfo') || entry.get('isUploading') || entry.get('uploadError')) {
       return;
     }
 
-    // A failed upload is final: `uploadError` turns into `errors` only on the next validation run, so until then
-    // the entry would otherwise look ready to send again.
+    // A file added in this same tick has not met its validators yet: wait for them, then re-check, so a rejected
+    // file is never sent. A second call for the same entry finds it uploading once the first one resumes.
+    await lifetime.guard(this._validation.whenValidated(entry));
     if (
+      !this._collection.read(uid) ||
       entry.get('fileInfo') ||
       entry.get('isUploading') ||
-      entry.get('uploadError') ||
       entry.get('errors').length > 0 ||
       entry.get('isValidationPending')
     ) {
