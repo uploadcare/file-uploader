@@ -490,8 +490,8 @@ describe('ValidationController', () => {
 
   it('swallows a telemetry sink that itself throws while reporting a validator error', async () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    // `onValidatorError` throwing makes the per-task catch handler reject, which
-    // the queued `Promise.all(...).catch(() => {})` swallows — no unhandled crash.
+    // `onValidatorError` throwing makes the per-task catch handler reject; the run
+    // waits for every task and logs that rejection — no unhandled crash.
     const { controller, config, collection } = setup({
       onValidatorError: () => {
         throw new Error('telemetry boom');
@@ -509,6 +509,33 @@ describe('ValidationController', () => {
     await flush();
 
     expect(collection.read(id)?.get('isValidationPending')).toBe(false);
+  });
+
+  it('logs a failure that escapes a validator task, and still settles the entry', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { controller, config, collection } = setup({
+      onValidatorError: () => {
+        throw new Error('telemetry boom');
+      },
+    });
+    await flush(20);
+    config.set('fileValidators', [
+      () => {
+        throw new Error('validator boom');
+      },
+      () => ({ message: 'nope' }),
+    ]);
+    const id = collection.add({ fileName: 'a.txt', mimeType: 'text/plain' });
+
+    controller.runFileValidators('change', [id]);
+    await flush();
+
+    expect(warn).toHaveBeenCalledWith(
+      '[uc][validation]',
+      'File validator execution has failed',
+      expect.objectContaining({ message: 'telemetry boom' }),
+    );
+    expect(collection.read(id)?.get('errors')).toMatchObject([{ message: 'nope' }]);
   });
 
   it('is inert after the ctx is disposed', async () => {
