@@ -336,7 +336,11 @@ export class ValidationController {
           // validators are user callbacks, so none is invoked once the ctx is torn down.
           if (lifetime.signal.aborted) return;
           entry.set('isQueuedForValidation', false);
-          await Promise.all(tasks.map((task) => task())).catch(() => {});
+          // Every task catches its validator's failure; a rejection here means the failure handling itself threw.
+          // Wait for all of them, so no late error lands after this run has written its results, and log it.
+          for (const result of await Promise.allSettled(tasks.map((task) => task()))) {
+            if (result.status === 'rejected') this._log.warn(LOG_TEXT.FILE_VALIDATION_FAILED, result.reason);
+          }
         },
         {
           autoRun: false,
