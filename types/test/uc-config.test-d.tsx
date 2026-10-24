@@ -53,7 +53,6 @@ type DocumentedOption =
   | 'maxVideoRecordingDuration'
   | 'metadata'
   | 'multipartChunkSize'
-  | 'multipartMaxAttempts'
   | 'multipartMaxConcurrentRequests'
   | 'multipartMinFileSize'
   | 'multiple'
@@ -269,7 +268,6 @@ test('every documented option has its documented value type', () => {
   config.multipartChunkSize = 1;
   config.maxConcurrentRequests = 1;
   config.multipartMaxConcurrentRequests = 1;
-  config.multipartMaxAttempts = 1;
   config.validationTimeout = 1;
   config.validationConcurrency = 1;
   config.maxVideoRecordingDuration = 1;
@@ -318,10 +316,6 @@ test('every documented option has its documented value type', () => {
   config.iconHrefResolver = (name) => `#uc-icon-${name}`;
   config.plugins = [{ id: 'p', setup: () => {} }];
 
-  // QUIRK(types): options.mdx says returning nothing from `iconHrefResolver` falls back to the default sprite, and
-  // `Icon._updateResolvedHref` implements that (`customHref ?? defaultHref`) — but the published type is
-  // `(iconName: string) => string`, so the documented resolver does not compile. When the type is widened to
-  // `string | undefined` this `@ts-expect-error` starts failing, which is the signal to delete it.
-  // @ts-expect-error the documented "return nothing" form is not expressible in the published type
+  // options.mdx: returning nothing falls back to the default sprite.
   config.iconHrefResolver = () => undefined;
 });

@@ -1,5 +1,7 @@
+import { LitElement } from 'lit';
 import { property } from 'lit/decorators.js';
-import { LitBlock } from '../../../../../lit/LitBlock';
+import { LightDomMixin } from '../../../../../lit/LightDomMixin';
+import { RegisterableElementMixin } from '../../../../../lit/RegisterableElementMixin';
 import { applyClassNames } from '../../lib/classNames';
 
 type PresenceToggleStyle = {
@@ -14,13 +16,20 @@ const DEFAULT_STYLE: Required<PresenceToggleStyle> = {
   hidden: 'uc-hidden',
 };
 
-export class PresenceToggle extends LitBlock {
+// Pure presentational leaf: no editor-state/l10n/ctx dependency, so it needs
+// neither `ChildBlock` nor `EditorBlock` — just the two structural mixins
+// (light-DOM rendering + `reg()` registration), same base shape as
+// `ChildBlockBase`/`EditorBlockBase`.
+const PresenceToggleBase = RegisterableElementMixin(LightDomMixin(LitElement));
+
+export class PresenceToggle extends PresenceToggleBase {
   private _visible = false;
   private _styles: PresenceToggleStyle = DEFAULT_STYLE;
   private _visibleStyle: string = DEFAULT_STYLE.visible;
   private _hiddenStyle: string = DEFAULT_STYLE.hidden;
   private _externalTransitions = false;
   private _initialRenderComplete = false;
+  private _initialTimer?: ReturnType<typeof setTimeout>;
 
   @property({ type: Boolean })
   public set visible(value: boolean) {
@@ -60,15 +69,15 @@ export class PresenceToggle extends LitBlock {
 
     this._initialRenderComplete = true;
     this.dispatchEvent(
-      new CustomEvent('initial-render', {
+      new CustomEvent('uc-internal:initial-render', {
         bubbles: true,
         composed: true,
       }),
     );
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public override connectedCallback(): void {
+    super.connectedCallback();
 
     this.classList.toggle('uc-initial', true);
 
@@ -77,10 +86,17 @@ export class PresenceToggle extends LitBlock {
     }
 
     this._handleVisible();
-    setTimeout(() => {
+    // `uc-initial` hides the element with transitions off, so it shows in its first state instead of animating into
+    // it. A task later the first state has been styled, and the transitions can come back.
+    this._initialTimer = setTimeout(() => {
       this.classList.toggle('uc-initial', false);
       this._dispatchInitialRenderEvent();
     }, 0);
+  }
+
+  public override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    clearTimeout(this._initialTimer);
   }
 }
 

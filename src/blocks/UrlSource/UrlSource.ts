@@ -1,6 +1,10 @@
 import { html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { RouterController } from '../../abstract/controllers/RouterController';
+import { inject } from '../../abstract/di/inject';
+import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { ChildBlock } from '../../lit/ChildBlock';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './url-source.css';
@@ -8,7 +12,13 @@ import './url-source.css';
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
 
-export class UrlSource extends LitUploaderBlock {
+export class UrlSource extends ChildBlock {
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  @inject(RouterController) private readonly _router!: RouterController;
+  // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
+  // token — it is container-resolved (M-god step 8a), injected via `@inject`.
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+
   @state()
   private _url = '';
 
@@ -18,7 +28,7 @@ export class UrlSource extends LitUploaderBlock {
 
   private _handleUpload = (event: Event) => {
     event.preventDefault();
-    this.telemetryManager.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -31,8 +41,8 @@ export class UrlSource extends LitUploaderBlock {
     if (!url) {
       return;
     }
-    this.api.addFileFromUrl(url, { source: UploadSource.URL });
-    this.routerLayer.navigateAfterFileAdd();
+    this._api.addFileFromUrl(url, { source: UploadSource.URL });
+    this._router.traverse('onFileAdd');
   };
 
   public override render() {
@@ -41,7 +51,7 @@ export class UrlSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn"
-          @click=${this.historyBack}
+          @click=${() => this._router.traverse('onBack')}
           title=${this.l10n('back')}
           aria-label=${this.l10n('back')}
         >
@@ -54,7 +64,7 @@ export class UrlSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${this.$['*closeModal']}
+          @click=${() => this._router.traverse('onClose')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >

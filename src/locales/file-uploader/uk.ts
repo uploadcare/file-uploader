@@ -108,6 +108,8 @@ export default {
   'file-item-edit-button': 'Редагувати',
   'file-item-remove-button': 'Видалити',
   'a11y-activity-header-button-close': 'Закрити',
+  'a11y-camera-microphone': 'Мікрофон',
+  'a11y-camera-stop-recording': 'Зупинити запис',
   'a11y-editor-tab-filters': 'Фільтри',
   'a11y-editor-tab-tuning': 'Налаштування',
   'a11y-editor-tab-crop': 'Обрізати',

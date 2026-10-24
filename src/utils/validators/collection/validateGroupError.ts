@@ -1,4 +1,4 @@
-import type { FuncCollectionValidator } from '../../../abstract/managers/ValidationManager';
+import type { FuncCollectionValidator } from '../../../abstract/validatorTypes';
 
 /**
  * Reports a group creation that failed.

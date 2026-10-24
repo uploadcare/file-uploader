@@ -62,7 +62,19 @@
     height: 24px;
   }
 
-  :where([uc-file-action-button]) button.uc-uploading .uc-preloader {
+  :where([uc-file-action-button]) button:is(.uc-uploading, .uc-queued) .uc-preloader {
     opacity: 1;
+  }
+
+  /* Queued: indeterminate spinner — a fixed partial arc (set via
+     `--l-progress-offset` in the render) rotated continuously. */
+  :where([uc-file-action-button]) button.uc-queued .uc-preloader {
+    animation: uc-file-action-queued-spin 0.9s linear infinite;
+  }
+
+  @keyframes uc-file-action-queued-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 }

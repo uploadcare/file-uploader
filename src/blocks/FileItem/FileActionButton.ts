@@ -1,7 +1,7 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 
 import '../Icon/Icon';
 
@@ -10,11 +10,16 @@ import { classMap } from 'lit/directives/class-map.js';
 
 const L10N_REMOVE_KEY = 'file-item-remove-button';
 
-export class FileActionButton extends LitUploaderBlock {
+export class FileActionButton extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-action-button'];
 
   @property({ type: Boolean })
   public uploading = false;
+
+  // Queued to upload (accepted, not yet started). Rendered as an indeterminate
+  // (continuously spinning) preloader so it's clear the file is waiting in queue.
+  @property({ type: Boolean })
+  public queued = false;
 
   @property({ type: Boolean })
   public failed = false;
@@ -50,11 +55,14 @@ export class FileActionButton extends LitUploaderBlock {
       'uc-mini-btn': true,
       'uc-idle': this.idle,
       'uc-uploading': this.uploading,
+      'uc-queued': this.queued,
       'uc-hide-remove': this.hideRemove,
       'uc-failed': this.failed,
       'uc-success': this.success,
     });
-    const progressOffset = 100 - this._normalizedProgress;
+    // Queued → a fixed partial arc that the CSS spins (indeterminate); otherwise
+    // the determinate upload progress.
+    const progressOffset = this.queued ? 65 : 100 - this._normalizedProgress;
     const actionLabel = this.l10n(L10N_REMOVE_KEY);
 
     return html`

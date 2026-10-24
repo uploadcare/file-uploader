@@ -385,7 +385,7 @@
     grid-template-columns: auto var(--l-base-min-width);
   }
 
-  uc-editor-freeform-button-control > button > uc-icon {
+  uc-editor-freeform-button-control > button > uc-editor-icon {
     margin-left: var(--cldtr-gap-mid-1);
     width: 10px;
   }
@@ -398,13 +398,13 @@
       uc-editor-filter-control,
       uc-editor-operation-control
     )
-    > uc-icon
+    > uc-editor-icon
     > svg {
     width: var(--size-icon);
     height: var(--size-icon);
   }
 
-  uc-editor-filter-control > uc-icon.uc-original-icon > svg {
+  uc-editor-filter-control > uc-editor-icon.uc-original-icon > svg {
     width: 100%;
     height: 100%;
   }
@@ -480,12 +480,12 @@
     padding-right: 0;
   }
 
-  uc-editor-button-control > button uc-icon,
-  uc-editor-operation-control > button uc-icon,
-  uc-editor-crop-button-control > button uc-icon,
-  uc-editor-aspect-ratio-button-control > button uc-icon,
-  uc-editor-freeform-button-control > button uc-icon,
-  uc-editor-filter-control > button uc-icon {
+  uc-editor-button-control > button uc-editor-icon,
+  uc-editor-operation-control > button uc-editor-icon,
+  uc-editor-crop-button-control > button uc-editor-icon,
+  uc-editor-aspect-ratio-button-control > button uc-editor-icon,
+  uc-editor-freeform-button-control > button uc-editor-icon,
+  uc-editor-filter-control > button uc-editor-icon {
     pointer-events: none;
   }
 
@@ -804,7 +804,7 @@
     > .uc-tab-toggles
     > .uc-tab-toggle
     > uc-btn-ui
-    > uc-icon
+    > uc-editor-icon
     > svg {
     width: var(--size-icon);
     height: var(--size-icon);
@@ -918,7 +918,7 @@
     user-select: none;
   }
 
-  uc-btn-ui > button > uc-icon {
+  uc-btn-ui > button > uc-editor-icon {
     pointer-events: none;
   }
 
@@ -1133,12 +1133,11 @@
 
   uc-slider-ui .uc-thumb {
     position: absolute;
-    left: 0px;
+    left: calc((100% - var(--l-thumb-size)) * var(--l-fraction, 0));
     width: var(--l-thumb-size);
     height: var(--l-thumb-size);
     background-color: var(--l-color);
     border-radius: 50%;
-    transform: translateX(0px);
     opacity: 1;
     transition:
       opacity var(--transition-duration-2),
@@ -1176,7 +1175,14 @@
   uc-slider-ui .uc-zero-dot {
     position: absolute;
     top: calc(100% - var(--l-zero-dot-offset) * 2);
-    left: calc(var(--l-thumb-size) / 2 - var(--l-zero-dot-size) / 2);
+    left: calc(
+      var(--l-thumb-size) /
+      2 -
+      var(--l-zero-dot-size) /
+      2 +
+      (100% - var(--l-thumb-size)) *
+      var(--l-fraction, 0)
+    );
     width: var(--l-zero-dot-size);
     height: var(--l-zero-dot-size);
     background-color: var(--color-primary-accent);
@@ -1229,7 +1235,7 @@
     display: flex;
   }
 
-  [uc-aspect-ratio-freeform] uc-icon {
+  [uc-aspect-ratio-freeform] uc-editor-icon {
     display: none;
   }
 

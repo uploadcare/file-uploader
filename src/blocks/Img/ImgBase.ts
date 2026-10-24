@@ -1,4 +1,7 @@
-import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
+import { isProxyUrl, parseFileUrl, parseProxyUrl, serializeFileUrl, serializeProxyUrl } from '@uploadcare/cdn-url';
+import { logger } from '../../abstract/logger';
+import { operationsFromModifiers } from '../../utils/cdn/operations';
+import { deliveryProxyOrigin } from '../../utils/cdn/origin';
 import { stringToArray } from '../../utils/stringToArray';
 import { applyTemplateData } from '../../utils/template-utils';
 import { uniqueArray } from '../../utils/uniqueArray';
@@ -11,8 +14,11 @@ import {
   ULTRA_RES_K,
   UNRESOLVED_ATTR,
 } from './configurations';
-import { ImgConfig } from './ImgConfig';
+import { type CssPropValue, ImgConfig } from './ImgConfig';
+import type { ImgPropKey } from './props-map';
 import { type ParseableParams, parseObjectToString } from './utils/parseObjectToString';
+
+const log = logger.scope('img');
 
 type ImgType = (typeof ImgTypeEnum)[keyof typeof ImgTypeEnum];
 
@@ -40,6 +46,12 @@ type CurrentImg = {
 export class ImgBase extends ImgConfig {
   private _img: HTMLImageElement = new Image();
   private _imgPreview: HTMLImageElement = new Image();
+
+  /** A config value as a string; unset (`null`/`undefined`) reads as `''`. */
+  private _str(key: ImgPropKey): string {
+    const value = this.$$(key);
+    return value === null || value === undefined ? '' : String(value);
+  }
 
   private _fmtAbs(src: string): string {
     const isRel = !src.includes('//');
@@ -72,7 +84,10 @@ export class ImgBase extends ImgConfig {
     return size;
   }
 
-  private _getCdnModifiers(size?: string | null, blur?: string | null): string {
+  private _getCdnOperationFragments(
+    size?: string | null,
+    blur?: string | null,
+  ): (string | number | boolean | null | undefined)[] {
     const params: ParseableParams = {
       format: this._getTypedCssValue('format'),
       quality: this._getTypedCssValue('quality'),
@@ -82,13 +97,13 @@ export class ImgBase extends ImgConfig {
       analytics: this.analyticsParams(),
     };
 
-    return createCdnUrlModifiers(...parseObjectToString(params));
+    return parseObjectToString(params);
   }
 
-  private _getTypedCssValue(key: string): string | number | boolean | null | undefined {
+  private _getTypedCssValue(key: ImgPropKey): string | number | boolean | null | undefined {
     const value = this.$$(key);
     if (value === null || value === undefined) {
-      return value as null | undefined;
+      return value;
     }
     if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
       return value;
@@ -97,7 +112,7 @@ export class ImgBase extends ImgConfig {
   }
 
   private _getUrlBase(size: string | null = '', blur: string | null = ''): string | undefined {
-    const src = this.$$('src') as string;
+    const src = this._str('src');
     if (src.startsWith('data:') || src.startsWith('blob:')) {
       return src;
     }
@@ -106,39 +121,69 @@ export class ImgBase extends ImgConfig {
       return this._proxyUrl(src);
     }
 
-    const cdnModifiers = this._getCdnModifiers(size, blur);
-    const cdnCnameRaw = this.$$('cdn-cname') as string | undefined;
-    const cdnCname = cdnCnameRaw;
+    try {
+      return this._buildCdnUrl(size, blur, src);
+    } catch (err) {
+      // `@uploadcare/cdn-url` rejects anything that is not a real CDN URL — a
+      // malformed `uuid`, a blanked `cdn-cname`, an unparseable `cdn-operations`
+      // attribute. This is user-supplied config reaching a render path, so it
+      // degrades to "no image" with a warning rather than throwing out of
+      // rendering (the previous string-concatenating implementation would have
+      // produced a broken URL instead, which failed just as silently).
+      log.warn('Failed to build a CDN URL from the configured attributes', err);
+      return undefined;
+    }
+  }
 
-    if (src.startsWith(String(cdnCnameRaw))) {
-      return createCdnUrl(src, cdnModifiers);
+  private _buildCdnUrl(size: string | null, blur: string | null, src: string): string | undefined {
+    const operations = operationsFromModifiers(...this._getCdnOperationFragments(size, blur));
+    const cdnCname = this._str('cdn-cname');
+
+    // A src already on the configured cname is a CDN URL in its own right: parse
+    // it and append, so operations it already carries survive.
+    //
+    // `<uc-img>` renders a single stored file or a proxied remote source. Parsing
+    // only those two kinds keeps the group parsers out of the bundle entirely —
+    // this element has the tightest size budget in the repo.
+    if (cdnCname && src.startsWith(cdnCname)) {
+      if (isProxyUrl(src)) {
+        const parsed = parseProxyUrl(src);
+        return serializeProxyUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
+      }
+      const parsed = parseFileUrl(src);
+      return serializeFileUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
     }
 
-    const uuid = this.$$('uuid') as string | undefined;
-
-    if (cdnCname && uuid) {
-      return this._proxyUrl(createCdnUrl(createOriginalUrl(cdnCname, uuid), cdnModifiers));
-    }
-
+    const uuid = this._str('uuid');
     if (uuid) {
-      return this._proxyUrl(createCdnUrl(createOriginalUrl(cdnCname as string, uuid), cdnModifiers));
+      // `cdn-cname` carries a default, so a blank one means it was blanked on
+      // purpose — `new URL('')` throws and the caller degrades, which is what the
+      // previous implementation did by accident.
+      const url = serializeFileUrl({ origin: new URL(cdnCname).origin, uuid, operations });
+      // `serializeFileUrl` builds without validating — it is `parseFileUrl` that
+      // knows the UUID grammar. Parsing the result back keeps a garbage `uuid`
+      // attribute degrading to "no image" instead of emitting a URL that 404s.
+      parseFileUrl(url);
+      return this._proxyUrl(url);
     }
 
-    const proxyCname = this.$$('proxy-cname') as string | undefined;
+    const proxyCname = this._str('proxy-cname');
     if (proxyCname) {
-      return this._proxyUrl(createCdnUrl(proxyCname, cdnModifiers, this._fmtAbs(src)));
+      return this._proxyUrl(serializeProxyUrl({ origin: proxyCname, sourceUrl: this._fmtAbs(src), operations }));
     }
 
-    const pubkey = this.$$('pubkey') as string | undefined;
+    const pubkey = this._str('pubkey');
     if (pubkey) {
-      return this._proxyUrl(createCdnUrl(`https://${pubkey}.ucr.io/`, cdnModifiers, this._fmtAbs(src)));
+      return this._proxyUrl(
+        serializeProxyUrl({ origin: deliveryProxyOrigin(pubkey), sourceUrl: this._fmtAbs(src), operations }),
+      );
     }
 
     return undefined;
   }
 
   private _proxyUrl(url: string): string {
-    const previewProxy = this.$$('secure-delivery-proxy') as string | undefined;
+    const previewProxy = this._str('secure-delivery-proxy');
     if (!previewProxy) {
       return url;
     }
@@ -193,16 +238,16 @@ export class ImgBase extends ImgConfig {
         };
   }
 
-  private get _hasPreviewImage(): string | number | boolean | undefined {
-    return this.$$('is-preview-blur') as string | number | boolean | undefined;
+  private get _hasPreviewImage(): CssPropValue {
+    return this.$$('is-preview-blur');
   }
 
-  private get _bgSelector(): string | undefined {
-    return this.$$('is-background-for') as string | undefined;
+  private get _bgSelector(): string {
+    return this._str('is-background-for');
   }
 
   private get _breakpoints(): number[] | null {
-    const breakpointsValue = this.$$('breakpoints') as string | undefined;
+    const breakpointsValue = this._str('breakpoints');
     if (breakpointsValue) {
       const list = stringToArray(breakpointsValue);
       return uniqueArray(list.map((bp) => parseInt(bp, 10)));
@@ -212,21 +257,29 @@ export class ImgBase extends ImgConfig {
   }
 
   private get _hasFormatJPG(): boolean {
-    return (this.$$('format') as string).toLowerCase() === 'jpeg';
+    return this._str('format').toLowerCase() === 'jpeg';
   }
 
   private _renderBg(el: HTMLElement): void {
     const imgSet = new Set<string>();
+    const add = (k: number): void => {
+      const url = this._getUrlBase(this._getElSize(el, k));
+      if (url) imgSet.add(`url("${url}") ${k}x`);
+    };
 
-    imgSet.add(`url("${this._getUrlBase(this._getElSize(el)) as string}") 1x`);
+    add(1);
     if (this.$$('hi-res-support')) {
-      imgSet.add(`url("${this._getUrlBase(this._getElSize(el, HI_RES_K)) as string}") ${HI_RES_K}x`);
+      add(HI_RES_K);
     }
 
     if (this.$$('ultra-res-support')) {
-      imgSet.add(`url("${this._getUrlBase(this._getElSize(el, ULTRA_RES_K)) as string}") ${ULTRA_RES_K}x`);
+      add(ULTRA_RES_K);
     }
 
+    if (!imgSet.size) {
+      el.style.removeProperty('background-image');
+      return;
+    }
     const iSet = `image-set(${[...imgSet].join(', ')})`;
     el.style.setProperty('background-image', iSet);
     el.style.setProperty('background-image', `-webkit-${iSet}`);
@@ -234,25 +287,26 @@ export class ImgBase extends ImgConfig {
 
   private _getSrcset(): string {
     const srcset = new Set<string>();
+    const add = (url: string | undefined, descriptor: string | null | undefined): void => {
+      if (url) srcset.add(`${url} ${descriptor}`);
+    };
     if (this._breakpoints) {
       this._breakpoints.forEach((bp) => {
-        srcset.add(`${this._getUrlBase(`${bp}x`) as string} ${this._validateSize(`${bp}w`)}`);
+        add(this._getUrlBase(`${bp}x`), this._validateSize(`${bp}w`));
         if (this.$$('hi-res-support')) {
-          srcset.add(`${this._getUrlBase(`${bp * HI_RES_K}x`) as string} ${this._validateSize(`${bp * HI_RES_K}w`)}`);
+          add(this._getUrlBase(`${bp * HI_RES_K}x`), this._validateSize(`${bp * HI_RES_K}w`));
         }
         if (this.$$('ultra-res-support')) {
-          srcset.add(
-            `${this._getUrlBase(`${bp * ULTRA_RES_K}x`) as string} ${this._validateSize(`${bp * ULTRA_RES_K}w`)}`,
-          );
+          add(this._getUrlBase(`${bp * ULTRA_RES_K}x`), this._validateSize(`${bp * ULTRA_RES_K}w`));
         }
       });
     } else {
-      srcset.add(`${this._getUrlBase(this._getElSize(this._currentImg.img)) as string} 1x`);
+      add(this._getUrlBase(this._getElSize(this._currentImg.img)), '1x');
       if (this.$$('hi-res-support')) {
-        srcset.add(`${this._getUrlBase(this._getElSize(this._currentImg.img, 2)) as string} 2x`);
+        add(this._getUrlBase(this._getElSize(this._currentImg.img, 2)), '2x');
       }
       if (this.$$('ultra-res-support')) {
-        srcset.add(`${this._getUrlBase(this._getElSize(this._currentImg.img, 3)) as string} 3x`);
+        add(this._getUrlBase(this._getElSize(this._currentImg.img, 3)), '3x');
       }
     }
     return [...srcset].join();
@@ -267,8 +321,7 @@ export class ImgBase extends ImgConfig {
   }
 
   private _renderBackground(): void {
-    const selector = this._bgSelector as string;
-    [...document.querySelectorAll(selector)].forEach((el) => {
+    [...document.querySelectorAll(this._bgSelector)].forEach((el) => {
       if (this.$$('intersection')) {
         this.initIntersection(el as HTMLElement, () => {
           this._renderBg(el as HTMLElement);
@@ -280,12 +333,17 @@ export class ImgBase extends ImgConfig {
   }
 
   private _appendURL({ elNode, src, srcset }: AppendUrlParams): void {
+    // No URL clears the attribute: a stale image must not survive a config that no longer resolves.
     if (src) {
       elNode.src = src;
+    } else {
+      elNode.removeAttribute('src');
     }
 
     if (srcset) {
       elNode.srcset = srcset;
+    } else {
+      elNode.removeAttribute('srcset');
     }
   }
 
@@ -325,8 +383,9 @@ export class ImgBase extends ImgConfig {
       }
 
       this.initIntersection(this._currentImg.img, async () => {
-        if (this._hasPreviewImage) {
-          this._imgPreview.src = this._srcUrlPreview as string;
+        const previewUrl = this._srcUrlPreview;
+        if (this._hasPreviewImage && previewUrl) {
+          this._imgPreview.src = previewUrl;
         }
 
         try {
@@ -385,7 +444,8 @@ export class ImgBase extends ImgConfig {
     if (this._bgSelector) {
       this._renderBackground();
     } else {
-      this._renderImage();
+      // `<uc-img>` has no lifetime of its own; a detached element appending its image is harmless, a failure is not.
+      this._renderImage().catch((error: unknown) => log.error('Failed to render the image', error));
     }
   }
 }

@@ -1,0 +1,69 @@
+import { parseFileUrl, serializeOperations } from '@uploadcare/cdn-url';
+import { logger } from '../abstract/logger';
+import { DEFAULT_CDN_CNAME } from '../blocks/Config/initialConfig';
+
+const log = logger.scope('parse-cdn-url-for-entry');
+
+type ParseCdnUrlForEntryOptions = {
+  url: string;
+  cdnBase: string;
+};
+
+type EntryFieldsFromCdnUrl = {
+  uuid: string;
+  cdnUrlModifiers: string;
+  filename: string | null;
+};
+
+/**
+ * Parse a CDN URL into the pieces an upload entry needs. Backs the documented
+ * `addFileFromCdnUrl`, which turns a `null` here into `Error('Invalid CDN URL')`,
+ * so every rejection path must keep returning `null` rather than throwing.
+ *
+ * Named for the entry rather than the parse because the library already exports a
+ * `parseCdnUrl`, and that one is the general structural parser — this is the
+ * narrower, policy-bearing wrapper that only `addFileFromCdnUrl` wants.
+ *
+ * The host policy is ours, not the library's: `@uploadcare/cdn-url` is
+ * origin-agnostic, while this accepts a URL on the configured `cdnBase` **or** on
+ * the default `ucarecdn.com` — a project that has moved to a custom cname can
+ * still add files by their canonical URL. Comparison is by host, so the protocol
+ * and any trailing slash on `cdnBase` are ignored.
+ *
+ * Only plain single-file URLs are accepted. Group URLs, delivery-proxy URLs and
+ * conversion results (`/:uuid/video/…`) parse fine but have no representation in
+ * an upload entry — `EntryFieldsFromCdnUrl` has nowhere to put a group id, a remote
+ * source or a conversion prefix, and silently dropping either would corrupt the
+ * entry. They were rejected before this module used the library, and still are.
+ */
+export const parseCdnUrlForEntry = ({ url, cdnBase }: ParseCdnUrlForEntryOptions): EntryFieldsFromCdnUrl | null => {
+  let parsed: ReturnType<typeof parseFileUrl>;
+  let urlHost: string;
+  let cdnBaseUrlObj: URL;
+  let fallbackCdnBaseUrlObj: URL;
+  try {
+    parsed = parseFileUrl(url);
+    // `parsed.origin` is already the host the URL was parsed from — reuse it
+    // instead of re-parsing `url` a second time just to read its host.
+    urlHost = new URL(parsed.origin).host;
+    cdnBaseUrlObj = new URL(cdnBase);
+    fallbackCdnBaseUrlObj = new URL(DEFAULT_CDN_CNAME);
+  } catch (err) {
+    log.warn('Not a CDN URL', err);
+    return null;
+  }
+
+  if (cdnBaseUrlObj.host !== urlHost && fallbackCdnBaseUrlObj.host !== urlHost) {
+    return null;
+  }
+
+  if (parsed.conversion) {
+    return null;
+  }
+
+  return {
+    uuid: parsed.uuid,
+    cdnUrlModifiers: serializeOperations(parsed.operations),
+    filename: parsed.filename,
+  };
+};

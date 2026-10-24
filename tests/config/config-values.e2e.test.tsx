@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import { CONFIG_VALUES, TEST_LOCALE } from '@/blocks/Config/__tests__/configValues';
-import { configAttributeBehavior } from '@/blocks/Config/Config';
+import { BUILTIN_REGISTRY as configAttributeBehavior } from '@/blocks/Config/builtin-registry';
 import { initialConfig } from '@/blocks/Config/initialConfig';
 import { type Config, defineLocale } from '@/index';
 import en from '@/locales/file-uploader/en';

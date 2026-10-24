@@ -1,4 +1,4 @@
-import type { PasteScope } from '../abstract/features/ClipboardLayer';
+import type { PasteScope } from '../abstract/controllers/ClipboardController';
 import type { CustomLocaleDefinition, LocaleDefinition } from '../abstract/localeRegistry';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
 import type {
@@ -6,9 +6,9 @@ import type {
   FileValidatorDescriptor,
   FuncCollectionValidator,
   FuncFileValidator,
-} from '../abstract/managers/ValidationManager';
+} from '../abstract/validatorTypes';
 import type { CameraMode } from '../blocks/CameraSource/CameraSource';
-import type { PropertyOnlyConfigKey } from '../blocks/Config/Config';
+import type { ComplexConfigKey as PropertyOnlyConfigKey } from '../blocks/Config/config-keys';
 import type { FilesViewMode } from '../blocks/UploadList/UploadList';
 
 export {
@@ -47,7 +47,8 @@ export type SecureDeliveryProxyUrlResolver = (
 ) => Promise<string> | string;
 export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureExpire: string };
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
-export type IconHrefResolver = (iconName: string) => string;
+/** Returning nothing falls back to the built-in sprite, as documented. */
+export type IconHrefResolver = (iconName: string) => string | undefined;
 export type FileValidators = FileValidator[];
 export type CollectionValidators = FuncCollectionValidator[];
 
@@ -217,10 +218,6 @@ export type ConfigType = {
    * Maximum number of concurrent multipart requests.
    */
   multipartMaxConcurrentRequests: number;
-  /**
-   * Maximum number of attempts for multipart uploads.
-   */
-  multipartMaxAttempts: number;
   /**
    * Check for URL duplicates.
    */
@@ -582,6 +579,12 @@ export type OutputCollectionState<
   failedEntries: OutputFileEntry<'failed'>[];
   uploadingEntries: OutputFileEntry<'uploading'>[];
   idleEntries: OutputFileEntry<'idle'>[];
+
+  /**
+   * A plain copy of every field, read now. Call it synchronously, in the event handler, to keep the state as the
+   * event saw it; `{...state}` does the same.
+   */
+  snapshot(): OutputCollectionState<TStatus, TGroupFlag>;
 } & (TGroupFlag extends 'has-group'
   ? { group: UploadcareGroup }
   : TGroupFlag extends 'maybe-has-group'

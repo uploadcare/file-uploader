@@ -24,8 +24,9 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
 
   const camera = within(rendered.root).getByTestId('uc-camera-source');
   // The controls stay `display: none` until the stream starts, so a "hidden" check made earlier passes whatever the
-  // option says. The shutter shows in every mode, which makes it the sign the controls are up.
-  await expect.element(camera.getByRole('button', { name: 'Shot', exact: true }), { timeout: 20_000 }).toBeVisible();
+  // option says. The shutter shows in every mode, which makes it the sign the controls are up. Found by test id, as its
+  // name changes with the mode.
+  await expect.element(camera.getByTestId('uc-camera-source--shot'), { timeout: 20_000 }).toBeVisible();
 
   return { ...rendered, camera };
 };

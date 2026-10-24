@@ -1,51 +1,37 @@
-// @ts-check
+import type { ApiHostEventListenerMap } from '../../lit/api-host-types';
+import { ChildBlock } from '../../lit/ChildBlock';
+import { WithApi } from '../../lit/WithApi';
+import { EventType } from './EventEmitter';
 
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import { type EventPayload, EventType } from './EventEmitter';
-
-// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: This is intentional interface merging, used to add event listener types
-export class UploadCtxProvider extends LitUploaderBlock {
-  public declare attributesMeta: {
-    'ctx-name': string;
-  };
+/**
+ * `<uc-upload-ctx-provider>` — thin API/events host. Behavior lives in the
+ * reusable {@link WithApi} mixin (uploader-scope attach, `getAPI()` / `.api` /
+ * `.uploadCollection`, EventBus → DOM CustomEvents) so any block can expose the
+ * same surface. This element is just `WithApi(ChildBlock)` + styles + the
+ * static `EventType` re-export kept for documented access paths.
+ */
+// biome-ignore lint/suspicious/noUnsafeDeclarationMerging: intentional interface merge for typed event listeners
+export class UploadCtxProvider extends WithApi(ChildBlock) {
   public static override styleAttrs = ['uc-wgt-common'];
+  // Keep the public static on the element class for `UploadCtxProvider.EventType`
+  // (also available on the WithApi mixin class as `EventType`).
   public static EventType = EventType;
-
-  private _unbindEventEmitter: (() => void) | null = null;
-
-  public override initCallback() {
-    super.initCallback();
-
-    this._unbindEventEmitter = this.eventEmitter.bindTarget(this);
-  }
-
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    this._unbindEventEmitter?.();
-  }
 }
 
-type EventListenerMap = {
-  [K in (typeof EventType)[keyof typeof EventType]]: (e: CustomEvent<EventPayload[K]>) => void;
-};
-
-export interface UploadCtxProvider extends LitUploaderBlock {
-  addEventListener<T extends keyof EventListenerMap>(
+export interface UploadCtxProvider extends ChildBlock {
+  addEventListener<T extends keyof ApiHostEventListenerMap>(
     type: T,
-    listener: EventListenerMap[T],
+    listener: ApiHostEventListenerMap[T],
     options?: boolean | AddEventListenerOptions,
   ): void;
-  // fallback overloads for compatibility with the DOM lib (lib.dom.d.ts)
   addEventListener(
     type: string,
     listener: EventListenerOrEventListenerObject | null,
     options?: boolean | AddEventListenerOptions,
   ): void;
-
-  removeEventListener<T extends keyof EventListenerMap>(
+  removeEventListener<T extends keyof ApiHostEventListenerMap>(
     type: T,
-    listener: EventListenerMap[T],
+    listener: ApiHostEventListenerMap[T],
     options?: boolean | EventListenerOptions,
   ): void;
   removeEventListener(

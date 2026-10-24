@@ -14,7 +14,10 @@
   const editorAutoOpenListener = (e) => {
     const { internalId } = e.detail;
     if (api.getCurrentActivity() !== 'cloud-image-edit') {
-      api.setCurrentActivity('cloud-image-edit', { internalId });
+      // `navigate` sets the activity *and* shows it; the deprecated
+      // `setCurrentActivity` only fills the background slot and needs a paired
+      // `setModalState(true)` to be visible at all.
+      api.navigate('cloud-image-edit', { internalId });
     }
   };
 

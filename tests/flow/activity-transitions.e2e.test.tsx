@@ -80,11 +80,7 @@ describe('regular: leaving the flow', () => {
     await expectModal(root, 'start-from', 'closed');
     await vi.waitFor(() => expect(recorder.detailsOf('modal-close').length).toBeGreaterThan(0));
 
-    // QUIRK(activity): `doneFlow` sets the activity to `doneActivity`, which is read from the `--cfg-done-activity`
-    // CSS custom property and defaults to an empty string, not null (LitActivityBlock.ts:150 — `getCssData` returns
-    // '' and `?? null` does not catch it). So after the documented "terminate the flow" call, `getCurrentActivity()`
-    // is `''`, and a caller checking `=== null` sees a falsy value that is not null. Pinned, not endorsed.
-    expect(api.getCurrentActivity()).toBe('');
+    expect(api.getCurrentActivity()).toBeNull();
   });
 
   it('closes everything on setModalState(false)', async () => {
@@ -118,22 +114,21 @@ describe('inline: no modal is ever used', () => {
     expect(api.getCurrentActivity()).toBe('upload-list');
   });
 
-  // QUIRK(activity): inline treats `null` as "go back to the init activity" (FileUploaderInline.ts:82), so the
-  // documented `setModalState(false)` — which sets the activity to null — cannot leave an inline uploader with
-  // nothing showing. Pinned as current behaviour, not endorsed.
-  it('re-enters the init activity instead of closing', async () => {
-    const { root, api, provider } = await renderSolution('inline');
-    await expectActivity(root, 'start-from');
-    const recorder = recordEvents(provider);
+  // Documented (api.mdx, setModalState): inline has no modal, so `setModalState(false)` does nothing but warn — it
+  // used to null the activity, which inline turns into a reset to the start screen.
+  it('leaves the inline uploader where it is and warns', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { root, api } = await renderSolution('inline');
+    api.addFileFromObject(IMAGE.PIXEL);
+    await expectActivity(root, 'upload-list');
 
     api.setModalState(false);
 
-    // The activity drops to null and start-from comes straight back, which is the end of the transition.
-    await expect
-      .poll(() => recorder.detailsOf('activity-change').map((detail) => detail.activity))
-      .toEqual(['start-from']);
-    await expectActivity(root, 'start-from');
-    expect(api.getCurrentActivity()).toBe('start-from');
+    // The warning is the last thing setModalState(false) does, so the activity is final once it fires.
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), expect.stringContaining('navigate()')),
+    );
+    expect(api.getCurrentActivity()).toBe('upload-list');
   });
 });
 

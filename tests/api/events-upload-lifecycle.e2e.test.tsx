@@ -132,7 +132,7 @@ describe('events: upload lifecycle', () => {
     // own, in the same batch, so once it sees the square's validation result the uploader has seen it too.
     const square = api.getOutputCollectionState().allEntries.find((entry) => entry.name === IMAGE.SQUARE.name);
     let isSquareValidationSeen = false;
-    const unobserve = provider.uploadCollection.observeProperties((changeMap) => {
+    const unobserve = provider.uploadCollection.observeProperties(['errors'], (changeMap) => {
       if (changeMap.errors?.has(square?.internalId ?? '')) isSquareValidationSeen = true;
     });
     onTestFinished(unobserve);

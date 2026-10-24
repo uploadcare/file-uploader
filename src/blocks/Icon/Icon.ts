@@ -1,86 +1,63 @@
-import { html, type PropertyValues } from 'lit';
-import { property, state } from 'lit/decorators.js';
+import { html } from 'lit';
+import { property } from 'lit/decorators.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
-import { LitBlock } from '../../lit/LitBlock';
-import type { IconHrefResolver } from '../../types/index';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { inject } from '../../abstract/di/inject';
+import { PluginController } from '../../abstract/managers/plugin';
+import { ChildBlock } from '../../lit/ChildBlock';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
+import { renderIconSvg } from './renderIconSvg';
 import './icon.css';
 
-export class Icon extends LitBlock {
+export class Icon extends ChildBlock {
+  @inject(ConfigController) private readonly _config!: ConfigController;
+
   @property({ type: String })
   public name = '';
 
-  @state()
-  private _resolvedHref = '';
+  // Transiently null until the container resolves the `PluginController`
+  // (`whenController`) — render falls back to the sprite href meanwhile. The
+  // plugin manager is CONDITIONALLY bound (only once an uploader scope attaches,
+  // or never in a bare ctx), so a synchronous `use(PluginController)` could
+  // throw; `whenController` fires now if resolved, else on first resolution. A
+  // plugin change re-renders via `requestUpdate` since its snapshot is not a
+  // signal.
+  private _pluginManager: PluginController | null = null;
 
-  @state()
-  private _pluginSvg: string | null = null;
-
-  private _iconHrefResolver: IconHrefResolver | null = null;
-  private _unsubscribePlugins?: () => void;
-
-  public override initCallback(): void {
-    super.initCallback();
+  public override connectedCallback(): void {
+    super.connectedCallback();
     this.setAttribute('aria-hidden', 'true');
+  }
 
-    this.subConfigValue('iconHrefResolver', (resolver: IconHrefResolver | null) => {
-      this._iconHrefResolver = resolver;
-      this._updateResolvedHref();
+  @subscription()
+  protected _wirePluginIcons(): Unsubscribe {
+    return this.container.whenController(PluginController, (pluginManager) => {
+      this._pluginManager = pluginManager;
+      this.requestUpdate();
+      return pluginManager.onPluginsChange(() => this.requestUpdate());
     });
-
-    const pluginManager = this._sharedInstancesBag.pluginManager;
-    if (pluginManager?.onPluginsChange) {
-      this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._updateResolvedHref());
-    }
   }
 
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
-    super.willUpdate(changedProperties);
-    if (changedProperties.has('name')) {
-      this._updateResolvedHref();
-    }
-  }
-
-  private _updateResolvedHref(): void {
-    if (!this.name) {
-      this._resolvedHref = '';
-      this._pluginSvg = null;
-      return;
-    }
-
-    const pluginManager = this._sharedInstancesBag.pluginManager;
-    const pluginIcon = pluginManager?.snapshot().icons.find((icon) => icon.name === this.name);
-
-    if (pluginIcon) {
-      this._pluginSvg = pluginIcon.svg;
-      this._resolvedHref = '';
-      return;
-    }
-
-    this._pluginSvg = null;
-    const defaultHref = `#uc-icon-${this.name}`;
-    const customHref = this._iconHrefResolver?.(this.name);
-    this._resolvedHref = customHref ?? defaultHref;
+  protected override controllerReleased(): void {
+    this._pluginManager = null;
   }
 
   public override render() {
-    if (this._pluginSvg) {
-      return html`${this.yield('', html`${unsafeSVG(this._pluginSvg)}`)}`;
+    if (!this.name) {
+      return html` ${this.yield('', renderIconSvg(''))} `;
     }
 
-    return html`
-      ${this.yield(
-        '',
-        html`<svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <use href=${this._resolvedHref}></use>
-      </svg>`,
-      )}
-    `;
-  }
+    const pluginIcon = this._pluginManager?.snapshot().icons.find((icon) => icon.name === this.name);
+    if (pluginIcon) {
+      return html`${this.yield('', html`${unsafeSVG(pluginIcon.svg)}`)}`;
+    }
 
-  public override disconnectedCallback(): void {
-    this._unsubscribePlugins?.();
-    this._unsubscribePlugins = undefined;
-    super.disconnectedCallback();
+    // Tracked read: reading `iconHrefResolver` here auto-tracks it under
+    // `SignalWatcher`, so a later config `set()` re-renders — replacing the v1
+    // `subConfigValue('iconHrefResolver', …)` mirror that fed `_resolvedHref`.
+    const iconHrefResolver = this._config.getTracked('iconHrefResolver');
+    const href = iconHrefResolver?.(this.name) ?? `#uc-icon-${this.name}`;
+    return html` ${this.yield('', renderIconSvg(href))} `;
   }
 }
 

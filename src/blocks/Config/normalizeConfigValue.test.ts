@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ConfigType } from '../../types/exported';
 import { CONFIG_VALUES } from './__tests__/configValues';
+import { normalizeConfigValue } from './builtin-registry';
 import { initialConfig } from './initialConfig';
-import { normalizeConfigValue } from './normalizeConfigValue';
 
 const keys = Object.keys(initialConfig) as (keyof ConfigType)[];
 

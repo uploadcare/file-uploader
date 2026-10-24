@@ -13,14 +13,15 @@ export const imageShrinkPlugin: UploaderPlugin = {
 
         const settings = parseShrink(imageShrink);
         if (!settings) {
-          console.warn('[ImageShrinkPlugin] Image shrink settings are invalid, skipping shrinking');
+          pluginApi.logger.warn('Image shrink settings are invalid, skipping shrinking');
           return { file };
         }
 
         try {
           const shrunk = await shrinkFile(file, settings);
           return { file: shrunk };
-        } catch {
+        } catch (error) {
+          pluginApi.logger.warn('Image shrink failed, uploading the original', error);
           return { file };
         }
       },

@@ -1,9 +1,16 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
+import { inject } from '../../abstract/di/inject';
+import { isAbortError } from '../../abstract/di/Lifetime';
+import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { ChildBlock } from '../../lit/ChildBlock';
+import { effect } from '../../lit/effect';
+import { debounced } from '../../lit/rate-limited-method';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
-import { debounce } from '../../utils/debounce';
 import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
@@ -44,14 +51,28 @@ function formatTime(time: number): string {
   return `${minutes}:${seconds}`;
 }
 
+/** The current device stays selected while it is still listed; otherwise the first one takes over. */
+const keepListedDeviceId = (devices: { value: string }[], currentId: string | null): string | null =>
+  devices.some((device) => device.value === currentId) ? currentId : (devices[0]?.value ?? null);
+
 const DEFAULT_PICTURE_FORMAT = 'image/jpeg';
 const DEFAULT_VIDEO_FORMAT = 'video/webm';
 
 export type CameraMode = 'photo' | 'video';
 export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pause' | 'resume';
 
-export class CameraSource extends LitUploaderBlock {
-  public override couldBeCtxOwner = true;
+const stopTracks = (stream: MediaStream): void => {
+  for (const track of stream.getTracks()) track.stop();
+};
+
+export class CameraSource extends ChildBlock {
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(RouterController) private readonly _router!: RouterController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  // `UploaderPublicApi` is read from `_toSend` (a capture handler that runs
+  // post-adoption), so `@inject` resolves it safely.
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+
   private _unsubPermissions: (() => void) | null = null;
 
   private _capturing = false;
@@ -62,8 +83,10 @@ export class CameraSource extends LitUploaderBlock {
 
   private _stream: MediaStream | null = null;
 
+  @state()
   private _selectedAudioId: string | null = null;
 
+  @state()
   private _selectedCameraId: string | null = null;
 
   private _activeTab: CameraMode | null = null;
@@ -75,6 +98,8 @@ export class CameraSource extends LitUploaderBlock {
   private _permissionResponses: Partial<Record<(typeof DEFAULT_PERMISSIONS)[number], PermissionStatus>> = {};
   private _permissionCleanupFns: Array<() => void> = [];
   private _currentVideoSource: MediaStream | null = null;
+  /** Object URL of the recorded clip being previewed; revoked when the preview is replaced or the camera released. */
+  private _previewUrl: string | null = null;
 
   private readonly _handlePreviewPlay = (): void => {
     this._startTimeline();
@@ -92,8 +117,12 @@ export class CameraSource extends LitUploaderBlock {
   private _startTime = 0;
   private _elapsedTime = 0;
 
-  @state()
-  private _videoTransformCss: string | null = null;
+  // Tracked read: `cameraMirror` auto-tracks under `SignalWatcher`, so a config
+  // change re-renders the video transform — replacing the v1
+  // `subConfigValue('cameraMirror')` mirror into a `_videoTransformCss` @state.
+  private get _videoTransformCss(): string | null {
+    return this._config.getTracked('cameraMirror') ? 'scaleX(-1)' : null;
+  }
 
   @state()
   private _videoHidden = true;
@@ -118,6 +147,9 @@ export class CameraSource extends LitUploaderBlock {
 
   @state()
   private _cameraHidden = true;
+
+  @state()
+  private _hasVideoFrame = false;
 
   @state()
   private _cameraActionsHidden = true;
@@ -153,7 +185,7 @@ export class CameraSource extends LitUploaderBlock {
   private _mutableClassButton = 'uc-shot-btn uc-camera-action';
 
   private _chooseActionWithCamera = () => {
-    this.telemetryManager.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -184,7 +216,7 @@ export class CameraSource extends LitUploaderBlock {
       return;
     }
     this._selectedCameraId = target.value;
-    void this._capture();
+    this.runTask(() => this._capture());
   };
 
   private _handleAudioSelectChange = (event: Event): void => {
@@ -193,15 +225,15 @@ export class CameraSource extends LitUploaderBlock {
       return;
     }
     this._selectedAudioId = target.value;
-    void this._capture();
+    this.runTask(() => this._capture());
   };
 
   private _handleRequestPermissions = (): void => {
-    void this._capture();
+    this.runTask(() => this._capture());
   };
 
   private _handleStartCamera = (): void => {
-    this.telemetryManager.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -223,7 +255,7 @@ export class CameraSource extends LitUploaderBlock {
   };
 
   private _handleRetake = (): void => {
-    this.telemetryManager.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -237,7 +269,7 @@ export class CameraSource extends LitUploaderBlock {
   };
 
   private _handleAccept = (): void => {
-    this.telemetryManager.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -260,9 +292,10 @@ export class CameraSource extends LitUploaderBlock {
 
   private _updateTimer = (): void => {
     const currentTime = Math.floor((performance.now() - this._startTime + this._elapsedTime) / 1000);
+    const maxVideoRecordingDuration = this._config.get('maxVideoRecordingDuration');
 
-    if (typeof this.cfg.maxVideoRecordingDuration === 'number' && this.cfg.maxVideoRecordingDuration > 0) {
-      const remainingTime = this.cfg.maxVideoRecordingDuration - currentTime;
+    if (typeof maxVideoRecordingDuration === 'number' && maxVideoRecordingDuration > 0) {
+      const remainingTime = maxVideoRecordingDuration - currentTime;
 
       if (remainingTime <= 0) {
         const timer = this._timerRef.value as HTMLElement | undefined;
@@ -326,11 +359,12 @@ export class CameraSource extends LitUploaderBlock {
   private _startRecording = (): void => {
     try {
       this._chunks = [];
+      const mediaRecorderOptions = this._config.get('mediaRecorderOptions');
       this._options = {
-        ...this.cfg.mediaRecorderOptions,
+        ...mediaRecorderOptions,
       };
 
-      const { mimeType } = this.cfg.mediaRecorderOptions || {};
+      const { mimeType } = mediaRecorderOptions || {};
 
       if (mimeType && MediaRecorder.isTypeSupported(mimeType)) {
         this._options.mimeType = mimeType;
@@ -354,8 +388,8 @@ export class CameraSource extends LitUploaderBlock {
         this._setCameraState(CameraSourceEvents.PLAY);
       }
     } catch (error) {
-      console.error('Failed to start recording', error);
-      this.telemetryManager.sendEventError(error, 'camera recording. Failed to start recording');
+      this._log.error('Failed to start recording', error);
+      this._telemetry.sendEventError(error, 'camera recording. Failed to start recording');
     }
   };
 
@@ -371,7 +405,7 @@ export class CameraSource extends LitUploaderBlock {
     this._mediaRecorder?.stop();
     this.classList.remove('uc-recording');
 
-    this.telemetryManager.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -392,7 +426,7 @@ export class CameraSource extends LitUploaderBlock {
     if (!videoEl.paused && !videoEl.ended && videoEl.readyState > 2) {
       videoEl.pause();
     } else if (videoEl.paused) {
-      videoEl.play();
+      this.runTask(() => videoEl.play());
     }
   };
 
@@ -414,12 +448,14 @@ export class CameraSource extends LitUploaderBlock {
         type: this._mediaRecorder?.mimeType,
       });
 
-      const videoURL = URL.createObjectURL(blob);
-
       const videoElement = this._videoRef.value as HTMLVideoElement | undefined;
       if (!videoElement) {
         return;
       }
+
+      this._revokePreviewUrl();
+      const videoURL = URL.createObjectURL(blob);
+      this._previewUrl = videoURL;
 
       videoElement.muted = false;
       videoElement.volume = 1;
@@ -428,8 +464,8 @@ export class CameraSource extends LitUploaderBlock {
 
       this._attachPreviewListeners(videoElement);
     } catch (error) {
-      console.error('Failed to preview video', error);
-      this.telemetryManager.sendEventError(error, 'camera previewing. Failed to preview video');
+      this._log.error('Failed to preview video', error);
+      this._telemetry.sendEventError(error, 'camera previewing. Failed to preview video');
     }
   };
 
@@ -442,6 +478,13 @@ export class CameraSource extends LitUploaderBlock {
   private _detachPreviewListeners(videoElement?: HTMLVideoElement | null): void {
     videoElement?.removeEventListener('play', this._handlePreviewPlay);
     videoElement?.removeEventListener('pause', this._handlePreviewPause);
+  }
+
+  private _revokePreviewUrl(): void {
+    if (this._previewUrl) {
+      URL.revokeObjectURL(this._previewUrl);
+      this._previewUrl = null;
+    }
   }
 
   private _setVideoSource(stream: MediaStream | null): void {
@@ -472,6 +515,7 @@ export class CameraSource extends LitUploaderBlock {
 
     /** Reset video */
     if (this._activeTab === CameraSourceTypes.VIDEO) {
+      this._revokePreviewUrl();
       this._setVideoSource(this._stream);
       const videoElement = this._videoRef.value as HTMLVideoElement | undefined;
       if (videoElement) {
@@ -479,7 +523,20 @@ export class CameraSource extends LitUploaderBlock {
       }
     }
 
-    void this._videoRef.value?.play?.();
+    const videoEl = this._videoRef.value;
+    if (videoEl) {
+      this.runTask(() => videoEl.play());
+    }
+  };
+
+  // The shutter waits for a frame: a shot before the first one draws an empty canvas, which accepting turns into
+  // nothing at all.
+  private _handleVideoFrame = (): void => {
+    this._hasVideoFrame = true;
+  };
+
+  private _handleVideoEmptied = (): void => {
+    this._hasVideoFrame = false;
   };
 
   private _accept = (): void => {
@@ -526,6 +583,7 @@ export class CameraSource extends LitUploaderBlock {
   };
 
   private _handleVideo = (status: CameraStatus): void => {
+    const enableAudioRecording = this._config.get('enableAudioRecording');
     if (status === CameraSourceEvents.PLAY) {
       this._timerHidden = false;
       this._tabCameraHidden = true;
@@ -549,10 +607,10 @@ export class CameraSource extends LitUploaderBlock {
       this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
       this._cameraHidden = false;
       this._cameraActionsHidden = true;
-      this._audioToggleMicrophoneHidden = !this.cfg.enableAudioRecording;
+      this._audioToggleMicrophoneHidden = !enableAudioRecording;
       this._currentIcon = 'video-camera-full';
       this._mutableClassButton = 'uc-shot-btn uc-camera-action';
-      this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
+      this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
       this._cameraSelectHidden = this._cameraDevices.length <= 1;
     }
   };
@@ -594,7 +652,7 @@ export class CameraSource extends LitUploaderBlock {
     this._canvas.height = videoEl.videoHeight;
     this._canvas.width = videoEl.videoWidth;
 
-    if (this.cfg.cameraMirror) {
+    if (this._config.get('cameraMirror')) {
       this._ctx.translate(this._canvas.width, 0);
       this._ctx.scale(-1, 1);
     }
@@ -612,13 +670,14 @@ export class CameraSource extends LitUploaderBlock {
     }
 
     if (tabId === CameraSourceTypes.VIDEO) {
+      const enableAudioRecording = this._config.get('enableAudioRecording');
       this._currentTimelineIcon = 'play';
       this._currentIcon = 'video-camera-full';
-      this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
-      this._audioToggleMicrophoneHidden = !this.cfg.enableAudioRecording;
+      this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
+      this._audioToggleMicrophoneHidden = !enableAudioRecording;
     }
 
-    this.telemetryManager.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
         metadata: {
@@ -681,21 +740,23 @@ export class CameraSource extends LitUploaderBlock {
    * The send file to the server
    */
   private _toSend = (file: File): void => {
-    this.api.addFileFromObject(file, { source: UploadSource.CAMERA });
+    this._api.addFileFromObject(file, { source: UploadSource.CAMERA });
 
-    this.routerLayer.navigateAfterFileAdd();
+    this._router.traverse('onFileAdd');
   };
 
   private get _cameraModes(): CameraMode[] {
-    return stringToArray(this.cfg.cameraModes).filter(
+    return stringToArray(this._config.get('cameraModes')).filter(
       (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
     );
   }
 
-  private _setPermissionsState = debounce((state: 'granted' | 'denied' | 'prompt') => {
+  // `@debounced` drops a call after release and cancels a pending one, so the body reads `@inject` fields freely.
+  @debounced(300)
+  protected _setPermissionsState(state: 'granted' | 'denied' | 'prompt'): void {
     this.classList.toggle('uc-initialized', state === 'granted');
 
-    const visibleAudio = this._activeTab === CameraSourceTypes.VIDEO && this.cfg.enableAudioRecording;
+    const visibleAudio = this._activeTab === CameraSourceTypes.VIDEO && this._config.get('enableAudioRecording');
     const currentIcon = this._activeTab === CameraSourceTypes.PHOTO ? 'camera-full' : 'video-camera-full';
 
     if (state === 'granted') {
@@ -727,7 +788,7 @@ export class CameraSource extends LitUploaderBlock {
 
       this._stopCapture();
     }
-  }, 300);
+  }
 
   private _makeStreamInactive = (): boolean => {
     if (!this._stream) return false;
@@ -763,9 +824,13 @@ export class CameraSource extends LitUploaderBlock {
   };
 
   private _capture = async (): Promise<void> => {
+    // Release the current stream first. The `'prompt'` state below used to do it, but that setter is debounced and a
+    // quick `'granted'` supersedes it, which left the previous camera running after a device switch.
+    this._stopCapture();
+    const enableAudioRecording = this._config.get('enableAudioRecording');
     const constraints: MediaStreamConstraints = {
       video: { ...DEFAULT_VIDEO_CONFIG },
-      audio: this.cfg.enableAudioRecording ? ({} as MediaTrackConstraints) : false,
+      audio: enableAudioRecording ? ({} as MediaTrackConstraints) : false,
     };
 
     if (this._selectedCameraId) {
@@ -776,7 +841,7 @@ export class CameraSource extends LitUploaderBlock {
       } as MediaTrackConstraints;
     }
 
-    if (this._selectedAudioId && this.cfg.enableAudioRecording) {
+    if (this._selectedAudioId && enableAudioRecording) {
       constraints.audio = {
         deviceId: {
           exact: this._selectedAudioId,
@@ -791,7 +856,7 @@ export class CameraSource extends LitUploaderBlock {
 
     try {
       this._setPermissionsState('prompt');
-      this._stream = await navigator.mediaDevices.getUserMedia(constraints);
+      this._stream = await this.whileAdopted(navigator.mediaDevices.getUserMedia(constraints), stopTracks);
 
       this._stream.addEventListener('inactive', () => {
         this._setPermissionsState('denied');
@@ -801,23 +866,26 @@ export class CameraSource extends LitUploaderBlock {
       this._capturing = true;
       this._setPermissionsState('granted');
     } catch (error) {
+      if (isAbortError(error)) throw error;
       this._setPermissionsState('denied');
-      console.log('Failed to capture camera', error);
-      this.telemetryManager.sendEventError(error, 'camera capturing. Failed to capture camera');
+      this._log.warn('Failed to capture camera', error);
+      this._telemetry.sendEventError(error, 'camera capturing. Failed to capture camera');
     }
   };
 
   private _handlePermissionsChange = (): void => {
-    this._capture();
+    this.runTask(() => this._capture());
   };
 
   private _permissionAccess = async (): Promise<void> => {
     try {
       this._teardownPermissionListeners();
       for (const permission of DEFAULT_PERMISSIONS) {
-        const response = await navigator.permissions.query({
-          name: permission as PermissionName,
-        });
+        const response = await this.whileAdopted(
+          navigator.permissions.query({
+            name: permission as PermissionName,
+          }),
+        );
         this._permissionResponses[permission] = response;
 
         response.addEventListener('change', this._handlePermissionsChange);
@@ -830,9 +898,10 @@ export class CameraSource extends LitUploaderBlock {
       };
     } catch (error) {
       this._teardownPermissionListeners();
-      console.log('Failed to use permissions API. Fallback to manual request mode.', error);
-      this.telemetryManager.sendEventError(error, 'camera permissions. Failed to use permissions API');
-      this._capture();
+      if (isAbortError(error)) throw error;
+      this._log.warn('Failed to use permissions API. Fallback to manual request mode.', error);
+      this._telemetry.sendEventError(error, 'camera permissions. Failed to use permissions API');
+      this.runTask(() => this._capture());
     }
   };
 
@@ -849,22 +918,31 @@ export class CameraSource extends LitUploaderBlock {
 
   private _requestDeviceAccess = async (): Promise<void> => {
     try {
-      await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: this.cfg.enableAudioRecording,
-      });
+      // Only probes for permission so device labels are readable; `_capture` opens the real stream.
+      const probe = await this.whileAdopted(
+        navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: this._config.get('enableAudioRecording'),
+        }),
+        stopTracks,
+      );
+      stopTracks(probe);
       await this._getDevices();
 
-      navigator.mediaDevices.addEventListener('devicechange', this._getDevices);
+      navigator.mediaDevices.addEventListener('devicechange', () => this.runTask(() => this._getDevices()), {
+        signal: this.adoptionSignal,
+      });
     } catch (error) {
-      this.telemetryManager.sendEventError(error, 'camera devices. Failed to get user media');
-      console.log('Failed to get user media', error);
+      if (isAbortError(error)) throw error;
+      this._telemetry.sendEventError(error, 'camera devices. Failed to get user media');
+      this._log.warn('Failed to get user media', error);
     }
   };
 
   private _getDevices = async (): Promise<void> => {
     try {
-      const devices = await navigator.mediaDevices.enumerateDevices();
+      const devices = await this.whileAdopted(navigator.mediaDevices.enumerateDevices());
+      const enableAudioRecording = this._config.get('enableAudioRecording');
 
       this._cameraDevices = devices
         .filter((device) => device.kind === 'videoinput')
@@ -873,7 +951,7 @@ export class CameraSource extends LitUploaderBlock {
           value: device.deviceId,
         }));
 
-      this._audioDevices = this.cfg.enableAudioRecording
+      this._audioDevices = enableAudioRecording
         ? devices
             .filter((device) => device.kind === 'audioinput')
             .map((device) => ({
@@ -884,14 +962,15 @@ export class CameraSource extends LitUploaderBlock {
 
       this._cameraSelectOptions = this._cameraDevices;
       this._cameraSelectHidden = this._cameraDevices.length <= 1;
-      this._selectedCameraId = this._cameraDevices[0]?.value ?? null;
+      this._selectedCameraId = keepListedDeviceId(this._cameraDevices, this._selectedCameraId);
 
       this._audioSelectOptions = this._audioDevices;
-      this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
-      this._selectedAudioId = this._audioDevices[0]?.value ?? null;
+      this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
+      this._selectedAudioId = keepListedDeviceId(this._audioDevices, this._selectedAudioId);
     } catch (error) {
-      this.telemetryManager.sendEventError(error, 'camera devices. Failed to get devices');
-      console.log('Failed to get devices', error);
+      if (isAbortError(error)) throw error;
+      this._telemetry.sendEventError(error, 'camera devices. Failed to get devices');
+      this._log.warn('Failed to get devices', error);
     }
   };
 
@@ -903,7 +982,7 @@ export class CameraSource extends LitUploaderBlock {
     this._handleCameraModes(this._cameraModes);
   };
 
-  private _onDeactivate = async (): Promise<void> => {
+  private _onDeactivate = (): void => {
     if (this._unsubPermissions) {
       this._unsubPermissions();
     }
@@ -927,29 +1006,32 @@ export class CameraSource extends LitUploaderBlock {
     }
   };
 
-  public override initCallback(): void {
-    super.initCallback();
+  protected override controllerReady(): void {
+    this.runTask(() => this._onActivate());
+  }
 
-    this.subConfigValue('cameraMirror', (val) => {
-      this._videoTransformCss = val ? 'scaleX(-1)' : null;
-    });
+  // `cameraMirror` is a tracked render read (see `_videoTransformCss`). These two
+  // config reactions mutate imperative `@state` fields also written by the
+  // camera-stream handlers (two-writer), so they can't collapse into a derived
+  // render getter — they're `@effect`s. `beforeUpdate` fires them eagerly and
+  // synchronously on adoption (before `_onActivate`'s awaited work runs),
+  // matching the former eager `subConfigValue` fire, then again on change.
+  @effect({ beforeUpdate: true })
+  protected _syncEnableAudioRecording(): void {
+    const enabled = this._config.getTracked('enableAudioRecording');
+    this._audioToggleMicrophoneHidden = !enabled;
+    this._audioSelectDisabled = !enabled;
+  }
 
-    this.subConfigValue('enableAudioRecording', (val) => {
-      this._audioToggleMicrophoneHidden = !val;
-      this._audioSelectDisabled = !val;
-    });
-
-    this.subConfigValue('cameraModes', (val) => {
-      if (!this.isConnected) return;
-      const cameraModes = deserializeCsv(val);
-      this._handleCameraModes(
-        cameraModes.filter(
-          (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
-        ),
-      );
-    });
-
-    void this._onActivate();
+  @effect({ beforeUpdate: true })
+  protected _syncCameraModes(): void {
+    if (!this.isConnected) return;
+    const cameraModes = deserializeCsv(this._config.getTracked('cameraModes'));
+    this._handleCameraModes(
+      cameraModes.filter(
+        (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
+      ),
+    );
   }
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
@@ -964,16 +1046,29 @@ export class CameraSource extends LitUploaderBlock {
 
   private _destroy(): void {
     this._teardownPermissionListeners();
-    navigator.mediaDevices?.removeEventListener('devicechange', this._getDevices);
     this._detachPreviewListeners(this._videoRef.value);
     this._setVideoSource(null);
+    this._revokePreviewUrl();
   }
 
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    void this._onDeactivate();
+  // Camera activation is adoption-scoped (`_onActivate` runs in `controllerReady`),
+  // so release the stream + device/permission listeners in `controllerReleased`
+  // — invoked on disconnect (via the base `disconnectedCallback` →
+  // `_releaseController`) and additionally on ctx release/re-adoption, which the
+  // old disconnect-only path missed (re-adoption re-activated without first
+  // deactivating).
+  protected override controllerReleased(): void {
+    this._onDeactivate();
     this._destroy();
+  }
+
+  /** Names the shutter after its icon, which is what tells sighted users what a press does next. */
+  private get _shotLabel(): string {
+    if (this._currentIcon === 'square') return this.l10n('a11y-camera-stop-recording');
+    if (this._currentIcon === 'video-camera-full') {
+      return this.l10n('record', { source: this.l10n('src-type-mobile-video-camera') });
+    }
+    return this.l10n('camera-shot');
   }
 
   public override render() {
@@ -982,7 +1077,7 @@ export class CameraSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn"
-          @click=${this.$['*historyBack']}
+          @click=${() => this._router.traverse('onBack')}
           title=${this.l10n('back')}
         >
           <uc-icon name="back"></uc-icon>
@@ -994,6 +1089,7 @@ export class CameraSource extends LitUploaderBlock {
         <uc-select
           class="uc-camera-select"
           .options=${this._cameraSelectOptions}
+          .value=${this._selectedCameraId ?? ''}
           ?hidden=${this._cameraSelectHidden}
           @change=${this._handleCameraSelectChange}
         >
@@ -1001,7 +1097,7 @@ export class CameraSource extends LitUploaderBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${this.$['*closeModal']}
+          @click=${() => this._router.traverse('onClose')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >
@@ -1017,6 +1113,8 @@ export class CameraSource extends LitUploaderBlock {
             transform: this._videoTransformCss,
           })}
           ?hidden=${this._videoHidden}
+          @loadeddata=${this._handleVideoFrame}
+          @emptied=${this._handleVideoEmptied}
           ${ref(this._videoRef)}
         ></video>
         <div class="uc-message-box" ?hidden=${this._messageHidden}>
@@ -1102,10 +1200,11 @@ export class CameraSource extends LitUploaderBlock {
         <button
           type="button"
           data-testid="shot"
-          aria-label=${this.l10n('camera-shot')}
           @click=${this._handleStartCamera}
           class=${this._mutableClassButton}
           ?hidden=${this._cameraHidden}
+          ?disabled=${!this._hasVideoFrame}
+          aria-label=${this._shotLabel}
         >
           <uc-icon name=${this._currentIcon}></uc-icon>
         </button>
@@ -1116,6 +1215,8 @@ export class CameraSource extends LitUploaderBlock {
             class="uc-mini-btn uc-btn-microphone"
             @click=${this._handleToggleAudio}
             ?hidden=${this._audioToggleMicrophoneHidden}
+            aria-label=${this.l10n('a11y-camera-microphone')}
+            aria-pressed=${this._toggleMicrophoneIcon === 'microphone' ? 'true' : 'false'}
             data-testid="toggle-microphone"
           >
             <uc-icon name=${this._toggleMicrophoneIcon}></uc-icon>
@@ -1124,6 +1225,7 @@ export class CameraSource extends LitUploaderBlock {
           <uc-select
             class="uc-audio-select"
             .options=${this._audioSelectOptions}
+            .value=${this._selectedAudioId ?? ''}
             ?hidden=${this._audioSelectHidden}
             ?disabled=${this._audioSelectDisabled}
             @change=${this._handleAudioSelectChange}

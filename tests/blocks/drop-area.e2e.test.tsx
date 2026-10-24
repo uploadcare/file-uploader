@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { commands } from 'vitest/browser';
 import { expectActivity, modalDialog, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -95,8 +96,8 @@ describe('drag state', () => {
 /**
  * Drops carry urls rather than files here. A `DataTransfer` built in JS exposes `webkitGetAsEntry`, but it returns
  * null, and `getDropItems` takes that branch and skips the item rather than falling back to `getAsFile` — so a
- * synthetic file drop adds nothing, and a test written that way would pass for the wrong reason. The file path is
- * covered properly by the unit spec in `src/blocks/DropArea/getDropItems.test.ts`.
+ * synthetic file drop adds nothing, and a test written that way would pass for the wrong reason. Files go through
+ * the `dropFolder` command instead (see "dropping a folder" below).
  */
 describe('dropping', () => {
   const dropUrl = (dropArea: HTMLElement, url: string) => {
@@ -160,25 +161,22 @@ describe('dropping', () => {
  * navigates straight there instead of showing the picker.
  */
 describe('when local uploads are not offered', () => {
-  // QUIRK(drop-area): removing `local` from `sourceList` is supposed to hide the area — `_updateVisibility` keeps it
-  // only when there is no default slot to hide (DropArea.ts:223). But visibility is computed from the `sourceList`
-  // subscription, which fires before the element has rendered its slotted content, so `querySelector` finds nothing,
-  // the area is judged slotless and stays visible. Nothing recomputes once the content appears. The result is a
-  // visible "Drop files here" target that silently refuses every drop (the next test). Reproduced through the
-  // attribute route too, so it is not a test-setup artefact. Pinned as current behaviour, not endorsed.
-  it('stays visible even though it no longer accepts anything', async () => {
+  it('hides the area that has content to hide', async () => {
+    // A slotless fullscreen zone stays in the DOM and simply refuses drops; one with a default slot is hidden outright.
     const { dropArea } = await openStartFrom({ sourceList: 'url, camera' });
 
-    // The slotted content the visibility check looks for has rendered, and the area is still visible.
-    await expect.poll(() => dropArea.querySelector('[data-default-slot]')).not.toBeNull();
-    expect(dropArea.hidden).toBe(false);
+    await expect.poll(() => dropArea.hidden).toBe(true);
   });
 
   it('ignores a drop while disabled', async () => {
     const { root, api, config } = await openStartFrom({ sourceList: 'url, camera' });
     // Every area in the solution is disabled, so any of them proves the point — `.elements()` rather than `.query()`
-    // because the strict locator refuses an ambiguous match, which is the behaviour worth keeping elsewhere.
-    const [area] = within(root).getByTestId('uc-drop-area').elements();
+    // because the strict locator refuses an ambiguous match, which is the behaviour worth keeping elsewhere. The one
+    // with content to hide, because its `hidden` shows when it is enabled again.
+    const area = within(root)
+      .getByTestId('uc-drop-area')
+      .elements()
+      .find((element) => element.querySelector('[data-default-slot]')) as HTMLElement;
 
     area.dispatchEvent(
       new DragEvent('drop', {
@@ -189,6 +187,7 @@ describe('when local uploads are not offered', () => {
     );
     // The sentinel: with local uploads back the area accepts, and its drop lands after the refused one.
     config.sourceList = 'local, url, camera';
+    await expect.poll(() => area.hidden).toBe(false);
     area.dispatchEvent(
       new DragEvent('drop', {
         bubbles: true,
@@ -198,5 +197,43 @@ describe('when local uploads are not offered', () => {
     );
 
     await expect.poll(() => droppedUrls(api)).toEqual(['https://example.com/sentinel.jpg']);
+  });
+});
+
+/**
+ * A folder dropped from the OS, through Chromium's own drag input (`commands.dropFolder`), so `getDropItems` walks
+ * real `FileSystemDirectoryEntry` objects. The viewport is phone-sized, where the start-from dialog shows no drop
+ * area, so these drop onto the minimal solution's.
+ */
+describe('dropping a folder', () => {
+  const MINIMAL_DROP_AREA = 'uc-file-uploader-minimal uc-drop-area[initflow]';
+
+  const dropFolder = async (files: Record<string, string>) => {
+    const rendered = await renderSolution('minimal');
+    await expect.element(within(rendered.root).getByText('Choose files', { exact: true })).toBeVisible();
+    await commands.dropFolder(MINIMAL_DROP_AREA, files);
+    return rendered;
+  };
+
+  const droppedPaths = (api: Awaited<ReturnType<typeof renderSolution>>['api']) =>
+    api
+      .getOutputCollectionState()
+      .allEntries.map((entry) => entry.fullPath)
+      .sort();
+
+  it('adds the files of nested folders with their paths', async () => {
+    const { api } = await dropFolder({ 'a.txt': 'a', 'sub/b.txt': 'b', 'sub/deeper/c.txt': 'c' });
+
+    await expect
+      .poll(() => droppedPaths(api))
+      .toEqual(['/dropped/a.txt', '/dropped/sub/b.txt', '/dropped/sub/deeper/c.txt']);
+  });
+
+  it('adds every file of a folder larger than one directory listing batch', async () => {
+    // Chromium lists a directory 100 entries per `readEntries` call.
+    const files = Object.fromEntries(Array.from({ length: 150 }, (_, i) => [`${i}.txt`, String(i)]));
+    const { api } = await dropFolder(files);
+
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(150);
   });
 });

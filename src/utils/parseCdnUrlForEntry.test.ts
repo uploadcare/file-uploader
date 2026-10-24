@@ -1,0 +1,140 @@
+import { describe, expect, it } from 'vitest';
+import { parseCdnUrlForEntry } from './parseCdnUrlForEntry';
+
+describe('parseCdnUrlForEntry', () => {
+  it('should should work', () => {
+    expect(
+      parseCdnUrlForEntry({
+        url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
+        cdnBase: 'https://cdn.example.com',
+      }),
+    ).toEqual({
+      uuid: '12345678-1234-5678-1234-567812345678',
+      cdnUrlModifiers: '',
+      filename: null,
+    });
+  });
+
+  it('should parse filename', () => {
+    expect(
+      parseCdnUrlForEntry({
+        url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/bar.jpg',
+        cdnBase: 'https://cdn.example.com',
+      }),
+    ).toEqual({
+      uuid: '12345678-1234-5678-1234-567812345678',
+      cdnUrlModifiers: '',
+      filename: 'bar.jpg',
+    });
+  });
+
+  it('should parse cdn url modifiers', () => {
+    expect(
+      parseCdnUrlForEntry({
+        url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/-/foo/bar/baz.jpg',
+        cdnBase: 'https://cdn.example.com',
+      }),
+    ).toEqual({
+      uuid: '12345678-1234-5678-1234-567812345678',
+      cdnUrlModifiers: '-/foo/bar/',
+      filename: 'baz.jpg',
+    });
+  });
+
+  it('should return null if cdn base is different', () => {
+    expect(
+      parseCdnUrlForEntry({
+        url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
+        cdnBase: 'https://cdn2.example.com',
+      }),
+    ).toBe(null);
+  });
+
+  it('should strip slashes from the end cdn base before comparing', () => {
+    expect(
+      parseCdnUrlForEntry({
+        url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
+        cdnBase: 'https://cdn.example.com/',
+      }),
+    ).toEqual({
+      uuid: '12345678-1234-5678-1234-567812345678',
+      cdnUrlModifiers: '',
+      filename: null,
+    });
+  });
+
+  it('should not compare the protocol', () => {
+    expect(
+      parseCdnUrlForEntry({
+        url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
+        cdnBase: 'http://cdn.example.com',
+      }),
+    ).toEqual({
+      uuid: '12345678-1234-5678-1234-567812345678',
+      cdnUrlModifiers: '',
+      filename: null,
+    });
+  });
+
+  it('should fallback to ucarecdn.com if cdnBase is not matched', () => {
+    expect(
+      parseCdnUrlForEntry({
+        url: 'https://ucarecdn.com/12345678-1234-5678-1234-567812345678/',
+        cdnBase: 'https://cdn.example.com',
+      }),
+    ).toEqual({
+      uuid: '12345678-1234-5678-1234-567812345678',
+      cdnUrlModifiers: '',
+      filename: null,
+    });
+  });
+
+  it('should keep multiple operations and a multi-parameter operation intact', () => {
+    expect(
+      parseCdnUrlForEntry({
+        url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/-/crop/640x480/10,20/-/preview/x.jpg',
+        cdnBase: 'https://cdn.example.com',
+      }),
+    ).toEqual({
+      uuid: '12345678-1234-5678-1234-567812345678',
+      cdnUrlModifiers: '-/crop/640x480/10,20/-/preview/',
+      filename: 'x.jpg',
+    });
+  });
+
+  /**
+   * These shapes parse fine as CDN URLs but cannot become an upload entry —
+   * `ParseCdnUrlResult` has nowhere to put a group id, a remote source or a
+   * conversion prefix, and dropping either silently would corrupt the entry.
+   * They were rejected before this module used `@uploadcare/cdn-url` too, so
+   * `addFileFromCdnUrl` keeps throwing `Invalid CDN URL` for them.
+   */
+  it.each([
+    ['a group root', 'https://cdn.example.com/12345678-1234-5678-1234-567812345678~2/'],
+    ['a group element', 'https://cdn.example.com/12345678-1234-5678-1234-567812345678~2/nth/0/x.jpg'],
+    ['a conversion result', 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/video/-/quality/best/'],
+  ])('should return null for %s', (_label, url) => {
+    expect(parseCdnUrlForEntry({ url, cdnBase: 'https://cdn.example.com' })).toBe(null);
+  });
+
+  it.each([
+    ['no uuid', 'https://cdn.example.com/'],
+    ['a segment that is not a uuid', 'https://cdn.example.com/not-a-uuid/x.jpg'],
+    ['unexpected path segments', 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/extra/segments/x.jpg'],
+  ])('should return null for %s rather than throwing', (_label, url) => {
+    expect(parseCdnUrlForEntry({ url, cdnBase: 'https://cdn.example.com' })).toBe(null);
+  });
+
+  it('should return null rather than throw for a malformed (unparseable) url', () => {
+    expect(parseCdnUrlForEntry({ url: 'not a url', cdnBase: 'https://cdn.example.com' })).toBe(null);
+  });
+
+  it('should return null rather than throw when cdnBase itself is malformed', () => {
+    expect(
+      parseCdnUrlForEntry({
+        url: 'https://cdn.example.com/12345678-1234-5678-1234-567812345678/',
+        cdnBase: 'not a url',
+      }),
+    ).toBe(null);
+  });
+});

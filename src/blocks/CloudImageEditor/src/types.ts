@@ -1,3 +1,4 @@
+import type { FilterName } from '@uploadcare/cdn-url/ops';
 /**
  * Mapping of loading resources per operation
  */
@@ -30,7 +31,7 @@ export interface Transformations {
   rotate?: number;
   mirror?: boolean;
   flip?: boolean;
-  filter?: { name: string; amount: number };
+  filter?: { name: FilterName; amount: number };
   crop?: { dimensions: [number, number]; coords: [number, number] };
 }
 

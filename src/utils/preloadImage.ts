@@ -1,23 +1,42 @@
 import { TRANSPARENT_PIXEL_SRC } from './transparentPixelSrc';
 
-export function preloadImage(src: string): {
+/** `signal` aborts the load: the promise rejects with its reason and the image stops loading. */
+export function preloadImage(
+  src: string,
+  { signal }: { signal?: AbortSignal } = {},
+): {
   promise: Promise<void>;
   image: HTMLImageElement;
   cancel: () => void;
 } {
   const image: HTMLImageElement = new Image();
 
-  const promise: Promise<void> = new Promise<void>((resolve, reject) => {
-    image.src = src;
-    image.onload = () => resolve();
-    image.onerror = (err) => reject(err);
-  });
-
   const cancel = () => {
     if (image.naturalWidth === 0) {
       image.src = TRANSPARENT_PIXEL_SRC;
     }
   };
+
+  const promise: Promise<void> = new Promise<void>((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(signal.reason);
+      return;
+    }
+    const onAbort = () => {
+      cancel();
+      reject(signal?.reason);
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
+    image.onload = () => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    };
+    image.onerror = () => {
+      signal?.removeEventListener('abort', onAbort);
+      reject(new Error(`Failed to load image ${src}`));
+    };
+    image.src = src;
+  });
 
   return { promise, image, cancel };
 }

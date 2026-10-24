@@ -1,5 +1,6 @@
 import { isAuthTokenResolver } from '@uploadcare/upload-client';
-import type { PasteScope } from '../../abstract/features/ClipboardLayer';
+import type { PasteScope } from '../../abstract/controllers/ClipboardController';
+import { parseBooleanAttribute } from '../../lit/boolean-attribute';
 import type { AuthToken, Metadata, MetadataCallback, Tags, TagsCallback } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
 import type { ModeCameraType } from '../CameraSource/constants';
@@ -18,15 +19,9 @@ const asNumber = (value: unknown): number => {
 };
 
 const asBoolean = (value: unknown): boolean => {
-  if (typeof value === 'undefined' || value === null) return false;
-  if (typeof value === 'boolean') return value;
-  // for attr like multiple="true" (react will pass it as string)
-  if (value === 'true') return true;
-  // for attr flags like multiple="" (some other libs will pass it as empty string)
-  if (value === '') return true;
-  // for attr like multiple="false" (react will pass it as string)
-  if (value === 'false') return false;
-  throw new Error(`Invalid boolean: "${value}"`);
+  // Attribute values are strings: the shared boolean-attribute rule (documented).
+  if (typeof value === 'string') return parseBooleanAttribute(value);
+  return Boolean(value);
 };
 
 const asStore = (value: unknown): boolean | 'auto' => (value === 'auto' ? value : asBoolean(value));

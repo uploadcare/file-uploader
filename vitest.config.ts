@@ -22,6 +22,15 @@ export default defineConfig({
     // them as attributes; esbuild's never did.
     jsx: { development: false },
     jsxInject: "import { renderer } from '~/tests/utils/test-renderer';",
+    // Force the experimental (legacy) decorator transform so it deterministically
+    // matches `tsc`. Without this, the solution-style root tsconfig leaves the
+    // inferred decorator mode ambiguous for `src` files; the DI
+    // `@inject`/`@signalState` decorators require the legacy transform, and every
+    // existing Lit decorator is happy with it too. The two class-field options are
+    // Oxc's spelling of `useDefineForClassFields: false`.
+    decorator: { legacy: true },
+    assumptions: { setPublicClassFields: true },
+    typescript: { removeClassFieldsWithoutInitializer: true },
   },
   test: {
     // Every project starts each test with the real implementations back and the stubbed globals gone, so a test that
@@ -58,7 +67,11 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'specs',
-          include: ['./specs/npm/*.test.ts', './**/*.test.{ts,js}'],
+          // Rooted at the directories tests actually live in, not `./**`. A
+          // repo-wide glob also collected `.claude/worktrees/<branch>/` — a full
+          // second checkout when an agent works in a git worktree — which doubled
+          // the suite and surfaced an unrelated branch's failures as ours.
+          include: ['./specs/*/*.test.ts', './src/**/*.test.{ts,js}'],
           environment: 'happy-dom',
         },
       },
@@ -90,7 +103,9 @@ export default defineConfig({
           setupFiles: ['./tests/setup.e2e.ts'],
           // Reaches the page as `import.meta.env.E2E_NET`: vitest defines `env` into the browser bundle.
           env: { E2E_NET: mode },
-          include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
+          // Browser e2e lives only under `tests/` — see the note on the specs
+          // project for why this is rooted rather than `./**`.
+          include: ['./tests/**/*.e2e.test.{ts,tsx}'],
           // Fake-only: these read back what the emulator received or steer it with scenarios, and a live run has no
           // emulator. They never measured the real API either: before the emulator they ran on a stubbed `fetch` or
           // `uploadFile`, live or not.

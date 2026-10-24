@@ -102,7 +102,10 @@ describe('plugin sources', () => {
     await openModal(root);
 
     await vi.waitFor(() => {
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Instagram source was removed'));
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[uc]/),
+        expect.stringContaining('Instagram source was removed'),
+      );
     });
 
     // The list has rendered once the local source it keeps is there; only then does instagram's absence mean anything.
@@ -140,7 +143,7 @@ describe('plugin sources', () => {
     addSource(config, 'shared-source');
 
     await vi.waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"shared-source"'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), expect.stringContaining('"shared-source"'));
     });
 
     await openModal(root);

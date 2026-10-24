@@ -1,12 +1,37 @@
 import { uploadFile } from '@uploadcare/upload-client';
 import { describe, expect, it, vi } from 'vitest';
+import { __resetLoggerForTests } from '@/abstract/logger';
 import type { EventPayload } from '@/index.js';
+import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import '~/types/jsx';
 import { renderSolution, within } from '~/tests/utils/render-solution';
 
 describe('UploadCtxProvider api', () => {
+  it('reports the idle collection state before any file is added', async () => {
+    const { api } = await renderSolution();
+
+    expect(api.getOutputCollectionState()).toMatchObject({
+      status: 'idle',
+      totalCount: 0,
+      successCount: 0,
+      failedCount: 0,
+      uploadingCount: 0,
+      progress: 0,
+      errors: [],
+      group: null,
+      isFailed: false,
+      isUploading: false,
+      isSuccess: false,
+      allEntries: [],
+      successEntries: [],
+      failedEntries: [],
+      uploadingEntries: [],
+      idleEntries: [],
+    });
+  });
+
   it('adds an already-uploaded file from an UploadcareFile instance and fires the success events without uploading', async () => {
     const { api, provider } = await renderSolution();
     // Upload a real local image via the upload client to get a genuine UploadcareFile.
@@ -207,6 +232,47 @@ describe('UploadCtxProvider api', () => {
       api.initFlow();
 
       await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
+    });
+  });
+
+  describe('the collection state an event carries', () => {
+    const firstChange = (provider: HTMLElement) =>
+      new Promise<EventPayload['change']>((resolve) =>
+        provider.addEventListener('change', (e) => resolve((e as CustomEvent<EventPayload['change']>).detail), {
+          once: true,
+        }),
+      );
+
+    it('keeps what the event saw when the handler takes a snapshot()', async () => {
+      const { api, provider } = await renderSolution('regular', { multiple: true, confirmUpload: true });
+      const snapshot = new Promise<EventPayload['change']>((resolve) =>
+        provider.addEventListener(
+          'change',
+          (e) => resolve((e as CustomEvent<EventPayload['change']>).detail.snapshot()),
+          {
+            once: true,
+          },
+        ),
+      );
+      api.addFileFromObject(IMAGE.PIXEL);
+      const seen = await snapshot;
+      api.addFileFromObject(IMAGE.SQUARE);
+      await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(2);
+
+      expect([seen.totalCount, seen.allEntries.length]).toEqual([1, 1]);
+    });
+
+    it('warns about file entries first read after the event', async () => {
+      __resetLoggerForTests();
+      const warn = vi.spyOn(console, 'warn');
+      const { api, provider } = await renderSolution('regular', { confirmUpload: true });
+      const change = firstChange(provider);
+      api.addFileFromObject(IMAGE.PIXEL);
+      const state = await change;
+      await delay(0);
+
+      void state.allEntries;
+      expect(warn).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('after the task that created it'));
     });
   });
 });

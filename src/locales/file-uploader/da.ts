@@ -107,6 +107,8 @@ export default {
   'file-item-edit-button': 'Rediger',
   'file-item-remove-button': 'Fjern',
   'a11y-activity-header-button-close': 'Luk',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Stop optagelse',
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Justering',
   'a11y-editor-tab-crop': 'Beskær',

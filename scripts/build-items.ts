@@ -35,7 +35,13 @@ export const buildItems: BuildItem[] = [
     format: 'esm',
     minify: true,
     bundleExternalDependencies: false,
-    mangleProps: false,
+    // Same `/^_/` mangling the `web/` bundles have always used, now applied to
+    // the npm build too — worth ~4 KB brotli on `dist/index.js`, which sits
+    // close to its size limit. Safe because `_`-prefixed properties are
+    // internal by convention: none appear on the documented data shapes
+    // (`src/types/exported.ts`) and nothing reaches them through a computed
+    // key, so the renaming cannot escape the bundle.
+    mangleProps: true,
   },
   // uc-blocks
   {

@@ -5,20 +5,6 @@ function createSvgBlobUrl(svg: string): string {
   return URL.createObjectURL(blob);
 }
 
-export function checkerboardCssBg(color1 = '#fff', color2 = 'rgba(0, 0, 0, .1)'): string {
-  return createSvgBlobUrl(/*svg*/ `<svg height="20" width="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-    <rect x="0" y="0" width="20" height="20" fill="${color1}" />
-    <rect x="0" y="0" width="10" height="10" fill="${color2}" />
-    <rect x="10" y="10" width="10" height="10" fill="${color2}" />
-  </svg>`);
-}
-
-export function strokesCssBg(color = 'rgba(0, 0, 0, .1)'): string {
-  return createSvgBlobUrl(/*svg*/ `<svg height="10" width="10" viewBox="0 0 10 10" xmlns="http://www.w3.org/2000/svg">
-    <line x1="0" y1="10" x2="10" y2="0" stroke="${color}" />
-  </svg>`);
-}
-
 export function fileCssBg(color = 'hsl(209, 21%, 65%)', width = 32, height = 32): string {
   return createSvgBlobUrl(/*svg*/ `
   <svg width="${width}" height="${height}" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">

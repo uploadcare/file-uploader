@@ -74,14 +74,23 @@ describe('published types under consumer compiler settings', { timeout: 60_000 }
     expect(ok).toBe(true);
   });
 
-  // QUIRK(types): under nodenext resolution with `skipLibCheck: false`, type-checking fails inside
-  // `dist/index.d.ts`: `TelemetryManager` (src/abstract/managers/TelemetryManager.ts:15) derives its method types
-  // from `TelemetryRequest`, so the import of `@uploadcare/quality-insights` ends up in the public d.ts, and that
-  // package ships extensionless relative imports in an ESM d.ts, which nodenext rejects. Goes away when the
-  // dependency fixes its d.ts or the manager stops leaking the type. Pinned as current behaviour, not endorsed.
-  it('nodenext (ESM), strict, skipLibCheck: false fails inside quality-insights', () => {
+  // QUIRK(types): the pinned alpha of @uploadcare/cdn-url ships extensionless relative imports in its ESM
+  // declarations. NodeNext rejects those imports and cannot resolve the public CdnOperation/FilterName types.
+  // Pin these diagnostics until the dependency fixes its declarations; unrelated type errors must still fail.
+  it('nodenext (ESM), strict, skipLibCheck: false fails inside cdn-url', () => {
     const { ok, output } = compile(cases[1]);
     expect(ok).toBe(false);
-    expect(output).toContain('quality-insights');
+    expect(output.trim().split(/\r?\n/)).toEqual([
+      expect.stringMatching(
+        /^dist\/index\.d\.ts\(\d+,\d+\): error TS2305: Module '"@uploadcare\/cdn-url\/ops"' has no exported member 'FilterName'\.$/,
+      ),
+      expect.stringMatching(
+        /^dist\/index\.d\.ts\(\d+,\d+\): error TS2305: Module '"@uploadcare\/cdn-url"' has no exported member 'CdnOperation'\.$/,
+      ),
+      ...['index', 'ops'].map(
+        (entry) =>
+          `node_modules/@uploadcare/cdn-url/dist/types/${entry}.d.ts(1,15): error TS2834: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Consider adding an extension to the import path.`,
+      ),
+    ]);
   });
 });

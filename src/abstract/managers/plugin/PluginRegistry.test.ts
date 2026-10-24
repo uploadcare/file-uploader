@@ -62,3 +62,16 @@ describe('PluginRegistry — batched change notification', () => {
     expect(registry.snapshot().sources).toHaveLength(1);
   });
 });
+
+describe('PluginRegistry — file hooks', () => {
+  it.each([
+    ['no timeout', {}],
+    ['an explicit undefined timeout', { timeout: undefined }],
+  ])('defaults a hook with %s to 30 seconds', (_, timeout) => {
+    const registry = new PluginRegistry(() => {});
+
+    registry.addFileHook('p', { type: 'onAdd', handler: ({ file }) => ({ file }), ...timeout });
+
+    expect(registry.snapshot().fileHooks[0]?.timeout).toBe(30_000);
+  });
+});

@@ -28,8 +28,7 @@ describe('telemetry: action events', () => {
     );
 
     expect(removal.payload.metadata).toMatchObject({ event: 'remove-file', node: 'UC-FILE-ITEM' });
-    // FileItem sends this one without an eventType, so it goes out with an empty one. Pinned as current behaviour.
-    expect(removal.event_type).toBe('');
+    expect(removal.event_type).toBe('action-event');
   });
 
   it('reports an action-event when the upload list is cleared', async () => {

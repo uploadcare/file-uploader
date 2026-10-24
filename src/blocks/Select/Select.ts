@@ -1,6 +1,6 @@
-import { html } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
-import { LitBlock } from '../../lit/LitBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 import './select.css';
 
 type SelectOption = {
@@ -8,7 +8,7 @@ type SelectOption = {
   value: string;
 };
 
-export class Select extends LitBlock {
+export class Select extends ChildBlock {
   @property({ type: String, attribute: false })
   public value = '';
 
@@ -20,10 +20,21 @@ export class Select extends LitBlock {
 
   public override render() {
     return html`
-      <select @change=${this._handleChange} .value=${this.value} ?disabled=${this.disabled}>
+      <select @change=${this._handleChange} ?disabled=${this.disabled}>
         ${this.options.map((option) => html`<option value=${option.value}>${option.text}</option>`)}
       </select>
     `;
+  }
+
+  // Applied after render rather than bound in the template: a `.value` binding on `<select>` commits before its
+  // `<option>`s exist, and Lit's dirty check never re-applies it when the options change. A value that matches no
+  // option is left alone so the browser keeps its first-option default.
+  public override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+    const select = this.querySelector('select');
+    if (select && this.options.some((option) => option.value === this.value)) {
+      select.value = this.value;
+    }
   }
 
   private _handleChange = (event: Event): void => {
