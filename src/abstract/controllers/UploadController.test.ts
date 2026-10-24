@@ -127,6 +127,7 @@ describe('UploadController', () => {
       ['already uploading', { isUploading: true }],
       ['has errors', { errors: [{ type: 'X', message: 'm' }] as unknown as UploadEntryData['errors'] }],
       ['validation pending', { isValidationPending: true }],
+      ['its upload already failed', { uploadError: new Error('failed') }],
     ];
     it.each(preconditionCases)('returns when %s', async (_label, init) => {
       const { controller, collection } = setup();

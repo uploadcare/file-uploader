@@ -191,9 +191,12 @@ export class UploadController {
       return;
     }
 
+    // A failed upload is final: `uploadError` turns into `errors` only on the next validation run, so until then
+    // the entry would otherwise look ready to send again.
     if (
       entry.get('fileInfo') ||
       entry.get('isUploading') ||
+      entry.get('uploadError') ||
       entry.get('errors').length > 0 ||
       entry.get('isValidationPending')
     ) {
