@@ -49,8 +49,7 @@ const setup = (opts: { collectionState?: OutputCollectionState; deferPlugin?: bo
     cleanupValidationForEntry: vi.fn(),
   } as unknown as ValidationController;
   container.bind(ValidationController, () => validation);
-  // The active upload batch now lives on `UploadController` (not a `*uploadTrigger`
-  // state key). Back the mock's `uploadBatch` getter with a test-owned set,
+  // The active upload batch lives on `UploadController`. Back the mock's `uploadBatch` getter with a test-owned set,
   // filtered by existence exactly as the real controller does.
   const uploadBatchSet = new Set<Uid>();
   const upload = {

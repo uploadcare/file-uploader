@@ -357,11 +357,8 @@ export class UploaderPublicApi {
       return;
     }
 
-    // Upload the entries directly through the controller (its `uploadEntry` is
-    // precondition-guarded + idempotent). This replaces the v1
-    // `ctx.pub('*uploadTrigger', new Set(...))` broadcast that each
-    // `<uc-file-item>` observed to self-upload — so upload no longer depends on
-    // an item being rendered.
+    // Uploads through the controller (its `uploadEntry` is precondition-guarded +
+    // idempotent), so uploading doesn't depend on an item being rendered.
     this._uploadController.uploadEntries(itemsToUpload);
     this._eventEmitter.emit(
       EventType.COMMON_UPLOAD_START,

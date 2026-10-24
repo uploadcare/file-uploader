@@ -98,13 +98,11 @@ export class UploadController {
   }
 
   /**
-   * Upload the given entries: the direct successor to the v1 `*uploadTrigger`
-   * broadcast. Each uid is added to the active batch and uploaded via
-   * `uploadEntry` (which is precondition-guarded + idempotent). Unlike the old
-   * per-`<uc-file-item>` trigger, this doesn't depend on any item being rendered.
+   * Upload the given entries. Each uid is added to the active batch and uploaded
+   * via `uploadEntry` (which is precondition-guarded + idempotent), whether or not
+   * any item is rendered.
    *
-   * The `uploadEntry` call is deferred a macrotask (as the v1 per-item
-   * `setTimeout(() => _upload())` was): a file added in the same tick kicks off
+   * The `uploadEntry` call is deferred a macrotask: a file added in the same tick kicks off
    * async validation that sets `isValidationPending`, and `uploadEntry` bails on
    * a pending entry — so we let that settle first rather than racing it.
    */

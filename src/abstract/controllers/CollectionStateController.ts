@@ -7,10 +7,7 @@ import { type ObserveOptions, SignalMap } from '../di/SignalMap';
 /**
  * The derived UI-state keys the upload stack publishes and the blocks read
  * every render — `*uploadList`, `*commonProgress`, `*collectionState`,
- * `*collectionErrors`, `*groupInfo`. In v1 these were orphan `*`-keys in the
- * per-ctx store map with no controller owner; this is their signal-backed owner.
- * (The former `*uploadTrigger` key is gone — `uploadAll` now uploads through
- * `UploadController.uploadEntries` directly, not a broadcast state key.)
+ * `*collectionErrors`, `*groupInfo`, signal-backed.
  */
 export type CollectionState = {
   uploadList: Uid[];
