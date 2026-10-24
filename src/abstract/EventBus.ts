@@ -7,8 +7,8 @@ import { lazy } from './logger';
 /**
  * Canonical event surface for the whole library. `EventEmitter`
  * (`src/blocks/UploadCtxProvider/EventEmitter.ts`) re-exports these as the
- * documented `EventType`/`EventPayload`, so there is a single source of truth —
- * the v1 and v2 names cannot drift apart.
+ * documented `EventType`/`EventPayload`, so the internal and documented names
+ * cannot drift apart.
  */
 export const UploaderEventType = Object.freeze({
   FILE_ADDED: 'file-added',

@@ -154,11 +154,6 @@ describe('FileItem (M-god step 6b-6 migration)', () => {
     expect(fileNameHidden(el)).toBe(true);
   });
 
-  // (The former `uploadTrigger` self-upload + `_upload`-delegation tests were
-  // removed: FileItem no longer uploads — `uploadAll` drives
-  // `UploadController.uploadEntries` directly. See UploaderPublicApi /
-  // UploadController specs.)
-
   it('shows the focus highlight from the focused property', async () => {
     const ctxName = freshCtxName();
     const { el } = await mount(ctxName);
