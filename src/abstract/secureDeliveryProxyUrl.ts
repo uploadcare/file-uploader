@@ -8,9 +8,8 @@ const log = logger.scope('secure-delivery-proxy');
 export type SecureDeliveryProxyConfig = Pick<ConfigType, 'secureDeliveryProxy' | 'secureDeliveryProxyUrlResolver'>;
 
 /**
- * Resolve a CDN url through the configured secure-delivery proxy, if any.
- * Extracted verbatim from `LitBlock.proxyUrl` so both the v1 and v2 element
- * bases can delegate to the same DOM-free logic.
+ * Resolve a CDN url through the configured secure-delivery proxy, if any. DOM-free, so `ChildBlock` and the
+ * standalone editor share it.
  */
 export async function resolveSecureDeliveryProxyUrl(
   config: SecureDeliveryProxyConfig,

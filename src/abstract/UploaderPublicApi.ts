@@ -1,5 +1,3 @@
-// @ts-check
-
 import { parseFileUrl } from '@uploadcare/cdn-url';
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
@@ -105,25 +103,9 @@ export const toOutputFileEntry = <TStatus extends OutputFileStatus>(
 };
 
 /**
- * The documented public JS API (`element.getAPI()`).
- *
- * A thin facade over single-responsibility controllers resolved from the
- * per-ctx DI container — config/locale/collection/collection-state/events/
- * router are injected fields. It is created through the container
- * (`ensureUploaderScope` → `container.get`) so `@inject` resolves, and is the
- * single per-ctx instance every caller reaches.
- *
- * The plugin manager is container-resolved via `@inject(() => PluginController)`
- * (a lazy thunk, resolved at plugin-read time; `PluginController` is bound on
- * the container by `ensurePluginManager`, which runs in the same
- * `ensureUploaderScope` that registers this api, so it is always available by
- * the time any plugin read fires on user action).
- *
- * `getOutputCollectionState` calls `buildOutputCollectionState(this._container)`
- * — the api reaches its own per-ctx `ControllerContainer` through the
- * `CONTAINER` tag every container-built instance carries (the same tag
- * `@inject` reads), so `buildOutputCollectionState` resolves the
- * derived-collection controllers itself.
+ * The documented public JS API (`element.getAPI()`): one instance per ctx, acting on that ctx's uploader. It holds no
+ * state of its own; every method reads or drives the ctx's controllers. Once the uploader is destroyed, calling a
+ * method throws instead of acting on a stale ctx: get a fresh api from the current `<uc-upload-ctx-provider>`.
  */
 export class UploaderPublicApi {
   @inject(AppInfo) private readonly _appInfo!: AppInfo;
@@ -188,9 +170,8 @@ export class UploaderPublicApi {
     return this._l10n;
   }
 
-  /**
-   * TODO: Probably we should not allow user to override `source` property
-   */
+  /** Adds a file to the upload list from a URL. `silent` suppresses its file events. */
+  // TODO: Probably we should not allow user to override `source` property
   public addFileFromUrl = (
     url: string,
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
@@ -430,7 +411,6 @@ export class UploaderPublicApi {
         }
         const source = options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL;
         this.addFilesFromObjects([...fileInput.files].map((file) => ({ file, source })));
-        // To call uploadTrigger UploadList should draw file items first.
         this._router.traverse('onFileAdd');
         fileInput.remove();
       },

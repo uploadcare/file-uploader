@@ -9,25 +9,11 @@ import { type LocaleDefinition, resolveLocaleDefinition } from '../localeRegistr
 import type { PluginController } from './plugin';
 
 /**
- * DOM-free locale orchestration: reads/writes the `ConfigController`/
- * `LocaleController` directly. Container-resolved with a zero-arg ctor,
- * `@inject`-ing both controllers instead of taking them in a deps object.
+ * Keeps the ctx's locale dictionary in step with `localeName`, `localeDefinitionOverride` and the dictionaries
+ * plugins register, falling back to `en` for missing keys.
  *
- * Construction itself is side-effect-free — `ensureUploaderCtx` resolves this
- * eagerly (`container.get(LocaleManager)`) the moment a ctx's container is
- * created, including from contexts that never mount a block (e.g. a bare
- * per-upload-entry ctx, or a unit test exercising the config controller
- * alone). Seeding the `en` dictionary and wiring the config subscriptions as
- * part of the constructor would leak locale state into every such scope.
- * Instead {@link activate} — the real construction-time work — is called
- * explicitly by `ensureUploaderCtx` the moment a ctx's container exists (on
- * every path, including the pre-element one with no block mounted), and again
- * by `ensurePluginManager` to re-couple the real plugin manager. It also takes
- * the plugin-manager coupling (`onPluginsChange`/`snapshot`, for plugin-supplied
- * `registerL10n` dictionaries): `PluginController` isn't resolved by
- * `ensureUploaderCtx` (it's bound later by `ensurePluginManager`), so
- * `activate` accepts a nullable plugin manager and re-couples idempotently
- * when `ensurePluginManager` later activates it with the real one.
+ * Constructing it does nothing, so a ctx that never shows a locale carries no locale state; {@link activate} starts
+ * it. `activate` may be called again, and a later call with the real plugin manager picks up plugin dictionaries.
  */
 export class LocaleManager {
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
@@ -51,7 +37,7 @@ export class LocaleManager {
   private _cancelPluginManagerReg?: () => void;
 
   /**
-   * Run the v1 construction-time work: seed the `en` defaults, wire the
+   * Start: seed the `en` defaults, wire the
    * plugin-manager coupling, and subscribe to `localeName`/
    * `localeDefinitionOverride`. Idempotent — the plugin-manager coupling is
    * always re-wired (harmless: unsub-then-resub) but the one-time seeding +
