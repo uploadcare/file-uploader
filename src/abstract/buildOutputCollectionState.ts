@@ -5,9 +5,7 @@ import type {
   OutputCollectionStatus,
   OutputErrorCollection,
   OutputFileEntry,
-  UploadcareGroup,
 } from '../types/index';
-import { memoize } from '../utils/memoize';
 import { CollectionStateController } from './controllers/CollectionStateController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import type { ControllerContainer } from './di/ControllerContainer';
@@ -15,151 +13,182 @@ import { logger } from './logger';
 
 const log = logger.scope('output-collection-state');
 
-function createAsyncAssertWrapper(warning: string) {
-  let isAsync = false;
-  setTimeout(() => {
-    isAsync = true;
-  }, 0);
+const KEEP_A_COPY =
+  'Read it synchronously, or keep a copy in the handler with the spread operator: `{...outputCollectionState}` or ' +
+  '`{...e.detail}`.';
 
-  const withAssert = <TArgs extends unknown[], TReturn, T extends (...args: TArgs) => TReturn>(fn: T): T => {
-    return ((...args) => {
-      if (isAsync) {
-        log.warnOnce(warning);
-      }
-      return fn(...args);
-    }) as T;
+const LATE_READ_WARNING =
+  "You've read an OutputCollectionState's file entries after the task that created it, so they are newer than " +
+  `the state or the event that carried it. ${KEEP_A_COPY}`;
+
+const mixedReadWarning = (fields: readonly string[]): string =>
+  `You've read an OutputCollectionState whose ${fields.map((f) => `\`${f}\``).join(', ')} changed between the ` +
+  `event and your read of its file entries, so the values you combined describe two different states. ${KEEP_A_COPY}`;
+
+// The task a state was built in. One shared timer per task advances it, not one per state: every event payload is a
+// state, and most are never read.
+let currentTask = 0;
+let taskEndScheduled = false;
+const taskNow = (): number => {
+  if (!taskEndScheduled) {
+    taskEndScheduled = true;
+    setTimeout(() => {
+      currentTask += 1;
+      taskEndScheduled = false;
+    }, 0);
+  }
+  return currentTask;
+};
+
+/** Forgets a pending task end, which a test that swaps timer implementations would otherwise strand. */
+export const __resetTaskClockForTests = (): void => {
+  taskEndScheduled = false;
+};
+
+/** Cheap to read, so they are read when the state is built. */
+const BUILD_TIME_FIELDS = [
+  'progress',
+  'errors',
+  'group',
+  'totalCount',
+] as const satisfies readonly (keyof OutputCollectionState)[];
+
+/** Derived from the output entries, so they are computed together on the first read of any of them. */
+const ENTRY_FIELDS = [
+  'failedCount',
+  'successCount',
+  'uploadingCount',
+  'status',
+  'isSuccess',
+  'isUploading',
+  'isFailed',
+  'allEntries',
+  'successEntries',
+  'failedEntries',
+  'uploadingEntries',
+  'idleEntries',
+] as const satisfies readonly (keyof OutputCollectionState)[];
+
+/** Each field of the state on its own: the union of what it can hold across every status. */
+type Fields<K extends keyof OutputCollectionState> = { [P in K]: OutputCollectionState[P] };
+type BuildTimeField = (typeof BUILD_TIME_FIELDS)[number];
+
+const readBuildTimeFields = (container: ControllerContainer): Fields<BuildTimeField> => {
+  // `CollectionStateController` owns progress, collection errors and the group.
+  const collectionState = container.get(CollectionStateController);
+  return {
+    progress: collectionState.get('commonProgress'),
+    errors: collectionState.get('collectionErrors'),
+    group: collectionState.get('groupInfo'),
+    totalCount: container.get(UploadCollectionController).size,
   };
+};
 
-  return withAssert;
-}
+// Validation writes a fresh `errors` array on every run, so errors compare by what they say.
+const sameErrors = (a: readonly OutputErrorCollection[], b: readonly OutputErrorCollection[]): boolean =>
+  a.length === b.length && a.every((error, i) => error.type === b[i]?.type && error.message === b[i]?.message);
+
+const changedFields = (before: Fields<BuildTimeField>, now: Fields<BuildTimeField>): Set<BuildTimeField> => {
+  const changed = new Set<BuildTimeField>();
+  if (before.progress !== now.progress) changed.add('progress');
+  if (!sameErrors(before.errors, now.errors)) changed.add('errors');
+  if (before.group !== now.group) changed.add('group');
+  if (before.totalCount !== now.totalCount) changed.add('totalCount');
+  return changed;
+};
 
 export function buildOutputCollectionState<
   TCollectionStatus extends OutputCollectionStatus,
   TGroupFlag extends GroupFlag = 'maybe-has-group',
 >(container: ControllerContainer): OutputCollectionState<TCollectionStatus, TGroupFlag> {
-  const state = {} as OutputCollectionState<TCollectionStatus, TGroupFlag>;
-  // Derived collection keys read straight off the controllers.
-  // `CollectionStateController` owns `*commonProgress`/`*collectionErrors`/
-  // `*groupInfo` (the same instance the v1 ctx facade routes those keys through).
-  const collectionState = container.get(CollectionStateController);
-  const uploadCollection = container.get(UploadCollectionController);
+  // Two moments, never one per field. The cheap fields are read now. The entry-derived ones are built together on
+  // the first read of any of them, so a payload whose handler reads only `progress` builds no `OutputFileEntry`.
+  // Read synchronously, as documented, both moments are the same one. When they are not, a reader that combines a
+  // build-time field that has changed with the entries gets warned.
+  const atBuild = readBuildTimeFields(container);
+  const builtInTask = taskNow();
 
-  // Partition all entries by derived status in ONE pass (memoized), so counts,
-  // the four per-status arrays, and the status flags don't each re-filter the
-  // whole list. Was O(N × ~5) filters/scans per state; now O(N) once. The result
-  // is identical to the per-getter `.filter(status === …)` it replaces (a
-  // `removed` entry lands in no bucket, exactly as the old filters excluded it).
-  const partitionByStatus = memoize(() => {
-    const success: OutputFileEntry<'success'>[] = [];
-    const failed: OutputFileEntry<'failed'>[] = [];
-    const uploading: OutputFileEntry<'uploading'>[] = [];
-    const idle: OutputFileEntry<'idle'>[] = [];
-    for (const entry of state.allEntries) {
+  const takeEntries = (): Fields<(typeof ENTRY_FIELDS)[number]> => {
+    const allEntries = getOutputData(container);
+    const { errors } = atBuild;
+
+    // One pass partitions the entries by status; a `removed` entry lands in no bucket.
+    const successEntries: OutputFileEntry<'success'>[] = [];
+    const failedEntries: OutputFileEntry<'failed'>[] = [];
+    const uploadingEntries: OutputFileEntry<'uploading'>[] = [];
+    const idleEntries: OutputFileEntry<'idle'>[] = [];
+    for (const entry of allEntries) {
       switch (entry.status) {
         case 'success':
-          success.push(entry as OutputFileEntry<'success'>);
+          successEntries.push(entry as OutputFileEntry<'success'>);
           break;
         case 'failed':
-          failed.push(entry as OutputFileEntry<'failed'>);
+          failedEntries.push(entry as OutputFileEntry<'failed'>);
           break;
         case 'uploading':
-          uploading.push(entry as OutputFileEntry<'uploading'>);
+          uploadingEntries.push(entry as OutputFileEntry<'uploading'>);
           break;
         case 'idle':
-          idle.push(entry as OutputFileEntry<'idle'>);
+          idleEntries.push(entry as OutputFileEntry<'idle'>);
           break;
       }
     }
-    return { success, failed, uploading, idle };
-  });
 
-  const getters = {
-    progress: (): number => {
-      return collectionState.get('commonProgress');
-    },
-    errors: (): OutputErrorCollection[] => {
-      return collectionState.get('collectionErrors');
-    },
+    const isFailed = errors.length > 0 || failedEntries.length > 0;
+    const isUploading = uploadingEntries.length > 0;
+    const isSuccess = allEntries.length > 0 && errors.length === 0 && successEntries.length === allEntries.length;
+    const status = isFailed ? 'failed' : isUploading ? 'uploading' : isSuccess ? 'success' : 'idle';
 
-    group: (): UploadcareGroup | null => {
-      return collectionState.get('groupInfo');
-    },
-
-    totalCount: (): number => {
-      return uploadCollection.size;
-    },
-
-    failedCount: (): number => {
-      return partitionByStatus().failed.length;
-    },
-
-    successCount: (): number => {
-      return partitionByStatus().success.length;
-    },
-
-    uploadingCount: (): number => {
-      return partitionByStatus().uploading.length;
-    },
-
-    status: (): TCollectionStatus => {
-      const status = state.isFailed ? 'failed' : state.isUploading ? 'uploading' : state.isSuccess ? 'success' : 'idle';
-      return status as TCollectionStatus;
-    },
-
-    isSuccess: (): boolean => {
-      return (
-        state.allEntries.length > 0 &&
-        state.errors.length === 0 &&
-        partitionByStatus().success.length === state.allEntries.length
-      );
-    },
-
-    isUploading: (): boolean => {
-      return partitionByStatus().uploading.length > 0;
-    },
-
-    isFailed: (): boolean => {
-      return state.errors.length > 0 || partitionByStatus().failed.length > 0;
-    },
-
-    allEntries: (): OutputFileEntry[] => {
-      return getOutputData(container);
-    },
-
-    successEntries: (): OutputFileEntry<'success'>[] => {
-      return partitionByStatus().success;
-    },
-
-    failedEntries: (): OutputFileEntry<'failed'>[] => {
-      return partitionByStatus().failed;
-    },
-
-    uploadingEntries: (): OutputFileEntry<'uploading'>[] => {
-      return partitionByStatus().uploading;
-    },
-
-    idleEntries: (): OutputFileEntry<'idle'>[] => {
-      return partitionByStatus().idle;
-    },
+    return {
+      failedCount: failedEntries.length,
+      successCount: successEntries.length,
+      uploadingCount: uploadingEntries.length,
+      status,
+      isSuccess,
+      isUploading,
+      isFailed,
+      allEntries,
+      successEntries,
+      failedEntries,
+      uploadingEntries,
+      idleEntries,
+    };
   };
 
-  const withAssert = createAsyncAssertWrapper(
-    "You're trying to access the OutputCollectionState asynchronously. " +
-      'In this case, the data you retrieve will be newer than it was when the ' +
-      'OutputCollectionState was created or when the event was dispatched. If you want ' +
-      'to retain the state at a specific moment in time, you should use the spread operator ' +
-      'like this: `{...outputCollectionState}` or `{...e.detail}`',
-  );
+  let entries: ReturnType<typeof takeEntries> | undefined;
+  // Build-time fields that had changed by the time the entries were taken, and those the reader has seen.
+  let changedBeforeEntries: Set<BuildTimeField> | undefined;
+  const readBuildTime = new Set<BuildTimeField>();
+  const warnIfMixed = (fields: BuildTimeField[]) => {
+    if (fields.length > 0) log.warnOnce(mixedReadWarning(fields));
+  };
 
-  for (const [key, value] of Object.entries(getters)) {
-    const name = key as keyof typeof getters;
-    const getter = value as (typeof getters)[typeof name];
-    const wrapped = memoize(withAssert(getter));
-    Object.defineProperty(state, name, {
-      get: wrapped,
+  // The status-narrowed type is the caller's promise (`getOutputCollectionState<'success'>()`); the getters below
+  // are what fill it.
+  const state = {} as OutputCollectionState<TCollectionStatus, TGroupFlag>;
+  for (const key of BUILD_TIME_FIELDS) {
+    Object.defineProperty(state, key, {
+      get: () => {
+        readBuildTime.add(key);
+        if (changedBeforeEntries?.has(key)) warnIfMixed([key]);
+        return atBuild[key];
+      },
       enumerable: true,
     });
   }
-
+  for (const key of ENTRY_FIELDS) {
+    Object.defineProperty(state, key, {
+      get: () => {
+        if (!entries) {
+          if (taskNow() !== builtInTask) log.warnOnce(LATE_READ_WARNING);
+          entries = takeEntries();
+          changedBeforeEntries = changedFields(atBuild, readBuildTimeFields(container));
+          warnIfMixed([...changedBeforeEntries].filter((field) => readBuildTime.has(field)));
+        }
+        return entries[key];
+      },
+      enumerable: true,
+    });
+  }
   return state;
 }

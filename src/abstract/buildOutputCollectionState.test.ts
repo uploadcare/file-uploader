@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildOutputCollectionState } from './buildOutputCollectionState';
+import { __resetTaskClockForTests, buildOutputCollectionState } from './buildOutputCollectionState';
 import { CollectionStateController } from './controllers/CollectionStateController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import { ControllerContainer } from './di/ControllerContainer';
@@ -16,6 +16,7 @@ describe('buildOutputCollectionState', () => {
   let collectionState: CollectionStateController;
 
   beforeEach(() => {
+    __resetTaskClockForTests();
     container = new ControllerContainer();
     collection = container.get(UploadCollectionController);
     collectionState = container.get(CollectionStateController);
@@ -98,6 +99,49 @@ describe('buildOutputCollectionState', () => {
     expect(state.group).toEqual({ uuid: 'group~1' });
   });
 
+  it('reports progress, errors, group and totalCount as they were when it was built', () => {
+    collectionState.set('commonProgress', 10);
+    addSuccess();
+    const state = buildOutputCollectionState(container);
+
+    collectionState.set('commonProgress', 50);
+    collectionState.set('collectionErrors', [{ type: 'TOO_MANY_FILES', message: 'too many' } as never]);
+    collectionState.set('groupInfo', { uuid: 'group~1' } as never);
+    addUploading();
+
+    expect({
+      progress: state.progress,
+      errors: state.errors,
+      group: state.group,
+      totalCount: state.totalCount,
+    }).toEqual({ progress: 10, errors: [], group: null, totalCount: 1 });
+  });
+
+  it('reports every entry-derived field from the moment the first of them is read', () => {
+    addSuccess();
+    const state = buildOutputCollectionState(container);
+    expect(state.successCount).toBe(1);
+
+    addUploading();
+
+    expect({
+      entries: state.allEntries.length,
+      uploadingEntries: state.uploadingEntries.length,
+      isUploading: state.isUploading,
+      isSuccess: state.isSuccess,
+      status: state.status,
+    }).toEqual({ entries: 1, uploadingEntries: 0, isUploading: false, isSuccess: true, status: 'success' });
+  });
+
+  it('builds no output entries for a read of the build-time fields', () => {
+    addSuccess();
+    const getOutputItem = vi.spyOn(container.get(UploaderPublicApi), 'getOutputItem');
+    const state = buildOutputCollectionState(container);
+
+    void [state.progress, state.errors, state.group, state.totalCount];
+    expect(getOutputItem).not.toHaveBeenCalled();
+  });
+
   it('spreads into a plain object carrying every documented field', () => {
     addSuccess();
     const plain = { ...buildOutputCollectionState(container) };
@@ -145,17 +189,117 @@ describe('buildOutputCollectionState', () => {
     expect(state.successEntries[0]).toBe(state.allEntries[0]);
   });
 
-  it('warns once about a read made after the task that built it', () => {
-    vi.useFakeTimers();
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const state = buildOutputCollectionState(container);
-    void state.totalCount;
-    expect(warn).not.toHaveBeenCalled();
+  describe('late-read warning', () => {
+    const warnings = () => vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    vi.advanceTimersByTime(0);
-    void state.totalCount;
-    void state.progress;
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(String(warn.mock.calls[0]?.[1])).toContain('asynchronously');
+    it('warns once when the file entries are first read in a later task', () => {
+      vi.useFakeTimers();
+      const warn = warnings();
+      addSuccess();
+      const first = buildOutputCollectionState(container);
+      const second = buildOutputCollectionState(container);
+      vi.advanceTimersByTime(0);
+
+      void first.status;
+      void second.allEntries;
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0]?.[1])).toContain('after the task that created it');
+    });
+
+    it('does not warn about a late read of a build-time field', () => {
+      vi.useFakeTimers();
+      const warn = warnings();
+      const state = buildOutputCollectionState(container);
+      vi.advanceTimersByTime(0);
+
+      void [state.progress, state.errors, state.group, state.totalCount];
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('does not warn about a late read of entries taken in the task that built it', () => {
+      vi.useFakeTimers();
+      const warn = warnings();
+      addSuccess();
+      const state = buildOutputCollectionState(container);
+      void state.status;
+      vi.advanceTimersByTime(0);
+
+      void [state.allEntries, state.successEntries, { ...state }];
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('does not warn about a state built in a later task and read in it', () => {
+      vi.useFakeTimers();
+      const warn = warnings();
+      addSuccess();
+      void buildOutputCollectionState(container);
+      vi.advanceTimersByTime(0);
+
+      void buildOutputCollectionState(container).status;
+      expect(warn).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('mixed-read warning', () => {
+    const warnings = () => vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    it('warns, naming the field, when a read combines a changed build-time field with the entries', () => {
+      const warn = warnings();
+      addSuccess();
+      const state = buildOutputCollectionState(container);
+      void state.progress;
+
+      collectionState.set('commonProgress', 50);
+      void state.status;
+
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0]?.[1])).toContain('`progress`');
+    });
+
+    it('warns when the changed field is read after the entries', () => {
+      const warn = warnings();
+      addSuccess();
+      const state = buildOutputCollectionState(container);
+      addUploading();
+
+      void state.allEntries;
+      expect(warn).not.toHaveBeenCalled();
+      void state.totalCount;
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(String(warn.mock.calls[0]?.[1])).toContain('`totalCount`');
+    });
+
+    it('does not warn when a field that changed is never read', () => {
+      const warn = warnings();
+      addSuccess();
+      const state = buildOutputCollectionState(container);
+      collectionState.set('commonProgress', 50);
+
+      void [state.status, state.errors, state.group, state.totalCount, state.allEntries];
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('treats a fresh errors array with the same errors as unchanged', () => {
+      const warn = warnings();
+      const error = { type: 'TOO_MANY_FILES', message: 'too many' } as never;
+      collectionState.set('collectionErrors', [error]);
+      const state = buildOutputCollectionState(container);
+      void state.errors;
+
+      collectionState.set('collectionErrors', [{ ...(error as object) } as never]);
+      void state.status;
+      expect(warn).not.toHaveBeenCalled();
+    });
+
+    it('prints a given warning once per page', () => {
+      const warn = warnings();
+      for (let i = 0; i < 3; i++) {
+        const state = buildOutputCollectionState(container);
+        void state.progress;
+        collectionState.set('commonProgress', i + 1);
+        void state.status;
+      }
+      expect(warn).toHaveBeenCalledTimes(1);
+    });
   });
 });
