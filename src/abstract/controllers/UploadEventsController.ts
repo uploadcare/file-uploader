@@ -168,7 +168,7 @@ export class UploadEventsController {
     if (this._ended) return;
 
     this._flushOutputItems();
-    this._scheduleValidation(changeMap);
+    this._runValidation(changeMap);
 
     if (changeMap.uploadProgress) {
       this._fileEvents.progress(changeMap.uploadProgress);
@@ -197,10 +197,8 @@ export class UploadEventsController {
     }
   };
 
-  // Deferred file validation for the keys that trigger it — a tick later, since we
-  // can't mutate entry properties in the same tick. Guards `_ended` (a released
-  // scope must not run validators).
-  private _scheduleValidation(changeMap: UploadCollectionChangeMap): void {
+  // File validation for the keys that trigger it.
+  private _runValidation(changeMap: UploadCollectionChangeMap): void {
     const entriesToRunValidation = [
       ...new Set(
         Object.entries(changeMap)
@@ -209,17 +207,13 @@ export class UploadEventsController {
       ),
     ];
     if (entriesToRunValidation.length === 0) return;
-    setTimeout(() => {
-      if (this._ended) return;
-      const entriesToRunOnUpload = entriesToRunValidation.filter(
-        (entryId) =>
-          changeMap.fileInfo?.has(entryId) && !!TypedData.getByUid<UploadEntryData>(entryId)?.values.fileInfo,
-      );
-      if (entriesToRunOnUpload.length > 0) {
-        this._validation.runFileValidators('upload', entriesToRunOnUpload);
-      }
-      this._validation.runFileValidators('change', entriesToRunValidation);
-    });
+    const entriesToRunOnUpload = entriesToRunValidation.filter(
+      (entryId) => changeMap.fileInfo?.has(entryId) && !!TypedData.getByUid<UploadEntryData>(entryId)?.values.fileInfo,
+    );
+    if (entriesToRunOnUpload.length > 0) {
+      this._validation.runFileValidators('upload', entriesToRunOnUpload);
+    }
+    this._validation.runFileValidators('change', entriesToRunValidation);
   }
 
   // Debounced: publish the derived collection state + `CHANGE`, then create the

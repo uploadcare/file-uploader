@@ -404,13 +404,12 @@ describe('UploadEventsController', () => {
       expect(t.deps.setGroupInfo).toHaveBeenCalledWith(null);
     });
 
-    it('schedules deferred validation for watched-key changes', () => {
+    it('runs validation for watched-key changes', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });
       t.collection.publishProp(id, 'fileInfo', { uuid: 'u1' } as never);
 
       t.fireProperties({ fileInfo: new Set([id]) });
-      vi.advanceTimersByTime(1);
 
       expect(t.deps.validation.runFileValidators).toHaveBeenCalledWith('upload', [id]);
       expect(t.deps.validation.runFileValidators).toHaveBeenCalledWith('change', [id]);
@@ -480,18 +479,6 @@ describe('UploadEventsController', () => {
 
       expect(t.deps.validation.runFileValidators).toHaveBeenCalledWith('change', [id]);
       expect(t.deps.validation.runFileValidators).not.toHaveBeenCalledWith('upload', expect.anything());
-    });
-
-    it('skips deferred validation if the ctx is torn down before the timer fires', () => {
-      const t = setup();
-      const id = t.collection.add({ fileName: 'a.txt' });
-      t.collection.publishProp(id, 'fileInfo', { uuid: 'u1' } as never);
-
-      t.fireProperties({ fileInfo: new Set([id]) });
-      t.container.dispose();
-      vi.advanceTimersByTime(1);
-
-      expect(t.deps.validation.runFileValidators).not.toHaveBeenCalledWith('change', expect.anything());
     });
 
     it('ignores a non-numeric uploadProgress when averaging', () => {
