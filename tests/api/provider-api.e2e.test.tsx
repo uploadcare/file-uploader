@@ -1,6 +1,8 @@
 import { uploadFile } from '@uploadcare/upload-client';
 import { describe, expect, it, vi } from 'vitest';
+import { __resetLoggerForTests } from '@/abstract/logger';
 import type { EventPayload } from '@/index.js';
+import { delay } from '@/utils/delay';
 import { IMAGE } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import '~/types/jsx';
@@ -230,6 +232,28 @@ describe('UploadCtxProvider api', () => {
       api.initFlow();
 
       await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
+    });
+  });
+
+  describe('the collection state an event carries', () => {
+    const firstChange = (provider: HTMLElement) =>
+      new Promise<EventPayload['change']>((resolve) =>
+        provider.addEventListener('change', (e) => resolve((e as CustomEvent<EventPayload['change']>).detail), {
+          once: true,
+        }),
+      );
+
+    it('warns about file entries first read after the event', async () => {
+      __resetLoggerForTests();
+      const warn = vi.spyOn(console, 'warn');
+      const { api, provider } = await renderSolution('regular', { confirmUpload: true });
+      const change = firstChange(provider);
+      api.addFileFromObject(IMAGE.PIXEL);
+      const state = await change;
+      await delay(0);
+
+      void state.allEntries;
+      expect(warn).toHaveBeenCalledWith(expect.anything(), expect.stringContaining('after the task that created it'));
     });
   });
 });
