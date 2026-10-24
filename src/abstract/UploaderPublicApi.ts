@@ -4,9 +4,9 @@ import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/c
 import { EventEmitter, type EventKey, type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityParamsMap, ActivityType } from '../lit/activity-constants';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
-import { waitForActivityBlock } from '../lit/hasBlockInCtx';
 import { createL10n } from '../lit/l10n';
 import type { Uid } from '../lit/Uid';
+import { waitForActivityBlock } from '../lit/waitForActivityBlock';
 import type {
   AuthToken,
   ConfigType,
