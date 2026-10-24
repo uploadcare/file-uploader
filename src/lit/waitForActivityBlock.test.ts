@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { RouterController } from '../abstract/controllers/RouterController';
 import { ControllerContainer } from '../abstract/di/ControllerContainer';
-import { waitForActivityBlock } from './hasBlockInCtx';
+import { waitForActivityBlock } from './waitForActivityBlock';
 
 // RouterController is container-resolved now (M-god step 3c): its emit target
 // (`EventEmitter`) is `@inject`-ed, so build it through a container.
