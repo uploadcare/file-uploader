@@ -97,6 +97,15 @@ afterEach(() => {
 });
 
 describe('UploaderPublicApi', () => {
+  it('throws instead of acting once its uploader is destroyed', () => {
+    const { api, ctxName } = setup();
+    destroyCtx(ctxName);
+
+    expect(() => api.addFileFromUrl('https://example.com/a.png')).toThrow(/read after the ctx container was disposed/);
+    expect(() => api.uploadAll()).toThrow(/read after the ctx container was disposed/);
+    expect(() => api.cfg).toThrow(/read after the ctx container was disposed/);
+  });
+
   describe('cfg / l10n reads', () => {
     it('exposes a read-only cfg proxy backed by the ConfigController', () => {
       const { api, ctrl } = setup();
