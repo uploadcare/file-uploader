@@ -3,6 +3,7 @@ import { buildOutputCollectionState } from './buildOutputCollectionState';
 import { CollectionStateController } from './controllers/CollectionStateController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import { ControllerContainer } from './di/ControllerContainer';
+import { __resetLoggerForTests } from './logger';
 import { UploaderPublicApi } from './UploaderPublicApi';
 
 // Cover-first parity net for `buildOutputCollectionState` (no dedicated test
@@ -24,6 +25,8 @@ describe('buildOutputCollectionState', () => {
   afterEach(() => {
     container.dispose();
     vi.restoreAllMocks();
+    vi.useRealTimers();
+    __resetLoggerForTests();
   });
 
   // status derivation (getOutputItem): removed → failed(errors) → success(fileInfo)
@@ -93,5 +96,66 @@ describe('buildOutputCollectionState', () => {
     const state = buildOutputCollectionState(container);
     expect(state.progress).toBe(42);
     expect(state.group).toEqual({ uuid: 'group~1' });
+  });
+
+  it('spreads into a plain object carrying every documented field', () => {
+    addSuccess();
+    const plain = { ...buildOutputCollectionState(container) };
+
+    expect(Object.keys(plain).sort()).toEqual(
+      [
+        'allEntries',
+        'errors',
+        'failedCount',
+        'failedEntries',
+        'group',
+        'idleEntries',
+        'isFailed',
+        'isSuccess',
+        'isUploading',
+        'progress',
+        'status',
+        'successCount',
+        'successEntries',
+        'totalCount',
+        'uploadingCount',
+        'uploadingEntries',
+      ].sort(),
+    );
+    expect(Object.getOwnPropertyDescriptor(plain, 'allEntries')?.get).toBeUndefined();
+    expect(plain.successCount).toBe(1);
+  });
+
+  it('computes nothing until a field is read', () => {
+    addSuccess();
+    const getOutputItem = vi.spyOn(container.get(UploaderPublicApi), 'getOutputItem');
+
+    const state = buildOutputCollectionState(container);
+    expect(getOutputItem).not.toHaveBeenCalled();
+
+    void state.allEntries;
+    expect(getOutputItem).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns the same entries on every read', () => {
+    addSuccess();
+    const state = buildOutputCollectionState(container);
+
+    expect(state.allEntries).toBe(state.allEntries);
+    expect(state.successEntries[0]).toBe(state.allEntries[0]);
+  });
+
+  it('warns once about a read made after the task that built it', () => {
+    vi.useFakeTimers();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const state = buildOutputCollectionState(container);
+    void state.totalCount;
+    expect(warn).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(0);
+    void state.totalCount;
+    void state.progress;
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0]?.[1])).toContain('asynchronously');
   });
 });
