@@ -259,6 +259,49 @@ describe('ValidationController', () => {
     expect(collection.read(id)?.get('isValidationPending')).toBe(false);
   });
 
+  describe('which validators run again for the same entry', () => {
+    const runTwice = async (runOn: 'add' | 'upload' | 'change', validator: () => unknown) => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const { controller, config, collection } = setup();
+      await flush(20);
+      config.set('validationTimeout', 50);
+      config.set('fileValidators', [{ runOn, validator: validator as never }]);
+      const id = collection.add({ fileName: 'a.txt', mimeType: 'text/plain' });
+      for (let i = 0; i < 2; i++) {
+        controller.runFileValidators(runOn, [id]);
+        await flush(800);
+      }
+    };
+
+    it('runs a passing "change" validator on every change', async () => {
+      const validator = vi.fn(() => undefined);
+      await runTwice('change', validator);
+      expect(validator).toHaveBeenCalledTimes(2);
+    });
+
+    it('runs an "add" or "upload" validator once', async () => {
+      const onAdd = vi.fn(() => undefined);
+      const onUpload = vi.fn(() => undefined);
+      await runTwice('add', onAdd);
+      await runTwice('upload', onUpload);
+      expect([onAdd.mock.calls.length, onUpload.mock.calls.length]).toEqual([1, 1]);
+    });
+
+    it('does not run a validator again after it timed out', async () => {
+      const validator = vi.fn(() => new Promise<undefined>(() => {}));
+      await runTwice('change', validator);
+      expect(validator).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not run a validator again after it threw', async () => {
+      const validator = vi.fn(() => {
+        throw new Error('boom');
+      });
+      await runTwice('change', validator);
+      expect(validator).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('cleanupValidationForEntry aborts in-flight validation and is a no-op without state', async () => {
     const { controller, config, collection } = setup();
     await flush(20);
