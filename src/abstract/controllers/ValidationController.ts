@@ -66,7 +66,9 @@ const RERUN_CONFIG_KEYS = [
 
 type EntryValidationState = {
   abortController?: AbortController;
-  skippedValidators: WeakSet<FuncFileValidator>;
+  // Never run again for this entry: an `add`/`upload` validator once it has run, and any validator that timed out
+  // or threw.
+  retiredValidators: WeakSet<FuncFileValidator>;
   promise?: Promise<void>;
   lastErrorThrownByValidator: WeakMap<FuncFileValidator, OutputErrorFile | undefined>;
   // The entry's first `add` and `change` runs (both start from its add): `firstPass` settles once both have.
@@ -290,7 +292,7 @@ export class ValidationController {
           validatorAbort.signal.addEventListener('abort', () => resolve(undefined), { once: true });
         });
         const timeoutId = setTimeout(() => {
-          state.skippedValidators.add(validatorDescriptor.validator);
+          state.retiredValidators.add(validatorDescriptor.validator);
           validatorAbort.abort();
           this._log.warn(LOG_TEXT.FILE_VALIDATION_TIMEOUT);
         }, timeoutMs);
@@ -313,7 +315,7 @@ export class ValidationController {
           }
         } catch (error) {
           if (!validatorAbort.signal.aborted) {
-            state.skippedValidators.add(validatorDescriptor.validator);
+            state.retiredValidators.add(validatorDescriptor.validator);
             this._log.warn(LOG_TEXT.FILE_VALIDATION_FAILED, error);
             this._telemetry.sendEventError(error, `file validator. ${LOG_TEXT.FILE_VALIDATION_FAILED}`);
           }
@@ -321,7 +323,7 @@ export class ValidationController {
           clearTimeout(timeoutId);
           abortController.signal.removeEventListener('abort', abortValidator);
           if (validatorDescriptor.runOn !== 'change') {
-            state.skippedValidators.add(validatorDescriptor.validator);
+            state.retiredValidators.add(validatorDescriptor.validator);
           }
         }
       });
@@ -391,7 +393,7 @@ export class ValidationController {
 
     const newState: EntryValidationState = {
       abortController: undefined,
-      skippedValidators: new WeakSet<FuncFileValidator>(),
+      retiredValidators: new WeakSet<FuncFileValidator>(),
       promise: undefined,
       lastErrorThrownByValidator: new WeakMap<FuncFileValidator, OutputErrorFile | undefined>(),
       firstRuns: new Set(),
@@ -412,7 +414,7 @@ export class ValidationController {
   ): FileValidatorDescriptor[] {
     const state = this._getEntryValidationState(entry);
     return this._getValidatorDescriptors()
-      .filter((descriptor) => !state.skippedValidators.has(descriptor.validator))
+      .filter((descriptor) => !state.retiredValidators.has(descriptor.validator))
       .filter((descriptor) => descriptor.runOn === runOn);
   }
 
