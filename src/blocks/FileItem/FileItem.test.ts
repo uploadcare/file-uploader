@@ -485,3 +485,31 @@ describe('FileItem uid rebinding', () => {
     expect(inner(el).hasAttribute('data-focused')).toBe(false);
   });
 });
+
+describe('FileItem status', () => {
+  const failed = { errors: [{ type: 'x', message: 'boom' } as never] };
+  const fileInfo = { fileInfo: { uuid: 'srv' } as never };
+
+  it.each<[string, Partial<UploadEntryData>, string]>([
+    ['not started', {}, 'idle'],
+    ['failed', failed, 'failed'],
+    ['failed while uploading', { ...failed, isUploading: true }, 'failed'],
+    ['queued for upload', { isQueuedForUploading: true }, 'queued for upload'],
+    ['queued for upload once uploaded', { isQueuedForUploading: true, ...fileInfo }, 'queued for upload'],
+    ['queued for validation', { isQueuedForValidation: true }, 'queued for validation'],
+    ['validating', { isValidationPending: true }, 'validating'],
+    ['uploading', { isUploading: true }, 'uploading'],
+    ['uploaded', fileInfo, 'finished'],
+    // Upload success writes `fileInfo` and clears `isUploading` together; should both ever hold, the file has its
+    // info and counts as uploaded, as `deriveEntryStatus` has it.
+    ['uploaded with isUploading still set', { isUploading: true, ...fileInfo }, 'finished'],
+  ])('reads %s', async (_, init, status) => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    await bindEntry(el, getCollection(ctxName), { fileName: 'a.png', ...init });
+
+    expect(el.querySelector('.uc-file-name-wrapper')?.getAttribute('aria-label')).toBe(
+      `File a.png in status ${status}`,
+    );
+  });
+});
