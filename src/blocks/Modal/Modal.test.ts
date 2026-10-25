@@ -71,13 +71,18 @@ describe('Modal', () => {
     expect(el.hasAttribute('aria-modal')).toBe(false);
   });
 
-  it('names the <dialog> after the activity it hosts', async () => {
+  it('names the <dialog> from its dialog-label, translating a key and passing plain text', async () => {
     const ctxName = freshCtxName();
-    const { el: startFrom } = await mount(ctxName, 'start-from');
-    const { el: camera } = await mount(ctxName, 'camera');
+    const { el } = await mount(ctxName, 'camera');
+    expect(dialogOf(el)?.hasAttribute('aria-label')).toBe(false);
 
-    expect(dialogOf(startFrom)?.getAttribute('aria-label')).toBe('Select file source');
-    expect(dialogOf(camera)?.getAttribute('aria-label')).toBe('Camera');
+    el.setAttribute('dialog-label', 'select-file-source');
+    await el.updateComplete;
+    expect(dialogOf(el)?.getAttribute('aria-label')).toBe('Select file source');
+
+    el.setAttribute('dialog-label', 'Pick a file');
+    await el.updateComplete;
+    expect(dialogOf(el)?.getAttribute('aria-label')).toBe('Pick a file');
   });
 
   it('does not open for a modal slot that is not this modal id', async () => {

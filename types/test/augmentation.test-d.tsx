@@ -1,7 +1,7 @@
 import '../jsx';
 import React from 'react';
 import { expectTypeOf, test } from 'vitest';
-import type { ActivityType, Config, PluginConfigApi, UploadCtxProvider } from '../../dist/index';
+import type { ActivityType, Config, PluginConfigApi, PluginRegistryApi, UploadCtxProvider } from '../../dist/index';
 
 /**
  * The two documented extension points: `CustomConfig` (customConfigOptions.ts) for plugin options, and
@@ -20,6 +20,7 @@ declare module '../../dist/index' {
 }
 
 declare const configApi: PluginConfigApi;
+declare const registry: PluginRegistryApi;
 declare const config: Config;
 declare const api: ReturnType<UploadCtxProvider['getAPI']>;
 
@@ -44,6 +45,25 @@ test('a custom activity is a valid activity, with its params enforced', () => {
   api.setCurrentActivity('my-activity', { id: 'x', nope: 1 });
   // @ts-expect-error unregistered activity
   api.setCurrentActivity('not-registered');
+});
+
+test("a custom activity's label gets its declared params, each one optional", () => {
+  registry.registerActivity({
+    id: 'my-activity',
+    label: (params) => {
+      expectTypeOf(params).toEqualTypeOf<Partial<{ id: string }>>();
+      return params.id ?? '';
+    },
+    render: () => undefined,
+  });
+  registry.registerActivity({
+    id: 'bare-activity',
+    label: (params) => {
+      expectTypeOf(params).toEqualTypeOf<Record<string, never>>();
+      return 'Bare';
+    },
+    render: () => undefined,
+  });
 });
 
 test('QUIRK(types): a custom option is not accepted as a <uc-config> JSX attribute', () => {

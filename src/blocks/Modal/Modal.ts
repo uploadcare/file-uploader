@@ -10,15 +10,6 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import type { RegisteredActivityType } from '../../lit/activity-constants';
 import { getScrollLock } from '../../utils/scroll-lock';
 
-/** l10n keys naming the `<dialog>` of each built-in activity's modal; custom activities stay unnamed. */
-const DIALOG_LABEL_KEYS: Partial<Record<RegisteredActivityType, string>> = {
-  'start-from': 'select-file-source',
-  'upload-list': 'upload-files',
-  camera: 'caption-camera',
-  url: 'caption-from-url',
-  'cloud-image-edit': 'caption-edit-file',
-};
-
 export class Modal extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
 
@@ -32,6 +23,10 @@ export class Modal extends ChildBlock {
 
   /** WARNING: Do not rename/change this, it's used in dashboard */
   protected dialogEl = createRef<HTMLDialogElement>();
+
+  /** Names the `<dialog>`: plain text or an l10n key. Whoever renders the modal knows what it holds. */
+  @property({ attribute: 'dialog-label' })
+  public dialogLabel: string | null = null;
 
   /**
    * CSS-only attribute
@@ -177,9 +172,8 @@ export class Modal extends ChildBlock {
   }
 
   public override render() {
-    const labelKey = DIALOG_LABEL_KEYS[this.id as RegisteredActivityType];
     return html`
-  <dialog data-testid="dialog" aria-label=${ifDefined(labelKey && this.l10n(labelKey))} ${ref(this._handleDialogRef)}>
+  <dialog data-testid="dialog" aria-label=${ifDefined(this.dialogLabel ? this.l10n<string>(this.dialogLabel) : undefined)} ${ref(this._handleDialogRef)}>
     ${this.yield('')}
   </dialog>
 `;

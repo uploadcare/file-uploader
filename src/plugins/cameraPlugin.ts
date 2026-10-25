@@ -50,6 +50,7 @@ export const cameraPlugin: UploaderPlugin = {
 
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.CAMERA,
+      label: 'caption-camera',
       render: (host) => {
         const cameraEl = document.createElement('uc-camera-source');
         host.append(cameraEl);

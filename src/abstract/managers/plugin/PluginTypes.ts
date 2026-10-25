@@ -1,3 +1,4 @@
+import type { ActivityParamsMap } from '../../../lit/activity-constants';
 import type { ConfigType, OutputFileEntry } from '../../../types/exported';
 import type { NavigationEdge } from '../../controllers/RouterController';
 import type { CustomConfig, CustomConfigDefinition } from '../../customConfigOptions';
@@ -35,9 +36,25 @@ export type PluginRender = (
   activityParams: Record<string, unknown>,
 ) => PluginRenderDispose | undefined;
 
-export type PluginActivityRegistration = {
-  id: string;
+/**
+ * The params an activity's label sees: its declared params (built-in, or from `CustomActivities`) with each one
+ * optional, since a closed activity gets `{}`. An activity without declared params gets any record.
+ */
+export type PluginActivityLabelParams<TId extends string> = TId extends keyof ActivityParamsMap
+  ? [ActivityParamsMap[TId]] extends [never]
+    ? Record<string, never>
+    : Partial<ActivityParamsMap[TId]>
+  : Record<string, unknown>;
+
+export type PluginActivityRegistration<TId extends string = string> = {
+  id: TId;
   render: PluginRender;
+  /**
+   * Names the activity's dialog when it opens in a modal. Accepts plain text or an l10n key registered via
+   * `registerL10n`. A function gets the params the activity was opened with (`{}` while it is closed). Without a label
+   * the dialog stays unnamed.
+   */
+  label?: string | ((activityParams: PluginActivityLabelParams<TId>) => string);
 };
 
 export type PluginFileActionRegistration = {
@@ -85,7 +102,7 @@ export type PluginFileHookRegistration = {
 
 export type PluginRegistryApi = {
   registerSource: (source: PluginSourceRegistration) => void;
-  registerActivity: (activity: PluginActivityRegistration) => void;
+  registerActivity: <TId extends string>(activity: PluginActivityRegistration<TId>) => void;
   registerFileAction: (fileAction: PluginFileActionRegistration) => void;
   registerFileHook: (hook: PluginFileHookRegistration) => void;
   registerIcon: (icon: PluginIconRegistration) => void;

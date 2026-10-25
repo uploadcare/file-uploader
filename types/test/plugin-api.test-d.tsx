@@ -57,6 +57,30 @@ test('registerActivity hands render the host element and the params, and takes a
   registry.registerActivity({ id: 'act', render: () => undefined });
 });
 
+test('registerActivity takes an optional label: text, an l10n key, or a function of the params', () => {
+  registry.registerActivity({ id: 'act', label: 'My panel', render: () => undefined });
+  registry.registerActivity({
+    id: 'act',
+    label: (params) => {
+      // An activity with no declared params gets any record.
+      expectTypeOf(params).toEqualTypeOf<Record<string, unknown>>();
+      return String(params.name);
+    },
+    render: () => undefined,
+  });
+  registry.registerActivity({
+    id: 'external',
+    label: (params) => {
+      // A built-in activity gets its own params, each one optional: a closed activity gets `{}`.
+      expectTypeOf(params).toEqualTypeOf<Partial<{ externalSourceType: string }>>();
+      return params.externalSourceType ?? '';
+    },
+    render: () => undefined,
+  });
+  // @ts-expect-error a label function returns the label
+  registry.registerActivity({ id: 'act', label: () => 1, render: () => undefined });
+});
+
 test('registerFileAction gets the output entry in shouldRender and onClick', () => {
   registry.registerFileAction({
     id: 'action',

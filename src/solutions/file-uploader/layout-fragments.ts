@@ -13,7 +13,7 @@ export function renderModalSourcePicker(opts: {
   copyright?: boolean;
 }): TemplateResult {
   return html`
-    <uc-modal id="start-from" strokes block-body-scrolling>
+    <uc-modal id="start-from" dialog-label="select-file-source" strokes block-body-scrolling>
       <uc-start-from>
         <uc-drop-area with-icon clickable></uc-drop-area>
         <uc-source-list role="list" wrap></uc-source-list>
