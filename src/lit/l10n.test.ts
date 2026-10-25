@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LocaleController } from '../abstract/controllers/LocaleController';
-import { createL10n } from './l10n';
+import { type CheckedL10nFunction, createL10n } from './l10n';
 
 // M-god step 7: `createL10n` reads the resolved dictionary directly from a
 // `LocaleController` (was the `*l10n/*` PubSub facade). These specs pin the
@@ -50,5 +50,18 @@ describe('createL10n (direct LocaleController)', () => {
     locale.set('header-uploading', 'Uploading {{count}} {{plural:file(count)}}');
     expect(l10n('header-uploading', { count: 1 })).toBe('Uploading 1 file');
     expect(l10n('header-uploading', { count: 3 })).toBe('Uploading 3 files');
+  });
+});
+
+describe('CheckedL10nFunction', () => {
+  it('rejects a misspelt literal key at compile time and passes a string from elsewhere', () => {
+    const l10n: CheckedL10nFunction = (key) => key;
+    const fromConfig: string = 'whatever';
+
+    // @ts-expect-error 'uplaod' is not a dictionary key
+    l10n('uplaod');
+    expect(l10n('upload')).toBe('upload');
+    expect(l10n(fromConfig)).toBe('whatever');
+    expect(l10n<string>(`src-type-${fromConfig}`)).toBe('src-type-whatever');
   });
 });

@@ -7,6 +7,7 @@ import type {
 import { Lifetime } from '../../../abstract/di/Lifetime';
 import { logger } from '../../../abstract/logger';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
+import type { CheckedL10nKey } from '../../../lit/l10n';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 
 const log = logger.scope('cloud-image-editor');
@@ -239,7 +240,7 @@ export abstract class EditorBlock extends EditorBlockBase {
    * while connected/attached, so they can keep using `editorController.l10n`
    * directly.
    */
-  protected l10nSafe(key: string, variables?: Record<string, string | number>): string {
+  protected l10nSafe<K extends string>(key: CheckedL10nKey<K>, variables?: Record<string, string | number>): string {
     return this.editorControllerOrNull?.l10n(key, variables) ?? key;
   }
 
