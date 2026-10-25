@@ -115,9 +115,9 @@ export class PrimaryAction extends ChildBlock {
 
     let sourceLabel: string;
     if (this.source.id === UploadSource.MOBILE_PHOTO_CAMERA) {
-      sourceLabel = this.l10n('photo').toLowerCase();
+      sourceLabel = this.l10n('src-type-mobile-photo-camera').toLowerCase();
     } else if (this.source.id === UploadSource.MOBILE_VIDEO_CAMERA) {
-      sourceLabel = this.l10n('video').toLowerCase();
+      sourceLabel = this.l10n('src-type-mobile-video-camera').toLowerCase();
     } else {
       sourceLabel = this.localizedSourceLabel;
     }

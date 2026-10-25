@@ -150,3 +150,19 @@ describe('PrimaryAction header text', () => {
     expect(el.querySelector('button')?.getAttribute('aria-label')).toBe(text);
   });
 });
+
+describe('PrimaryAction mobile camera label', () => {
+  it.each([
+    ['mobile-photo-camera', 'Take snapshot'],
+    ['mobile-video-camera', 'Record clip'],
+  ])('names the %s source in the current locale', async (id, text) => {
+    const { el, config } = await mountWithConfig(freshCtxName());
+    config.set('localeDefinitionOverride', {
+      en: { 'src-type-mobile-photo-camera': 'Snapshot', 'src-type-mobile-video-camera': 'Clip' },
+    });
+    el.source = { id, label: `src-type-${id}`, icon: 'camera', onClick: () => {} };
+    await el.updateComplete;
+
+    expect(el.querySelector('button')?.getAttribute('aria-label')).toBe(text);
+  });
+});
