@@ -1,15 +1,15 @@
 import type { PropertyValues } from 'lit';
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { SourceListController } from '../../abstract/controllers';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
+import { observeSources } from '../../abstract/sources';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../SourceBtn/SourceBtn';
 import './source-list.css';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 
 export class SourceList extends ChildBlock {
   @inject(ConfigController) private readonly _config!: ConfigController;
@@ -23,34 +23,11 @@ export class SourceList extends ChildBlock {
   @property({ type: Boolean, attribute: 'wrap', noAccessor: true })
   public wrap = false;
 
-  private _sourceListController: SourceListController | null = null;
-
-  protected override controllerReady(container: ControllerContainer): void {
-    // Re-adoption (release-while-connected followed by re-adopt) would otherwise
-    // stack a new SourceListController per adoption without ever removing the
-    // previous one — tear down the old instance's subscriptions first.
-    this._teardownSourceListController();
-
-    this._sourceListController = new SourceListController(this, {
-      config: this._config,
-      container,
-      onSourcesChange: (sources) => {
-        this._sources = sources;
-      },
+  @subscription()
+  protected _wireSources(): Unsubscribe {
+    return observeSources(this.container, (sources) => {
+      this._sources = sources;
     });
-  }
-
-  protected override controllerReleased(): void {
-    this._teardownSourceListController();
-  }
-
-  private _teardownSourceListController(): void {
-    if (!this._sourceListController) {
-      return;
-    }
-    this._sourceListController.hostDisconnected();
-    this.removeController(this._sourceListController);
-    this._sourceListController = null;
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
