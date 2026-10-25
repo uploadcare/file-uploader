@@ -431,3 +431,24 @@ describe('UploadList', () => {
     });
   });
 });
+
+describe('UploadList header text', () => {
+  const uploading = { isUploading: true };
+  const failed = { errors: [{ type: 'x', message: 'boom' } as never] };
+  const success = { fileInfo: { uuid: 'srv' } as never };
+  const validating = { isValidationPending: true };
+
+  it.each<[string, Partial<UploadEntryData>[], string]>([
+    ['uploading', [uploading], 'Uploading 1 file'],
+    ['uploading while another failed', [uploading, failed], 'Uploading 1 file'],
+    ['validating before upload', [validating, {}], 'Uploading 1 file'],
+    ['failed', [failed, failed, success], '2 errors'],
+    ['all uploaded', [success, success], '2 files uploaded'],
+    ['some uploaded, some not started', [success, {}], '1 file uploaded'],
+    ['none started', [{}, {}], '2 files selected'],
+  ])('reports %s', async (_, entries, text) => {
+    const { el } = await mount(freshCtxName(), { entries });
+
+    expect(el.querySelector('.uc-header-text')?.textContent?.trim()).toBe(text);
+  });
+});
