@@ -619,8 +619,9 @@ export class UploaderPublicApi {
     this._whenPluginsReady(() => {
       const router = this._router;
       if (!opened) {
-        // The inline uploader has no modal to close; nulling its activity would only reset it to the start screen.
-        if (this._appInfo.solutionName === 'uc-file-uploader-inline') {
+        // A solution without a modal (the inline uploader) has none to close; nulling its activity would only reset it
+        // to the start screen.
+        if (!this._appInfo.hasModal) {
           this._log.warnOnce(
             'setModalState(false) does nothing for the inline uploader, which has no modal. Use navigate() to change its activity.',
           );

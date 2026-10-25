@@ -30,4 +30,15 @@ export class AppInfo {
   public setSolutionName(name: string): void {
     this._solutionName = name.toLowerCase();
   }
+
+  // Whether the solution owning this scope shows activities in a modal, declared by it (`SolutionChildBlock.hasModal`).
+  @signalState() private _hasModal = true;
+
+  public get hasModal(): boolean {
+    return this._hasModal;
+  }
+
+  public setHasModal(hasModal: boolean): void {
+    this._hasModal = hasModal;
+  }
 }

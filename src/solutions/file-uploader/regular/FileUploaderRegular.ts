@@ -23,6 +23,7 @@ import '../../../blocks/DynamicBtn/DynamicBtn';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 export class FileUploaderRegular extends SolutionChildBlock {
+  public static override ownsPagePaste = true;
   public static override lazyPlugins = fileUploaderLazyPlugins;
 
   @inject(RouterController) private readonly _router!: RouterController;
