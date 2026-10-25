@@ -1,5 +1,5 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
-import type { ActivityId } from '../../lit/activity-constants';
+import { ACTIVITY_TYPES, type ActivityId } from '../../lit/activity-constants';
 import { controllerLogger } from '../controllerLogger';
 import { inject } from '../di/inject';
 import { signalState } from '../di/signalState';
@@ -493,7 +493,7 @@ export class RouterController {
     // *is* a target (`onDone` → done activity, `onFileAdd` → upload-list).
     // For `onBack`/`onCancel`/`onClose` the default is an *action*
     // (`back()`/`close()`), not a target, so `proposed` is `null`.
-    const proposed = edge === 'onDone' ? this.doneActivity : edge === 'onFileAdd' ? 'upload-list' : null;
+    const proposed = edge === 'onDone' ? this.doneActivity : edge === 'onFileAdd' ? ACTIVITY_TYPES.UPLOAD_LIST : null;
     // `from` is the effective (modal-aware) activity — `EdgeContext.from`
     // always means "what the user currently sees".
     const ctx: EdgeContext = { edge, from: this.currentActivity, proposed, defaults: () => proposed };
@@ -513,10 +513,8 @@ export class RouterController {
         this.close();
         break;
       case 'onDone':
-        this.navigate(this.doneActivity);
-        break;
       case 'onFileAdd':
-        this.navigate('upload-list');
+        this.navigate(proposed);
         break;
     }
   }
