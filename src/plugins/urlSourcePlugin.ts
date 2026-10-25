@@ -11,6 +11,7 @@ export const urlSourcePlugin: UploaderPlugin = {
 
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.URL,
+      label: 'caption-from-url',
       render: (host) => {
         const el = document.createElement('uc-url-source');
         host.append(el);

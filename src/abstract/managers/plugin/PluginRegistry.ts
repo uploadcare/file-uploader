@@ -2,6 +2,7 @@ import { debounce } from '../../../utils/debounce';
 import { logger } from '../../logger';
 import type {
   Owned,
+  PluginActivityLabelParams,
   PluginActivityRegistration,
   PluginFileActionRegistration,
   PluginFileHookRegistration,
@@ -56,7 +57,14 @@ export class PluginRegistry {
     this._scheduleNotify();
   }
 
-  public addActivity(pluginId: string, item: PluginActivityRegistration): void {
+  public addActivity<TId extends string>(pluginId: string, activity: PluginActivityRegistration<TId>): void {
+    // Stored without its id-specific types: the params come from the router, untyped, and the activity's declared
+    // shape is the plugin's promise, as with `setCurrentActivity`.
+    const { label } = activity;
+    const item: PluginActivityRegistration = {
+      ...activity,
+      label: typeof label === 'function' ? (params) => label(params as PluginActivityLabelParams<TId>) : label,
+    };
     const existing = this._activities.find((a) => a.id === item.id);
     if (existing) {
       log.warn(

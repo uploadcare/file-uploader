@@ -34,6 +34,7 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
 
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.CLOUD_IMG_EDIT,
+      label: 'caption-edit-file',
       render: (host) => {
         const activityEl = document.createElement('uc-cloud-image-editor-activity');
         host.append(activityEl);

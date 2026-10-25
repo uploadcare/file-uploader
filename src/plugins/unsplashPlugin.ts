@@ -229,6 +229,7 @@ export const unsplashPlugin: UploaderPlugin = {
 
     pluginApi.registry.registerActivity({
       id: UNSPLASH_ACTIVITY_ID,
+      label: 'unsplash.label',
       render(el) {
         const activityEl = document.createElement('uc-unsplash-activity') as UcUnsplashActivity;
         activityEl.uploaderApi = uploaderApi;

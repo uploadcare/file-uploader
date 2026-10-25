@@ -1,7 +1,10 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
+import { RouterController } from '../../abstract/controllers/RouterController';
+import { injectOrNull } from '../../abstract/di/inject';
 import type { Owned, PluginActivityRegistration, PluginRenderDispose } from '../../abstract/managers/plugin';
 import { PluginController } from '../../abstract/managers/plugin';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
@@ -94,6 +97,8 @@ export class PluginActivityRenderer extends ChildBlock {
   // to `bag.when('pluginManager')`.
   private _pluginManager: PluginController | null = null;
 
+  @injectOrNull(RouterController) private readonly _router!: RouterController | null;
+
   @subscription()
   protected _wirePluginActivities(): Unsubscribe {
     return this.container.whenController(PluginController, (pluginManager) => {
@@ -117,6 +122,19 @@ export class PluginActivityRenderer extends ChildBlock {
     this._activities = pluginManager.snapshot().activities;
   }
 
+  private _dialogLabel(activity: Owned<PluginActivityRegistration>): string | undefined {
+    const { label } = activity;
+    if (typeof label !== 'function') return label;
+    // The router's params belong to whatever is open, so a closed activity sees none.
+    const router = this._router;
+    try {
+      return label(router?.modal === activity.id ? { ...router.params } : {}) || undefined;
+    } catch (error) {
+      this._log.error(`Plugin "${activity.pluginId}" Activity label() threw an error`, error);
+      return undefined;
+    }
+  }
+
   public override render() {
     if (this.mode === 'inline') {
       return html`${repeat(
@@ -130,7 +148,7 @@ export class PluginActivityRenderer extends ChildBlock {
       this._activities,
       (activity) => activity.id,
       (activity) => html`
-        <uc-modal id=${activity.id} strokes block-body-scrolling>
+        <uc-modal id=${activity.id} dialog-label=${ifDefined(this._dialogLabel(activity))} strokes block-body-scrolling>
           <uc-plugin-activity-host .registration=${activity}></uc-plugin-activity-host>
         </uc-modal>
       `,
