@@ -1,5 +1,6 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
+import { collectionHeader } from '../../abstract/collectionSummary';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject } from '../../abstract/di/inject';
@@ -91,21 +92,16 @@ export class PrimaryAction extends ChildBlock {
   }
 
   private _headerTextDependentOnEntries(): string | undefined {
-    if (this.entries?.status === 'uploading') {
-      return this._translate('header-uploading', { count: this.entries.uploadingCount });
-    }
-    if (this.entries?.status === 'failed') {
-      return this._translate('header-failed', { count: this.entries.failedCount });
-    }
-    if (this.entries?.status === 'success') {
-      return this._translate('header-succeed', { count: this.entries.successCount });
-    }
-
-    if ((this.entries?.totalCount ?? 0) > 0) {
-      return this._translate('header-total', { count: this.entries?.totalCount ?? 0 });
-    } else {
-      return undefined;
-    }
+    const entries = this.entries;
+    if (!entries?.totalCount) return undefined;
+    const { key, count } = collectionHeader({
+      total: entries.totalCount,
+      success: entries.successCount,
+      uploading: entries.uploadingCount,
+      failed: entries.failedCount,
+      validatingBeforeUploading: entries.idleEntries?.filter((entry) => entry.isValidationPending).length ?? 0,
+    });
+    return this._translate(key, { count });
   }
 
   private _getSourceLabelText(): string {

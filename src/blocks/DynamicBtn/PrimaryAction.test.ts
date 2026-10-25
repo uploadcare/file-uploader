@@ -106,3 +106,47 @@ describe('PrimaryAction', () => {
     expect(el.source).toBeNull();
   });
 });
+
+describe('PrimaryAction header text', () => {
+  type Counts = { uploading?: number; failed?: number; success?: number; idle?: number; validating?: number };
+  const entriesWith = ({ uploading = 0, failed = 0, success = 0, idle = 0, validating = 0 }: Counts): Entries => {
+    const idleEntries = [
+      ...Array.from({ length: idle }, () => ({ isValidationPending: false })),
+      ...Array.from({ length: validating }, () => ({ isValidationPending: true })),
+    ];
+    const totalCount = uploading + failed + success + idleEntries.length;
+    const status = failed
+      ? 'failed'
+      : uploading
+        ? 'uploading'
+        : success === totalCount && totalCount
+          ? 'success'
+          : 'idle';
+    return {
+      status,
+      isSuccess: status === 'success',
+      totalCount,
+      uploadingCount: uploading,
+      failedCount: failed,
+      successCount: success,
+      idleEntries,
+      allEntries: Array.from({ length: totalCount }, () => ({})),
+    } as unknown as Entries;
+  };
+
+  it.each<[string, Counts, string]>([
+    ['uploading', { uploading: 1 }, 'Uploading 1 file'],
+    ['uploading while another failed', { uploading: 1, failed: 1 }, 'Uploading 1 file'],
+    ['validating before upload', { validating: 1, idle: 1 }, 'Uploading 1 file'],
+    ['failed', { failed: 2, success: 1 }, '2 errors'],
+    ['all uploaded', { success: 2 }, '2 files uploaded'],
+    ['some uploaded, some not started', { success: 1, idle: 1 }, '1 file uploaded'],
+    ['none started', { idle: 2 }, '2 files selected'],
+  ])('reports %s', async (_, counts, text) => {
+    const { el } = await mountWithConfig(freshCtxName());
+    el.entries = entriesWith(counts);
+    await el.updateComplete;
+
+    expect(el.querySelector('button')?.getAttribute('aria-label')).toBe(text);
+  });
+});
