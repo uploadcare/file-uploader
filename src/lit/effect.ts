@@ -1,5 +1,5 @@
 import type { ReactiveElement } from 'lit';
-import { logger } from '../abstract/logger';
+import { type Logger, logger } from '../abstract/logger';
 import { boundMethod, collectDecoratedMethods, makeMethodDecorator } from './reactive-method-registry';
 
 const log = logger.scope('effect');
@@ -58,13 +58,11 @@ export const effect = makeMethodDecorator<EffectOptions>(EFFECT);
  *
  * Isolate-and-warn: a throwing effect body (most reachably a `beforeUpdate`
  * effect, which runs synchronously at registration) is contained — logged via
- * the host's scoped logger when reachable, else the module logger — so the
- * remaining methods still register and any disposers already collected stay
- * intact.
+ * `hostLog`, the host's scoped logger — so the remaining methods still register
+ * and any disposers already collected stay intact.
  */
-export function registerHostEffects(host: EffectHost): Array<() => void> {
+export function registerHostEffects(host: EffectHost, hostLog: Pick<Logger, 'warn'> = log): Array<() => void> {
   const disposers: Array<() => void> = [];
-  const warn = (host as { _log?: { warn: (...args: unknown[]) => void } })._log?.warn ?? log.warn;
   for (const { key, options } of collectDecoratedMethods<EffectOptions>(host, EFFECT)) {
     const fn = boundMethod(host, key);
     if (!fn) continue;
@@ -72,7 +70,7 @@ export function registerHostEffects(host: EffectHost): Array<() => void> {
       try {
         fn();
       } catch (err) {
-        warn(`an @effect method (${String(key)}) threw`, err);
+        hostLog.warn(`an @effect method (${String(key)}) threw`, err);
       }
     }, options);
     disposers.push(() => {

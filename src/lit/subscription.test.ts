@@ -141,11 +141,10 @@ describe('@subscription / registerHostSubscriptions', () => {
     expect(teardownC).toHaveBeenCalledTimes(1);
   });
 
-  it("uses the host's scoped `_log.warn` when reachable, instead of the module logger", () => {
+  it('warns through the logger it is given, instead of the module logger', () => {
     const scopedWarn = vi.fn();
     const moduleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     class Host {
-      public _log = { warn: scopedWarn };
       @subscription()
       protected bad(): void {
         throw new Error('boom');
@@ -153,7 +152,7 @@ describe('@subscription / registerHostSubscriptions', () => {
     }
 
     const host = new Host();
-    registerHostSubscriptions(host);
+    registerHostSubscriptions(host, { warn: scopedWarn });
 
     expect(scopedWarn).toHaveBeenCalledTimes(1);
     expect(moduleWarn).not.toHaveBeenCalled();
