@@ -1,5 +1,5 @@
 import { modifiers } from '@uploadcare/cdn-url';
-import { html, type PropertyValues } from 'lit';
+import { html, type PropertyValues, type TemplateResult } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
@@ -94,9 +94,6 @@ export class EditorFilterControl extends EditorButtonControl {
     this.icon = this.isOriginal ? 'original' : 'slider';
     this._iconSize = this.isOriginal ? 40 : 20;
     this.requestUpdate('filter', previousValue);
-    if (this.isConnected) {
-      this._updateFilterLabels(nextFilter);
-    }
   }
 
   public override onClick(e: MouseEvent) {
@@ -165,18 +162,6 @@ export class EditorFilterControl extends EditorButtonControl {
         this._schedulePreviewVisibilityCheck();
       }
     });
-
-    // The `filter` prop is typically set (by `EditorToolbar`'s template
-    // binding) before the editor context finishes resolving, so the one-shot
-    // `_updateFilterLabels` call from the property setter/`connectedCallback`
-    // can run with no controller yet (`l10nSafe` falling back to the raw
-    // key). Redo it once the controller actually attaches so the real l10n
-    // label lands.
-    this.onEditorAttach(() => {
-      if (this._filter) {
-        this._updateFilterLabels(this._filter);
-      }
-    });
   }
 
   public override connectedCallback(): void {
@@ -189,10 +174,6 @@ export class EditorFilterControl extends EditorButtonControl {
     if (!this.isOriginal) {
       this._observer.observe(this);
       this._schedulePreviewVisibilityCheck();
-    }
-
-    if (this._filter) {
-      this._updateFilterLabels(this._filter);
     }
   }
 
@@ -216,16 +197,10 @@ export class EditorFilterControl extends EditorButtonControl {
     }
   }
 
-  private _updateFilterLabels(filterName: string): void {
-    if (!filterName) {
-      this.titleProp = '';
-      return;
-    }
-
-    const label = this.l10nSafe('a11y-cloud-editor-apply-filter', {
-      name: filterName.toLowerCase(),
-    });
-    this.titleProp = label;
+  protected override updateLabels(): void {
+    this.buttonLabel = this._filter
+      ? this.l10nSafe('a11y-cloud-editor-apply-filter', { name: this._filter.toLowerCase() })
+      : '';
   }
 
   private async _loadPreview(observer?: IntersectionObserver): Promise<void> {
@@ -336,8 +311,7 @@ export class EditorFilterControl extends EditorButtonControl {
     return Boolean(this._previewLoaded && !this.active && !this.isOriginal);
   }
 
-  public override render() {
-    const clickHandler = this.onClick;
+  protected override renderContent(): TemplateResult {
     // Prefixed like `ChildBlock` prefixes its inner test ids; editor blocks aren't `ChildBlock`s.
     const previewTestId = this.editorControllerOrNull?.getConfig('testMode')
       ? `${this.tagName.toLowerCase()}--preview`
@@ -354,27 +328,17 @@ export class EditorFilterControl extends EditorButtonControl {
     };
 
     return html`
-      <button
-        role="option"
-        aria-selected=${this.active ? 'true' : 'false'}
-        type="button"
-        class=${classMap(this.buttonClasses)}
-        aria-label=${ifDefined(this.titleProp)}
-        title=${ifDefined(this.titleProp)}
-        @click=${clickHandler}
-      >
-        <div
-          class="uc-preview"
-          data-testid=${ifDefined(previewTestId)}
-          ?data-loaded=${this._previewLoaded}
-          style=${styleMap(previewStyles)}
-        ></div>
-        <uc-editor-icon
-          class=${classMap({ 'uc-original-icon': this.isOriginal })}
-          name=${this.icon}
-          style=${styleMap(iconStyles)}
-        ></uc-editor-icon>
-      </button>
+      <div
+        class="uc-preview"
+        data-testid=${ifDefined(previewTestId)}
+        ?data-loaded=${this._previewLoaded}
+        style=${styleMap(previewStyles)}
+      ></div>
+      <uc-editor-icon
+        class=${classMap({ 'uc-original-icon': this.isOriginal })}
+        name=${this.icon}
+        style=${styleMap(iconStyles)}
+      ></uc-editor-icon>
     `;
   }
 }
