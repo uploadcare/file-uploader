@@ -2,8 +2,12 @@ import { EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import '~/types/jsx';
+import { defineLocale } from '@/index';
+import de from '@/locales/file-uploader/de';
 import { createInCtx, inCtx, within } from '~/tests/utils/render-solution';
 import { getCtxName } from '~/tests/utils/test-renderer';
+
+defineLocale('de', de);
 
 const CONTROLS = [
   'uc-editor-crop-button-control',
@@ -27,7 +31,7 @@ const renderEditor = (cropPreset: string) => {
   });
   page.render(<div ctx-name={ctxName}></div>);
   inCtx('div', ctxName).append(element, config);
-  return { element, editor: within(element) };
+  return { element, config, editor: within(element) };
 };
 
 /** What each visible button says: its tag, accessible name, tooltip, visible text, icon and host state. */
@@ -110,5 +114,18 @@ describe('editor button labels', () => {
         "filter-control aria-label=Apply briaril filter title=Apply briaril filter text=∅ icon=slider inactive",
       ]
     `);
+  });
+
+  it('relabels the editor when the locale changes', async () => {
+    const { config, editor } = renderEditor('1:1');
+    await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
+    await expect.element(editor.getByRole('option', { name: 'Apply brightness tuning' })).toBeVisible();
+
+    config.setAttribute('locale-name', 'de');
+
+    const brightness = editor.getByRole('option', { name: 'helligkeit-Abstimmung anwenden' });
+    await expect.element(brightness).toBeVisible();
+    await expect.element(brightness).toHaveTextContent('Helligkeit');
+    await expect.element(editor.getByRole('tab', { name: 'Feinabstimmung' })).toBeVisible();
   });
 });
