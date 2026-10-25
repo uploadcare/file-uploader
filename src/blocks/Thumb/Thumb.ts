@@ -188,60 +188,6 @@ export class Thumb extends FileItemConfig {
     this.runTask(() => this._generateThumbnail());
   }
 
-  private _decodeImage(src: string, signal?: AbortSignal): Promise<void> {
-    return new Promise((resolve, reject) => {
-      let image: HTMLImageElement | null = new Image();
-      image.decoding = 'async';
-
-      const cleanup = () => {
-        if (!image) {
-          return;
-        }
-
-        image.onload = null;
-        image.onerror = null;
-        image.src = TRANSPARENT_PIXEL_SRC;
-
-        signal?.removeEventListener('abort', onAbort);
-
-        image = null;
-      };
-
-      const onAbort = () => {
-        cleanup();
-        reject(new DOMException('Aborted', 'AbortError'));
-      };
-
-      if (signal) {
-        if (signal.aborted) {
-          onAbort();
-          return;
-        }
-        signal.addEventListener('abort', onAbort, { once: true });
-      }
-
-      const resolveSafe = () => {
-        cleanup();
-        resolve();
-      };
-
-      const rejectSafe = (error: unknown) => {
-        cleanup();
-        reject(error);
-      };
-
-      if (typeof image.decode === 'function') {
-        image.src = src;
-        image.decode().then(resolveSafe).catch(rejectSafe);
-        return;
-      }
-
-      image.onload = resolveSafe;
-      image.onerror = rejectSafe as OnErrorEventHandler;
-      image.src = src;
-    });
-  }
-
   private _cancelPendingThumbUpdate(): void {
     this._pendingThumbUpdate?.cancel();
     this._pendingThumbUpdate = undefined;
@@ -274,8 +220,8 @@ export class Thumb extends FileItemConfig {
 
     this._pendingThumbUpdate = pending;
 
-    this._decodeImage(nextThumbUrl, abortController.signal)
-      .then(() => {
+    preloadImage(nextThumbUrl, { signal: abortController.signal, decode: true })
+      .promise.then(() => {
         if (abortController.signal.aborted) {
           return;
         }
