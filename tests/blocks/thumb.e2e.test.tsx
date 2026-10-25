@@ -150,3 +150,15 @@ describe('generateThumb', () => {
     expect(revoke).toHaveBeenCalledWith(create.mock.results[0]?.value);
   });
 });
+
+describe('generateThumb output', () => {
+  it('resolves to a blob url for an image', async () => {
+    await expect(Promise.resolve(generateThumb(IMAGE.SQUARE))).resolves.toMatch(/^blob:/);
+  });
+
+  it('rejects for a file that is not an image', async () => {
+    await expect(
+      Promise.resolve(generateThumb(new File(['not an image'], 'broken.jpg', { type: 'image/jpeg' }))),
+    ).rejects.toBeDefined();
+  });
+});
