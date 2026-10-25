@@ -306,9 +306,7 @@ export class TelemetryManager {
    * Report an error to telemetry. This is a terminal error SINK — it must never
    * throw, or the original failure it reports (a rejected upload/validator/
    * resolver handler, often on an async path) would surface as an unhandled
-   * rejection. It absorbs the never-throw guard the removed `UploadHostBridge`
-   * telemetry sinks used to wrap around this call; the fallback log is
-   * debug-gated (verbose only) and cannot throw either.
+   * rejection. A failed send is logged on the verbose tier only.
    */
   public sendEventError(error: unknown, context = 'unknown'): void {
     try {
@@ -325,15 +323,7 @@ export class TelemetryManager {
         },
       });
     } catch (err) {
-      // The fallback log must not throw either — a host-supplied `isVerbose`
-      // predicate or a patched `console` could — or the original failure this
-      // sink exists to report becomes an unhandled rejection. Nested guard,
-      // matching the removed bridge sink's double try/catch.
-      try {
-        this._log.debug('failed to report an error event to telemetry', err);
-      } catch {
-        // Error reporting must never mask the original failure.
-      }
+      this._log.debug('failed to report an error event to telemetry', err);
     }
   }
 

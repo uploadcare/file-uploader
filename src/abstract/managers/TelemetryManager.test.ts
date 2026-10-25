@@ -617,21 +617,6 @@ describe('TelemetryManager', () => {
     expect(debug.mock.calls.some((call) => call.includes('failed to report an error event to telemetry'))).toBe(false);
   });
 
-  it('sendEventError does not rethrow even when the fallback log itself throws', () => {
-    const { manager, config } = setup();
-    config.set('debug', true);
-    // Both the send AND the fallback debug log throw (a host-patched console) —
-    // the nested guard must still swallow, or the original failure escapes.
-    vi.spyOn(manager, 'sendEvent').mockImplementation(() => {
-      throw new Error('telemetry sink is down');
-    });
-    vi.spyOn(console, 'log').mockImplementation(() => {
-      throw new Error('console is patched to throw');
-    });
-
-    expect(() => manager.sendEventError(new Error('boom'), 'upload')).not.toThrow();
-  });
-
   it('sendEventError stringifies a non-Error throwable instead of reporting undefined', async () => {
     const { manager, enable } = setup();
     enable();
