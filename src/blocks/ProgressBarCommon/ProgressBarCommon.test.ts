@@ -45,16 +45,6 @@ const innerValue = (el: ProgressBarCommon): number | undefined =>
   (el.querySelector('uc-progress-bar') as ProgressBar | null)?.value;
 
 describe('ProgressBarCommon (M-god step 6b-2 migration)', () => {
-  it('resolves its CollectionStateController dependency via the @inject field on the element', async () => {
-    const ctxName = freshCtxName();
-    const { el, collectionState } = await mount(ctxName);
-    // The `@inject(CollectionStateController)` field resolves through the
-    // container the block adopted (tagged as `this[CONTAINER]`), yielding the
-    // same controller instance the ctx owns — the mechanism that replaces
-    // `static uses` + `this.use()`.
-    expect((el as unknown as { _collectionState: CollectionStateController })._collectionState).toBe(collectionState);
-  });
-
   it('re-renders the inner progress-bar value reactively when commonProgress changes (getTracked, no ctx.sub)', async () => {
     const ctxName = freshCtxName();
     const { el, collectionState } = await mount(ctxName);

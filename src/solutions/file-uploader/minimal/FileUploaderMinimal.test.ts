@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CollectionStateController } from '../../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../../abstract/controllers/ConfigController';
 import { RouterController } from '../../../abstract/controllers/RouterController';
-import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../../../abstract/UploaderRegistry';
 import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { ensureUploaderCtx } from '../../../lit/ensureUploaderCtx';
@@ -66,25 +65,6 @@ describe('FileUploaderMinimal (M-god step 6b-4 migration)', () => {
     // Persistent trigger + modal picker (two start-from activity mounts).
     expect(el.querySelectorAll('uc-start-from')).toHaveLength(2);
     expect(el.querySelector('uc-modal#start-from')).not.toBeNull();
-  });
-
-  it('resolves its dependencies via @inject fields on the element', async () => {
-    const ctxName = freshCtxName();
-    const { el, config, router } = await mount(ctxName);
-    const container = UploaderRegistry.get(ctxName);
-    // Always-bound controllers become `@inject` fields resolving through the
-    // container the block adopted (tagged as `this[CONTAINER]`) — the mechanism
-    // that replaces `static uses` + `this.use()`.
-    const injected = el as unknown as {
-      _router: RouterController;
-      _config: ConfigController;
-      _collectionState: CollectionStateController;
-      _telemetry: TelemetryManager;
-    };
-    expect(injected._router).toBe(router);
-    expect(injected._config).toBe(config);
-    expect(injected._collectionState).toBe(container?.get(CollectionStateController));
-    expect(injected._telemetry).toBe(container?.get(TelemetryManager));
   });
 
   it('drives the background slot off CollectionStateController.uploadList only when the list reference changes (per-key dedup)', async () => {

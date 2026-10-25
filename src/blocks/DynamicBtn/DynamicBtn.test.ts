@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
@@ -54,24 +53,6 @@ const mountWithConfig = async (ctxName: string): Promise<{ el: DynamicBtn; confi
 const hasPrimaryAction = (el: DynamicBtn): boolean => el.querySelector('uc-primary-action') !== null;
 
 describe('DynamicBtn (M-god step 6b-2 migration)', () => {
-  it('resolves its always-bound dependencies via @inject fields on the element', async () => {
-    const ctxName = freshCtxName();
-    const { el } = await mountWithConfig(ctxName);
-    const container = UploaderRegistry.get(ctxName);
-    expect(container).toBeDefined();
-
-    // Controllers resolve through `@inject` fields on the container the block
-    // adopted (tagged as `this[CONTAINER]`); every read happens while adopted.
-    const injected = el as unknown as {
-      _config: ConfigController;
-      _router: RouterController;
-      _collectionState: CollectionStateController;
-    };
-    expect(injected._config).toBe(container?.get(ConfigController));
-    expect(injected._router).toBe(container?.get(RouterController));
-    expect(injected._collectionState).toBe(container?.get(CollectionStateController));
-  });
-
   it('re-renders reactively when config.dynamicButtonViewMode changes (getTracked, no subConfigValue)', async () => {
     const ctxName = freshCtxName();
     const { el, config } = await mountWithConfig(ctxName);

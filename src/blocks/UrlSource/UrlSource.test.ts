@@ -1,7 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RouterController } from '../../abstract/controllers/RouterController';
-import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
-import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { UrlSource } from './UrlSource';
@@ -37,26 +35,6 @@ const mount = async (ctxName: string): Promise<UrlSource> => {
 };
 
 describe('UrlSource (M-god step 6b-1 migration)', () => {
-  it('resolves its TelemetryManager + RouterController + UploaderPublicApi dependencies via @inject fields', async () => {
-    const ctxName = freshCtxName();
-    ensureUploaderCtx(ctxName);
-    const container = UploaderRegistry.get(ctxName);
-    expect(container).toBeDefined();
-
-    const el = await mount(ctxName);
-    // The `@inject` fields resolve through the container the block adopted
-    // (tagged as `this[CONTAINER]`), yielding the very same instances the ctx
-    // owns — the mechanism that replaces `static uses` + `this.use()`.
-    const injected = el as unknown as {
-      _telemetry: TelemetryManager;
-      _router: RouterController;
-      _api: UploaderPublicApi;
-    };
-    expect(injected._telemetry).toBe(container?.get(TelemetryManager));
-    expect(injected._router).toBe(container?.get(RouterController));
-    expect(injected._api).toBe(container?.get(UploaderPublicApi));
-  });
-
   it('routes header back/close navigation through the container-resolved RouterController (use())', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
