@@ -1,11 +1,4 @@
-type Throttled<T extends (...args: any[]) => void> = ((...args: Parameters<T>) => void) & {
-  readonly cancel: () => void;
-};
-
-export const throttle = <T extends (...args: any[]) => void>(
-  fn: T,
-  wait: number,
-): T & { readonly cancel: () => void } => {
+export const throttle = <T extends (...args: any[]) => void>(fn: T, wait: number): T & { cancel: () => void } => {
   let lastFn: ReturnType<typeof setTimeout> | undefined;
   let lastTime = 0;
 
@@ -23,16 +16,11 @@ export const throttle = <T extends (...args: any[]) => void>(
     } else {
       lastFn = setTimeout(() => run(args), remaining);
     }
-  }) as Throttled<T>;
+  }) as T & { cancel: () => void };
 
-  Object.defineProperty(throttled, 'cancel', {
-    configurable: false,
-    writable: false,
-    enumerable: false,
-    value: () => {
-      if (lastFn) clearTimeout(lastFn);
-    },
-  });
+  throttled.cancel = () => {
+    if (lastFn) clearTimeout(lastFn);
+  };
 
-  return throttled as T & { readonly cancel: () => void };
+  return throttled;
 };
