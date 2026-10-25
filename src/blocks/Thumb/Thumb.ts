@@ -15,6 +15,7 @@ import { FileItemConfig } from '../FileItem/FileItemConfig';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds';
 import './thumb.css';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import type { Uid } from '../../lit/Uid';
 import type { ConfigType } from '../../types';
 import { TRANSPARENT_PIXEL_SRC } from '../../utils/transparentPixelSrc';
@@ -140,19 +141,8 @@ export class Thumb extends FileItemConfig {
         } catch (error) {
           if (isAbortError(error)) throw error;
           if (currentThumbUrl?.startsWith('blob:')) return;
-          try {
-            const file = entry.get('file');
-            if (!file) return;
-            const blobThumbUrl = await this.whileAdopted(Promise.resolve(generateThumb(file, size)), (url) =>
-              entry.set('thumbUrl', url),
-            );
-            entry.set('thumbUrl', blobThumbUrl);
-          } catch (err) {
-            if (isAbortError(err)) throw err;
-            this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
-            const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-            entry.set('thumbUrl', fileCssBg(color));
-          }
+          const file = entry.get('file');
+          if (file) await this._storeLocalThumb(entry, file, size);
         }
 
         return;
@@ -165,22 +155,29 @@ export class Thumb extends FileItemConfig {
 
     const file = entry.get('file');
     if (file?.type.includes('image')) {
-      try {
-        const thumbUrl = await this.whileAdopted(Promise.resolve(generateThumb(file, size)), (url) =>
-          entry.set('thumbUrl', url),
-        );
-        entry.set('thumbUrl', thumbUrl);
-      } catch (err) {
-        if (isAbortError(err)) throw err;
-        this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
-        const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-        entry.set('thumbUrl', fileCssBg(color));
-      }
+      await this._storeLocalThumb(entry, file, size);
     } else {
-      const color = window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground');
-      entry.set('thumbUrl', fileCssBg(color));
+      entry.set('thumbUrl', this._placeholderThumb());
     }
   });
+
+  /** Store a thumbnail drawn from the local file, or the placeholder if that fails. */
+  private async _storeLocalThumb(entry: UploadEntryTypedData, file: File, size: number): Promise<void> {
+    try {
+      const thumbUrl = await this.whileAdopted(Promise.resolve(generateThumb(file, size)), (url) =>
+        entry.set('thumbUrl', url),
+      );
+      entry.set('thumbUrl', thumbUrl);
+    } catch (err) {
+      if (isAbortError(err)) throw err;
+      this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
+      entry.set('thumbUrl', this._placeholderThumb());
+    }
+  }
+
+  private _placeholderThumb(): string {
+    return fileCssBg(window.getComputedStyle(this).getPropertyValue('--uc-muted-foreground'));
+  }
 
   // `@debounced` drops a call after release and cancels a pending one on release.
   @debounced(100)
