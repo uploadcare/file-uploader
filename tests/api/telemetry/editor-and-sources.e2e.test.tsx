@@ -51,6 +51,16 @@ describe('telemetry: cloud image editor', () => {
       operation: { filter: 'filter', value: 0 },
     });
   });
+
+  it.each(['apply', 'cancel'])('reports an action-event when %s is clicked', async (action) => {
+    await waitForType('init-solution');
+    clearSent();
+
+    await userEvent.click(page.getByRole('button', { name: new RegExp(`^${action}$`, 'i') }));
+    const sent = await waitForType('action-event');
+
+    expect(sent.payload.metadata).toMatchObject({ action, event: 'click', node: 'UC-BTN-UI', tab_id: 'crop' });
+  });
 });
 
 describe('telemetry: cloud image editor moved to a ctx that does not exist yet', () => {
