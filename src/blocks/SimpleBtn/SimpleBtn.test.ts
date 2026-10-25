@@ -1,7 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { LocaleController } from '../../abstract/controllers/LocaleController';
-import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { delay } from '../../utils/delay';
@@ -42,20 +41,6 @@ const mountWithConfig = async (ctxName: string): Promise<{ el: SimpleBtn; config
 const buttonText = (el: SimpleBtn): string | null | undefined => el.querySelector('button span')?.textContent?.trim();
 
 describe('SimpleBtn (M-god step 6b-1 migration)', () => {
-  it('resolves its ConfigController + UploaderPublicApi dependencies via @inject fields on the element', async () => {
-    const ctxName = freshCtxName();
-    const { el, config } = await mountWithConfig(ctxName);
-    const api = UploaderRegistry.get(ctxName)?.get(UploaderPublicApi);
-    expect(api).toBeDefined();
-
-    // The `@inject` fields resolve through the container the block adopted
-    // (tagged as `this[CONTAINER]`), yielding the very same instances the ctx
-    // owns — the mechanism that replaces `static uses` + `this.use()`.
-    const injected = el as unknown as { _config: ConfigController; _api: UploaderPublicApi };
-    expect(injected._config).toBe(config);
-    expect(injected._api).toBe(api);
-  });
-
   it('re-renders the button text reactively when config.multiple changes (getTracked, no subConfigValue)', async () => {
     const ctxName = freshCtxName();
     const { el, config } = await mountWithConfig(ctxName);

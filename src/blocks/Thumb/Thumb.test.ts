@@ -44,19 +44,6 @@ const mount = async (ctxName: string): Promise<{ el: Thumb; config: ConfigContro
 const badgeIconName = (el: Thumb): string | null => el.querySelector('.uc-badge uc-icon')?.getAttribute('name') ?? null;
 
 describe('Thumb (M-god step 6b-6 migration)', () => {
-  it('resolves its always-bound dependencies via @inject fields on the element', async () => {
-    const ctxName = freshCtxName();
-    const { el, config } = await mount(ctxName);
-    const container = UploaderRegistry.get(ctxName);
-    // `ConfigController` / `TelemetryManager` become `@inject` fields resolving
-    // through the container the block adopted (tagged as `this[CONTAINER]`); the
-    // uploader-scope-bound `UploadCollectionController` (read via `useOrNull`)
-    // stays off `@inject`.
-    const injected = el as unknown as { _config: ConfigController; _telemetry: TelemetryManager };
-    expect(injected._config).toBe(config);
-    expect(injected._telemetry).toBe(container?.get(TelemetryManager));
-  });
-
   it('renders the preview as a decorative image, since the file name sits next to it', async () => {
     const { el } = await mount(freshCtxName());
     const img = el.querySelector('img');

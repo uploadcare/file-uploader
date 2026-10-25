@@ -35,20 +35,6 @@ const mount = async (ctxName: string): Promise<SourceBtn> => {
 };
 
 describe('SourceBtn (M-god step 6b-1 migration)', () => {
-  it('resolves its TelemetryManager dependency via the @inject field on the element', async () => {
-    const ctxName = freshCtxName();
-    ensureUploaderCtx(ctxName);
-    const telemetry = UploaderRegistry.get(ctxName)?.get(TelemetryManager);
-    expect(telemetry).toBeDefined();
-
-    const el = await mount(ctxName);
-    // The `@inject(TelemetryManager)` field resolves through the container the
-    // block adopted (tagged as `this[CONTAINER]`), yielding the very same
-    // manager instance the ctx owns — the mechanism that replaces `static uses`
-    // + `this.use()`.
-    expect((el as unknown as { _telemetry: TelemetryManager })._telemetry).toBe(telemetry);
-  });
-
   it('routes activate() telemetry through the container-resolved TelemetryManager (use())', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);

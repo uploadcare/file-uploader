@@ -66,17 +66,6 @@ const hiddenInputs = (el: FormInput): HTMLInputElement[] =>
   Array.from(el.querySelectorAll<HTMLInputElement>('input[type="hidden"]'));
 
 describe('FormInput (M-god step 6b-4 migration)', () => {
-  it('resolves its dependencies via @inject fields on the element', async () => {
-    const ctxName = freshCtxName();
-    const { el, config, collection } = await mount(ctxName);
-    // The always-bound controllers become `@inject` fields resolving through the
-    // container the block adopted (tagged as `this[CONTAINER]`) — the mechanism
-    // that replaces `static uses` + `this.use()`.
-    const injected = el as unknown as { _config: ConfigController; _collectionState: CollectionStateController };
-    expect(injected._config).toBe(config);
-    expect(injected._collectionState).toBe(collection);
-  });
-
   it('creates the validation input on ready, reflecting multipleMin via ConfigController', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);

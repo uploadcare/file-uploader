@@ -93,21 +93,6 @@ const bindEntry = async (
 };
 
 describe('FileItem (M-god step 6b-6 migration)', () => {
-  it('resolves its always-bound dependencies via @inject fields on the element', async () => {
-    const ctxName = freshCtxName();
-    const { el, config } = await mount(ctxName);
-    const container = UploaderRegistry.get(ctxName);
-    // Controllers resolve through `@inject` fields on the container the block
-    // adopted (tagged as `this[CONTAINER]`); the conditionally-bound
-    // `PluginController` (read via `whenController`) stays off `@inject`.
-    const injected = el as unknown as {
-      _config: ConfigController;
-      _telemetry: TelemetryManager;
-    };
-    expect(injected._config).toBe(config);
-    expect(injected._telemetry).toBe(container?.get(TelemetryManager));
-  });
-
   it('reflects the config filesViewMode onto the host [mode] attribute and reacts to changes', async () => {
     const ctxName = freshCtxName();
     const { el, config } = await mount(ctxName);

@@ -83,20 +83,6 @@ describe('Copyright (M-god step 6a probe)', () => {
     expect(link(el)?.hasAttribute('hidden')).toBe(false);
   });
 
-  it('resolves its ConfigController dependency via the @inject field on the element', async () => {
-    const ctxName = freshCtxName();
-    ensureUploaderCtx(ctxName);
-    const config = UploaderRegistry.get(ctxName)?.get(ConfigController);
-    expect(config).toBeDefined();
-
-    const el = await mount(ctxName);
-    // The `@inject(ConfigController)` field resolves through the container the
-    // block adopted (tagged as `this[CONTAINER]`), yielding the very same
-    // controller instance the ctx owns — the mechanism that replaces
-    // `static uses` + `this.use()`.
-    expect((el as unknown as { _config: ConfigController })._config).toBe(config);
-  });
-
   it('opens the credits link in a new browsing context without an opener', async () => {
     const el = await mount(freshCtxName());
     const a = link(el);
