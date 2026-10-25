@@ -83,7 +83,9 @@ export class RouterController {
   // `SignalWatcher` consumer can track it; the coarse `_listeners.notify()`
   // change-notification every current reader relies on is preserved unchanged.
   @signalState() private _currentActivity: ActivityId | null = null;
-  private _params: Record<string, unknown> = {};
+  // Signal-backed, so a tracked reader sees new params even when the activity stays the same (one external activity
+  // switching sources).
+  @signalState() private _params: Record<string, unknown> = {};
   private _history: ActivityId[] = [];
   private _hooks = {
     beforeChange: [] as Hook[],

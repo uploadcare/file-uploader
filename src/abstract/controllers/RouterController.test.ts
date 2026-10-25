@@ -1,3 +1,4 @@
+import { computed } from '@lit-labs/signals';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityId } from '../../lit/activity-constants';
@@ -734,6 +735,20 @@ describe('RouterController (v2)', () => {
 
       router.navigate(null);
       expect(router.currentActivity).toBeNull();
+    });
+  });
+
+  describe('params (signal-backed field)', () => {
+    it('lets a tracked reader see new params for the same activity', () => {
+      const { router } = setup();
+      router.activityBlockMounted('external' as never);
+      router.navigate('external', { externalSourceType: 'dropbox' });
+      const source = computed(() => router.params.externalSourceType);
+      expect(source.get()).toBe('dropbox');
+
+      router.navigate('external', { externalSourceType: 'gdrive' });
+
+      expect(source.get()).toBe('gdrive');
     });
   });
 
