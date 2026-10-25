@@ -8,7 +8,7 @@ import {
   uploadFile,
 } from '@uploadcare/upload-client';
 import type { Uid } from '../../lit/Uid';
-import { fileIsImage } from '../../utils/fileTypes';
+import { fileDerivedFields } from '../../utils/fileTypes';
 import { redactSecrets } from '../../utils/redactSecrets';
 import { customUserAgent } from '../../utils/userAgent';
 import { controllerLogger } from '../controllerLogger';
@@ -242,12 +242,7 @@ export class UploadController {
               const { file: newFile } = await runFileHook(hook, file, abortController.signal);
               if (newFile !== file) {
                 file = newFile;
-                entry.set('mimeType', file.type || null);
-                entry.set('isImage', fileIsImage(file));
-                entry.set('fileSize', file.size);
-                if (file instanceof File) {
-                  entry.set('fileName', file.name);
-                }
+                entry.setMany(fileDerivedFields(file));
               }
             } catch (error) {
               // Aborted by a cancel or by the ctx going away: the hook did what its signal asked, and the aborted

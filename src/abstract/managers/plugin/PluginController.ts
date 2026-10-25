@@ -1,4 +1,4 @@
-import { fileIsImage } from '../../../utils/fileTypes';
+import { fileDerivedFields } from '../../../utils/fileTypes';
 import { controllerLogger } from '../../controllerLogger';
 import { ConfigController } from '../../controllers/ConfigController';
 import { containerOf, lifetimeOf } from '../../di/ControllerContainer';
@@ -217,13 +217,7 @@ export class PluginController {
 
     if (signal.aborted) return;
     if (file !== initialFile) {
-      entry.set('file', file as File);
-      entry.set('fileSize', file.size);
-      entry.set('mimeType', file.type || null);
-      entry.set('isImage', fileIsImage(file));
-      if (file instanceof File) {
-        entry.set('fileName', file.name);
-      }
+      entry.setMany({ file: file as File, ...fileDerivedFields(file) });
     }
   }
 

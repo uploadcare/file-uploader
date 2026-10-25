@@ -68,6 +68,16 @@ export const fileIsImage = (file: File | Blob): boolean => {
   return matchMimeType(type, IMAGE_ACCEPT_LIST);
 };
 
+/** The entry fields read off a file. A `Blob` has no name, so it leaves `fileName` out. */
+export const fileDerivedFields = (
+  file: File | Blob,
+): { mimeType: string | null; isImage: boolean; fileSize: number; fileName?: string } => ({
+  mimeType: file.type || null,
+  isImage: fileIsImage(file),
+  fileSize: file.size,
+  ...(file instanceof File && { fileName: file.name }),
+});
+
 export const isBlob = (data: unknown): data is Blob => {
   return typeof Blob !== 'undefined' && data instanceof Blob;
 };
