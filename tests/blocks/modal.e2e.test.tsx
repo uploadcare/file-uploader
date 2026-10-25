@@ -5,6 +5,7 @@ import { getCtxName } from '../utils/getCtxName';
 import { hasCtx } from '../utils/registry';
 import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
+import { modalDialog, renderSolution } from '../utils/render-solution';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
@@ -81,5 +82,19 @@ describe('uc-modal teardown', () => {
       window.removeEventListener('error', onError);
     }
     expect(errors).toEqual([]);
+  });
+});
+
+describe('uc-modal dialog names', () => {
+  it.each([
+    ['start-from', 'Select file source'],
+    ['upload-list', 'Upload files'],
+    ['camera', 'Camera'],
+    ['url', 'Import from link'],
+    ['cloud-image-edit', 'Edit file'],
+  ])('names the %s dialog', async (id, name) => {
+    const { root } = await renderSolution('regular');
+
+    await vi.waitFor(() => expect(modalDialog(root, id)?.getAttribute('aria-label')).toBe(name));
   });
 });
