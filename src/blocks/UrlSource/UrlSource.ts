@@ -6,7 +6,6 @@ import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { UploadSource } from '../../utils/UploadSource';
-import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './url-source.css';
 
 import '../ActivityHeader/ActivityHeader';
@@ -28,15 +27,7 @@ export class UrlSource extends ChildBlock {
 
   private _handleUpload = (event: Event) => {
     event.preventDefault();
-    this._telemetry.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'upload-from-url',
-          node: this.tagName,
-        },
-      },
-    });
+    this._telemetry.sendActionEvent('upload-from-url', this.tagName);
     const url = this._url.trim();
     if (!url) {
       return;

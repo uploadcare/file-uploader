@@ -12,7 +12,6 @@ import { debounced } from '../../lit/rate-limited-method';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { UploadSource } from '../../utils/UploadSource';
-import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './camera-source.css';
 import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
@@ -184,16 +183,7 @@ export class CameraSource extends ChildBlock {
   private _mutableClassButton = 'uc-shot-btn uc-camera-action';
 
   private _chooseActionWithCamera = () => {
-    this._telemetry.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'start-camera',
-          node: this.tagName,
-          tabId: this._activeTab,
-        },
-      },
-    });
+    this._telemetry.sendActionEvent('start-camera', this.tagName, { tabId: this._activeTab });
 
     if (this._activeTab === CameraSourceTypes.PHOTO) {
       this._shot();
@@ -232,16 +222,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleStartCamera = (): void => {
-    this._telemetry.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'shot-camera',
-          node: this.tagName,
-          tabId: this._activeTab,
-        },
-      },
-    });
+    this._telemetry.sendActionEvent('shot-camera', this.tagName, { tabId: this._activeTab });
     this._chooseActionWithCamera();
   };
 
@@ -254,30 +235,12 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleRetake = (): void => {
-    this._telemetry.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'retake-camera',
-          node: this.tagName,
-          tabId: this._activeTab,
-        },
-      },
-    });
+    this._telemetry.sendActionEvent('retake-camera', this.tagName, { tabId: this._activeTab });
     this._retake();
   };
 
   private _handleAccept = (): void => {
-    this._telemetry.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'accept-camera',
-          node: this.tagName,
-          tabId: this._activeTab,
-        },
-      },
-    });
+    this._telemetry.sendActionEvent('accept-camera', this.tagName, { tabId: this._activeTab });
     this._accept();
   };
 
@@ -404,16 +367,7 @@ export class CameraSource extends ChildBlock {
     this._mediaRecorder?.stop();
     this.classList.remove('uc-recording');
 
-    this._telemetry.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'stop-camera',
-          node: this.tagName,
-          tabId: this._activeTab,
-        },
-      },
-    });
+    this._telemetry.sendActionEvent('stop-camera', this.tagName, { tabId: this._activeTab });
   };
 
   /** This method is used to toggle recording pause/resume */
@@ -676,16 +630,7 @@ export class CameraSource extends ChildBlock {
       this._audioToggleMicrophoneHidden = !enableAudioRecording;
     }
 
-    this._telemetry.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'camera-tab-switch',
-          node: this.tagName,
-          tabId,
-        },
-      },
-    });
+    this._telemetry.sendActionEvent('camera-tab-switch', this.tagName, { tabId });
 
     this._activeTab = tabId;
   };

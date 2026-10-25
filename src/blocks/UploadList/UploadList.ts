@@ -13,7 +13,7 @@ import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { throttled } from '../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
 import type { Uid } from '../../lit/Uid';
-import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
+import { EventType } from '../UploadCtxProvider/EventEmitter';
 import './upload-list.css';
 import { repeat } from 'lit/directives/repeat.js';
 import { VirtualListController } from '../../lit/VirtualListController';
@@ -154,15 +154,7 @@ export class UploadList extends ActivityChildBlock {
   }
 
   private _handleAdd = (): void => {
-    this._telemetry.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'add-more',
-          node: this.tagName,
-        },
-      },
-    });
+    this._telemetry.sendActionEvent('add-more', this.tagName);
     this._api.initFlow(true);
   };
 
@@ -187,15 +179,7 @@ export class UploadList extends ActivityChildBlock {
   };
 
   private _handleCancel = (): void => {
-    this._telemetry.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'clear-all',
-          node: this.tagName,
-        },
-      },
-    });
+    this._telemetry.sendActionEvent('clear-all', this.tagName);
 
     this._uploadCollection.clearAll();
   };

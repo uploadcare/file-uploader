@@ -327,20 +327,11 @@ export class TelemetryManager {
     }
   }
 
-  /**
-   * Method to send telemetry event for Cloud Image Editor.
-   */
-  public sendEventCloudImageEditor(e: MouseEvent, tabId: string, options: Record<string, unknown> = {}): void {
+  /** Report a UI action: `event` names it, `node` is the tag of the element that reported it. */
+  public sendActionEvent(event: string, node: string | undefined, extra: Record<string, unknown> = {}): void {
     this.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          tabId,
-          node: (e.currentTarget as HTMLElement | null)?.tagName,
-          event: e.type,
-          ...options,
-        },
-      },
+      payload: { metadata: { event, node, ...extra } },
     });
   }
 

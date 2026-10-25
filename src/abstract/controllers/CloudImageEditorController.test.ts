@@ -82,12 +82,12 @@ describe('CloudImageEditorController', () => {
     const controller = new CloudImageEditorController();
     const sendEvent = vi.fn();
     const sendEventError = vi.fn();
-    const sendEventCloudImageEditor = vi.fn();
+    const sendActionEvent = vi.fn();
     controller.setServices({
       l10n: (key, variables) => `${key}:${JSON.stringify(variables ?? {})}`,
       getConfig: ((key: string) =>
         key === 'pubkey' ? 'demopublickey' : undefined) as CloudImageEditorController['getConfig'],
-      telemetry: { sendEvent, sendEventError, sendEventCloudImageEditor },
+      telemetry: { sendEvent, sendEventError, sendActionEvent },
       proxyUrl: async (url) => `https://proxy.example.com/?u=${url}`,
     });
 
@@ -106,7 +106,7 @@ describe('CloudImageEditorController', () => {
     const controller = new CloudImageEditorController(undefined, {
       l10n: (key) => `pre:${key}`,
       getConfig: (() => undefined) as CloudImageEditorController['getConfig'],
-      telemetry: { sendEvent: () => {}, sendEventError: () => {}, sendEventCloudImageEditor: () => {} },
+      telemetry: { sendEvent: () => {}, sendEventError: () => {}, sendActionEvent: () => {} },
       proxyUrl: async (url) => url,
     });
     expect(controller.l10n('cancel')).toBe('pre:cancel');
