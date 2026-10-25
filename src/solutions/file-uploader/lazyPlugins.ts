@@ -37,8 +37,10 @@ export const fileUploaderLazyPlugins: LazyPluginEntry[] = [
   },
   {
     configDeps: ['sourceList'],
-    isEnabled: (get) =>
-      Object.values(ExternalUploadSource).some((src) => deserializeCsv(get('sourceList')).includes(src)),
+    isEnabled: (get) => {
+      const sources = deserializeCsv(get('sourceList'));
+      return Object.values(ExternalUploadSource).some((src) => sources.includes(src));
+    },
     load: () => externalSourcesPlugin,
   },
   {
