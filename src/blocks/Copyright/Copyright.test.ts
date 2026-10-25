@@ -36,7 +36,7 @@ const mount = async (ctxName: string): Promise<Copyright> => {
 
 const link = (el: HTMLElement): HTMLAnchorElement | null => el.querySelector<HTMLAnchorElement>('.uc-credits');
 
-describe('Copyright (M-god step 6a probe)', () => {
+describe('Copyright', () => {
   it('renders the credits link into its own light DOM (no shadow root)', async () => {
     const ctxName = freshCtxName();
     const el = await mount(ctxName);

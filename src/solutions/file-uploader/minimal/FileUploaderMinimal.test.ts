@@ -55,7 +55,7 @@ const settle = async (el: FileUploaderMinimal): Promise<void> => {
 // `<uc-start-from>` (the modal picker's drop-area is second).
 const inlineDropArea = (el: FileUploaderMinimal): Element | null => el.querySelector('uc-start-from uc-drop-area');
 
-describe('FileUploaderMinimal (M-god step 6b-4 migration)', () => {
+describe('FileUploaderMinimal', () => {
   it('composes a compact upload list (chrome=compact) and dual start-from trees', async () => {
     const ctxName = freshCtxName();
     const { el } = await mount(ctxName);

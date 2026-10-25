@@ -92,7 +92,7 @@ const bindEntry = async (
   return uid;
 };
 
-describe('FileItem (M-god step 6b-6 migration)', () => {
+describe('FileItem', () => {
   it('reflects the config filesViewMode onto the host [mode] attribute and reacts to changes', async () => {
     const ctxName = freshCtxName();
     const { el, config } = await mount(ctxName);

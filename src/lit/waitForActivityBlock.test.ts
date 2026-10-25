@@ -3,7 +3,7 @@ import { RouterController } from '../abstract/controllers/RouterController';
 import { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { waitForActivityBlock } from './waitForActivityBlock';
 
-// RouterController is container-resolved now (M-god step 3c): its emit target
+// RouterController is container-resolved now: its emit target
 // (`EventEmitter`) is `@inject`-ed, so build it through a container.
 const setup = () => new ControllerContainer().get(RouterController);
 
@@ -52,7 +52,7 @@ describe('waitForActivityBlock', () => {
     expect(unsubCalled).toBe(true);
   });
 
-  it('resolves false on timeout and settles even if onTimeout throws (resolve happens before onTimeout, M9f ordering)', async () => {
+  it('resolves false on timeout and settles even if onTimeout throws (resolve happens before onTimeout)', async () => {
     vi.useFakeTimers();
     try {
       const router = setup();

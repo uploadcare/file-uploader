@@ -43,7 +43,7 @@ const mount = async (ctxName: string): Promise<{ el: Thumb; config: ConfigContro
 
 const badgeIconName = (el: Thumb): string | null => el.querySelector('.uc-badge uc-icon')?.getAttribute('name') ?? null;
 
-describe('Thumb (M-god step 6b-6 migration)', () => {
+describe('Thumb', () => {
   it('renders the preview as a decorative image, since the file name sits next to it', async () => {
     const { el } = await mount(freshCtxName());
     const img = el.querySelector('img');

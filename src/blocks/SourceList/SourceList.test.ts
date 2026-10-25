@@ -37,7 +37,7 @@ const mount = async (ctxName: string): Promise<{ el: SourceList; config: ConfigC
   return { el, config };
 };
 
-describe('SourceList (M-god step 6b-3 migration)', () => {
+describe('SourceList', () => {
   it('drives the host [nowrap] attribute from the sourceListWrap config resolved via use(ConfigController)', async () => {
     const ctxName = freshCtxName();
     const { el, config } = await mount(ctxName);

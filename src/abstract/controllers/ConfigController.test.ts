@@ -204,7 +204,7 @@ describe('ConfigController', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it('getTracked returns the current value, matching get() (M-god step 6a)', () => {
+  it('getTracked returns the current value, matching get()', () => {
     const config = new ConfigController();
     expect(config.getTracked('removeCopyright')).toBe(config.get('removeCopyright'));
 

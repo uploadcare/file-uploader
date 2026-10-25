@@ -34,7 +34,7 @@ const mount = async (ctxName: string): Promise<SourceBtn> => {
   return el;
 };
 
-describe('SourceBtn (M-god step 6b-1 migration)', () => {
+describe('SourceBtn', () => {
   it('routes activate() telemetry through the container-resolved TelemetryManager (use())', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);

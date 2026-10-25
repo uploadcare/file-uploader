@@ -301,7 +301,7 @@ describe('instance lifecycle (destroy -> recreate cycle)', () => {
   });
 });
 
-describe('instance lifecycle (single-owner teardown, M9k Task 3)', () => {
+describe('instance lifecycle (single-owner teardown)', () => {
   it('a full ctx teardown destroys each controller-owned manager exactly once', async () => {
     const ctxName = getCtxName();
     page.render(
@@ -354,7 +354,7 @@ describe('instance lifecycle (single-owner teardown, M9k Task 3)', () => {
   });
 });
 
-describe('instance lifecycle (attachUploaderScope idempotency across two LitUploaderBlock instances, M9m Task 3)', () => {
+describe('instance lifecycle (attachUploaderScope idempotency across two blocks)', () => {
   it('a second LitUploaderBlock joining the same ctx does not double-construct the upload stack', async () => {
     const ctxName = getCtxName();
     const observeSpy = vi.spyOn(UploadEventsController.prototype, 'observe');
@@ -408,7 +408,7 @@ describe('instance lifecycle (attachUploaderScope idempotency across two LitUplo
  * RED today and must go green once M9q registers the keys (+ runs
  * `activate`) from the ctx-scope seam itself, not `LitBlock`.
  */
-describe('instance lifecycle (M9q ChildBlock-only ctx-scope keys)', () => {
+describe('instance lifecycle (ChildBlock-only ctx-scope keys)', () => {
   it('a ChildBlock-only ctx (no v1 block anywhere) resolves the eagerly-constructed controller-owned ctx-scope keys after adoption', async () => {
     const ctxName = getCtxName();
     // `uc-copyright` is a pure-consumer ported `ChildBlock` — no `uc-config`,
@@ -451,7 +451,7 @@ describe('instance lifecycle (M9q ChildBlock-only ctx-scope keys)', () => {
     expect(container.get(LocaleController).get('upload-file')).toBe('Upload file');
   });
 
-  it('the same ChildBlock-only ctx tears down cleanly once the block disconnects (M9o refcount, no double-destroy)', async () => {
+  it('the same ChildBlock-only ctx tears down cleanly once the block disconnects (refcounted, no double-destroy)', async () => {
     const ctxName = getCtxName();
     page.render(<uc-copyright ctx-name={ctxName}></uc-copyright>);
     await expect.poll(() => hasCtx(ctxName)).toBe(true);
@@ -494,7 +494,7 @@ describe('instance lifecycle (M9q ChildBlock-only ctx-scope keys)', () => {
   });
 });
 
-describe('instance lifecycle (container-owned single-instance pins, M9l final-review follow-up)', () => {
+describe('instance lifecycle (container-owned single-instance pins)', () => {
   it('every ctx-scoped controller resolves to a single cached instance off the container (no re-shadowing)', async () => {
     const ctxName = getCtxName();
     page.render(

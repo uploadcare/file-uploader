@@ -38,7 +38,7 @@ const mount = async (ctxName: string): Promise<{ el: DropArea; config: ConfigCon
   return { el, config };
 };
 
-describe('DropArea (M-god step 6b-3 migration)', () => {
+describe('DropArea', () => {
   it('attaches the uploader scope and renders into its own light DOM', async () => {
     const ctxName = freshCtxName();
     const { el } = await mount(ctxName);

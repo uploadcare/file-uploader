@@ -52,7 +52,7 @@ const mountWithConfig = async (ctxName: string): Promise<{ el: PrimaryAction; co
 
 const iconEl = (el: PrimaryAction): Element | null => el.querySelector('uc-icon');
 
-describe('PrimaryAction (M-god step 6b-1 migration)', () => {
+describe('PrimaryAction', () => {
   it('renders/hides the source icon reactively when dynamicButtonShowFirstIcon toggles (getTracked)', async () => {
     const ctxName = freshCtxName();
     const { el, config } = await mountWithConfig(ctxName);

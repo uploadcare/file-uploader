@@ -65,7 +65,7 @@ const validationInput = (el: FormInput): HTMLInputElement | null => el.querySele
 const hiddenInputs = (el: FormInput): HTMLInputElement[] =>
   Array.from(el.querySelectorAll<HTMLInputElement>('input[type="hidden"]'));
 
-describe('FormInput (M-god step 6b-4 migration)', () => {
+describe('FormInput', () => {
   it('creates the validation input on ready, reflecting multipleMin via ConfigController', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);

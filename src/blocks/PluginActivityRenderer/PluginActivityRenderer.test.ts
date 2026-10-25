@@ -36,7 +36,7 @@ const mount = async (ctxName: string): Promise<PluginActivityRenderer> => {
   return el;
 };
 
-describe('PluginActivityRenderer (M-god step 6b-2 migration)', () => {
+describe('PluginActivityRenderer', () => {
   // `PluginActivityRenderer` has no always-bound `@inject` field: its only
   // controller read is the conditionally-bound `PluginController`, resolved via
   // the now-or-when-available `whenController(PluginController)` (M-god step

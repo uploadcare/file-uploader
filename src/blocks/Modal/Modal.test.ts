@@ -46,7 +46,7 @@ const mount = async (
 
 const dialogOf = (el: Modal): HTMLDialogElement | null => el.querySelector('dialog');
 
-describe('Modal (M-god step 6b-3 migration)', () => {
+describe('Modal', () => {
   it('opens/closes the <dialog> reactively when the router modal slot changes (no subRouter)', async () => {
     const ctxName = freshCtxName();
     const { el, router } = await mount(ctxName, 'camera');

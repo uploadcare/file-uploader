@@ -44,7 +44,7 @@ const mount = async (
 const innerValue = (el: ProgressBarCommon): number | undefined =>
   (el.querySelector('uc-progress-bar') as ProgressBar | null)?.value;
 
-describe('ProgressBarCommon (M-god step 6b-2 migration)', () => {
+describe('ProgressBarCommon', () => {
   it('re-renders the inner progress-bar value reactively when commonProgress changes (getTracked, no ctx.sub)', async () => {
     const ctxName = freshCtxName();
     const { el, collectionState } = await mount(ctxName);

@@ -60,7 +60,7 @@ describe('uc-copyright', () => {
     await expect.element(page.getByTestId('uc-copyright')).toBeInTheDocument();
   });
 
-  it('bootstraps its own ctx and renders with NO v1 block present anywhere in the composition (M9o)', async () => {
+  it('bootstraps its own ctx and renders with NO v1 block present anywhere in the composition', async () => {
     const ctxName = getCtxName();
     const { hasCtx } = await import('../utils/registry.js');
     expect(hasCtx(ctxName)).toBe(false);

@@ -91,7 +91,7 @@ const mount = async (
 
 const editorEl = (el: CloudImageEditorActivity): HTMLElement | null => el.querySelector('uc-cloud-image-editor');
 
-describe('CloudImageEditorActivity (M-god step 6b-9 migration)', () => {
+describe('CloudImageEditorActivity', () => {
   it('renders nothing until the uploadCollection entry (with a cdnUrl) resolves', async () => {
     const ctxName = freshCtxName();
     // Router params present, but no uploadCollection resolved on the container ->

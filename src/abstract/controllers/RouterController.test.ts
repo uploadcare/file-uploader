@@ -8,7 +8,7 @@ import { ConfigController } from './ConfigController';
 import { NAVIGATE_CANCEL, RouterController } from './RouterController';
 
 const setup = () => {
-  // RouterController is container-resolved (M-god step 3c): it emits via the
+  // RouterController is container-resolved: it emits via the
   // container-owned `EventEmitter`, `@inject`-ed lazily. Bind a spy so specs can
   // assert the exact `(type, payload, options)` dispatch — including the modal
   // debounce, which now lives inside RouterController's own `_emit`.
@@ -690,7 +690,7 @@ describe('RouterController (v2)', () => {
     });
   });
 
-  describe('emit debounce (M-god step 3c — debounce lives in RouterController)', () => {
+  describe('emit debounce', () => {
     it('debounces MODAL_OPEN and MODAL_CLOSE, emits ACTIVITY_CHANGE immediately', () => {
       const { router, emit } = setup();
 
@@ -718,7 +718,7 @@ describe('RouterController (v2)', () => {
     });
   });
 
-  describe('currentActivity (signal-backed field, M-god step 3c)', () => {
+  describe('currentActivity (signal-backed field)', () => {
     it('tracks the effective (modal-aware) activity across transitions', () => {
       const { router } = setup();
       expect(router.currentActivity).toBeNull();
