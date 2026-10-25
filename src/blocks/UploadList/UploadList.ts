@@ -1,5 +1,6 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { type CollectionSummary, collectionHeader, partitionByStatus } from '../../abstract/collectionSummary';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
@@ -8,6 +9,7 @@ import { deriveEntryStatus } from '../../abstract/deriveEntryStatus';
 import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { throttled } from '../../lit/rate-limited-method';
@@ -33,14 +35,6 @@ export type FilesViewMode = 'grid' | 'list';
  * - `compact` — no header; toolbar is add-more only (minimal solution)
  */
 export type UploadListChrome = 'default' | 'compact';
-
-export type Summary = {
-  total: number;
-  succeed: number;
-  uploading: number;
-  failed: number;
-  validatingBeforeUploading: number;
-};
 
 export class UploadList extends ActivityChildBlock {
   // Controllers become `@inject` fields (the getter re-resolves from the
@@ -94,7 +88,7 @@ export class UploadList extends ActivityChildBlock {
   private _hasFiles = false;
 
   @state()
-  private _latestSummary: Summary | null = null;
+  private _latestSummary: CollectionSummary | null = null;
 
   // The clicked row, by uid so it survives the virtualizer unmounting it.
   @state()
@@ -202,50 +196,26 @@ export class UploadList extends ActivityChildBlock {
     }
   }
 
-  // Cheap toolbar summary: ONE pass over the raw collection entries computing
-  // status counts, instead of `getOutputCollectionState()` which builds a full
-  // `OutputFileEntry` object per entry (O(N) allocation) just for these numbers.
-  // Status precedence is single-sourced with `getOutputItem` via
-  // `deriveEntryStatus`. `anyValidationPending` mirrors the old
-  // `allEntries.some(isValidationPending)` (ANY entry), while
-  // `validatingBeforeUploading` counts only IDLE entries pending validation.
-  private _computeSummary(): Summary & { anyValidationPending: boolean } {
+  // Cheap toolbar summary over the raw collection entries, instead of `getOutputCollectionState()`, which builds a
+  // full `OutputFileEntry` per entry just for these numbers. The status of each entry comes from `deriveEntryStatus`,
+  // as in `getOutputItem`. `anyValidationPending` covers every entry; `validatingBeforeUploading` only idle ones.
+  private _computeSummary(): CollectionSummary & { anyValidationPending: boolean } {
     const collection = this._uploadCollection;
-    let succeed = 0;
-    let uploading = 0;
-    let failed = 0;
-    let validatingBeforeUploading = 0;
-    let anyValidationPending = false;
-
+    const fields: UploadEntryData[] = [];
     for (const id of collection.items()) {
       const entry = collection.read(id);
-      if (!entry) {
-        continue;
-      }
-      const fields = entry.values;
-      if (fields.isValidationPending) {
-        anyValidationPending = true;
-      }
-      switch (deriveEntryStatus(fields)) {
-        case 'failed':
-          failed++;
-          break;
-        case 'success':
-          succeed++;
-          break;
-        case 'uploading':
-          uploading++;
-          break;
-        case 'idle':
-          if (fields.isValidationPending) {
-            validatingBeforeUploading++;
-          }
-          break;
-        // 'removed' entries are not counted.
-      }
+      if (entry) fields.push(entry.values);
     }
+    const { success, uploading, failed, idle } = partitionByStatus(fields, deriveEntryStatus);
 
-    return { total: collection.size, succeed, uploading, failed, validatingBeforeUploading, anyValidationPending };
+    return {
+      total: collection.size,
+      success: success.length,
+      uploading: uploading.length,
+      failed: failed.length,
+      validatingBeforeUploading: idle.filter((entry) => entry.isValidationPending).length,
+      anyValidationPending: fields.some((entry) => entry.isValidationPending),
+    };
   }
 
   private _updateUploadsState(): void {
@@ -277,13 +247,13 @@ export class UploadList extends ActivityChildBlock {
     let allDone = false;
     let doneBtnEnabled = false;
 
-    const readyToUpload = summary.total - summary.succeed - summary.uploading - summary.failed;
+    const readyToUpload = summary.total - summary.success - summary.uploading - summary.failed;
     if (readyToUpload > 0 && fitCountRestrictions && validationOk && config.get('confirmUpload')) {
       uploadBtnVisible = true;
     } else {
       allDone = true;
       const groupOk = config.get('groupOutput') ? !!this._collectionState.get('groupInfo') : true;
-      doneBtnEnabled = summary.total === summary.succeed && fitCountRestrictions && validationOk && groupOk;
+      doneBtnEnabled = summary.total === summary.success && fitCountRestrictions && validationOk && groupOk;
     }
 
     this._doneBtnVisible = allDone;
@@ -300,7 +270,7 @@ export class UploadList extends ActivityChildBlock {
     if (
       !prev ||
       prev.total !== summary.total ||
-      prev.succeed !== summary.succeed ||
+      prev.success !== summary.success ||
       prev.uploading !== summary.uploading ||
       prev.failed !== summary.failed ||
       prev.validatingBeforeUploading !== summary.validatingBeforeUploading
@@ -309,27 +279,9 @@ export class UploadList extends ActivityChildBlock {
     }
   }
 
-  private _getHeaderText(summary: Summary): string {
-    const localizedText = (status: keyof Summary) => {
-      let count = summary[status];
-      if (status === 'uploading') {
-        count += summary.validatingBeforeUploading;
-      }
-      return this.l10n(`header-${status}`, {
-        count: count,
-      });
-    };
-    if (summary.uploading > 0 || summary.validatingBeforeUploading > 0) {
-      return localizedText('uploading');
-    }
-    if (summary.failed > 0) {
-      return localizedText('failed');
-    }
-    if (summary.succeed > 0) {
-      return localizedText('succeed');
-    }
-
-    return localizedText('total');
+  private _getHeaderText(summary: CollectionSummary): string {
+    const { key, count } = collectionHeader(summary);
+    return this.l10n(key, { count });
   }
 
   // Guard: the upload list may only be open while it has files (or
