@@ -140,6 +140,29 @@ describe('UploaderPublicApi', () => {
       expect(ctrl.collection.size).toBe(1);
     });
 
+    describe('silent and source defaults', () => {
+      const UUID = '12345678-1234-1234-1234-123456789012';
+      const uploadcareFile = { uuid: UUID, cdnUrl: `https://ucarecdn.com/${UUID}/` } as unknown as UploadcareFile;
+      const adders: [string, (api: UploaderPublicApi, options?: { silent?: boolean; source?: string }) => string][] = [
+        ['addFileFromUrl', (api, o) => api.addFileFromUrl('https://example.com/a.jpg', o).internalId],
+        ['addFileFromUuid', (api, o) => api.addFileFromUuid(UUID, o).internalId],
+        ['addFileFromCdnUrl', (api, o) => api.addFileFromCdnUrl(`https://ucarecdn.com/${UUID}/`, o).internalId],
+        ['addFileFromObject', (api, o) => api.addFileFromObject(new File(['a'], 'a.txt'), o).internalId],
+        ['addFileFromUploadcareFile', (api, o) => api.addFileFromUploadcareFile(uploadcareFile, o).internalId],
+      ];
+
+      it.each(adders)('%s adds a loud entry from the API by default, and takes both as options', (_, add) => {
+        const { api, ctrl } = setup();
+        const read = (id: string) => {
+          const entry = ctrl.collection.read(id as never);
+          return { silent: entry?.get('silent'), source: entry?.get('source') };
+        };
+
+        expect(read(add(api))).toEqual({ silent: false, source: UploadSource.API });
+        expect(read(add(api, { silent: true, source: 'my-source' }))).toEqual({ silent: true, source: 'my-source' });
+      });
+    });
+
     it('addFileFromUrl honors silent/fileName/source options', () => {
       const { api } = setup();
       const entry = api.addFileFromUrl('https://example.com/a.jpg', {

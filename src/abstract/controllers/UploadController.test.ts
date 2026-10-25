@@ -423,6 +423,40 @@ describe('UploadController', () => {
   });
 
   describe('beforeUpload hooks', () => {
+    // Read while the upload call is in flight: its success write-back replaces these fields with the server's.
+    const fieldsAtUpload = (collection: UploadCollectionController, id: Uid) => {
+      let seen: unknown[] = [];
+      mockUploadFile.mockImplementationOnce(async () => {
+        const entry = collection.read(id);
+        seen = [entry?.get('fileName'), entry?.get('mimeType'), entry?.get('isImage'), entry?.get('fileSize')];
+        return makeFileInfo();
+      });
+      return () => seen;
+    };
+
+    it('uploads the file a hook returns and re-derives the entry fields from it', async () => {
+      const replaced = new File(['replaced!'], 'b.png', { type: 'image/png' });
+      const { controller, collection } = setup({ hooks: [makeHook({ handler: () => ({ file: replaced }) })] });
+      const id = collection.add({ file: new File(['x'], 'a.txt', { type: 'text/plain' }), fileName: 'a.txt' });
+      const seen = fieldsAtUpload(collection, id);
+
+      await controller.uploadEntry(id);
+
+      expect(mockUploadFile.mock.calls[0]?.[0]).toBe(replaced);
+      expect(seen()).toEqual(['b.png', 'image/png', true, replaced.size]);
+    });
+
+    it('keeps the file name when a hook returns a Blob, which has none', async () => {
+      const blob = new Blob(['blob'], { type: '' });
+      const { controller, collection } = setup({ hooks: [makeHook({ handler: () => ({ file: blob }) })] });
+      const id = collection.add({ file: new File(['x'], 'a.txt', { type: 'text/plain' }), fileName: 'a.txt' });
+      const seen = fieldsAtUpload(collection, id);
+
+      await controller.uploadEntry(id);
+
+      expect(seen()).toEqual(['a.txt', null, false, 4]);
+    });
+
     it('invokes no further hook and uploads nothing once the ctx is disposed mid-hook', async () => {
       let finishFirst: (() => void) | undefined;
       const second = vi.fn(({ file }: { file: File | Blob }) => ({ file }));
