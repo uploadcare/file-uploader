@@ -1,6 +1,6 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import type { SourceButtonConfig } from '../../blocks/SourceBtn/SourceBtn';
-import { stringToArray } from '../../utils/stringToArray';
+import { deserializeCsv } from '../../utils/comma-separated';
 import type { ControllerContainer } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { PluginController, type PluginSourceRegistration } from '../managers/plugin';
@@ -40,7 +40,7 @@ export class SourceListController implements ReactiveController {
       this._config.observe(
         'sourceList',
         (val) => {
-          this._rawSourceList = stringToArray(val);
+          this._rawSourceList = deserializeCsv(val);
           this._updateSources();
         },
         { immediate: true },

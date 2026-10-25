@@ -1,6 +1,6 @@
+import { deserializeCsv } from '../../utils/comma-separated';
 import { delay } from '../../utils/delay';
 import { getTopLevelOrigin } from '../../utils/get-top-level-origin';
-import { stringToArray } from '../../utils/stringToArray';
 import { ExternalUploadSource } from '../../utils/UploadSource';
 import { wildcardRegexp } from '../../utils/wildcardRegexp';
 import { buildThemeDefinition } from './buildThemeDefinition';
@@ -156,7 +156,7 @@ export class ExternalSource extends ChildBlock {
     selectedFile: NonNullable<InputMessageMap['selected-files-change']['selectedFiles']>[number],
   ): string {
     if (selectedFile.alternatives) {
-      const preferredTypes = stringToArray(this._config.get('externalSourcesPreferredTypes'));
+      const preferredTypes = deserializeCsv(this._config.get('externalSourcesPreferredTypes'));
       for (const preferredType of preferredTypes) {
         const regexp = wildcardRegexp(preferredType);
         for (const [type, typeUrl] of Object.entries(selectedFile.alternatives)) {

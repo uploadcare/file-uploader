@@ -1,5 +1,5 @@
 import { browserInfo } from './browser-info';
-import { stringToArray } from './stringToArray';
+import { deserializeCsv } from './comma-separated';
 
 export const BASIC_IMAGE_WILDCARD = 'image/*' as const;
 export const BASIC_VIDEO_WILDCARD = 'video/*' as const;
@@ -36,7 +36,7 @@ export const mergeFileTypes = (fileTypes?: string[]): string[] => {
   if (!fileTypes) {
     return [];
   }
-  return fileTypes.filter((item): item is string => typeof item === 'string').flatMap((str) => stringToArray(str));
+  return fileTypes.filter((item): item is string => typeof item === 'string').flatMap((str) => deserializeCsv(str));
 };
 
 export const matchMimeType = (mimeType: string, allowedFileTypes: string[]): boolean => {
