@@ -22,7 +22,7 @@ import { deserializeCsv, serializeCsv } from '../utils/comma-separated';
 import {
   BASIC_IMAGE_WILDCARD,
   BASIC_VIDEO_WILDCARD,
-  fileIsImage,
+  fileDerivedFields,
   IMAGE_ACCEPT_LIST,
   mergeFileTypes,
 } from '../utils/fileTypes';
@@ -50,6 +50,15 @@ export type ApiAddFileCommonOptions = {
   fileName?: string;
   source?: string;
 };
+
+/** Options for adding a local file, which can also carry its path inside a dropped folder. */
+type ApiAddFileObjectOptions = ApiAddFileCommonOptions & { fullPath?: string };
+
+/** `silent` and `source` for a new entry: loud and from the JS API, unless the caller says otherwise. */
+const addOptions = ({ silent, source }: ApiAddFileCommonOptions) => ({
+  silent: silent ?? false,
+  source: source ?? UploadSource.API,
+});
 
 /** Whether `value` is exactly a file uuid — checked by the same parser that backs `addFileFromCdnUrl`'s validation. */
 const isFileUuid = (value: string): boolean => {
@@ -178,8 +187,7 @@ export class UploaderPublicApi {
     const internalId = this._uploadCollection.add({
       externalUrl: url,
       fileName: fileName ?? null,
-      silent: silent ?? false,
-      source: source ?? UploadSource.API,
+      ...addOptions({ silent, source }),
     });
     return this.getOutputItem(internalId);
   };
@@ -194,8 +202,7 @@ export class UploaderPublicApi {
     const internalId = this._uploadCollection.add({
       uuid,
       fileName: fileName ?? null,
-      silent: silent ?? false,
-      source: source ?? UploadSource.API,
+      ...addOptions({ silent, source }),
     });
     return this.getOutputItem(internalId);
   };
@@ -216,8 +223,7 @@ export class UploaderPublicApi {
       cdnUrl,
       cdnUrlModifiers: parsedCdnUrl.cdnUrlModifiers,
       fileName: fileName ?? parsedCdnUrl.filename ?? null,
-      silent: silent ?? false,
-      source: source ?? UploadSource.API,
+      ...addOptions({ silent, source }),
     });
     return this.getOutputItem(internalId);
   };
@@ -226,24 +232,18 @@ export class UploaderPublicApi {
   // `addFileFromObject` and the batch `addFilesFromObjects`.
   private _objectFileInit(
     file: File,
-    { silent, fileName, source, fullPath }: ApiAddFileCommonOptions & { fullPath?: string } = {},
+    { silent, fileName, source, fullPath }: ApiAddFileObjectOptions = {},
   ): Partial<UploadEntryData> {
     return {
       file,
-      isImage: fileIsImage(file),
-      mimeType: file.type || null,
+      ...fileDerivedFields(file),
       fileName: fileName ?? file.name,
-      fileSize: file.size,
-      silent: silent ?? false,
-      source: source ?? UploadSource.API,
+      ...addOptions({ silent, source }),
       fullPath: fullPath ?? null,
     };
   }
 
-  public addFileFromObject = (
-    file: File,
-    options: ApiAddFileCommonOptions & { fullPath?: string } = {},
-  ): OutputFileEntry<'idle'> => {
+  public addFileFromObject = (file: File, options: ApiAddFileObjectOptions = {}): OutputFileEntry<'idle'> => {
     const internalId = this._uploadCollection.add(this._objectFileInit(file, options));
     return this.getOutputItem(internalId);
   };
@@ -254,9 +254,7 @@ export class UploaderPublicApi {
    * the whole batch, and it skips the per-file `getOutputItem` `OutputFileEntry`
    * build that the single-add returns (and callers here discard).
    */
-  public addFilesFromObjects = (
-    entries: ReadonlyArray<{ file: File } & ApiAddFileCommonOptions & { fullPath?: string }>,
-  ): void => {
+  public addFilesFromObjects = (entries: ReadonlyArray<{ file: File } & ApiAddFileObjectOptions>): void => {
     if (entries.length === 0) {
       return;
     }
@@ -273,8 +271,7 @@ export class UploaderPublicApi {
       ...uploadcareFileToEntryData(file),
       // A caller-supplied name takes precedence over the file's own.
       fileName: fileName ?? file.originalFilename ?? null,
-      silent: silent ?? false,
-      source: source ?? UploadSource.API,
+      ...addOptions({ silent, source }),
     });
     return this.getOutputItem(internalId);
   };
