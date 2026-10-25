@@ -140,8 +140,8 @@ export class EditorImageCropper extends EditorBlock {
           // supplies the new image's `imageSize` prop — reactivation then
           // happens in `updated`. Reactivating here would use the previous
           // image's still-stale `imageSize` (the root clears it to null before
-          // the size fetch). `deactivate` also bumps the activation generation,
-          // aborting any in-flight activation of the old image.
+          // the size fetch). `deactivate` also aborts the current activation, so an
+          // in-flight activation of the old image stops.
           const originalUrl = this.editorController.get('*originalUrl');
           if (originalUrl !== this._lastOriginalUrl) {
             this._lastOriginalUrl = originalUrl;
