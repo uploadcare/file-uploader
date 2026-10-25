@@ -2,6 +2,7 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { deriveEntryStatus } from '../../abstract/deriveEntryStatus';
 import { inject } from '../../abstract/di/inject';
 import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
@@ -94,10 +95,16 @@ export class FileItem extends FileItemConfig {
     collection.remove(this.uid);
   };
 
-  // The state-machine verdict. `read` is `getTracked`, so `SignalWatcher`
-  // re-renders on the exact keys read.
+  // The state-machine verdict: the output status (`deriveEntryStatus`), with the queue and validation steps checked
+  // after a failure and before the rest. `read` is `getTracked`, so `SignalWatcher` re-renders on the exact keys read.
   private _deriveState(read: <K extends UploadEntryKeys>(key: K) => UploadEntryData[K]): FileItemStateValue {
-    if (read('errors').length > 0) {
+    const status = deriveEntryStatus({
+      isRemoved: false,
+      errors: read('errors'),
+      fileInfo: read('fileInfo'),
+      isUploading: read('isUploading'),
+    });
+    if (status === 'failed') {
       return FileItemState.FAILED;
     }
     if (read('isQueuedForUploading')) {
@@ -109,11 +116,11 @@ export class FileItem extends FileItemConfig {
     if (read('isValidationPending')) {
       return FileItemState.VALIDATION;
     }
-    if (read('isUploading')) {
-      return FileItemState.UPLOADING;
-    }
-    if (read('fileInfo')) {
+    if (status === 'success') {
       return FileItemState.FINISHED;
+    }
+    if (status === 'uploading') {
+      return FileItemState.UPLOADING;
     }
     return FileItemState.IDLE;
   }
