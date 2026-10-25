@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { ConfigType } from '../../../types/index';
 import { initialConfig } from '../../Config/initialConfig';
-import { calcCameraModes } from '../calcCameraModes';
+import { calcCameraModes, parseCameraModes } from '../calcCameraModes';
 
 describe('calcCameraModes', () => {
   it('should return both modes enabled when cameraModes includes video and photo', () => {
@@ -47,5 +47,15 @@ describe('calcCameraModes', () => {
       isVideoRecordingEnabled: true,
       isPhotoEnabled: true,
     });
+  });
+});
+
+describe('parseCameraModes', () => {
+  it('keeps the known modes in order, trimmed, and drops the rest', () => {
+    expect(parseCameraModes(' video , unknown,photo,')).toEqual(['video', 'photo']);
+  });
+
+  it('returns an empty list for an empty string', () => {
+    expect(parseCameraModes('')).toEqual([]);
   });
 });
