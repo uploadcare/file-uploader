@@ -1,10 +1,11 @@
 import type { UploaderPlugin } from '../abstract/managers/plugin';
+import { INSTAGRAM_SOURCE } from '../utils/UploadSource';
 
 export const instagramPlugin: UploaderPlugin = {
   id: 'instagram',
   setup({ pluginApi }) {
     pluginApi.registry.registerSource({
-      id: 'instagram',
+      id: INSTAGRAM_SOURCE,
       label: 'src-type-instagram',
       icon: 'instagram',
       expand: () => {

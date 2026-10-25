@@ -5,6 +5,7 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
@@ -67,7 +68,7 @@ export class PrimaryAction extends ChildBlock {
   private get localizedSourceLabel(): string {
     if (!this.source?.label) return '';
 
-    if (['local', 'url', 'camera'].includes(this.source?.id)) {
+    if ([UploadSource.LOCAL, UploadSource.URL, UploadSource.CAMERA].includes(this.source?.id)) {
       return this.l10n(this.source.label).toLowerCase();
     }
 
@@ -126,7 +127,7 @@ export class PrimaryAction extends ChildBlock {
 
   private _handleClick() {
     if (this.hasEntries) {
-      this._router.navigate('upload-list');
+      this._router.navigate(ACTIVITY_TYPES.UPLOAD_LIST);
       return;
     }
 

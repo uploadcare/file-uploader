@@ -8,6 +8,9 @@ export const ExternalUploadSource = Object.freeze({
   ONEDRIVE: 'onedrive',
 } as const);
 
+/** A source that was removed; its id still turns up in `sourceList`, where it gets an explanation. */
+export const INSTAGRAM_SOURCE = 'instagram';
+
 export const UploadSourceMobile = Object.freeze({
   MOBILE_VIDEO_CAMERA: 'mobile-video-camera',
   MOBILE_PHOTO_CAMERA: 'mobile-photo-camera',
