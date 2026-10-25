@@ -56,7 +56,7 @@ export class EditorCropButtonControl extends EditorButtonControl {
       patch = { mirror: next };
     }
 
-    this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
+    this.sendClickEvent(e, {
       operation: this.operation,
       next,
       prev,

@@ -490,7 +490,7 @@ export class EditorToolbar extends EditorBlock {
   }
 
   private readonly _handleCancel = (e: MouseEvent): void => {
-    this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
+    this.sendClickEvent(e, {
       action: 'cancel',
     });
     this._cancelPreload?.();
@@ -498,7 +498,7 @@ export class EditorToolbar extends EditorBlock {
   };
 
   private readonly _handleApply = (e: MouseEvent): void => {
-    this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
+    this.sendClickEvent(e, {
       action: 'apply',
     });
     this.dispatchEvent(
@@ -511,7 +511,7 @@ export class EditorToolbar extends EditorBlock {
   };
 
   private readonly _handleApplySlider = (e: MouseEvent): void => {
-    this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
+    this.sendClickEvent(e, {
       action: 'apply-slider',
       operation: parseFilterValue(this._operationTooltip),
     });
@@ -521,7 +521,7 @@ export class EditorToolbar extends EditorBlock {
   };
 
   private readonly _handleCancelSlider = (e: MouseEvent): void => {
-    this.editorController.telemetry.sendEventCloudImageEditor(e, this.editorController.get('*tabId'), {
+    this.sendClickEvent(e, {
       action: 'cancel-slider',
     });
     const slider = this._sliderRef.value;
@@ -535,7 +535,7 @@ export class EditorToolbar extends EditorBlock {
     if (!id) {
       return;
     }
-    this.editorController.telemetry.sendEventCloudImageEditor(e, id);
+    this.sendClickEvent(e, { tabId: id });
     this._activateTab(id);
   };
 
@@ -555,7 +555,7 @@ export class EditorToolbar extends EditorBlock {
       this._setShowSlider(true);
     }
 
-    this.editorController.telemetry.sendEventCloudImageEditor(originalEvent, this.editorController.get('*tabId'), {
+    this.sendClickEvent(originalEvent, {
       operation: parseFilterValue(this._operationTooltip),
     });
 
@@ -572,7 +572,7 @@ export class EditorToolbar extends EditorBlock {
     this._setShowSlider(true);
     this._currentOperation = e.operation;
 
-    this.editorController.telemetry.sendEventCloudImageEditor(e.originalEvent, this.editorController.get('*tabId'), {
+    this.sendClickEvent(e.originalEvent, {
       operation: parseFilterValue(this._operationTooltip),
     });
 

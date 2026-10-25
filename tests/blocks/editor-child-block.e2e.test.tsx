@@ -26,7 +26,7 @@ class TestEditorRoot extends TestEditorRootBase {
     telemetry: {
       sendEvent: this.telemetrySendEvent,
       sendEventError: this.telemetrySendEventError,
-      sendEventCloudImageEditor: vi.fn(),
+      sendActionEvent: vi.fn(),
     },
     proxyUrl: async (url) => url,
   });

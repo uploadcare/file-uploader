@@ -9,7 +9,6 @@ import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryData, UploadEntryKeys } from '../../abstract/uploadEntrySchema';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
-import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './file-item.css';
 import { effect } from '../../lit/effect';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
@@ -89,15 +88,7 @@ export class FileItem extends FileItemConfig {
     }
     // Telemetry only for a real removal — guard first, so a stale/double
     // `uc:remove` (or an unset uid) doesn't record a phantom `remove-file`.
-    this._telemetry.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'remove-file',
-          node: this.tagName,
-        },
-      },
-    });
+    this._telemetry.sendActionEvent('remove-file', this.tagName);
     // Aborting the in-flight upload is file/upload logic and lives in
     // `UploadCollectionController.remove` — the UI just requests the removal.
     collection.remove(this.uid);
@@ -224,16 +215,7 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    this._telemetry.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: action.id,
-          node: this.tagName,
-          pluginId: action.pluginId,
-        },
-      },
-    });
+    this._telemetry.sendActionEvent(action.id, this.tagName, { pluginId: action.pluginId });
 
     this.runTask(async () => {
       try {

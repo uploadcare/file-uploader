@@ -420,8 +420,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
           this._emitTelemetry((tm) => tm.sendEvent(event as Parameters<TelemetryManager['sendEvent']>[0])),
         sendEventError: (err, context) =>
           this._emitTelemetry((tm) => tm.sendEventError(err, context as string | undefined)),
-        sendEventCloudImageEditor: (e, tabId, options) =>
-          this._emitTelemetry((tm) => tm.sendEventCloudImageEditor(e, tabId, options)),
+        sendActionEvent: (event, node, extra) => this._emitTelemetry((tm) => tm.sendActionEvent(event, node, extra)),
       },
       proxyUrl: (url) => this.proxyUrl(url),
     });

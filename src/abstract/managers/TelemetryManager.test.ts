@@ -628,13 +628,11 @@ describe('TelemetryManager', () => {
     expect(payload.payload.metadata.error).toBe('plain string failure');
   });
 
-  it('sendEventCloudImageEditor reports the interaction metadata', async () => {
+  it('sendActionEvent reports the event, its node and the extra metadata', async () => {
     const { manager, enable } = setup();
     enable();
-    const button = document.createElement('button');
-    const event = { currentTarget: button, type: 'click' } as unknown as MouseEvent;
 
-    manager.sendEventCloudImageEditor(event, 'crop', { extra: 1 });
+    manager.sendActionEvent('click', 'BUTTON', { tabId: 'crop', extra: 1 });
     await flush();
 
     const payload = sendEventMock.mock.calls[0]?.[0] as { eventType: string; payload: { metadata: unknown } };

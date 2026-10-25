@@ -221,6 +221,14 @@ export abstract class EditorBlock extends EditorBlockBase {
     return this._editorCtx.controllerOrNull;
   }
 
+  /** Report a click as an action event on the current tab; `extra` adds metadata and can name another tab. */
+  protected sendClickEvent(e: MouseEvent, extra: Record<string, unknown> = {}): void {
+    this.editorController.telemetry.sendActionEvent(e.type, (e.currentTarget as HTMLElement | null)?.tagName, {
+      tabId: this.editorController.get('*tabId'),
+      ...extra,
+    });
+  }
+
   /**
    * `l10n` that tolerates running with no adopted controller — falls back to
    * the raw key. For lifecycle hooks (`willUpdate`/`updated`/a debounced

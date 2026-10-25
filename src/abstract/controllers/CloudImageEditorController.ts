@@ -90,8 +90,8 @@ export interface EditorServices {
   telemetry: {
     sendEvent: (e: unknown) => void;
     sendEventError: (err: unknown, ctx?: unknown) => void;
-    /** Cloud-editor-specific action-event helper — same contract as `TelemetryManager.sendEventCloudImageEditor`. */
-    sendEventCloudImageEditor: (e: MouseEvent, tabId: string, options?: Record<string, unknown>) => void;
+    /** Same contract as `TelemetryManager.sendActionEvent`. */
+    sendActionEvent: (event: string, node: string | undefined, extra?: Record<string, unknown>) => void;
   };
   proxyUrl: (url: string) => Promise<string>;
 }
@@ -103,7 +103,7 @@ function createDefaultServices(): EditorServices {
     // No real config to read yet — `undefined` as a stand-in until `setServices`
     // injects the real accessor; narrow cast at this one boundary (default-only).
     getConfig: <K extends keyof ConfigType>(_key: K) => undefined as unknown as ConfigType[K],
-    telemetry: { sendEvent: () => {}, sendEventError: () => {}, sendEventCloudImageEditor: () => {} },
+    telemetry: { sendEvent: () => {}, sendEventError: () => {}, sendActionEvent: () => {} },
     proxyUrl: async (url) => url,
   };
 }
