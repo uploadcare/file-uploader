@@ -6,6 +6,7 @@ import type {
   OutputErrorCollection,
   OutputFileEntry,
 } from '../types/index';
+import { partitionByStatus } from './collectionSummary';
 import { CollectionStateController } from './controllers/CollectionStateController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import type { ControllerContainer } from './di/ControllerContainer';
@@ -117,27 +118,12 @@ export function buildOutputCollectionState<
     const allEntries = getOutputData(container);
     const { errors } = atBuild;
 
-    // One pass partitions the entries by status; a `removed` entry lands in no bucket.
-    const successEntries: OutputFileEntry<'success'>[] = [];
-    const failedEntries: OutputFileEntry<'failed'>[] = [];
-    const uploadingEntries: OutputFileEntry<'uploading'>[] = [];
-    const idleEntries: OutputFileEntry<'idle'>[] = [];
-    for (const entry of allEntries) {
-      switch (entry.status) {
-        case 'success':
-          successEntries.push(entry as OutputFileEntry<'success'>);
-          break;
-        case 'failed':
-          failedEntries.push(entry as OutputFileEntry<'failed'>);
-          break;
-        case 'uploading':
-          uploadingEntries.push(entry as OutputFileEntry<'uploading'>);
-          break;
-        case 'idle':
-          idleEntries.push(entry as OutputFileEntry<'idle'>);
-          break;
-      }
-    }
+    const buckets = partitionByStatus(allEntries, (entry) => entry.status);
+    // `partitionByStatus` sorts by the status each entry carries, which is what narrows its type.
+    const successEntries = buckets.success as OutputFileEntry<'success'>[];
+    const failedEntries = buckets.failed as OutputFileEntry<'failed'>[];
+    const uploadingEntries = buckets.uploading as OutputFileEntry<'uploading'>[];
+    const idleEntries = buckets.idle as OutputFileEntry<'idle'>[];
 
     const isFailed = errors.length > 0 || failedEntries.length > 0;
     const isUploading = uploadingEntries.length > 0;
