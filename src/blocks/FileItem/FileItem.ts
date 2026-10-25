@@ -355,7 +355,7 @@ export class FileItem extends FileItemConfig {
     const source = entry.getTracked('source');
     const externalUrl = entry.getTracked('externalUrl');
     if (externalUrl && source && Object.values(ExternalUploadSource).includes(source)) {
-      return this.l10n('waiting-for', { source: this.l10n(`src-type-${canonicalSourceName(source)}`) });
+      return this.l10n('waiting-for', { source: this.l10n<string>(`src-type-${canonicalSourceName(source)}`) });
     }
     return '';
   }

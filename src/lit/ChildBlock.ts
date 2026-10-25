@@ -20,7 +20,7 @@ import { ctxNameContext } from './ctx-name-context';
 import { effect, registerHostEffects } from './effect';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { LightDomMixin } from './LightDomMixin';
-import { createL10n } from './l10n';
+import { type CheckedL10nFunction, createL10n } from './l10n';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
 import { registerHostSubscriptions } from './subscription';
 
@@ -185,7 +185,7 @@ export abstract class ChildBlock extends ChildBlockBase {
    * re-renders the block when the dictionary loads or the locale switches — no
    * explicit subscription needed.
    */
-  public l10n = createL10n(() => this._locale);
+  public l10n: CheckedL10nFunction = createL10n(() => this._locale);
 
   /**
    * Per-ctx logger for this block. `error`/`warn`/`warnOnce` always print; the

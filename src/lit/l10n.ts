@@ -1,8 +1,20 @@
 import type { LocaleController } from '../abstract/controllers/LocaleController';
+import type { CustomLocaleDefinition, LocaleDefinition } from '../abstract/localeRegistry';
 import { getPluralForm } from '../utils/getPluralForm';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils';
 
 export type L10nFunction = (str: string, variables?: Record<string, string | number>) => string;
+
+export type L10nKey = keyof LocaleDefinition | keyof CustomLocaleDefinition;
+
+/** A literal key has to exist in the dictionary. A `string` from elsewhere (a plugin label, a config value) passes. */
+export type CheckedL10nKey<K extends string> = K extends L10nKey ? K : string extends K ? K : never;
+
+/** `L10nFunction` for the blocks' own calls, where a misspelt literal key fails to compile. */
+export type CheckedL10nFunction = <K extends string>(
+  key: CheckedL10nKey<K>,
+  variables?: Record<string, string | number>,
+) => string;
 
 export const createPluralizer = (getL10n: () => L10nFunction) => {
   return (key: string, count: number): string => {
