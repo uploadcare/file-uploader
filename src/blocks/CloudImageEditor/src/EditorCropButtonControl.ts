@@ -1,4 +1,3 @@
-import type { PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropOperation } from './toolbar-constants';
@@ -14,17 +13,15 @@ export class EditorCropButtonControl extends EditorButtonControl {
   @property({ type: String })
   public operation: CropOperation | undefined = undefined;
 
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
-    super.willUpdate(changedProperties);
-
+  protected override updateLabels(): void {
     if (this.operation) {
-      this.titleProp = this.l10nSafe('a11y-cloud-editor-apply-crop', {
+      this.buttonLabel = this.l10nSafe('a11y-cloud-editor-apply-crop', {
         name: this.l10nSafe(this.operation).toLowerCase(),
       });
       this.icon = this.operation;
     } else {
       this.icon = '';
-      this.titleProp = '';
+      this.buttonLabel = '';
     }
   }
 
