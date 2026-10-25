@@ -35,6 +35,7 @@ const freshCtxName = (): string => {
 };
 
 afterEach(() => {
+  vi.useRealTimers();
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) {
     UploaderRegistry.dispose(name);
@@ -423,9 +424,11 @@ describe('FileItem uid rebinding', () => {
 
     // A write to the PREVIOUS entry must not leak into this item (subscription
     // torn down by reset(); its signals no longer tracked by render).
+    vi.useFakeTimers();
     collection.publishProp(uidA, 'fileName', 'a-changed.png');
     await el.updateComplete;
-    await delay(120);
+    await vi.advanceTimersByTimeAsync(120);
+    vi.useRealTimers();
     expect(fileNameText(el)).toBe('b.png');
 
     // A write to the CURRENT entry still updates it.
@@ -469,9 +472,11 @@ describe('FileItem uid rebinding', () => {
 
     // The PREVIOUS entry starting to upload must NOT hide this item's focus —
     // its signals are no longer tracked by render.
+    vi.useFakeTimers();
     collection.publishProp(uidA, 'isUploading', true);
     await el.updateComplete;
-    await delay(120);
+    await vi.advanceTimersByTimeAsync(120);
+    vi.useRealTimers();
     expect(inner(el).hasAttribute('data-focused')).toBe(true);
 
     // The CURRENT entry uploading still hides it.

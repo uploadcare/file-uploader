@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { EventEmitter, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { destroyCtx } from '../lit/ctx-lifecycle';
@@ -595,11 +595,15 @@ describe('UploaderPublicApi', () => {
     });
 
     it('navigate warns when the target activity block never mounts', async () => {
+      vi.useFakeTimers();
+      onTestFinished(() => {
+        vi.useRealTimers();
+      });
       const { api, ctxName } = setup();
       const warn = vi.spyOn(console, 'warn');
 
       api.navigate('camera');
-      await new Promise((r) => setTimeout(r, 150));
+      await vi.advanceTimersByTimeAsync(150);
 
       expect(warn).toHaveBeenCalledWith(`[uc][${ctxName}][public-api]`, expect.stringContaining('camera'));
     });
@@ -615,11 +619,15 @@ describe('UploaderPublicApi', () => {
     });
 
     it('setCurrentActivity warns when the target activity block never mounts', async () => {
+      vi.useFakeTimers();
+      onTestFinished(() => {
+        vi.useRealTimers();
+      });
       const { api, ctxName } = setup();
       const warn = vi.spyOn(console, 'warn');
 
       api.setCurrentActivity('camera');
-      await new Promise((r) => setTimeout(r, 150));
+      await vi.advanceTimersByTimeAsync(150);
 
       expect(warn).toHaveBeenCalledWith(`[uc][${ctxName}][public-api]`, expect.stringContaining('camera'));
     });
@@ -668,12 +676,16 @@ describe('UploaderPublicApi', () => {
     });
 
     it('setModalState(true) keeps the modal closed if the block never mounts', async () => {
+      vi.useFakeTimers();
+      onTestFinished(() => {
+        vi.useRealTimers();
+      });
       const { api, ctrl } = setup();
       ctrl.router.setActivity('camera' as never);
       const openModal = vi.spyOn(ctrl.router, 'openModal');
 
       api.setModalState(true);
-      await new Promise((r) => setTimeout(r, 1100));
+      await vi.advanceTimersByTimeAsync(1100);
 
       expect(openModal).not.toHaveBeenCalled();
     });
