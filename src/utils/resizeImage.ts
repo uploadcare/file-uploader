@@ -1,3 +1,5 @@
+import { preloadImage } from './preloadImage';
+
 export function generateThumb(imgFile: File, size = 40): string | Promise<string> {
   if (imgFile.type === 'image/svg+xml') {
     // TODO: Return destuctor here
@@ -8,36 +10,31 @@ export function generateThumb(imgFile: File, size = 40): string | Promise<string
   if (!ctx) {
     return Promise.reject(new Error('Canvas context not supported'));
   }
-  const img = new Image();
   const srcUrl = URL.createObjectURL(imgFile);
-  const promise: Promise<string> = new Promise<string>((resolve, reject) => {
-    img.onload = () => {
-      URL.revokeObjectURL(srcUrl);
-      const ratio = img.height / img.width;
-      if (ratio > 1) {
-        canvas.width = size;
-        canvas.height = size * ratio;
-      } else {
-        canvas.height = size;
-        canvas.width = size / ratio;
-      }
-      ctx.fillStyle = 'rgb(240, 240, 240)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      canvas.toBlob((blob: Blob | null) => {
-        if (!blob) {
-          reject();
-          return;
-        }
-        const url = URL.createObjectURL(blob);
-        resolve(url);
-      });
-    };
-    img.onerror = (err: unknown) => {
-      URL.revokeObjectURL(srcUrl);
-      reject(err);
-    };
-  });
-  img.src = srcUrl;
-  return promise;
+  const { promise, image: img } = preloadImage(srcUrl);
+  return promise
+    .finally(() => URL.revokeObjectURL(srcUrl))
+    .then(
+      () =>
+        new Promise<string>((resolve, reject) => {
+          const ratio = img.height / img.width;
+          if (ratio > 1) {
+            canvas.width = size;
+            canvas.height = size * ratio;
+          } else {
+            canvas.height = size;
+            canvas.width = size / ratio;
+          }
+          ctx.fillStyle = 'rgb(240, 240, 240)';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvas.toBlob((blob: Blob | null) => {
+            if (!blob) {
+              reject();
+              return;
+            }
+            resolve(URL.createObjectURL(blob));
+          });
+        }),
+    );
 }
