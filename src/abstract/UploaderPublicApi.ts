@@ -18,7 +18,7 @@ import type {
 } from '../types/index';
 import { applyStyles } from '../utils/applyStyles';
 import { DEFAULT_CDN_ORIGIN } from '../utils/cdn/origin';
-import { serializeCsv } from '../utils/comma-separated';
+import { deserializeCsv, serializeCsv } from '../utils/comma-separated';
 import {
   BASIC_IMAGE_WILDCARD,
   BASIC_VIDEO_WILDCARD,
@@ -27,7 +27,6 @@ import {
   mergeFileTypes,
 } from '../utils/fileTypes';
 import { parseCdnUrlForEntry } from '../utils/parseCdnUrlForEntry';
-import { stringToArray } from '../utils/stringToArray';
 import { UploadSource } from '../utils/UploadSource';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
 import { controllerLogger } from './controllerLogger';
@@ -665,7 +664,7 @@ export class UploaderPublicApi {
   private get _sourceList(): string[] {
     let list: string[] = [];
     if (this.cfg.sourceList) {
-      list = stringToArray(this.cfg.sourceList);
+      list = deserializeCsv(this.cfg.sourceList);
     }
     return list;
   }

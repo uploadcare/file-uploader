@@ -1,6 +1,6 @@
 import { logger } from '../../../../abstract/logger';
 import type { ConfigType } from '../../../../types/exported';
-import { stringToArray } from '../../../../utils/stringToArray';
+import { deserializeCsv } from '../../../../utils/comma-separated';
 import { UID } from '../../../../utils/UID';
 import type { CropAspectRatio, CropPresetList } from '../types';
 
@@ -9,7 +9,7 @@ const log = logger.scope('crop-preset');
 const EXCLUDED_TYPES = ['free'];
 
 export const parseCropPreset = (cropPreset: ConfigType['cropPreset']): CropAspectRatio[] => {
-  const items = stringToArray(cropPreset);
+  const items = deserializeCsv(cropPreset);
   if (!items || items.length === 0) return [];
 
   const result: CropAspectRatio[] = [];

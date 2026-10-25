@@ -2,7 +2,7 @@ import { type CdnOperation, modifiers, type OperationLiteral } from '@uploadcare
 import { FILTER_NAMES, type FilterName } from '@uploadcare/cdn-url/ops';
 import { logger } from '../../../../abstract/logger';
 import { operationsFromModifiers } from '../../../../utils/cdn/operations';
-import { stringToArray } from '../../../../utils/stringToArray.js';
+import { deserializeCsv } from '../../../../utils/comma-separated';
 import type { Transformations } from '../types';
 
 const log = logger.scope('transformation-utils');
@@ -153,8 +153,8 @@ const asCrop = ([dimensions, alignment]: [string, string]) => {
   }
 
   return {
-    dimensions: stringToArray(dimensions, 'x').map(Number),
-    coords: stringToArray(alignment).map(Number),
+    dimensions: dimensions.split('x').map(Number),
+    coords: deserializeCsv(alignment).map(Number),
   };
 };
 

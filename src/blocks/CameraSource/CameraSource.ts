@@ -11,7 +11,6 @@ import { effect } from '../../lit/effect';
 import { debounced } from '../../lit/rate-limited-method';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
-import { stringToArray } from '../../utils/stringToArray';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './camera-source.css';
@@ -746,7 +745,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private get _cameraModes(): CameraMode[] {
-    return stringToArray(this._config.get('cameraModes')).filter(
+    return deserializeCsv(this._config.get('cameraModes')).filter(
       (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
     );
   }

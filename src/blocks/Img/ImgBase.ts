@@ -2,7 +2,7 @@ import { isProxyUrl, parseFileUrl, parseProxyUrl, serializeFileUrl, serializePro
 import { logger } from '../../abstract/logger';
 import { operationsFromModifiers } from '../../utils/cdn/operations';
 import { deliveryProxyOrigin } from '../../utils/cdn/origin';
-import { stringToArray } from '../../utils/stringToArray';
+import { deserializeCsv } from '../../utils/comma-separated';
 import { applyTemplateData } from '../../utils/template-utils';
 import { uniqueArray } from '../../utils/uniqueArray';
 import {
@@ -249,7 +249,7 @@ export class ImgBase extends ImgConfig {
   private get _breakpoints(): number[] | null {
     const breakpointsValue = this._str('breakpoints');
     if (breakpointsValue) {
-      const list = stringToArray(breakpointsValue);
+      const list = deserializeCsv(breakpointsValue);
       return uniqueArray(list.map((bp) => parseInt(bp, 10)));
     } else {
       return null;

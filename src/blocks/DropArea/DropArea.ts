@@ -11,7 +11,7 @@ import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { effect } from '../../lit/effect';
 import { ensureUploaderScope } from '../../lit/ensureUploaderScope';
-import { stringToArray } from '../../utils/stringToArray';
+import { deserializeCsv } from '../../utils/comma-separated';
 import { UploadSource } from '../../utils/UploadSource';
 import { addDropzone, DropzoneState, type DropzoneStateValue } from './addDropzone';
 import './drop-area.css';
@@ -238,7 +238,7 @@ export class DropArea extends ChildBlock {
   // the `_dropTextKey` getter.)
   @effect({ beforeUpdate: true })
   protected _syncSourceList(): void {
-    const list = stringToArray(this._config.getTracked('sourceList'));
+    const list = deserializeCsv(this._config.getTracked('sourceList'));
     this._sourceListAllowsLocal = list.includes(UploadSource.LOCAL);
     this._updateIsEnabled();
     this._updateVisibility();
