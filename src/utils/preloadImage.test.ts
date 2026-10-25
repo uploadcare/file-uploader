@@ -50,3 +50,35 @@ describe('preloadImage with a signal', () => {
     expect(image.src).toBe('');
   });
 });
+
+describe('preloadImage with decode', () => {
+  const decodingImage = (result: 'decodes' | 'fails') =>
+    class {
+      public onerror: ((event: Event) => void) | null = null;
+      public onload: (() => void) | null = null;
+      public naturalWidth = 0;
+      public decoding = 'auto';
+      public src = '';
+      public decode = vi.fn(() =>
+        result === 'decodes' ? Promise.resolve() : Promise.reject(new Error('EncodingError')),
+      );
+    };
+
+  it('resolves once the image is decoded, asking for async decoding', async () => {
+    vi.stubGlobal('Image', decodingImage('decodes'));
+    const { promise, image } = preloadImage('https://ucarecdn.com/ok/', { decode: true });
+
+    await expect(promise).resolves.toBeUndefined();
+    expect(image.decode).toHaveBeenCalledOnce();
+    expect(image.decoding).toBe('async');
+    expect(image.src).toBe('https://ucarecdn.com/ok/');
+  });
+
+  it('rejects with an Error that names the url when decoding fails', async () => {
+    vi.stubGlobal('Image', decodingImage('fails'));
+
+    await expect(preloadImage('https://ucarecdn.com/broken/', { decode: true }).promise).rejects.toThrow(
+      'Failed to load image https://ucarecdn.com/broken/',
+    );
+  });
+});

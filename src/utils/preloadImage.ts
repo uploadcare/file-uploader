@@ -1,9 +1,12 @@
 import { TRANSPARENT_PIXEL_SRC } from './transparentPixelSrc';
 
-/** `signal` aborts the load: the promise rejects with its reason and the image stops loading. */
+/**
+ * `signal` aborts the load: the promise rejects with its reason and the image stops loading. `decode` waits for the
+ * image to be decoded too, so showing it afterwards doesn't stall a frame.
+ */
 export function preloadImage(
   src: string,
-  { signal }: { signal?: AbortSignal } = {},
+  { signal, decode = false }: { signal?: AbortSignal; decode?: boolean } = {},
 ): {
   promise: Promise<void>;
   image: HTMLImageElement;
@@ -27,14 +30,22 @@ export function preloadImage(
       reject(signal?.reason);
     };
     signal?.addEventListener('abort', onAbort, { once: true });
-    image.onload = () => {
+    const onLoad = () => {
       signal?.removeEventListener('abort', onAbort);
       resolve();
     };
-    image.onerror = () => {
+    const onError = () => {
       signal?.removeEventListener('abort', onAbort);
       reject(new Error(`Failed to load image ${src}`));
     };
+    if (decode) {
+      image.decoding = 'async';
+      image.src = src;
+      image.decode().then(onLoad, onError);
+      return;
+    }
+    image.onload = onLoad;
+    image.onerror = onError;
     image.src = src;
   });
 
