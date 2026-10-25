@@ -4,7 +4,6 @@ import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import type { Uid } from '../../lit/Uid';
-import { delay } from '../../utils/delay';
 import { Thumb } from './Thumb';
 
 const mocks = vi.hoisted(() => ({
@@ -34,6 +33,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
   for (const el of mounted.splice(0)) el.remove();
   for (const name of ctxNames.splice(0)) UploaderRegistry.dispose(name);
@@ -85,19 +85,21 @@ describe('Thumb fallbacks', () => {
   });
 
   it('keeps an existing blob thumb when the CDN thumbnail fails to load', async () => {
+    vi.useFakeTimers();
     mocks.cdnLoads = false;
     const { thumbUrl } = await setup({ ...uploaded, file: imageFile(), thumbUrl: 'blob:existing' });
 
-    await delay(150);
+    await vi.advanceTimersByTimeAsync(150);
     expect(thumbUrl()).toBe('blob:existing');
     expect(mocks.generateThumb).not.toHaveBeenCalled();
   });
 
   it('leaves the thumb unset when the CDN thumbnail fails and there is no file', async () => {
+    vi.useFakeTimers();
     mocks.cdnLoads = false;
     const { thumbUrl } = await setup(uploaded);
 
-    await delay(150);
+    await vi.advanceTimersByTimeAsync(150);
     expect(thumbUrl()).toBeNull();
     expect(mocks.generateThumb).not.toHaveBeenCalled();
   });

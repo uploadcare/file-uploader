@@ -10,11 +10,9 @@ import { ConfigController } from './ConfigController';
 import { UploadCollectionController } from './UploadCollectionController';
 import { ValidationController } from './ValidationController';
 
-// The async path runs through a 500ms queue debounce, so the async tests use
-// real timers and wait it out rather than choreographing fake timers across
-// the upload-client Queue + per-entry promise chain.
+// The async path runs through a 500ms queue debounce; the specs run on fake timers and advance past it.
 const QUEUE_FLUSH_MS = 600;
-const flush = (ms = QUEUE_FLUSH_MS) => new Promise((resolve) => setTimeout(resolve, ms));
+const flush = (ms = QUEUE_FLUSH_MS) => vi.advanceTimersByTimeAsync(ms);
 
 // Built from the typed entry snapshot — the natural (inferred) shape is used
 // directly; the only boundary cast is on the api mock below. A fully
@@ -106,11 +104,13 @@ function setup(overrides: { onValidatorError?: (error: unknown, context?: string
 
 describe('ValidationController', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
     active.length = 0;
   });
   afterEach(() => {
     for (const c of active) c.destroy();
     vi.restoreAllMocks();
+    vi.useRealTimers();
   });
 
   it('runs an initial validation pass on construction', async () => {
