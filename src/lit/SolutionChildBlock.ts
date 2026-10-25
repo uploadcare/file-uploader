@@ -21,6 +21,10 @@ import { HostScopeController } from './HostScopeController';
 export abstract class SolutionChildBlock extends ChildBlock {
   public static override styleAttrs = ['uc-wgt-common'];
   public static lazyPlugins: LazyPluginEntry[] | null = null;
+  /** Whether the solution shows its activities in a modal. */
+  public static hasModal = true;
+  /** Whether a paste anywhere on the page adds files while the solution sits on its start screen (`pasteScope: 'global'`). */
+  public static ownsPagePaste = false;
 
   protected override controllerReady(container: ControllerContainer): void {
     super.controllerReady(container);
@@ -33,10 +37,11 @@ export abstract class SolutionChildBlock extends ChildBlock {
     // covers a plain disconnect AND an in-place `ctx-name` switch (which releases
     // while `isConnected` stays true, so Lit's own `hostDisconnected` never
     // fires), and stops a re-adoption from stacking a second registration.
+    const solution = this.constructor as typeof SolutionChildBlock;
     const clipboard = container.get(ClipboardController);
     const a11y = container.get(A11y);
     const scope = new HostScopeController(this, () => {
-      const unregisterClipboard = clipboard.registerScope(this);
+      const unregisterClipboard = clipboard.registerScope(this, { ownsPagePaste: solution.ownsPagePaste });
       const unregisterA11y = a11y.registerBlock(this);
       return () => {
         unregisterClipboard();
@@ -51,8 +56,9 @@ export abstract class SolutionChildBlock extends ChildBlock {
     // A boot-time identity fact on the container-owned `AppInfo`, not pub/sub
     // state — read lazily by telemetry as the payload's `component`.
     container.get(AppInfo).setSolutionName(this.tagName);
+    container.get(AppInfo).setHasModal(solution.hasModal);
 
-    const entries = (this.constructor as typeof SolutionChildBlock).lazyPlugins;
+    const entries = solution.lazyPlugins;
     if (entries) {
       // `LazyPluginsController` owns the lazy-plugin entries (M-god step 4); this
       // is the same instance `LazyPluginLoader` reads + subscribes to, so setting

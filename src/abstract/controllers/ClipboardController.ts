@@ -41,6 +41,8 @@ export class ClipboardController {
 
   private _armedEventTarget: Pick<Window, 'addEventListener' | 'removeEventListener'> | undefined;
   private _scopes: Set<Node> = new Set();
+  // Scopes whose solution takes a paste anywhere on the page while it sits on its start screen.
+  private _pagePasteScopes: Set<Node> = new Set();
   private _listener: (event: ClipboardEvent) => void;
   private _armed = false;
 
@@ -119,10 +121,8 @@ export class ClipboardController {
     return [...this._scopes].some((scope) => scope.isConnected);
   }
 
-  private _hasRegularSolutionScope(): boolean {
-    return [...this._scopes].some((scope) => {
-      return scope.isConnected && scope instanceof Element && scope.localName === 'uc-file-uploader-regular';
-    });
+  private _hasPagePasteScope(): boolean {
+    return [...this._pagePasteScopes].some((scope) => scope.isConnected);
   }
 
   private _isInsideScope(target: Node | null): boolean {
@@ -169,7 +169,7 @@ export class ClipboardController {
 
     switch (this._config.get('pasteScope')) {
       case 'global':
-        if (!isAllowedActivity && !(isInitialState && this._hasRegularSolutionScope())) {
+        if (!isAllowedActivity && !(isInitialState && this._hasPagePasteScope())) {
           return;
         }
         await this._handlePaste(event.clipboardData);
@@ -235,21 +235,26 @@ export class ClipboardController {
   /**
    * Register a DOM scope pastes may land in (`pasteScope: 'local'` only
    * handles pastes targeted inside a registered scope; a `'global'` scope
-   * must merely be connected). Returns an unregister fn.
+   * must merely be connected). `ownsPagePaste` lets a global paste through
+   * while the uploader sits on its start screen. Returns an unregister fn.
    */
-  public registerScope(scope: Node): () => void {
+  public registerScope(scope: Node, { ownsPagePaste = false }: { ownsPagePaste?: boolean } = {}): () => void {
     if (lifetimeOf(this).signal.aborted) {
       return () => {};
     }
 
     const wasEmpty = this._scopes.size === 0;
     this._scopes.add(scope);
+    if (ownsPagePaste) {
+      this._pagePasteScopes.add(scope);
+    }
     if (wasEmpty) {
       this._arm();
     }
 
     return () => {
       this._scopes.delete(scope);
+      this._pagePasteScopes.delete(scope);
       if (this._scopes.size === 0) {
         this._disarm();
       }
@@ -259,5 +264,6 @@ export class ClipboardController {
   public destroy(): void {
     this._disarm();
     this._scopes.clear();
+    this._pagePasteScopes.clear();
   }
 }

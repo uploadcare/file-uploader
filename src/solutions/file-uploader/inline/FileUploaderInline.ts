@@ -24,6 +24,7 @@ import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 export class FileUploaderInline extends SolutionChildBlock {
+  public static override hasModal = false;
   public static override lazyPlugins = fileUploaderLazyPlugins;
 
   // Type-only: feeds the JSX attribute typing (`ReflectAttributes` in

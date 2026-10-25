@@ -75,7 +75,8 @@ describe('SolutionChildBlock', () => {
     await expect.poll(() => child.readyCount).toBe(1);
     expect(container.get(AppInfo).solutionName).toBe('uc-test-solution-child');
     expect(registerBlockSpy).toHaveBeenCalledWith(child);
-    expect(registerScopeSpy).toHaveBeenCalledWith(child);
+    expect(registerScopeSpy).toHaveBeenCalledWith(child, { ownsPagePaste: false });
+    expect(container.get(AppInfo).hasModal).toBe(true);
     expect(container.get(LazyPluginsController).get()).toBe(testLazyPlugins);
     // The svg-sprite render path (mirrors LitSolutionBlock.render).
     expect(child.querySelector('.marker')?.textContent).toBe('solution-child');

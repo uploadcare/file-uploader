@@ -121,19 +121,19 @@ describe('ClipboardController', () => {
     expect(api.addFileFromObject).not.toHaveBeenCalled();
   });
 
-  it('global scope: initial state (no activity) is allowed only for the regular solution', async () => {
+  it('global scope: initial state (no activity) is allowed only for a scope that owns page paste', async () => {
     const regular = setup({ pasteScope: 'global', currentActivity: null });
     track(regular.layer);
-    regular.layer.registerScope(connectedScope('uc-file-uploader-regular'));
+    regular.layer.registerScope(connectedScope(), { ownsPagePaste: true });
     window.dispatchEvent(pasteEvent([fileItem(new File(['x'], 'x.txt'))]));
     await flush();
     expect(regular.api.addFileFromObject).toHaveBeenCalled();
   });
 
-  it('global scope: initial state with a non-regular scope is ignored', async () => {
+  it('global scope: initial state with a scope that does not own page paste is ignored', async () => {
     const { layer, api } = setup({ pasteScope: 'global', currentActivity: null });
     track(layer);
-    layer.registerScope(connectedScope('uc-file-uploader-minimal'));
+    layer.registerScope(connectedScope());
 
     window.dispatchEvent(pasteEvent([fileItem(new File(['x'], 'x.txt'))]));
     await flush();
