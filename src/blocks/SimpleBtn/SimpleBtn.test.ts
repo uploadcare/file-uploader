@@ -40,7 +40,7 @@ const mountWithConfig = async (ctxName: string): Promise<{ el: SimpleBtn; config
 
 const buttonText = (el: SimpleBtn): string | null | undefined => el.querySelector('button span')?.textContent?.trim();
 
-describe('SimpleBtn (M-god step 6b-1 migration)', () => {
+describe('SimpleBtn', () => {
   it('re-renders the button text reactively when config.multiple changes (getTracked, no subConfigValue)', async () => {
     const ctxName = freshCtxName();
     const { el, config } = await mountWithConfig(ctxName);

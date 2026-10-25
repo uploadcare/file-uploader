@@ -117,7 +117,7 @@ describe('ChildBlock.useOrNull()', () => {
   });
 });
 
-describe('ChildBlock consumer lifecycle (M-god step 6a)', () => {
+describe('ChildBlock consumer lifecycle', () => {
   it('registers as a container consumer on adoption', async () => {
     const ctxName = freshCtxName();
     await mount<UseBlock>('uc-test-use-block', ctxName);

@@ -52,7 +52,7 @@ const mountWithConfig = async (ctxName: string): Promise<{ el: DynamicBtn; confi
 
 const hasPrimaryAction = (el: DynamicBtn): boolean => el.querySelector('uc-primary-action') !== null;
 
-describe('DynamicBtn (M-god step 6b-2 migration)', () => {
+describe('DynamicBtn', () => {
   it('re-renders reactively when config.dynamicButtonViewMode changes (getTracked, no subConfigValue)', async () => {
     const ctxName = freshCtxName();
     const { el, config } = await mountWithConfig(ctxName);

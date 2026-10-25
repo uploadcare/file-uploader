@@ -37,7 +37,7 @@ const mount = async (ctxName: string): Promise<{ el: ExternalSource; router: Rou
   return { el, router };
 };
 
-describe('ExternalSource (M-god step 6b-2 migration)', () => {
+describe('ExternalSource', () => {
   it('routes the close button through the container-resolved RouterController (use())', async () => {
     // The deferred mount in controllerReady reads router params for the (absent)
     // externalSourceType and console.errors then bails — silence it here so the

@@ -39,7 +39,7 @@ const mount = async (ctxName: string): Promise<{ el: CameraSource; config: Confi
 
 const videoEl = (el: CameraSource): HTMLVideoElement | null => el.querySelector('video');
 
-describe('CameraSource (M-god step 6b-3 migration)', () => {
+describe('CameraSource', () => {
   it('re-renders the video transform reactively when cameraMirror changes (getTracked, no subConfigValue)', async () => {
     const ctxName = freshCtxName();
     const { el, config } = await mount(ctxName);

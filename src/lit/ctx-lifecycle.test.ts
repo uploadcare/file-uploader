@@ -34,7 +34,7 @@ describe('isCtxUnreferenced', () => {
     expect(isCtxUnreferenced(ctxName)).toBe(true);
   });
 
-  it('is false while a container consumer is registered, true after it is removed (M-god step 6a)', () => {
+  it('is false while a container consumer is registered, true after it is removed', () => {
     // The refcount lives on the per-ctx ControllerContainer: a ChildBlock is a
     // container consumer for the span of its controller adoption, and this
     // predicate reads container.isUnreferenced().

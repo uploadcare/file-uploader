@@ -34,7 +34,7 @@ const mount = async (ctxName: string): Promise<UrlSource> => {
   return el;
 };
 
-describe('UrlSource (M-god step 6b-1 migration)', () => {
+describe('UrlSource', () => {
   it('routes header back/close navigation through the container-resolved RouterController (use())', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);

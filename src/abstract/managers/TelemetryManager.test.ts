@@ -18,7 +18,7 @@ vi.mock('@uploadcare/quality-insights', () => ({
 
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-// TelemetryManager is container-resolved now (M-god step 3c): a zero-arg ctor
+// TelemetryManager is container-resolved now: a zero-arg ctor
 // that `@inject`s ConfigController/EventBus/AppInfo/RouterController and, in
 // `init()`, subscribes to the config store AND observes the bus (`onAny`). Build
 // all collaborators through one throwaway container so the manager injects the
@@ -349,7 +349,7 @@ describe('TelemetryManager', () => {
     expect(payload.activity).toBe('start-from');
   });
 
-  describe('bus observer (M-god step 3c)', () => {
+  describe('bus observer', () => {
     it('an event emitted on the bus reaches telemetry (replaces the per-emit mirror)', async () => {
       const { emitOnBus } = setup({ solution: 'uc-file-uploader-regular' }); // enabled by default
 

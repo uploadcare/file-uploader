@@ -43,7 +43,7 @@ const mount = async (
   return { el, router };
 };
 
-describe('FileUploaderRegular (M-god step 6b-4 migration)', () => {
+describe('FileUploaderRegular', () => {
   it('routes every activity to the foreground (modal) slot', async () => {
     const ctxName = freshCtxName();
     const { router } = await mount(ctxName);

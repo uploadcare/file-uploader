@@ -844,7 +844,7 @@ describe('UploaderPublicApi', () => {
     });
   });
 
-  describe('container wiring (M-god step 8a)', () => {
+  describe('container wiring', () => {
     it('is reachable as container.get(UploaderPublicApi) as the same instance', () => {
       const { api, ctrl } = setup();
       // M-god step 8b removed `ctrl.api`/`setApi` (the clipboard now `@inject`s
@@ -852,7 +852,7 @@ describe('UploaderPublicApi', () => {
       expect(ctrl.container.get(UploaderPublicApiClass)).toBe(api);
     });
 
-    it('resolves getOutputCollectionState from its own container — no bag bridge (M-god step 9c-1)', () => {
+    it('resolves getOutputCollectionState from its own container', () => {
       // The api reaches its per-ctx container through the `CONTAINER` tag every
       // container-built instance carries, so a container-resolved api can build
       // its output state with no `setBagBridge` hand-off. A bare, empty container
@@ -874,7 +874,7 @@ describe('UploaderPublicApi', () => {
     });
   });
 
-  describe('plugin manager @inject (M-god step 8c)', () => {
+  describe('plugin manager @inject', () => {
     it('the api resolves its plugin manager from the container — the same instance ensurePluginManager bound', () => {
       const { ctrl } = setup();
       const fromContainer = ctrl.container.get(PluginController);

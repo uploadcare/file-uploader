@@ -58,7 +58,7 @@ const settle = async (el: FileUploaderInline): Promise<void> => {
 
 const cancelBtn = (el: FileUploaderInline): HTMLButtonElement | null => el.querySelector('button.uc-cancel-btn');
 
-describe('FileUploaderInline (M-god step 6b-4 migration)', () => {
+describe('FileUploaderInline', () => {
   it('routes every activity to the background slot', async () => {
     const ctxName = freshCtxName();
     const { router } = await mount(ctxName);

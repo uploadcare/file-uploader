@@ -114,7 +114,7 @@ describe('ChildBlock', () => {
     expect(child.readyCount).toBe(0);
   });
 
-  it('self-bootstraps its own ctx and renders immediately with no v1 block ever present (M9o)', async () => {
+  it('self-bootstraps its own ctx and renders immediately with no v1 block ever present', async () => {
     const ctxName = getCtxName();
     expect(hasCtx(ctxName)).toBe(false);
 
@@ -206,7 +206,7 @@ describe('ChildBlock', () => {
     expect(child.readyCount).toBe(1);
   });
 
-  it('releases the old controller and self-bootstraps a fresh ctx when ctx-name switches to a not-yet-available name (M9o)', async () => {
+  it('releases the old controller and self-bootstraps a fresh ctx when ctx-name switches to a not-yet-available name', async () => {
     const ctxNameA = getCtxName();
     const ctxNameB = getCtxName();
     page.render(<uc-config ctx-name={ctxNameA} pubkey="demopublickey" testMode></uc-config>);
@@ -238,7 +238,7 @@ describe('ChildBlock', () => {
     expect(child.releasedCount).toBe(1);
   });
 
-  it('tears down an abandoned self-bootstrapped ctx once unreferenced when ctx-name switches while connected (M9o follow-up)', async () => {
+  it('tears down an abandoned self-bootstrapped ctx once unreferenced when ctx-name switches while connected', async () => {
     const ctxNameA = getCtxName();
     const ctxNameB = getCtxName();
     const { delay } = await import('@/utils/delay.js');
@@ -547,7 +547,7 @@ describe('mixed lifecycle (v1 blocks + ChildBlock on one ctx)', () => {
  * (M9o Task 2) and no v1 `LitBlock` ever exists in the composition. Teardown
  * must be driven purely by the `UploaderRegistry` consumer refcount.
  */
-describe('v1-free lifecycle (ChildBlock-only composition, M9o Task 3d)', () => {
+describe('v1-free lifecycle (ChildBlock-only composition)', () => {
   it('one of two ChildBlocks leaving keeps the ctx alive; the last one leaving tears it down', async () => {
     const ctxName = getCtxName();
     const { delay } = await import('@/utils/delay.js');

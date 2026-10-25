@@ -43,7 +43,7 @@ const mountWithConfig = async (ctxName: string, name: string): Promise<{ el: Ico
 
 const useHref = (el: Icon): string | null | undefined => el.querySelector('svg use')?.getAttribute('href');
 
-describe('Icon (M-god step 6b-2 migration)', () => {
+describe('Icon', () => {
   it('renders the default sprite href for a name with no custom resolver', async () => {
     const { el } = await mountWithConfig(freshCtxName(), 'upload');
     expect(useHref(el)).toBe('#uc-icon-upload');

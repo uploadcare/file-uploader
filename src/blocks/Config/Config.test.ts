@@ -54,7 +54,7 @@ const mount = async (ctxName: string, attrs: Record<string, string> = {}): Promi
   return el;
 };
 
-describe('Config (<uc-config>) — M-god step 6b-5 use(ConfigController)', () => {
+describe('Config (<uc-config>)', () => {
   it('writes a DOM-property value into the SAME ConfigController the app reads', async () => {
     const ctxName = freshCtxName();
     // Force ctx/container/controller into existence up front so we compare

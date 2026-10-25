@@ -134,7 +134,7 @@ afterEach(() => {
   }
 });
 
-describe('UploadList (M-god step 6b-8 migration)', () => {
+describe('UploadList', () => {
   it('re-renders the <uc-file-item> list reactively when uploadList changes (getTracked, no ctx.sub)', async () => {
     const ctxName = freshCtxName();
     const { el, collectionState } = await mount(ctxName);
