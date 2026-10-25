@@ -1,13 +1,23 @@
 import type { ConfigType } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
+import type { CameraMode } from './CameraSource';
 import { CameraSourceTypes } from './constants';
+
+/** The known modes in a `cameraModes` value, in the order given. */
+export const parseCameraModes = (cameraModes: string): CameraMode[] =>
+  deserializeCsv(cameraModes).filter(
+    (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
+  );
 
 export const calcCameraModes = (
   cfg: ConfigType,
 ): {
   isVideoRecordingEnabled: boolean;
   isPhotoEnabled: boolean;
-} => ({
-  isVideoRecordingEnabled: deserializeCsv(cfg.cameraModes).includes(CameraSourceTypes.VIDEO),
-  isPhotoEnabled: deserializeCsv(cfg.cameraModes).includes(CameraSourceTypes.PHOTO),
-});
+} => {
+  const modes = parseCameraModes(cfg.cameraModes);
+  return {
+    isVideoRecordingEnabled: modes.includes(CameraSourceTypes.VIDEO),
+    isPhotoEnabled: modes.includes(CameraSourceTypes.PHOTO),
+  };
+};

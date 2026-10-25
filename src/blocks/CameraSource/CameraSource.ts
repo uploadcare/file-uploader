@@ -10,12 +10,12 @@ import { ChildBlock } from '../../lit/ChildBlock';
 import { effect } from '../../lit/effect';
 import { debounced } from '../../lit/rate-limited-method';
 import { canUsePermissionsApi } from '../../utils/abilities';
-import { deserializeCsv } from '../../utils/comma-separated';
 import { UploadSource } from '../../utils/UploadSource';
 import './camera-source.css';
 import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
+import { parseCameraModes } from './calcCameraModes';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 
 import '../ActivityHeader/ActivityHeader';
@@ -690,9 +690,7 @@ export class CameraSource extends ChildBlock {
   };
 
   private get _cameraModes(): CameraMode[] {
-    return deserializeCsv(this._config.get('cameraModes')).filter(
-      (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
-    );
+    return parseCameraModes(this._config.get('cameraModes'));
   }
 
   // `@debounced` drops a call after release and cancels a pending one, so the body reads `@inject` fields freely.
@@ -970,12 +968,7 @@ export class CameraSource extends ChildBlock {
   @effect({ beforeUpdate: true })
   protected _syncCameraModes(): void {
     if (!this.isConnected) return;
-    const cameraModes = deserializeCsv(this._config.getTracked('cameraModes'));
-    this._handleCameraModes(
-      cameraModes.filter(
-        (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
-      ),
-    );
+    this._handleCameraModes(parseCameraModes(this._config.getTracked('cameraModes')));
   }
 
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
