@@ -147,11 +147,10 @@ describe('@effect / registerHostEffects', () => {
     expect(host.ran).toEqual(['good']);
   });
 
-  it("uses the host's scoped `_log.warn` when reachable, instead of the module logger", () => {
+  it('warns through the logger it is given, instead of the module logger', () => {
     const scopedWarn = vi.fn();
     const moduleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     class Host extends FakeHost {
-      public _log = { warn: scopedWarn };
       @effect()
       protected bad(): void {
         throw new Error('boom');
@@ -159,7 +158,7 @@ describe('@effect / registerHostEffects', () => {
     }
 
     const host = new Host();
-    wire(host);
+    registerHostEffects(host as unknown as EffectHost, { warn: scopedWarn });
     host.registered[0]?.fn();
 
     expect(scopedWarn).toHaveBeenCalledTimes(1);

@@ -425,10 +425,10 @@ export abstract class ChildBlock extends ChildBlockBase {
     // and `@subscription` (imperative subscribes returning a teardown). Both are
     // auto-disposed on release, so a block never tracks a disposer by hand.
     // (`@throttled`/`@debounced` need no wiring: they follow `adoptionSignal`.)
-    for (const dispose of registerHostEffects(this)) {
+    for (const dispose of registerHostEffects(this, this._log)) {
       this._disposables.add(dispose);
     }
-    for (const teardown of registerHostSubscriptions(this)) {
+    for (const teardown of registerHostSubscriptions(this, this._log)) {
       this._disposables.add(teardown);
     }
     this.requestUpdate();

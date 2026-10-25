@@ -1,4 +1,4 @@
-import { logger } from '../abstract/logger';
+import { type Logger, logger } from '../abstract/logger';
 import { boundMethod, collectDecoratedMethods, makeMethodDecorator } from './reactive-method-registry';
 
 const log = logger.scope('subscription');
@@ -32,13 +32,12 @@ export const subscription = makeMethodDecorator<void>(SUBSCRIPTION);
  * they produced — a returned array is flattened, and non-function entries are
  * ignored. The host tracks these for release.
  *
- * Isolate-and-warn: a throwing method is contained (logged via the host's
- * scoped logger when reachable, else the module logger) so the remaining
- * methods still register and any teardowns already collected are kept.
+ * Isolate-and-warn: a throwing method is contained (logged via `hostLog`, the
+ * host's scoped logger) so the remaining methods still register and any
+ * teardowns already collected are kept.
  */
-export function registerHostSubscriptions(host: object): Array<Unsubscribe> {
+export function registerHostSubscriptions(host: object, hostLog: Pick<Logger, 'warn'> = log): Array<Unsubscribe> {
   const teardowns: Array<Unsubscribe> = [];
-  const warn = (host as { _log?: { warn: (...args: unknown[]) => void } })._log?.warn ?? log.warn;
   for (const { key } of collectDecoratedMethods<void>(host, SUBSCRIPTION)) {
     const fn = boundMethod(host, key);
     if (!fn) continue;
@@ -46,7 +45,7 @@ export function registerHostSubscriptions(host: object): Array<Unsubscribe> {
     try {
       result = fn() as SubscriptionTeardown;
     } catch (err) {
-      warn(`a @subscription method (${String(key)}) threw during registration`, err);
+      hostLog.warn(`a @subscription method (${String(key)}) threw during registration`, err);
       continue;
     }
     for (const teardown of Array.isArray(result) ? result : [result]) {
