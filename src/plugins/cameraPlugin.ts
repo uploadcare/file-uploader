@@ -4,6 +4,7 @@ import { CameraSource } from '../blocks/CameraSource/CameraSource';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { browserFeatures } from '../utils/browser-info';
 import { deserializeCsv } from '../utils/comma-separated';
+import { UploadSource, UploadSourceMobile } from '../utils/UploadSource';
 
 export const cameraPlugin: UploaderPlugin = {
   id: 'camera',
@@ -13,15 +14,15 @@ export const cameraPlugin: UploaderPlugin = {
     // Desktop camera source — opens the camera activity.
     // On mobile devices with htmlMediaCapture, expands to separate photo/video sources.
     pluginApi.registry.registerSource({
-      id: 'camera',
+      id: UploadSource.CAMERA,
       label: 'src-type-camera',
       icon: 'camera',
       expand: () => {
         if (!browserFeatures.htmlMediaCapture) {
-          return ['camera'];
+          return [UploadSource.CAMERA];
         }
         const modes = deserializeCsv(pluginApi.config.get('cameraModes'));
-        return modes.length ? modes.map((mode) => `mobile-${mode}-camera`) : ['mobile-photo-camera'];
+        return modes.length ? modes.map((mode) => `mobile-${mode}-camera`) : [UploadSourceMobile.MOBILE_PHOTO_CAMERA];
       },
       onSelect: () => {
         uploaderApi.navigate(ACTIVITY_TYPES.CAMERA);
@@ -30,7 +31,7 @@ export const cameraPlugin: UploaderPlugin = {
 
     // Mobile sources — expanded from 'camera' on devices with htmlMediaCapture
     pluginApi.registry.registerSource({
-      id: 'mobile-photo-camera',
+      id: UploadSourceMobile.MOBILE_PHOTO_CAMERA,
       label: 'src-type-mobile-photo-camera',
       icon: 'camera',
       onSelect: () => {
@@ -39,7 +40,7 @@ export const cameraPlugin: UploaderPlugin = {
     });
 
     pluginApi.registry.registerSource({
-      id: 'mobile-video-camera',
+      id: UploadSourceMobile.MOBILE_VIDEO_CAMERA,
       label: 'src-type-mobile-video-camera',
       icon: 'video-camera',
       onSelect: () => {

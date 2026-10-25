@@ -2,6 +2,7 @@ import { defineComponents } from '../abstract/defineComponents';
 import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import { UrlSource } from '../blocks/UrlSource/UrlSource';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
+import { UploadSource } from '../utils/UploadSource';
 
 export const urlSourcePlugin: UploaderPlugin = {
   id: 'url-source',
@@ -20,7 +21,7 @@ export const urlSourcePlugin: UploaderPlugin = {
     });
 
     pluginApi.registry.registerSource({
-      id: 'url',
+      id: UploadSource.URL,
       label: 'src-type-from-url',
       icon: 'url',
       onSelect: () => {
