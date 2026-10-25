@@ -39,7 +39,7 @@ describe('plugin activity label', () => {
   });
 
   it('names the dialog from the params it was opened with, and follows them', async () => {
-    const label = vi.fn((params: Record<string, unknown>) => (typeof params.name === 'string' ? params.name : ''));
+    const label = vi.fn((params: Partial<{ name: string }>) => params.name ?? '');
     const { root, api } = await renderSolution('regular', { plugins: [withActivity({ id: 'lbl-fn', label })] });
     await vi.waitFor(() => expect(modalDialog(root, 'lbl-fn')).not.toBeNull());
     // Closed, it sees no params: the ones in the router belong to whatever else is open.
@@ -84,3 +84,9 @@ describe('plugin activity label', () => {
     await vi.waitFor(() => expect(labelOf(root, 'external')).toBe('Dropbox'));
   });
 });
+
+declare module '@/types/index' {
+  interface CustomActivities {
+    'lbl-fn': { params: { name: string } };
+  }
+}
