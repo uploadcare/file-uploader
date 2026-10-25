@@ -785,7 +785,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     }
     try {
       await this._lifetime.guard(this._waitForSize());
-    } catch {
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+      // The size wait timed out; `_waitForSize` has logged it.
       return;
     }
 
