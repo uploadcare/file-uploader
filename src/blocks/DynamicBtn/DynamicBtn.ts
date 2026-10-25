@@ -1,12 +1,11 @@
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { SourceListController } from '../../abstract/controllers';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
-import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
+import { observeSources } from '../../abstract/sources';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -80,8 +79,6 @@ export class DynamicBtn extends ChildBlock {
   private get _mode(): DynamicButtonMode {
     return this._config.getTracked('dynamicButtonViewMode');
   }
-
-  private _sourceListController: SourceListController | null = null;
 
   @state()
   private _sources: SourceButtonConfig[] = [];
@@ -196,16 +193,10 @@ export class DynamicBtn extends ChildBlock {
     this._status = collectionState.status;
   }
 
-  protected override controllerReady(container: ControllerContainer): void {
-    // Re-adoption would otherwise stack a new SourceListController per
-    // adoption without removing the previous one (same shape as SourceList).
-    this._teardownSourceListController();
-    this._sourceListController = new SourceListController(this, {
-      config: this._config,
-      container,
-      onSourcesChange: (sources) => {
-        this._sources = sources;
-      },
+  @subscription()
+  protected _wireSources(): Unsubscribe {
+    return observeSources(this.container, (sources) => {
+      this._sources = sources;
     });
   }
 
@@ -339,22 +330,6 @@ export class DynamicBtn extends ChildBlock {
         <uc-icon name="arrow-down"></uc-icon>
       </div>
     `;
-  }
-
-  protected override controllerReleased(): void {
-    this._teardownSourceListController();
-    // The throttled collection-update tick is cancelled on release automatically
-    // by `@throttled` (registered in `_adoptController`, drained by
-    // `_releaseController`) — no manual `.cancel()` needed here.
-  }
-
-  private _teardownSourceListController(): void {
-    if (!this._sourceListController) {
-      return;
-    }
-    this._sourceListController.hostDisconnected();
-    this.removeController(this._sourceListController);
-    this._sourceListController = null;
   }
 
   public override render() {

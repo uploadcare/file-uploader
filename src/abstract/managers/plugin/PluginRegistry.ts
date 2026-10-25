@@ -23,7 +23,7 @@ export class PluginRegistry {
   private _l10n: Owned<PluginL10nRegistration>[] = [];
 
   /**
-   * Notify consumers (LocaleManager, SourceListController, …) that the registry
+   * Notify consumers (LocaleManager, observeSources, …) that the registry
    * changed so they re-apply the new state. Coalesces a synchronous burst of
    * registrations — a plugin's setup() typically registers an icon, a source,
    * several l10n maps, … in one tick — into a single, deferred notification.
