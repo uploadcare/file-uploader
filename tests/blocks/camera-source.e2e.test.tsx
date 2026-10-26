@@ -198,6 +198,54 @@ describe('uc-camera-source (device selection)', () => {
     expect(first.getTracks().map((track) => track.readyState)).toEqual(first.getTracks().map(() => 'ended'));
   });
 
+  it('never reports access denied while a slow camera reopens after a switch', async () => {
+    // Stopping the old stream fires its `inactive` event, which reads as a revoked permission. A real camera takes
+    // longer than the permission state's 300 ms settle to reopen, so the stale 'denied' showed before 'granted'.
+    const getUserMedia = stubDevices();
+    renderRegularHost();
+    await navigateToCameraSource();
+    const video = () => document.querySelector('uc-camera-source video') as HTMLVideoElement | null;
+    await expect.poll(() => (video()?.srcObject as MediaStream | null)?.active).toBe(true);
+    const first = video()?.srcObject;
+    const messages: string[] = [];
+    const box = document.querySelector('uc-camera-source .uc-message-box')!;
+    const observer = new MutationObserver(() => {
+      if (!box.hasAttribute('hidden')) messages.push(box.querySelector('span')?.textContent ?? '');
+    });
+    observer.observe(box, { attributes: true, childList: true, subtree: true, characterData: true });
+    onTestFinished(() => observer.disconnect());
+    const realOpen = getUserMedia.getMockImplementation()!;
+    getUserMedia.mockImplementation(async (constraints) => {
+      await delay(600);
+      return realOpen(constraints);
+    });
+
+    await pickCamera('cam-b');
+    // The sentinel: the new stream is on the video, so the switch has fully settled.
+    await expect
+      .poll(() => video()?.srcObject !== first && (video()?.srcObject as MediaStream | null)?.active)
+      .toBe(true);
+    await delay(400);
+
+    expect(messages).not.toContain('Camera access denied');
+    expect(box.hasAttribute('hidden')).toBe(true);
+  });
+
+  it('reports access denied when the stream on screen ends', async () => {
+    // A revoked permission ends the live stream; stopping its tracks stands in for that.
+    stubDevices();
+    renderRegularHost();
+    await navigateToCameraSource();
+    const video = () => document.querySelector('uc-camera-source video') as HTMLVideoElement | null;
+    await expect.poll(() => (video()?.srcObject as MediaStream | null)?.active).toBe(true);
+
+    for (const track of (video()?.srcObject as MediaStream).getTracks()) track.stop();
+
+    await expect
+      .element(page.getByTestId('uc-camera-source').getByText('Camera access denied', { exact: true }))
+      .toBeVisible();
+  });
+
   it('keeps the picked camera across a devicechange that still lists it', async () => {
     const getUserMedia = stubDevices();
     renderRegularHost();
