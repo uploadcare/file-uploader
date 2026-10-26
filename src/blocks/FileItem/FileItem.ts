@@ -238,6 +238,7 @@ export class FileItem extends FileItemConfig {
   // paint. `beforeUpdate` fires this synchronously on adoption AND keeps firing on
   // `filesViewMode` change even while `_pauseRender` holds `shouldUpdate` off —
   // which a plain `willUpdate`+`getTracked` host-attr write could not do.
+  /** @internal */
   @effect({ beforeUpdate: true })
   protected _applyMode(): void {
     this.setAttribute('mode', this._config.getTracked('filesViewMode'));
@@ -251,6 +252,7 @@ export class FileItem extends FileItemConfig {
   // uploader scope attaches (`ensurePluginManager`, conditional) — possibly after
   // adoption, or never in a bare ctx — so go through `whenController`; its
   // callback returns the plugin-change subscription, which the unsubscribe disposes.
+  /** @internal */
   @subscription()
   protected _wirePluginFileActions(): Unsubscribe {
     return this.container.whenController(PluginController, (pm) => {

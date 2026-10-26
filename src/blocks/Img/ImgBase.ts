@@ -194,6 +194,7 @@ export class ImgBase extends ImgConfig {
     );
   }
 
+  /** @internal */
   protected _getElSize(el: HTMLElement, k = 1, wOnly = true): string | null {
     const rect = el.getBoundingClientRect();
     const w = k * Math.round(rect.width);

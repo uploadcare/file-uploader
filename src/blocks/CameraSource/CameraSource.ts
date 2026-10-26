@@ -694,6 +694,7 @@ export class CameraSource extends ChildBlock {
   }
 
   // `@debounced` drops a call after release and cancels a pending one, so the body reads `@inject` fields freely.
+  /** @internal */
   @debounced(300)
   protected _setPermissionsState(state: 'granted' | 'denied' | 'prompt'): void {
     this.classList.toggle('uc-initialized', state === 'granted');
@@ -958,6 +959,7 @@ export class CameraSource extends ChildBlock {
   // render getter — they're `@effect`s. `beforeUpdate` fires them eagerly and
   // synchronously on adoption (before `_onActivate`'s awaited work runs),
   // matching the former eager `subConfigValue` fire, then again on change.
+  /** @internal */
   @effect({ beforeUpdate: true })
   protected _syncEnableAudioRecording(): void {
     const enabled = this._config.getTracked('enableAudioRecording');
@@ -965,6 +967,7 @@ export class CameraSource extends ChildBlock {
     this._audioSelectDisabled = !enabled;
   }
 
+  /** @internal */
   @effect({ beforeUpdate: true })
   protected _syncCameraModes(): void {
     if (!this.isConnected) return;

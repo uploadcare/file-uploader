@@ -193,6 +193,7 @@ export abstract class ChildBlock extends ChildBlockBase {
    * config is on — so debug output is per-ctx accurate and prefixed with the
    * block's tag. The `isVerbose` predicate reads the container lazily at log
    * time (null-safe: a pre-adoption call is a no-op).
+   * @internal
    */
   protected readonly _log = logger.scope(this.tagName.toLowerCase().replace(/^uc-/, ''), {
     // Verbose tier prints only when THIS ctx's `debug` config is on; predicate +
@@ -482,7 +483,7 @@ export abstract class ChildBlock extends ChildBlockBase {
     this._applyTestMode();
   }
 
-  /** Lay the host out in the ctx locale's text direction; `ltr` clears it so the page's own direction applies. */
+  /** Lay the host out in the ctx locale's text direction; `ltr` clears it so the page's own direction applies. @internal */
   @effect()
   protected _applyLocaleDirection(): void {
     // Null-tolerant for the teardown-race tick, like `_applyTestMode`.
@@ -494,6 +495,7 @@ export abstract class ChildBlock extends ChildBlockBase {
     this.style.direction = direction === 'ltr' ? '' : direction;
   }
 
+  /** @internal */
   @effect()
   protected _applyTestMode(): void {
     // Runs post-adoption (effects wire at adoption), so the container is present;

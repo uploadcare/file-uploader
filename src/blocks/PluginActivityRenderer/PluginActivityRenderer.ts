@@ -99,6 +99,7 @@ export class PluginActivityRenderer extends ChildBlock {
 
   @injectOrNull(RouterController) private readonly _router!: RouterController | null;
 
+  /** @internal */
   @subscription()
   protected _wirePluginActivities(): Unsubscribe {
     return this.container.whenController(PluginController, (pluginManager) => {

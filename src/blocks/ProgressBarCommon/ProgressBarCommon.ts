@@ -41,6 +41,7 @@ export class ProgressBarCommon extends ChildBlock {
   // removed. The initial recompute covers an already-populated collection,
   // which otherwise wouldn't set `_visible` until the next property/collection
   // change.
+  /** @internal */
   @subscription()
   protected _wireProgress(): Unsubscribe {
     return this.container.whenController(UploadCollectionController, (collection) => {

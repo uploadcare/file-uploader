@@ -636,6 +636,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     // on change. Per-key `ConfigController.observe` (atomic dedup) replaces the
     // coarse `subscribe` + manual `Object.is` loop; change-only (no eager) — the
     // initial values are seeded by `_seedBuiltInConfig` in `controllerReady`.
+    /** @internal */
     @subscription()
     protected _wirePlainConfigSync(): Unsubscribe[] {
       return plainConfigKeys.map((key) => this._config.observe(key, (value) => this._setValue(key, value)));
@@ -648,6 +649,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     // (`immediate`) compute ORDER the all-keys loop had (the two `cameraModes`
     // computeds both read+write `cameraModes`, so order is observable). Composed
     // into one teardown, auto-disposed.
+    /** @internal */
     @subscription()
     protected _wireComputedProperties(): Unsubscribe[] {
       // `_setValue`/`_getValue` are string-keyed and untyped-value (they bridge

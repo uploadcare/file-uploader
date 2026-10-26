@@ -47,6 +47,7 @@ export function WithApi<T extends abstract new (...args: any[]) => ChildBlock>(B
     /**
      * Bridge the per-ctx {@link EventBus} to documented DOM `CustomEvent`s on
      * this host. `@subscription` wires at adoption and auto-disposes on release.
+     * @internal
      */
     @subscription()
     protected _bridgeBusToDom(): Unsubscribe {

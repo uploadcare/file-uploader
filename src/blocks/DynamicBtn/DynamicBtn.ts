@@ -177,6 +177,7 @@ export class DynamicBtn extends ChildBlock {
   // `!this.isConnected` bail and the manual `.cancel()` in `controllerReleased`.
   // The name is unchanged, so the `@subscription` observers can still hand this
   // stable bound reference to `observeCollection`.
+  /** @internal */
   @throttled(COLLECTION_SUMMARY_THROTTLE_MS)
   protected _throttledHandleCollectionUpdate(): void {
     this._updateButtonBasedOnCollectionState();
@@ -194,6 +195,7 @@ export class DynamicBtn extends ChildBlock {
     this._status = collectionState.status;
   }
 
+  /** @internal */
   @subscription()
   protected _wireSources(): Unsubscribe {
     return observeSources(this.container, (sources) => {
@@ -205,6 +207,7 @@ export class DynamicBtn extends ChildBlock {
   // attaches (which can race adoption), so go through `whenController`
   // (now-or-when-available); its callback returns the two observers, which
   // `whenController`'s unsubscribe disposes (so a re-adoption can't stack them).
+  /** @internal */
   @subscription()
   protected _wireCollectionObservers(): Unsubscribe {
     return this.container.whenController(UploadCollectionController, (collection) => [
@@ -219,6 +222,7 @@ export class DynamicBtn extends ChildBlock {
     ]);
   }
 
+  /** @internal */
   @subscription()
   protected _wireFileAddHook(): Unsubscribe {
     const router = this._router;

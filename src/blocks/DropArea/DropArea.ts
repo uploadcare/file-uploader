@@ -236,6 +236,7 @@ export class DropArea extends ChildBlock {
   // former eager `subConfigValue` fire) so `_isEnabled` is correct before the
   // first drop, and again whenever `sourceList` changes. (`multiple` folded into
   // the `_dropTextKey` getter.)
+  /** @internal */
   @effect({ beforeUpdate: true })
   protected _syncSourceList(): void {
     const list = deserializeCsv(this._config.getTracked('sourceList'));

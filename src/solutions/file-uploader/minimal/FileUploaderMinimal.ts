@@ -78,6 +78,7 @@ export class FileUploaderMinimal extends SolutionChildBlock {
   // otherwise the start-from trigger. Side-effecting (drives `setActivity`, not
   // a render read); the atomic `observe('uploadList')` fires only on a real
   // `uploadList` change, not every collection-state notify (e.g. a progress tick).
+  /** @internal */
   @subscription()
   protected _wireUploadListActivity(): Unsubscribe {
     return this._collectionState.observe(
@@ -92,6 +93,7 @@ export class FileUploaderMinimal extends SolutionChildBlock {
   // Activity coordination: close the modal once the background lands on the
   // upload list; re-seed start-from when everything closes. Atomic
   // `observeCurrentActivity` (dedup) + eager fire.
+  /** @internal */
   @subscription()
   protected _wireActivityCoordination(): Unsubscribe {
     return this._router.observeCurrentActivity(
@@ -108,6 +110,7 @@ export class FileUploaderMinimal extends SolutionChildBlock {
   }
 
   // Minimal forces `confirmUpload` off. Atomic `observe('confirmUpload')` + eager.
+  /** @internal */
   @subscription()
   protected _wireForceConfirmUploadOff(): Unsubscribe {
     return this._config.observe(
