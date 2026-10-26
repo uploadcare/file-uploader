@@ -38,9 +38,11 @@ export class CameraSource extends ChildBlock {
   private readonly _requestButtonHidden = canUsePermissionsApi();
 
   private readonly _session = new CameraSession({
-    whileAdopted: (work, dispose) => this.whileAdopted(work, dispose),
-    runTask: (task) => this.runTask(task),
-    adoptionSignal: () => this.adoptionSignal,
+    lifetime: {
+      whileAdopted: (work, dispose) => this.whileAdopted(work, dispose),
+      runTask: (task) => this.runTask(task),
+      adoptionSignal: () => this.adoptionSignal,
+    },
     config: {
       audioEnabled: () => this._config.get('enableAudioRecording'),
       mirror: () => this._config.get('cameraMirror'),

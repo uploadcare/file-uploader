@@ -3,7 +3,7 @@ import type { NavigationEdge } from '../../abstract/controllers/RouterController
 import { signalState } from '../../abstract/di/signalState';
 import { debounce } from '../../utils/debounce';
 import type { CameraAction } from './CameraActionEvent';
-import { CameraDevices, type DeviceOption } from './CameraDevices';
+import { CameraDevices, type CameraLifetime, type DeviceOption } from './CameraDevices';
 import { CameraRecorder, createCameraFile, RecordingClock } from './CameraRecorder';
 import { CameraStream, cameraConstraints, captureFrame } from './CameraStream';
 import type { CameraPermission, CameraPhase } from './cameraView';
@@ -19,9 +19,7 @@ const keepListedDeviceId = (devices: { value: string }[], currentId: string | nu
 
 /** What the camera element lends the session: its lifetime, config, elements, and the ways out. */
 export type CameraSessionHost = {
-  whileAdopted: <T>(work: PromiseLike<T>, dispose?: (value: T) => void) => Promise<T>;
-  runTask: (task: () => unknown) => void;
-  adoptionSignal: () => AbortSignal;
+  lifetime: CameraLifetime;
   config: {
     audioEnabled: () => boolean;
     mirror: () => boolean;
@@ -71,7 +69,7 @@ export class CameraSession {
 
   private readonly _setPermission = debounce((state: Exclude<CameraPermission, 'idle'>) => {
     // A state settling after the camera was released belongs to no one.
-    if (this._host.adoptionSignal().aborted) return;
+    if (this._host.lifetime.adoptionSignal().aborted) return;
     this._host.setHostClass('uc-initialized', state === 'granted');
     this.permission = state;
     if (state === 'prompt') {
@@ -98,12 +96,10 @@ export class CameraSession {
       },
     });
     this._devices = new CameraDevices({
-      whileAdopted: _host.whileAdopted,
-      runTask: _host.runTask,
-      adoptionSignal: _host.adoptionSignal,
+      lifetime: _host.lifetime,
       audioEnabled: _host.config.audioEnabled,
       cameraLabel: _host.cameraLabel,
-      onPermissionChange: () => _host.runTask(() => this._capture()),
+      onPermissionChange: () => _host.lifetime.runTask(() => this._capture()),
       onDevicesChange: ({ cameras, microphones }) => {
         this.cameras = cameras;
         this.selectedCameraId = keepListedDeviceId(cameras, this.selectedCameraId);
@@ -118,7 +114,7 @@ export class CameraSession {
   public async activate(cameraModes: CameraMode[]): Promise<void> {
     // Without the Permissions API, ask for the camera straight away.
     if (!(await this._devices.watchPermissions())) {
-      this._host.runTask(() => this._capture());
+      this._host.lifetime.runTask(() => this._capture());
     }
     await this._devices.requestAccess();
     await this._capture();
@@ -159,14 +155,14 @@ export class CameraSession {
         break;
       case 'select-camera':
         this.selectedCameraId = action.deviceId;
-        this._host.runTask(() => this._capture());
+        this._host.lifetime.runTask(() => this._capture());
         break;
       case 'select-microphone':
         this.selectedMicrophoneId = action.deviceId;
-        this._host.runTask(() => this._capture());
+        this._host.lifetime.runTask(() => this._capture());
         break;
       case 'request-access':
-        this._host.runTask(() => this._capture());
+        this._host.lifetime.runTask(() => this._capture());
         break;
       case 'video-frame':
         this.hasVideoFrame = action.ready;
@@ -266,7 +262,7 @@ export class CameraSession {
     if (!video.paused && !video.ended && video.readyState > 2) {
       video.pause();
     } else if (video.paused) {
-      this._host.runTask(() => video.play());
+      this._host.lifetime.runTask(() => video.play());
     }
   }
 
@@ -279,7 +275,7 @@ export class CameraSession {
     }
     const video = this._host.video();
     if (video) {
-      this._host.runTask(() => video.play());
+      this._host.lifetime.runTask(() => video.play());
     }
   }
 
@@ -323,7 +319,7 @@ export class CameraSession {
     });
     try {
       this._setPermission('prompt');
-      const stream = await this._stream.open(constraints, this._host.whileAdopted);
+      const stream = await this._stream.open(constraints, this._host.lifetime.whileAdopted);
       // A later capture took over; it settles the permission state.
       if (!stream) return;
       // Ends on a revoked permission, and also when this stream is stopped for the next one; only the first counts.
@@ -334,10 +330,10 @@ export class CameraSession {
       this.audioMuted = false;
       this._setPermission('granted');
       // Access is granted now, so the labels are readable: list the devices if the first access check failed.
-      if (!this.cameras.length) this._host.runTask(() => this._devices.list());
+      if (!this.cameras.length) this._host.lifetime.runTask(() => this._devices.list());
     } catch (error) {
       // Asks the lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
-      if (this._host.adoptionSignal().aborted) throw error;
+      if (this._host.lifetime.adoptionSignal().aborted) throw error;
       this._setPermission('denied');
       this._host.report('warn', 'Failed to capture camera', error, 'camera capturing. Failed to capture camera');
     }

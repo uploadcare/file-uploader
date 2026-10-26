@@ -4,11 +4,13 @@ import { CameraDevices, type CameraDevicesHost } from './CameraDevices';
 const host = (overrides: Partial<CameraDevicesHost> = {}) => {
   const controller = new AbortController();
   const fns = {
-    whileAdopted: <T>(work: PromiseLike<T>) => Promise.resolve(work),
-    runTask: vi.fn((task: () => unknown) => {
-      void task();
-    }),
-    adoptionSignal: () => controller.signal,
+    lifetime: {
+      whileAdopted: <T>(work: PromiseLike<T>) => Promise.resolve(work),
+      runTask: vi.fn((task: () => unknown) => {
+        void task();
+      }),
+      adoptionSignal: () => controller.signal,
+    },
     audioEnabled: () => true,
     cameraLabel: (index: number) => `Camera ${index + 1}`,
     onPermissionChange: vi.fn(),
