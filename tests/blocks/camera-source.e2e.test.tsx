@@ -266,6 +266,30 @@ describe('uc-camera-source (device selection)', () => {
       .toBeVisible();
   });
 
+  it('ignores a camera that fails after another one was picked', async () => {
+    // Only the latest open counts: a superseded one that fails late must not mark access denied.
+    const getUserMedia = stubDevices();
+    renderRegularHost();
+    await navigateToCameraSource();
+    const video = () => document.querySelector('uc-camera-source video') as HTMLVideoElement | null;
+    await expect.poll(() => (video()?.srcObject as MediaStream | null)?.active).toBe(true);
+    const realOpen = getUserMedia.getMockImplementation()!;
+    getUserMedia.mockImplementationOnce(async () => {
+      await delay(500);
+      throw new DOMException('Could not start video source', 'NotReadableError');
+    });
+
+    await pickCamera('cam-b');
+    getUserMedia.mockImplementation(realOpen);
+    await pickCamera('cam-a');
+    await expect.poll(() => getUserMedia.mock.calls.length).toBeGreaterThanOrEqual(3);
+    // Past the failure and the permission state's 300 ms settle.
+    await delay(1000);
+
+    expect(document.querySelector('uc-camera-source .uc-message-box')?.hasAttribute('hidden')).toBe(true);
+    expect((video()?.srcObject as MediaStream | null)?.active).toBe(true);
+  });
+
   it('keeps the picked camera across a devicechange that still lists it', async () => {
     const getUserMedia = stubDevices();
     renderRegularHost();
