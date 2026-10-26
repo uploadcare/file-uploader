@@ -118,8 +118,8 @@ describe('telemetry: sources', () => {
     await clickSource(root, 'Dropbox');
     const action = await waitForType('action-event');
 
-    // SourceBtn puts the id straight on the payload, not inside `metadata`.
-    expect(action.payload.source_id).toBe('dropbox');
+    expect(action.payload.metadata).toMatchObject({ event: 'select-source', source_id: 'dropbox' });
+    expect(action.payload).not.toHaveProperty('source_id');
   });
 
   it('reports the camera action events in order', { timeout: 60_000 }, async () => {

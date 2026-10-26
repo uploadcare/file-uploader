@@ -9,7 +9,6 @@ import type { AriaRole } from '../../types/dom';
 import './source-btn.css';
 
 import '../Icon/Icon';
-import { InternalEventType } from '../../abstract/EventEmitter';
 import type { PluginLabel } from '../../abstract/managers/plugin/PluginTypes';
 import type { SourceButtonConfig } from '../../abstract/sources';
 
@@ -67,12 +66,7 @@ export class SourceBtn extends ChildBlock {
   public activate(): void {
     if (!this.source) return;
 
-    this._telemetry.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        sourceId: this.source.id,
-      },
-    });
+    this._telemetry.sendActionEvent('select-source', this.tagName, { sourceId: this.source.id });
 
     const { source } = this;
     this.runTask(() => source.onClick());
