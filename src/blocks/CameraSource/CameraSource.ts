@@ -73,8 +73,6 @@ export class CameraSource extends ChildBlock {
   // post-adoption), so `@inject` resolves it safely.
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
-  private _unsubPermissions: (() => void) | null = null;
-
   private _capturing = false;
 
   private _chunks: BlobPart[] = [];
@@ -95,7 +93,6 @@ export class CameraSource extends ChildBlock {
   private _ctx: CanvasRenderingContext2D | null = null;
   private _cameraDevices: CameraDeviceOption[] = [];
   private _audioDevices: AudioDeviceOption[] = [];
-  private _permissionResponses: Partial<Record<(typeof DEFAULT_PERMISSIONS)[number], PermissionStatus>> = {};
   private _permissionCleanupFns: Array<() => void> = [];
   private _currentVideoSource: MediaStream | null = null;
   /** Object URL of the recorded clip being previewed; revoked when the preview is replaced or the camera released. */
@@ -831,16 +828,12 @@ export class CameraSource extends ChildBlock {
             name: permission as PermissionName,
           }),
         );
-        this._permissionResponses[permission] = response;
 
         response.addEventListener('change', this._handlePermissionsChange);
         this._permissionCleanupFns.push(() => {
           response.removeEventListener('change', this._handlePermissionsChange);
         });
       }
-      this._unsubPermissions = () => {
-        this._teardownPermissionListeners();
-      };
     } catch (error) {
       this._teardownPermissionListeners();
       if (isAbortError(error)) throw error;
@@ -858,7 +851,6 @@ export class CameraSource extends ChildBlock {
       cleanup();
     }
     this._permissionCleanupFns = [];
-    this._unsubPermissions = null;
   }
 
   private _requestDeviceAccess = async (): Promise<void> => {
@@ -928,10 +920,6 @@ export class CameraSource extends ChildBlock {
   };
 
   private _onDeactivate = (): void => {
-    if (this._unsubPermissions) {
-      this._unsubPermissions();
-    }
-
     /** Calling this method here because safari and firefox don't support the inactive event yet */
     const isChromium = Boolean((window as Window & { chrome?: unknown }).chrome);
     if (!isChromium) {
