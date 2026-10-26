@@ -8,6 +8,7 @@ import { A11y } from '../abstract/managers/a11y';
 import type { LazyPluginEntry } from '../abstract/managers/plugin/LazyPluginLoader';
 import svgIconsSprite from '../blocks/themes/uc-basic/svg-sprite';
 import { ChildBlock } from './ChildBlock';
+import { ensureUploaderScope } from './ensureUploaderScope';
 import { HostScopeController } from './HostScopeController';
 
 /**
@@ -21,6 +22,11 @@ import { HostScopeController } from './HostScopeController';
 export abstract class SolutionChildBlock extends ChildBlock {
   public static override styleAttrs = ['uc-wgt-common'];
   public static lazyPlugins: LazyPluginEntry[] | null = null;
+  /**
+   * Whether the solution is an uploader: its adoption attaches the upload stack, rather than leaving that to whichever
+   * `<uc-drop-area>` its template happens to render first.
+   */
+  public static isUploader = false;
   /** Whether the solution shows its activities in a modal. */
   public static hasModal = true;
   /** Whether a paste anywhere on the page adds files while the solution sits on its start screen (`pasteScope: 'global'`). */
@@ -57,6 +63,9 @@ export abstract class SolutionChildBlock extends ChildBlock {
     // state — read lazily by telemetry as the payload's `component`.
     container.get(AppInfo).setSolutionName(this.tagName);
     container.get(AppInfo).setHasModal(solution.hasModal);
+    if (solution.isUploader) {
+      ensureUploaderScope(container);
+    }
 
     const entries = solution.lazyPlugins;
     if (entries) {
