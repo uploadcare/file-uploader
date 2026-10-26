@@ -47,6 +47,26 @@ describe('uc-select', () => {
     expect(paddingRight).toBeGreaterThanOrEqual(box.right - icon.left);
   });
 
+  it('ends a name too long to fit with an ellipsis and shows it in full as the tooltip', async () => {
+    const { select } = renderSelect();
+    select.style.width = '98px';
+    select.options = [
+      { text: 'Fake Default Audio Input', value: 'a' },
+      { text: 'Headset Microphone', value: 'b' },
+    ];
+    await expect.poll(() => innerSelect()?.querySelectorAll('option').length).toBe(2);
+    const native = innerSelect()!;
+
+    expect(getComputedStyle(native).textOverflow).toBe('ellipsis');
+    // Held to the width set on `uc-select` rather than growing to fit the name.
+    expect(native.getBoundingClientRect().width).toBeLessThanOrEqual(98);
+    expect(native.title).toBe('Fake Default Audio Input');
+
+    native.value = 'b';
+    native.dispatchEvent(new Event('change'));
+    await expect.poll(() => innerSelect()?.title).toBe('Headset Microphone');
+  });
+
   it('puts the arrow at the end of the line in a right-to-left layout', async () => {
     const { select } = renderSelect();
     select.dir = 'rtl';
