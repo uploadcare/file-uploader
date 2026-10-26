@@ -139,6 +139,11 @@ export class ControllerContainer {
     this.#boundValues.set(Ctrl, factory as (c: ControllerContainer) => unknown);
   }
 
+  /** Whether {@link dispose} has run: the uploader is gone and nothing can be read from it. */
+  public get disposed(): boolean {
+    return this.#disposed;
+  }
+
   public get<T>(token: Token<T>): T {
     const Ctrl = resolveToken(token);
     if (this.#disposed) {
