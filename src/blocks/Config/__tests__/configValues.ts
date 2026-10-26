@@ -114,6 +114,8 @@ export const CONFIG_VALUES: { [K in keyof ConfigType]: ConfigType[K][] } = {
   qualityInsights: [true, false],
   cloudImageEditorMaskHref: ['https://example.com/mask.svg', null],
   cameraAspectRatio: ['', '1:1', '16:9', '9:16'],
+  cameraQuality: ['auto', '720p', '1080p', '4k'],
+  cameraPhotoQuality: [0, 0.5, 0.92, 1],
   testMode: [true, false],
   pasteScope: ['local', 'global', false],
   dynamicButtonViewMode: ['auto', 'menu', 'toolbar', 'compact', 'plain'],

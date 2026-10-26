@@ -80,6 +80,8 @@ const config = {
   mediaRecorderOptions: null,
   cameraConstraints: null,
   cameraAspectRatio: '',
+  cameraQuality: 'auto',
+  cameraPhotoQuality: 0.92,
 
   filesViewMode: 'list',
   gridShowFileNames: false,

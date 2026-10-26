@@ -4,6 +4,7 @@ import type {
   AuthToken,
   CameraConstraints,
   CameraConstraintsResolver,
+  CameraQuality,
   Metadata,
   MetadataCallback,
   Tags,
@@ -128,6 +129,22 @@ const asCameraAspectRatio = (value: unknown): string => {
   return strValue;
 };
 
+const asCameraQuality = (value: unknown): CameraQuality => {
+  const strValue = asString(value);
+  if (['auto', '720p', '1080p', '4k'].includes(strValue)) {
+    return strValue as CameraQuality;
+  }
+  throw new Error(`Invalid value: "${strValue}"`);
+};
+
+const asCameraPhotoQuality = (value: unknown): number => {
+  const number = asNumber(value);
+  if (number < 0 || number > 1) {
+    throw new Error(`Must be between 0 and 1, got ${number}`);
+  }
+  return number;
+};
+
 const asObject = <T>(value: unknown): T => {
   if (typeof value === 'object') {
     return value as T;
@@ -177,6 +194,8 @@ export {
   asCameraAspectRatio,
   asCameraCapture,
   asCameraConstraints,
+  asCameraPhotoQuality,
+  asCameraQuality,
   asCameraMode,
   asCameraModes,
   asFilesViewMode,

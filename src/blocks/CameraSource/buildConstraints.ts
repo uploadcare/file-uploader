@@ -1,4 +1,4 @@
-import type { CameraConstraints, CameraConstraintsResolver } from '../../types/exported';
+import type { CameraConstraints, CameraConstraintsResolver, CameraQuality } from '../../types/exported';
 import type { CameraMode } from './CameraSource';
 
 export const DEFAULT_VIDEO_CONSTRAINTS: MediaTrackConstraints = {
@@ -13,11 +13,35 @@ export const DEFAULT_VIDEO_CONSTRAINTS: MediaTrackConstraints = {
   },
 };
 
+/** Short side, in pixels, of each `cameraQuality` preset. `'auto'` keeps the defaults. */
+const QUALITY_SHORT_SIDE: Record<Exclude<CameraQuality, 'auto'>, number> = {
+  '720p': 720,
+  '1080p': 1080,
+  '4k': 2160,
+};
+
+/** The resolution a preset asks for: its short side, with the long side from the ratio (16:9 without one). */
+export const qualityResolution = (
+  quality: CameraQuality,
+  aspectRatio: number | null,
+): Pick<MediaTrackConstraints, 'width' | 'height'> => {
+  if (quality === 'auto') {
+    return {};
+  }
+  const shortSide = QUALITY_SHORT_SIDE[quality];
+  const ratio = aspectRatio ?? 16 / 9;
+  if (ratio >= 1) {
+    return { width: { ideal: Math.round(shortSide * ratio) }, height: { ideal: shortSide } };
+  }
+  return { width: { ideal: shortSide }, height: { ideal: Math.round(shortSide / ratio) } };
+};
+
 export type BuildConstraintsInput = {
   mode: CameraMode;
   enableAudio: boolean;
   /** Width / height from `cameraAspectRatio`, or `null` for the camera's native shape. */
   aspectRatio: number | null;
+  quality: CameraQuality;
   /** `cameraConstraints` from the config. */
   custom: CameraConstraints | CameraConstraintsResolver | null;
   cameraId: string | null;
@@ -42,12 +66,14 @@ export const resolveCustomConstraints = (
 
 /**
  * The constraints the camera opens with, layered per property:
- * built-in defaults < `cameraAspectRatio` < `cameraConstraints` < the device picked in the camera screen.
+ * built-in defaults < `cameraQuality` < `cameraAspectRatio` < `cameraConstraints` < the device picked in the camera
+ * screen.
  */
 export const buildConstraints = ({
   mode,
   enableAudio,
   aspectRatio,
+  quality,
   custom,
   cameraId,
   audioId,
@@ -56,6 +82,7 @@ export const buildConstraints = ({
 
   const video: MediaTrackConstraints = {
     ...DEFAULT_VIDEO_CONSTRAINTS,
+    ...qualityResolution(quality, aspectRatio),
     // Only `ideal`: most cameras offer a few native shapes, and the photo is cropped to the exact ratio anyway.
     ...(aspectRatio && { aspectRatio: { ideal: aspectRatio } }),
     ...resolved.video,

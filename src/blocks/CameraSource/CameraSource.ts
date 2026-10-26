@@ -158,6 +158,7 @@ export class CameraSource extends LitUploaderBlock {
           tabId: this._activeTab,
           hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
           aspectRatio: this.cfg.cameraAspectRatio,
+          quality: this.cfg.cameraQuality,
         },
       },
     });
@@ -208,6 +209,7 @@ export class CameraSource extends LitUploaderBlock {
           tabId: this._activeTab,
           hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
           aspectRatio: this.cfg.cameraAspectRatio,
+          quality: this.cfg.cameraQuality,
         },
       },
     });
@@ -490,13 +492,17 @@ export class CameraSource extends LitUploaderBlock {
     this._setCameraState(CameraSourceEvents.ACCEPT);
 
     if (this._activeTab === CameraSourceTypes.PHOTO) {
-      this._canvas?.toBlob((blob) => {
-        if (!blob) {
-          return;
-        }
-        const file = this._createFile('camera', 'jpeg', DEFAULT_PICTURE_FORMAT, blob);
-        this._toSend(file);
-      }, DEFAULT_PICTURE_FORMAT);
+      this._canvas?.toBlob(
+        (blob) => {
+          if (!blob) {
+            return;
+          }
+          const file = this._createFile('camera', 'jpeg', DEFAULT_PICTURE_FORMAT, blob);
+          this._toSend(file);
+        },
+        DEFAULT_PICTURE_FORMAT,
+        this.cfg.cameraPhotoQuality,
+      );
       return;
     }
 
@@ -802,6 +808,7 @@ export class CameraSource extends LitUploaderBlock {
       mode: this._currentMode,
       enableAudio: this.cfg.enableAudioRecording,
       aspectRatio: this._aspectRatio,
+      quality: this.cfg.cameraQuality,
       custom: this.cfg.cameraConstraints,
       cameraId: this._selectedCameraId,
       audioId: this._selectedAudioId,
@@ -1048,6 +1055,10 @@ export class CameraSource extends LitUploaderBlock {
     });
 
     this.subConfigValue('cameraConstraints', () => {
+      void this._applyVideoConstraints();
+    });
+
+    this.subConfigValue('cameraQuality', () => {
       void this._applyVideoConstraints();
     });
 

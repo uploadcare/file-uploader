@@ -18,6 +18,8 @@ import {
   asCameraConstraints,
   asCameraMode,
   asCameraModes,
+  asCameraPhotoQuality,
+  asCameraQuality,
   asDynamicButtonViewMode,
   asFilesViewMode,
   asFunction,
@@ -108,6 +110,8 @@ const mapping: { [Key in keyof ConfigType]: ConfigNormalizer<Key> } = {
   mediaRecorderOptions: asObject,
   cameraConstraints: asCameraConstraints,
   cameraAspectRatio: asCameraAspectRatio,
+  cameraQuality: asCameraQuality,
+  cameraPhotoQuality: asCameraPhotoQuality,
 
   maxVideoRecordingDuration: asNumber,
 

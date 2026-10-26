@@ -73,6 +73,8 @@ describe('documented config options', () => {
       // ships and the fixture is regenerated.
       'cameraAspectRatio',
       'cameraConstraints',
+      'cameraPhotoQuality',
+      'cameraQuality',
       'cdnCnamePrefixed',
       'externalSourcesEmbedCss',
       'mediaRecorderOptions',

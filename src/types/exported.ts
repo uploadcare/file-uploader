@@ -49,6 +49,7 @@ export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureE
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
 export type IconHrefResolver = (iconName: string) => string;
 export type CameraConstraints = { video?: MediaTrackConstraints; audio?: MediaTrackConstraints };
+export type CameraQuality = 'auto' | '720p' | '1080p' | '4k';
 export type CameraConstraintsResolver = (context: { mode: CameraMode }) => CameraConstraints;
 export type FileValidators = FileValidator[];
 export type CollectionValidators = FuncCollectionValidator[];
@@ -371,6 +372,22 @@ export type ConfigType = {
    * @default ''
    */
   cameraAspectRatio: string;
+
+  /**
+   * The resolution asked of the camera, for photo and video. A preset sets the short side (720, 1080 or 2160 px) and
+   * the long side follows `cameraAspectRatio`, or 16:9 when no ratio is set. `'auto'` asks for 1920×1080.
+   *
+   * It is a request, not a guarantee: the camera picks its closest supported resolution. Large resolutions make big
+   * video files, which may exceed `maxLocalFileSizeBytes`.
+   * @default 'auto'
+   */
+  cameraQuality: CameraQuality;
+
+  /**
+   * JPEG quality of camera photos, from 0 to 1.
+   * @default 0.92
+   */
+  cameraPhotoQuality: number;
 
   filesViewMode: FilesViewMode;
 

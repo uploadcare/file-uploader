@@ -110,6 +110,7 @@ describe('telemetry: sources', () => {
     const { root } = await renderSolution('regular', {
       qualityInsights: true,
       cameraAspectRatio: '1:1',
+      cameraQuality: '720p',
       cameraConstraints: { video: { deviceId: 'secret-camera-id' } },
     });
     await clickSource(root, 'Camera');
@@ -122,7 +123,11 @@ describe('telemetry: sources', () => {
     await vi.waitFor(() => expect(actionEvents()).toContain('start-camera'), WAIT);
     for (const event of ['shot-camera', 'start-camera']) {
       const [body] = bodiesWithAction(event);
-      expect(body.payload.metadata).toMatchObject({ aspect_ratio: '1:1', has_custom_constraints: true });
+      expect(body.payload.metadata).toMatchObject({
+        aspect_ratio: '1:1',
+        quality: '720p',
+        has_custom_constraints: true,
+      });
       expect(JSON.stringify(body)).not.toContain('secret-camera-id');
     }
   });

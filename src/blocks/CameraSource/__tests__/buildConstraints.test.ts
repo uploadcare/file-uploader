@@ -1,10 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
-import { type BuildConstraintsInput, buildConstraints, DEFAULT_VIDEO_CONSTRAINTS } from '../buildConstraints';
+import {
+  type BuildConstraintsInput,
+  buildConstraints,
+  DEFAULT_VIDEO_CONSTRAINTS,
+  qualityResolution,
+} from '../buildConstraints';
 
 const input = (overrides: Partial<BuildConstraintsInput> = {}): BuildConstraintsInput => ({
   mode: 'photo',
   enableAudio: false,
   aspectRatio: null,
+  quality: 'auto',
   custom: null,
   cameraId: null,
   audioId: null,
@@ -34,6 +40,18 @@ describe('buildConstraints', () => {
     const { video } = buildConstraints(input({ aspectRatio: 1, custom: { video: { aspectRatio: { exact: 4 / 3 } } } }));
 
     expect(video.aspectRatio).toEqual({ exact: 4 / 3 });
+  });
+
+  it('replaces the default resolution with the quality preset', () => {
+    const { video } = buildConstraints(input({ quality: '720p', aspectRatio: 1 }));
+
+    expect(video).toMatchObject({ width: { ideal: 720 }, height: { ideal: 720 }, aspectRatio: { ideal: 1 } });
+  });
+
+  it('lets a custom width replace the quality preset', () => {
+    const { video } = buildConstraints(input({ quality: '4k', custom: { video: { width: { ideal: 1000 } } } }));
+
+    expect(video).toMatchObject({ width: { ideal: 1000 }, height: { ideal: 2160 } });
   });
 
   it('lets each custom video property replace the default of the same name', () => {
@@ -88,5 +106,23 @@ describe('buildConstraints', () => {
 
     expect(constraints.video).toEqual(DEFAULT_VIDEO_CONSTRAINTS);
     expect(console.warn).toHaveBeenCalled();
+  });
+});
+
+describe('qualityResolution', () => {
+  it('keeps the defaults for auto', () => {
+    expect(qualityResolution('auto', 1)).toEqual({});
+  });
+
+  it.each([
+    ['720p', null, 1280, 720],
+    ['1080p', null, 1920, 1080],
+    ['4k', null, 3840, 2160],
+    ['1080p', 1, 1080, 1080],
+    ['1080p', 4 / 3, 1440, 1080],
+    ['1080p', 9 / 16, 1080, 1920],
+    ['720p', 3 / 4, 720, 960],
+  ] as const)('%s at ratio %s asks for %i×%i', (quality, ratio, width, height) => {
+    expect(qualityResolution(quality, ratio)).toEqual({ width: { ideal: width }, height: { ideal: height } });
   });
 });
