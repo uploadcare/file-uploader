@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LocaleController } from './controllers/LocaleController';
-import { type CheckedL10nFunction, createL10n } from './l10n';
+import { type CheckedL10nFunction, createL10n, plainText } from './l10n';
 
 // M-god step 7: `createL10n` reads the resolved dictionary directly from a
 // `LocaleController` (was the `*l10n/*` PubSub facade). These specs pin the
@@ -54,14 +54,15 @@ describe('createL10n (direct LocaleController)', () => {
 });
 
 describe('CheckedL10nFunction', () => {
-  it('rejects a misspelt literal key at compile time and passes a string from elsewhere', () => {
+  it('rejects a misspelt key and a bare string at compile time, and takes text marked plainText()', () => {
     const l10n: CheckedL10nFunction = (key) => key;
     const fromConfig: string = 'whatever';
 
     // @ts-expect-error 'uplaod' is not a dictionary key
     l10n('uplaod');
     expect(l10n('upload')).toBe('upload');
-    expect(l10n(fromConfig)).toBe('whatever');
-    expect(l10n<string>(`src-type-${fromConfig}`)).toBe('src-type-whatever');
+    // @ts-expect-error a string from elsewhere is not a key until marked
+    l10n(fromConfig);
+    expect(l10n(plainText(fromConfig))).toBe('whatever');
   });
 });

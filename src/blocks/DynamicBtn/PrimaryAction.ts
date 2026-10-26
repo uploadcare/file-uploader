@@ -15,6 +15,7 @@ import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 import './primary-action.css';
 import '../Icon/Icon';
 import '../Thumb/Thumb';
+import type { L10nKey } from '../../abstract/l10n';
 
 export class PrimaryAction extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-primary-action'];
@@ -25,7 +26,7 @@ export class PrimaryAction extends ChildBlock {
 
   private static readonly DEFAULT_ICON = 'upload';
 
-  private static readonly SOURCE_TEXT_CONFIG: Record<string, { action: string }> = {
+  private static readonly SOURCE_TEXT_CONFIG: Record<string, { action: L10nKey }> = {
     [UploadSource.LOCAL]: { action: 'upload-from' },
     [UploadSource.URL]: { action: 'upload-from' },
     [UploadSource.CAMERA]: { action: 'capture-with' },
@@ -94,7 +95,7 @@ export class PrimaryAction extends ChildBlock {
       failed: entries.failedCount,
       validatingBeforeUploading: entries.idleEntries?.filter((entry) => entry.isValidationPending).length ?? 0,
     });
-    return this.l10n<string>(key, { count });
+    return this.l10n(key, { count });
   }
 
   private _getSourceLabelText(): string {
@@ -114,7 +115,7 @@ export class PrimaryAction extends ChildBlock {
       sourceLabel = this.localizedSourceLabel;
     }
 
-    return this.l10n<string>(action, { source: sourceLabel });
+    return this.l10n(action, { source: sourceLabel });
   }
 
   private _handleClick() {

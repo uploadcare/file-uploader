@@ -6,6 +6,7 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import type { AriaRole } from '../../../../../types/dom';
 import { EditorBlock } from '../../editor-context';
 import '../../EditorIcon';
+import type { L10nKey } from '../../../../../abstract/l10n';
 
 type Theme = string | null;
 
@@ -33,7 +34,7 @@ export class BtnUi extends EditorBlock {
   public selected: boolean | undefined = undefined;
 
   @property({ attribute: 'title-prop' })
-  public titleProp = '';
+  public titleProp: L10nKey | '' = '';
 
   /**
    * CSS-only attribute
@@ -103,8 +104,8 @@ export class BtnUi extends EditorBlock {
         role=${ifDefined(this.ariaRole || undefined)}
         aria-controls=${ifDefined(this.ariaControls || undefined)}
         aria-selected=${ifDefined(this._ariaSelected)}
-        aria-label=${ifDefined(this.l10nSafe(this.titleProp))}
-        title=${ifDefined(this.l10nSafe(this.titleProp))}
+        aria-label=${ifDefined(this.titleProp ? this.l10nSafe(this.titleProp) : undefined)}
+        title=${ifDefined(this.titleProp ? this.l10nSafe(this.titleProp) : undefined)}
       >
         <uc-editor-icon
           class=${classMap(this._iconClassMap)}

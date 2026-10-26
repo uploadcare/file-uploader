@@ -6,7 +6,12 @@ import { repeat } from 'lit/directives/repeat.js';
 import type { ActivityType } from '../../abstract/activity-constants';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { injectOrNull } from '../../abstract/di/inject';
-import type { Owned, PluginActivityRegistration, PluginRenderDispose } from '../../abstract/managers/plugin';
+import type {
+  Owned,
+  PluginActivityRegistration,
+  PluginLabel,
+  PluginRenderDispose,
+} from '../../abstract/managers/plugin';
 import { PluginController } from '../../abstract/managers/plugin';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -123,7 +128,7 @@ export class PluginActivityRenderer extends ChildBlock {
     this._activities = pluginManager.snapshot().activities;
   }
 
-  private _dialogLabel(activity: Owned<PluginActivityRegistration>): string | undefined {
+  private _dialogLabel(activity: Owned<PluginActivityRegistration>): PluginLabel | undefined {
     const { label } = activity;
     if (typeof label !== 'function') return label;
     // The router's params belong to whatever is open, so a closed activity sees none.

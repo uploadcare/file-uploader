@@ -10,7 +10,7 @@ import './source-btn.css';
 
 import '../Icon/Icon';
 import { InternalEventType } from '../../abstract/EventEmitter';
-
+import type { PluginLabel } from '../../abstract/managers/plugin/PluginTypes';
 import type { SourceButtonConfig } from '../../abstract/sources';
 
 export type { SourceButtonConfig };
@@ -35,7 +35,7 @@ export class SourceBtn extends ChildBlock {
   private _iconName = 'default';
 
   @state()
-  private _srcTypeKey = '';
+  private _srcTypeKey: PluginLabel | '' = '';
 
   protected override controllerReady(): void {
     // A `source` set while the render gate was closed never reaches
@@ -81,13 +81,13 @@ export class SourceBtn extends ChildBlock {
   public override render() {
     return html`
       <button
-        aria-label=${this.l10n(this._srcTypeKey)}
+        aria-label=${this._srcTypeKey ? this.l10n(this._srcTypeKey) : ''}
         role=${ifDefined(this.buttonRole)}
         type="button"
         @click=${this.activate}
       >
         ${this.textOnly ? '' : html`<uc-icon name=${this._iconName}></uc-icon>`}
-        ${this.iconOnly ? '' : html`<div class="uc-txt">${this.l10n(this._srcTypeKey)}</div>`}
+        ${this.iconOnly ? '' : html`<div class="uc-txt">${this._srcTypeKey ? this.l10n(this._srcTypeKey) : ''}</div>`}
       </button>
     `;
   }

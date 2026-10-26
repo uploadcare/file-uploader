@@ -604,7 +604,7 @@ export class EditorToolbar extends EditorBlock {
           aria-role="tab"
           aria-controls=${isActive ? `tab_${id}` : ''}
           .selected=${isActive}
-          title-prop=${`a11y-editor-tab-${id}`}
+          .titleProp=${`a11y-editor-tab-${id}` as const}
           .active=${isActive}
           style=${style}
           @click=${this._handleTabClick}

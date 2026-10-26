@@ -18,6 +18,7 @@ import './drop-area.css';
 import type { DropItem } from './getDropItems';
 
 import '../Icon/Icon';
+import { type L10nKey, type PlainText, plainText } from '../../abstract/l10n';
 
 const dropAreaRegistry = new Set<DropArea>();
 const ACTIVATION_CODES = new Set(['Enter', 'NumpadEnter', 'Space']);
@@ -88,10 +89,11 @@ export class DropArea extends ChildBlock {
   // config `multiple`. Recomputes on either input through their native
   // reactivity — Lit for the `text` property, `SignalWatcher` for the tracked
   // config read — so no backing field or subscription is needed.
-  private get _dropTextKey(): string {
+  private get _dropTextKey(): L10nKey | PlainText {
     const customText = this.text;
     if (typeof customText === 'string' && customText.length > 0) {
-      return customText;
+      // The page author's text: a key or plain text.
+      return plainText(customText);
     }
     return this._config.getTracked('multiple') ? 'drop-files-here' : 'drop-file-here';
   }

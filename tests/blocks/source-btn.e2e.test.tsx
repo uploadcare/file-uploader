@@ -6,6 +6,7 @@ import type { SourceButtonConfig } from '@/blocks/SourceBtn/SourceBtn.ts';
 import type { Config, SourceBtn } from '@/index.ts';
 import { getCtxName } from '../utils/getCtxName';
 import '../../types/jsx';
+import { plainText } from '@/abstract/l10n';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
@@ -36,7 +37,7 @@ const txtContent = () => document.querySelector('uc-source-btn .uc-txt')?.textCo
 describe('uc-source-btn', () => {
   it('renders the l10n of the label as aria-label and text; unknown key falls back to the key itself', async () => {
     const { btn } = renderSourceBtn();
-    const source: SourceButtonConfig = { id: 'my-src', label: 'my-label-key', onClick: () => {} };
+    const source: SourceButtonConfig = { id: 'my-src', label: plainText('my-label-key'), onClick: () => {} };
     btn.source = source;
 
     await expect
@@ -48,21 +49,21 @@ describe('uc-source-btn', () => {
 
   it('uses source.icon when set, instead of falling back to id', async () => {
     const { btn } = renderSourceBtn();
-    btn.source = { id: 'my-src', label: 'my-label-key', icon: 'custom-icon', onClick: () => {} };
+    btn.source = { id: 'my-src', label: plainText('my-label-key'), icon: 'custom-icon', onClick: () => {} };
 
     await expect.poll(iconName).toBe('custom-icon');
   });
 
   it('textOnly suppresses the icon', async () => {
     const { btn } = renderSourceBtn({ textOnly: true });
-    btn.source = { id: 'my-src', label: 'my-label-key', onClick: () => {} };
+    btn.source = { id: 'my-src', label: plainText('my-label-key'), onClick: () => {} };
     await expect.poll(txtContent).toBe('my-label-key');
     expect(document.querySelector('uc-source-btn uc-icon')).toBeNull();
   });
 
   it('iconOnly suppresses the text', async () => {
     const { btn } = renderSourceBtn({ iconOnly: true });
-    btn.source = { id: 'my-src', label: 'my-label-key', onClick: () => {} };
+    btn.source = { id: 'my-src', label: plainText('my-label-key'), onClick: () => {} };
     await expect.poll(iconName).toBe('my-src');
     expect(document.querySelector('uc-source-btn .uc-txt')).toBeNull();
   });
@@ -70,7 +71,7 @@ describe('uc-source-btn', () => {
   it('clicking the button invokes source.onClick', async () => {
     const { btn } = renderSourceBtn();
     const onClick = vi.fn();
-    btn.source = { id: 'my-src', label: 'my-label-key', onClick };
+    btn.source = { id: 'my-src', label: plainText('my-label-key'), onClick };
     await expect.poll(iconName).toBe('my-src');
 
     (document.querySelector('uc-source-btn button') as HTMLButtonElement).click();
@@ -95,7 +96,7 @@ describe('uc-source-btn', () => {
     btn.setAttribute('ctx-name', ctxName);
     document.body.append(btn);
     await btn.updateComplete;
-    btn.source = { id: 'late-src', label: 'late-label-key', onClick: () => {} };
+    btn.source = { id: 'late-src', label: plainText('late-label-key'), onClick: () => {} };
     await btn.updateComplete;
 
     // Now create the ctx; the button adopts and must render the label it was
