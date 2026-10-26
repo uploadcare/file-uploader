@@ -56,12 +56,23 @@ export class UploadCollectionController {
   private _markedToDestroy = new Set<TypedData<UploadEntryData>>();
   private _changeMap: UploadCollectionChangeMap = Object.create(null);
 
-  // The three batchers: property change-map + membership flush on the next tick,
-  // deferred-destroy on the ~10s delay. Calling one (re-)arms it; `.cancel()`
-  // tears it down. Deferred-destroy now lives solely here — no longer re-armed
-  // from the two notify paths.
-  private _scheduleProperties = debounce(() => this._flushProperties(), 0);
-  private _scheduleMembership = debounce(() => this._flushMembership(), 0);
+  // Membership and property changes flush together on the next tick, membership first, so a consumer always sees
+  // `FILE_ADDED` before any per-prop event for the new entry. One timer keeps that order: with one each, re-arming
+  // membership (a `remove` after an `add`) moved it behind the property flush. Deferred-destroy runs on its own ~10s
+  // delay. `.cancel()` tears a timer down.
+  private _membershipPending = false;
+  private _scheduleFlush = debounce(() => {
+    if (this._membershipPending) {
+      this._membershipPending = false;
+      this._flushMembership();
+    }
+    this._flushProperties();
+  }, 0);
+  private _scheduleProperties = (): void => this._scheduleFlush();
+  private _scheduleMembership = (): void => {
+    this._membershipPending = true;
+    this._scheduleFlush();
+  };
   private _scheduleDestroy = debounce(() => this._flushDestroy(), UploadCollectionController._destroyDelayMs);
 
   private _recomputeObservedKeys(): void {
@@ -183,7 +194,7 @@ export class UploadCollectionController {
   }
 
   // Insert one entry's state + key-subscription WITHOUT arming any flush. Shared
-  // by `add`/`addMany` so a batch arms the two 0-delay timers ONCE for the whole
+  // by `add`/`addMany` so a batch arms the flush timer ONCE for the whole
   // batch instead of once per entry.
   private _insertEntry(init: Partial<UploadEntryData>, index?: number): TypedData<UploadEntryData> {
     const item = new TypedData<UploadEntryData>(initialUploadEntryData);
@@ -228,9 +239,9 @@ export class UploadCollectionController {
 
   public add(init: Partial<UploadEntryData>, options: { index?: number } = {}): Uid {
     const item = this._insertEntry(init, options.index);
-    // Arm membership BEFORE the immediate-on-add property fire so their 0-delay
-    // ticks flush in that order (v1 parity): a consumer sees `FILE_ADDED` before
-    // any per-prop event for the new entry — notably `FILE_UPLOAD_SUCCESS`.
+    // Membership flushes before properties (see `_scheduleFlush`), so a consumer
+    // sees `FILE_ADDED` before any per-prop event for the new entry — notably
+    // `FILE_UPLOAD_SUCCESS`.
     this._scheduleMembership();
     if (this._queueImmediateOnAdd(item)) {
       this._scheduleProperties();
@@ -240,9 +251,9 @@ export class UploadCollectionController {
 
   /**
    * Batch-add: insert all entries, then arm the membership + property flushes ONCE
-   * (a per-`add` loop re-arms both 0-delay timers per file — N re-arms — and, at the
+   * (a per-`add` loop re-arms the flush timer per file — N re-arms — and, at the
    * public-API layer, builds a discarded `OutputFileEntry` per file). Same flush
-   * order/outcome as `add` (membership tick before the property tick).
+   * order/outcome as `add` (membership before properties).
    */
   public addMany(inits: Partial<UploadEntryData>[]): Uid[] {
     if (inits.length === 0) {
@@ -359,8 +370,7 @@ export class UploadCollectionController {
   }
 
   public destroy(): void {
-    this._scheduleProperties.cancel();
-    this._scheduleMembership.cancel();
+    this._scheduleFlush.cancel();
     this._scheduleDestroy.cancel();
 
     // Force-destroy entries still in the deferred-destroy window, then the live

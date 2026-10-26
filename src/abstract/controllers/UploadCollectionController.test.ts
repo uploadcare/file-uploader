@@ -97,6 +97,26 @@ describe('UploadCollectionController', () => {
     collection.destroy();
   });
 
+  it('keeps membership before properties when another entry is removed in the same tick', () => {
+    // Removing re-armed the membership timer behind the property timer the add had already armed, so an
+    // already-uploaded entry's FILE_UPLOAD_SUCCESS went out before its FILE_ADDED.
+    const collection = new UploadCollectionController();
+    const other = collection.add({});
+    vi.runOnlyPendingTimers();
+    const order: string[] = [];
+    collection.observeCollection(() => order.push('collection'));
+    collection.observeProperties(['fileInfo'], () => order.push('property'));
+    vi.runOnlyPendingTimers();
+    order.length = 0;
+
+    collection.add({ fileInfo: { uuid: 'srv' } as never });
+    collection.remove(other);
+    vi.runOnlyPendingTimers();
+
+    expect(order).toEqual(['collection', 'property']);
+    collection.destroy();
+  });
+
   it('drops a queued property change for an entry removed before the flush', () => {
     const collection = new UploadCollectionController();
     const propObserver = vi.fn();
