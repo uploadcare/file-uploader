@@ -2,6 +2,7 @@ import type { ConfigType, OutputFileEntry } from '../../../types/exported';
 import type { ActivityParamsMap } from '../../activity-constants';
 import type { NavigationEdge } from '../../controllers/RouterController';
 import type { CustomConfig, CustomConfigDefinition } from '../../customConfigOptions';
+import type { L10nKey, PlainText } from '../../l10n';
 import type { Logger } from '../../logger';
 import type { UploaderPublicApi } from '../../UploaderPublicApi';
 
@@ -10,11 +11,21 @@ export type PluginIconRegistration = {
   svg: string;
 };
 
-export type PluginL10nRegistration = Record<string, Record<string, string>>;
+/**
+ * Translations by locale name. Each key must be declared: built in, or added to `CustomLocaleDefinition` with
+ * `declare module '@uploadcare/file-uploader' { interface CustomLocaleDefinition { 'my-plugin.title': string } }`.
+ */
+export type PluginL10nRegistration = Record<string, Partial<Record<L10nKey, string>>>;
+
+/**
+ * A plugin's label: an l10n key, built in or declared in `CustomLocaleDefinition` and registered via `registerL10n`,
+ * or text marked with `plainText()`.
+ */
+export type PluginLabel = L10nKey | PlainText;
 
 export type PluginSourceRegistration = {
   id: string;
-  label: string;
+  label: PluginLabel;
   icon?: string;
   /**
    * @internal
@@ -50,11 +61,10 @@ export type PluginActivityRegistration<TId extends string = string> = {
   id: TId;
   render: PluginRender;
   /**
-   * Names the activity's dialog when it opens in a modal. Accepts plain text or an l10n key registered via
-   * `registerL10n`. A function gets the params the activity was opened with (`{}` while it is closed). Without a label
-   * the dialog stays unnamed.
+   * Names the activity's dialog when it opens in a modal. A function gets the params the activity was opened with
+   * (`{}` while it is closed). Without a label the dialog stays unnamed.
    */
-  label?: string | ((activityParams: PluginActivityLabelParams<TId>) => string);
+  label?: PluginLabel | ((activityParams: PluginActivityLabelParams<TId>) => PluginLabel | undefined);
 };
 
 export type PluginFileActionRegistration = {
@@ -62,8 +72,8 @@ export type PluginFileActionRegistration = {
   id: string;
   /** Icon name to display in the action button. */
   icon: string;
-  /** Label shown next to the icon in the action button. Accepts a plain string or an l10n key registered via `registerL10n`. */
-  label: string;
+  /** Label shown next to the icon in the action button. */
+  label: PluginLabel;
   /** Return `true` to show the action button for the given file entry. */
   shouldRender: (fileEntry: OutputFileEntry) => boolean;
   onClick: (fileEntry: OutputFileEntry) => void | Promise<void>;

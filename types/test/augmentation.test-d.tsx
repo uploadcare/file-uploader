@@ -2,6 +2,7 @@ import '../jsx';
 import React from 'react';
 import { expectTypeOf, test } from 'vitest';
 import type { ActivityType, Config, PluginConfigApi, PluginRegistryApi, UploadCtxProvider } from '../../dist/index';
+import { plainText } from '../../dist/index';
 
 /**
  * The two documented extension points: `CustomConfig` (customConfigOptions.ts) for plugin options, and
@@ -52,7 +53,7 @@ test("a custom activity's label gets its declared params, each one optional", ()
     id: 'my-activity',
     label: (params) => {
       expectTypeOf(params).toEqualTypeOf<Partial<{ id: string }>>();
-      return params.id ?? '';
+      return params.id ? plainText(params.id) : undefined;
     },
     render: () => undefined,
   });
@@ -60,7 +61,7 @@ test("a custom activity's label gets its declared params, each one optional", ()
     id: 'bare-activity',
     label: (params) => {
       expectTypeOf(params).toEqualTypeOf<Record<string, never>>();
-      return 'Bare';
+      return plainText('Bare');
     },
     render: () => undefined,
   });

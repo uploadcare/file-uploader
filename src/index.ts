@@ -7,6 +7,7 @@ export { UID } from './utils/UID';
 export { defineComponents } from './abstract/defineComponents';
 export { loadFileUploaderFrom } from './abstract/loadFileUploaderFrom';
 export { defineLocale } from './abstract/localeRegistry';
+export { type PlainText, plainText } from './abstract/l10n';
 export { toKebabCase } from './utils/toKebabCase';
 
 // Shared:

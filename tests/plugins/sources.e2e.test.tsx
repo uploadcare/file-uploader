@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
+import { plainText } from '@/abstract/l10n';
 import { instagramPlugin } from '@/plugins/instagramPlugin';
 import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
+
+declare module '@/abstract/localeRegistry' {
+  interface CustomLocaleDefinition {
+    'src-type-custom': string;
+  }
+}
 
 describe('plugin sources', () => {
   it('shows a registered source in the source list', async () => {
@@ -9,7 +16,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'my-source',
-          label: 'My Custom Source',
+          label: plainText('My Custom Source'),
           onSelect: () => {},
         });
       },
@@ -29,7 +36,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'click-source',
-          label: 'Click Me',
+          label: plainText('Click Me'),
           onSelect,
         });
       },
@@ -77,7 +84,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'removable-source',
-          label: 'Removable Source',
+          label: plainText('Removable Source'),
           onSelect: () => {},
         });
       },
@@ -122,7 +129,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'shared-source',
-          label: 'First',
+          label: plainText('First'),
           onSelect: () => {},
         });
       },
@@ -133,7 +140,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'shared-source',
-          label: 'Second',
+          label: plainText('Second'),
           onSelect: () => {},
         });
       },
@@ -157,7 +164,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'unlisted-source',
-          label: 'Unlisted Source',
+          label: plainText('Unlisted Source'),
           onSelect: () => {},
         });
       },

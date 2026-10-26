@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { plainText } from '@/abstract/l10n';
 import type { PluginSetupParams, UploaderPlugin } from '@/index.ts';
 import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
 
@@ -9,7 +10,7 @@ describe('plugin lifecycle: setup failures', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'error-source',
-          label: 'Error Source',
+          label: plainText('Error Source'),
           onSelect: () => {},
         });
         throw new Error('setup failed');
@@ -35,7 +36,7 @@ describe('plugin lifecycle: setup failures', () => {
     const workingSetup = vi.fn<(params: PluginSetupParams) => void>(({ pluginApi }) => {
       pluginApi.registry.registerSource({
         id: 'working-source',
-        label: 'Working Source',
+        label: plainText('Working Source'),
         onSelect: () => {},
       });
     });

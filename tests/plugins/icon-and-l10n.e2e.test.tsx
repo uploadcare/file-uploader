@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import { plainText } from '@/abstract/l10n';
 import type { PluginApi } from '@/abstract/managers/plugin/PluginTypes';
 import { defineLocale } from '@/index';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
+
+declare module '@/abstract/localeRegistry' {
+  interface CustomLocaleDefinition {
+    'my-source-label': string;
+    'lazy-source-label': string;
+  }
+}
 
 describe('plugin icons', () => {
   it('makes a registered icon usable by file actions', async () => {
@@ -15,7 +23,7 @@ describe('plugin icons', () => {
         });
         pluginApi.registry.registerFileAction({
           id: 'icon-action',
-          label: 'Icon Action',
+          label: plainText('Icon Action'),
           icon: 'my-custom-icon',
           shouldRender: () => true,
           onClick: () => {},

@@ -13,7 +13,7 @@ import { UploadCollectionController } from './controllers/UploadCollectionContro
 import { UploadController } from './controllers/UploadController';
 import { ControllerContainer } from './di/ControllerContainer';
 import { EventEmitter, EventType } from './EventEmitter';
-import { createL10n } from './l10n';
+import { createL10n, plainText } from './l10n';
 import { PluginController } from './managers/plugin';
 import type { UploaderPublicApi } from './UploaderPublicApi';
 import { UploaderPublicApi as UploaderPublicApiClass } from './UploaderPublicApi';
@@ -517,7 +517,9 @@ describe('UploaderPublicApi', () => {
       const { api, ctrl } = setup();
       ctrl.config.set('sourceList', 'local');
       const onSelect = vi.fn();
-      ctrl.container.get(PluginController).registry.addSource('p', { id: 'local', label: 'Local', onSelect });
+      ctrl.container
+        .get(PluginController)
+        .registry.addSource('p', { id: 'local', label: plainText('Local'), onSelect });
 
       api.initFlow();
       await flush();
@@ -533,7 +535,7 @@ describe('UploaderPublicApi', () => {
       // so `find(expandedIds[0]) ?? registeredSource` falls back to the origin.
       ctrl.container.get(PluginController).registry.addSource('p', {
         id: 'local',
-        label: 'Local',
+        label: plainText('Local'),
         onSelect,
         expand: () => ['ghost'],
       });
@@ -550,7 +552,7 @@ describe('UploaderPublicApi', () => {
       const navigate = vi.spyOn(ctrl.router, 'navigate');
       ctrl.container.get(PluginController).registry.addSource('p', {
         id: 'group',
-        label: 'Group',
+        label: plainText('Group'),
         onSelect: vi.fn(),
         expand: () => ['a', 'b'],
       });
@@ -924,7 +926,9 @@ describe('UploaderPublicApi', () => {
       const onSelect = vi.fn();
       // Register on the container instance. The api's
       // `@inject(() => PluginController)` must see this exact registry.
-      ctrl.container.get(PluginController).registry.addSource('p', { id: 'local', label: 'Local', onSelect });
+      ctrl.container
+        .get(PluginController)
+        .registry.addSource('p', { id: 'local', label: plainText('Local'), onSelect });
 
       api.initFlow();
       await flush();

@@ -9,7 +9,7 @@ import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryData, UploadEntryKeys } from '../../abstract/uploadEntrySchema';
-import { ExternalUploadSource, sourceLabelKey } from '../../utils/UploadSource';
+import { isExternalSource, sourceLabelKey } from '../../utils/UploadSource';
 import './file-item.css';
 import type { Uid } from '../../abstract/Uid';
 import { effect } from '../../lit/effect';
@@ -356,7 +356,7 @@ export class FileItem extends FileItemConfig {
     }
     const source = entry.getTracked('source');
     const externalUrl = entry.getTracked('externalUrl');
-    if (externalUrl && source && Object.values(ExternalUploadSource).includes(source)) {
+    if (externalUrl && source && isExternalSource(source)) {
       return this.l10n('waiting-for', { source: this.l10n<string>(sourceLabelKey(source)) });
     }
     return '';

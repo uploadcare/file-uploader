@@ -6,7 +6,8 @@ export const instagramPlugin: UploaderPlugin = {
   setup({ pluginApi }) {
     pluginApi.registry.registerSource({
       id: INSTAGRAM_SOURCE,
-      label: 'src-type-instagram',
+      // Never shown: `expand` renders no button. The source stays only to log why it was removed.
+      label: 'src-type-other',
       icon: 'instagram',
       expand: () => {
         pluginApi.logger.error(

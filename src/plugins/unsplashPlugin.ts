@@ -257,6 +257,12 @@ declare module '../abstract/customConfigOptions' {
   }
 }
 
+declare module '../abstract/localeRegistry' {
+  interface CustomLocaleDefinition {
+    'unsplash.label': string;
+  }
+}
+
 declare module '../types/index' {
   interface CustomActivities {
     [UNSPLASH_ACTIVITY_ID]: { params: never };
