@@ -1,7 +1,7 @@
 import { getPluralForm } from '../utils/getPluralForm';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils';
 import type { LocaleController } from './controllers/LocaleController';
-import type { CustomLocaleDefinition, LocaleDefinition } from './localeRegistry';
+import type { CustomLocaleDefinition, EnglishTemplates, LocaleDefinition } from './localeRegistry';
 
 export type L10nFunction = (str: string, variables?: Record<string, string | number>) => string;
 
@@ -21,11 +21,31 @@ export const plainText = (text: string): PlainText => text as PlainText;
 /** A key has to exist in the dictionary, or be text marked `PlainText`; a bare `string` does not pass. */
 export type CheckedL10nKey<K extends string> = K extends L10nKey | PlainText ? K : never;
 
-/** `L10nFunction` for the blocks' own calls, where a misspelt literal key fails to compile. */
-export type CheckedL10nFunction = <K extends string>(
-  key: CheckedL10nKey<K>,
-  variables?: Record<string, string | number>,
-) => string;
+type L10nVariables = Record<string, string | number>;
+
+/** The variables a template interpolates: `{{name}}`, and the count behind `{{plural:file(count)}}`. */
+type TemplateVariables<T extends string> = T extends `${string}{{${infer Placeholder}}}${infer Rest}`
+  ? (Placeholder extends `plural:${string}(${infer Count})` ? Count : Placeholder) | TemplateVariables<Rest>
+  : never;
+
+type Templates = EnglishTemplates & CustomLocaleDefinition;
+
+/**
+ * The variables argument for `key`: exactly its template's variables, none for a template without any. A key whose
+ * template is only known as `string` (a plugin's, or text marked `PlainText`) takes any.
+ */
+export type L10nArguments<K extends string> = K extends keyof Templates
+  ? Templates[K] extends string
+    ? string extends Templates[K]
+      ? [variables?: L10nVariables]
+      : [TemplateVariables<Templates[K]>] extends [never]
+        ? []
+        : [variables: Record<TemplateVariables<Templates[K]>, string | number>]
+    : [variables?: L10nVariables]
+  : [variables?: L10nVariables];
+
+/** `L10nFunction` for the blocks' own calls: an unknown key, or a template's missing or unknown variable, fails to compile. */
+export type CheckedL10nFunction = <K extends string>(key: CheckedL10nKey<K>, ...variables: L10nArguments<K>) => string;
 
 export const createPluralizer = (getL10n: () => L10nFunction) => {
   return (key: string, count: number): string => {

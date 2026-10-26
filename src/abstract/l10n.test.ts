@@ -55,7 +55,7 @@ describe('createL10n (direct LocaleController)', () => {
 
 describe('CheckedL10nFunction', () => {
   it('rejects a misspelt key and a bare string at compile time, and takes text marked plainText()', () => {
-    const l10n: CheckedL10nFunction = (key) => key;
+    const l10n: CheckedL10nFunction = (key: string, _variables?: Record<string, string | number>) => key;
     const fromConfig: string = 'whatever';
 
     // @ts-expect-error 'uplaod' is not a dictionary key
@@ -64,5 +64,26 @@ describe('CheckedL10nFunction', () => {
     // @ts-expect-error a string from elsewhere is not a key until marked
     l10n(fromConfig);
     expect(l10n(plainText(fromConfig))).toBe('whatever');
+  });
+
+  it("checks a key's variables against its English template", () => {
+    const l10n: CheckedL10nFunction = (key: string, _variables?: Record<string, string | number>) => key;
+
+    l10n('waiting-for', { source: 'Dropbox' });
+    // `{{plural:file(count)}}` needs `count` too.
+    l10n('header-uploading', { count: 2 });
+    l10n('upload-file');
+    // Text marked plainText() has no known template, so it takes any variables.
+    l10n(plainText('Hi {{name}}'), { name: 'Ada' });
+
+    // @ts-expect-error the template interpolates `source`
+    l10n('waiting-for');
+    // @ts-expect-error the template's variable is `count`
+    l10n('header-uploading', { cnt: 2 });
+    // @ts-expect-error the template interpolates nothing
+    l10n('upload-file', { count: 1 });
+    // @ts-expect-error `extra` is not in the template
+    l10n('waiting-for', { source: 'Dropbox', extra: 1 });
+    expect(l10n('upload-file')).toBe('upload-file');
   });
 });
