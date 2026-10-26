@@ -274,7 +274,7 @@ describe('regular: moving while the camera is active', () => {
       const second = video()?.srcObject as MediaStream;
       expect(second.getVideoTracks()[0]?.readyState).toBe('live');
       await expect
-        .element(within(uploader.root).getByTestId('uc-camera-source').getByTestId('uc-camera-source--shot'))
+        .element(within(uploader.root).getByTestId('uc-camera-source').getByTestId('uc-camera-controls--shot'))
         .toBeVisible();
 
       // Leaving the camera releases the new stream as well.

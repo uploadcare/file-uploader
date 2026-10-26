@@ -22,7 +22,7 @@ const openCamera = async (configProps: Parameters<typeof renderSolution>[1] = {}
     ...rendered,
     camera,
     // By test id: the shutter is named after what it does next, which changes with the mode.
-    shot: () => camera.getByTestId('uc-camera-source--shot').click(),
+    shot: () => camera.getByTestId('uc-camera-controls--shot').click(),
     accept: () => camera.getByRole('button', { name: 'Accept', exact: true }).click(),
     openVideoTab: () => camera.getByRole('button', { name: 'Video', exact: true }).click(),
   };
@@ -66,15 +66,15 @@ describe('accessible names', () => {
   it('names the mode tabs and the photo shutter', async () => {
     const { camera } = await openCamera();
 
-    await expect.element(camera.getByTestId('uc-camera-source--tab-photo')).toHaveAccessibleName('Photo');
-    await expect.element(camera.getByTestId('uc-camera-source--tab-video')).toHaveAccessibleName('Video');
-    await expect.element(camera.getByTestId('uc-camera-source--shot')).toHaveAccessibleName('Shot');
+    await expect.element(camera.getByTestId('uc-camera-controls--tab-photo')).toHaveAccessibleName('Photo');
+    await expect.element(camera.getByTestId('uc-camera-controls--tab-video')).toHaveAccessibleName('Video');
+    await expect.element(camera.getByTestId('uc-camera-controls--shot')).toHaveAccessibleName('Shot');
   });
 
   it('names the video shutter by what it does next', async () => {
     const { camera, shot, openVideoTab } = await openCamera();
     await openVideoTab();
-    const shutter = camera.getByTestId('uc-camera-source--shot');
+    const shutter = camera.getByTestId('uc-camera-controls--shot');
 
     await expect.element(shutter).toHaveAccessibleName('Record Video');
     await shot();
@@ -84,7 +84,7 @@ describe('accessible names', () => {
   it('names the microphone toggle and exposes whether it is on', async () => {
     const { camera, openVideoTab } = await openCamera();
     await openVideoTab();
-    const toggle = camera.getByTestId('uc-camera-source--toggle-microphone');
+    const toggle = camera.getByTestId('uc-camera-controls--toggle-microphone');
 
     await expect.element(toggle).toHaveAccessibleName('Microphone');
     await expect.element(toggle).toHaveAttribute('aria-pressed', 'true');
@@ -100,7 +100,7 @@ describe('video recording', () => {
 
     await shot();
     // The timer replaces the tab strip while recording.
-    const timer = camera.getByTestId('uc-camera-source--recording-timer');
+    const timer = camera.getByTestId('uc-camera-controls--recording-timer');
     await expect.element(timer).toBeVisible();
     // Stop only once at least a second was captured, so the recorder has data to emit for the clip.
     await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
@@ -124,7 +124,7 @@ describe('video recording', () => {
     });
 
     await shot();
-    const timer = camera.getByTestId('uc-camera-source--recording-timer');
+    const timer = camera.getByTestId('uc-camera-controls--recording-timer');
     await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
     await shot();
     await expect.element(camera.getByText('Retake', { exact: true })).toBeVisible();
@@ -141,7 +141,7 @@ describe('video recording', () => {
     await openVideoTab();
 
     await shot();
-    const timer = camera.getByTestId('uc-camera-source--recording-timer');
+    const timer = camera.getByTestId('uc-camera-controls--recording-timer');
     await expect.element(timer).toBeVisible();
 
     await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
@@ -155,7 +155,7 @@ describe('video recording', () => {
     await openVideoTab();
 
     await shot();
-    await expect.element(camera.getByTestId('uc-camera-source--recording-timer')).toBeVisible();
+    await expect.element(camera.getByTestId('uc-camera-controls--recording-timer')).toBeVisible();
 
     // No second shutter click: the recording has to end by itself.
     await expect
@@ -172,7 +172,7 @@ describe('microphone toggle', () => {
     const { camera, openVideoTab } = await openCamera({ enableAudioRecording: true });
     await openVideoTab();
 
-    const toggle = camera.getByTestId('uc-camera-source--toggle-microphone');
+    const toggle = camera.getByTestId('uc-camera-controls--toggle-microphone');
     await expect.element(toggle).toBeVisible();
 
     const iconName = () => (toggle.getByTestId('uc-icon').query() as Icon | null)?.name;
