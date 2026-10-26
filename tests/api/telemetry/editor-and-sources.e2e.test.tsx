@@ -142,21 +142,36 @@ describe('telemetry: sources', () => {
     await accept.click();
 
     await vi.waitFor(() => expect(actionEvents()).toContain('accept-camera'), WAIT);
-    // Every shot reports twice: `shot-camera` from the button handler, then `start-camera` from the shared camera
-    // action dispatcher it calls.
+    // One event per press.
     expect(actionEvents()).toEqual([
       'camera-tab-switch',
       'camera-tab-switch',
       'shot-camera',
-      'start-camera',
       'retake-camera',
       'shot-camera',
-      'start-camera',
       'accept-camera',
     ]);
     expect(bodiesWithAction('camera-tab-switch')[0].payload.metadata).toMatchObject({
       tab_id: 'video',
       node: 'UC-CAMERA-SOURCE',
     });
+  });
+
+  it('reports a recording as one event to start it and one to stop it', { timeout: 60_000 }, async () => {
+    const { root } = await renderSolution('regular', { qualityInsights: true });
+    await clickSource(root, 'Camera');
+    const camera = within(root).getByTestId('uc-camera-source');
+    await camera.getByRole('button', { name: 'Video', exact: true }).click();
+    const shutter = camera.getByTestId('uc-camera-controls--shot');
+    await expect.element(shutter).toHaveAccessibleName('Record Video');
+    clearSent();
+
+    await shutter.click();
+    await expect.element(shutter).toHaveAccessibleName('Stop recording');
+    await shutter.click();
+
+    await vi.waitFor(() => expect(actionEvents()).toContain('stop-camera'), WAIT);
+    // Tab switches are batched with these and can land after `clearSent()`; the test above orders them.
+    expect(actionEvents().filter((event) => event !== 'camera-tab-switch')).toEqual(['shot-camera', 'stop-camera']);
   });
 });

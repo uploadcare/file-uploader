@@ -208,8 +208,8 @@ export class CameraSession {
   }
 
   private _shutter(): void {
-    this._track('shot-camera');
-    this._track('start-camera');
+    // One event per press: `shot-camera` takes a photo or starts a recording; stopping one reports `stop-camera`.
+    if (!this._recorder.isRecording) this._track('shot-camera');
     if (this.activeTab === CameraSourceTypes.PHOTO) {
       this._shot();
     } else if (this.activeTab === CameraSourceTypes.VIDEO) {
