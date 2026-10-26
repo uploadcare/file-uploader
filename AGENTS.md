@@ -156,7 +156,11 @@ tests/             Browser e2e (*.e2e.test.tsx)
   `this.use(Token)` / `useOrNull(Token)` / `container.whenController(Token, cb)`,
   reading reactive state via `getTracked(...)` under `SignalWatcher` (imperative
   reads use `get(...)`). Controllers are plain DOM-free classes owned by the
-  container — they must **not** import `lit` or touch the DOM.
+  container — they must **not** import `lit` or touch the DOM. A Biome
+  `noRestrictedImports` override in `biome.json` fails any `src/abstract` import of
+  `lit`, `src/lit`, `src/blocks` or `src/solutions` (specs are exempt). Shared
+  DOM-free pieces live in `src/abstract`, `src/utils` or `src/types`; controllers
+  that do need the DOM (`A11y`, `ClipboardController`) live in `src/lit`.
 - **Public JS API:** `element.getAPI()` → `UploaderPublicApi` (a thin `@inject`
   facade resolved from the container). Events dispatch on
   `<uc-upload-ctx-provider>` (`EventType` in `EventEmitter.ts`).
