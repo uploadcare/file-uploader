@@ -26,7 +26,8 @@ export type CameraDevicesHost = {
 
 /** The camera's permissions and devices: watches the permission state and lists the cameras and microphones. */
 export class CameraDevices {
-  private _permissionCleanups: Array<() => void> = [];
+  /** Aborted to remove the permission listeners: when watching stops, and when it starts over. */
+  private _permissionWatch: AbortController | null = null;
 
   public constructor(private readonly _host: CameraDevicesHost) {}
 
@@ -37,13 +38,13 @@ export class CameraDevices {
   public async watchPermissions(): Promise<boolean> {
     try {
       this.stopWatchingPermissions();
+      const watch = new AbortController();
+      this._permissionWatch = watch;
       for (const name of WATCHED_PERMISSIONS) {
         const status = await this._host.lifetime.whileAdopted(
           navigator.permissions.query({ name: name as PermissionName }),
         );
-        const onChange = () => this._host.onPermissionChange();
-        status.addEventListener('change', onChange);
-        this._permissionCleanups.push(() => status.removeEventListener('change', onChange));
+        status.addEventListener('change', () => this._host.onPermissionChange(), { signal: watch.signal });
       }
       return true;
     } catch (error) {
@@ -59,8 +60,8 @@ export class CameraDevices {
   }
 
   public stopWatchingPermissions(): void {
-    for (const cleanup of this._permissionCleanups) cleanup();
-    this._permissionCleanups = [];
+    this._permissionWatch?.abort();
+    this._permissionWatch = null;
   }
 
   /**
