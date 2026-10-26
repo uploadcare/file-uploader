@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ControllerContainer } from '../../abstract/di/ControllerContainer';
-import { EventBus } from '../../abstract/EventBus';
-import type { OutputFileEntry } from '../../types';
+import type { OutputFileEntry } from '../types/index';
+import { ControllerContainer } from './di/ControllerContainer';
+import { EventBus } from './EventBus';
 import { EventEmitter, EventType } from './EventEmitter';
 
 // The facade is container-resolved now (M-god step 3b): a zero-arg ctor that

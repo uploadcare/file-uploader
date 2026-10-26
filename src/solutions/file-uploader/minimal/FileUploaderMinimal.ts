@@ -4,8 +4,8 @@ import { ConfigController } from '../../../abstract/controllers/ConfigController
 import { RouterController } from '../../../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../../../abstract/di/ControllerContainer';
 import { inject } from '../../../abstract/di/inject';
+import { InternalEventType } from '../../../abstract/EventEmitter';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
-import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
 import { subscription, type Unsubscribe } from '../../../lit/subscription';

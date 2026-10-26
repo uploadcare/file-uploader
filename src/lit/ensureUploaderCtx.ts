@@ -1,10 +1,10 @@
 import { RouterController } from '../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
+import { EventEmitter } from '../abstract/EventEmitter';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager } from '../abstract/managers/LocaleManager';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
-import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 
 /**
  * The one controller-side entry point that ensures a per-ctx

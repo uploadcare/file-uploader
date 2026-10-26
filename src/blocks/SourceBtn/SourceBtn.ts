@@ -9,7 +9,7 @@ import type { AriaRole } from '../../types/dom';
 import './source-btn.css';
 
 import '../Icon/Icon';
-import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
+import { InternalEventType } from '../../abstract/EventEmitter';
 
 export type SourceButtonConfig = {
   id: string;

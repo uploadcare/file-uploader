@@ -2,8 +2,8 @@ import { UploadCollectionController } from '../abstract/controllers/UploadCollec
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { inject } from '../abstract/di/inject';
 import { EventBus } from '../abstract/EventBus';
+import { EventType } from '../abstract/EventEmitter';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ApiHost } from './api-host-types';
 import type { ChildBlock } from './ChildBlock';
 import type { Constructor } from './Constructor';

@@ -1,9 +1,9 @@
-import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { OutputCollectionState } from '../../types';
 import { buildOutputCollectionState } from '../buildOutputCollectionState';
 import { requireContainerOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';
 import { UploaderEventType } from '../EventBus';
+import { EventEmitter } from '../EventEmitter';
 import type { TypedData } from '../TypedData';
 import type { Uid } from '../Uid';
 import type { UploadEntryData } from '../uploadEntrySchema';

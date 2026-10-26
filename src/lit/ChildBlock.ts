@@ -8,11 +8,11 @@ import { CONTAINER, type ControllerContainer, type Token } from '../abstract/di/
 import { Disposables } from '../abstract/di/Disposables';
 import { inject, injectOrNull } from '../abstract/di/inject';
 import { Lifetime } from '../abstract/di/Lifetime';
+import { EventEmitter } from '../abstract/EventEmitter';
 import { logger } from '../abstract/logger';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
-import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { getLocaleDirection } from '../utils/getLocaleDirection';
 import { WindowHeightTracker } from '../utils/WindowHeightTracker';
 import { destroyCtx, isCtxUnreferenced } from './ctx-lifecycle';

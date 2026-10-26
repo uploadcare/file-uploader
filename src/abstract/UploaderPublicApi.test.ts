@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
-import { EventEmitter, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { destroyCtx } from '../lit/ctx-lifecycle';
 import { ensureUploaderCtx } from '../lit/ensureUploaderCtx';
@@ -14,6 +13,7 @@ import { RouterController } from './controllers/RouterController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import { UploadController } from './controllers/UploadController';
 import { ControllerContainer } from './di/ControllerContainer';
+import { EventEmitter, EventType } from './EventEmitter';
 import { PluginController } from './managers/plugin';
 import type { UploaderPublicApi } from './UploaderPublicApi';
 import { UploaderPublicApi as UploaderPublicApiClass } from './UploaderPublicApi';

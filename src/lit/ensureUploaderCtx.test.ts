@@ -5,12 +5,12 @@ import { LocaleController } from '../abstract/controllers/LocaleController';
 import { RouterController } from '../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
 import { ControllerContainer } from '../abstract/di/ControllerContainer';
+import { EventEmitter } from '../abstract/EventEmitter';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager } from '../abstract/managers/LocaleManager';
 import { PluginController } from '../abstract/managers/plugin';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
-import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
 
 // Each test uses a unique ctx id and tears it down so the global

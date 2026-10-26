@@ -1,7 +1,6 @@
 import { parseFileUrl } from '@uploadcare/cdn-url';
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
-import { EventEmitter, type EventKey, type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityParamsMap, ActivityType } from '../lit/activity-constants';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { createL10n } from '../lit/l10n';
@@ -38,6 +37,7 @@ import { UploadCollectionController } from './controllers/UploadCollectionContro
 import { UploadController } from './controllers/UploadController';
 import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
 import { inject } from './di/inject';
+import { EventEmitter, type EventKey, type EventPayload, EventType } from './EventEmitter';
 import { AuthTokenManager } from './managers/AuthTokenManager';
 import { PluginController } from './managers/plugin';
 import { toOutputFileEntry } from './outputFileEntry';

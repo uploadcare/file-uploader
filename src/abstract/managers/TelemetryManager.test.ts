@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { EventEmitter, EventType, InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityId } from '../../lit/activity-constants';
 import type { ConfigType } from '../../types/index';
 import { AppInfo } from '../controllers/AppInfo';
 import { ConfigController, type KnownConfig } from '../controllers/ConfigController';
 import { RouterController } from '../controllers/RouterController';
 import { ControllerContainer } from '../di/ControllerContainer';
+import { EventEmitter, EventType, InternalEventType } from '../EventEmitter';
 import { TelemetryManager } from './TelemetryManager';
 
 const sendEventMock = vi.hoisted(() => vi.fn(async (_payload: Record<string, unknown>) => {}));

@@ -1,6 +1,6 @@
 import type { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
+import type { EventPayload, EventType } from '../abstract/EventEmitter';
 import type { UploaderPublicApi } from '../abstract/UploaderPublicApi';
-import type { EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 
 /**
  * Instance surface contributed by {@link WithApi} — the documented public API +

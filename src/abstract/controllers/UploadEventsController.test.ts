@@ -1,9 +1,9 @@
 import type { FileFromOptions, UploadcareGroup } from '@uploadcare/upload-client';
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
-import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { OutputCollectionState } from '../../types';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
+import { EventEmitter } from '../EventEmitter';
 import { PluginController } from '../managers/plugin';
 import type { TypedData } from '../TypedData';
 import type { Uid } from '../Uid';

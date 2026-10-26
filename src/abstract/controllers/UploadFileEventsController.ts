@@ -1,6 +1,6 @@
-import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { inject } from '../di/inject';
 import { UploaderEventType } from '../EventBus';
+import { EventEmitter } from '../EventEmitter';
 import { toOutputFileEntry } from '../outputFileEntry';
 import { TypedData } from '../TypedData';
 import type { Uid } from '../Uid';
