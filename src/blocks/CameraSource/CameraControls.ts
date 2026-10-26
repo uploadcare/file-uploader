@@ -9,6 +9,7 @@ import type { DeviceOption } from './CameraDevices';
 import type { CameraView } from './cameraView';
 import '../Icon/Icon';
 import '../Select/Select';
+import './camera-controls.css';
 
 /** The camera's controls: the tab switcher, the recording timer, accept and retake, the shutter and the microphone. */
 export class CameraControls extends ChildBlock {
