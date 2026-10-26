@@ -1,6 +1,6 @@
 import { preloadImage } from './preloadImage';
 
-export function generateThumb(imgFile: File, size = 40): string | Promise<string> {
+export async function generateThumb(imgFile: File, size = 40): Promise<string> {
   if (imgFile.type === 'image/svg+xml') {
     // TODO: Return destuctor here
     return URL.createObjectURL(imgFile);
@@ -8,7 +8,7 @@ export function generateThumb(imgFile: File, size = 40): string | Promise<string
   const canvas: HTMLCanvasElement = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   if (!ctx) {
-    return Promise.reject(new Error('Canvas context not supported'));
+    throw new Error('Canvas context not supported');
   }
   const srcUrl = URL.createObjectURL(imgFile);
   const { promise, image: img } = preloadImage(srcUrl);
