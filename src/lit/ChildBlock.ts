@@ -9,6 +9,7 @@ import { Disposables } from '../abstract/di/Disposables';
 import { inject, injectOrNull } from '../abstract/di/inject';
 import { Lifetime } from '../abstract/di/Lifetime';
 import { EventEmitter } from '../abstract/EventEmitter';
+import { type CheckedL10nFunction, createL10n } from '../abstract/l10n';
 import { logger } from '../abstract/logger';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
@@ -20,7 +21,6 @@ import { ctxNameContext } from './ctx-name-context';
 import { effect, registerHostEffects } from './effect';
 import { ensureUploaderCtx } from './ensureUploaderCtx';
 import { LightDomMixin } from './LightDomMixin';
-import { type CheckedL10nFunction, createL10n } from './l10n';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
 import { registerHostSubscriptions } from './subscription';
 

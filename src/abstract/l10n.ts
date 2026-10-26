@@ -1,7 +1,7 @@
-import type { LocaleController } from '../abstract/controllers/LocaleController';
-import type { CustomLocaleDefinition, LocaleDefinition } from '../abstract/localeRegistry';
 import { getPluralForm } from '../utils/getPluralForm';
 import { applyTemplateData, getPluralObjects } from '../utils/template-utils';
+import type { LocaleController } from './controllers/LocaleController';
+import type { CustomLocaleDefinition, LocaleDefinition } from './localeRegistry';
 
 export type L10nFunction = (str: string, variables?: Record<string, string | number>) => string;
 
