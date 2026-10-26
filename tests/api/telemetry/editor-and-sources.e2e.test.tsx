@@ -143,15 +143,13 @@ describe('telemetry: sources', () => {
     await accept.click();
 
     await vi.waitFor(() => expect(actionEvents()).toContain('accept-camera'), WAIT);
-    // One event per press, plus the `start-camera` every shot used to send too, kept for telemetry consumers.
+    // A photo shot sends `shot-camera` alone: `start-camera` marks a recording starting.
     expect(actionEvents()).toEqual([
       'camera-tab-switch',
       'camera-tab-switch',
       'shot-camera',
-      'start-camera',
       'retake-camera',
       'shot-camera',
-      'start-camera',
       'accept-camera',
     ]);
     expect(bodiesWithAction('camera-tab-switch')[0].payload.metadata).toMatchObject({
