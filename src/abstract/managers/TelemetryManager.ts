@@ -2,8 +2,6 @@ import type { TelemetryRequest } from '@uploadcare/quality-insights';
 import { TelemetryAPIService } from '@uploadcare/quality-insights';
 import { Queue } from '@uploadcare/upload-client';
 import { initialConfig } from '../../blocks/Config/initialConfig';
-import type { EventKey, InternalEventKey } from '../../blocks/UploadCtxProvider/EventEmitter';
-import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import type { ConfigType } from '../../types/index';
 import { redactSecrets } from '../../utils/redactSecrets';
@@ -16,6 +14,8 @@ import { lifetimeOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { EventBus } from '../EventBus';
+import type { EventKey, InternalEventKey } from '../EventEmitter';
+import { EventType, InternalEventType } from '../EventEmitter';
 
 type CommonEventType = InternalEventKey | EventKey;
 

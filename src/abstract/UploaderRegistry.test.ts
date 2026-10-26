@@ -1,9 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ConfigController } from './controllers/ConfigController';
 import { RouterController } from './controllers/RouterController';
 import { ControllerContainer } from './di/ControllerContainer';
 import { UploaderEventType } from './EventBus';
+import { EventEmitter } from './EventEmitter';
 import { TelemetryManager } from './managers/TelemetryManager';
 import { UploaderRegistry } from './UploaderRegistry';
 

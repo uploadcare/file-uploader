@@ -1,7 +1,7 @@
+import { EventType } from '../../abstract/EventEmitter';
 import type { ApiHostEventListenerMap } from '../../lit/api-host-types';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { WithApi } from '../../lit/WithApi';
-import { EventType } from './EventEmitter';
 
 /**
  * `<uc-upload-ctx-provider>` — thin API/events host. Behavior lives in the

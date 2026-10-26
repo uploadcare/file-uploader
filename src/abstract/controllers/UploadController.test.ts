@@ -1,9 +1,9 @@
 import { CancelError, UploadcareError, type UploadcareFile, uploadFile } from '@uploadcare/upload-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ConfigType } from '../../types';
 import { ControllerContainer, containerOf } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
+import { EventEmitter } from '../EventEmitter';
 import { __resetLoggerForTests } from '../logger';
 import { PluginController } from '../managers/plugin';
 import type { Owned, PluginFileHookRegistration } from '../managers/plugin/PluginTypes';

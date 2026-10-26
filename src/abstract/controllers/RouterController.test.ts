@@ -1,9 +1,9 @@
 import { computed } from '@lit-labs/signals';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { ActivityId } from '../../lit/activity-constants';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
+import { EventEmitter } from '../EventEmitter';
 import { SCOPE_BADGE_STYLE, UC_BADGE_STYLE } from '../logger';
 import { ConfigController } from './ConfigController';
 import { NAVIGATE_CANCEL, RouterController } from './RouterController';

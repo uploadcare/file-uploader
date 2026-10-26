@@ -1,11 +1,11 @@
 import { uploadFileGroup } from '@uploadcare/upload-client';
-import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { OutputCollectionState } from '../../types';
 import { buildOutputCollectionState } from '../buildOutputCollectionState';
 import { controllerLogger } from '../controllerLogger';
 import { lifetimeOf, requireContainerOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';
 import { UploaderEventType } from '../EventBus';
+import { EventEmitter } from '../EventEmitter';
 import { CollectionStateController } from './CollectionStateController';
 import { UploadController } from './UploadController';
 import { ValidationController } from './ValidationController';

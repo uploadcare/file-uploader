@@ -625,8 +625,8 @@ export type OutputCollectionState<
       }
   );
 
+import { type EventPayload, EventType } from '../abstract/EventEmitter';
 import type { DynamicButtonMode } from '../blocks/DynamicBtn/DynamicBtn';
-import { type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 
 export type { EventPayload };
 export { EventType };

@@ -1,8 +1,8 @@
 import { describe, expectTypeOf, it } from 'vitest';
 import type { UploaderEventKey, UploaderEventPayload, UploaderEventType } from '../../abstract/EventBus';
+import type { EventKey, EventPayload, EventType } from '../../abstract/EventEmitter';
 import type { ActivityType, RegisteredActivityType } from '../../lit/activity-constants';
 import type { OutputCollectionState, OutputFileEntry } from '../../types';
-import type { EventKey, EventPayload, EventType } from './EventEmitter';
 
 // Type-level ("tsd"-style) tests via vitest `expectTypeOf` — checked by
 // `tsc:test`. They are the migration guards for the event surface: a payload

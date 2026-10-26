@@ -1,9 +1,9 @@
-import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES, type ActivityId } from '../../lit/activity-constants';
 import { controllerLogger } from '../controllerLogger';
 import { inject } from '../di/inject';
 import { signalState } from '../di/signalState';
 import { type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../EventBus';
+import { EventEmitter } from '../EventEmitter';
 import { Listeners, type ObserveOptions } from '../host-subscription';
 import { lazy } from '../logger';
 

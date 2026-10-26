@@ -1,5 +1,4 @@
 import { Queue } from '@uploadcare/upload-client';
-import { EventEmitter, EventType } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type {
   OutputCollectionErrorType,
   OutputCollectionState,
@@ -25,6 +24,7 @@ import { controllerLogger } from '../controllerLogger';
 import { lifetimeOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
+import { EventEmitter, EventType } from '../EventEmitter';
 import { TelemetryManager } from '../managers/TelemetryManager';
 import type { TypedData } from '../TypedData';
 import type { Uid } from '../Uid';

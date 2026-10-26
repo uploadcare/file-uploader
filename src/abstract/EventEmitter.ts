@@ -1,5 +1,5 @@
-import { inject } from '../../abstract/di/inject';
-import { EventBus, type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from '../../abstract/EventBus';
+import { inject } from './di/inject';
+import { EventBus, type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from './EventBus';
 
 const DEFAULT_DEBOUNCE_TIMEOUT = 20;
 
