@@ -18,6 +18,7 @@ import { styleMap } from 'lit/directives/style-map.js';
 import { parseCameraModes } from '../../abstract/cameraModes';
 import { CameraDevices, type DeviceOption } from './CameraDevices';
 import { CameraRecorder, createCameraFile, RecordingClock } from './CameraRecorder';
+import { type CameraPermission, type CameraPhase, type CameraView, deriveCameraView } from './cameraView';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 
 import '../ActivityHeader/ActivityHeader';
@@ -72,10 +73,13 @@ export class CameraSource extends ChildBlock {
   @state()
   private _selectedCameraId: string | null = null;
 
+  @state()
   private _activeTab: CameraMode | null = null;
   private _canvas: HTMLCanvasElement | null = null;
   private _ctx: CanvasRenderingContext2D | null = null;
+  @state()
   private _cameraDevices: DeviceOption[] = [];
+  @state()
   private _audioDevices: DeviceOption[] = [];
   private readonly _devices = new CameraDevices({
     whileAdopted: (work, dispose) => this.whileAdopted(work, dispose),
@@ -119,65 +123,28 @@ export class CameraSource extends ChildBlock {
     return this._config.getTracked('cameraMirror') ? 'scaleX(-1)' : null;
   }
 
-  @state()
-  private _videoHidden = true;
+  private readonly _requestBtnHidden = canUsePermissionsApi();
 
   @state()
-  private _messageHidden = true;
+  private _permission: CameraPermission = 'idle';
 
   @state()
-  private _requestBtnHidden = canUsePermissionsApi();
+  private _phase: CameraPhase = 'live';
+
+  @state()
+  private _audioMuted = false;
 
   @state()
   private _cameraSelectOptions: DeviceOption[] = [];
 
   @state()
-  private _cameraSelectHidden = true;
-
-  @state()
-  private _l10nMessage = '';
-
-  @state()
-  private _timerHidden = true;
-
-  @state()
-  private _cameraHidden = true;
-
-  @state()
   private _hasVideoFrame = false;
-
-  @state()
-  private _cameraActionsHidden = true;
 
   @state()
   private _audioSelectOptions: DeviceOption[] = [];
 
   @state()
-  private _audioSelectHidden = true;
-
-  @state()
-  private _audioSelectDisabled = true;
-
-  @state()
-  private _audioToggleMicrophoneHidden = true;
-
-  @state()
-  private _tabCameraHidden = true;
-
-  @state()
-  private _tabVideoHidden = true;
-
-  @state()
-  private _currentIcon = 'camera-full';
-
-  @state()
   private _currentTimelineIcon = 'play';
-
-  @state()
-  private _toggleMicrophoneIcon = 'microphone';
-
-  @state()
-  private _mutableClassButton = 'uc-shot-btn uc-camera-action';
 
   private _chooseActionWithCamera = () => {
     this._telemetry.sendActionEvent('start-camera', this.tagName, { tabId: this._activeTab });
@@ -295,9 +262,7 @@ export class CameraSource extends ChildBlock {
   private _toggleEnableAudio = (): void => {
     this._stream?.getAudioTracks().forEach((track) => {
       track.enabled = !track.enabled;
-
-      this._toggleMicrophoneIcon = track.enabled ? 'microphone' : 'microphone-mute';
-      this._audioSelectDisabled = !track.enabled;
+      this._audioMuted = !track.enabled;
     });
   };
 
@@ -416,75 +381,15 @@ export class CameraSource extends ChildBlock {
     this._toSend(this._recorder.takeFile());
   };
 
-  private _handlePhoto = (status: CameraStatus): void => {
-    if (status === CameraSourceEvents.SHOT) {
-      this._tabVideoHidden = true;
-      this._cameraHidden = true;
-      this._tabCameraHidden = true;
-      this._cameraActionsHidden = false;
-      this._cameraSelectHidden = true;
-    }
-
-    if (status === CameraSourceEvents.RETAKE || status === CameraSourceEvents.ACCEPT) {
-      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
-      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this._cameraHidden = false;
-      this._cameraActionsHidden = true;
-      this._cameraSelectHidden = this._cameraDevices.length <= 1;
-    }
-  };
-
-  private _handleVideo = (status: CameraStatus): void => {
-    const enableAudioRecording = this._config.get('enableAudioRecording');
-    if (status === CameraSourceEvents.PLAY) {
-      this._timerHidden = false;
-      this._tabCameraHidden = true;
-      this._cameraSelectHidden = true;
-      this._audioSelectHidden = true;
-      this._currentTimelineIcon = 'pause';
-      this._currentIcon = 'square';
-      this._mutableClassButton = 'uc-shot-btn uc-camera-action uc-stop-record';
-    }
-
-    if (status === CameraSourceEvents.STOP) {
-      this._timerHidden = false;
-      this._cameraHidden = true;
-      this._audioToggleMicrophoneHidden = true;
-      this._cameraActionsHidden = false;
-    }
-
-    if (status === CameraSourceEvents.RETAKE || status === CameraSourceEvents.ACCEPT) {
-      this._timerHidden = true;
-      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
-      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this._cameraHidden = false;
-      this._cameraActionsHidden = true;
-      this._audioToggleMicrophoneHidden = !enableAudioRecording;
-      this._currentIcon = 'video-camera-full';
-      this._mutableClassButton = 'uc-shot-btn uc-camera-action';
-      this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
-      this._cameraSelectHidden = this._cameraDevices.length <= 1;
-    }
-  };
-
   private _setCameraState = (status: CameraStatus): void => {
-    if (
-      this._activeTab === CameraSourceTypes.PHOTO &&
-      (status === 'shot' || status === 'retake' || status === 'accept')
-    ) {
-      this._handlePhoto(status);
-    }
-
-    if (
-      this._activeTab === CameraSourceTypes.VIDEO &&
-      (status === 'play' ||
-        status === 'stop' ||
-        status === 'retake' ||
-        status === 'accept' ||
-        status === 'pause' ||
-        status === 'resume')
-    ) {
-      this._handleVideo(status);
+    if (status === CameraSourceEvents.RETAKE || status === CameraSourceEvents.ACCEPT) {
+      this._phase = 'live';
+    } else if (this._activeTab === CameraSourceTypes.PHOTO && status === CameraSourceEvents.SHOT) {
+      this._phase = 'shot';
+    } else if (this._activeTab === CameraSourceTypes.VIDEO && status === CameraSourceEvents.PLAY) {
+      this._phase = 'recording';
+    } else if (this._activeTab === CameraSourceTypes.VIDEO && status === CameraSourceEvents.STOP) {
+      this._phase = 'recorded';
     }
   };
 
@@ -515,18 +420,8 @@ export class CameraSource extends ChildBlock {
   }
 
   private _handleActiveTab = (tabId: CameraMode): void => {
-    if (tabId === CameraSourceTypes.PHOTO) {
-      this._currentIcon = 'camera-full';
-      this._audioSelectHidden = true;
-      this._audioToggleMicrophoneHidden = true;
-    }
-
     if (tabId === CameraSourceTypes.VIDEO) {
-      const enableAudioRecording = this._config.get('enableAudioRecording');
       this._currentTimelineIcon = 'play';
-      this._currentIcon = 'video-camera-full';
-      this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
-      this._audioToggleMicrophoneHidden = !enableAudioRecording;
     }
 
     this._telemetry.sendActionEvent('camera-tab-switch', this.tagName, { tabId });
@@ -552,37 +447,14 @@ export class CameraSource extends ChildBlock {
   @debounced(300)
   protected _setPermissionsState(state: 'granted' | 'denied' | 'prompt'): void {
     this.classList.toggle('uc-initialized', state === 'granted');
-
-    const visibleAudio = this._activeTab === CameraSourceTypes.VIDEO && this._config.get('enableAudioRecording');
-    const currentIcon = this._activeTab === CameraSourceTypes.PHOTO ? 'camera-full' : 'video-camera-full';
-
-    if (state === 'granted') {
-      this._videoHidden = false;
-      this._cameraHidden = false;
-      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
-      this._messageHidden = true;
-      this._timerHidden = true;
-      this._currentIcon = currentIcon;
-      this._audioToggleMicrophoneHidden = !visibleAudio;
-      this._audioSelectHidden = !visibleAudio;
-    } else if (state === 'prompt') {
-      this._l10nMessage = 'camera-permissions-prompt';
-      this._videoHidden = true;
-      this._cameraHidden = true;
-      this._tabCameraHidden = true;
-      this._messageHidden = false;
-
+    this._permission = state;
+    if (state === 'prompt') {
       this._stopCapture();
-    } else {
-      this._l10nMessage = 'camera-permissions-denied';
-      this._videoHidden = true;
-      this._messageHidden = false;
-      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
-      this._cameraActionsHidden = true;
-      this._mutableClassButton = 'uc-shot-btn uc-camera-action';
-
+      return;
+    }
+    // A new stream, or none: whatever was captured from the previous one is gone.
+    this._phase = 'live';
+    if (state === 'denied') {
       this._stopCapture();
     }
   }
@@ -661,6 +533,8 @@ export class CameraSource extends ChildBlock {
 
       this._setVideoSource(this._stream);
       this._capturing = true;
+      // The new stream's microphone starts on.
+      this._audioMuted = false;
       this._setPermissionsState('granted');
     } catch (error) {
       if (isAbortError(error)) throw error;
@@ -671,16 +545,13 @@ export class CameraSource extends ChildBlock {
   };
 
   private _applyDevices(cameras: DeviceOption[], microphones: DeviceOption[]): void {
-    const enableAudioRecording = this._config.get('enableAudioRecording');
     this._cameraDevices = cameras;
     this._audioDevices = microphones;
 
     this._cameraSelectOptions = cameras;
-    this._cameraSelectHidden = cameras.length <= 1;
     this._selectedCameraId = keepListedDeviceId(cameras, this._selectedCameraId);
 
     this._audioSelectOptions = microphones;
-    this._audioSelectHidden = !enableAudioRecording || microphones.length <= 1;
     this._selectedAudioId = keepListedDeviceId(microphones, this._selectedAudioId);
   }
 
@@ -706,9 +577,6 @@ export class CameraSource extends ChildBlock {
   };
 
   private _handleCameraModes = (cameraModes: CameraMode[]): void => {
-    this._tabVideoHidden = !cameraModes.includes(CameraSourceTypes.VIDEO);
-    this._tabCameraHidden = !cameraModes.includes(CameraSourceTypes.PHOTO);
-
     const defaultTab = cameraModes[0];
     if (defaultTab && (!this._activeTab || !cameraModes.includes(this._activeTab))) {
       this._handleActiveTab(defaultTab);
@@ -719,20 +587,8 @@ export class CameraSource extends ChildBlock {
     this.runTask(() => this._onActivate());
   }
 
-  // `cameraMirror` is a tracked render read (see `_videoTransformCss`). These two
-  // config reactions mutate imperative `@state` fields also written by the
-  // camera-stream handlers (two-writer), so they can't collapse into a derived
-  // render getter — they're `@effect`s. `beforeUpdate` fires them eagerly and
-  // synchronously on adoption (before `_onActivate`'s awaited work runs),
-  // matching the former eager `subConfigValue` fire, then again on change.
-  /** @internal */
-  @effect({ beforeUpdate: true })
-  protected _syncEnableAudioRecording(): void {
-    const enabled = this._config.getTracked('enableAudioRecording');
-    this._audioToggleMicrophoneHidden = !enabled;
-    this._audioSelectDisabled = !enabled;
-  }
-
+  // Picks the default tab when `cameraModes` changes. `beforeUpdate` fires it eagerly and synchronously on adoption,
+  // before `_onActivate`'s awaited work runs, then again on change. What the modes show and hide is read in render.
   /** @internal */
   @effect({ beforeUpdate: true })
   protected _syncCameraModes(): void {
@@ -769,15 +625,30 @@ export class CameraSource extends ChildBlock {
   }
 
   /** Names the shutter after its icon, which is what tells sighted users what a press does next. */
-  private get _shotLabel(): string {
-    if (this._currentIcon === 'square') return this.l10n('a11y-camera-stop-recording');
-    if (this._currentIcon === 'video-camera-full') {
+  private _shotLabel(icon: CameraView['shotIcon']): string {
+    if (icon === 'square') return this.l10n('a11y-camera-stop-recording');
+    if (icon === 'video-camera-full') {
       return this.l10n('record', { source: this.l10n('src-type-mobile-video-camera') });
     }
     return this.l10n('camera-shot');
   }
 
+  private get _view(): CameraView {
+    const audioEnabled = this._config.getTracked('enableAudioRecording');
+    return deriveCameraView({
+      permission: this._permission,
+      phase: this._phase,
+      tab: this._activeTab,
+      cameraModes: parseCameraModes(this._config.getTracked('cameraModes')),
+      audioEnabled,
+      cameraCount: this._cameraDevices.length,
+      microphoneCount: audioEnabled ? this._audioDevices.length : 0,
+      muted: this._audioMuted,
+    });
+  }
+
   public override render() {
+    const view = this._view;
     return html`
      <uc-activity-header>
         <button
@@ -788,7 +659,7 @@ export class CameraSource extends ChildBlock {
         >
           <uc-icon name="back"></uc-icon>
         </button>
-        <div ?hidden=${!this._cameraSelectHidden}>
+        <div ?hidden=${!view.cameraSelectHidden}>
           <uc-icon name="camera"></uc-icon>
           <span>${this.l10n('caption-camera')}</span>
         </div>
@@ -796,7 +667,7 @@ export class CameraSource extends ChildBlock {
           class="uc-camera-select"
           .options=${this._cameraSelectOptions}
           .value=${this._selectedCameraId ?? ''}
-          ?hidden=${this._cameraSelectHidden}
+          ?hidden=${view.cameraSelectHidden}
           @change=${this._handleCameraSelectChange}
         >
         </uc-select>
@@ -818,13 +689,13 @@ export class CameraSource extends ChildBlock {
           style=${styleMap({
             transform: this._videoTransformCss,
           })}
-          ?hidden=${this._videoHidden}
+          ?hidden=${view.videoHidden}
           @loadeddata=${this._handleVideoFrame}
           @emptied=${this._handleVideoEmptied}
           ${ref(this._videoRef)}
         ></video>
-        <div class="uc-message-box" ?hidden=${this._messageHidden}>
-          <span>${this.l10n(this._l10nMessage)}</span>
+        <div class="uc-message-box" ?hidden=${view.messageHidden}>
+          <span>${this.l10n(view.message)}</span>
           <button
             type="button"
             @click=${this._handleRequestPermissions}
@@ -836,7 +707,7 @@ export class CameraSource extends ChildBlock {
       </div>
 
       <div class="uc-controls">
-        <div class="uc-switcher" ?hidden=${!this._timerHidden}>
+        <div class="uc-switcher" ?hidden=${!view.timerHidden}>
           <button
             data-id="photo"
             type="button"
@@ -848,7 +719,7 @@ export class CameraSource extends ChildBlock {
             aria-label=${this.l10n('src-type-mobile-photo-camera')}
             aria-pressed=${this._activeTab === CameraSourceTypes.PHOTO}
             @click=${this._handleClickTab}
-            ?hidden=${this._tabCameraHidden}
+            ?hidden=${view.photoTabHidden}
             data-testid="tab-photo"
           >
             <uc-icon name="camera"></uc-icon>
@@ -864,7 +735,7 @@ export class CameraSource extends ChildBlock {
             aria-label=${this.l10n('src-type-mobile-video-camera')}
             aria-pressed=${this._activeTab === CameraSourceTypes.VIDEO}
             @click=${this._handleClickTab}
-            ?hidden=${this._tabVideoHidden}
+            ?hidden=${view.videoTabHidden}
             data-testid="tab-video"
           >
             <uc-icon name="video-camera"></uc-icon>
@@ -874,7 +745,7 @@ export class CameraSource extends ChildBlock {
         <button
           class="uc-secondary-btn uc-recording-timer"
           @click=${this._handleToggleRecording}
-          ?hidden=${this._timerHidden}
+          ?hidden=${view.timerHidden}
           data-testid="recording-timer"
         >
           <uc-icon name=${this._currentTimelineIcon}></uc-icon>
@@ -884,7 +755,7 @@ export class CameraSource extends ChildBlock {
 
         <div
           class="uc-camera-actions uc-camera-action"
-          ?hidden=${this._cameraActionsHidden}
+          ?hidden=${view.actionsHidden}
         >
           <button
             type="button"
@@ -907,12 +778,12 @@ export class CameraSource extends ChildBlock {
           type="button"
           data-testid="shot"
           @click=${this._handleStartCamera}
-          class=${this._mutableClassButton}
-          ?hidden=${this._cameraHidden}
+          class=${view.shotClass}
+          ?hidden=${view.shotHidden}
           ?disabled=${!this._hasVideoFrame}
-          aria-label=${this._shotLabel}
+          aria-label=${this._shotLabel(view.shotIcon)}
         >
-          <uc-icon name=${this._currentIcon}></uc-icon>
+          <uc-icon name=${view.shotIcon}></uc-icon>
         </button>
 
         <div class="uc-select">
@@ -920,20 +791,20 @@ export class CameraSource extends ChildBlock {
             type="button"
             class="uc-mini-btn uc-btn-microphone"
             @click=${this._handleToggleAudio}
-            ?hidden=${this._audioToggleMicrophoneHidden}
+            ?hidden=${view.microphoneHidden}
             aria-label=${this.l10n('a11y-camera-microphone')}
-            aria-pressed=${this._toggleMicrophoneIcon === 'microphone' ? 'true' : 'false'}
+            aria-pressed=${view.microphoneIcon === 'microphone' ? 'true' : 'false'}
             data-testid="toggle-microphone"
           >
-            <uc-icon name=${this._toggleMicrophoneIcon}></uc-icon>
+            <uc-icon name=${view.microphoneIcon}></uc-icon>
           </button>
 
           <uc-select
             class="uc-audio-select"
             .options=${this._audioSelectOptions}
             .value=${this._selectedAudioId ?? ''}
-            ?hidden=${this._audioSelectHidden}
-            ?disabled=${this._audioSelectDisabled}
+            ?hidden=${view.audioSelectHidden}
+            ?disabled=${view.audioSelectDisabled}
             @change=${this._handleAudioSelectChange}
             data-testid="audio-select"
           >

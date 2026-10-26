@@ -312,7 +312,7 @@ describe('camera view', () => {
       {
         "actions": false,
         "activeTab": "video",
-        "audioSelect": "disabled",
+        "audioSelect": false,
         "cameraSelect": false,
         "caption": true,
         "host": "uc-initialized",
@@ -463,7 +463,7 @@ describe('camera view', () => {
       {
         "actions": false,
         "activeTab": "photo",
-        "audioSelect": "enabled",
+        "audioSelect": false,
         "cameraSelect": false,
         "caption": true,
         "host": "-",
