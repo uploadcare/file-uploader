@@ -96,6 +96,8 @@ export default {
   'camera-permissions-denied': 'Доступ до камери заборонено',
   'camera-permissions-prompt': 'Будь ласка, дозвольте доступ до камери',
   'camera-permissions-request': 'Запитати доступ',
+  'camera-not-found': 'Камеру не знайдено',
+  'camera-unavailable': 'Камера зайнята або недоступна',
   'files-count-limit-error-title': 'Перевищено ліміт кількості файлів',
   'files-count-limit-error-too-few':
     'Ви вибрали {{total}} {{plural:file(total)}}. Мінімум потрібно {{min}} {{plural:file(min)}}.',

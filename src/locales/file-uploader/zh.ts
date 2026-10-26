@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': '相机访问被拒绝',
   'camera-permissions-prompt': '请允许访问相机',
   'camera-permissions-request': '请求访问',
+  'camera-not-found': '未找到相机',
+  'camera-unavailable': '相机正在使用中或不可用',
   'files-count-limit-error-title': '文件数量限制超出',
   'files-count-limit-error-too-few':
     '您选择了 {{total}} {{plural:file(total)}}。至少需要 {{min}} {{plural:file(min)}}。',

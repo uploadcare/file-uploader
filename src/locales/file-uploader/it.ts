@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Accesso alla fotocamera negato',
   'camera-permissions-prompt': "Per favore consenti l'accesso alla fotocamera",
   'camera-permissions-request': 'Richiedi accesso',
+  'camera-not-found': 'Nessuna fotocamera trovata',
+  'camera-unavailable': 'La fotocamera è in uso o non è disponibile',
   'files-count-limit-error-title': 'Limite numero di file superato',
   'files-count-limit-error-too-few':
     'Hai scelto {{total}} {{plural:file(total)}}. Almeno {{min}} {{plural:file(min)}} richiesti.',

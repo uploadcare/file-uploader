@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Kameraadgang nægtet',
   'camera-permissions-prompt': 'Tillad venligst adgang til kameraet',
   'camera-permissions-request': 'Anmod om adgang',
+  'camera-not-found': 'Intet kamera fundet',
+  'camera-unavailable': 'Kameraet er i brug eller utilgængeligt',
   'files-count-limit-error-title': 'Filantal grænse overskredet',
   'files-count-limit-error-too-few':
     'Du har valgt {{total}} {{plural:file(total)}}. Mindst {{min}} {{plural:file(min)}} er påkrævet.',

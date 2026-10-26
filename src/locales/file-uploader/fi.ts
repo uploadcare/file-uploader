@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': 'Kameran käyttöoikeus evätty',
   'camera-permissions-prompt': 'Salli kameran käyttö',
   'camera-permissions-request': 'Pyydä käyttöoikeutta',
+  'camera-not-found': 'Kameraa ei löytynyt',
+  'camera-unavailable': 'Kamera on käytössä tai ei ole käytettävissä',
   'files-count-limit-error-title': 'Tiedostojen lukumäärän ylitys',
   'files-count-limit-error-too-few':
     'Olet valinnut {{total}} {{plural:file(total)}}. Vähintään {{min}} {{plural:file(min)}} vaaditaan.',

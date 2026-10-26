@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': 'Kamera erişimi reddedildi',
   'camera-permissions-prompt': 'Lütfen kameraya erişime izin verin',
   'camera-permissions-request': 'Erişim iste',
+  'camera-not-found': 'Kamera bulunamadı',
+  'camera-unavailable': 'Kamera kullanımda veya kullanılamıyor',
   'files-count-limit-error-title': 'Dosya sayısı limiti aşıldı',
   'files-count-limit-error-too-few':
     '{{total}} {{plural:file(total)}} seçtiniz. En az {{min}} {{plural:file(min)}} gerekli.',

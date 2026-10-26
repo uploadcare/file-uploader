@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Camera access denied',
   'camera-permissions-prompt': 'Please allow access to the camera',
   'camera-permissions-request': 'Request access',
+  'camera-not-found': 'No camera found',
+  'camera-unavailable': 'The camera is in use or unavailable',
   'files-count-limit-error-title': 'Files count limit overflow',
   'files-count-limit-error-too-few':
     'You’ve chosen {{total}} {{plural:file(total)}}. At least {{min}} {{plural:file(min)}} required.',

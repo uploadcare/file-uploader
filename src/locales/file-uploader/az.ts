@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Kamera girişi qadağandır',
   'camera-permissions-prompt': 'Lütfən, kameraya girişə icazə verin',
   'camera-permissions-request': 'Girişə icazə istə',
+  'camera-not-found': 'Kamera tapılmadı',
+  'camera-unavailable': 'Kamera istifadədədir və ya əlçatan deyil',
   'files-count-limit-error-title': 'Faylların say limiti aşıldı',
   'files-count-limit-error-too-few':
     '{{total}} {{plural:file(total)}} seçdiniz. Ən az {{min}} {{plural:file(min)}} tələb olunur.',

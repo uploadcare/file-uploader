@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'גישה למצלמה נדחתה',
   'camera-permissions-prompt': 'אנא אפשר גישה למצלמה',
   'camera-permissions-request': 'בקש גישה',
+  'camera-not-found': 'לא נמצאה מצלמה',
+  'camera-unavailable': 'המצלמה בשימוש או אינה זמינה',
   'files-count-limit-error-title': 'חריגה ממגבלת כמות הקבצים',
   'files-count-limit-error-too-few':
     'בחרת {{total}} {{plural:file(total)}}. לפחות {{min}} {{plural:file(min)}} נדרשים.',

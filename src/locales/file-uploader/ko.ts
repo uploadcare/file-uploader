@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': '카메라 접근 거부됨',
   'camera-permissions-prompt': '카메라 접근을 허용해주세요',
   'camera-permissions-request': '접근 요청',
+  'camera-not-found': '카메라를 찾을 수 없음',
+  'camera-unavailable': '카메라가 사용 중이거나 사용할 수 없음',
   'files-count-limit-error-title': '파일 수 제한 초과',
   'files-count-limit-error-too-few': '선택된 파일이 {{total}}개입니다. 최소 {{min}}개가 필요합니다.',
   'files-count-limit-error-too-many': '파일이 너무 많습니다. 최대 {{max}}개입니다.',

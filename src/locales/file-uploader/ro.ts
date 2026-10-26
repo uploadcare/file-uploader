@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Accesul la cameră a fost refuzat',
   'camera-permissions-prompt': 'Vă rugăm să permiteți accesul la cameră',
   'camera-permissions-request': 'Solicitați acces',
+  'camera-not-found': 'Nu a fost găsită nicio cameră',
+  'camera-unavailable': 'Camera este folosită sau indisponibilă',
   'files-count-limit-error-title': 'Limita numărului de fișiere depășită',
   'files-count-limit-error-too-few':
     'Ați selectat {{total}} {{plural:file(total)}}. Cel puțin {{min}} {{plural:file(min)}} sunt necesare.',

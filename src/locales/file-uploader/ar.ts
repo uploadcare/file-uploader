@@ -102,6 +102,8 @@ export default {
   'camera-permissions-denied': 'تم رفض الوصول للكاميرا',
   'camera-permissions-prompt': 'الرجاء السماح بالوصول إلى الكاميرا',
   'camera-permissions-request': 'طلب الوصول',
+  'camera-not-found': 'لم يتم العثور على كاميرا',
+  'camera-unavailable': 'الكاميرا قيد الاستخدام أو غير متاحة',
   'files-count-limit-error-title': 'تجاوز حد عدد الملفات',
   'files-count-limit-error-too-few':
     'لقد اخترت {{total}} {{plural:file(total)}}. على الأقل {{min}} {{plural:file(min)}} مطلوب.',

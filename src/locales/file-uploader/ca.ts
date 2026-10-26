@@ -96,6 +96,8 @@ export default {
   'camera-permissions-denied': 'Accés a la càmera denegat',
   'camera-permissions-prompt': "Si us plau, permet l'accés a la càmera",
   'camera-permissions-request': 'Sol·licitar accés',
+  'camera-not-found': "No s'ha trobat cap càmera",
+  'camera-unavailable': 'La càmera està en ús o no està disponible',
   'files-count-limit-error-title': 'Límit de fitxers superat',
   'files-count-limit-error-too-few':
     "Has seleccionat {{total}} {{plural:file(total)}}. S'exigeix un mínim de {{min}} {{plural:file(min)}}.",

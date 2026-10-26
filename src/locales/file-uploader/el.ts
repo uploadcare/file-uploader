@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Άρνηση πρόσβασης στην κάμερα',
   'camera-permissions-prompt': 'Παρακαλώ επιτρέψτε την πρόσβαση στην κάμερα',
   'camera-permissions-request': 'Αίτημα πρόσβασης',
+  'camera-not-found': 'Δεν βρέθηκε κάμερα',
+  'camera-unavailable': 'Η κάμερα χρησιμοποιείται ή δεν είναι διαθέσιμη',
   'files-count-limit-error-title': 'Υπέρβαση ορίου αριθμού αρχείων',
   'files-count-limit-error-too-few':
     'Έχετε επιλέξει {{total}} {{plural:file(total)}}. Απαιτούνται τουλάχιστον {{min}} {{plural:file(min)}}.',
