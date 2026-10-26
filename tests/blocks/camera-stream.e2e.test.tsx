@@ -106,3 +106,76 @@ describe('picking a camera', () => {
     expect(live).toEqual([opened[1]]);
   });
 });
+
+describe('cameraConstraints', () => {
+  const lastVideoRequest = (getUserMedia: Awaited<ReturnType<typeof openCamera>>['getUserMedia']) =>
+    getUserMedia.mock.lastCall?.[0]?.video;
+
+  it('replaces the default of the same name and keeps the rest', async () => {
+    const { getUserMedia } = await openCamera({ cameraConstraints: { video: { frameRate: { ideal: 15 } } } });
+
+    expect(lastVideoRequest(getUserMedia)).toMatchObject({ width: { ideal: 1920 }, frameRate: { ideal: 15 } });
+  });
+
+  it('passes the opening mode to the function form', async () => {
+    const custom = vi.fn(() => ({}));
+    await openCamera({ cameraModes: 'video, photo', cameraConstraints: custom });
+
+    expect(custom).toHaveBeenCalledWith({ mode: 'video' });
+  });
+
+  it('opens the camera without them when it cannot satisfy them', async () => {
+    const warn = vi.spyOn(console, 'warn');
+    const { getUserMedia } = await openCamera({ cameraConstraints: { video: { width: { exact: 99_999 } } } });
+
+    expect(getUserMedia).toHaveBeenCalledTimes(2);
+    expect(lastVideoRequest(getUserMedia)).toMatchObject({ width: { ideal: 1920 } });
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('cannot satisfy cameraConstraints'), expect.anything());
+  });
+
+  it('applies a change to the open camera without reopening it', async () => {
+    const { camera, config, getUserMedia } = await openCamera();
+    const applyConstraints = vi.spyOn(MediaStreamTrack.prototype, 'applyConstraints');
+    const track = previewTrack(camera);
+
+    config.cameraConstraints = { video: { frameRate: { ideal: 15 } } };
+
+    await vi.waitFor(() =>
+      expect(applyConstraints).toHaveBeenCalledWith(expect.objectContaining({ frameRate: { ideal: 15 } })),
+    );
+    expect(getUserMedia).toHaveBeenCalledTimes(1);
+    expect(previewTrack(camera)).toBe(track);
+  });
+
+  it('re-applies the function form when the tab changes', async () => {
+    const { camera } = await openCamera({
+      cameraConstraints: ({ mode }) => ({ video: { frameRate: { ideal: mode === 'video' ? 24 : 15 } } }),
+    });
+    const applyConstraints = vi.spyOn(MediaStreamTrack.prototype, 'applyConstraints');
+
+    await camera.getByRole('button', { name: 'Video', exact: true }).click();
+
+    await vi.waitFor(() =>
+      expect(applyConstraints).toHaveBeenCalledWith(expect.objectContaining({ frameRate: { ideal: 24 } })),
+    );
+  });
+
+  it('waits for a recording to stop before applying a change', async () => {
+    const { camera, config } = await openCamera();
+    await camera.getByRole('button', { name: 'Video', exact: true }).click();
+    const applyConstraints = vi.spyOn(MediaStreamTrack.prototype, 'applyConstraints');
+
+    await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+    const timer = camera.getByTestId('uc-camera-source--recording-timer');
+    await expect.element(timer).toBeVisible();
+    config.cameraConstraints = { video: { frameRate: { ideal: 15 } } };
+    await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
+    expect(applyConstraints).not.toHaveBeenCalled();
+
+    await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+
+    await vi.waitFor(() =>
+      expect(applyConstraints).toHaveBeenCalledWith(expect.objectContaining({ frameRate: { ideal: 15 } })),
+    );
+  });
+});

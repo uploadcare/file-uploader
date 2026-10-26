@@ -11,6 +11,7 @@ import './camera-source.css';
 import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
+import { type BuildConstraintsInput, buildConstraints } from './buildConstraints';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 
 import '../ActivityHeader/ActivityHeader';
@@ -19,18 +20,6 @@ import '../Select/Select';
 
 type CameraDeviceOption = { text: string; value: string };
 type AudioDeviceOption = { text: string; value: string };
-
-const DEFAULT_VIDEO_CONFIG = {
-  width: {
-    ideal: 1920,
-  },
-  height: {
-    ideal: 1080,
-  },
-  frameRate: {
-    ideal: 30,
-  },
-};
 
 const DEFAULT_PERMISSIONS = ['camera', 'microphone'];
 
@@ -162,6 +151,7 @@ export class CameraSource extends LitUploaderBlock {
           event: 'start-camera',
           node: this.tagName,
           tabId: this._activeTab,
+          hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
         },
       },
     });
@@ -210,6 +200,7 @@ export class CameraSource extends LitUploaderBlock {
           event: 'shot-camera',
           node: this.tagName,
           tabId: this._activeTab,
+          hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
         },
       },
     });
@@ -368,6 +359,10 @@ export class CameraSource extends LitUploaderBlock {
       this._stopTimer();
 
       this._setCameraState(CameraSourceEvents.STOP);
+
+      if (this._videoConstraintsPending) {
+        void this._applyVideoConstraints();
+      }
     });
 
     this._mediaRecorder?.stop();
@@ -632,6 +627,11 @@ export class CameraSource extends LitUploaderBlock {
     });
 
     this._activeTab = tabId;
+
+    // Only the function form can differ between modes.
+    if (typeof this.cfg.cameraConstraints === 'function') {
+      void this._applyVideoConstraints();
+    }
   };
 
   private _createFile = (type: 'camera' | 'video', ext: string, format: string, blob: Blob): File => {
@@ -773,30 +773,45 @@ export class CameraSource extends LitUploaderBlock {
   /** Incremented on every `_capture()` call, so a slower, older `getUserMedia` call can tell it was superseded. */
   private _captureId = 0;
 
+  /** The mode the camera is opening for: the active tab, or the tab that is about to become active. */
+  private get _currentMode(): CameraMode {
+    return this._activeTab ?? this._cameraModes[0] ?? CameraSourceTypes.PHOTO;
+  }
+
+  private get _constraintsInput(): BuildConstraintsInput {
+    return {
+      mode: this._currentMode,
+      enableAudio: this.cfg.enableAudioRecording,
+      custom: this.cfg.cameraConstraints,
+      cameraId: this._selectedCameraId,
+      audioId: this._selectedAudioId,
+    };
+  }
+
+  /**
+   * Opens the stream. If `cameraConstraints` asks for something the camera can't do, opens it once more without them
+   * rather than showing the camera as denied.
+   */
+  private async _openStream(): Promise<{ stream: MediaStream; requested: MediaTrackConstraints }> {
+    const input = this._constraintsInput;
+    const constraints = buildConstraints(input);
+    try {
+      return { stream: await navigator.mediaDevices.getUserMedia(constraints), requested: constraints.video };
+    } catch (error) {
+      if (!input.custom || (error as Error | null)?.name !== 'OverconstrainedError') {
+        throw error;
+      }
+      console.warn('The camera cannot satisfy cameraConstraints, opening it without them', error);
+      this.telemetryManager.sendEventError(error, 'camera capturing. cameraConstraints could not be satisfied');
+
+      const fallback = buildConstraints({ ...input, custom: null });
+      // Reported as the original request, so `_applyVideoConstraints` doesn't retry the same rejected constraints.
+      return { stream: await navigator.mediaDevices.getUserMedia(fallback), requested: constraints.video };
+    }
+  }
+
   private _capture = async (): Promise<void> => {
     const captureId = ++this._captureId;
-
-    const constraints: MediaStreamConstraints = {
-      video: { ...DEFAULT_VIDEO_CONFIG },
-      audio: this.cfg.enableAudioRecording ? ({} as MediaTrackConstraints) : false,
-    };
-
-    if (this._selectedCameraId) {
-      constraints.video = {
-        ...DEFAULT_VIDEO_CONFIG,
-        deviceId: {
-          exact: this._selectedCameraId,
-        },
-      };
-    }
-
-    if (this._selectedAudioId && this.cfg.enableAudioRecording) {
-      constraints.audio = {
-        deviceId: {
-          exact: this._selectedAudioId,
-        },
-      } as MediaTrackConstraints;
-    }
 
     // Mute the video to prevent feedback for Firefox
     if (this._videoRef.value) {
@@ -808,7 +823,7 @@ export class CameraSource extends LitUploaderBlock {
 
     try {
       this._setPermissionsState('prompt');
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const { stream, requested } = await this._openStream();
 
       if (captureId !== this._captureId) {
         for (const track of stream.getTracks()) {
@@ -818,6 +833,7 @@ export class CameraSource extends LitUploaderBlock {
       }
 
       this._stream = stream;
+      this._requestedVideoConstraints = JSON.stringify(requested);
       this._stream.addEventListener('inactive', this._handleStreamInactive);
 
       this._setVideoSource(this._stream);
@@ -830,6 +846,42 @@ export class CameraSource extends LitUploaderBlock {
       this._setPermissionsState('denied');
       console.log('Failed to capture camera', error);
       this.telemetryManager.sendEventError(error, 'camera capturing. Failed to capture camera');
+    }
+  };
+
+  /** The video constraints last asked of the open camera, serialized to compare against the next request. */
+  private _requestedVideoConstraints: string | null = null;
+
+  /** Set when the video constraints changed during a recording; they are applied once it stops. */
+  private _videoConstraintsPending = false;
+
+  /**
+   * Applies changed video constraints to the open camera without reopening it, so there is no new permission prompt
+   * and no black frame. Audio constraints need a new stream and wait for the next capture.
+   */
+  private _applyVideoConstraints = async (): Promise<void> => {
+    const track = this._stream?.getVideoTracks()[0];
+    if (!this._capturing || !track) {
+      return;
+    }
+    if (this._mediaRecorder?.state === 'recording') {
+      this._videoConstraintsPending = true;
+      return;
+    }
+    this._videoConstraintsPending = false;
+
+    const { video } = buildConstraints(this._constraintsInput);
+    const serialized = JSON.stringify(video);
+    if (serialized === this._requestedVideoConstraints) {
+      return;
+    }
+    this._requestedVideoConstraints = serialized;
+
+    try {
+      await track.applyConstraints(video);
+    } catch (error) {
+      console.warn('The camera cannot satisfy cameraConstraints, keeping the current settings', error);
+      this.telemetryManager.sendEventError(error, 'camera capturing. cameraConstraints could not be applied');
     }
   };
 
@@ -973,6 +1025,10 @@ export class CameraSource extends LitUploaderBlock {
     this.subConfigValue('enableAudioRecording', (val) => {
       this._audioToggleMicrophoneHidden = !val;
       this._audioSelectDisabled = !val;
+    });
+
+    this.subConfigValue('cameraConstraints', () => {
+      void this._applyVideoConstraints();
     });
 
     this.subConfigValue('cameraModes', (val) => {

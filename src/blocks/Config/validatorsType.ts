@@ -1,6 +1,14 @@
 import { isAuthTokenResolver } from '@uploadcare/upload-client';
 import type { PasteScope } from '../../abstract/features/ClipboardLayer';
-import type { AuthToken, Metadata, MetadataCallback, Tags, TagsCallback } from '../../types/index';
+import type {
+  AuthToken,
+  CameraConstraints,
+  CameraConstraintsResolver,
+  Metadata,
+  MetadataCallback,
+  Tags,
+  TagsCallback,
+} from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
 import type { ModeCameraType } from '../CameraSource/constants';
 import { CameraSourceTypes } from '../CameraSource/constants';
@@ -102,6 +110,17 @@ const asAuthToken = (value: unknown): AuthToken => {
   throw new Error('Invalid authToken value. Must be a string, a function, or a `{ getToken }` object.');
 };
 
+const asCameraConstraints = (value: unknown): CameraConstraints | CameraConstraintsResolver => {
+  if (typeof value === 'function') {
+    return value as CameraConstraintsResolver;
+  }
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    return value as CameraConstraints;
+  }
+
+  throw new Error('Invalid cameraConstraints value. Must be an object or a function.');
+};
+
 const asObject = <T>(value: unknown): T => {
   if (typeof value === 'object') {
     return value as T;
@@ -149,6 +168,7 @@ export {
   asAuthToken,
   asBoolean,
   asCameraCapture,
+  asCameraConstraints,
   asCameraMode,
   asCameraModes,
   asFilesViewMode,

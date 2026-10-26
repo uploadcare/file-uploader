@@ -48,6 +48,8 @@ export type SecureDeliveryProxyUrlResolver = (
 export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureExpire: string };
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
 export type IconHrefResolver = (iconName: string) => string;
+export type CameraConstraints = { video?: MediaTrackConstraints; audio?: MediaTrackConstraints };
+export type CameraConstraintsResolver = (context: { mode: CameraMode }) => CameraConstraints;
 export type FileValidators = FileValidator[];
 export type CollectionValidators = FuncCollectionValidator[];
 
@@ -345,6 +347,20 @@ export type ConfigType = {
    * the following properties from MediaRecorderOptions
    */
   mediaRecorderOptions: MediaRecorderOptions | null;
+
+  /**
+   * Extra `getUserMedia` constraints for the camera, as an object or as a function of the active mode.
+   *
+   * Each property replaces the built-in value of the same name (`width`, `height`, `frameRate`, ...); the camera and
+   * microphone picked in the camera screen always win over `deviceId`. If the camera cannot satisfy these
+   * constraints, it opens without them and a warning is logged.
+   *
+   * Video constraints are re-applied to the open camera when this option changes or, for the function form, when
+   * the user switches between photo and video; changes made during a recording apply once it stops. Audio
+   * constraints only take effect the next time the camera opens.
+   * @default null
+   */
+  cameraConstraints: CameraConstraints | CameraConstraintsResolver | null;
 
   filesViewMode: FilesViewMode;
 

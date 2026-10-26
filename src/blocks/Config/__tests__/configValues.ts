@@ -101,6 +101,12 @@ export const CONFIG_VALUES: { [K in keyof ConfigType]: ConfigType[K][] } = {
   enableVideoRecording: [true, false, null],
   maxVideoRecordingDuration: [0, 30, null],
   mediaRecorderOptions: [{}, { mimeType: 'video/webm' }, null],
+  cameraConstraints: [
+    {},
+    { video: { frameRate: { ideal: 60 } } },
+    ({ mode }) => ({ audio: { echoCancellation: mode === 'video' } }),
+    null,
+  ],
 
   filesViewMode: ['grid', 'list'],
   gridShowFileNames: [true, false],

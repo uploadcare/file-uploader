@@ -14,6 +14,7 @@ import {
   asAuthToken,
   asBoolean,
   asCameraCapture,
+  asCameraConstraints,
   asCameraMode,
   asCameraModes,
   asDynamicButtonViewMode,
@@ -104,6 +105,7 @@ const mapping: { [Key in keyof ConfigType]: ConfigNormalizer<Key> } = {
   enableAudioRecording: asBoolean,
   enableVideoRecording: asBoolean,
   mediaRecorderOptions: asObject,
+  cameraConstraints: asCameraConstraints,
 
   maxVideoRecordingDuration: asNumber,
 
