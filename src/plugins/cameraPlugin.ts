@@ -5,6 +5,7 @@ import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { browserFeatures } from '../utils/browser-info';
 import { deserializeCsv } from '../utils/comma-separated';
 import { UploadSource, UploadSourceMobile } from '../utils/UploadSource';
+import { renderElement } from './renderElement';
 
 export const cameraPlugin: UploaderPlugin = {
   id: 'camera',
@@ -51,13 +52,7 @@ export const cameraPlugin: UploaderPlugin = {
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.CAMERA,
       label: 'caption-camera',
-      render: (host) => {
-        const cameraEl = document.createElement('uc-camera-source');
-        host.append(cameraEl);
-        return () => {
-          host.replaceChildren();
-        };
-      },
+      render: renderElement('uc-camera-source'),
     });
   },
 };

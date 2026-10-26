@@ -3,6 +3,7 @@ import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import { ExternalSource } from '../blocks/ExternalSource/ExternalSource';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { canonicalSourceName, ExternalUploadSource } from '../utils/UploadSource';
+import { renderElement } from './renderElement';
 
 export const externalSourcesPlugin: UploaderPlugin = {
   id: 'external-sources',
@@ -13,13 +14,7 @@ export const externalSourcesPlugin: UploaderPlugin = {
       id: ACTIVITY_TYPES.EXTERNAL,
       label: ({ externalSourceType }) =>
         externalSourceType ? `src-type-${canonicalSourceName(externalSourceType)}` : '',
-      render: (host) => {
-        const el = document.createElement('uc-external-source');
-        host.append(el);
-        return () => {
-          host.replaceChildren();
-        };
-      },
+      render: renderElement('uc-external-source'),
     });
 
     for (const sourceId of Object.values(ExternalUploadSource)) {

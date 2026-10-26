@@ -3,6 +3,7 @@ import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import { UrlSource } from '../blocks/UrlSource/UrlSource';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { UploadSource } from '../utils/UploadSource';
+import { renderElement } from './renderElement';
 
 export const urlSourcePlugin: UploaderPlugin = {
   id: 'url-source',
@@ -12,13 +13,7 @@ export const urlSourcePlugin: UploaderPlugin = {
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.URL,
       label: 'caption-from-url',
-      render: (host) => {
-        const el = document.createElement('uc-url-source');
-        host.append(el);
-        return () => {
-          host.replaceChildren();
-        };
-      },
+      render: renderElement('uc-url-source'),
     });
 
     pluginApi.registry.registerSource({
