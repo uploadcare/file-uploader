@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { ConfigType } from '../../../types/index';
-import { initialConfig } from '../../Config/initialConfig';
-import { calcCameraModes, parseCameraModes } from '../calcCameraModes';
+import { initialConfig } from '../blocks/Config/initialConfig';
+import type { ConfigType } from '../types/index';
+import { calcCameraModes, parseCameraModes } from './cameraModes';
 
 describe('calcCameraModes', () => {
   it('should return both modes enabled when cameraModes includes video and photo', () => {
