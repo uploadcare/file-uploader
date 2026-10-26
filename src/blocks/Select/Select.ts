@@ -1,6 +1,7 @@
 import { html, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { ChildBlock } from '../../lit/ChildBlock';
+import '../Icon/Icon';
 import './select.css';
 
 type SelectOption = {
@@ -23,6 +24,7 @@ export class Select extends ChildBlock {
       <select @change=${this._handleChange} ?disabled=${this.disabled}>
         ${this.options.map((option) => html`<option value=${option.value}>${option.text}</option>`)}
       </select>
+      <uc-icon name="arrow-dropdown"></uc-icon>
     `;
   }
 

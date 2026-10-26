@@ -25,6 +25,28 @@ const renderSelect = () => {
 const innerSelect = () => document.querySelector('uc-select select') as HTMLSelectElement | null;
 
 describe('uc-select', () => {
+  it("draws the theme's dropdown arrow in place of the browser's, clear of the text", async () => {
+    // The native arrow sat against the right edge, closer than the text sat to the left one.
+    const { select } = renderSelect();
+    select.options = [{ text: 'USB Camera VID:1133 PID:2075 (046d:081b)', value: 'v1' }];
+    await expect.poll(() => innerSelect()?.querySelectorAll('option').length).toBe(1);
+
+    const native = innerSelect()!;
+    expect(getComputedStyle(native).appearance).toBe('none');
+    const arrow = select.querySelector('uc-icon[name="arrow-dropdown"]')!;
+    expect(arrow).toBeTruthy();
+    const box = native.getBoundingClientRect();
+    const icon = arrow.querySelector('svg')!.getBoundingClientRect();
+    const paddingLeft = Number.parseFloat(getComputedStyle(native).paddingLeft);
+    const paddingRight = Number.parseFloat(getComputedStyle(native).paddingRight);
+    expect(icon.width).toBeGreaterThan(0);
+    // Inside the select, as far from its right edge as the text is from its left, and the text stops before it.
+    expect(icon.top).toBeGreaterThanOrEqual(box.top);
+    expect(icon.bottom).toBeLessThanOrEqual(box.bottom);
+    expect(Math.abs(box.right - icon.right - paddingLeft)).toBeLessThanOrEqual(1);
+    expect(paddingRight).toBeGreaterThanOrEqual(box.right - icon.left);
+  });
+
   it('renders one native <option> per options entry, with matching text and value', async () => {
     const { select } = renderSelect();
     select.options = [
