@@ -74,7 +74,8 @@ export class CameraDevices {
         signal: this._host.adoptionSignal(),
       });
     } catch (error) {
-      if (isAbortError(error)) throw error;
+      // Asks the lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
+      if (this._host.adoptionSignal().aborted) throw error;
       this._host.onError(error, 'camera devices. Failed to get user media', 'Failed to get user media');
     }
   }
