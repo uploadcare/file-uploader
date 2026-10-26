@@ -56,6 +56,8 @@ export class UploadFileEventsController {
    * and an upload that finishes inside one batch would never be seen uploading.
    */
   public start(entry: Entry): void {
+    // A new attempt: its failure is news even when it repeats the last one.
+    this._reportedFailures.delete(entry);
     if (!entry.get('silent')) {
       this._emit(UploaderEventType.FILE_UPLOAD_START, toOutputFileEntry(entry));
     }
@@ -66,12 +68,27 @@ export class UploadFileEventsController {
     this._emitEach(ids, UploaderEventType.FILE_UPLOAD_SUCCESS, ({ fileInfo, silent }) => !!fileInfo && !silent);
   }
 
-  /** `FILE_UPLOAD_FAILED` for `id` if it has errors. Returns whether it emitted (the caller pairs a common-failed emit). */
+  /**
+   * The verdict each entry's last `FILE_UPLOAD_FAILED` reported. Validators rerun on every `change`, writing a fresh
+   * `errors` array with the same verdict; only `type` and `message` say whether it is a new failure.
+   */
+  private readonly _reportedFailures = new WeakMap<Entry, string>();
+
+  /**
+   * `FILE_UPLOAD_FAILED` for `id` if it has errors it has not reported yet. Returns whether it emitted (the caller
+   * pairs a common-failed emit).
+   */
   public failed(id: Uid): boolean {
     const entry = TypedData.getByUid<UploadEntryData>(id);
-    if (!entry || entry.values.errors.length === 0) {
+    if (!entry) return false;
+    const { errors } = entry.values;
+    if (errors.length === 0) {
+      this._reportedFailures.delete(entry);
       return false;
     }
+    const verdict = JSON.stringify(errors.map(({ type, message }) => [type, message]));
+    if (this._reportedFailures.get(entry) === verdict) return false;
+    this._reportedFailures.set(entry, verdict);
     this._emit(UploaderEventType.FILE_UPLOAD_FAILED, toOutputFileEntry(entry));
     return true;
   }
