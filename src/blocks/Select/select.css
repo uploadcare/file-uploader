@@ -1,6 +1,23 @@
 @layer uc.shared {
   uc-select {
+    position: relative;
     display: inline-flex;
+    align-items: center;
+  }
+
+  /* The theme's arrow stands in for the browser's, which sits against the edge. */
+  uc-select uc-icon {
+    position: absolute;
+    right: 14px;
+    width: auto;
+    height: auto;
+    pointer-events: none;
+    color: var(--uc-secondary-foreground);
+  }
+
+  uc-select uc-icon svg {
+    width: 16px;
+    height: 16px;
   }
 
   uc-select select {
@@ -9,7 +26,8 @@
     align-items: center;
     justify-content: center;
     height: var(--uc-button-size);
-    padding: 0 14px;
+    padding: 0 38px 0 14px;
+    appearance: none;
     font-size: 1em;
     font-family: inherit;
     white-space: nowrap;
