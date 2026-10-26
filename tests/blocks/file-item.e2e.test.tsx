@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, FileItem, OutputFileEntry, UploadCtxProvider, UploaderPlugin } from '@/index.ts';
-import type { Uid } from '../../src/lit/Uid';
+import type { Uid } from '../../src/abstract/Uid';
 import { TEST_IMAGE_URL } from '../utils/constants';
 import { getCtxName } from '../utils/getCtxName';
 import '../../types/jsx';

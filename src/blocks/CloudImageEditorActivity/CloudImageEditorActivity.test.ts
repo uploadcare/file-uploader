@@ -3,10 +3,10 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { TypedData } from '../../abstract/TypedData';
+import type { Uid } from '../../abstract/Uid';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import type { Uid } from '../../lit/Uid';
 import { delay } from '../../utils/delay';
 import { CloudImageEditorActivity } from './CloudImageEditorActivity';
 

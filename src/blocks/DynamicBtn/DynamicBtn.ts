@@ -7,12 +7,12 @@ import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { inject } from '../../abstract/di/inject';
 import { observeSources } from '../../abstract/sources';
+import type { Uid } from '../../abstract/Uid';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { throttled } from '../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
-import type { Uid } from '../../lit/Uid';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../DropArea/DropArea';

@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventEmitter, EventType } from '../../blocks/UploadCtxProvider/EventEmitter';
-import type { Uid } from '../../lit/Uid';
 import type { OutputErrorCollection } from '../../types';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { TelemetryManager } from '../managers/TelemetryManager';
+import type { Uid } from '../Uid';
 import { UploaderPublicApi } from '../UploaderPublicApi';
 import { CollectionStateController } from './CollectionStateController';
 import { ConfigController } from './ConfigController';

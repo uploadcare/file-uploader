@@ -1,7 +1,7 @@
 import { beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, Thumb, UploadCtxProvider } from '@/index.ts';
-import type { Uid } from '../../src/lit/Uid';
+import type { Uid } from '../../src/abstract/Uid';
 import { generateThumb } from '../../src/utils/resizeImage';
 import { TRANSPARENT_PIXEL_SRC } from '../../src/utils/transparentPixelSrc';
 import { IMAGE } from '../fixtures/files';

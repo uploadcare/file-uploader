@@ -3,10 +3,10 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { PluginController } from '../../abstract/managers/plugin';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import type { Uid } from '../../abstract/Uid';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
-import type { Uid } from '../../lit/Uid';
 import { delay } from '../../utils/delay';
 import { FileItem } from './FileItem';
 

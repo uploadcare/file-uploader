@@ -11,9 +11,9 @@ import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryData, UploadEntryKeys } from '../../abstract/uploadEntrySchema';
 import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
 import './file-item.css';
+import type { Uid } from '../../abstract/Uid';
 import { effect } from '../../lit/effect';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
-import type { Uid } from '../../lit/Uid';
 import { FileItemConfig } from './FileItemConfig';
 
 import '../Thumb/Thumb';

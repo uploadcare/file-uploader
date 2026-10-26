@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputErrorCollection } from '../../types';
+import type { Uid } from '../Uid';
 import { CollectionStateController } from './CollectionStateController';
 
 const uid = (s: string) => s as Uid;

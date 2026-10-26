@@ -13,13 +13,13 @@ import { UploadCollectionController } from '../../abstract/controllers/UploadCol
 import { deriveEntryStatus } from '../../abstract/deriveEntryStatus';
 import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import type { Uid } from '../../abstract/Uid';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { throttled } from '../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
-import type { Uid } from '../../lit/Uid';
 import { EventType } from '../UploadCtxProvider/EventEmitter';
 import './upload-list.css';
 import { repeat } from 'lit/directives/repeat.js';

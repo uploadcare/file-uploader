@@ -1,4 +1,4 @@
-import type { Uid } from '../lit/Uid';
+import type { Uid } from '../abstract/Uid';
 
 // biome-ignore lint/complexity/noStaticOnlyClass: This is defined as class to be compatible with the symbiote's UID type
 export class UID {

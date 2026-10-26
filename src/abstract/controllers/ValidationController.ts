@@ -1,6 +1,5 @@
 import { Queue } from '@uploadcare/upload-client';
 import { EventEmitter, EventType } from '../../blocks/UploadCtxProvider/EventEmitter';
-import type { Uid } from '../../lit/Uid';
 import type {
   OutputCollectionErrorType,
   OutputCollectionState,
@@ -28,6 +27,7 @@ import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { TelemetryManager } from '../managers/TelemetryManager';
 import type { TypedData } from '../TypedData';
+import type { Uid } from '../Uid';
 import { UploaderPublicApi } from '../UploaderPublicApi';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import type {

@@ -10,8 +10,8 @@ import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
 import type { ApplyResult, ChangeResult } from '../CloudImageEditor/src/types';
 import './cloud-image-editor-activity.css';
+import type { Uid } from '../../abstract/Uid';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
-import type { Uid } from '../../lit/Uid';
 
 import '../../solutions/cloud-image-editor/CloudImageEditor';
 

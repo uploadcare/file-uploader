@@ -5,7 +5,6 @@ import { EventEmitter, type EventKey, type EventPayload, EventType } from '../bl
 import type { ActivityParamsMap, ActivityType } from '../lit/activity-constants';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { createL10n } from '../lit/l10n';
-import type { Uid } from '../lit/Uid';
 import { waitForActivityBlock } from '../lit/waitForActivityBlock';
 import type {
   AuthToken,
@@ -42,6 +41,7 @@ import { inject } from './di/inject';
 import { AuthTokenManager } from './managers/AuthTokenManager';
 import { PluginController } from './managers/plugin';
 import { toOutputFileEntry } from './outputFileEntry';
+import type { Uid } from './Uid';
 import { type UploadEntryData, uploadcareFileToEntryData } from './uploadEntrySchema';
 
 export type ApiAddFileCommonOptions = {
