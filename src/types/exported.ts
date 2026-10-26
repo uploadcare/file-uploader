@@ -1,4 +1,6 @@
-import type { PasteScope } from '../abstract/config/validatorsType';
+import type { CameraMode } from '../abstract/cameraModes';
+import type { ComplexConfigKey as PropertyOnlyConfigKey } from '../abstract/config/builtin-registry';
+import type { DynamicButtonMode, FilesViewMode, PasteScope } from '../abstract/config/validatorsType';
 import type { CustomLocaleDefinition, LocaleDefinition } from '../abstract/localeRegistry';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
 import type {
@@ -7,9 +9,6 @@ import type {
   FuncCollectionValidator,
   FuncFileValidator,
 } from '../abstract/validatorTypes';
-import type { CameraMode } from '../blocks/CameraSource/CameraSource';
-import type { ComplexConfigKey as PropertyOnlyConfigKey } from '../blocks/Config/config-keys';
-import type { FilesViewMode } from '../blocks/UploadList/UploadList';
 
 export {
   type AuthToken,
@@ -626,7 +625,6 @@ export type OutputCollectionState<
   );
 
 import { type EventPayload, EventType } from '../abstract/EventEmitter';
-import type { DynamicButtonMode } from '../blocks/DynamicBtn/DynamicBtn';
 
 export type { EventPayload };
 export { EventType };
