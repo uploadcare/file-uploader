@@ -62,8 +62,10 @@ export class CameraSource extends LitUploaderBlock {
 
   private _stream: MediaStream | null = null;
 
+  @state()
   private _selectedAudioId: string | null = null;
 
+  @state()
   private _selectedCameraId: string | null = null;
 
   private _activeTab: CameraMode | null = null;
@@ -692,6 +694,7 @@ export class CameraSource extends LitUploaderBlock {
     );
   }
 
+  /** Only updates the UI; stopping the stream is always an explicit `_stopCapture()` call. */
   private _setPermissionsState = debounce((state: 'granted' | 'denied' | 'prompt') => {
     this.classList.toggle('uc-initialized', state === 'granted');
 
@@ -714,8 +717,6 @@ export class CameraSource extends LitUploaderBlock {
       this._cameraHidden = true;
       this._tabCameraHidden = true;
       this._messageHidden = false;
-
-      this._stopCapture();
     } else {
       this._l10nMessage = 'camera-permissions-denied';
       this._videoHidden = true;
@@ -724,8 +725,6 @@ export class CameraSource extends LitUploaderBlock {
       this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
       this._cameraActionsHidden = true;
       this._mutableClassButton = 'uc-shot-btn uc-camera-action';
-
-      this._stopCapture();
     }
   }, 300);
 
@@ -745,24 +744,38 @@ export class CameraSource extends LitUploaderBlock {
     return true;
   };
 
+  /** The stream ended without us stopping it, e.g. the permission was revoked or the device was unplugged. */
+  private _handleStreamInactive = (): void => {
+    this._stopCapture();
+    this._setPermissionsState('denied');
+  };
+
   private _stopCapture = (): void => {
     if (this._capturing) {
       if (this._videoRef.value) {
         this._videoRef.value.volume = 0;
       }
+      // Detach first: stopping the tracks ourselves must not be reported as an external stop.
+      this._stream?.removeEventListener('inactive', this._handleStreamInactive);
       const tracks = this._currentVideoSource?.getTracks?.();
       tracks?.[0]?.stop();
       this._detachPreviewListeners(this._videoRef.value);
       this._setVideoSource(null);
 
       this._makeStreamInactive();
+      this._stream = null;
       this._stopTimer();
 
       this._capturing = false;
     }
   };
 
+  /** Incremented on every `_capture()` call, so a slower, older `getUserMedia` call can tell it was superseded. */
+  private _captureId = 0;
+
   private _capture = async (): Promise<void> => {
+    const captureId = ++this._captureId;
+
     const constraints: MediaStreamConstraints = {
       video: { ...DEFAULT_VIDEO_CONFIG },
       audio: this.cfg.enableAudioRecording ? ({} as MediaTrackConstraints) : false,
@@ -770,10 +783,11 @@ export class CameraSource extends LitUploaderBlock {
 
     if (this._selectedCameraId) {
       constraints.video = {
+        ...DEFAULT_VIDEO_CONFIG,
         deviceId: {
           exact: this._selectedCameraId,
         },
-      } as MediaTrackConstraints;
+      };
     }
 
     if (this._selectedAudioId && this.cfg.enableAudioRecording) {
@@ -789,18 +803,30 @@ export class CameraSource extends LitUploaderBlock {
       this._videoRef.value.volume = 0;
     }
 
+    // Many mobile devices can't open two cameras at once, so the old stream has to go before asking for the new one.
+    this._stopCapture();
+
     try {
       this._setPermissionsState('prompt');
-      this._stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-      this._stream.addEventListener('inactive', () => {
-        this._setPermissionsState('denied');
-      });
+      if (captureId !== this._captureId) {
+        for (const track of stream.getTracks()) {
+          track.stop();
+        }
+        return;
+      }
+
+      this._stream = stream;
+      this._stream.addEventListener('inactive', this._handleStreamInactive);
 
       this._setVideoSource(this._stream);
       this._capturing = true;
       this._setPermissionsState('granted');
     } catch (error) {
+      if (captureId !== this._captureId) {
+        return;
+      }
       this._setPermissionsState('denied');
       console.log('Failed to capture camera', error);
       this.telemetryManager.sendEventError(error, 'camera capturing. Failed to capture camera');
@@ -832,7 +858,6 @@ export class CameraSource extends LitUploaderBlock {
       this._teardownPermissionListeners();
       console.log('Failed to use permissions API. Fallback to manual request mode.', error);
       this.telemetryManager.sendEventError(error, 'camera permissions. Failed to use permissions API');
-      this._capture();
     }
   };
 
@@ -847,21 +872,26 @@ export class CameraSource extends LitUploaderBlock {
     this._unsubPermissions = null;
   }
 
-  private _requestDeviceAccess = async (): Promise<void> => {
-    try {
-      await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: this.cfg.enableAudioRecording,
-      });
-      await this._getDevices();
-
-      navigator.mediaDevices.addEventListener('devicechange', this._getDevices);
-    } catch (error) {
-      this.telemetryManager.sendEventError(error, 'camera devices. Failed to get user media');
-      console.log('Failed to get user media', error);
+  /**
+   * Picks the option to show as selected: the current choice if that device is still there, otherwise the device the
+   * open stream actually uses, otherwise the first one.
+   */
+  private _resolveSelectedId(
+    options: Array<{ value: string }>,
+    currentId: string | null,
+    track: MediaStreamTrack | undefined,
+  ): string | null {
+    if (currentId && options.some((option) => option.value === currentId)) {
+      return currentId;
     }
-  };
+    const activeId = track?.getSettings().deviceId;
+    if (activeId && options.some((option) => option.value === activeId)) {
+      return activeId;
+    }
+    return options[0]?.value ?? null;
+  }
 
+  /** Device labels are only exposed once permission is granted, so this runs after a successful capture. */
   private _getDevices = async (): Promise<void> => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -884,11 +914,19 @@ export class CameraSource extends LitUploaderBlock {
 
       this._cameraSelectOptions = this._cameraDevices;
       this._cameraSelectHidden = this._cameraDevices.length <= 1;
-      this._selectedCameraId = this._cameraDevices[0]?.value ?? null;
+      this._selectedCameraId = this._resolveSelectedId(
+        this._cameraDevices,
+        this._selectedCameraId,
+        this._stream?.getVideoTracks()[0],
+      );
 
       this._audioSelectOptions = this._audioDevices;
       this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
-      this._selectedAudioId = this._audioDevices[0]?.value ?? null;
+      this._selectedAudioId = this._resolveSelectedId(
+        this._audioDevices,
+        this._selectedAudioId,
+        this._stream?.getAudioTracks()[0],
+      );
     } catch (error) {
       this.telemetryManager.sendEventError(error, 'camera devices. Failed to get devices');
       console.log('Failed to get devices', error);
@@ -897,8 +935,9 @@ export class CameraSource extends LitUploaderBlock {
 
   private _onActivate = async (): Promise<void> => {
     await this._permissionAccess();
-    await this._requestDeviceAccess();
     await this._capture();
+    await this._getDevices();
+    navigator.mediaDevices?.addEventListener('devicechange', this._getDevices);
 
     this._handleCameraModes(this._cameraModes);
   };
@@ -908,11 +947,8 @@ export class CameraSource extends LitUploaderBlock {
       this._unsubPermissions();
     }
 
-    /** Calling this method here because safari and firefox don't support the inactive event yet */
-    const isChromium = Boolean((window as Window & { chrome?: unknown }).chrome);
-    if (!isChromium) {
-      this._setPermissionsState('denied');
-    }
+    // `_stopCapture()` detaches the `inactive` listener before stopping, so the UI is reset here in every browser.
+    this._setPermissionsState('denied');
 
     this._stopCapture();
   };
@@ -994,6 +1030,7 @@ export class CameraSource extends LitUploaderBlock {
         <uc-select
           class="uc-camera-select"
           .options=${this._cameraSelectOptions}
+          .value=${this._selectedCameraId ?? ''}
           ?hidden=${this._cameraSelectHidden}
           @change=${this._handleCameraSelectChange}
         >
@@ -1124,6 +1161,7 @@ export class CameraSource extends LitUploaderBlock {
           <uc-select
             class="uc-audio-select"
             .options=${this._audioSelectOptions}
+            .value=${this._selectedAudioId ?? ''}
             ?hidden=${this._audioSelectHidden}
             ?disabled=${this._audioSelectDisabled}
             @change=${this._handleAudioSelectChange}
