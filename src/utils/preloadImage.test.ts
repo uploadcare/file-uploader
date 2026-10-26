@@ -23,6 +23,26 @@ describe('preloadImage', () => {
   });
 });
 
+describe('preloadImage cancel()', () => {
+  it('rejects with an AbortError, even though the placeholder it swaps in loads', async () => {
+    // Loads whatever it is pointed at, a while later: the cancelled url never, the placeholder pixel right away.
+    class LoadingImage {
+      public onerror: ((event: Event) => void) | null = null;
+      public onload: (() => void) | null = null;
+      public naturalWidth = 0;
+      public set src(_value: string) {
+        queueMicrotask(() => this.onload?.());
+      }
+    }
+    vi.stubGlobal('Image', LoadingImage);
+    const { promise, cancel } = preloadImage('https://ucarecdn.com/slow/');
+
+    cancel();
+
+    await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
+  });
+});
+
 describe('preloadImage with a signal', () => {
   class PendingImage {
     public onerror: ((event: Event) => void) | null = null;
@@ -40,6 +60,17 @@ describe('preloadImage with a signal', () => {
 
     await expect(promise).rejects.toMatchObject({ name: 'AbortError' });
     expect(image.src).not.toBe('https://ucarecdn.com/slow/');
+  });
+
+  it("rejects with the signal's own reason, not cancel()'s", async () => {
+    vi.stubGlobal('Image', PendingImage);
+    const controller = new AbortController();
+    const reason = new Error('the thumb was replaced');
+    const { promise } = preloadImage('https://ucarecdn.com/slow/', { signal: controller.signal });
+
+    controller.abort(reason);
+
+    await expect(promise).rejects.toBe(reason);
   });
 
   it('rejects without loading when the signal has already aborted', async () => {

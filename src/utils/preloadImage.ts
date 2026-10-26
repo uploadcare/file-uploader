@@ -13,21 +13,26 @@ export function preloadImage(
   cancel: () => void;
 } {
   const image: HTMLImageElement = new Image();
+  let rejectLoad: (reason: unknown) => void = () => {};
 
+  // Stops the load and rejects with an AbortError. Rejected first, so the placeholder's own load can't resolve it.
   const cancel = () => {
+    rejectLoad(new DOMException('The image preload was cancelled', 'AbortError'));
     if (image.naturalWidth === 0) {
       image.src = TRANSPARENT_PIXEL_SRC;
     }
   };
 
   const promise: Promise<void> = new Promise<void>((resolve, reject) => {
+    rejectLoad = reject;
     if (signal?.aborted) {
       reject(signal.reason);
       return;
     }
     const onAbort = () => {
-      cancel();
+      // The signal's reason first: `cancel` rejects too, with its own.
       reject(signal?.reason);
+      cancel();
     };
     signal?.addEventListener('abort', onAbort, { once: true });
     const onLoad = () => {
