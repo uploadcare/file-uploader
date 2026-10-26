@@ -36,3 +36,6 @@ const SOURCE_L10N_KEY_MAP: Partial<Record<SourceTypes, SourceTypes>> = {
 
 /** Returns the canonical name for a source, mapping aliases to their shared display name, icon, and translation key. */
 export const canonicalSourceName = (source: string): string => SOURCE_L10N_KEY_MAP[source as SourceTypes] ?? source;
+
+/** The translation key of a source's name; an alias shares the key of the source it stands for. */
+export const sourceLabelKey = (source: string): string => `src-type-${canonicalSourceName(source)}`;
