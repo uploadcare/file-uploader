@@ -97,6 +97,7 @@ export class RecordingClock {
     maxSeconds: () => number | undefined,
     onLimit: () => void,
   ): void {
+    this.stop();
     this._startTime = performance.now();
     const tick = (): void => {
       const elapsed = Math.floor((performance.now() - this._startTime) / 1000);
@@ -124,6 +125,7 @@ export class RecordingClock {
     line: () => HTMLElement | undefined,
     display: () => HTMLElement | undefined,
   ): void {
+    this.stop();
     const tick = (): void => {
       const element = video();
       if (!element) return;
@@ -138,7 +140,9 @@ export class RecordingClock {
     tick();
   }
 
+  /** Stops whichever loop is running; starting one stops the other, so only one ever writes the display. */
   public stop(): void {
     if (this._frame) cancelAnimationFrame(this._frame);
+    this._frame = null;
   }
 }

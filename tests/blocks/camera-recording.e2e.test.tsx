@@ -1,5 +1,6 @@
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import type { Icon } from '@/index';
+import { delay } from '@/utils/delay';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -134,6 +135,25 @@ describe('video recording', () => {
     await camera.getByText('Retake', { exact: true }).click();
 
     expect(revoke).toHaveBeenCalledWith(previewUrl);
+  });
+
+  it('runs no clock in the live view after a retake', async () => {
+    // The clip's play listener outlived the retake, so playing the live stream again started the timeline loop,
+    // which kept writing the stream's own time into the timer.
+    const { camera, shot, openVideoTab } = await openCamera();
+    await openVideoTab();
+    const timer = camera.getByTestId('uc-camera-controls--recording-timer');
+    await shot();
+    await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
+    await shot();
+    await camera.getByText('Retake', { exact: true }).click();
+    await expect.element(camera.getByRole('button', { name: 'Record Video', exact: true })).toBeVisible();
+
+    const atRetake = timer.element().textContent?.trim();
+    // Long enough for the live stream's time to tick past a whole second.
+    await delay(1500);
+
+    expect(timer.element().textContent?.trim()).toBe(atRetake);
   });
 
   it('counts the elapsed time while recording', async () => {

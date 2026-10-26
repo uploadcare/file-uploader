@@ -277,6 +277,7 @@ export class CameraSession {
     this._track('retake-camera');
     this.phase = 'live';
     if (this.activeTab === CameraSourceTypes.VIDEO) {
+      this._clock.stop();
       this._stream.showLive();
     }
     const video = this._host.video();

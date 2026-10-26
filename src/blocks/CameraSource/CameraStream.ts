@@ -130,6 +130,7 @@ export class CameraStream {
 
   /** Goes back from a clip to the live stream. */
   public showLive(): void {
+    this._detachClipListeners();
     this._revokeClipUrl();
     this._setSource(this._stream);
     const video = this._options.video();
