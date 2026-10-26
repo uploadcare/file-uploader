@@ -37,12 +37,11 @@ import { LocaleController } from './controllers/LocaleController';
 import { RouterController } from './controllers/RouterController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import { UploadController } from './controllers/UploadController';
-import { deriveEntryStatus } from './deriveEntryStatus';
 import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
 import { inject } from './di/inject';
 import { AuthTokenManager } from './managers/AuthTokenManager';
 import { PluginController } from './managers/plugin';
-import type { TypedData } from './TypedData';
+import { toOutputFileEntry } from './outputFileEntry';
 import { type UploadEntryData, uploadcareFileToEntryData } from './uploadEntrySchema';
 
 export type ApiAddFileCommonOptions = {
@@ -70,46 +69,6 @@ const isFileUuid = (value: string): boolean => {
 };
 
 /** The documented `OutputFileEntry` shape of one upload entry. */
-export const toOutputFileEntry = <TStatus extends OutputFileStatus>(
-  entry: TypedData<UploadEntryData>,
-): OutputFileEntry<TStatus> => {
-  const uploadEntryData = entry.values;
-  const fileInfo = uploadEntryData.fileInfo as UploadcareFile | null;
-
-  // Shared status ladder (single source with UploadList's toolbar counts).
-  const status = deriveEntryStatus(uploadEntryData);
-
-  const outputItem = {
-    uuid: fileInfo?.uuid ?? uploadEntryData.uuid ?? null,
-    internalId: entry.uid as string,
-    // An explicit entry `fileName` (e.g. a caller-supplied name on add/replace)
-    // wins over the uploaded file's own name; otherwise fall back to it.
-    name: uploadEntryData.fileName ?? fileInfo?.originalFilename ?? null,
-    size: fileInfo?.size ?? uploadEntryData.fileSize,
-    isImage: fileInfo?.isImage ?? uploadEntryData.isImage,
-    mimeType: fileInfo?.mimeType ?? uploadEntryData.mimeType,
-    file: uploadEntryData.file,
-    externalUrl: uploadEntryData.externalUrl,
-    cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
-    cdnUrl: uploadEntryData.cdnUrl ?? fileInfo?.cdnUrl ?? null,
-    fullPath: uploadEntryData.fullPath,
-    uploadProgress: uploadEntryData.uploadProgress,
-    fileInfo: fileInfo ?? null,
-    metadata: uploadEntryData.metadata ?? fileInfo?.metadata ?? null,
-    tags: uploadEntryData.tags ?? fileInfo?.tags ?? null,
-    isSuccess: status === 'success',
-    isUploading: status === 'uploading',
-    isFailed: status === 'failed',
-    isRemoved: status === 'removed',
-    isValidationPending: uploadEntryData.isValidationPending,
-    errors: uploadEntryData.errors as OutputFileEntry['errors'],
-    status,
-    source: uploadEntryData?.source,
-  };
-
-  return outputItem as OutputFileEntry<TStatus>;
-};
-
 /**
  * The documented public JS API (`element.getAPI()`): one instance per ctx, acting on that ctx's uploader. It holds no
  * state of its own; every method reads or drives the ctx's controllers. Once the uploader is destroyed, calling a

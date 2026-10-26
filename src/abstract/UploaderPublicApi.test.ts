@@ -446,7 +446,7 @@ describe('UploaderPublicApi', () => {
     // M-god step 9c-1: full output-shape coverage for the container-resolved
     // build (was `buildOutputCollectionState(bag)`). A success entry exercises
     // every derived getter — counts, status, boolean flags, and the filtered
-    // entry arrays that all read through `getOutputData(container)`.
+    // entry arrays that all read through `outputEntries(container)`.
     it('reports a success collection state byte-shape from the container', () => {
       const { api } = setup();
       api.addFileFromUploadcareFile({
