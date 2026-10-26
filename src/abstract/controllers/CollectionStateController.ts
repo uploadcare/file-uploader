@@ -1,8 +1,8 @@
 import type { UploadcareGroup } from '@uploadcare/upload-client';
-import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState, OutputErrorCollection } from '../../types';
 import type { ReactiveStore } from '../di/ReactiveStore';
 import { type ObserveOptions, SignalMap } from '../di/SignalMap';
+import type { Uid } from '../Uid';
 
 /**
  * The derived UI-state keys the upload stack publishes and the blocks read

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Uid } from '../../lit/Uid';
+import type { Uid } from '../../abstract/Uid';
 import { UID } from '../UID';
 import { getClosestAspectRatio, parseCropPreset } from './cropPreset';
 

@@ -15,8 +15,8 @@ import { FileItemConfig } from '../FileItem/FileItemConfig';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds';
 import './thumb.css';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import type { Uid } from '../../abstract/Uid';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
-import type { Uid } from '../../lit/Uid';
 import type { ConfigType } from '../../types';
 import { TRANSPARENT_PIXEL_SRC } from '../../utils/transparentPixelSrc';
 

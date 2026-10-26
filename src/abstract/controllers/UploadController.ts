@@ -7,7 +7,6 @@ import {
   type UploadcareFile,
   uploadFile,
 } from '@uploadcare/upload-client';
-import type { Uid } from '../../lit/Uid';
 import type { OutputFileEntry } from '../../types/exported';
 import { fileDerivedFields } from '../../utils/fileTypes';
 import { redactSecrets } from '../../utils/redactSecrets';
@@ -22,6 +21,7 @@ import { PluginController } from '../managers/plugin';
 import { runFileHook } from '../managers/plugin/runFileHook';
 import { TelemetryManager } from '../managers/TelemetryManager';
 import { toOutputFileEntry } from '../outputFileEntry';
+import type { Uid } from '../Uid';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';

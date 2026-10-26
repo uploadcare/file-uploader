@@ -1,7 +1,7 @@
-import type { Uid } from '../../lit/Uid';
 import { debounce } from '../../utils/debounce';
 import { controllerLogger } from '../controllerLogger';
 import { TypedData } from '../TypedData';
+import type { Uid } from '../Uid';
 import { initialUploadEntryData, type UploadEntryData } from '../uploadEntrySchema';
 
 export type UploadCollectionChangeMap = Partial<Record<keyof UploadEntryData, Set<Uid>>>;

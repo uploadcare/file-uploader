@@ -1,9 +1,9 @@
-import type { Uid } from '../lit/Uid';
 import { UID } from '../utils/UID';
 import type { ReactiveStore } from './di/ReactiveStore';
 import { SignalMap } from './di/SignalMap';
 import type { ObserveOptions } from './host-subscription';
 import { logger } from './logger';
+import type { Uid } from './Uid';
 
 const log = logger.scope('typed-data');
 const MSG_NAME = '[Typed State] Wrong property name: ';

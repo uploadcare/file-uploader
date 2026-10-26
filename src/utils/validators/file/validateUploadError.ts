@@ -1,6 +1,6 @@
 import { AuthTokenResolverError, NetworkError, UploadError } from '@uploadcare/upload-client';
+import type { Uid } from '../../../abstract/Uid';
 import type { FuncFileValidator } from '../../../abstract/validatorTypes';
-import type { Uid } from '../../../lit/Uid';
 
 export const validateUploadError: FuncFileValidator = (outputEntry, api) => {
   const { internalId } = outputEntry;

@@ -1,4 +1,3 @@
-import type { Uid } from '../../../lit/Uid';
 import type { ConfigType } from '../../../types';
 import type { ConfigController } from '../../controllers/ConfigController';
 import { RouterController } from '../../controllers/RouterController';
@@ -6,6 +5,7 @@ import { UploadCollectionController } from '../../controllers/UploadCollectionCo
 import type { CustomConfig } from '../../customConfigOptions';
 import type { ControllerContainer } from '../../di/ControllerContainer';
 import type { Logger } from '../../logger';
+import type { Uid } from '../../Uid';
 import type { PluginRegistry } from './PluginRegistry';
 import type {
   PluginActivityApi,
