@@ -20,7 +20,6 @@ import { deriveCameraView } from './cameraView';
 import './camera-source.css';
 
 export type { CameraMode };
-export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pause' | 'resume';
 
 /**
  * The camera activity. `CameraSession` holds its state and does the work; this element lends it the lifetime, the
