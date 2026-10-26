@@ -15,8 +15,8 @@ const shown = (selector: string) => {
 };
 
 const describeView = () => {
-  const shot = part('[data-testid="uc-camera-source--shot"]');
-  const mic = part('[data-testid="uc-camera-source--toggle-microphone"]');
+  const shot = part('[data-testid="uc-camera-controls--shot"]');
+  const mic = part('[data-testid="uc-camera-controls--toggle-microphone"]');
   return {
     host: ['uc-initialized', 'uc-recording'].filter((c) => camera().classList.contains(c)).join(' ') || '-',
     video: shown('video'),
@@ -24,15 +24,15 @@ const describeView = () => {
     requestButton: shown('.uc-message-box button'),
     caption: shown('uc-activity-header > div'),
     cameraSelect: shown('.uc-camera-select'),
-    tabs: `${shown('[data-testid="uc-camera-source--tab-photo"]') ? 'photo' : '-'} ${shown('[data-testid="uc-camera-source--tab-video"]') ? 'video' : '-'}`,
+    tabs: `${shown('[data-testid="uc-camera-controls--tab-photo"]') ? 'photo' : '-'} ${shown('[data-testid="uc-camera-controls--tab-video"]') ? 'video' : '-'}`,
     activeTab: part('.uc-switch.uc-active')?.dataset.id ?? '-',
     switcher: shown('.uc-switcher'),
-    timer: shown('[data-testid="uc-camera-source--recording-timer"]'),
+    timer: shown('[data-testid="uc-camera-controls--recording-timer"]'),
     actions: shown('.uc-camera-actions'),
-    shot: shown('[data-testid="uc-camera-source--shot"]')
+    shot: shown('[data-testid="uc-camera-controls--shot"]')
       ? `${shot?.getAttribute('class')} icon=${shot?.querySelector('uc-icon')?.getAttribute('name')} "${shot?.getAttribute('aria-label')}"`
       : false,
-    mic: shown('[data-testid="uc-camera-source--toggle-microphone"]')
+    mic: shown('[data-testid="uc-camera-controls--toggle-microphone"]')
       ? mic?.querySelector('uc-icon')?.getAttribute('name')
       : false,
     audioSelect: shown('.uc-audio-select')
@@ -50,13 +50,13 @@ const open = async (config: Parameters<typeof renderSolution>[1] = {}) => {
   const { root, config: cfg } = await renderSolution('regular', config);
   await clickSource(root, 'Camera');
   await expect.poll(() => camera()?.classList.contains('uc-initialized')).toBe(true);
-  await expect.poll(() => part('[data-testid="uc-camera-source--shot"]')?.hasAttribute('disabled')).toBe(false);
+  await expect.poll(() => part('[data-testid="uc-camera-controls--shot"]')?.hasAttribute('disabled')).toBe(false);
   await settle();
   return { root, config: cfg, view: within(camera()) };
 };
 
 const click = async (testId: string) => {
-  part(`[data-testid="uc-camera-source--${testId}"]`)?.click();
+  part(`[data-testid="uc-camera-controls--${testId}"]`)?.click();
   await settle();
 };
 

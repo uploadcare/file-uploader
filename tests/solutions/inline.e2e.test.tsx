@@ -44,7 +44,7 @@ describe('uc-file-uploader-inline', () => {
     await userEvent.click(tabVideo);
     await expect.element(tabVideo).toHaveAttribute('aria-pressed', 'true');
 
-    await expect.element(cameraSource.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
+    await expect.element(cameraSource.getByTestId('uc-camera-controls--toggle-microphone')).toBeVisible();
     // In video mode the shutter is named for recording.
     await expect.element(cameraSource.getByRole('button', { name: 'Record Video', exact: true })).toBeInTheDocument();
   });

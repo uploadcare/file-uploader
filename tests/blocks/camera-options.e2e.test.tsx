@@ -10,7 +10,7 @@ import '~/types/jsx';
  * `--use-fake-device-for-media-stream` (vitest.config.ts), so the camera activity opens with a working stream and
  * these can be asserted on the rendered controls rather than mocked.
  *
- * Nested test ids are prefixed with the host tag by TestModeController, hence `uc-camera-source--toggle-microphone`.
+ * Nested test ids are prefixed with the host tag by TestModeController, hence `uc-camera-controls--toggle-microphone`.
  */
 
 /** Opens the camera activity and returns the solution root once it is really on screen. */
@@ -26,7 +26,7 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
   // The controls stay `display: none` until the stream starts, so a "hidden" check made earlier passes whatever the
   // option says. The shutter shows in every mode, which makes it the sign the controls are up. Found by test id, as its
   // name changes with the mode.
-  await expect.element(camera.getByTestId('uc-camera-source--shot'), { timeout: 20_000 }).toBeVisible();
+  await expect.element(camera.getByTestId('uc-camera-controls--shot'), { timeout: 20_000 }).toBeVisible();
 
   return { ...rendered, camera };
 };
@@ -68,21 +68,21 @@ describe('enableAudioRecording', () => {
   it('hides the microphone toggle on the photo tab whatever the setting', async () => {
     const { camera } = await openCamera({ enableAudioRecording: true });
 
-    await expect.element(camera.getByTestId('uc-camera-source--toggle-microphone')).not.toBeVisible();
+    await expect.element(camera.getByTestId('uc-camera-controls--toggle-microphone')).not.toBeVisible();
   });
 
   it('shows the microphone toggle on the video tab, which is the default', async () => {
     const { camera } = await openCamera();
     await camera.getByRole('button', { name: 'Video', exact: true }).click();
 
-    await expect.element(camera.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
+    await expect.element(camera.getByTestId('uc-camera-controls--toggle-microphone')).toBeVisible();
   });
 
   it('hides the microphone toggle on the video tab when disabled', async () => {
     const { camera } = await openCamera({ enableAudioRecording: false });
     await camera.getByRole('button', { name: 'Video', exact: true }).click();
 
-    await expect.element(camera.getByTestId('uc-camera-source--toggle-microphone')).not.toBeVisible();
+    await expect.element(camera.getByTestId('uc-camera-controls--toggle-microphone')).not.toBeVisible();
   });
 });
 

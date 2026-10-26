@@ -1,6 +1,7 @@
 import type { PropertyValues } from 'lit';
+import { html } from 'lit';
 import { state } from 'lit/decorators.js';
-import { createRef } from 'lit/directives/ref.js';
+import { createRef, ref } from 'lit/directives/ref.js';
 import { type CameraMode, parseCameraModes } from '../../abstract/cameraModes';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
@@ -13,11 +14,14 @@ import { effect } from '../../lit/effect';
 import { debounced } from '../../lit/rate-limited-method';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { UploadSource } from '../../utils/UploadSource';
+import type { CameraActionEvent } from './CameraActionEvent';
+import { CameraControls } from './CameraControls';
 import { CameraDevices, type DeviceOption } from './CameraDevices';
+import { CameraHeader } from './CameraHeader';
+import { CameraPreview } from './CameraPreview';
 import { CameraRecorder, createCameraFile, RecordingClock } from './CameraRecorder';
 import { CameraStream, cameraConstraints, captureFrame } from './CameraStream';
-import { renderCameraSource } from './camera-source-template';
-import { type CameraPermission, type CameraPhase, type CameraView, deriveCameraView } from './cameraView';
+import { type CameraPermission, type CameraPhase, deriveCameraView } from './cameraView';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 import './camera-source.css';
 
@@ -38,19 +42,18 @@ export class CameraSource extends ChildBlock {
   // post-adoption), so `@inject` resolves it safely.
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
-  private _videoRef = createRef<HTMLVideoElement>();
-  private _timerRef = createRef<HTMLElement>();
-  private _lineRef = createRef<HTMLElement>();
+  private readonly _previewRef = createRef<CameraPreview>();
+  private readonly _controlsRef = createRef<CameraControls>();
 
   private readonly _recorder = new CameraRecorder();
   private readonly _clock = new RecordingClock();
   private readonly _camera = new CameraStream({
-    video: () => this._videoRef.value,
+    video: () => this._previewRef.value?.video,
     onClipPlay: () => {
       this._clock.startTimeline(
-        () => this._videoRef.value,
-        () => this._lineRef.value,
-        () => this._timerRef.value,
+        () => this._previewRef.value?.video,
+        () => this._controlsRef.value?.timeline,
+        () => this._controlsRef.value?.timer,
       );
       this._timelineIcon = 'pause';
     },
@@ -108,7 +111,7 @@ export class CameraSource extends ChildBlock {
   @state()
   private _timelineIcon = 'play';
 
-  private readonly _handleShutter = (): void => {
+  private _handleShutter(): void {
     this._telemetry.sendActionEvent('shot-camera', this.tagName, { tabId: this._activeTab });
     this._telemetry.sendActionEvent('start-camera', this.tagName, { tabId: this._activeTab });
     if (this._activeTab === CameraSourceTypes.PHOTO) {
@@ -120,56 +123,38 @@ export class CameraSource extends ChildBlock {
         this._startRecording();
       }
     }
-  };
-
-  private readonly _handleCameraChange = (event: Event): void => {
-    const target = event.target as HTMLSelectElement | null;
-    if (!target) return;
-    this._selectedCameraId = target.value;
-    this.runTask(() => this._capture());
-  };
-
-  private readonly _handleMicrophoneChange = (event: Event): void => {
-    const target = event.target as HTMLSelectElement | null;
-    if (!target) return;
-    this._selectedMicrophoneId = target.value;
-    this.runTask(() => this._capture());
-  };
-
-  private readonly _handleRequestAccess = (): void => {
-    this.runTask(() => this._capture());
-  };
+  }
 
   /** Pauses or resumes the recorded clip's preview. */
-  private readonly _handleToggleClipPlayback = (): void => {
+  private _handleToggleClipPlayback(): void {
     if (this._recorder.isRecording) return;
-    const video = this._videoRef.value;
+    const video = this._previewRef.value?.video;
     if (!video) return;
     if (!video.paused && !video.ended && video.readyState > 2) {
       video.pause();
     } else if (video.paused) {
       this.runTask(() => video.play());
     }
-  };
+  }
 
-  private readonly _handleToggleMicrophone = (): void => {
+  private _handleToggleMicrophone(): void {
     const muted = this._camera.toggleAudio();
     if (muted !== undefined) this._audioMuted = muted;
-  };
+  }
 
-  private readonly _handleRetake = (): void => {
+  private _handleRetake(): void {
     this._telemetry.sendActionEvent('retake-camera', this.tagName, { tabId: this._activeTab });
     this._setCameraState(CameraSourceEvents.RETAKE);
     if (this._activeTab === CameraSourceTypes.VIDEO) {
       this._camera.showLive();
     }
-    const video = this._videoRef.value;
+    const video = this._previewRef.value?.video;
     if (video) {
       this.runTask(() => video.play());
     }
-  };
+  }
 
-  private readonly _handleAccept = (): void => {
+  private _handleAccept(): void {
     this._telemetry.sendActionEvent('accept-camera', this.tagName, { tabId: this._activeTab });
     this._setCameraState(CameraSourceEvents.ACCEPT);
     if (this._activeTab === CameraSourceTypes.PHOTO) {
@@ -179,12 +164,7 @@ export class CameraSource extends ChildBlock {
       return;
     }
     this._toSend(this._recorder.takeFile());
-  };
-
-  private readonly _handleTabClick = (event: MouseEvent): void => {
-    const id = (event.currentTarget as HTMLElement | null)?.getAttribute('data-id');
-    if (id) this._selectTab(id as CameraMode);
-  };
+  }
 
   private _startRecording(): void {
     try {
@@ -192,7 +172,7 @@ export class CameraSource extends ChildBlock {
       if (!stream) return;
       this._recorder.start(stream, this._config.get('mediaRecorderOptions') ?? {});
       this._clock.startTimer(
-        () => this._timerRef.value,
+        () => this._controlsRef.value?.timer,
         () => this._config.get('maxVideoRecordingDuration') ?? undefined,
         () => this._stopRecording(),
       );
@@ -221,7 +201,7 @@ export class CameraSource extends ChildBlock {
 
   private _shot(): void {
     this._setCameraState(CameraSourceEvents.SHOT);
-    const video = this._videoRef.value;
+    const video = this._previewRef.value?.video;
     if (!video) {
       throw new Error('Video element not found');
     }
@@ -363,14 +343,49 @@ export class CameraSource extends ChildBlock {
     this._camera.sync();
   }
 
-  /** Names the shutter after its icon, which is what tells sighted users what a press does next. */
-  private _shotLabel(icon: CameraView['shotIcon']): string {
-    if (icon === 'square') return this.l10n('a11y-camera-stop-recording');
-    if (icon === 'video-camera-full') {
-      return this.l10n('record', { source: this.l10n('src-type-mobile-video-camera') });
+  private readonly _handleAction = (event: CameraActionEvent): void => {
+    const { action } = event;
+    switch (action.type) {
+      case 'back':
+        this._router.traverse('onBack');
+        break;
+      case 'close':
+        this._router.traverse('onClose');
+        break;
+      case 'select-camera':
+        this._selectedCameraId = action.deviceId;
+        this.runTask(() => this._capture());
+        break;
+      case 'select-microphone':
+        this._selectedMicrophoneId = action.deviceId;
+        this.runTask(() => this._capture());
+        break;
+      case 'request-access':
+        this.runTask(() => this._capture());
+        break;
+      case 'video-frame':
+        this._hasVideoFrame = action.ready;
+        break;
+      case 'select-tab':
+        this._selectTab(action.tab);
+        break;
+      case 'shutter':
+        this._handleShutter();
+        break;
+      case 'retake':
+        this._handleRetake();
+        break;
+      case 'accept':
+        this._handleAccept();
+        break;
+      case 'toggle-microphone':
+        this._handleToggleMicrophone();
+        break;
+      case 'toggle-playback':
+        this._handleToggleClipPlayback();
+        break;
     }
-    return this.l10n('camera-shot');
-  }
+  };
 
   public override render() {
     const audioEnabled = this._config.getTracked('enableAudioRecording');
@@ -384,41 +399,39 @@ export class CameraSource extends ChildBlock {
       microphoneCount: audioEnabled ? this._microphones.length : 0,
       muted: this._audioMuted,
     });
-    return renderCameraSource({
-      view,
-      l10n: this.l10n,
-      activeTab: this._activeTab,
-      cameras: this._cameras,
-      microphones: this._microphones,
-      selectedCameraId: this._selectedCameraId,
-      selectedMicrophoneId: this._selectedMicrophoneId,
-      // Tracked: a `cameraMirror` change re-renders the mirror.
-      videoTransform: this._config.getTracked('cameraMirror') ? 'scaleX(-1)' : null,
-      requestButtonHidden: this._requestButtonHidden,
-      hasVideoFrame: this._hasVideoFrame,
-      timelineIcon: this._timelineIcon,
-      shotLabel: this._shotLabel(view.shotIcon),
-      videoRef: this._videoRef,
-      timerRef: this._timerRef,
-      lineRef: this._lineRef,
-      onBack: () => this._router.traverse('onBack'),
-      onClose: () => this._router.traverse('onClose'),
-      onCameraChange: this._handleCameraChange,
-      onMicrophoneChange: this._handleMicrophoneChange,
-      onVideoFrame: () => {
-        this._hasVideoFrame = true;
-      },
-      onVideoEmptied: () => {
-        this._hasVideoFrame = false;
-      },
-      onRequestAccess: this._handleRequestAccess,
-      onTabClick: this._handleTabClick,
-      onToggleClipPlayback: this._handleToggleClipPlayback,
-      onRetake: this._handleRetake,
-      onAccept: this._handleAccept,
-      onShutter: this._handleShutter,
-      onToggleMicrophone: this._handleToggleMicrophone,
-    });
+    return html`
+      <uc-camera-header
+        .pickCamera=${!view.cameraSelectHidden}
+        .cameras=${this._cameras}
+        .selectedCameraId=${this._selectedCameraId}
+        @uc-internal:camera-action=${this._handleAction}
+      ></uc-camera-header>
+      <uc-camera-preview
+        .view=${view}
+        .mirror=${this._config.getTracked('cameraMirror')}
+        .requestButtonHidden=${this._requestButtonHidden}
+        @uc-internal:camera-action=${this._handleAction}
+        ${ref(this._previewRef)}
+      ></uc-camera-preview>
+      <uc-camera-controls
+        .view=${view}
+        .activeTab=${this._activeTab}
+        .microphones=${this._microphones}
+        .selectedMicrophoneId=${this._selectedMicrophoneId}
+        .hasVideoFrame=${this._hasVideoFrame}
+        .timelineIcon=${this._timelineIcon}
+        @uc-internal:camera-action=${this._handleAction}
+        ${ref(this._controlsRef)}
+      ></uc-camera-controls>
+    `;
+  }
+
+  /** Registers the camera's parts with it, so a page that defines `<uc-camera-source>` gets the whole camera. */
+  public static override reg(tagName: string): void {
+    super.reg(tagName);
+    CameraHeader.reg('uc-camera-header');
+    CameraPreview.reg('uc-camera-preview');
+    CameraControls.reg('uc-camera-controls');
   }
 }
 

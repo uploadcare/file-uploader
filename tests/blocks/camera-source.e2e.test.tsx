@@ -57,7 +57,7 @@ describe('uc-camera-source (parity, render surface + permissions)', () => {
       .poll(() => document.querySelector('uc-camera-source')?.classList.contains('uc-initialized'))
       .toBe(true);
 
-    await expect.element(cameraSource.getByTestId('uc-camera-source--shot')).toBeVisible();
+    await expect.element(cameraSource.getByTestId('uc-camera-controls--shot')).toBeVisible();
 
     const video = document.querySelector('uc-camera-source video');
     expect(video).toBeTruthy();
@@ -76,7 +76,7 @@ describe('uc-camera-source (parity, render surface + permissions)', () => {
     vi.spyOn(navigator.mediaDevices, 'getUserMedia').mockImplementation(async () => stream.clone());
     renderRegularHost();
     const cameraSource = await navigateToCameraSource();
-    const shutter = cameraSource.getByTestId('uc-camera-source--shot');
+    const shutter = cameraSource.getByTestId('uc-camera-controls--shot');
     await expect.element(shutter).toBeVisible();
     await expect.element(shutter).toBeDisabled();
 
