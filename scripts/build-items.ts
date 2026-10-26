@@ -21,6 +21,8 @@ export interface BuildItem {
   cssFilename?: string;
   bundleExternalDependencies: boolean;
   mangleProps?: boolean;
+  /** Source modules this bundle must not contain; the build fails naming the first one found. */
+  forbiddenModules?: RegExp[];
 }
 
 export const buildItems: BuildItem[] = [
@@ -72,6 +74,15 @@ export const buildItems: BuildItem[] = [
     minify: true,
     bundleExternalDependencies: true,
     mangleProps: true,
+    // The standalone editor uploads nothing: the upload stack must stay out of it. `@uploadcare/upload-client` itself
+    // can't be listed: the editor takes two small helpers from it (`Queue`, `isAuthTokenResolver`), and the package
+    // is one bundled file, so the metafile can't tell them from its upload functions.
+    forbiddenModules: [
+      /src\/abstract\/UploaderPublicApi\.ts$/,
+      /src\/abstract\/managers\/plugin\/PluginController\.ts$/,
+      /src\/abstract\/controllers\/UploadController\.ts$/,
+      /src\/abstract\/controllers\/registerUploadStack\.ts$/,
+    ],
   },
   // file-uploader-regular
   {
