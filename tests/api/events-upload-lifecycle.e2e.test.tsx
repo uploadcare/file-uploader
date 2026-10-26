@@ -232,4 +232,23 @@ describe('events: upload lifecycle', () => {
     ]);
     expect(recorder.detailsOf('group-created')[0].group?.cdnUrl).toBeTruthy();
   });
+
+  it('creates a new group when a file is removed from a grouped collection', async () => {
+    const { api, provider } = await renderSolution('regular', { groupOutput: true, multiple: true });
+    const recorder = recordEvents(provider);
+
+    const kept = api.addFileFromObject(IMAGE.PIXEL);
+    const removed = api.addFileFromObject(IMAGE.SQUARE);
+    api.uploadAll();
+    await expect.poll(() => recorder.detailsOf('group-created')).toHaveLength(1);
+    expect(recorder.detailsOf('group-created')[0].group?.filesCount).toBe(2);
+
+    api.removeFileByInternalId(removed.internalId);
+
+    await expect.poll(() => recorder.detailsOf('group-created')).toHaveLength(2);
+    const [first, second] = recorder.detailsOf('group-created');
+    expect(second.group?.filesCount).toBe(1);
+    expect(second.group?.uuid).not.toBe(first.group?.uuid);
+    expect(second.allEntries.map((entry) => entry.internalId)).toEqual([kept.internalId]);
+  });
 });

@@ -80,7 +80,7 @@ export class UploadEventsController {
   @inject(UploadGroupController) private readonly _group!: UploadGroupController;
   private readonly _log = controllerLogger(this, 'upload-events');
 
-  // Bumped when the collection's membership changes: a group created for the old members is stale.
+  // Bumped when the collection's files or their URLs change: a group created before then is stale.
   private _groupGeneration = 0;
   private _unobserveCollection?: Unsubscribe;
   private _unobserveProperties?: Unsubscribe;
@@ -193,6 +193,8 @@ export class UploadEventsController {
     }
     if (changeMap.cdnUrl) {
       this._fileEvents.urlChanged(changeMap.cdnUrl);
+      // A group in flight was built from the old URLs: its answer must not become this collection's group.
+      this._groupGeneration += 1;
       this._collectionEvents.resetGroup();
     }
   };

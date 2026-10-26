@@ -605,6 +605,76 @@ describe('UploadEventsController', () => {
       expect(t.emit.mock.calls.filter(([type]) => type === UploaderEventType.GROUP_CREATED)).toHaveLength(1);
     });
 
+    describe('a new group for a changed collection', () => {
+      const withGroup = async () => {
+        const state = makeState({ totalCount: 1, status: 'success', allEntries: [{ uuid: 'u1' }] as never });
+        const t = setup({ collectionState: state });
+        t.config.set('groupOutput', true);
+        mockUploadFileGroup.mockResolvedValueOnce({ uuid: 'group~1' } as UploadcareGroup);
+        const id = t.collection.add({ fileName: 'a.txt' });
+        t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+        await vi.advanceTimersByTimeAsync(300);
+        expect(t.container.get(CollectionStateController).get('groupInfo')).toEqual({ uuid: 'group~1' });
+        mockUploadFileGroup.mockResolvedValueOnce({ uuid: 'group~2' } as UploadcareGroup);
+        return { t, id };
+      };
+      const groupInfo = (t: ReturnType<typeof setup>) => t.container.get(CollectionStateController).get('groupInfo');
+
+      it('when a file is added', async () => {
+        const { t, id } = await withGroup();
+        const next = t.collection.add({ fileName: 'b.txt' });
+
+        t.fireCollection([id, next], entriesByUid(t.collection, [next]), new Set());
+        await vi.advanceTimersByTimeAsync(300);
+
+        expect(mockUploadFileGroup).toHaveBeenCalledTimes(2);
+        expect(groupInfo(t)).toEqual({ uuid: 'group~2' });
+      });
+
+      it('when a file is removed', async () => {
+        const { t, id } = await withGroup();
+        const removed = entriesByUid(t.collection, [id]);
+        const kept = t.collection.add({ fileName: 'b.txt' });
+
+        t.fireCollection([kept], new Set(), removed);
+        await vi.advanceTimersByTimeAsync(300);
+
+        expect(mockUploadFileGroup).toHaveBeenCalledTimes(2);
+        expect(groupInfo(t)).toEqual({ uuid: 'group~2' });
+      });
+
+      it("when a file's URL changes, as an editor edit does", async () => {
+        const { t, id } = await withGroup();
+
+        t.fireProperties({ cdnUrl: new Set([id]) });
+        await vi.advanceTimersByTimeAsync(300);
+
+        expect(mockUploadFileGroup).toHaveBeenCalledTimes(2);
+        expect(groupInfo(t)).toEqual({ uuid: 'group~2' });
+      });
+
+      it("drops a group that was in flight when a file's URL changed", async () => {
+        const state = makeState({ totalCount: 1, status: 'success', allEntries: [{ uuid: 'u1' }] as never });
+        const t = setup({ collectionState: state });
+        t.config.set('groupOutput', true);
+        const id = t.collection.add({ fileName: 'a.txt' });
+        // The first group answers only after the URL has changed, but before the next flush.
+        mockUploadFileGroup.mockImplementationOnce(async () => {
+          t.fireProperties({ cdnUrl: new Set([id]) });
+          return { uuid: 'group~stale' } as UploadcareGroup;
+        });
+        mockUploadFileGroup.mockResolvedValueOnce({ uuid: 'group~2' } as UploadcareGroup);
+
+        t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+        await vi.advanceTimersByTimeAsync(300);
+        expect(groupInfo(t)).toBeNull();
+        await vi.advanceTimersByTimeAsync(300);
+
+        expect(mockUploadFileGroup).toHaveBeenCalledTimes(2);
+        expect(groupInfo(t)).toEqual({ uuid: 'group~2' });
+      });
+    });
+
     it('does not finalize the group if the ctx is torn down mid-flight', async () => {
       const state = makeState({
         totalCount: 1,
