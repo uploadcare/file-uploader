@@ -30,7 +30,9 @@ import '../Icon/Icon';
 import '../FileItem/FileItem';
 import '../DropArea/DropArea';
 
-export type FilesViewMode = 'grid' | 'list';
+import type { FilesViewMode } from '../../abstract/config/validatorsType';
+
+export type { FilesViewMode };
 
 /**
  * Visual chrome of the upload list. Solutions set this at composition time;

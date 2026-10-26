@@ -1,6 +1,6 @@
-import { BUILTIN_DESCRIPTORS } from '../../blocks/Config/builtin-descriptors';
-import { initialConfig } from '../../blocks/Config/initialConfig';
 import type { ConfigType } from '../../types/exported';
+import { BUILTIN_DESCRIPTORS } from '../config/builtin-descriptors';
+import { initialConfig } from '../config/initialConfig';
 import { type ConfigKeyDescriptor, resolveConfigDescriptor } from '../config-descriptor';
 import { controllerLogger } from '../controllerLogger';
 import type { CustomConfig, CustomConfigDefinition } from '../customConfigOptions';

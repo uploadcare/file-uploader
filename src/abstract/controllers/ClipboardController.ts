@@ -1,4 +1,5 @@
 import { ACTIVITY_TYPES } from '../activity-constants';
+import type { PasteScope } from '../config/validatorsType';
 import { controllerLogger } from '../controllerLogger';
 import { lifetimeOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';
@@ -6,7 +7,7 @@ import { UploaderPublicApi } from '../UploaderPublicApi';
 import { ConfigController } from './ConfigController';
 import { RouterController } from './RouterController';
 
-export type PasteScope = 'local' | 'global' | false;
+export type { PasteScope };
 
 const ALLOWED_PASTE_ACTIVITIES = new Set<string>([ACTIVITY_TYPES.START_FROM, ACTIVITY_TYPES.UPLOAD_LIST]);
 

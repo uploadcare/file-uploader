@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { resolveConfigDescriptor } from '../../abstract/config-descriptor';
+import { resolveConfigDescriptor } from '../config-descriptor';
 import { BUILTIN_DESCRIPTORS } from './builtin-descriptors';
 import { initialConfig } from './initialConfig';
 

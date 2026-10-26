@@ -30,7 +30,9 @@ import '../FileItem/FileActionButton';
 import './NoWrapModeDynamicBtn';
 import { ACTIVITY_TYPES } from '../../abstract/activity-constants';
 
-export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact' | 'plain';
+import type { DynamicButtonMode } from '../../abstract/config/validatorsType';
+
+export type { DynamicButtonMode };
 
 type SourceSplit = {
   main: SourceButtonConfig | null;

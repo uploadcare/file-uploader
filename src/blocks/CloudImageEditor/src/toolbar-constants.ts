@@ -1,15 +1,8 @@
 import { FILTER_NAMES, type FilterName } from '@uploadcare/cdn-url/ops';
+import { ALL_TABS, TabId, type TabIdValue } from '../../../abstract/config/editorTabs';
 import { OPERATIONS_DEFAULTS } from './lib/transformationUtils.js';
 
-export const TabId = Object.freeze({
-  CROP: 'crop',
-  TUNING: 'tuning',
-  FILTERS: 'filters',
-} as const);
-
-export type TabIdValue = (typeof TabId)[keyof typeof TabId];
-
-export const ALL_TABS = Object.freeze([TabId.CROP, TabId.TUNING, TabId.FILTERS] as const);
+export { ALL_TABS, TabId, type TabIdValue };
 
 export const ALL_COLOR_OPERATIONS = Object.freeze([
   'brightness',

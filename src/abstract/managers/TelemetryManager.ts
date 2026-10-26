@@ -1,11 +1,11 @@
 import type { TelemetryRequest } from '@uploadcare/quality-insights';
 import { TelemetryAPIService } from '@uploadcare/quality-insights';
 import { Queue } from '@uploadcare/upload-client';
-import { initialConfig } from '../../blocks/Config/initialConfig';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import type { ConfigType } from '../../types/index';
 import { redactSecrets } from '../../utils/redactSecrets';
 import { UID } from '../../utils/UID';
+import { initialConfig } from '../config/initialConfig';
 import { controllerLogger } from '../controllerLogger';
 import { AppInfo } from '../controllers/AppInfo';
 import { ConfigController } from '../controllers/ConfigController';
