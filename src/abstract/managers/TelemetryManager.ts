@@ -48,6 +48,18 @@ const SENSITIVE_CONFIG_KEYS: ReadonlySet<keyof ConfigType> = new Set([
 
 const REDACTED_VALUE = '[redacted]';
 
+/** Uploader events that are too frequent, or too per-file, to report to telemetry. */
+const EXCLUDED_EVENTS: ReadonlySet<CommonEventType> = new Set([
+  EventType.CHANGE,
+  EventType.COMMON_UPLOAD_PROGRESS,
+  EventType.FILE_ADDED,
+  EventType.FILE_REMOVED,
+  EventType.FILE_UPLOAD_START,
+  EventType.FILE_UPLOAD_PROGRESS,
+  EventType.FILE_UPLOAD_SUCCESS,
+  EventType.FILE_UPLOAD_FAILED,
+]);
+
 /**
  * Quality-insights telemetry (M8 port): container-resolved (M-god step 3c) and
  * an EventBus OBSERVER. Enablement and config tracking read the v2
@@ -179,8 +191,8 @@ export class TelemetryManager {
     return sanitized as TelemetryState['config'];
   }
 
-  private _init(type: CommonEventType | undefined): void {
-    if (type === InternalEventType.INIT_SOLUTION && !this._initialized) {
+  private _markInitialized(type: CommonEventType | undefined): void {
+    if (type === InternalEventType.INIT_SOLUTION) {
       this._initialized = true;
     }
   }
@@ -221,24 +233,8 @@ export class TelemetryManager {
     } as TelemetryState;
   }
 
-  private _excludedEvents(type: CommonEventType | undefined): boolean {
-    if (
-      type &&
-      [
-        EventType.CHANGE,
-        EventType.COMMON_UPLOAD_PROGRESS,
-        EventType.FILE_ADDED,
-        EventType.FILE_REMOVED,
-        EventType.FILE_UPLOAD_START,
-        EventType.FILE_UPLOAD_PROGRESS,
-        EventType.FILE_UPLOAD_SUCCESS,
-        EventType.FILE_UPLOAD_FAILED,
-      ].includes(type)
-    ) {
-      return true;
-    }
-
-    return false;
+  private _isExcludedEvent(type: CommonEventType | undefined): boolean {
+    return type !== undefined && EXCLUDED_EVENTS.has(type);
   }
 
   public sendEvent(body: TelemetryEventBody): void {
@@ -248,10 +244,9 @@ export class TelemetryManager {
       return;
     }
 
-    this._init(body.eventType);
+    this._markInitialized(body.eventType);
 
-    const hasExcludedEvents = this._excludedEvents(body.eventType);
-    if (hasExcludedEvents) {
+    if (this._isExcludedEvent(body.eventType)) {
       return;
     }
     // Copied now, while the config waits for the send: event payloads such as `OutputCollectionState` are getters over
