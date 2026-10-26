@@ -1,6 +1,7 @@
 import type { ConfigType } from '../../../types/index';
 import type { ConfigController } from '../../controllers/ConfigController';
 import type { LazyPluginsController } from '../../controllers/LazyPluginsController';
+import { Disposables } from '../../di/Disposables';
 import { logger } from '../../logger';
 import type { UploaderPlugin } from './PluginTypes';
 
@@ -46,7 +47,8 @@ const resolveLazyPlugins = async ({
 };
 
 export class LazyPluginLoader {
-  private _subs: Set<() => void> = new Set();
+  // Isolate-and-warn teardown: one throwing unsubscribe doesn't keep the rest subscribed.
+  private _subs = new Disposables(() => log);
   private _unsubLazyPlugins: () => void;
   private _abortController?: AbortController;
 
@@ -65,8 +67,7 @@ export class LazyPluginLoader {
   }
 
   private _setEntries(entries: LazyPluginEntry[]): void {
-    for (const unsub of this._subs) unsub();
-    this._subs.clear();
+    this._subs.run();
 
     if (entries.length === 0) return;
 
@@ -125,8 +126,7 @@ export class LazyPluginLoader {
 
   public destroy(): void {
     this._unsubLazyPlugins();
-    for (const unsub of this._subs) unsub();
-    this._subs.clear();
+    this._subs.run();
     this._abortController?.abort();
   }
 }
