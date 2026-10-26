@@ -145,7 +145,7 @@ export class CameraStream {
     if (video) video.muted = true;
   }
 
-  /** Re-applies the source to the video element, which a render may have replaced. */
+  /** Applies the source to the video element: when it changes, and once the preview has rendered the element. */
   public sync(): void {
     const video = this._options.video();
     if (video && video.srcObject !== this._source) {

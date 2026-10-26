@@ -138,11 +138,6 @@ export class CameraSession {
     this._stream.release();
   }
 
-  /** Re-applies the stream to the video element, which a render may have replaced. */
-  public syncVideo(): void {
-    this._stream.sync();
-  }
-
   /** Falls back to the first configured mode when the current tab isn't one. */
   public selectDefaultTab(cameraModes: CameraMode[]): void {
     const defaultTab = cameraModes[0];
@@ -169,6 +164,9 @@ export class CameraSession {
         break;
       case 'request-access':
         this._host.lifetime.runTask(() => this._capture());
+        break;
+      case 'video-element':
+        this._stream.sync();
         break;
       case 'video-frame':
         this.hasVideoFrame = action.ready;

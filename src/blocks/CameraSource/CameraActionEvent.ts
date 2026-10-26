@@ -8,6 +8,8 @@ export type CameraAction =
   | { type: 'select-microphone'; deviceId: string }
   | { type: 'request-access' }
   | { type: 'video-frame'; ready: boolean }
+  /** The preview rendered its `<video>`, which the stream can now be shown in. */
+  | { type: 'video-element' }
   | { type: 'select-tab'; tab: CameraMode }
   | { type: 'shutter' }
   | { type: 'retake' }
