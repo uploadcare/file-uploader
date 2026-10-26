@@ -660,11 +660,7 @@ export class UploaderPublicApi {
   };
 
   private get _sourceList(): string[] {
-    let list: string[] = [];
-    if (this.cfg.sourceList) {
-      list = deserializeCsv(this.cfg.sourceList);
-    }
-    return list;
+    return deserializeCsv(this.cfg.sourceList);
   }
 
   public destroy(): void {
