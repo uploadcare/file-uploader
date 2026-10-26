@@ -105,7 +105,6 @@ async function build(buildItem: BuildItem) {
     ],
     noExternal: buildItem.bundleExternalDependencies ? [/.*/] : undefined,
     globalName: buildItem.format === 'iife' ? 'UC' : undefined,
-    keepNames: buildItem.format === 'iife' ? true : undefined,
     splitting: false,
     treeshake: true,
     shims: false,
