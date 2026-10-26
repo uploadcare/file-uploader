@@ -15,7 +15,7 @@ const host = (overrides: Partial<CameraDevicesHost> = {}) => {
     cameraLabel: (index: number) => `Camera ${index + 1}`,
     onPermissionChange: vi.fn(),
     onDevicesChange: vi.fn(),
-    onError: vi.fn(),
+    report: vi.fn(),
     ...overrides,
   };
   return { fns, devices: new CameraDevices(fns), abort: () => controller.abort() };
@@ -89,10 +89,10 @@ describe('CameraDevices.requestAccess', () => {
 
     await devices.requestAccess();
 
-    expect(fns.onError).toHaveBeenCalledWith(
+    expect(fns.report).toHaveBeenCalledWith(
+      'Failed to get user media',
       expect.any(DOMException),
       'camera devices. Failed to get user media',
-      'Failed to get user media',
     );
   });
 });
@@ -126,10 +126,10 @@ describe('CameraDevices.watchPermissions', () => {
     const { fns, devices } = host();
 
     await expect(devices.watchPermissions()).resolves.toBe(false);
-    expect(fns.onError).toHaveBeenCalledWith(
+    expect(fns.report).toHaveBeenCalledWith(
+      'Failed to use permissions API. Fallback to manual request mode.',
       expect.any(TypeError),
       'camera permissions. Failed to use permissions API',
-      'Failed to use permissions API. Fallback to manual request mode.',
     );
   });
 

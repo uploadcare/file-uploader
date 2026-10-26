@@ -106,7 +106,7 @@ export class CameraSession {
         this.microphones = microphones;
         this.selectedMicrophoneId = keepListedDeviceId(microphones, this.selectedMicrophoneId);
       },
-      onError: (error, context, message) => _host.report('warn', message, error, context),
+      report: (message, error, context) => _host.report('warn', message, error, context),
     });
   }
 
