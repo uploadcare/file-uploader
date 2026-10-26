@@ -62,6 +62,27 @@ describe('photo capture', () => {
   });
 });
 
+describe('photo encoding failure', () => {
+  it('reports a photo the browser could not encode instead of dropping it silently', async () => {
+    const { api, shot, accept } = await openCamera();
+    const toBlob = vi
+      .spyOn(HTMLCanvasElement.prototype, 'toBlob')
+      .mockImplementation((callback: BlobCallback) => callback(null));
+    const error = vi.spyOn(console, 'error');
+    onTestFinished(() => {
+      toBlob.mockRestore();
+      error.mockRestore();
+    });
+    await shot();
+    await accept();
+
+    await expect
+      .poll(() => error.mock.calls.some((call) => String(call).includes('Failed to encode the photo')))
+      .toBe(true);
+    expect(api.getOutputCollectionState().totalCount).toBe(0);
+  });
+});
+
 describe('accessible names', () => {
   // Every control below renders only a `uc-icon`, which is `aria-hidden`, so the name has to come from `aria-label`.
   it('names the mode tabs and the photo shutter', async () => {

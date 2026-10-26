@@ -289,8 +289,14 @@ export class CameraSession {
     this.phase = 'live';
     if (this.activeTab === CameraSourceTypes.PHOTO) {
       this._photo?.toBlob((blob) => {
-        if (blob) this._addFile(createCameraFile('camera', 'jpeg', DEFAULT_PICTURE_FORMAT, blob));
+        if (blob) {
+          this._addFile(createCameraFile('camera', 'jpeg', DEFAULT_PICTURE_FORMAT, blob));
+          return;
+        }
+        const error = new Error('The browser returned no image for the photo');
+        this._host.report('error', 'Failed to encode the photo', error, 'camera accepting. Failed to encode the photo');
       }, DEFAULT_PICTURE_FORMAT);
+      this._photo = null;
       return;
     }
     this._addFile(this._recorder.takeFile());
