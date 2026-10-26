@@ -1,12 +1,9 @@
 import { isAbortError } from '../../abstract/di/Lifetime';
+import { stopTracks } from './CameraStream';
 
 export type DeviceOption = { text: string; value: string };
 
 const WATCHED_PERMISSIONS = ['camera', 'microphone'] as const;
-
-const stopTracks = (stream: MediaStream): void => {
-  for (const track of stream.getTracks()) track.stop();
-};
 
 /** What the camera block lends: its adoption-bound async helpers, config reads and its reaction to changes. */
 export type CameraDevicesHost = {
