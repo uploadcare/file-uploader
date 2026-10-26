@@ -290,6 +290,16 @@ describe('uc-camera-source (device selection)', () => {
     expect((video()?.srcObject as MediaStream | null)?.active).toBe(true);
   });
 
+  it('lists the cameras once a capture succeeds after the first access check failed', async () => {
+    // The device list was only read after the first check, so failing it left the camera picker empty for good.
+    const getUserMedia = stubDevices();
+    getUserMedia.mockRejectedValueOnce(new DOMException('Permission dismissed', 'NotAllowedError'));
+    renderRegularHost();
+    await navigateToCameraSource();
+
+    await expect.poll(() => cameraSelect()?.querySelectorAll('option').length).toBe(2);
+  });
+
   it('keeps the picked camera across a devicechange that still lists it', async () => {
     const getUserMedia = stubDevices();
     renderRegularHost();
