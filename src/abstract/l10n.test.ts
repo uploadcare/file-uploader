@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LocaleController } from '../abstract/controllers/LocaleController';
+import { LocaleController } from './controllers/LocaleController';
 import { type CheckedL10nFunction, createL10n } from './l10n';
 
 // M-god step 7: `createL10n` reads the resolved dictionary directly from a

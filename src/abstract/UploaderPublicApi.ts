@@ -1,8 +1,6 @@
 import { parseFileUrl } from '@uploadcare/cdn-url';
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
-import { createL10n } from '../lit/l10n';
-import { waitForActivityBlock } from '../lit/waitForActivityBlock';
 import type {
   AuthToken,
   ConfigType,
@@ -38,11 +36,13 @@ import { UploadController } from './controllers/UploadController';
 import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
 import { inject } from './di/inject';
 import { EventEmitter, type EventKey, type EventPayload, EventType } from './EventEmitter';
+import { createL10n } from './l10n';
 import { AuthTokenManager } from './managers/AuthTokenManager';
 import { PluginController } from './managers/plugin';
 import { toOutputFileEntry } from './outputFileEntry';
 import type { Uid } from './Uid';
 import { type UploadEntryData, uploadcareFileToEntryData } from './uploadEntrySchema';
+import { waitForActivityBlock } from './waitForActivityBlock';
 
 export type ApiAddFileCommonOptions = {
   silent?: boolean;

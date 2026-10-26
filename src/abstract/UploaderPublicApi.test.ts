@@ -2,7 +2,6 @@ import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 
 import { destroyCtx } from '../lit/ctx-lifecycle';
 import { ensureUploaderCtx } from '../lit/ensureUploaderCtx';
 import { ensureUploaderScope } from '../lit/ensureUploaderScope';
-import { createL10n } from '../lit/l10n';
 import type { UploadcareFile } from '../types/index';
 import { BASIC_IMAGE_WILDCARD, BASIC_VIDEO_WILDCARD } from '../utils/fileTypes';
 import { UploadSource } from '../utils/UploadSource';
@@ -14,6 +13,7 @@ import { UploadCollectionController } from './controllers/UploadCollectionContro
 import { UploadController } from './controllers/UploadController';
 import { ControllerContainer } from './di/ControllerContainer';
 import { EventEmitter, EventType } from './EventEmitter';
+import { createL10n } from './l10n';
 import { PluginController } from './managers/plugin';
 import type { UploaderPublicApi } from './UploaderPublicApi';
 import { UploaderPublicApi as UploaderPublicApiClass } from './UploaderPublicApi';

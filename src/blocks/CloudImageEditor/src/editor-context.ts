@@ -5,9 +5,9 @@ import type {
   CloudImageEditorControllerState,
 } from '../../../abstract/controllers/CloudImageEditorController';
 import { Lifetime } from '../../../abstract/di/Lifetime';
+import type { CheckedL10nKey } from '../../../abstract/l10n';
 import { logger } from '../../../abstract/logger';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
-import type { CheckedL10nKey } from '../../../lit/l10n';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 
 const log = logger.scope('cloud-image-editor');

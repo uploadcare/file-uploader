@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { RouterController } from '../abstract/controllers/RouterController';
-import { ControllerContainer } from '../abstract/di/ControllerContainer';
+import { RouterController } from './controllers/RouterController';
+import { ControllerContainer } from './di/ControllerContainer';
 import { waitForActivityBlock } from './waitForActivityBlock';
 
 // RouterController is container-resolved now: its emit target
