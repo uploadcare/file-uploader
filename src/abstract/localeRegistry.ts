@@ -3,7 +3,11 @@ import { logger } from './logger';
 
 const log = logger.scope('locale-registry');
 
-export type LocaleDefinition = typeof en;
+/** The keys of the English dictionary, each a translated string. `en` itself keeps its templates' literal types. */
+export type LocaleDefinition = { -readonly [K in keyof typeof en]: string };
+
+/** The English templates as written, which the blocks' `l10n` reads the interpolation variables from. */
+export type EnglishTemplates = typeof en;
 export type LocaleDefinitionResolver = () => Promise<LocaleDefinition>;
 
 /**

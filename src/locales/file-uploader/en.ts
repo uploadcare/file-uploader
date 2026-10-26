@@ -138,4 +138,4 @@ export default {
 
   retake: 'Retake',
   accept: 'Accept',
-};
+} as const;
