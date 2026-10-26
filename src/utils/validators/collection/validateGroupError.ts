@@ -1,4 +1,4 @@
-import type { FuncCollectionValidator } from '../../../abstract/validatorTypes';
+import type { OutputErrorCollection } from '../../../types/index';
 
 /**
  * Reports a group creation that failed.
@@ -7,8 +7,7 @@ import type { FuncCollectionValidator } from '../../../abstract/validatorTypes';
  * this the failure had nowhere to go, and with `groupOutput` on it is the
  * difference between an output with a group and one silently without.
  */
-export const validateGroupError: FuncCollectionValidator = (_collection, api) => {
-  const error = api._groupError;
+export const validateGroupError = (error: Error | null): OutputErrorCollection | undefined => {
   if (!error) {
     return undefined;
   }

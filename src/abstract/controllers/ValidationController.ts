@@ -20,8 +20,9 @@ import {
   validateUploadError,
 } from '../../utils/validators/file/index';
 import { withResolvers } from '../../utils/withResolvers';
+import { buildOutputCollectionState } from '../buildOutputCollectionState';
 import { controllerLogger } from '../controllerLogger';
-import { lifetimeOf } from '../di/ControllerContainer';
+import { lifetimeOf, requireContainerOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { EventEmitter, EventType } from '../EventEmitter';
@@ -105,13 +106,14 @@ export class ValidationController {
     validateIsImage,
     validateFileType,
     validateMaxSizeLimit,
-    validateUploadError,
+    // Built in, so they read the collection and its state directly; a custom validator gets only the public api.
+    (entry) => validateUploadError(entry, this._collection),
   ];
 
   private _commonCollectionValidators: FuncCollectionValidator[] = [
     validateMultiple,
     validateCollectionUploadError,
-    validateGroupError,
+    () => validateGroupError(this._collectionState.get('groupError')),
   ];
 
   private _queue = new Queue(20);
@@ -189,7 +191,7 @@ export class ValidationController {
     if (lifetimeOf(this).signal.aborted) return;
 
     const api = this._api;
-    const collection = api.getOutputCollectionState();
+    const collection = buildOutputCollectionState(requireContainerOf(this));
     const errors: Array<OutputErrorCollection> = [];
     const collectionValidators = this._config.get('collectionValidators');
 
@@ -215,7 +217,7 @@ export class ValidationController {
       // `common-upload-failed` with a thunked failed-collection-state payload.
       this._eventEmitter.emit(
         EventType.COMMON_UPLOAD_FAILED,
-        () => this._api.getOutputCollectionState() as OutputCollectionState<'failed'>,
+        () => buildOutputCollectionState(requireContainerOf(this)) as OutputCollectionState<'failed'>,
         { debounce: true },
       );
     }

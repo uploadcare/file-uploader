@@ -78,10 +78,6 @@ export class UploaderPublicApi {
   @inject(AuthTokenManager) private readonly _authToken!: AuthTokenManager;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
 
-  /** @internal Mangled in the build, so it is kept out of the published types. */
-  public get _groupError(): Error | null {
-    return this._collectionState.get('groupError');
-  }
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
   // (resolved lazily at log time via the container that built this instance).
   private readonly _log = controllerLogger(this, 'public-api');
