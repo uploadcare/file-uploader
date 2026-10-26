@@ -587,6 +587,24 @@ describe('UploadEventsController', () => {
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.GROUP_CREATED, expect.anything());
     });
 
+    it('creates the group once when the collection flushes as successful again', async () => {
+      // A slow post-upload validator lands in a later flush than the upload, with the collection still successful.
+      const state = makeState({ totalCount: 1, status: 'success', allEntries: [{ uuid: 'u1' }] as never });
+      const t = setup({ collectionState: state });
+      t.config.set('groupOutput', true);
+      mockUploadFileGroup.mockResolvedValue({ uuid: 'group~1' } as UploadcareGroup);
+      const id = t.collection.add({ fileName: 'a.txt' });
+      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+      await vi.advanceTimersByTimeAsync(300);
+      expect(mockUploadFileGroup).toHaveBeenCalledTimes(1);
+
+      t.fireProperties({ errors: new Set([id]) });
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(mockUploadFileGroup).toHaveBeenCalledTimes(1);
+      expect(t.emit.mock.calls.filter(([type]) => type === UploaderEventType.GROUP_CREATED)).toHaveLength(1);
+    });
+
     it('does not finalize the group if the ctx is torn down mid-flight', async () => {
       const state = makeState({
         totalCount: 1,
