@@ -152,10 +152,8 @@ export class DropArea extends ChildBlock {
   }
 
   protected override controllerReady(container: ControllerContainer): void {
-    // `<uc-drop-area>` is the uploader block in the built-in solutions (they
-    // never render `<uc-upload-ctx-provider>`), so it must attach the
-    // uploader scope itself — same contract as v1's `LitUploaderBlock.
-    // initCallback`, and the identical seam `<uc-upload-ctx-provider>` uses.
+    // The built-in solutions attach the uploader scope themselves. A drop area on a page of its own, with no solution
+    // and no `<uc-upload-ctx-provider>`, still makes its ctx an uploader, as v1's `LitUploaderBlock` did.
     ensureUploaderScope(container);
 
     // Re-adoption (release-while-connected followed by re-adopt) would
