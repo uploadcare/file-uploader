@@ -1,9 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { SourceButtonConfig } from '../blocks/SourceBtn/SourceBtn';
 import { ConfigController } from './controllers/ConfigController';
 import { ControllerContainer } from './di/ControllerContainer';
 import { PluginController, type PluginSourceRegistration } from './managers/plugin';
-import { observeSources, resolveSources } from './sources';
+import { observeSources, resolveSources, type SourceButtonConfig } from './sources';
 
 const source = (id: string, expand?: () => string[]): PluginSourceRegistration => ({
   id,
