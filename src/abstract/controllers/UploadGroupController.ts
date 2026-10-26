@@ -29,6 +29,10 @@ export class UploadGroupController {
   };
 
   public async create(collectionState: OutputCollectionState, isActive: () => boolean): Promise<void> {
+    // The collection already has its group: `groupInfo` is cleared whenever the membership or a file's URL changes,
+    // so it is never another collection's. A later flush that finds the collection successful again (a slow
+    // post-upload validator) must not create a second one.
+    if (this._collectionState.get('groupInfo')) return;
     // Callers invoke this fire-and-forget. Report a current request's failure
     // through collection validation instead of leaking an unhandled rejection.
     try {
