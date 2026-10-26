@@ -1,9 +1,9 @@
 import type { CdnOperation } from '@uploadcare/cdn-url';
-import { type ColorPreview, TabId, type TabIdValue } from '../../blocks/CloudImageEditor/src/toolbar-constants';
-import type { CropAspectRatio, LoadingOperations, Transformations } from '../../blocks/CloudImageEditor/src/types';
-import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../types';
-import { DEFAULT_CDN_ORIGIN } from '../../utils/cdn/origin';
+import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types/index';
+import { DEFAULT_CDN_ORIGIN } from '../../../utils/cdn/origin';
 import { StateController } from './StateController';
+import { type ColorPreview, TabId, type TabIdValue } from './toolbar-constants';
+import type { CropAspectRatio, LoadingOperations, Transformations } from './types';
 
 /**
  * Editor-owned config surface — the subset of `ConfigType` the editor cares

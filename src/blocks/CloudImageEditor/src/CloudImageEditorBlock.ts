@@ -5,11 +5,6 @@ import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { when } from 'lit/directives/when.js';
-import {
-  CloudImageEditorController,
-  type EditorConfig,
-  type EditorServices,
-} from '../../../abstract/controllers/CloudImageEditorController';
 import { isAbortError, Lifetime } from '../../../abstract/di/Lifetime';
 import { logger } from '../../../abstract/logger';
 import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
@@ -22,6 +17,7 @@ import { serializeCsv } from '../../../utils/comma-separated';
 import { getClosestAspectRatio, parseCropPreset } from '../../../utils/crop/cropPreset';
 import { debounce } from '../../../utils/debounce.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
+import { CloudImageEditorController, type EditorConfig, type EditorServices } from './CloudImageEditorController';
 import { subscribeUploaderConfigCompat } from './editor-config-compat';
 import { cloudImageEditorContext } from './editor-context';
 import { type EditorL10n, resolveEditorL10n } from './editor-locale';

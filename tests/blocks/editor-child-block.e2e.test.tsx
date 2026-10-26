@@ -1,7 +1,10 @@
 import { ContextProvider } from '@lit/context';
 import { html, LitElement } from 'lit';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import { CloudImageEditorController, type EditorServices } from '@/abstract/controllers/CloudImageEditorController';
+import {
+  CloudImageEditorController,
+  type EditorServices,
+} from '@/blocks/CloudImageEditor/src/CloudImageEditorController';
 import { cloudImageEditorContext, EditorBlock } from '@/blocks/CloudImageEditor/src/editor-context';
 import { LightDomMixin } from '@/lit/LightDomMixin';
 import { RegisterableElementMixin } from '@/lit/RegisterableElementMixin';

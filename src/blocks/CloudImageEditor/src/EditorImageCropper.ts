@@ -2,10 +2,10 @@ import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import type { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
 import { isAbortError } from '../../../abstract/di/Lifetime';
 import { debounced, throttled } from '../../../lit/rate-limited-method';
 import { preloadImage } from '../../../utils/preloadImage.js';
+import type { CloudImageEditorController } from './CloudImageEditorController';
 import type { CropBoxChangeEvent, CropFrame } from './CropFrame';
 import {
   clamp,
