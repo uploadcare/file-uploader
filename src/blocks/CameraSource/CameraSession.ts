@@ -323,8 +323,9 @@ export class CameraSession {
       const stream = await this._stream.open(constraints, this._host.whileAdopted);
       // A later capture took over; it settles the permission state.
       if (!stream) return;
+      // Ends on a revoked permission, and also when this stream is stopped for the next one; only the first counts.
       stream.addEventListener('inactive', () => {
-        this._setPermission('denied');
+        if (this._stream.stream === stream) this._setPermission('denied');
       });
       // The new stream's microphone starts on.
       this.audioMuted = false;

@@ -98,6 +98,7 @@ export class CameraStream {
     this._detachClipListeners();
     this._setSource(null);
     if (this._stream) stopTracks(this._stream);
+    this._stream = null;
     this._capturing = false;
     return true;
   }
