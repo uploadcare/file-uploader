@@ -30,7 +30,7 @@ export function generateThumb(imgFile: File, size = 40): string | Promise<string
           ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
           canvas.toBlob((blob: Blob | null) => {
             if (!blob) {
-              reject();
+              reject(new Error('Failed to encode the thumbnail'));
               return;
             }
             resolve(URL.createObjectURL(blob));
