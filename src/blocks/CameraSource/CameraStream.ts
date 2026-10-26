@@ -67,8 +67,8 @@ export class CameraStream {
 
   /**
    * Opens the camera with `constraints` and shows it. `guard` binds the wait to the owner's lifetime, stopping a
-   * stream that arrives after it. Only the latest open is shown: one that a later open overtook is stopped and
-   * resolves to null, since a stream left running holds the camera and can freeze the one on screen.
+   * stream that arrives after it. Only the latest open counts: one that a later open overtook resolves to null, its
+   * stream stopped (left running, it holds the camera and can freeze the one on screen) or its failure dropped.
    */
   public async open(
     constraints: MediaStreamConstraints,
@@ -78,7 +78,14 @@ export class CameraStream {
     const video = this._options.video();
     // Muted so Firefox doesn't feed the microphone back.
     if (video) video.volume = 0;
-    const stream = await guard(navigator.mediaDevices.getUserMedia(constraints), stopTracks);
+    let stream: MediaStream;
+    try {
+      stream = await guard(navigator.mediaDevices.getUserMedia(constraints), stopTracks);
+    } catch (error) {
+      // A failure is the superseded open's own; the later one decides what the camera shows.
+      if (open !== this._opens) return null;
+      throw error;
+    }
     if (open !== this._opens) {
       stopTracks(stream);
       return null;
