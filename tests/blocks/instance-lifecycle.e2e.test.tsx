@@ -1,6 +1,5 @@
 import { beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
-import { ClipboardController } from '@/abstract/controllers/ClipboardController';
 import { LocaleController } from '@/abstract/controllers/LocaleController';
 import { RouterController } from '@/abstract/controllers/RouterController';
 import { SecureUploadsController } from '@/abstract/controllers/SecureUploadsController';
@@ -10,11 +9,12 @@ import { UploadEventsController } from '@/abstract/controllers/UploadEventsContr
 import { ValidationController } from '@/abstract/controllers/ValidationController';
 import type { ControllerContainer, Token } from '@/abstract/di/ControllerContainer';
 import { EventEmitter } from '@/abstract/EventEmitter';
-import { A11y } from '@/abstract/managers/a11y';
 import { LocaleManager } from '@/abstract/managers/LocaleManager';
 import { PluginController } from '@/abstract/managers/plugin';
 import { TelemetryManager } from '@/abstract/managers/TelemetryManager';
 import type { Config, UploadCtxProvider } from '@/index.js';
+import { A11y } from '@/lit/a11y';
+import { ClipboardController } from '@/lit/ClipboardController';
 import { delay } from '@/utils/delay';
 import { getCtxName } from '../utils/getCtxName';
 import { containerOf, hasCtx } from '../utils/registry';

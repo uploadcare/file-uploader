@@ -1,13 +1,13 @@
 import { html } from 'lit';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { AppInfo } from '../abstract/controllers/AppInfo';
-import { ClipboardController } from '../abstract/controllers/ClipboardController';
 import { LazyPluginsController } from '../abstract/controllers/LazyPluginsController';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
-import { A11y } from '../abstract/managers/a11y';
 import type { LazyPluginEntry } from '../abstract/managers/plugin/LazyPluginLoader';
 import svgIconsSprite from '../blocks/themes/uc-basic/svg-sprite';
+import { A11y } from './a11y';
 import { ChildBlock } from './ChildBlock';
+import { ClipboardController } from './ClipboardController';
 import { ensureUploaderScope } from './ensureUploaderScope';
 import { HostScopeController } from './HostScopeController';
 
