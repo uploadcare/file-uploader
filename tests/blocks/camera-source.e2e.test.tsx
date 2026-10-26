@@ -52,7 +52,7 @@ describe('uc-camera-source (parity, render surface + permissions)', () => {
 
     // Permissions flow reaches 'granted' (fake-media-stream Chromium flags):
     // the host gets `.uc-initialized` and the video/shot-button `hidden`
-    // attributes clear (CameraSource.ts's `_setPermissionsState('granted')`).
+    // attributes clear (`CameraSession` settling on 'granted').
     await expect
       .poll(() => document.querySelector('uc-camera-source')?.classList.contains('uc-initialized'))
       .toBe(true);
