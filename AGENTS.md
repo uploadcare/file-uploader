@@ -267,10 +267,14 @@ and one of them corrupted any path whose last segment recurred earlier.
   which the editor's merge needs because it matches operations by name. Re-measure
   before revisiting.
 - **Bundle budgets are tight and `size-limit` runs inside `npm run build`.** The
-  editor sits near 50.8 KB of 51, the IIFE near 103.1 of 104, `<uc-img>` near 9.0 of
+  editor sits near 49.2 KB of 51, the IIFE near 102.9 of 104, `<uc-img>` near 9.0 of
   10. Treat ~100 B as build-to-build variance and do not quote a single run to tighter
   precision. If a change crosses a limit, that is a decision to raise the budget or
   trim, not something to work around.
+- **The editor bundle may not contain the upload stack.** Its build item lists
+  `forbiddenModules` (`scripts/build-items.ts`); the build fails naming the module and
+  the import chain that brought it in. Fix the chain (usually a value import that only
+  needed a type, or a class named as a token) rather than the list.
 - **The dependency is pinned to an alpha** (`6.20.0-alpha.*`, exact, no caret). It
   must not reach a published release as-is — a stable version has to land first.
 

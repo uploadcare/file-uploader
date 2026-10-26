@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path, { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postcssCascadeLayers from '@csstools/postcss-cascade-layers';
+import type { Plugin as EsbuildPlugin } from 'esbuild';
 import { minifyTemplates, writeFiles } from 'esbuild-minify-templates';
 import postcss from 'postcss';
 import { build as tsupBuild } from 'tsup';
@@ -30,6 +31,34 @@ function banner() {
     ' */',
   ].join('\n');
 }
+
+/** Fails the build if the bundle's module graph contains one of `patterns`. */
+const forbidModules = (patterns: RegExp[]): EsbuildPlugin => ({
+  name: 'forbid-modules',
+  setup(build) {
+    build.onEnd((result) => {
+      const inputs = result.metafile?.inputs ?? {};
+      for (const pattern of patterns) {
+        const found = Object.keys(inputs).find((input) => pattern.test(input));
+        if (found) {
+          // Walk back to the entry along the first importer of each module, so the error shows how it got in.
+          const chain = [found];
+          for (let current = found; ; ) {
+            const importer = Object.keys(inputs).find(
+              (input) => !chain.includes(input) && inputs[input]?.imports.some((imported) => imported.path === current),
+            );
+            if (!importer) break;
+            chain.push(importer);
+            current = importer;
+          }
+          throw new Error(
+            `The bundle must not contain ${found} (${pattern}). Import chain: ${chain.reverse().join(' -> ')}`,
+          );
+        }
+      }
+    });
+  },
+});
 
 async function build(buildItem: BuildItem) {
   await tsupBuild({
@@ -66,8 +95,14 @@ async function build(buildItem: BuildItem) {
       if (buildItem.mangleProps) {
         options.mangleProps = /^_/;
       }
+      if (buildItem.forbiddenModules) {
+        options.metafile = true;
+      }
     },
-    esbuildPlugins: buildItem.minify ? [minifyTemplates(), writeFiles()] : [],
+    esbuildPlugins: [
+      ...(buildItem.minify ? [minifyTemplates(), writeFiles()] : []),
+      ...(buildItem.forbiddenModules ? [forbidModules(buildItem.forbiddenModules)] : []),
+    ],
     noExternal: buildItem.bundleExternalDependencies ? [/.*/] : undefined,
     globalName: buildItem.format === 'iife' ? 'UC' : undefined,
     keepNames: buildItem.format === 'iife' ? true : undefined,
