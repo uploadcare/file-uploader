@@ -1,7 +1,4 @@
-export const CameraSourceTypes = Object.freeze({
-  PHOTO: 'photo',
-  VIDEO: 'video',
-});
+export { CameraSourceTypes, type ModeCameraType } from '../../abstract/cameraModes';
 
 export const CameraSourceEvents = Object.freeze({
   IDLE: 'idle',
@@ -15,5 +12,3 @@ export const CameraSourceEvents = Object.freeze({
   RETAKE: 'retake',
   ACCEPT: 'accept',
 });
-
-export type ModeCameraType = (typeof CameraSourceTypes)[keyof typeof CameraSourceTypes];

@@ -1,7 +1,14 @@
-import type { ConfigType } from '../../types/index';
-import { deserializeCsv } from '../../utils/comma-separated';
-import type { CameraMode } from './CameraSource';
-import { CameraSourceTypes } from './constants';
+import type { ConfigType } from '../types/index';
+import { deserializeCsv } from '../utils/comma-separated';
+
+export const CameraSourceTypes = Object.freeze({
+  PHOTO: 'photo',
+  VIDEO: 'video',
+});
+
+export type ModeCameraType = (typeof CameraSourceTypes)[keyof typeof CameraSourceTypes];
+
+export type CameraMode = ModeCameraType;
 
 /** The known modes in a `cameraModes` value, in the order given. */
 export const parseCameraModes = (cameraModes: string): CameraMode[] =>

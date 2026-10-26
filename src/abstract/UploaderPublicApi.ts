@@ -1,6 +1,4 @@
 import { parseFileUrl } from '@uploadcare/cdn-url';
-import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
-import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
 import type {
   AuthToken,
   ConfigType,
@@ -25,6 +23,7 @@ import { UploadSource } from '../utils/UploadSource';
 import type { ActivityParamsMap, ActivityType } from './activity-constants';
 import { ACTIVITY_TYPES } from './activity-constants';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
+import { CameraSourceTypes, calcCameraModes, type ModeCameraType } from './cameraModes';
 import { controllerLogger } from './controllerLogger';
 import { AppInfo } from './controllers/AppInfo';
 import { CollectionStateController } from './controllers/CollectionStateController';

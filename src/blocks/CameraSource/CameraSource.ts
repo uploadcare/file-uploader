@@ -15,7 +15,7 @@ import './camera-source.css';
 import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { parseCameraModes } from './calcCameraModes';
+import { parseCameraModes } from '../../abstract/cameraModes';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 
 import '../ActivityHeader/ActivityHeader';
@@ -56,7 +56,9 @@ const keepListedDeviceId = (devices: { value: string }[], currentId: string | nu
 const DEFAULT_PICTURE_FORMAT = 'image/jpeg';
 const DEFAULT_VIDEO_FORMAT = 'video/webm';
 
-export type CameraMode = 'photo' | 'video';
+import type { CameraMode } from '../../abstract/cameraModes';
+
+export type { CameraMode };
 export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pause' | 'resume';
 
 const stopTracks = (stream: MediaStream): void => {
