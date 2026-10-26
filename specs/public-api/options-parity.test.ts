@@ -71,6 +71,7 @@ describe('documented config options', () => {
       'authToken',
       // New, documented on the fern-docs side together with this release. Same as `authToken`: remove once the page
       // ships and the fixture is regenerated.
+      'cameraAspectRatio',
       'cameraConstraints',
       'cdnCnamePrefixed',
       'externalSourcesEmbedCss',

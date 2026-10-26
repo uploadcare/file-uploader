@@ -16,6 +16,8 @@ export const DEFAULT_VIDEO_CONSTRAINTS: MediaTrackConstraints = {
 export type BuildConstraintsInput = {
   mode: CameraMode;
   enableAudio: boolean;
+  /** Width / height from `cameraAspectRatio`, or `null` for the camera's native shape. */
+  aspectRatio: number | null;
   /** `cameraConstraints` from the config. */
   custom: CameraConstraints | CameraConstraintsResolver | null;
   cameraId: string | null;
@@ -40,18 +42,24 @@ export const resolveCustomConstraints = (
 
 /**
  * The constraints the camera opens with, layered per property:
- * built-in defaults < `cameraConstraints` < the device picked in the camera screen.
+ * built-in defaults < `cameraAspectRatio` < `cameraConstraints` < the device picked in the camera screen.
  */
 export const buildConstraints = ({
   mode,
   enableAudio,
+  aspectRatio,
   custom,
   cameraId,
   audioId,
 }: BuildConstraintsInput): MediaStreamConstraints & { video: MediaTrackConstraints } => {
   const resolved = resolveCustomConstraints(custom, mode);
 
-  const video: MediaTrackConstraints = { ...DEFAULT_VIDEO_CONSTRAINTS, ...resolved.video };
+  const video: MediaTrackConstraints = {
+    ...DEFAULT_VIDEO_CONSTRAINTS,
+    // Only `ideal`: most cameras offer a few native shapes, and the photo is cropped to the exact ratio anyway.
+    ...(aspectRatio && { aspectRatio: { ideal: aspectRatio } }),
+    ...resolved.video,
+  };
   if (cameraId) {
     video.deviceId = { exact: cameraId };
   }

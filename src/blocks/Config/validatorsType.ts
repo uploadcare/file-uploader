@@ -10,6 +10,7 @@ import type {
   TagsCallback,
 } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
+import { parseAspectRatio } from '../CameraSource/aspectRatio';
 import type { ModeCameraType } from '../CameraSource/constants';
 import { CameraSourceTypes } from '../CameraSource/constants';
 import type { DynamicButtonMode } from '../DynamicBtn/DynamicBtn';
@@ -121,6 +122,12 @@ const asCameraConstraints = (value: unknown): CameraConstraints | CameraConstrai
   throw new Error('Invalid cameraConstraints value. Must be an object or a function.');
 };
 
+const asCameraAspectRatio = (value: unknown): string => {
+  const strValue = asString(value).trim();
+  parseAspectRatio(strValue);
+  return strValue;
+};
+
 const asObject = <T>(value: unknown): T => {
   if (typeof value === 'object') {
     return value as T;
@@ -167,6 +174,7 @@ export {
   asArray,
   asAuthToken,
   asBoolean,
+  asCameraAspectRatio,
   asCameraCapture,
   asCameraConstraints,
   asCameraMode,

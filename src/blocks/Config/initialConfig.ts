@@ -79,6 +79,7 @@ const config = {
   maxVideoRecordingDuration: null,
   mediaRecorderOptions: null,
   cameraConstraints: null,
+  cameraAspectRatio: '',
 
   filesViewMode: 'list',
   gridShowFileNames: false,

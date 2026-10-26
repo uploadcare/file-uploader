@@ -4,6 +4,7 @@ import { type BuildConstraintsInput, buildConstraints, DEFAULT_VIDEO_CONSTRAINTS
 const input = (overrides: Partial<BuildConstraintsInput> = {}): BuildConstraintsInput => ({
   mode: 'photo',
   enableAudio: false,
+  aspectRatio: null,
   custom: null,
   cameraId: null,
   audioId: null,
@@ -20,6 +21,19 @@ describe('buildConstraints', () => {
       ...DEFAULT_VIDEO_CONSTRAINTS,
       deviceId: { exact: 'cam-1' },
     });
+  });
+
+  it('asks for the aspect ratio as ideal', () => {
+    expect(buildConstraints(input({ aspectRatio: 1 })).video).toEqual({
+      ...DEFAULT_VIDEO_CONSTRAINTS,
+      aspectRatio: { ideal: 1 },
+    });
+  });
+
+  it('lets a custom aspectRatio replace the configured one', () => {
+    const { video } = buildConstraints(input({ aspectRatio: 1, custom: { video: { aspectRatio: { exact: 4 / 3 } } } }));
+
+    expect(video.aspectRatio).toEqual({ exact: 4 / 3 });
   });
 
   it('lets each custom video property replace the default of the same name', () => {

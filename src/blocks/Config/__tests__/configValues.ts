@@ -113,6 +113,7 @@ export const CONFIG_VALUES: { [K in keyof ConfigType]: ConfigType[K][] } = {
   cloudImageEditorAutoOpen: [true, false],
   qualityInsights: [true, false],
   cloudImageEditorMaskHref: ['https://example.com/mask.svg', null],
+  cameraAspectRatio: ['', '1:1', '16:9', '9:16'],
   testMode: [true, false],
   pasteScope: ['local', 'global', false],
   dynamicButtonViewMode: ['auto', 'menu', 'toolbar', 'compact', 'plain'],

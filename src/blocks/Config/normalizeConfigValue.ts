@@ -13,6 +13,7 @@ import {
   asArray,
   asAuthToken,
   asBoolean,
+  asCameraAspectRatio,
   asCameraCapture,
   asCameraConstraints,
   asCameraMode,
@@ -106,6 +107,7 @@ const mapping: { [Key in keyof ConfigType]: ConfigNormalizer<Key> } = {
   enableVideoRecording: asBoolean,
   mediaRecorderOptions: asObject,
   cameraConstraints: asCameraConstraints,
+  cameraAspectRatio: asCameraAspectRatio,
 
   maxVideoRecordingDuration: asNumber,
 

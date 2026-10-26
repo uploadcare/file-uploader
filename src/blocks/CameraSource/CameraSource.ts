@@ -11,6 +11,7 @@ import './camera-source.css';
 import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
+import { centerCrop, parseAspectRatio } from './aspectRatio';
 import { type BuildConstraintsInput, buildConstraints } from './buildConstraints';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 
@@ -86,6 +87,10 @@ export class CameraSource extends LitUploaderBlock {
   @state()
   private _videoTransformCss: string | null = null;
 
+  /** Width / height from `cameraAspectRatio`, or `null` for the camera's native shape. */
+  @state()
+  private _aspectRatio: number | null = null;
+
   @state()
   private _videoHidden = true;
 
@@ -152,6 +157,7 @@ export class CameraSource extends LitUploaderBlock {
           node: this.tagName,
           tabId: this._activeTab,
           hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
+          aspectRatio: this.cfg.cameraAspectRatio,
         },
       },
     });
@@ -201,6 +207,7 @@ export class CameraSource extends LitUploaderBlock {
           node: this.tagName,
           tabId: this._activeTab,
           hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
+          aspectRatio: this.cfg.cameraAspectRatio,
         },
       },
     });
@@ -588,15 +595,19 @@ export class CameraSource extends LitUploaderBlock {
     if (!videoEl) {
       throw new Error('Video element not found');
     }
-    this._canvas.height = videoEl.videoHeight;
-    this._canvas.width = videoEl.videoWidth;
+    const crop = this._aspectRatio
+      ? centerCrop(videoEl.videoWidth, videoEl.videoHeight, this._aspectRatio)
+      : { x: 0, y: 0, width: videoEl.videoWidth, height: videoEl.videoHeight };
+    this._canvas.height = crop.height;
+    this._canvas.width = crop.width;
 
+    // The crop is centered, so mirroring the canvas mirrors the crop too.
     if (this.cfg.cameraMirror) {
       this._ctx.translate(this._canvas.width, 0);
       this._ctx.scale(-1, 1);
     }
 
-    this._ctx.drawImage(videoEl, 0, 0);
+    this._ctx.drawImage(videoEl, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
     // TODO: There are troubles with this, image isn't freezed after shot due to rendering in progress
     videoEl.pause();
   }
@@ -687,6 +698,14 @@ export class CameraSource extends LitUploaderBlock {
 
     this.routerLayer.navigateAfterFileAdd();
   };
+
+  /**
+   * Photos are cropped to `cameraAspectRatio`, so the photo preview shows the same crop. Video isn't cropped, so its
+   * preview keeps the real frame.
+   */
+  private get _isPreviewCropped(): boolean {
+    return this._aspectRatio !== null && this._activeTab === CameraSourceTypes.PHOTO;
+  }
 
   private get _cameraModes(): CameraMode[] {
     return stringToArray(this.cfg.cameraModes).filter(
@@ -782,6 +801,7 @@ export class CameraSource extends LitUploaderBlock {
     return {
       mode: this._currentMode,
       enableAudio: this.cfg.enableAudioRecording,
+      aspectRatio: this._aspectRatio,
       custom: this.cfg.cameraConstraints,
       cameraId: this._selectedCameraId,
       audioId: this._selectedAudioId,
@@ -1031,6 +1051,16 @@ export class CameraSource extends LitUploaderBlock {
       void this._applyVideoConstraints();
     });
 
+    this.subConfigValue('cameraAspectRatio', (val) => {
+      // Already validated by the config; the fallback only guards against a value set around it.
+      try {
+        this._aspectRatio = parseAspectRatio(val);
+      } catch {
+        this._aspectRatio = null;
+      }
+      void this._applyVideoConstraints();
+    });
+
     this.subConfigValue('cameraModes', (val) => {
       if (!this.isConnected) return;
       const cameraModes = deserializeCsv(val);
@@ -1106,8 +1136,10 @@ export class CameraSource extends LitUploaderBlock {
           muted
           autoplay
           playsinline
+          class=${classMap({ 'uc-cropped': this._isPreviewCropped })}
           style=${styleMap({
             transform: this._videoTransformCss,
+            aspectRatio: this._isPreviewCropped ? String(this._aspectRatio) : null,
           })}
           ?hidden=${this._videoHidden}
           ${ref(this._videoRef)}

@@ -362,6 +362,16 @@ export type ConfigType = {
    */
   cameraConstraints: CameraConstraints | CameraConstraintsResolver | null;
 
+  /**
+   * The shape of camera captures, as `"w:h"` (`"1:1"`, `"4:3"`, `"16:9"`, `"9:16"`, ...), taken literally whatever the
+   * device orientation. Empty means the camera's native shape.
+   *
+   * Photos are cropped to the ratio from the center, and the preview shows the same crop. For video the ratio is only
+   * requested from the camera: recordings are not cropped and may come out in the camera's native shape.
+   * @default ''
+   */
+  cameraAspectRatio: string;
+
   filesViewMode: FilesViewMode;
 
   gridShowFileNames: boolean;

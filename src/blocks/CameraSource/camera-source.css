@@ -26,6 +26,15 @@
     border-radius: var(--uc-radius);
   }
 
+  /* Photo preview cropped to cameraAspectRatio: the box takes the ratio (set inline) and fits inside the content area. */
+  uc-camera-source video.uc-cropped {
+    align-self: center;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+
   uc-camera-source .uc-toolbar {
     position: absolute;
     bottom: 0;
