@@ -59,6 +59,13 @@ export class CameraRecorder {
     this._recorder?.stop();
   }
 
+  /** Drops the recording, finished or not, without handing it over. */
+  public discard(): void {
+    if (this._recorder?.state !== 'inactive') this._recorder?.stop();
+    this._recorder = null;
+    this._chunks = [];
+  }
+
   /** The clip recorded so far, for the preview. */
   public clip(): Blob {
     return new Blob(this._chunks, { type: this._recorder?.mimeType });

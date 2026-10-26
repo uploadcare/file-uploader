@@ -128,12 +128,10 @@ export class CameraSession {
 
   /** Stops the camera and lets go of every listener; a pending permission state is dropped. */
   public release(): void {
-    // Safari and Firefox don't fire the stream's `inactive` event yet.
-    const isChromium = Boolean((window as Window & { chrome?: unknown }).chrome);
-    if (!isChromium) {
-      this._setPermission('denied');
-    }
     this._setPermission.cancel();
+    // A recording or a photo in progress belongs to the stream being stopped.
+    this._recorder.discard();
+    this._photo = null;
     this._stopCapture();
     this._devices.stopWatchingPermissions();
     this._stream.release();
