@@ -1,8 +1,6 @@
 import { parseFileUrl } from '@uploadcare/cdn-url';
 import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
 import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
-import type { ActivityParamsMap, ActivityType } from '../lit/activity-constants';
-import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { createL10n } from '../lit/l10n';
 import { waitForActivityBlock } from '../lit/waitForActivityBlock';
 import type {
@@ -26,6 +24,8 @@ import {
 } from '../utils/fileTypes';
 import { parseCdnUrlForEntry } from '../utils/parseCdnUrlForEntry';
 import { UploadSource } from '../utils/UploadSource';
+import type { ActivityParamsMap, ActivityType } from './activity-constants';
+import { ACTIVITY_TYPES } from './activity-constants';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
 import { controllerLogger } from './controllerLogger';
 import { AppInfo } from './controllers/AppInfo';

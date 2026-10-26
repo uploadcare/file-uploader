@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ActivityId } from '../../lit/activity-constants';
 import type { ConfigType } from '../../types/index';
+import type { ActivityId } from '../activity-constants';
 import { AppInfo } from '../controllers/AppInfo';
 import { ConfigController, type KnownConfig } from '../controllers/ConfigController';
 import { RouterController } from '../controllers/RouterController';

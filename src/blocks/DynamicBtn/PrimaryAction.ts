@@ -1,12 +1,12 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
+import { ACTIVITY_TYPES } from '../../abstract/activity-constants';
 import { collectionHeader } from '../../abstract/collectionSummary';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject } from '../../abstract/di/inject';
 import type { Uid } from '../../abstract/Uid';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
-import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types';
 import { UploadSource } from '../../utils/UploadSource';

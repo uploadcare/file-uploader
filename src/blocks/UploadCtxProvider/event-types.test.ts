@@ -1,7 +1,7 @@
 import { describe, expectTypeOf, it } from 'vitest';
+import type { ActivityType, RegisteredActivityType } from '../../abstract/activity-constants';
 import type { UploaderEventKey, UploaderEventPayload, UploaderEventType } from '../../abstract/EventBus';
 import type { EventKey, EventPayload, EventType } from '../../abstract/EventEmitter';
-import type { ActivityType, RegisteredActivityType } from '../../lit/activity-constants';
 import type { OutputCollectionState, OutputFileEntry } from '../../types';
 
 // Type-level ("tsd"-style) tests via vitest `expectTypeOf` — checked by

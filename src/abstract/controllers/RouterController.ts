@@ -1,4 +1,4 @@
-import { ACTIVITY_TYPES, type ActivityId } from '../../lit/activity-constants';
+import { ACTIVITY_TYPES, type ActivityId } from '../activity-constants';
 import { controllerLogger } from '../controllerLogger';
 import { inject } from '../di/inject';
 import { signalState } from '../di/signalState';

@@ -257,7 +257,7 @@ declare module '../abstract/customConfigOptions' {
   }
 }
 
-declare module '../lit/activity-constants' {
+declare module '../types/index' {
   interface CustomActivities {
     [UNSPLASH_ACTIVITY_ID]: { params: never };
   }

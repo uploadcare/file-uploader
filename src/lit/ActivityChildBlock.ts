@@ -1,9 +1,9 @@
 import type { PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
+import { ACTIVITY_TYPES, type ActivityParamsMap, type ActivityType } from '../abstract/activity-constants';
 import { RouterController } from '../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { inject } from '../abstract/di/inject';
-import { ACTIVITY_TYPES, type ActivityParamsMap, type ActivityType } from './activity-constants';
 import { ChildBlock } from './ChildBlock';
 
 const ACTIVE_ATTR = 'active';

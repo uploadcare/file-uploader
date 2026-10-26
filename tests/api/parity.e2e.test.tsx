@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { ACTIVITY_TYPES } from '@/lit/activity-constants';
+import { ACTIVITY_TYPES } from '@/abstract/activity-constants';
 import surface from '~/specs/public-api/public-surface.json' with { type: 'json' };
 import { type RenderedUploader, renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';

@@ -7,7 +7,7 @@ import './modal.css';
 import { property } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import type { RegisteredActivityType } from '../../lit/activity-constants';
+import type { RegisteredActivityType } from '../../abstract/activity-constants';
 import { getScrollLock } from '../../utils/scroll-lock';
 
 export class Modal extends ChildBlock {

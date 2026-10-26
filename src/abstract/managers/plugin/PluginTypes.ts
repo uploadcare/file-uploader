@@ -1,5 +1,5 @@
-import type { ActivityParamsMap } from '../../../lit/activity-constants';
 import type { ConfigType, OutputFileEntry } from '../../../types/exported';
+import type { ActivityParamsMap } from '../../activity-constants';
 import type { NavigationEdge } from '../../controllers/RouterController';
 import type { CustomConfig, CustomConfigDefinition } from '../../customConfigOptions';
 import type { Logger } from '../../logger';

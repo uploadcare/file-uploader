@@ -1,6 +1,3 @@
-import type { ActivityParams as CloudImageEditorActivityParams } from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
-import type { ActivityParams as ExternalSourceActivityParams } from '../blocks/ExternalSource/ExternalSource';
-
 /**
  * Consumer-augmentable map of custom activity ids → `{ params }`. Declared here
  * (a dependency-free leaf) rather than in `LitActivityBlock` so the activity-id
@@ -8,8 +5,10 @@ import type { ActivityParams as ExternalSourceActivityParams } from '../blocks/E
  * `keyof CustomActivities` term resolve inconsistently (wide in some positions,
  * narrow in others). Re-exported from the package root (via `src/types`), so
  * consumer `declare module` augmentations of the published entry still merge
- * in the flattened dist types; in-repo augmentations target this file directly
- * (see `unsplashPlugin`).
+ * in the flattened dist types. In-repo augmentations go through the same
+ * re-export (`src/types/index`, see `unsplashPlugin` and the e2e plugin specs):
+ * augmenting this file directly and the re-export from another file does not
+ * merge reliably across the e2e program.
  */
 // biome-ignore lint/suspicious/noEmptyInterface: consumer-augmented interface
 export interface CustomActivities {}
@@ -33,6 +32,12 @@ export type ActivityType = RegisteredActivityType | null;
  * membership, exposed under the router's own name) so the two can't drift.
  */
 export type ActivityId = RegisteredActivityType;
+
+/** The params `cloud-image-edit` is opened with: which entry to edit. */
+export type CloudImageEditorActivityParams = { internalId: string };
+
+/** The params `external` is opened with: which external source to show. */
+export type ExternalSourceActivityParams = { externalSourceType: string };
 
 /** Maps each activity id to the params shape it accepts (built-in + augmented). */
 export type ActivityParamsMap = {

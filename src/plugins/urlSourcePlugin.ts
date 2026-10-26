@@ -1,7 +1,7 @@
+import { ACTIVITY_TYPES } from '../abstract/activity-constants';
 import { defineComponents } from '../abstract/defineComponents';
 import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import { UrlSource } from '../blocks/UrlSource/UrlSource';
-import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { UploadSource } from '../utils/UploadSource';
 import { renderElement } from './renderElement';
 

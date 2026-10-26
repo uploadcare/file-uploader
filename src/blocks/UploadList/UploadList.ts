@@ -1,5 +1,6 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { ACTIVITY_TYPES } from '../../abstract/activity-constants';
 import {
   COLLECTION_SUMMARY_THROTTLE_MS,
   type CollectionSummary,
@@ -18,7 +19,6 @@ import type { Uid } from '../../abstract/Uid';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
-import { ACTIVITY_TYPES } from '../../lit/activity-constants';
 import { throttled } from '../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
 import './upload-list.css';

@@ -1,5 +1,5 @@
-import type { ActivityType, RegisteredActivityType } from '../lit/activity-constants';
 import type { OutputCollectionState, OutputFileEntry } from '../types/exported';
+import type { ActivityType, RegisteredActivityType } from './activity-constants';
 import { controllerLogger } from './controllerLogger';
 import { lifetimeOf } from './di/ControllerContainer';
 import { lazy } from './logger';

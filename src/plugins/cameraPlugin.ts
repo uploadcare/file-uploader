@@ -1,7 +1,7 @@
+import { ACTIVITY_TYPES } from '../abstract/activity-constants';
 import { defineComponents } from '../abstract/defineComponents';
 import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import { CameraSource } from '../blocks/CameraSource/CameraSource';
-import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { browserFeatures } from '../utils/browser-info';
 import { deserializeCsv } from '../utils/comma-separated';
 import { UploadSource, UploadSourceMobile } from '../utils/UploadSource';

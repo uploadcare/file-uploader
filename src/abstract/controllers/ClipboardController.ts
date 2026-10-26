@@ -1,4 +1,4 @@
-import { ACTIVITY_TYPES } from '../../lit/activity-constants';
+import { ACTIVITY_TYPES } from '../activity-constants';
 import { controllerLogger } from '../controllerLogger';
 import { lifetimeOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';

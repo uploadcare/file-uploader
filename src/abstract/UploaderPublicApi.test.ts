@@ -1,5 +1,4 @@
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
-import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import { destroyCtx } from '../lit/ctx-lifecycle';
 import { ensureUploaderCtx } from '../lit/ensureUploaderCtx';
 import { ensureUploaderScope } from '../lit/ensureUploaderScope';
@@ -7,6 +6,7 @@ import { createL10n } from '../lit/l10n';
 import type { UploadcareFile } from '../types/index';
 import { BASIC_IMAGE_WILDCARD, BASIC_VIDEO_WILDCARD } from '../utils/fileTypes';
 import { UploadSource } from '../utils/UploadSource';
+import { ACTIVITY_TYPES } from './activity-constants';
 import { ConfigController } from './controllers/ConfigController';
 import { LocaleController } from './controllers/LocaleController';
 import { RouterController } from './controllers/RouterController';

@@ -22,12 +22,13 @@ import type { InputMessageMap } from './types';
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
 import '../Spinner/Spinner';
+import type { ExternalSourceActivityParams } from '../../abstract/activity-constants';
 
 const SOCIAL_SOURCE_MAPPING: Record<string, string> = {
   [ExternalUploadSource.GDRIVE]: 'ngdrive',
 };
 
-export type ActivityParams = { externalSourceType: string };
+export type ActivityParams = ExternalSourceActivityParams;
 
 export class ExternalSource extends ChildBlock {
   @inject(ConfigController) private readonly _config!: ConfigController;
