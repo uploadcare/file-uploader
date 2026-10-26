@@ -143,6 +143,26 @@ describe('uc-camera-source (first access)', () => {
   });
 });
 
+describe('uc-camera-source (camera failures)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('reports a camera that fails to start with an AbortError instead of waiting on access forever', async () => {
+    // `getUserMedia` names a hardware failure `AbortError` too (Firefox, when another app holds the camera). Read as
+    // the block's own teardown, it was swallowed: no log, and the camera sat on "Please allow access" for good.
+    vi.spyOn(navigator.mediaDevices, 'getUserMedia').mockRejectedValue(
+      new DOMException('Starting videoinput failed', 'AbortError'),
+    );
+    renderRegularHost();
+    await navigateToCameraSource();
+
+    await expect
+      .element(page.getByTestId('uc-camera-source').getByText('Camera access denied', { exact: true }))
+      .toBeVisible();
+  });
+});
+
 describe('uc-camera-source (device selection)', () => {
   // The fake-media Chromium exposes one camera, so the device list is stubbed to two. `getUserMedia` is wrapped so
   // the stubbed ids still open the real fake stream, and the requested constraints can be read back.

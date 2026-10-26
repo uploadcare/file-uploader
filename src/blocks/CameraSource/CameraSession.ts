@@ -1,6 +1,5 @@
 import type { CameraMode } from '../../abstract/cameraModes';
 import type { NavigationEdge } from '../../abstract/controllers/RouterController';
-import { isAbortError } from '../../abstract/di/Lifetime';
 import { signalState } from '../../abstract/di/signalState';
 import { debounce } from '../../utils/debounce';
 import type { CameraAction } from './CameraActionEvent';
@@ -331,7 +330,8 @@ export class CameraSession {
       this.audioMuted = false;
       this._setPermission('granted');
     } catch (error) {
-      if (isAbortError(error)) throw error;
+      // Asks the lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
+      if (this._host.adoptionSignal().aborted) throw error;
       this._setPermission('denied');
       this._host.report('warn', 'Failed to capture camera', error, 'camera capturing. Failed to capture camera');
     }
