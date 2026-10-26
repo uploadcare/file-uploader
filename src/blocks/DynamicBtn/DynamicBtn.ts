@@ -1,5 +1,6 @@
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { COLLECTION_SUMMARY_THROTTLE_MS } from '../../abstract/collectionSummary';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
@@ -176,7 +177,7 @@ export class DynamicBtn extends ChildBlock {
   // `!this.isConnected` bail and the manual `.cancel()` in `controllerReleased`.
   // The name is unchanged, so the `@subscription` observers can still hand this
   // stable bound reference to `observeCollection`.
-  @throttled(300)
+  @throttled(COLLECTION_SUMMARY_THROTTLE_MS)
   protected _throttledHandleCollectionUpdate(): void {
     this._updateButtonBasedOnCollectionState();
   }

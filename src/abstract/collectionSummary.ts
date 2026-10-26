@@ -10,6 +10,12 @@ export type CollectionSummary = {
   validatingBeforeUploading: number;
 };
 
+/**
+ * How often the upload list and the dynamic button recount the collection. They share it so the two never show
+ * different counts for long.
+ */
+export const COLLECTION_SUMMARY_THROTTLE_MS = 300;
+
 export type CollectionHeaderKey = 'header-uploading' | 'header-failed' | 'header-succeed' | 'header-total';
 
 /**
