@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': 'Tillgång till kamera nekad',
   'camera-permissions-prompt': 'Vänligen tillåt tillgång till kameran',
   'camera-permissions-request': 'Begär tillgång',
+  'camera-not-found': 'Ingen kamera hittades',
+  'camera-unavailable': 'Kameran används eller är inte tillgänglig',
   'files-count-limit-error-title': 'För många filer',
   'files-count-limit-error-too-few':
     'Du har valt {{total}} {{plural:file(total)}}. Minst {{min}} {{plural:file(min)}} krävs.',

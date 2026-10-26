@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Kaamera ligipääs keelatud',
   'camera-permissions-prompt': 'Palun luba kaamera ligipääs',
   'camera-permissions-request': 'Küsi ligipääsu',
+  'camera-not-found': 'Kaamerat ei leitud',
+  'camera-unavailable': 'Kaamera on kasutusel või pole saadaval',
   'files-count-limit-error-title': 'Failide arvu piir ületatud',
   'files-count-limit-error-too-few':
     'Valisid {{total}} {{plural:file(total)}}. Vähemalt {{min}} {{plural:file(min)}} on nõutud.',

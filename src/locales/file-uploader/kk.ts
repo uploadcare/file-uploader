@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': 'Камераға рұқсат берілмеді',
   'camera-permissions-prompt': 'Камераға рұқсат беріңіз',
   'camera-permissions-request': 'Рұқсат сұрау',
+  'camera-not-found': 'Камера табылмады',
+  'camera-unavailable': 'Камера пайдаланылуда немесе қолжетімсіз',
   'files-count-limit-error-title': 'Файлдар санының шектеуі асып түсті',
   'files-count-limit-error-too-few':
     'Сіз {{total}} {{plural:file(total)}} таңдадыңыз. Кемінде {{min}} {{plural:file(min)}} қажет.',

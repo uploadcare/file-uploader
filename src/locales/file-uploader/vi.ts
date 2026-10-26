@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': 'Truy cập máy ảnh bị từ chối',
   'camera-permissions-prompt': 'Vui lòng cho phép truy cập vào máy ảnh',
   'camera-permissions-request': 'Yêu cầu truy cập',
+  'camera-not-found': 'Không tìm thấy máy ảnh',
+  'camera-unavailable': 'Máy ảnh đang được sử dụng hoặc không khả dụng',
   'files-count-limit-error-title': 'Quá giới hạn số lượng tệp',
   'files-count-limit-error-too-few':
     'Bạn đã chọn {{total}} {{plural:file(total)}}. Tối thiểu {{min}} {{plural:file(min)}} là cần thiết.',

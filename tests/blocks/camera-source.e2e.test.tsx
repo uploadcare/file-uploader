@@ -158,8 +158,22 @@ describe('uc-camera-source (camera failures)', () => {
     await navigateToCameraSource();
 
     await expect
-      .element(page.getByTestId('uc-camera-source').getByText('Camera access denied', { exact: true }))
+      .element(page.getByTestId('uc-camera-source').getByText('The camera is in use or unavailable', { exact: true }))
       .toBeVisible();
+  });
+
+  it.each([
+    ['NotAllowedError', 'Camera access denied'],
+    ['SecurityError', 'Camera access denied'],
+    ['NotFoundError', 'No camera found'],
+    ['OverconstrainedError', 'No camera found'],
+    ['NotReadableError', 'The camera is in use or unavailable'],
+  ])('tells a %s apart from the other failures', async (name, message) => {
+    vi.spyOn(navigator.mediaDevices, 'getUserMedia').mockRejectedValue(new DOMException('failed', name));
+    renderRegularHost();
+    await navigateToCameraSource();
+
+    await expect.element(page.getByTestId('uc-camera-source').getByText(message, { exact: true })).toBeVisible();
   });
 });
 

@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': 'Toegang tot de camera geweigerd',
   'camera-permissions-prompt': 'Geef toegang tot de camera alstublieft',
   'camera-permissions-request': 'Toegang aanvragen',
+  'camera-not-found': 'Geen camera gevonden',
+  'camera-unavailable': 'De camera is in gebruik of niet beschikbaar',
   'files-count-limit-error-title': 'Bestandslimiet overschreden',
   'files-count-limit-error-too-few':
     'U heeft {{total}} {{plural:file(total)}} gekozen. Minimaal {{min}} {{plural:file(min)}} vereist.',

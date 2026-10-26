@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': 'Tilgang til kamera nektet',
   'camera-permissions-prompt': 'Vennligst gi tilgang til kameraet',
   'camera-permissions-request': 'Be om tilgang',
+  'camera-not-found': 'Fant ikke noe kamera',
+  'camera-unavailable': 'Kameraet er i bruk eller utilgjengelig',
   'files-count-limit-error-title': 'Filtellgrensen overskredet',
   'files-count-limit-error-too-few':
     'Du har valgt {{total}} {{plural:file(total)}}. Minst {{min}} {{plural:file(min)}} kreves.',

@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': 'カメラへのアクセスが拒否されました',
   'camera-permissions-prompt': 'カメラへのアクセスを許可してください',
   'camera-permissions-request': 'アクセスをリクエスト',
+  'camera-not-found': 'カメラが見つかりません',
+  'camera-unavailable': 'カメラが使用中か、利用できません',
   'files-count-limit-error-title': 'ファイル数の上限超過',
   'files-count-limit-error-too-few':
     '選択されたファイルは{{total}} {{plural:file(total)}}です。最小{{min}} {{plural:file(min)}}が必要です。',

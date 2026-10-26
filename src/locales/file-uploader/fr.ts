@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Accès à la caméra refusé',
   'camera-permissions-prompt': "Veuillez autoriser l'accès à la caméra",
   'camera-permissions-request': "Demander l'accès",
+  'camera-not-found': 'Aucune caméra trouvée',
+  'camera-unavailable': 'La caméra est déjà utilisée ou indisponible',
   'files-count-limit-error-title': 'Limite du nombre de fichiers dépassée',
   'files-count-limit-error-too-few':
     'Vous avez choisi {{total}} {{plural:file(total)}}. Au moins {{min}} {{plural:file(min)}} requis.',

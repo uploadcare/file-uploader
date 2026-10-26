@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { type CameraViewInput, deriveCameraView } from './cameraView';
+import { type CameraViewInput, cameraFailureOf, deriveCameraView } from './cameraView';
 
 const input = (overrides: Partial<CameraViewInput> = {}): CameraViewInput => ({
   permission: 'granted',
@@ -106,5 +106,33 @@ describe('deriveCameraView', () => {
   it('names the shutter icon after the tab', () => {
     expect(deriveCameraView(input({ tab: 'video' })).shotIcon).toBe('video-camera-full');
     expect(deriveCameraView(input({ tab: null })).shotIcon).toBe('camera-full');
+  });
+});
+
+describe('a camera that could not start', () => {
+  it.each([
+    ['denied', 'camera-permissions-denied'],
+    ['not-found', 'camera-not-found'],
+    ['unavailable', 'camera-unavailable'],
+  ] as const)('shows the %s message, laid out as denied', (failure, message) => {
+    const view = deriveCameraView(input({ permission: 'denied', failure }));
+
+    expect(view).toEqual({ ...deriveCameraView(input({ permission: 'denied' })), message });
+  });
+
+  it.each([
+    ['NotAllowedError', 'denied'],
+    ['SecurityError', 'denied'],
+    ['NotFoundError', 'not-found'],
+    ['OverconstrainedError', 'not-found'],
+    ['NotReadableError', 'unavailable'],
+    ['AbortError', 'unavailable'],
+  ] as const)('reads a %s as %s', (name, failure) => {
+    expect(cameraFailureOf(new DOMException('failed', name))).toBe(failure);
+  });
+
+  it('reads an error it does not know as unavailable', () => {
+    expect(cameraFailureOf(new TypeError('boom'))).toBe('unavailable');
+    expect(cameraFailureOf('nope')).toBe('unavailable');
   });
 });

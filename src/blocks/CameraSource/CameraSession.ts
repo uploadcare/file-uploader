@@ -6,7 +6,7 @@ import type { CameraAction } from './CameraActionEvent';
 import { CameraDevices, type CameraLifetime, type DeviceOption } from './CameraDevices';
 import { CameraRecorder, createCameraFile, RecordingClock } from './CameraRecorder';
 import { CameraStream, cameraConstraints, captureFrame } from './CameraStream';
-import type { CameraPermission, CameraPhase } from './cameraView';
+import { type CameraFailure, type CameraPermission, type CameraPhase, cameraFailureOf } from './cameraView';
 
 const DEFAULT_PICTURE_FORMAT = 'image/jpeg';
 
@@ -48,6 +48,8 @@ export type CameraSessionHost = {
  */
 export class CameraSession {
   @signalState() public permission: CameraPermission = 'idle';
+  /** Why access ended `denied`, which picks the message shown. */
+  @signalState() public failure: CameraFailure = 'denied';
   @signalState() public phase: CameraPhase = 'live';
   @signalState() public activeTab: CameraMode | null = null;
   @signalState() public cameras: DeviceOption[] = [];
@@ -67,21 +69,25 @@ export class CameraSession {
   /** The photo just taken, until it is accepted or retaken. */
   private _photo: HTMLCanvasElement | null = null;
 
-  private readonly _setPermission = debounce((state: Exclude<CameraPermission, 'idle'>) => {
-    // A state settling after the camera was released belongs to no one.
-    if (this._host.lifetime.adoptionSignal().aborted) return;
-    this._host.setHostClass('uc-initialized', state === 'granted');
-    this.permission = state;
-    if (state === 'prompt') {
-      this._stopCapture();
-      return;
-    }
-    // A new stream, or none: whatever was captured from the previous one is gone.
-    this.phase = 'live';
-    if (state === 'denied') {
-      this._stopCapture();
-    }
-  }, PERMISSION_STATE_DELAY);
+  private readonly _setPermission = debounce(
+    (state: Exclude<CameraPermission, 'idle'>, failure: CameraFailure = 'denied') => {
+      // A state settling after the camera was released belongs to no one.
+      if (this._host.lifetime.adoptionSignal().aborted) return;
+      this._host.setHostClass('uc-initialized', state === 'granted');
+      this.failure = failure;
+      this.permission = state;
+      if (state === 'prompt') {
+        this._stopCapture();
+        return;
+      }
+      // A new stream, or none: whatever was captured from the previous one is gone.
+      this.phase = 'live';
+      if (state === 'denied') {
+        this._stopCapture();
+      }
+    },
+    PERMISSION_STATE_DELAY,
+  );
 
   public constructor(private readonly _host: CameraSessionHost) {
     this._stream = new CameraStream({
@@ -339,7 +345,7 @@ export class CameraSession {
     } catch (error) {
       // Asks the lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
       if (this._host.lifetime.adoptionSignal().aborted) throw error;
-      this._setPermission('denied');
+      this._setPermission('denied', cameraFailureOf(error));
       this._host.report('warn', 'Failed to capture camera', error, 'camera capturing. Failed to capture camera');
     }
   }

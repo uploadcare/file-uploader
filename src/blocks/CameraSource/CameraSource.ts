@@ -101,6 +101,7 @@ export class CameraSource extends ChildBlock {
     const audioEnabled = this._config.getTracked('enableAudioRecording');
     const view = deriveCameraView({
       permission: session.permission,
+      failure: session.failure,
       phase: session.phase,
       tab: session.activeTab,
       cameraModes: parseCameraModes(this._config.getTracked('cameraModes')),
