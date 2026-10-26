@@ -1,6 +1,11 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { type CollectionSummary, collectionHeader, partitionByStatus } from '../../abstract/collectionSummary';
+import {
+  COLLECTION_SUMMARY_THROTTLE_MS,
+  type CollectionSummary,
+  collectionHeader,
+  partitionByStatus,
+} from '../../abstract/collectionSummary';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
@@ -183,7 +188,7 @@ export class UploadList extends ActivityChildBlock {
   // on release, so the body reads its throwing `@inject` fields directly instead
   // of the old `useOrNull` bail. Callers keep using `this._throttledHandleCollectionUpdate`
   // (a stable bound reference, still safe to hand to `observeCollection`).
-  @throttled(300)
+  @throttled(COLLECTION_SUMMARY_THROTTLE_MS)
   protected _throttledHandleCollectionUpdate(): void {
     this._updateUploadsState();
 
