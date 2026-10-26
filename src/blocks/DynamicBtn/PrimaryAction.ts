@@ -61,10 +61,6 @@ export class PrimaryAction extends ChildBlock {
     );
   }
 
-  private get hasMultipleEntries(): boolean {
-    return (this.entries?.allEntries?.length ?? 0) >= 1;
-  }
-
   private get localizedSourceLabel(): string {
     if (!this.source?.label) return '';
 
@@ -73,10 +69,6 @@ export class PrimaryAction extends ChildBlock {
     }
 
     return this.l10n(this.source.label);
-  }
-
-  private _translate(key: string, params?: Record<string, string | number>): string {
-    return this.l10n(key, params);
   }
 
   private get textBasedOnLocale(): string {
@@ -102,7 +94,7 @@ export class PrimaryAction extends ChildBlock {
       failed: entries.failedCount,
       validatingBeforeUploading: entries.idleEntries?.filter((entry) => entry.isValidationPending).length ?? 0,
     });
-    return this._translate(key, { count });
+    return this.l10n<string>(key, { count });
   }
 
   private _getSourceLabelText(): string {
@@ -122,7 +114,7 @@ export class PrimaryAction extends ChildBlock {
       sourceLabel = this.localizedSourceLabel;
     }
 
-    return this._translate(action, { source: sourceLabel });
+    return this.l10n<string>(action, { source: sourceLabel });
   }
 
   private _handleClick() {
@@ -147,7 +139,7 @@ export class PrimaryAction extends ChildBlock {
       return html`<uc-thumb .uid=${entry.internalId as Uid}></uc-thumb>`;
     }
 
-    if (this._isMultiple && this.hasMultipleEntries) {
+    if (this._isMultiple && this.hasEntries) {
       return null;
     }
 
