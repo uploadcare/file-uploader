@@ -16,6 +16,7 @@ import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { parseCameraModes } from '../../abstract/cameraModes';
+import { CameraRecorder, createCameraFile, RecordingClock } from './CameraRecorder';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 
 import '../ActivityHeader/ActivityHeader';
@@ -39,22 +40,11 @@ const DEFAULT_VIDEO_CONFIG = {
 
 const DEFAULT_PERMISSIONS = ['camera', 'microphone'];
 
-function formatTime(time: number): string {
-  const minutes = Math.floor(time / 60)
-    .toString()
-    .padStart(2, '0');
-  const seconds = Math.floor(time % 60)
-    .toString()
-    .padStart(2, '0');
-  return `${minutes}:${seconds}`;
-}
-
 /** The current device stays selected while it is still listed; otherwise the first one takes over. */
 const keepListedDeviceId = (devices: { value: string }[], currentId: string | null): string | null =>
   devices.some((device) => device.value === currentId) ? currentId : (devices[0]?.value ?? null);
 
 const DEFAULT_PICTURE_FORMAT = 'image/jpeg';
-const DEFAULT_VIDEO_FORMAT = 'video/webm';
 
 import type { CameraMode } from '../../abstract/cameraModes';
 
@@ -75,9 +65,8 @@ export class CameraSource extends ChildBlock {
 
   private _capturing = false;
 
-  private _chunks: BlobPart[] = [];
-
-  private _mediaRecorder: MediaRecorder | null = null;
+  private readonly _recorder = new CameraRecorder();
+  private readonly _clock = new RecordingClock();
 
   private _stream: MediaStream | null = null;
 
@@ -88,7 +77,6 @@ export class CameraSource extends ChildBlock {
   private _selectedCameraId: string | null = null;
 
   private _activeTab: CameraMode | null = null;
-  private _options: MediaRecorderOptions = {};
   private _canvas: HTMLCanvasElement | null = null;
   private _ctx: CanvasRenderingContext2D | null = null;
   private _cameraDevices: CameraDeviceOption[] = [];
@@ -99,20 +87,22 @@ export class CameraSource extends ChildBlock {
   private _previewUrl: string | null = null;
 
   private readonly _handlePreviewPlay = (): void => {
-    this._startTimeline();
+    this._clock.startTimeline(
+      () => this._videoRef.value,
+      () => this._lineRef.value,
+      () => this._timerRef.value,
+    );
     this._currentTimelineIcon = 'pause';
   };
 
   private readonly _handlePreviewPause = (): void => {
     this._currentTimelineIcon = 'play';
-    this._stopTimeline();
+    this._clock.stop();
   };
 
   private _timerRef = createRef<HTMLElement>();
   private _lineRef = createRef<HTMLElement>();
   private _videoRef = createRef<HTMLVideoElement>();
-  private _startTime = 0;
-  private _elapsedTime = 0;
 
   // Tracked read: `cameraMirror` auto-tracks under `SignalWatcher`, so a config
   // change re-renders the video transform — replacing the v1
@@ -189,7 +179,7 @@ export class CameraSource extends ChildBlock {
     }
 
     if (this._activeTab === CameraSourceTypes.VIDEO) {
-      if (this._mediaRecorder?.state === 'recording') {
+      if (this._recorder.isRecording) {
         this._stopRecording();
         return;
       }
@@ -251,99 +241,15 @@ export class CameraSource extends ChildBlock {
     }
   };
 
-  private _updateTimer = (): void => {
-    const currentTime = Math.floor((performance.now() - this._startTime + this._elapsedTime) / 1000);
-    const maxVideoRecordingDuration = this._config.get('maxVideoRecordingDuration');
-
-    if (typeof maxVideoRecordingDuration === 'number' && maxVideoRecordingDuration > 0) {
-      const remainingTime = maxVideoRecordingDuration - currentTime;
-
-      if (remainingTime <= 0) {
-        const timer = this._timerRef.value as HTMLElement | undefined;
-        if (timer) {
-          timer.textContent = formatTime(remainingTime);
-        }
-        this._stopRecording();
-        return;
-      }
-
-      const timer = this._timerRef.value as HTMLElement | undefined;
-      if (timer) {
-        timer.textContent = formatTime(remainingTime);
-      }
-    } else {
-      const timer = this._timerRef.value as HTMLElement | undefined;
-      if (timer) {
-        timer.textContent = formatTime(currentTime);
-      }
-    }
-
-    this._animationFrameId = requestAnimationFrame(this._updateTimer);
-  };
-
-  private _startTimer = (): void => {
-    this._startTime = performance.now();
-    this._elapsedTime = 0;
-
-    this._updateTimer();
-  };
-
-  private _stopTimer = (): void => {
-    if (this._animationFrameId) cancelAnimationFrame(this._animationFrameId);
-  };
-
-  private _startTimeline = (): void => {
-    const video = this._videoRef.value as HTMLVideoElement | undefined;
-    if (!video) {
-      return;
-    }
-    const currentTime = video.currentTime;
-    const duration = video.duration || 1;
-
-    const line = this._lineRef.value as HTMLElement | undefined;
-    if (line) {
-      line.style.transform = `scaleX(${currentTime / duration})`;
-    }
-    const timer = this._timerRef.value as HTMLElement | undefined;
-    if (timer) {
-      timer.textContent = formatTime(currentTime);
-    }
-    this._animationFrameId = requestAnimationFrame(this._startTimeline);
-  };
-
-  private _stopTimeline = (): void => {
-    if (this._animationFrameId) cancelAnimationFrame(this._animationFrameId);
-  };
-
-  private _animationFrameId: number | null = null;
-
   private _startRecording = (): void => {
     try {
-      this._chunks = [];
-      const mediaRecorderOptions = this._config.get('mediaRecorderOptions');
-      this._options = {
-        ...mediaRecorderOptions,
-      };
-
-      const { mimeType } = mediaRecorderOptions || {};
-
-      if (mimeType && MediaRecorder.isTypeSupported(mimeType)) {
-        this._options.mimeType = mimeType;
-      } else if (MediaRecorder.isTypeSupported(DEFAULT_VIDEO_FORMAT)) {
-        this._options.mimeType = DEFAULT_VIDEO_FORMAT;
-      } else {
-        this._options.mimeType = 'video/mp4';
-      }
-
       if (this._stream) {
-        this._mediaRecorder = new MediaRecorder(this._stream, this._options);
-        this._mediaRecorder.start();
-
-        this._mediaRecorder.addEventListener('dataavailable', (event: BlobEvent) => {
-          this._chunks.push(event.data);
-        });
-
-        this._startTimer();
+        this._recorder.start(this._stream, this._config.get('mediaRecorderOptions') ?? {});
+        this._clock.startTimer(
+          () => this._timerRef.value,
+          () => this._config.get('maxVideoRecordingDuration') ?? undefined,
+          () => this._stopRecording(),
+        );
 
         this.classList.add('uc-recording');
         this._setCameraState(CameraSourceEvents.PLAY);
@@ -355,15 +261,11 @@ export class CameraSource extends ChildBlock {
   };
 
   private _stopRecording = (): void => {
-    this._mediaRecorder?.addEventListener('stop', () => {
+    this._recorder.stop(() => {
       this._previewVideo();
-
-      this._stopTimer();
-
+      this._clock.stop();
       this._setCameraState(CameraSourceEvents.STOP);
     });
-
-    this._mediaRecorder?.stop();
     this.classList.remove('uc-recording');
 
     this._telemetry.sendActionEvent('stop-camera', this.tagName, { tabId: this._activeTab });
@@ -371,7 +273,7 @@ export class CameraSource extends ChildBlock {
 
   /** This method is used to toggle recording pause/resume */
   private _toggleRecording = (): void => {
-    if (this._mediaRecorder?.state === 'recording') return;
+    if (this._recorder.isRecording) return;
 
     const videoEl = this._videoRef.value;
     if (!videoEl) return;
@@ -396,9 +298,7 @@ export class CameraSource extends ChildBlock {
    */
   private _previewVideo = (): void => {
     try {
-      const blob = new Blob(this._chunks, {
-        type: this._mediaRecorder?.mimeType,
-      });
+      const blob = this._recorder.clip();
 
       const videoElement = this._videoRef.value as HTMLVideoElement | undefined;
       if (!videoElement) {
@@ -499,21 +399,13 @@ export class CameraSource extends ChildBlock {
         if (!blob) {
           return;
         }
-        const file = this._createFile('camera', 'jpeg', DEFAULT_PICTURE_FORMAT, blob);
+        const file = createCameraFile('camera', 'jpeg', DEFAULT_PICTURE_FORMAT, blob);
         this._toSend(file);
       }, DEFAULT_PICTURE_FORMAT);
       return;
     }
 
-    const blob = new Blob(this._chunks, {
-      type: this._mediaRecorder?.mimeType,
-    });
-
-    const ext = this._guessExtensionByMime(this._mediaRecorder?.mimeType);
-    const file = this._createFile('video', ext, `video/${ext}`, blob);
-
-    this._toSend(file);
-    this._chunks = [];
+    this._toSend(this._recorder.takeFile());
   };
 
   private _handlePhoto = (status: CameraStatus): void => {
@@ -634,51 +526,6 @@ export class CameraSource extends ChildBlock {
     this._activeTab = tabId;
   };
 
-  private _createFile = (type: 'camera' | 'video', ext: string, format: string, blob: Blob): File => {
-    const date = Date.now();
-    const name = `${type}-${date}.${ext}`;
-
-    const file = new File([blob], name, {
-      lastModified: date,
-      type: format,
-    });
-
-    return file;
-  };
-
-  private _guessExtensionByMime(mime: string | undefined): string {
-    const knownContainers = {
-      mp4: 'mp4',
-      ogg: 'ogg',
-      webm: 'webm',
-      quicktime: 'mov',
-      'x-matroska': 'mkv',
-    };
-
-    // MediaRecorder.mimeType returns empty string in Firefox.
-    // Firefox record video as WebM now by default.
-    // @link https://bugzilla.mozilla.org/show_bug.cgi?id=1512175
-    if (mime === '') {
-      return 'webm';
-    }
-
-    // e.g. "video/x-matroska;codecs=avc1,opus"
-    if (mime) {
-      const parts = mime.split('/');
-      if (parts?.[0] === 'video') {
-        const rest = parts.slice(1).join('/');
-        const container = rest?.split(';')[0] as keyof typeof knownContainers | undefined;
-        // e.g. "mkv"
-        if (container && knownContainers[container]) {
-          return knownContainers[container];
-        }
-      }
-    }
-
-    // In all other cases just return the base extension for all times
-    return 'avi';
-  }
-
   /**
    * The send file to the server
    */
@@ -759,7 +606,7 @@ export class CameraSource extends ChildBlock {
       this._setVideoSource(null);
 
       this._makeStreamInactive();
-      this._stopTimer();
+      this._clock.stop();
 
       this._capturing = false;
     }
