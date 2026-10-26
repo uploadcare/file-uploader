@@ -14,8 +14,9 @@ import type { Uid } from '../../abstract/Uid';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 
 import '../../solutions/cloud-image-editor/CloudImageEditor';
+import type { CloudImageEditorActivityParams } from '../../abstract/activity-constants';
 
-export type ActivityParams = { internalId: string };
+export type ActivityParams = CloudImageEditorActivityParams;
 
 export class CloudImageEditorActivity extends ActivityChildBlock {
   // `RouterController` is inherited as the base `ActivityChildBlock`'s

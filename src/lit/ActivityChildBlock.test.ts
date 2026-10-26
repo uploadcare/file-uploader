@@ -1,10 +1,10 @@
 import { html } from 'lit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { ACTIVITY_TYPES } from '../abstract/activity-constants';
 import { RouterController } from '../abstract/controllers/RouterController';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { delay } from '../utils/delay';
 import { ActivityChildBlock } from './ActivityChildBlock';
-import { ACTIVITY_TYPES } from './activity-constants';
 
 // ─── Test-only ActivityChildBlock subclasses ─────────────────────────────────
 // A background activity block (rendered inline, not inside `<uc-modal>`): its

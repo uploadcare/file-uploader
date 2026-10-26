@@ -1,4 +1,5 @@
 import { html, type PropertyValues } from 'lit';
+import { ACTIVITY_TYPES } from '../../../abstract/activity-constants';
 import { CollectionStateController } from '../../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../../abstract/controllers/ConfigController';
 import { RouterController } from '../../../abstract/controllers/RouterController';
@@ -6,7 +7,6 @@ import type { ControllerContainer } from '../../../abstract/di/ControllerContain
 import { inject } from '../../../abstract/di/inject';
 import { InternalEventType } from '../../../abstract/EventEmitter';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
-import { ACTIVITY_TYPES } from '../../../lit/activity-constants';
 import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
 import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import './index.css';

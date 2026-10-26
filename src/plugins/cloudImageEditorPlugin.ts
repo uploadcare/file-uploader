@@ -1,8 +1,8 @@
+import { ACTIVITY_TYPES } from '../abstract/activity-constants';
 import { defineComponents } from '../abstract/defineComponents';
 import { EventType } from '../abstract/EventEmitter';
 import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import * as cloudImageEditorActivityModule from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
-import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import * as cloudEditorModules from '../solutions/cloud-image-editor/index';
 import { renderElement } from './renderElement';
 

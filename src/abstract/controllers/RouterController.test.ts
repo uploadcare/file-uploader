@@ -1,6 +1,6 @@
 import { computed } from '@lit-labs/signals';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ActivityId } from '../../lit/activity-constants';
+import type { ActivityId } from '../activity-constants';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
 import { EventEmitter } from '../EventEmitter';

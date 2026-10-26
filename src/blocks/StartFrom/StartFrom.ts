@@ -1,7 +1,7 @@
 import './start-from.css';
 import { html } from 'lit';
+import { ACTIVITY_TYPES, type ActivityType } from '../../abstract/activity-constants';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
-import { ACTIVITY_TYPES, type ActivityType } from '../../lit/activity-constants';
 
 export class StartFrom extends ActivityChildBlock {
   public override activityType: ActivityType = ACTIVITY_TYPES.START_FROM;

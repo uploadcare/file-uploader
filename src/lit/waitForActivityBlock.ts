@@ -1,5 +1,5 @@
+import type { ActivityId } from '../abstract/activity-constants';
 import type { RouterController } from '../abstract/controllers/RouterController';
-import type { ActivityId } from './activity-constants';
 
 /**
  * Wait for an activity to be "mounted" — reported through the router's

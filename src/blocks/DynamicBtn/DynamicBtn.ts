@@ -28,7 +28,7 @@ import './PrimaryAction';
 import '../DropDown/DropDown';
 import '../FileItem/FileActionButton';
 import './NoWrapModeDynamicBtn';
-import { ACTIVITY_TYPES } from '../../lit/activity-constants';
+import { ACTIVITY_TYPES } from '../../abstract/activity-constants';
 
 export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact' | 'plain';
 
