@@ -321,6 +321,8 @@ export class CameraSession {
     try {
       this._setPermission('prompt');
       const stream = await this._stream.open(constraints, this._host.whileAdopted);
+      // A later capture took over; it settles the permission state.
+      if (!stream) return;
       stream.addEventListener('inactive', () => {
         this._setPermission('denied');
       });
