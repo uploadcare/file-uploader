@@ -44,12 +44,22 @@ describe('telemetry: cloud image editor', () => {
     await userEvent.click(page.getByRole('option', { name: /Brightness/i }));
     const action = await waitForType('action-event');
 
-    // `operation` is read from `*operationTooltip`, which still holds the pre-click value — so it reports the stale
-    // tooltip rather than the operation just picked. Pinned as current behaviour, not an endorsement of it.
+    // The operation just picked, at its current value — not the tooltip the slider shows a render later.
     expect(action.payload.metadata).toMatchObject({
       tab_id: 'tuning',
-      operation: { filter: 'filter', value: 0 },
+      operation: { filter: 'brightness', value: 0 },
     });
+  });
+
+  it('reports the filter just picked, at its starting value', async () => {
+    await userEvent.click(page.getByRole('tab', { name: /filters/i }));
+    await waitForType('action-event');
+    clearSent();
+
+    await userEvent.click(page.getByRole('option', { name: /^Apply adaris filter$/i }));
+    const action = await waitForType('action-event');
+
+    expect(action.payload.metadata).toMatchObject({ operation: { filter: 'adaris', value: 100 } });
   });
 
   it.each(['apply', 'cancel'])('reports an action-event when %s is clicked', async (action) => {
