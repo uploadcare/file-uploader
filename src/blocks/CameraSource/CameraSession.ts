@@ -334,6 +334,8 @@ export class CameraSession {
       // The new stream's microphone starts on.
       this.audioMuted = false;
       this._setPermission('granted');
+      // Access is granted now, so the labels are readable: list the devices if the first access check failed.
+      if (!this.cameras.length) this._host.runTask(() => this._devices.list());
     } catch (error) {
       // Asks the lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
       if (this._host.adoptionSignal().aborted) throw error;

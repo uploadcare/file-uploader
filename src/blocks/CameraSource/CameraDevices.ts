@@ -59,8 +59,14 @@ export class CameraDevices {
     this._permissionCleanups = [];
   }
 
-  /** Asks for access once, so the device labels are readable, then lists the devices and follows changes to them. */
+  /**
+   * Follows changes to the devices, then asks for access once, so the device labels are readable, and lists them.
+   * When that check fails, the session lists them after its first successful capture.
+   */
   public async requestAccess(): Promise<void> {
+    navigator.mediaDevices.addEventListener('devicechange', () => this._host.runTask(() => this.list()), {
+      signal: this._host.adoptionSignal(),
+    });
     try {
       // Only probes for permission; the block opens the real stream.
       const probe = await this._host.whileAdopted(
@@ -69,10 +75,6 @@ export class CameraDevices {
       );
       stopTracks(probe);
       await this.list();
-
-      navigator.mediaDevices.addEventListener('devicechange', () => this._host.runTask(() => this.list()), {
-        signal: this._host.adoptionSignal(),
-      });
     } catch (error) {
       // Asks the lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
       if (this._host.adoptionSignal().aborted) throw error;
