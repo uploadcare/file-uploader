@@ -179,3 +179,25 @@ describe('cameraConstraints', () => {
     );
   });
 });
+
+describe('when camera access is denied', () => {
+  it('shows the message without the capture controls', async () => {
+    vi.spyOn(navigator.mediaDevices, 'getUserMedia').mockRejectedValue(new DOMException('denied', 'NotAllowedError'));
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    const rendered = await renderSolution('regular');
+    rendered.api.initFlow();
+    await expectActivity(rendered.root, 'start-from');
+    await within(rendered.root)
+      .getByTestId('uc-start-from')
+      .getByRole('button', { name: 'Camera', exact: true })
+      .click();
+    const camera = within(rendered.root).getByTestId('uc-camera-source');
+
+    await expect.element(camera.getByText('Camera access denied')).toBeVisible();
+    // Nothing to capture from: a shutter or tab switch here would act on a stream that isn't there.
+    for (const name of ['Shot', 'Photo', 'Video']) {
+      await expect.element(camera.getByRole('button', { name, exact: true, includeHidden: true })).not.toBeVisible();
+    }
+  });
+});

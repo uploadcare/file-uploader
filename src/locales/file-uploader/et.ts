@@ -94,6 +94,11 @@ export default {
   'camera-permissions-denied': 'Kaamera ligipääs keelatud',
   'camera-permissions-prompt': 'Palun luba kaamera ligipääs',
   'camera-permissions-request': 'Küsi ligipääsu',
+  'camera-settings': 'Kaamera seaded',
+  'camera-aspect-ratio': 'Kuvasuhe',
+  'camera-aspect-ratio-native': 'Algne',
+  'camera-quality': 'Kvaliteet',
+  'camera-quality-auto': 'Automaatne',
   'files-count-limit-error-title': 'Failide arvu piir ületatud',
   'files-count-limit-error-too-few':
     'Valisid {{total}} {{plural:file(total)}}. Vähemalt {{min}} {{plural:file(min)}} on nõutud.',

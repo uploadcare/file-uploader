@@ -14,7 +14,7 @@ export const DEFAULT_VIDEO_CONSTRAINTS: MediaTrackConstraints = {
 };
 
 /** Short side, in pixels, of each `cameraQuality` preset. `'auto'` keeps the defaults. */
-const QUALITY_SHORT_SIDE: Record<Exclude<CameraQuality, 'auto'>, number> = {
+export const QUALITY_SHORT_SIDE: Record<Exclude<CameraQuality, 'auto'>, number> = {
   '720p': 720,
   '1080p': 1080,
   '4k': 2160,

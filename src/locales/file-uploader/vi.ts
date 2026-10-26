@@ -92,6 +92,11 @@ export default {
   'camera-permissions-denied': 'Truy cập máy ảnh bị từ chối',
   'camera-permissions-prompt': 'Vui lòng cho phép truy cập vào máy ảnh',
   'camera-permissions-request': 'Yêu cầu truy cập',
+  'camera-settings': 'Cài đặt máy ảnh',
+  'camera-aspect-ratio': 'Tỷ lệ khung hình',
+  'camera-aspect-ratio-native': 'Gốc',
+  'camera-quality': 'Chất lượng',
+  'camera-quality-auto': 'Tự động',
   'files-count-limit-error-title': 'Quá giới hạn số lượng tệp',
   'files-count-limit-error-too-few':
     'Bạn đã chọn {{total}} {{plural:file(total)}}. Tối thiểu {{min}} {{plural:file(min)}} là cần thiết.',

@@ -96,6 +96,11 @@ export default {
   'camera-permissions-denied': 'Accés a la càmera denegat',
   'camera-permissions-prompt': "Si us plau, permet l'accés a la càmera",
   'camera-permissions-request': 'Sol·licitar accés',
+  'camera-settings': 'Configuració de la càmera',
+  'camera-aspect-ratio': 'Relació d’aspecte',
+  'camera-aspect-ratio-native': 'Original',
+  'camera-quality': 'Qualitat',
+  'camera-quality-auto': 'Automàtica',
   'files-count-limit-error-title': 'Límit de fitxers superat',
   'files-count-limit-error-too-few':
     "Has seleccionat {{total}} {{plural:file(total)}}. S'exigeix un mínim de {{min}} {{plural:file(min)}}.",

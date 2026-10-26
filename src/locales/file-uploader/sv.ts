@@ -92,6 +92,11 @@ export default {
   'camera-permissions-denied': 'Tillgång till kamera nekad',
   'camera-permissions-prompt': 'Vänligen tillåt tillgång till kameran',
   'camera-permissions-request': 'Begär tillgång',
+  'camera-settings': 'Kamerainställningar',
+  'camera-aspect-ratio': 'Bildförhållande',
+  'camera-aspect-ratio-native': 'Original',
+  'camera-quality': 'Kvalitet',
+  'camera-quality-auto': 'Automatisk',
   'files-count-limit-error-title': 'För många filer',
   'files-count-limit-error-too-few':
     'Du har valt {{total}} {{plural:file(total)}}. Minst {{min}} {{plural:file(min)}} krävs.',

@@ -92,6 +92,11 @@ export default {
   'camera-permissions-denied': '相机访问被拒绝',
   'camera-permissions-prompt': '请允许访问相机',
   'camera-permissions-request': '请求访问',
+  'camera-settings': '相机设置',
+  'camera-aspect-ratio': '宽高比',
+  'camera-aspect-ratio-native': '原始',
+  'camera-quality': '画质',
+  'camera-quality-auto': '自动',
   'files-count-limit-error-title': '文件数量限制超出',
   'files-count-limit-error-too-few':
     '您选择了 {{total}} {{plural:file(total)}}。至少需要 {{min}} {{plural:file(min)}}。',

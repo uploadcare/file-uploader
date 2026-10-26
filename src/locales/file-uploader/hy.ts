@@ -92,6 +92,11 @@ export default {
   'camera-permissions-denied': 'Կամերայի մուտքի մերժում',
   'camera-permissions-prompt': 'Խնդրում ենք տրամադրել մուտք կամերային',
   'camera-permissions-request': 'Հարցում մուտքի համար',
+  'camera-settings': 'Կամերայի կարգավորումներ',
+  'camera-aspect-ratio': 'Կողմերի հարաբերակցություն',
+  'camera-aspect-ratio-native': 'Բնօրինակ',
+  'camera-quality': 'Որակ',
+  'camera-quality-auto': 'Ավտոմատ',
   'files-count-limit-error-title': 'Ֆայլերի քանակի գերազանցում',
   'files-count-limit-error-too-few':
     'Դուք ընտրել եք {{total}} {{plural:file(total)}}։ Պետք է ընտրվեն առնվազն {{min}} {{plural:file(min)}}։',

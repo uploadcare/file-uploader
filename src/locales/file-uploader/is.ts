@@ -92,6 +92,11 @@ export default {
   'camera-permissions-denied': 'Aðgangur að myndavél neitað',
   'camera-permissions-prompt': 'Vinsamlegast leyfðu aðgang að myndavél',
   'camera-permissions-request': 'Biðja um aðgang',
+  'camera-settings': 'Myndavélarstillingar',
+  'camera-aspect-ratio': 'Myndhlutfall',
+  'camera-aspect-ratio-native': 'Upprunalegt',
+  'camera-quality': 'Gæði',
+  'camera-quality-auto': 'Sjálfvirkt',
   'files-count-limit-error-title': 'Fjölda skráa takmark yfirflæði',
   'files-count-limit-error-too-few':
     'Þú valdir {{total}} {{plural:file(total)}}. Að lágmarki {{min}} {{plural:file(min)}} þarf.',

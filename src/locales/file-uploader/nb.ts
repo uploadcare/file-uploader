@@ -92,6 +92,11 @@ export default {
   'camera-permissions-denied': 'Tilgang til kamera nektet',
   'camera-permissions-prompt': 'Vennligst gi tilgang til kameraet',
   'camera-permissions-request': 'Be om tilgang',
+  'camera-settings': 'Kamerainnstillinger',
+  'camera-aspect-ratio': 'Sideforhold',
+  'camera-aspect-ratio-native': 'Original',
+  'camera-quality': 'Kvalitet',
+  'camera-quality-auto': 'Automatisk',
   'files-count-limit-error-title': 'Filtellgrensen overskredet',
   'files-count-limit-error-too-few':
     'Du har valgt {{total}} {{plural:file(total)}}. Minst {{min}} {{plural:file(min)}} kreves.',

@@ -96,6 +96,11 @@ export default {
   'camera-permissions-denied': 'Prístup ku kamere bol zamietnutý',
   'camera-permissions-prompt': 'Prosím, povolte prístup ku kamere',
   'camera-permissions-request': 'Požiadať o prístup',
+  'camera-settings': 'Nastavenia kamery',
+  'camera-aspect-ratio': 'Pomer strán',
+  'camera-aspect-ratio-native': 'Pôvodný',
+  'camera-quality': 'Kvalita',
+  'camera-quality-auto': 'Automaticky',
   'files-count-limit-error-title': 'Prekročený limit počtu súborov',
   'files-count-limit-error-too-few':
     'Vybrali ste {{total}} {{plural:file(total)}}. Je potrebných aspoň {{min}} {{plural:file(min)}}.',

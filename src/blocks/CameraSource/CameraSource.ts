@@ -1,10 +1,12 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import type { CameraQuality } from '../../types/exported';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { debounce } from '../../utils/debounce';
 import { stringToArray } from '../../utils/stringToArray';
+import { UID } from '../../utils/UID';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './camera-source.css';
@@ -13,6 +15,15 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { centerCrop, parseAspectRatio } from './aspectRatio';
 import { type BuildConstraintsInput, buildConstraints } from './buildConstraints';
+import {
+  filterQualityOptions,
+  maxShortSideOf,
+  NATIVE_ASPECT_RATIO,
+  parseAspectRatioOptions,
+  parseQualityOptions,
+  pickInitial,
+  toRatio,
+} from './cameraSettings';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 
 import '../ActivityHeader/ActivityHeader';
@@ -58,6 +69,7 @@ export class CameraSource extends LitUploaderBlock {
   @state()
   private _selectedCameraId: string | null = null;
 
+  @state()
   private _activeTab: CameraMode | null = null;
   private _options: MediaRecorderOptions = {};
   private _canvas: HTMLCanvasElement | null = null;
@@ -89,7 +101,26 @@ export class CameraSource extends LitUploaderBlock {
 
   /** Width / height from `cameraAspectRatio`, or `null` for the camera's native shape. */
   @state()
-  private _aspectRatio: number | null = null;
+  private _configAspectRatio: number | null = null;
+
+  /**
+   * The user's picks in the settings picker, as option values. `null` while that picker isn't offered, in which case
+   * the config value applies. They never write back to the config.
+   */
+  @state()
+  private _pickedAspectRatio: string | null = null;
+
+  @state()
+  private _pickedQuality: CameraQuality | null = null;
+
+  /** The largest short side the open camera reports, to leave out quality presets it can't do. */
+  @state()
+  private _maxShortSide: number | null = null;
+
+  private readonly _settingsPopoverId = `uc-camera-settings-${UID.generateFastUid()}`;
+
+  /** The last mismatch warned about, so subscriptions that fire together don't repeat it. */
+  private _lastSettingsWarning = '';
 
   @state()
   private _videoHidden = true;
@@ -104,19 +135,21 @@ export class CameraSource extends LitUploaderBlock {
   private _cameraSelectOptions: CameraDeviceOption[] = [];
 
   @state()
-  private _cameraSelectHidden = true;
-
-  @state()
   private _l10nMessage = '';
 
   @state()
   private _timerHidden = true;
 
   @state()
-  private _cameraHidden = true;
-
-  @state()
   private _cameraActionsHidden = true;
+
+  /** The last permission state shown. Together with `_captureState`, it decides which controls are on screen. */
+  @state()
+  private _permissionState: 'granted' | 'denied' | 'prompt' = 'prompt';
+
+  /** `live` while framing a shot, `recording` while recording, `review` while a photo or clip waits for retake or accept. */
+  @state()
+  private _captureState: 'live' | 'recording' | 'review' = 'live';
 
   @state()
   private _audioSelectOptions: AudioDeviceOption[] = [];
@@ -129,12 +162,6 @@ export class CameraSource extends LitUploaderBlock {
 
   @state()
   private _audioToggleMicrophoneHidden = true;
-
-  @state()
-  private _tabCameraHidden = true;
-
-  @state()
-  private _tabVideoHidden = true;
 
   @state()
   private _currentIcon = 'camera-full';
@@ -157,8 +184,8 @@ export class CameraSource extends LitUploaderBlock {
           node: this.tagName,
           tabId: this._activeTab,
           hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
-          aspectRatio: this.cfg.cameraAspectRatio,
-          quality: this.cfg.cameraQuality,
+          aspectRatio: this._aspectRatioValue,
+          quality: this._quality,
         },
       },
     });
@@ -208,8 +235,8 @@ export class CameraSource extends LitUploaderBlock {
           node: this.tagName,
           tabId: this._activeTab,
           hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
-          aspectRatio: this.cfg.cameraAspectRatio,
-          quality: this.cfg.cameraQuality,
+          aspectRatio: this._aspectRatioValue,
+          quality: this._quality,
         },
       },
     });
@@ -519,27 +546,20 @@ export class CameraSource extends LitUploaderBlock {
 
   private _handlePhoto = (status: CameraStatus): void => {
     if (status === CameraSourceEvents.SHOT) {
-      this._tabVideoHidden = true;
-      this._cameraHidden = true;
-      this._tabCameraHidden = true;
+      this._captureState = 'review';
       this._cameraActionsHidden = false;
-      this._cameraSelectHidden = true;
     }
 
     if (status === CameraSourceEvents.RETAKE || status === CameraSourceEvents.ACCEPT) {
-      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
-      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this._cameraHidden = false;
+      this._captureState = 'live';
       this._cameraActionsHidden = true;
-      this._cameraSelectHidden = this._cameraDevices.length <= 1;
     }
   };
 
   private _handleVideo = (status: CameraStatus): void => {
     if (status === CameraSourceEvents.PLAY) {
+      this._captureState = 'recording';
       this._timerHidden = false;
-      this._tabCameraHidden = true;
-      this._cameraSelectHidden = true;
       this._audioSelectHidden = true;
       this._currentTimelineIcon = 'pause';
       this._currentIcon = 'square';
@@ -547,23 +567,20 @@ export class CameraSource extends LitUploaderBlock {
     }
 
     if (status === CameraSourceEvents.STOP) {
+      this._captureState = 'review';
       this._timerHidden = false;
-      this._cameraHidden = true;
       this._audioToggleMicrophoneHidden = true;
       this._cameraActionsHidden = false;
     }
 
     if (status === CameraSourceEvents.RETAKE || status === CameraSourceEvents.ACCEPT) {
+      this._captureState = 'live';
       this._timerHidden = true;
-      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
-      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this._cameraHidden = false;
       this._cameraActionsHidden = true;
       this._audioToggleMicrophoneHidden = !this.cfg.enableAudioRecording;
       this._currentIcon = 'video-camera-full';
       this._mutableClassButton = 'uc-shot-btn uc-camera-action';
       this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
-      this._cameraSelectHidden = this._cameraDevices.length <= 1;
     }
   };
 
@@ -705,12 +722,142 @@ export class CameraSource extends LitUploaderBlock {
     this.routerLayer.navigateAfterFileAdd();
   };
 
+  /** Width / height in effect: the user's pick, else `cameraAspectRatio`. `null` is the camera's native shape. */
+  private get _aspectRatio(): number | null {
+    return this._pickedAspectRatio === null ? this._configAspectRatio : (toRatio(this._pickedAspectRatio) ?? null);
+  }
+
+  private get _quality(): CameraQuality {
+    return this._pickedQuality ?? this.cfg.cameraQuality;
+  }
+
+  private get _aspectRatioOptions(): string[] {
+    return parseAspectRatioOptions(this.cfg.cameraAspectRatioOptions);
+  }
+
+  private get _qualityOptions(): CameraQuality[] {
+    return filterQualityOptions(parseQualityOptions(this.cfg.cameraQualityOptions), this._maxShortSide);
+  }
+
+  /** Cropping is a photo-only feature, so the ratio picker is too. */
+  private get _isAspectRatioPickerHidden(): boolean {
+    return this._pickedAspectRatio === null || this._activeTab !== CameraSourceTypes.PHOTO;
+  }
+
+  private get _isQualityPickerHidden(): boolean {
+    return this._pickedQuality === null;
+  }
+
+  private get _isSettingsHidden(): boolean {
+    return (
+      this._permissionState !== 'granted' ||
+      this._captureState !== 'live' ||
+      (this._isAspectRatioPickerHidden && this._isQualityPickerHidden)
+    );
+  }
+
+  private _warnSettingsMismatch(message: string): void {
+    if (message !== this._lastSettingsWarning) {
+      this._lastSettingsWarning = message;
+      console.warn(message);
+    }
+  }
+
+  /** Starts the ratio picker over from the config: on `cameraAspectRatio` if it's listed, else on the first option. */
+  private _resetAspectRatioPick(): void {
+    const options = this._aspectRatioOptions;
+    if (options.length < 2) {
+      this._pickedAspectRatio = null;
+      return;
+    }
+    const { value, listed } = pickInitial(options, (option) => toRatio(option) === this._configAspectRatio);
+    if (!listed) {
+      this._warnSettingsMismatch(
+        `cameraAspectRatio "${this.cfg.cameraAspectRatio}" is not in cameraAspectRatioOptions, starting on "${value}".`,
+      );
+    }
+    this._pickedAspectRatio = value;
+  }
+
+  /** Starts the quality picker over from the config, among the presets the camera can do. */
+  private _resetQualityPick(): void {
+    const options = this._qualityOptions;
+    if (options.length < 2) {
+      this._pickedQuality = null;
+      return;
+    }
+    const { value, listed } = pickInitial(options, (option) => option === this.cfg.cameraQuality);
+    if (!listed) {
+      this._warnSettingsMismatch(
+        `cameraQuality "${this.cfg.cameraQuality}" is not among the available cameraQualityOptions, starting on "${value}".`,
+      );
+    }
+    this._pickedQuality = value;
+  }
+
+  private _handleAspectRatioPick = (event: Event): void => {
+    const value = (event.target as { value?: string } | null)?.value;
+    if (!value) return;
+    this._pickedAspectRatio = value;
+    this._sendSettingChange('aspectRatio', value);
+    void this._applyVideoConstraints();
+  };
+
+  private _handleQualityPick = (event: Event): void => {
+    const value = (event.target as { value?: string } | null)?.value as CameraQuality | undefined;
+    if (!value) return;
+    this._pickedQuality = value;
+    this._sendSettingChange('quality', value);
+    void this._applyVideoConstraints();
+  };
+
+  private _aspectRatioLabel(value: string): string {
+    return value === NATIVE_ASPECT_RATIO ? this.l10n('camera-aspect-ratio-native') : value;
+  }
+
+  private _qualityLabel(value: CameraQuality): string {
+    return value === 'auto' ? this.l10n('camera-quality-auto') : value.toUpperCase();
+  }
+
+  private _sendSettingChange(setting: 'aspectRatio' | 'quality', value: string): void {
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        metadata: {
+          event: 'camera-setting-change',
+          node: this.tagName,
+          tabId: this._activeTab,
+          setting,
+          value,
+        },
+      },
+    });
+  }
+
+  /** The ratio in effect, spelled like `cameraAspectRatio`: `''` for the native shape. */
+  private get _aspectRatioValue(): string {
+    if (this._pickedAspectRatio === null) return this.cfg.cameraAspectRatio;
+    return this._pickedAspectRatio === NATIVE_ASPECT_RATIO ? '' : this._pickedAspectRatio;
+  }
+
   /**
    * Photos are cropped to `cameraAspectRatio`, so the photo preview shows the same crop. Video isn't cropped, so its
    * preview keeps the real frame.
    */
   private get _isPreviewCropped(): boolean {
     return this._aspectRatio !== null && this._activeTab === CameraSourceTypes.PHOTO;
+  }
+
+  private _isTabHidden(mode: CameraMode): boolean {
+    return this._permissionState !== 'granted' || this._captureState !== 'live' || !this._cameraModes.includes(mode);
+  }
+
+  private get _isShutterHidden(): boolean {
+    return this._permissionState !== 'granted' || this._captureState === 'review';
+  }
+
+  private get _isCameraSelectHidden(): boolean {
+    return this._captureState !== 'live' || this._cameraSelectOptions.length <= 1;
   }
 
   private get _cameraModes(): CameraMode[] {
@@ -722,15 +869,13 @@ export class CameraSource extends LitUploaderBlock {
   /** Only updates the UI; stopping the stream is always an explicit `_stopCapture()` call. */
   private _setPermissionsState = debounce((state: 'granted' | 'denied' | 'prompt') => {
     this.classList.toggle('uc-initialized', state === 'granted');
+    this._permissionState = state;
 
     const visibleAudio = this._activeTab === CameraSourceTypes.VIDEO && this.cfg.enableAudioRecording;
     const currentIcon = this._activeTab === CameraSourceTypes.PHOTO ? 'camera-full' : 'video-camera-full';
 
     if (state === 'granted') {
       this._videoHidden = false;
-      this._cameraHidden = false;
-      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
       this._messageHidden = true;
       this._timerHidden = true;
       this._currentIcon = currentIcon;
@@ -739,15 +884,12 @@ export class CameraSource extends LitUploaderBlock {
     } else if (state === 'prompt') {
       this._l10nMessage = 'camera-permissions-prompt';
       this._videoHidden = true;
-      this._cameraHidden = true;
-      this._tabCameraHidden = true;
       this._messageHidden = false;
     } else {
       this._l10nMessage = 'camera-permissions-denied';
       this._videoHidden = true;
       this._messageHidden = false;
-      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
+      this._captureState = 'live';
       this._cameraActionsHidden = true;
       this._mutableClassButton = 'uc-shot-btn uc-camera-action';
     }
@@ -808,7 +950,7 @@ export class CameraSource extends LitUploaderBlock {
       mode: this._currentMode,
       enableAudio: this.cfg.enableAudioRecording,
       aspectRatio: this._aspectRatio,
-      quality: this.cfg.cameraQuality,
+      quality: this._quality,
       custom: this.cfg.cameraConstraints,
       cameraId: this._selectedCameraId,
       audioId: this._selectedAudioId,
@@ -866,6 +1008,13 @@ export class CameraSource extends LitUploaderBlock {
       this._setVideoSource(this._stream);
       this._capturing = true;
       this._setPermissionsState('granted');
+
+      // Another camera may not do the picked preset: start the quality picker over if it's no longer offered.
+      this._maxShortSide = maxShortSideOf(stream.getVideoTracks()[0]);
+      if (this._pickedQuality !== null && !this._qualityOptions.includes(this._pickedQuality)) {
+        this._resetQualityPick();
+        void this._applyVideoConstraints();
+      }
     } catch (error) {
       if (captureId !== this._captureId) {
         return;
@@ -992,7 +1141,6 @@ export class CameraSource extends LitUploaderBlock {
         : [];
 
       this._cameraSelectOptions = this._cameraDevices;
-      this._cameraSelectHidden = this._cameraDevices.length <= 1;
       this._selectedCameraId = this._resolveSelectedId(
         this._cameraDevices,
         this._selectedCameraId,
@@ -1033,8 +1181,8 @@ export class CameraSource extends LitUploaderBlock {
   };
 
   private _handleCameraModes = (cameraModes: CameraMode[]): void => {
-    this._tabVideoHidden = !cameraModes.includes(CameraSourceTypes.VIDEO);
-    this._tabCameraHidden = !cameraModes.includes(CameraSourceTypes.PHOTO);
+    // The tabs are derived from `cameraModes`, which isn't reactive state.
+    this.requestUpdate();
 
     const defaultTab = cameraModes[0];
     if (defaultTab && (!this._activeTab || !cameraModes.includes(this._activeTab))) {
@@ -1058,17 +1206,30 @@ export class CameraSource extends LitUploaderBlock {
       void this._applyVideoConstraints();
     });
 
+    // A config change starts its picker over, dropping what the user picked.
     this.subConfigValue('cameraQuality', () => {
+      this._resetQualityPick();
+      void this._applyVideoConstraints();
+    });
+
+    this.subConfigValue('cameraQualityOptions', () => {
+      this._resetQualityPick();
       void this._applyVideoConstraints();
     });
 
     this.subConfigValue('cameraAspectRatio', (val) => {
       // Already validated by the config; the fallback only guards against a value set around it.
       try {
-        this._aspectRatio = parseAspectRatio(val);
+        this._configAspectRatio = parseAspectRatio(val);
       } catch {
-        this._aspectRatio = null;
+        this._configAspectRatio = null;
       }
+      this._resetAspectRatioPick();
+      void this._applyVideoConstraints();
+    });
+
+    this.subConfigValue('cameraAspectRatioOptions', () => {
+      this._resetAspectRatioPick();
       void this._applyVideoConstraints();
     });
 
@@ -1120,7 +1281,7 @@ export class CameraSource extends LitUploaderBlock {
         >
           <uc-icon name="back"></uc-icon>
         </button>
-        <div ?hidden=${!this._cameraSelectHidden}>
+        <div ?hidden=${!this._isCameraSelectHidden}>
           <uc-icon name="camera"></uc-icon>
           <span>${this.l10n('caption-camera')}</span>
         </div>
@@ -1128,19 +1289,49 @@ export class CameraSource extends LitUploaderBlock {
           class="uc-camera-select"
           .options=${this._cameraSelectOptions}
           .value=${this._selectedCameraId ?? ''}
-          ?hidden=${this._cameraSelectHidden}
+          ?hidden=${this._isCameraSelectHidden}
           @change=${this._handleCameraSelectChange}
         >
         </uc-select>
-        <button
-          type="button"
-          class="uc-mini-btn uc-close-btn"
-          @click=${this.$['*closeModal']}
-          title=${this.l10n('a11y-activity-header-button-close')}
-          aria-label=${this.l10n('a11y-activity-header-button-close')}
-        >
-          <uc-icon name="close"></uc-icon>
-        </button>
+        <div class="uc-camera-header-actions">
+          <button
+            type="button"
+            class="uc-mini-btn uc-camera-settings-btn"
+            popovertarget=${this._settingsPopoverId}
+            title=${this.l10n('camera-settings')}
+            aria-label=${this.l10n('camera-settings')}
+            ?hidden=${this._isSettingsHidden}
+          >
+            <uc-icon name="settings"></uc-icon>
+          </button>
+          <div id=${this._settingsPopoverId} class="uc-camera-settings" popover="auto">
+            <label ?hidden=${this._isAspectRatioPickerHidden}>
+              <span>${this.l10n('camera-aspect-ratio')}</span>
+              <uc-select
+                .options=${this._aspectRatioOptions.map((value) => ({ value, text: this._aspectRatioLabel(value) }))}
+                .value=${this._pickedAspectRatio ?? ''}
+                @change=${this._handleAspectRatioPick}
+              ></uc-select>
+            </label>
+            <label ?hidden=${this._isQualityPickerHidden}>
+              <span>${this.l10n('camera-quality')}</span>
+              <uc-select
+                .options=${this._qualityOptions.map((value) => ({ value, text: this._qualityLabel(value) }))}
+                .value=${this._pickedQuality ?? ''}
+                @change=${this._handleQualityPick}
+              ></uc-select>
+            </label>
+          </div>
+          <button
+            type="button"
+            class="uc-mini-btn uc-close-btn"
+            @click=${this.$['*closeModal']}
+            title=${this.l10n('a11y-activity-header-button-close')}
+            aria-label=${this.l10n('a11y-activity-header-button-close')}
+          >
+            <uc-icon name="close"></uc-icon>
+          </button>
+        </div>
       </uc-activity-header>
       <div class="uc-content">
         <video
@@ -1180,7 +1371,7 @@ export class CameraSource extends LitUploaderBlock {
             aria-label=${this.l10n('src-type-mobile-photo-camera')}
             aria-pressed=${this._activeTab === CameraSourceTypes.PHOTO}
             @click=${this._handleClickTab}
-            ?hidden=${this._tabCameraHidden}
+            ?hidden=${this._isTabHidden(CameraSourceTypes.PHOTO)}
             data-testid="tab-photo"
           >
             <uc-icon name="camera"></uc-icon>
@@ -1196,7 +1387,7 @@ export class CameraSource extends LitUploaderBlock {
             aria-label=${this.l10n('src-type-mobile-video-camera')}
             aria-pressed=${this._activeTab === CameraSourceTypes.VIDEO}
             @click=${this._handleClickTab}
-            ?hidden=${this._tabVideoHidden}
+            ?hidden=${this._isTabHidden(CameraSourceTypes.VIDEO)}
             data-testid="tab-video"
           >
             <uc-icon name="video-camera"></uc-icon>
@@ -1241,7 +1432,7 @@ export class CameraSource extends LitUploaderBlock {
           aria-label=${this.l10n('camera-shot')}
           @click=${this._handleStartCamera}
           class=${this._mutableClassButton}
-          ?hidden=${this._cameraHidden}
+          ?hidden=${this._isShutterHidden}
         >
           <uc-icon name=${this._currentIcon}></uc-icon>
         </button>

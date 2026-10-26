@@ -94,6 +94,11 @@ export default {
   'camera-permissions-denied': 'Άρνηση πρόσβασης στην κάμερα',
   'camera-permissions-prompt': 'Παρακαλώ επιτρέψτε την πρόσβαση στην κάμερα',
   'camera-permissions-request': 'Αίτημα πρόσβασης',
+  'camera-settings': 'Ρυθμίσεις κάμερας',
+  'camera-aspect-ratio': 'Αναλογία διαστάσεων',
+  'camera-aspect-ratio-native': 'Αρχική',
+  'camera-quality': 'Ποιότητα',
+  'camera-quality-auto': 'Αυτόματα',
   'files-count-limit-error-title': 'Υπέρβαση ορίου αριθμού αρχείων',
   'files-count-limit-error-too-few':
     'Έχετε επιλέξει {{total}} {{plural:file(total)}}. Απαιτούνται τουλάχιστον {{min}} {{plural:file(min)}}.',

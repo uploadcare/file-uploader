@@ -92,6 +92,11 @@ export default {
   'camera-permissions-denied': 'კამერის წვდომა აკრძალულია',
   'camera-permissions-prompt': 'გთხოვთ, დართეთ წვდომა კამერაზე',
   'camera-permissions-request': 'წვდომის მოთხოვნა',
+  'camera-settings': 'კამერის პარამეტრები',
+  'camera-aspect-ratio': 'გვერდების თანაფარდობა',
+  'camera-aspect-ratio-native': 'ორიგინალი',
+  'camera-quality': 'ხარისხი',
+  'camera-quality-auto': 'ავტომატური',
   'files-count-limit-error-title': 'ფაილების რაოდენობის ზღვარის დამრღვევი',
   'files-count-limit-error-too-few':
     'თქვენ აირჩიეთ {{total}} {{plural:file(total)}}. მინიმუმ {{min}} {{plural:file(min)}} საჭიროა.',

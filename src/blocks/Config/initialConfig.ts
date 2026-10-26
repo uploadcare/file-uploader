@@ -82,6 +82,8 @@ const config = {
   cameraAspectRatio: '',
   cameraQuality: 'auto',
   cameraPhotoQuality: 0.92,
+  cameraAspectRatioOptions: '',
+  cameraQualityOptions: '',
 
   filesViewMode: 'list',
   gridShowFileNames: false,

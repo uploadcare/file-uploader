@@ -92,6 +92,11 @@ export default {
   'camera-permissions-denied': 'Камераға рұқсат берілмеді',
   'camera-permissions-prompt': 'Камераға рұқсат беріңіз',
   'camera-permissions-request': 'Рұқсат сұрау',
+  'camera-settings': 'Камера параметрлері',
+  'camera-aspect-ratio': 'Пропорциялар',
+  'camera-aspect-ratio-native': 'Түпнұсқа',
+  'camera-quality': 'Сапа',
+  'camera-quality-auto': 'Автоматты',
   'files-count-limit-error-title': 'Файлдар санының шектеуі асып түсті',
   'files-count-limit-error-too-few':
     'Сіз {{total}} {{plural:file(total)}} таңдадыңыз. Кемінде {{min}} {{plural:file(min)}} қажет.',

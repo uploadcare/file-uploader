@@ -94,6 +94,11 @@ export default {
   'camera-permissions-denied': 'Приступ камери одбијен',
   'camera-permissions-prompt': 'Молимо дозволите приступ камери',
   'camera-permissions-request': 'Затражи приступ',
+  'camera-settings': 'Подешавања камере',
+  'camera-aspect-ratio': 'Однос страница',
+  'camera-aspect-ratio-native': 'Оригинал',
+  'camera-quality': 'Квалитет',
+  'camera-quality-auto': 'Аутоматски',
   'files-count-limit-error-title': 'Прекорачење лимита броја датотека',
   'files-count-limit-error-too-few':
     'Изабрали сте {{total}} {{plural:file(total)}}. Најмање {{min}} {{plural:file(min)}} је потребно.',

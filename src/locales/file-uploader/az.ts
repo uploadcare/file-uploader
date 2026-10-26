@@ -94,6 +94,11 @@ export default {
   'camera-permissions-denied': 'Kamera girişi qadağandır',
   'camera-permissions-prompt': 'Lütfən, kameraya girişə icazə verin',
   'camera-permissions-request': 'Girişə icazə istə',
+  'camera-settings': 'Kamera parametrləri',
+  'camera-aspect-ratio': 'Tərəflərin nisbəti',
+  'camera-aspect-ratio-native': 'Orijinal',
+  'camera-quality': 'Keyfiyyət',
+  'camera-quality-auto': 'Avtomatik',
   'files-count-limit-error-title': 'Faylların say limiti aşıldı',
   'files-count-limit-error-too-few':
     '{{total}} {{plural:file(total)}} seçdiniz. Ən az {{min}} {{plural:file(min)}} tələb olunur.',

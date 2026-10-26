@@ -92,6 +92,11 @@ export default {
   'camera-permissions-denied': 'Kameran käyttöoikeus evätty',
   'camera-permissions-prompt': 'Salli kameran käyttö',
   'camera-permissions-request': 'Pyydä käyttöoikeutta',
+  'camera-settings': 'Kameran asetukset',
+  'camera-aspect-ratio': 'Kuvasuhde',
+  'camera-aspect-ratio-native': 'Alkuperäinen',
+  'camera-quality': 'Laatu',
+  'camera-quality-auto': 'Automaattinen',
   'files-count-limit-error-title': 'Tiedostojen lukumäärän ylitys',
   'files-count-limit-error-too-few':
     'Olet valinnut {{total}} {{plural:file(total)}}. Vähintään {{min}} {{plural:file(min)}} vaaditaan.',

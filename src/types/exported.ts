@@ -389,6 +389,24 @@ export type ConfigType = {
    */
   cameraPhotoQuality: number;
 
+  /**
+   * Aspect ratios the user can pick from in the camera screen, as a comma-separated list of `"w:h"` values; `native`
+   * stands for the camera's own shape. The picker starts on `cameraAspectRatio`, or on the first option when that
+   * value isn't listed. It shows in photo mode only, and only with two or more options.
+   * @example 'native, 1:1, 4:3'
+   * @default ''
+   */
+  cameraAspectRatioOptions: string;
+
+  /**
+   * Quality presets the user can pick from in the camera screen, as a comma-separated list of `cameraQuality`
+   * values. Presets above what the camera supports are left out. The picker starts on `cameraQuality`, or on the first
+   * option when that value isn't listed, and only shows with two or more options.
+   * @example 'auto, 720p, 1080p'
+   * @default ''
+   */
+  cameraQualityOptions: string;
+
   filesViewMode: FilesViewMode;
 
   gridShowFileNames: boolean;

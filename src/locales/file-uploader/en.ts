@@ -94,6 +94,11 @@ export default {
   'camera-permissions-denied': 'Camera access denied',
   'camera-permissions-prompt': 'Please allow access to the camera',
   'camera-permissions-request': 'Request access',
+  'camera-settings': 'Camera settings',
+  'camera-aspect-ratio': 'Aspect ratio',
+  'camera-aspect-ratio-native': 'Original',
+  'camera-quality': 'Quality',
+  'camera-quality-auto': 'Auto',
   'files-count-limit-error-title': 'Files count limit overflow',
   'files-count-limit-error-too-few':
     'You’ve chosen {{total}} {{plural:file(total)}}. At least {{min}} {{plural:file(min)}} required.',

@@ -92,6 +92,11 @@ export default {
   'camera-permissions-denied': 'カメラへのアクセスが拒否されました',
   'camera-permissions-prompt': 'カメラへのアクセスを許可してください',
   'camera-permissions-request': 'アクセスをリクエスト',
+  'camera-settings': 'カメラ設定',
+  'camera-aspect-ratio': 'アスペクト比',
+  'camera-aspect-ratio-native': 'オリジナル',
+  'camera-quality': '画質',
+  'camera-quality-auto': '自動',
   'files-count-limit-error-title': 'ファイル数の上限超過',
   'files-count-limit-error-too-few':
     '選択されたファイルは{{total}} {{plural:file(total)}}です。最小{{min}} {{plural:file(min)}}が必要です。',

@@ -102,6 +102,11 @@ export default {
   'camera-permissions-denied': 'تم رفض الوصول للكاميرا',
   'camera-permissions-prompt': 'الرجاء السماح بالوصول إلى الكاميرا',
   'camera-permissions-request': 'طلب الوصول',
+  'camera-settings': 'إعدادات الكاميرا',
+  'camera-aspect-ratio': 'نسبة العرض إلى الارتفاع',
+  'camera-aspect-ratio-native': 'الأصلية',
+  'camera-quality': 'الجودة',
+  'camera-quality-auto': 'تلقائي',
   'files-count-limit-error-title': 'تجاوز حد عدد الملفات',
   'files-count-limit-error-too-few':
     'لقد اخترت {{total}} {{plural:file(total)}}. على الأقل {{min}} {{plural:file(min)}} مطلوب.',

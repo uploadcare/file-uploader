@@ -96,6 +96,11 @@ export default {
   'camera-permissions-denied': 'Доступ до камери заборонено',
   'camera-permissions-prompt': 'Будь ласка, дозвольте доступ до камери',
   'camera-permissions-request': 'Запитати доступ',
+  'camera-settings': 'Налаштування камери',
+  'camera-aspect-ratio': 'Співвідношення сторін',
+  'camera-aspect-ratio-native': 'Оригінал',
+  'camera-quality': 'Якість',
+  'camera-quality-auto': 'Авто',
   'files-count-limit-error-title': 'Перевищено ліміт кількості файлів',
   'files-count-limit-error-too-few':
     'Ви вибрали {{total}} {{plural:file(total)}}. Мінімум потрібно {{min}} {{plural:file(min)}}.',

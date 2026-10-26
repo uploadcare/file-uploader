@@ -14,12 +14,14 @@ import {
   asAuthToken,
   asBoolean,
   asCameraAspectRatio,
+  asCameraAspectRatioOptions,
   asCameraCapture,
   asCameraConstraints,
   asCameraMode,
   asCameraModes,
   asCameraPhotoQuality,
   asCameraQuality,
+  asCameraQualityOptions,
   asDynamicButtonViewMode,
   asFilesViewMode,
   asFunction,
@@ -112,6 +114,8 @@ const mapping: { [Key in keyof ConfigType]: ConfigNormalizer<Key> } = {
   cameraAspectRatio: asCameraAspectRatio,
   cameraQuality: asCameraQuality,
   cameraPhotoQuality: asCameraPhotoQuality,
+  cameraAspectRatioOptions: asCameraAspectRatioOptions,
+  cameraQualityOptions: asCameraQualityOptions,
 
   maxVideoRecordingDuration: asNumber,
 

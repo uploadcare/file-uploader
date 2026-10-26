@@ -94,6 +94,11 @@ export default {
   'camera-permissions-denied': 'Kameras piekļuve liegta',
   'camera-permissions-prompt': 'Lūdzu, atļaujiet piekļuvi kamerai',
   'camera-permissions-request': 'Pieprasīt piekļuvi',
+  'camera-settings': 'Kameras iestatījumi',
+  'camera-aspect-ratio': 'Malu attiecība',
+  'camera-aspect-ratio-native': 'Oriģināls',
+  'camera-quality': 'Kvalitāte',
+  'camera-quality-auto': 'Automātiski',
   'files-count-limit-error-title': 'Failu skaita limits pārsniegts',
   'files-count-limit-error-too-few':
     'Jūs esat izvēlējies {{total}} {{plural:file(total)}}. Nepieciešami vismaz {{min}} {{plural:file(min)}}.',

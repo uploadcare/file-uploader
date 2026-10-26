@@ -129,12 +129,33 @@ const asCameraAspectRatio = (value: unknown): string => {
   return strValue;
 };
 
+const CAMERA_QUALITIES: readonly string[] = ['auto', '720p', '1080p', '4k'] satisfies CameraQuality[];
+
 const asCameraQuality = (value: unknown): CameraQuality => {
   const strValue = asString(value);
-  if (['auto', '720p', '1080p', '4k'].includes(strValue)) {
+  if (CAMERA_QUALITIES.includes(strValue)) {
     return strValue as CameraQuality;
   }
   throw new Error(`Invalid value: "${strValue}"`);
+};
+
+const asCameraAspectRatioOptions = (value: unknown): string => {
+  const str = asString(value);
+  for (const item of deserializeCsv(str)) {
+    if (item !== 'native') {
+      parseAspectRatio(item);
+    }
+  }
+  return str;
+};
+
+const asCameraQualityOptions = (value: unknown): string => {
+  const str = asString(value);
+  const invalid = deserializeCsv(str).filter((item) => !CAMERA_QUALITIES.includes(item));
+  if (invalid.length > 0) {
+    throw new Error(`Invalid value: "${JSON.stringify(invalid)}"`);
+  }
+  return str;
 };
 
 const asCameraPhotoQuality = (value: unknown): number => {
@@ -192,10 +213,12 @@ export {
   asAuthToken,
   asBoolean,
   asCameraAspectRatio,
+  asCameraAspectRatioOptions,
   asCameraCapture,
   asCameraConstraints,
   asCameraPhotoQuality,
   asCameraQuality,
+  asCameraQualityOptions,
   asCameraMode,
   asCameraModes,
   asFilesViewMode,
