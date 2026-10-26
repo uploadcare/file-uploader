@@ -1,6 +1,6 @@
-import type { ReactiveStore } from '../di/ReactiveStore';
-import type { ObserveOptions } from '../host-subscription';
-import { Listeners } from '../host-subscription';
+import type { ReactiveStore } from '../../../abstract/di/ReactiveStore';
+import type { ObserveOptions } from '../../../abstract/host-subscription';
+import { Listeners } from '../../../abstract/host-subscription';
 
 /**
  * Generic DOM-free reactive-state primitive, shared by the config

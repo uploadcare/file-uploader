@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import { TabId } from '../../blocks/CloudImageEditor/src/toolbar-constants';
 import { CloudImageEditorController } from './CloudImageEditorController';
+import { TabId } from './toolbar-constants';
 
 describe('CloudImageEditorController', () => {
   it('seeds the cross-cutting defaults', () => {

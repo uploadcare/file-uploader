@@ -1,8 +1,8 @@
 import { ContextProvider } from '@lit/context';
 import { html, LitElement } from 'lit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
+import { CloudImageEditorController } from './CloudImageEditorController';
 import { EditorImageCropper } from './EditorImageCropper';
 import { EditorImageFader } from './EditorImageFader';
 import { cloudImageEditorContext } from './editor-context';

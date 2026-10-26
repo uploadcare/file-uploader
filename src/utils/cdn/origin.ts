@@ -3,7 +3,7 @@ import { defaultProxyEndpoint } from '@uploadcare/cdn-url/proxy';
 /**
  * The default CDN origin, without a trailing slash. Single source of truth: it
  * previously existed as three independent literals in `blocks/Config`,
- * `blocks/Img/props-map.ts` and `controllers/CloudImageEditorController.ts`.
+ * `blocks/Img/props-map.ts` and `blocks/CloudImageEditor/src/CloudImageEditorController.ts`.
  */
 export const DEFAULT_CDN_ORIGIN = 'https://ucarecdn.com';
 

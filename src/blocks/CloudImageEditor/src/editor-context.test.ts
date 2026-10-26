@@ -1,9 +1,9 @@
 import { ContextProvider } from '@lit/context';
 import { html, LitElement } from 'lit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CloudImageEditorController } from '../../../abstract/controllers/CloudImageEditorController';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { debounced, throttled } from '../../../lit/rate-limited-method';
+import { CloudImageEditorController } from './CloudImageEditorController';
 import { cloudImageEditorContext, EditorBlock } from './editor-context';
 
 class LifetimeEditorRoot extends LightDomMixin(LitElement) {

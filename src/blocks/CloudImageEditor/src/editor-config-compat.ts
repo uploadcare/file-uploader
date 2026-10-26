@@ -1,10 +1,10 @@
-import type { EditorConfig } from '../../../abstract/controllers/CloudImageEditorController';
 import { ConfigController } from '../../../abstract/controllers/ConfigController';
 import { LocaleController } from '../../../abstract/controllers/LocaleController';
 import type { ControllerContainer } from '../../../abstract/di/ControllerContainer';
 import { createL10n } from '../../../abstract/l10n';
 import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../../../abstract/UploaderRegistry';
+import type { EditorConfig } from './CloudImageEditorController';
 
 // COMPAT ONLY — the sole uploader-ctx dependency for editor config/telemetry.
 // Deletion steps: delete this file + its single call site in

@@ -1,14 +1,11 @@
 import { ContextConsumer, createContext } from '@lit/context';
 import { LitElement, type ReactiveController, type ReactiveControllerHost } from 'lit';
-import type {
-  CloudImageEditorController,
-  CloudImageEditorControllerState,
-} from '../../../abstract/controllers/CloudImageEditorController';
 import { Lifetime } from '../../../abstract/di/Lifetime';
 import type { CheckedL10nKey } from '../../../abstract/l10n';
 import { logger } from '../../../abstract/logger';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
+import type { CloudImageEditorController, CloudImageEditorControllerState } from './CloudImageEditorController';
 
 const log = logger.scope('cloud-image-editor');
 
