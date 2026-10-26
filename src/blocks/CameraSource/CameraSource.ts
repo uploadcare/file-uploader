@@ -16,15 +16,13 @@ import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { parseCameraModes } from '../../abstract/cameraModes';
+import { CameraDevices, type DeviceOption } from './CameraDevices';
 import { CameraRecorder, createCameraFile, RecordingClock } from './CameraRecorder';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
 import '../Select/Select';
-
-type CameraDeviceOption = { text: string; value: string };
-type AudioDeviceOption = { text: string; value: string };
 
 const DEFAULT_VIDEO_CONFIG = {
   width: {
@@ -37,8 +35,6 @@ const DEFAULT_VIDEO_CONFIG = {
     ideal: 30,
   },
 };
-
-const DEFAULT_PERMISSIONS = ['camera', 'microphone'];
 
 /** The current device stays selected while it is still listed; otherwise the first one takes over. */
 const keepListedDeviceId = (devices: { value: string }[], currentId: string | null): string | null =>
@@ -79,9 +75,21 @@ export class CameraSource extends ChildBlock {
   private _activeTab: CameraMode | null = null;
   private _canvas: HTMLCanvasElement | null = null;
   private _ctx: CanvasRenderingContext2D | null = null;
-  private _cameraDevices: CameraDeviceOption[] = [];
-  private _audioDevices: AudioDeviceOption[] = [];
-  private _permissionCleanupFns: Array<() => void> = [];
+  private _cameraDevices: DeviceOption[] = [];
+  private _audioDevices: DeviceOption[] = [];
+  private readonly _devices = new CameraDevices({
+    whileAdopted: (work, dispose) => this.whileAdopted(work, dispose),
+    runTask: (task) => this.runTask(task),
+    adoptionSignal: () => this.adoptionSignal,
+    audioEnabled: () => this._config.get('enableAudioRecording'),
+    cameraLabel: (index) => `${this.l10n('caption-camera')} ${index + 1}`,
+    onPermissionChange: () => this.runTask(() => this._capture()),
+    onDevicesChange: ({ cameras, microphones }) => this._applyDevices(cameras, microphones),
+    onError: (error, context, message) => {
+      this._log.warn(message, error);
+      this._telemetry.sendEventError(error, context);
+    },
+  });
   private _currentVideoSource: MediaStream | null = null;
   /** Object URL of the recorded clip being previewed; revoked when the preview is replaced or the camera released. */
   private _previewUrl: string | null = null;
@@ -121,7 +129,7 @@ export class CameraSource extends ChildBlock {
   private _requestBtnHidden = canUsePermissionsApi();
 
   @state()
-  private _cameraSelectOptions: CameraDeviceOption[] = [];
+  private _cameraSelectOptions: DeviceOption[] = [];
 
   @state()
   private _cameraSelectHidden = true;
@@ -142,7 +150,7 @@ export class CameraSource extends ChildBlock {
   private _cameraActionsHidden = true;
 
   @state()
-  private _audioSelectOptions: AudioDeviceOption[] = [];
+  private _audioSelectOptions: DeviceOption[] = [];
 
   @state()
   private _audioSelectHidden = true;
@@ -662,105 +670,26 @@ export class CameraSource extends ChildBlock {
     }
   };
 
-  private _handlePermissionsChange = (): void => {
-    this.runTask(() => this._capture());
-  };
+  private _applyDevices(cameras: DeviceOption[], microphones: DeviceOption[]): void {
+    const enableAudioRecording = this._config.get('enableAudioRecording');
+    this._cameraDevices = cameras;
+    this._audioDevices = microphones;
 
-  private _permissionAccess = async (): Promise<void> => {
-    try {
-      this._teardownPermissionListeners();
-      for (const permission of DEFAULT_PERMISSIONS) {
-        const response = await this.whileAdopted(
-          navigator.permissions.query({
-            name: permission as PermissionName,
-          }),
-        );
+    this._cameraSelectOptions = cameras;
+    this._cameraSelectHidden = cameras.length <= 1;
+    this._selectedCameraId = keepListedDeviceId(cameras, this._selectedCameraId);
 
-        response.addEventListener('change', this._handlePermissionsChange);
-        this._permissionCleanupFns.push(() => {
-          response.removeEventListener('change', this._handlePermissionsChange);
-        });
-      }
-    } catch (error) {
-      this._teardownPermissionListeners();
-      if (isAbortError(error)) throw error;
-      this._log.warn('Failed to use permissions API. Fallback to manual request mode.', error);
-      this._telemetry.sendEventError(error, 'camera permissions. Failed to use permissions API');
-      this.runTask(() => this._capture());
-    }
-  };
-
-  private _teardownPermissionListeners(): void {
-    if (this._permissionCleanupFns.length === 0) {
-      return;
-    }
-    for (const cleanup of this._permissionCleanupFns) {
-      cleanup();
-    }
-    this._permissionCleanupFns = [];
+    this._audioSelectOptions = microphones;
+    this._audioSelectHidden = !enableAudioRecording || microphones.length <= 1;
+    this._selectedAudioId = keepListedDeviceId(microphones, this._selectedAudioId);
   }
 
-  private _requestDeviceAccess = async (): Promise<void> => {
-    try {
-      // Only probes for permission so device labels are readable; `_capture` opens the real stream.
-      const probe = await this.whileAdopted(
-        navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: this._config.get('enableAudioRecording'),
-        }),
-        stopTracks,
-      );
-      stopTracks(probe);
-      await this._getDevices();
-
-      navigator.mediaDevices.addEventListener('devicechange', () => this.runTask(() => this._getDevices()), {
-        signal: this.adoptionSignal,
-      });
-    } catch (error) {
-      if (isAbortError(error)) throw error;
-      this._telemetry.sendEventError(error, 'camera devices. Failed to get user media');
-      this._log.warn('Failed to get user media', error);
-    }
-  };
-
-  private _getDevices = async (): Promise<void> => {
-    try {
-      const devices = await this.whileAdopted(navigator.mediaDevices.enumerateDevices());
-      const enableAudioRecording = this._config.get('enableAudioRecording');
-
-      this._cameraDevices = devices
-        .filter((device) => device.kind === 'videoinput')
-        .map((device, index) => ({
-          text: device.label.trim() || `${this.l10n('caption-camera')} ${index + 1}`,
-          value: device.deviceId,
-        }));
-
-      this._audioDevices = enableAudioRecording
-        ? devices
-            .filter((device) => device.kind === 'audioinput')
-            .map((device) => ({
-              text: device.label.trim(),
-              value: device.deviceId,
-            }))
-        : [];
-
-      this._cameraSelectOptions = this._cameraDevices;
-      this._cameraSelectHidden = this._cameraDevices.length <= 1;
-      this._selectedCameraId = keepListedDeviceId(this._cameraDevices, this._selectedCameraId);
-
-      this._audioSelectOptions = this._audioDevices;
-      this._audioSelectHidden = !enableAudioRecording || this._audioDevices.length <= 1;
-      this._selectedAudioId = keepListedDeviceId(this._audioDevices, this._selectedAudioId);
-    } catch (error) {
-      if (isAbortError(error)) throw error;
-      this._telemetry.sendEventError(error, 'camera devices. Failed to get devices');
-      this._log.warn('Failed to get devices', error);
-    }
-  };
-
   private _onActivate = async (): Promise<void> => {
-    await this._permissionAccess();
-    await this._requestDeviceAccess();
+    // Without the Permissions API, ask for the camera straight away.
+    if (!(await this._devices.watchPermissions())) {
+      this.runTask(() => this._capture());
+    }
+    await this._devices.requestAccess();
     await this._capture();
 
     this._handleCameraModes(this._cameraModes);
@@ -822,7 +751,7 @@ export class CameraSource extends ChildBlock {
   }
 
   private _destroy(): void {
-    this._teardownPermissionListeners();
+    this._devices.stopWatchingPermissions();
     this._detachPreviewListeners(this._videoRef.value);
     this._setVideoSource(null);
     this._revokePreviewUrl();
