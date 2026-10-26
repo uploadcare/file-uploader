@@ -169,3 +169,15 @@ describe('plugin sources', () => {
     await expect.element(within(root).getByText('Unlisted Source')).not.toBeInTheDocument();
   });
 });
+
+describe('source aliases', () => {
+  it('labels an aliased source with the name it shares', async () => {
+    // `dropboxchooser` shares Dropbox's name and icon; its button asked for a `src-type-dropboxchooser` key no locale has.
+    const { root } = await renderSolution('regular', { sourceList: 'local, dropboxchooser' });
+
+    await openModal(root);
+    await expect
+      .element(within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Dropbox', exact: true }))
+      .toBeVisible();
+  });
+});

@@ -1,7 +1,7 @@
 import { deserializeCsv } from '../../utils/comma-separated';
 import { delay } from '../../utils/delay';
 import { getTopLevelOrigin } from '../../utils/get-top-level-origin';
-import { ExternalUploadSource } from '../../utils/UploadSource';
+import { ExternalUploadSource, sourceLabelKey } from '../../utils/UploadSource';
 import { wildcardRegexp } from '../../utils/wildcardRegexp';
 import { buildThemeDefinition } from './buildThemeDefinition';
 import './external-source.css';
@@ -270,7 +270,7 @@ export class ExternalSource extends ChildBlock {
   private _mountIframe(): void {
     const iframe = document.createElement('iframe');
     iframe.src = this._remoteUrl();
-    iframe.title = this.l10n<string>(`src-type-${(this._router.params as ActivityParams).externalSourceType}`);
+    iframe.title = this.l10n<string>(sourceLabelKey((this._router.params as ActivityParams).externalSourceType));
     // @ts-expect-error
     iframe.marginHeight = 0;
     // @ts-expect-error
