@@ -64,7 +64,6 @@ function setup(overrides: { onValidatorError?: (error: unknown, context?: string
   const api = {
     cfg: config.values,
     l10n: (key: string) => key,
-    _uploadCollection: collection, // `validateUploadError` reads this
     getOutputItem: (uid: Uid) => buildOutputItem(collection, uid),
     getOutputCollectionState: () => ({
       totalCount: collection.size,

@@ -1,14 +1,22 @@
 import { AuthTokenResolverError, NetworkError, UploadError } from '@uploadcare/upload-client';
+import type { UploadCollectionController } from '../../../abstract/controllers/UploadCollectionController';
 import type { Uid } from '../../../abstract/Uid';
-import type { FuncFileValidator } from '../../../abstract/validatorTypes';
+import type { OutputErrorFile, OutputFileEntry } from '../../../types/index';
 
-export const validateUploadError: FuncFileValidator = (outputEntry, api) => {
+/**
+ * Classifies a failed upload from the cause kept on its entry. Built in, so it reads the collection directly; a
+ * custom validator gets only the public api.
+ */
+export const validateUploadError = (
+  outputEntry: OutputFileEntry,
+  collection: Pick<UploadCollectionController, 'hasItem' | 'read'>,
+): OutputErrorFile | undefined => {
   const { internalId } = outputEntry;
 
-  if (!api._uploadCollection.hasItem(internalId as Uid)) {
+  if (!collection.hasItem(internalId as Uid)) {
     return;
   }
-  const internalEntry = api._uploadCollection.read(internalId as Uid);
+  const internalEntry = collection.read(internalId as Uid);
 
   const cause: unknown = internalEntry?.get('uploadError');
   if (!cause) {
