@@ -1,9 +1,9 @@
 import { getPrefixedCdnBaseAsync, isPrefixedCdnBase } from '@uploadcare/cname-prefix/async';
+import { DEFAULT_CDN_CNAME } from '../../abstract/config/initialConfig';
 import { logger } from '../../abstract/logger';
 import type { ConfigType } from '../../types/index';
 import { deserializeCsv, serializeCsv } from '../../utils/comma-separated';
 import { isPromiseLike } from '../../utils/isPromiseLike';
-import { DEFAULT_CDN_CNAME } from './initialConfig';
 
 const log = logger.scope('computed-properties');
 

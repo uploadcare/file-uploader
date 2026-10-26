@@ -1,6 +1,10 @@
+import {
+  type ComplexConfigKey,
+  complexConfigKeys as complexKeysFromRegistry,
+  initialConfig,
+} from '../../abstract/config/builtin-registry';
 import type { ConfigComplexType, ConfigPlainType, ConfigType } from '../../types';
 import { toKebabCase } from '../../utils/toKebabCase';
-import { type ComplexConfigKey, complexConfigKeys as complexKeysFromRegistry, initialConfig } from './builtin-registry';
 
 export type { ComplexConfigKey };
 

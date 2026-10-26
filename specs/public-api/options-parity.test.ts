@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { initialConfig } from '@/blocks/Config/initialConfig';
+import { initialConfig } from '@/abstract/config/initialConfig';
 import { toKebabCase } from '@/utils/toKebabCase';
 import surface from './public-surface.json' with { type: 'json' };
 

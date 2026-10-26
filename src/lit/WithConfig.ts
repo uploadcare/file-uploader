@@ -1,10 +1,11 @@
+import { BUILTIN_DESCRIPTORS } from '../abstract/config/builtin-descriptors';
+import { initialConfig } from '../abstract/config/initialConfig';
 import type { ConfigKeyDescriptor } from '../abstract/config-descriptor';
 import { ConfigController } from '../abstract/controllers/ConfigController';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { inject } from '../abstract/di/inject';
 import { lazy } from '../abstract/logger';
 import { runAssertions } from '../blocks/Config/assertions';
-import { BUILTIN_DESCRIPTORS } from '../blocks/Config/builtin-descriptors';
 import {
   type ComputedPropertyControllers,
   type ConfigGetter,
@@ -13,7 +14,6 @@ import {
   computeProperty,
 } from '../blocks/Config/computed-properties';
 import { allConfigKeys, builtinAttrKeyMapping, plainConfigKeys } from '../blocks/Config/config-keys';
-import { initialConfig } from '../blocks/Config/initialConfig';
 import type { ConfigType } from '../types';
 import { isSecretKey, REDACTED } from '../utils/redactSecrets';
 import { toKebabCase } from '../utils/toKebabCase';

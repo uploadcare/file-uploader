@@ -1,11 +1,7 @@
 import type { ComplexAttributeConverter } from 'lit';
+import { parseBooleanAttribute } from '../utils/boolean-attribute';
 
-/**
- * The one boolean-attribute rule, shared by `<uc-config>` and the blocks. Like an HTML boolean attribute, any value
- * means true (`headless`, `headless=""`, `headless="value"`) except `"false"`, which frameworks such as React, Angular
- * and Vue 2 write for a false binding.
- */
-export const parseBooleanAttribute = (value: string): boolean => value !== 'false';
+export { parseBooleanAttribute };
 
 /** Lit converter for a block's boolean property, following {@link parseBooleanAttribute}. */
 export const booleanAttribute: ComplexAttributeConverter<boolean> = {

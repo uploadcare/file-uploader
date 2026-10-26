@@ -8,12 +8,13 @@
  * - {@link BUILTIN_DESCRIPTORS} — host/controller descriptor map
  * - {@link complexConfigKeys} / plain keys — attribute surface
  */
-import { type ConfigKeyDescriptor, resolveConfigDescriptor } from '../../abstract/config-descriptor';
-import { logger } from '../../abstract/logger';
-import type { ConfigType } from '../../types';
+
+import type { ConfigType } from '../../types/index';
 import { DEFAULT_CDN_ORIGIN } from '../../utils/cdn/origin';
 import { serializeCsv } from '../../utils/comma-separated';
-import { ALL_TABS } from '../CloudImageEditor/src/toolbar-constants';
+import { type ConfigKeyDescriptor, resolveConfigDescriptor } from '../config-descriptor';
+import { logger } from '../logger';
+import { ALL_TABS } from './editorTabs';
 import {
   asArray,
   asAuthToken,

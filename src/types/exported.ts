@@ -1,4 +1,4 @@
-import type { PasteScope } from '../abstract/controllers/ClipboardController';
+import type { PasteScope } from '../abstract/config/validatorsType';
 import type { CustomLocaleDefinition, LocaleDefinition } from '../abstract/localeRegistry';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
 import type {

@@ -1,12 +1,13 @@
 import { isAuthTokenResolver } from '@uploadcare/upload-client';
-import type { PasteScope } from '../../abstract/controllers/ClipboardController';
-import { parseBooleanAttribute } from '../../lit/boolean-attribute';
 import type { AuthToken, Metadata, MetadataCallback, Tags, TagsCallback } from '../../types/index';
+import { parseBooleanAttribute } from '../../utils/boolean-attribute';
 import { deserializeCsv } from '../../utils/comma-separated';
-import type { ModeCameraType } from '../CameraSource/constants';
-import { CameraSourceTypes } from '../CameraSource/constants';
-import type { DynamicButtonMode } from '../DynamicBtn/DynamicBtn';
-import type { FilesViewMode } from '../UploadList/UploadList';
+import { CameraSourceTypes, type ModeCameraType } from '../cameraModes';
+
+/** Where a paste adds files: inside the uploader, anywhere on the page, or nowhere. */
+export type PasteScope = 'local' | 'global' | false;
+export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact' | 'plain';
+export type FilesViewMode = 'grid' | 'list';
 
 const asString = (value: unknown): string => String(value);
 

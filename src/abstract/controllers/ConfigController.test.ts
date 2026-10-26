@@ -1,6 +1,6 @@
 import { Signal } from '@lit-labs/signals';
 import { describe, expect, it, vi } from 'vitest';
-import { initialConfig } from '../../blocks/Config/initialConfig';
+import { initialConfig } from '../config/initialConfig';
 import { ConfigController } from './ConfigController';
 
 describe('ConfigController', () => {
