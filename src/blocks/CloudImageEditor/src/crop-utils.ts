@@ -294,32 +294,6 @@ export function rotateSize({ width, height }: ImageSize, angle: number): ImageSi
   return { width: swap ? height : width, height: swap ? width : height };
 }
 
-export function calculateMaxCenteredCropFrame(width: number, height: number, aspectRatio: number): Rectangle {
-  const imageAspectRatio = width / height;
-  let cropWidth: number;
-  let cropHeight: number;
-
-  if (imageAspectRatio > aspectRatio) {
-    cropWidth = Math.round(height * aspectRatio);
-    cropHeight = height;
-  } else {
-    cropWidth = width;
-    cropHeight = Math.round(width / aspectRatio);
-  }
-
-  const cropX = Math.round((width - cropWidth) / 2);
-  const cropY = Math.round((height - cropHeight) / 2);
-
-  if (cropX + cropWidth > width) {
-    cropWidth = width - cropX;
-  }
-  if (cropY + cropHeight > height) {
-    cropHeight = height - cropY;
-  }
-
-  return { x: cropX, y: cropY, width: cropWidth, height: cropHeight };
-}
-
 export function roundRect(rect: Rectangle): Rectangle {
   return {
     x: Math.round(rect.x),

@@ -44,15 +44,7 @@ export interface ApplyResult {
 
 export type ChangeResult = ApplyResult;
 
-export interface CropAspectRatio {
-  type: 'aspect-ratio';
-  width: number;
-  height: number;
-  id: string;
-  hasFreeform?: boolean;
-}
-
-export type CropPresetList = CropAspectRatio[];
+export type { CropAspectRatio, CropPresetList } from '../../../utils/crop/cropPreset';
 
 export type Direction = '' | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
