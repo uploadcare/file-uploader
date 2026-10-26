@@ -18,8 +18,8 @@ export type PlainText = string & { readonly [plainTextBrand]: true };
  */
 export const plainText = (text: string): PlainText => text as PlainText;
 
-/** A literal key has to exist in the dictionary, or be marked `PlainText`. A `string` from elsewhere still passes. */
-export type CheckedL10nKey<K extends string> = K extends L10nKey | PlainText ? K : string extends K ? K : never;
+/** A key has to exist in the dictionary, or be text marked `PlainText`; a bare `string` does not pass. */
+export type CheckedL10nKey<K extends string> = K extends L10nKey | PlainText ? K : never;
 
 /** `L10nFunction` for the blocks' own calls, where a misspelt literal key fails to compile. */
 export type CheckedL10nFunction = <K extends string>(

@@ -42,7 +42,7 @@ export class CameraPreview extends ChildBlock {
           ${ref(this._videoRef)}
         ></video>
         <div class="uc-message-box" ?hidden=${view?.messageHidden ?? true}>
-          <span>${view ? this.l10n<string>(view.message) : ''}</span>
+          <span>${view ? this.l10n(view.message) : ''}</span>
           <button
             type="button"
             @click=${() => this._emit({ type: 'request-access' })}

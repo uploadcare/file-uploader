@@ -21,6 +21,7 @@ import '../../../blocks/UploadList/UploadList';
 import '../../../blocks/SourceList/SourceList';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
+import type { L10nKey } from '../../../abstract/l10n';
 
 export class FileUploaderMinimal extends SolutionChildBlock {
   public static override isUploader = true;
@@ -51,7 +52,7 @@ export class FileUploaderMinimal extends SolutionChildBlock {
   }
 
   /** Trigger label key, derived reactively from `multiple` (drops the v1 `@state`). */
-  private get _buttonTextKey(): string {
+  private get _buttonTextKey(): L10nKey {
     return this._config.getTracked('multiple') ? 'choose-files' : 'choose-file';
   }
 

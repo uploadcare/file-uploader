@@ -22,7 +22,7 @@ export type CameraView = {
   videoHidden: boolean;
   messageHidden: boolean;
   /** The l10n key of the message, when one shows. */
-  message: string;
+  message: 'camera-permissions-prompt' | 'camera-permissions-denied';
   /** The camera picker; the caption shows in its place. */
   cameraSelectHidden: boolean;
   photoTabHidden: boolean;
