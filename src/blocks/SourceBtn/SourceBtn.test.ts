@@ -54,7 +54,9 @@ describe('SourceBtn', () => {
     // The instance `use(TelemetryManager)` resolves is the same one the ctx's
     // container owns — proving the bag→use() migration kept a single instance.
     expect(spy).toHaveBeenCalledOnce();
-    expect(spy.mock.calls[0]?.[0]).toMatchObject({ payload: { sourceId: 'my-src' } });
+    expect(spy.mock.calls[0]?.[0]).toMatchObject({
+      payload: { metadata: { event: 'select-source', node: 'UC-SOURCE-BTN', sourceId: 'my-src' } },
+    });
   });
 
   it('activate() with no source set is a no-op (no telemetry, no crash)', async () => {
