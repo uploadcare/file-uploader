@@ -55,7 +55,7 @@ describe('SourceBtn', () => {
     // container owns — proving the bag→use() migration kept a single instance.
     expect(spy).toHaveBeenCalledOnce();
     expect(spy.mock.calls[0]?.[0]).toMatchObject({
-      payload: { metadata: { event: 'select-source', node: 'UC-SOURCE-BTN', sourceId: 'my-src' } },
+      payload: { metadata: { event: 'select-source', node: 'UC-SOURCE-BTN', sourceId: 'my-src' }, sourceId: 'my-src' },
     });
   });
 

@@ -2,6 +2,7 @@ import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { inject } from '../../abstract/di/inject';
+import { InternalEventType } from '../../abstract/EventEmitter';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -66,7 +67,15 @@ export class SourceBtn extends ChildBlock {
   public activate(): void {
     if (!this.source) return;
 
-    this._telemetry.sendActionEvent('select-source', this.tagName, { sourceId: this.source.id });
+    this._telemetry.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        metadata: { event: 'select-source', node: this.tagName, sourceId: this.source.id },
+        // Backward compatibility: telemetry consumers read `source_id` at the payload root, where it was sent before
+        // it moved into `metadata` like every other action event's detail. Drop in the next major.
+        sourceId: this.source.id,
+      },
+    });
 
     const { source } = this;
     this.runTask(() => source.onClick());

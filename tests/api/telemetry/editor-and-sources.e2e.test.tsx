@@ -119,7 +119,8 @@ describe('telemetry: sources', () => {
     const action = await waitForType('action-event');
 
     expect(action.payload.metadata).toMatchObject({ event: 'select-source', source_id: 'dropbox' });
-    expect(action.payload).not.toHaveProperty('source_id');
+    // Also at the payload root, where telemetry consumers read it before it moved into `metadata`.
+    expect(action.payload.source_id).toBe('dropbox');
   });
 
   it('reports the camera action events in order', { timeout: 60_000 }, async () => {
@@ -142,13 +143,15 @@ describe('telemetry: sources', () => {
     await accept.click();
 
     await vi.waitFor(() => expect(actionEvents()).toContain('accept-camera'), WAIT);
-    // One event per press.
+    // One event per press, plus the `start-camera` every shot used to send too, kept for telemetry consumers.
     expect(actionEvents()).toEqual([
       'camera-tab-switch',
       'camera-tab-switch',
       'shot-camera',
+      'start-camera',
       'retake-camera',
       'shot-camera',
+      'start-camera',
       'accept-camera',
     ]);
     expect(bodiesWithAction('camera-tab-switch')[0].payload.metadata).toMatchObject({
@@ -172,6 +175,10 @@ describe('telemetry: sources', () => {
 
     await vi.waitFor(() => expect(actionEvents()).toContain('stop-camera'), WAIT);
     // Tab switches are batched with these and can land after `clearSent()`; the test above orders them.
-    expect(actionEvents().filter((event) => event !== 'camera-tab-switch')).toEqual(['shot-camera', 'stop-camera']);
+    expect(actionEvents().filter((event) => event !== 'camera-tab-switch')).toEqual([
+      'shot-camera',
+      'start-camera',
+      'stop-camera',
+    ]);
   });
 });
