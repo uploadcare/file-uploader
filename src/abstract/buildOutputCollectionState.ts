@@ -22,6 +22,10 @@ const LATE_READ_WARNING =
   "You've read an OutputCollectionState's file entries after the task that created it, so they are newer than " +
   `the state or the event that carried it. ${KEEP_A_COPY}`;
 
+const READ_AFTER_DESTROY_ERROR =
+  "An OutputCollectionState's file entries were read after its uploader was destroyed, so there is nothing left to " +
+  `read them from. ${KEEP_A_COPY}`;
+
 const mixedReadWarning = (fields: readonly string[]): string =>
   `You've read an OutputCollectionState whose ${fields.map((f) => `\`${f}\``).join(', ')} changed between the ` +
   `event and your read of its file entries, so the values you combined describe two different states. ${KEEP_A_COPY}`;
@@ -171,6 +175,7 @@ export function buildOutputCollectionState<
     Object.defineProperty(state, key, {
       get: () => {
         if (!entries) {
+          if (container.disposed) throw new Error(`[uc] ${READ_AFTER_DESTROY_ERROR}`);
           if (taskNow() !== builtInTask) log.warnOnce(LATE_READ_WARNING);
           entries = takeEntries();
           changedBeforeEntries = changedFields(atBuild, readBuildTimeFields(container));

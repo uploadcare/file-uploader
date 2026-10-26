@@ -179,6 +179,17 @@ describe('buildOutputCollectionState', () => {
     expect(read).toHaveBeenCalledTimes(1);
   });
 
+  it('names the late read, not the container, when its entries are read after the uploader is destroyed', () => {
+    addSuccess();
+    const state = buildOutputCollectionState(container);
+    container.dispose();
+
+    expect(state.totalCount).toBe(1);
+    expect(() => state.allEntries).toThrow(
+      /OutputCollectionState's file entries were read after its uploader was destroyed.*state\.snapshot\(\)/,
+    );
+  });
+
   it('returns the same entries on every read', () => {
     addSuccess();
     const state = buildOutputCollectionState(container);
