@@ -187,6 +187,11 @@ export class CameraSession {
       case 'toggle-playback':
         this._toggleClipPlayback();
         break;
+      default: {
+        // A new action that isn't handled here fails to compile.
+        const unhandled: never = action;
+        throw new Error(`Unknown camera action: ${(unhandled as CameraAction).type}`);
+      }
     }
   }
 
