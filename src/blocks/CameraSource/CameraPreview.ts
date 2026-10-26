@@ -5,6 +5,7 @@ import { styleMap } from 'lit/directives/style-map.js';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { CameraActionEvent } from './CameraActionEvent';
 import type { CameraView } from './cameraView';
+import './camera-preview.css';
 
 /** The camera's picture: the video, or the message asking for or explaining access. */
 export class CameraPreview extends ChildBlock {
