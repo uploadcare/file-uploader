@@ -47,6 +47,20 @@ describe('uc-select', () => {
     expect(paddingRight).toBeGreaterThanOrEqual(box.right - icon.left);
   });
 
+  it('puts the arrow at the end of the line in a right-to-left layout', async () => {
+    const { select } = renderSelect();
+    select.dir = 'rtl';
+    select.options = [{ text: 'מצלמה', value: 'v1' }];
+    await expect.poll(() => innerSelect()?.querySelectorAll('option').length).toBe(1);
+
+    const box = innerSelect()!.getBoundingClientRect();
+    const icon = select.querySelector('uc-icon svg')!.getBoundingClientRect();
+    const style = getComputedStyle(innerSelect()!);
+    // Mirrored: the arrow on the left, as far from that edge as the text is from the right, and the text clear of it.
+    expect(Math.abs(icon.left - box.left - Number.parseFloat(style.paddingRight))).toBeLessThanOrEqual(1);
+    expect(Number.parseFloat(style.paddingLeft)).toBeGreaterThanOrEqual(icon.right - box.left);
+  });
+
   it('renders one native <option> per options entry, with matching text and value', async () => {
     const { select } = renderSelect();
     select.options = [

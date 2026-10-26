@@ -8,7 +8,7 @@
   /* The theme's arrow stands in for the browser's, which sits against the edge. */
   uc-select uc-icon {
     position: absolute;
-    right: 14px;
+    inset-inline-end: 14px;
     width: auto;
     height: auto;
     pointer-events: none;
@@ -26,7 +26,8 @@
     align-items: center;
     justify-content: center;
     height: var(--uc-button-size);
-    padding: 0 38px 0 14px;
+    padding-block: 0;
+    padding-inline: 14px 38px;
     appearance: none;
     font-size: 1em;
     font-family: inherit;
