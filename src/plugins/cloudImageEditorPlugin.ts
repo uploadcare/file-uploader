@@ -4,6 +4,7 @@ import * as cloudImageEditorActivityModule from '../blocks/CloudImageEditorActiv
 import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
 import { ACTIVITY_TYPES } from '../lit/activity-constants';
 import * as cloudEditorModules from '../solutions/cloud-image-editor/index';
+import { renderElement } from './renderElement';
 
 const CLOUD_EDITOR_PLUGIN_ID = 'cloud-image-editor';
 
@@ -35,14 +36,7 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.CLOUD_IMG_EDIT,
       label: 'caption-edit-file',
-      render: (host) => {
-        const activityEl = document.createElement('uc-cloud-image-editor-activity');
-        host.append(activityEl);
-
-        return () => {
-          host.replaceChildren();
-        };
-      },
+      render: renderElement('uc-cloud-image-editor-activity'),
     });
 
     const unsubscribe = uploaderApi.on(EventType.FILE_UPLOAD_SUCCESS, (fileEntry) => {
