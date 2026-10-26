@@ -132,9 +132,13 @@ export class EditorSlider extends EditorBlock {
     super.updated(changedProperties);
 
     if (changedProperties.has('state')) {
-      const tooltip = `${this.state.filter ?? this.state.operation} ${this.state.value}`;
-      this.dispatchEvent(new SliderTooltipChangeEvent(tooltip));
+      this.dispatchEvent(new SliderTooltipChangeEvent(this.tooltip));
     }
+  }
+
+  /** The operation or filter and its value, as the tooltip shows them; current as soon as `setOperation` returns. */
+  public get tooltip(): string {
+    return `${this.state.filter ?? this.state.operation} ${this.state.value}`;
   }
 
   public override render() {

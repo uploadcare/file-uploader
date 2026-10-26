@@ -555,8 +555,9 @@ export class EditorToolbar extends EditorBlock {
       this._setShowSlider(true);
     }
 
+    // Read from the slider now: `_operationTooltip` only catches up when it renders, after this click.
     this.sendClickEvent(originalEvent, {
-      operation: parseFilterValue(this._operationTooltip),
+      operation: parseFilterValue(this._sliderRef.value?.tooltip ?? null),
     });
 
     this._currentFilter = filter;
@@ -573,7 +574,7 @@ export class EditorToolbar extends EditorBlock {
     this._currentOperation = e.operation;
 
     this.sendClickEvent(e.originalEvent, {
-      operation: parseFilterValue(this._operationTooltip),
+      operation: parseFilterValue(this._sliderRef.value?.tooltip ?? null),
     });
 
     this._updateInfoTooltip();
