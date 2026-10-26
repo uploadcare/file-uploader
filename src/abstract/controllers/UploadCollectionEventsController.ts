@@ -1,10 +1,11 @@
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { Uid } from '../../lit/Uid';
 import type { OutputCollectionState } from '../../types';
+import { buildOutputCollectionState } from '../buildOutputCollectionState';
+import { requireContainerOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';
 import { UploaderEventType } from '../EventBus';
 import type { TypedData } from '../TypedData';
-import { UploaderPublicApi } from '../UploaderPublicApi';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import { CollectionStateController } from './CollectionStateController';
 import { UploadCollectionController } from './UploadCollectionController';
@@ -23,7 +24,6 @@ type Entry = TypedData<UploadEntryData>;
  */
 export class UploadCollectionEventsController {
   @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
-  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(UploadController) private readonly _upload!: UploadController;
@@ -57,6 +57,8 @@ export class UploadCollectionEventsController {
     this._collectionState.set('uploadList', [...entries]);
   }
 
+  private _outputCollectionState = (): OutputCollectionState => buildOutputCollectionState(requireContainerOf(this));
+
   /**
    * Rebuild + publish the output collection state and emit the debounced `CHANGE`.
    * Returns the freshly built state (for the group-output decision), or `null`
@@ -64,21 +66,19 @@ export class UploadCollectionEventsController {
    */
   public flushOutput(): OutputCollectionState | null {
     const collection = this._collection;
-    const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
     // Defensive: bail on an inconsistent item set. Compare the uid-list length to
     // `size` directly (no per-item `OutputFileEntry` build).
     if (collection.items().length !== collection.size) {
       return null;
     }
-    const collectionState = getOutputCollectionState();
+    const collectionState = this._outputCollectionState();
     this._collectionState.set('collectionState', collectionState);
-    this._emit(UploaderEventType.CHANGE, () => getOutputCollectionState(), { debounce: true });
+    this._emit(UploaderEventType.CHANGE, () => this._outputCollectionState(), { debounce: true });
     return collectionState;
   }
 
   public flushCommonProgress(): void {
     const collection = this._collection;
-    const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
     let commonProgress = 0;
     const items = this._upload.uploadBatch;
     items.forEach((id) => {
@@ -96,16 +96,15 @@ export class UploadCollectionEventsController {
     this._collectionState.set('commonProgress', progress);
     this._emit(
       UploaderEventType.COMMON_UPLOAD_PROGRESS,
-      getOutputCollectionState() as OutputCollectionState<'uploading'>,
+      this._outputCollectionState() as OutputCollectionState<'uploading'>,
     );
   }
 
   /** `COMMON_UPLOAD_FAILED` (debounced) — paired per errored entry by the coordinator. */
   public emitCommonFailed(): void {
-    const getOutputCollectionState = this._api.getOutputCollectionState.bind(this._api);
     this._emit(
       UploaderEventType.COMMON_UPLOAD_FAILED,
-      () => getOutputCollectionState() as OutputCollectionState<'failed'>,
+      () => this._outputCollectionState() as OutputCollectionState<'failed'>,
       { debounce: true },
     );
   }
@@ -137,7 +136,7 @@ export class UploadCollectionEventsController {
     if (isUploadSuccess && !this._isUploadSuccessReported) {
       this._emit(
         UploaderEventType.COMMON_UPLOAD_SUCCESS,
-        this._api.getOutputCollectionState() as OutputCollectionState<'success'>,
+        this._outputCollectionState() as OutputCollectionState<'success'>,
       );
     }
     this._isUploadSuccessReported = isUploadSuccess;

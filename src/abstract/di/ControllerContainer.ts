@@ -42,13 +42,16 @@ export const containerOf = (instance: unknown): ControllerContainer | undefined 
  * binds to (`lifetimeOf(this).guard(...)`), so it stops once the ctx is torn down instead of resuming against
  * released peers. Throws, like `@inject`, for an instance no container built.
  */
-export const lifetimeOf = (instance: unknown): Lifetime => {
+/** The container that built `instance`; throws for an instance it didn't build. */
+export const requireContainerOf = (instance: unknown): ControllerContainer => {
   const container = containerOf(instance);
   if (!container) {
-    throw new Error('[uc] lifetimeOf: instance not created by a container');
+    throw new Error('[uc] instance not created by a container');
   }
-  return container.lifetime;
+  return container;
 };
+
+export const lifetimeOf = (instance: unknown): Lifetime => requireContainerOf(instance).lifetime;
 
 /**
  * A thunk `() => Ctor` has no `.prototype` (arrow functions never do), while a

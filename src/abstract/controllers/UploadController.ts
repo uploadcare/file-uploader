@@ -8,6 +8,7 @@ import {
   uploadFile,
 } from '@uploadcare/upload-client';
 import type { Uid } from '../../lit/Uid';
+import type { OutputFileEntry } from '../../types/exported';
 import { fileDerivedFields } from '../../utils/fileTypes';
 import { redactSecrets } from '../../utils/redactSecrets';
 import { customUserAgent } from '../../utils/userAgent';
@@ -20,7 +21,7 @@ import { AuthTokenManager } from '../managers/AuthTokenManager';
 import { PluginController } from '../managers/plugin';
 import { runFileHook } from '../managers/plugin/runFileHook';
 import { TelemetryManager } from '../managers/TelemetryManager';
-import { UploaderPublicApi } from '../UploaderPublicApi';
+import { toOutputFileEntry } from '../outputFileEntry';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
@@ -51,13 +52,8 @@ export class UploadController {
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   @inject(UploadFileEventsController) private readonly _fileEvents!: UploadFileEventsController;
   @inject(SecureUploadsController) private readonly _secureUploads!: SecureUploadsController;
-  // Token thunk: `UploaderPublicApi` `@inject`s `UploadController` back, so a
-  // direct token reference here would form a value-import cycle that leaves one
-  // side `undefined` at decoration time. The thunk defers the lookup to
-  // resolution time (lazy field), breaking the cycle.
-  @inject(() => UploaderPublicApi) private readonly _api!: UploaderPublicApi;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
-  // Thunk for the same reason: `ValidationController` reaches this class through `UploaderPublicApi`.
+  // Thunk: `ValidationController` reaches this class back through `UploaderPublicApi`, which validators receive.
   @inject(() => ValidationController) private readonly _validation!: ValidationController;
 
   // Per-ctx gated logger: the verbose tier prints only when THIS ctx's `debug`
@@ -158,11 +154,19 @@ export class UploadController {
     };
   }
 
+  private _outputEntry(uid: Uid): OutputFileEntry {
+    const entry = this._collection.read(uid);
+    if (!entry) {
+      throw new Error(`Entry with ID "${uid}" not found in the upload collection`);
+    }
+    return toOutputFileEntry(entry);
+  }
+
   /** Resolve the documented `metadata` config (static value or per-entry callback). */
   public async getMetadataFor(uid: Uid): Promise<FileFromOptions['metadata']> {
     const configValue = this._config.values.metadata || undefined;
     if (typeof configValue === 'function') {
-      return configValue(this._api.getOutputItem(uid));
+      return configValue(this._outputEntry(uid));
     }
     return configValue;
   }
@@ -171,7 +175,7 @@ export class UploadController {
   public async getTagsFor(uid: Uid): Promise<FileFromOptions['tags']> {
     const configValue = this._config.values.tags || undefined;
     if (typeof configValue === 'function') {
-      return configValue(this._api.getOutputItem(uid));
+      return configValue(this._outputEntry(uid));
     }
     return configValue;
   }
