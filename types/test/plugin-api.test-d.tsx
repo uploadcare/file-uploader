@@ -11,6 +11,7 @@ import type {
   UploadCtxProvider,
   UploaderPlugin,
 } from '../../dist/index';
+import { plainText } from '../../dist/index';
 
 declare const registry: PluginRegistryApi;
 declare const config: PluginConfigApi;
@@ -39,10 +40,10 @@ test('the api handed to a plugin is the one the provider exposes', () => {
 });
 
 test('registerSource takes id, label, optional icon and an onSelect that may be async', () => {
-  registry.registerSource({ id: 'src', label: 'Source', onSelect: () => {} });
-  registry.registerSource({ id: 'src', label: 'Source', icon: 'icon', onSelect: async () => {} });
+  registry.registerSource({ id: 'src', label: plainText('Source'), onSelect: () => {} });
+  registry.registerSource({ id: 'src', label: plainText('Source'), icon: 'icon', onSelect: async () => {} });
   // @ts-expect-error onSelect is required
-  registry.registerSource({ id: 'src', label: 'Source' });
+  registry.registerSource({ id: 'src', label: plainText('Source') });
 });
 
 test('registerActivity hands render the host element and the params, and takes an optional disposer back', () => {
@@ -58,13 +59,13 @@ test('registerActivity hands render the host element and the params, and takes a
 });
 
 test('registerActivity takes an optional label: text, an l10n key, or a function of the params', () => {
-  registry.registerActivity({ id: 'act', label: 'My panel', render: () => undefined });
+  registry.registerActivity({ id: 'act', label: plainText('My panel'), render: () => undefined });
   registry.registerActivity({
     id: 'act',
     label: (params) => {
       // An activity with no declared params gets any record.
       expectTypeOf(params).toEqualTypeOf<Record<string, unknown>>();
-      return String(params.name);
+      return plainText(String(params.name));
     },
     render: () => undefined,
   });
@@ -73,7 +74,7 @@ test('registerActivity takes an optional label: text, an l10n key, or a function
     label: (params) => {
       // A built-in activity gets its own params, each one optional: a closed activity gets `{}`.
       expectTypeOf(params).toEqualTypeOf<Partial<{ externalSourceType: string }>>();
-      return params.externalSourceType ?? '';
+      return params.externalSourceType ? plainText(params.externalSourceType) : undefined;
     },
     render: () => undefined,
   });
@@ -85,7 +86,7 @@ test('registerFileAction gets the output entry in shouldRender and onClick', () 
   registry.registerFileAction({
     id: 'action',
     icon: 'icon',
-    label: 'Label',
+    label: plainText('Label'),
     shouldRender: (entry) => {
       expectTypeOf(entry).toEqualTypeOf<OutputFileEntry>();
       return entry.isSuccess;
@@ -112,7 +113,7 @@ test('registerFileHook runs onAdd or beforeUpload with the file and an abort sig
 
 test('registerIcon and registerL10n take their documented shapes', () => {
   registry.registerIcon({ name: 'icon', svg: '<svg></svg>' });
-  registry.registerL10n({ en: { key: 'value' } });
+  registry.registerL10n({ en: { 'upload-file': 'Upload' } });
 });
 
 test('registerConfig infers the option type from defaultValue and holds the converters to it', () => {

@@ -2,7 +2,7 @@ import { ACTIVITY_TYPES } from '../abstract/activity-constants';
 import { defineComponents } from '../abstract/defineComponents';
 import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import { ExternalSource } from '../blocks/ExternalSource/ExternalSource';
-import { ExternalUploadSource, sourceLabelKey } from '../utils/UploadSource';
+import { ExternalUploadSource, isExternalSource, sourceLabelKey } from '../utils/UploadSource';
 import { renderElement } from './renderElement';
 
 export const externalSourcesPlugin: UploaderPlugin = {
@@ -12,7 +12,8 @@ export const externalSourcesPlugin: UploaderPlugin = {
 
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.EXTERNAL,
-      label: ({ externalSourceType }) => (externalSourceType ? sourceLabelKey(externalSourceType) : ''),
+      label: ({ externalSourceType }) =>
+        externalSourceType && isExternalSource(externalSourceType) ? sourceLabelKey(externalSourceType) : undefined,
       render: renderElement('uc-external-source'),
     });
 

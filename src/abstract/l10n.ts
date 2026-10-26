@@ -7,8 +7,19 @@ export type L10nFunction = (str: string, variables?: Record<string, string | num
 
 export type L10nKey = keyof LocaleDefinition | keyof CustomLocaleDefinition;
 
-/** A literal key has to exist in the dictionary. A `string` from elsewhere (a plugin label, a config value) passes. */
-export type CheckedL10nKey<K extends string> = K extends L10nKey ? K : string extends K ? K : never;
+declare const plainTextBrand: unique symbol;
+
+/** Text meant to be shown as written rather than as an l10n key. Made with {@link plainText}. */
+export type PlainText = string & { readonly [plainTextBrand]: true };
+
+/**
+ * Marks `text` as meant to be shown as written, for a plugin label that is not an l10n key. It is still looked up in
+ * the locale like any label, so text that happens to equal a key shows that key's translation.
+ */
+export const plainText = (text: string): PlainText => text as PlainText;
+
+/** A literal key has to exist in the dictionary, or be marked `PlainText`. A `string` from elsewhere still passes. */
+export type CheckedL10nKey<K extends string> = K extends L10nKey | PlainText ? K : string extends K ? K : never;
 
 /** `L10nFunction` for the blocks' own calls, where a misspelt literal key fails to compile. */
 export type CheckedL10nFunction = <K extends string>(

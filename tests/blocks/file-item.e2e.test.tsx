@@ -5,6 +5,7 @@ import type { Uid } from '../../src/abstract/Uid';
 import { TEST_IMAGE_URL } from '../utils/constants';
 import { getCtxName } from '../utils/getCtxName';
 import '../../types/jsx';
+import { plainText } from '@/abstract/l10n';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
@@ -124,7 +125,7 @@ describe('uc-file-item (parity, real upload flow)', () => {
         pluginApi.registry.registerFileAction({
           id: 'file-item-parity-action',
           icon: 'default',
-          label: 'Parity Action',
+          label: plainText('Parity Action'),
           shouldRender: () => true,
           onClick,
         });

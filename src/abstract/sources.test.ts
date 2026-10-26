@@ -1,12 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { ConfigController } from './controllers/ConfigController';
 import { ControllerContainer } from './di/ControllerContainer';
+import { plainText } from './l10n';
 import { PluginController, type PluginSourceRegistration } from './managers/plugin';
 import { observeSources, resolveSources, type SourceButtonConfig } from './sources';
 
 const source = (id: string, expand?: () => string[]): PluginSourceRegistration => ({
   id,
-  label: `src-type-${id}`,
+  label: plainText(`src-type-${id}`),
   icon: id,
   onSelect: vi.fn(),
   ...(expand && { expand }),

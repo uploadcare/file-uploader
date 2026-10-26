@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { plainText } from '@/abstract/l10n';
 import type { PluginSetupParams } from '@/index.ts';
 import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
 import { cleanup } from '~/tests/utils/test-renderer';
@@ -47,7 +48,7 @@ describe('plugin lifecycle: register and unregister', () => {
         setup();
         pluginApi.registry.registerSource({
           id: 'temp-source',
-          label: 'Temp Source',
+          label: plainText('Temp Source'),
           onSelect: () => {},
         });
       },
@@ -130,7 +131,7 @@ describe('plugin lifecycle: register and unregister', () => {
         await Promise.resolve();
         pluginApi.registry.registerSource({
           id: 'async-source',
-          label: 'Async Source',
+          label: plainText('Async Source'),
           onSelect: () => {},
         });
       },
