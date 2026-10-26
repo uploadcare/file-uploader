@@ -47,7 +47,6 @@ export class EditorFilterControl extends EditorButtonControl {
   private _cancelPreload?: () => void;
   private _lastPreviewRequestId = 0;
   private _previewVisibilityCheckRaf?: number;
-  private _previewVisibilityCheckTimeout?: number;
 
   @state()
   private _previewImage: string | null = null;
@@ -210,10 +209,8 @@ export class EditorFilterControl extends EditorButtonControl {
       return;
     }
 
+    // The `*originalUrl` subscription checks again once the image is known.
     if (!this._originalUrl) {
-      if (!this._previewVisibilityCheckTimeout && !this._previewVisibilityCheckRaf) {
-        this._schedulePreviewVisibilityCheck();
-      }
       return;
     }
     const requestId = ++this._lastPreviewRequestId;
@@ -285,14 +282,10 @@ export class EditorFilterControl extends EditorButtonControl {
       const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
       const isVisible =
         hasSize && rect.bottom > 0 && rect.right > 0 && rect.top < viewportHeight && rect.left < viewportWidth;
+      // Out of view, the IntersectionObserver loads the preview when it scrolls in.
       if (isVisible) {
         this.runTask(() => this._loadPreview());
-        return;
       }
-      this._previewVisibilityCheckTimeout = window.setTimeout(() => {
-        this._previewVisibilityCheckTimeout = undefined;
-        this._schedulePreviewVisibilityCheck();
-      }, 500);
     });
   }
 
@@ -300,10 +293,6 @@ export class EditorFilterControl extends EditorButtonControl {
     if (this._previewVisibilityCheckRaf) {
       cancelAnimationFrame(this._previewVisibilityCheckRaf);
       this._previewVisibilityCheckRaf = undefined;
-    }
-    if (this._previewVisibilityCheckTimeout) {
-      window.clearTimeout(this._previewVisibilityCheckTimeout);
-      this._previewVisibilityCheckTimeout = undefined;
     }
   }
 
