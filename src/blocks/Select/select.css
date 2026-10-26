@@ -32,6 +32,12 @@
     font-size: 1em;
     font-family: inherit;
     white-space: nowrap;
+
+    /* A name too long for the select ends with an ellipsis; the title holds it in full. */
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     border: none;
     border-radius: var(--uc-radius);
     cursor: pointer;
