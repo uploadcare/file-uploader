@@ -215,7 +215,12 @@ export class CameraSession {
 
   private _shutter(): void {
     // One event per press: `shot-camera` takes a photo or starts a recording; stopping one reports `stop-camera`.
-    if (!this._recorder.isRecording) this._track('shot-camera');
+    if (!this._recorder.isRecording) {
+      this._track('shot-camera');
+      // Backward compatibility: telemetry consumers count `start-camera`, which every press used to send as well.
+      // Drop in the next major.
+      this._track('start-camera');
+    }
     if (this.activeTab === CameraSourceTypes.PHOTO) {
       this._shot();
     } else if (this.activeTab === CameraSourceTypes.VIDEO) {
