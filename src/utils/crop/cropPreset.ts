@@ -1,10 +1,19 @@
-import { logger } from '../../../../abstract/logger';
-import type { ConfigType } from '../../../../types/exported';
-import { deserializeCsv } from '../../../../utils/comma-separated';
-import { UID } from '../../../../utils/UID';
-import type { CropAspectRatio, CropPresetList } from '../types';
+import { logger } from '../../abstract/logger';
+import type { ConfigType } from '../../types/exported';
+import { deserializeCsv } from '../comma-separated';
+import { UID } from '../UID';
 
 const log = logger.scope('crop-preset');
+
+export interface CropAspectRatio {
+  type: 'aspect-ratio';
+  width: number;
+  height: number;
+  id: string;
+  hasFreeform?: boolean;
+}
+
+export type CropPresetList = CropAspectRatio[];
 
 const EXCLUDED_TYPES = ['free'];
 

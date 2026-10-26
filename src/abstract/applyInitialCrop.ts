@@ -1,8 +1,8 @@
 import { modifiers, serializeOperations } from '@uploadcare/cdn-url';
-import { calculateMaxCenteredCropFrame } from '../blocks/CloudImageEditor/src/crop-utils';
-import { parseCropPreset } from '../blocks/CloudImageEditor/src/lib/parseCropPreset';
 import type { ConfigType } from '../types';
 import { operationsFromModifiers, withOperations } from '../utils/cdn/operations';
+import { calculateMaxCenteredCropFrame } from '../utils/crop/centeredCropFrame';
+import { parseCropPreset } from '../utils/crop/cropPreset';
 import type { UploadCollectionController } from './controllers/UploadCollectionController';
 import { logger } from './logger';
 

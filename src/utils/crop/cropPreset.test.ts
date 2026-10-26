@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Uid } from '../../../../lit/Uid';
-import { UID } from '../../../../utils/UID';
-import { getClosestAspectRatio, parseCropPreset } from './parseCropPreset';
+import type { Uid } from '../../lit/Uid';
+import { UID } from '../UID';
+import { getClosestAspectRatio, parseCropPreset } from './cropPreset';
 
 describe('parseCropPreset', () => {
   it('should parse crop presets correctly', () => {
