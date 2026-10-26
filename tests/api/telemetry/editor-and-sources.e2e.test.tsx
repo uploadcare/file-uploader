@@ -123,6 +123,38 @@ describe('telemetry: sources', () => {
     expect(action.payload.source_id).toBe('dropbox');
   });
 
+  it('reports the files picked in an external source, without what they are', async () => {
+    // `.invalid` never resolves, so the picker iframe posts nothing of its own over the message below.
+    const { root } = await renderSolution('regular', {
+      qualityInsights: true,
+      socialBaseUrl: 'https://social.invalid',
+    });
+    await clickSource(root, 'Dropbox');
+    const externalSource = within(root).getByTestId('uc-external-source');
+    await expect.element(externalSource).toBeVisible();
+    const file = (name: string) => ({ obj_type: 'selected_file', url: `https://example.com/${name}`, filename: name });
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        source: externalSource.element().querySelector('iframe')?.contentWindow,
+        data: {
+          type: 'selected-files-change',
+          total: 2,
+          selectedCount: 2,
+          isReady: true,
+          isMultipleMode: true,
+          selectedFiles: [file('a.jpg'), file('b.jpg')],
+        },
+      }),
+    );
+    clearSent();
+    await externalSource.getByRole('button', { name: 'Done', exact: true }).click();
+
+    await vi.waitFor(() => expect(actionEvents()).toContain('select-external-files'), WAIT);
+    const [body] = bodiesWithAction('select-external-files');
+    expect(body?.payload.metadata).toMatchObject({ source_id: 'dropbox', files_count: 2 });
+    expect(JSON.stringify(body)).not.toContain('example.com');
+  });
+
   it('reports the camera action events in order', { timeout: 60_000 }, async () => {
     const { root } = await renderSolution('regular', { qualityInsights: true });
     await clickSource(root, 'Camera');

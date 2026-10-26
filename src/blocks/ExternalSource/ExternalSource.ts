@@ -23,6 +23,7 @@ import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
 import '../Spinner/Spinner';
 import type { ExternalSourceActivityParams } from '../../abstract/activity-constants';
+import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 
 const SOCIAL_SOURCE_MAPPING: Record<string, string> = {
   [ExternalUploadSource.GDRIVE]: 'ngdrive',
@@ -33,6 +34,7 @@ export type ActivityParams = ExternalSourceActivityParams;
 export class ExternalSource extends ChildBlock {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(RouterController) private readonly _router!: RouterController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
   // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
   // token — it is container-resolved (M-god step 8a), injected via `@inject`.
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
@@ -235,18 +237,23 @@ export class ExternalSource extends ChildBlock {
   }
 
   private _handleDone = (): void => {
+    const { externalSourceType } = this._router.params as ActivityParams;
+    if (!externalSourceType) {
+      throw new Error(`Param "externalSourceType" is required for external source activity`);
+    }
     for (const message of this._selectedList) {
       const url = this._extractUrlFromSelectedFile(message);
       const { filename } = message;
-      const { externalSourceType } = this._router.params as ActivityParams;
-      if (!externalSourceType) {
-        throw new Error(`Param "externalSourceType" is required for external source activity`);
-      }
       this._api.addFileFromUrl(url, {
         fileName: filename,
         source: externalSourceType,
       });
     }
+    // Which source and how many files, never what they are.
+    this._telemetry.sendActionEvent('select-external-files', this.tagName, {
+      sourceId: externalSourceType,
+      filesCount: this._selectedList.length,
+    });
 
     this._router.traverse('onFileAdd');
   };
