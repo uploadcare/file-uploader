@@ -4,7 +4,10 @@ import { page } from 'vitest/browser';
 import { AppInfo } from '@/abstract/controllers/AppInfo';
 import { ClipboardController } from '@/abstract/controllers/ClipboardController';
 import { LazyPluginsController } from '@/abstract/controllers/LazyPluginsController';
+import { UploadCollectionController } from '@/abstract/controllers/UploadCollectionController';
+import { UploadController } from '@/abstract/controllers/UploadController';
 import { A11y } from '@/abstract/managers/a11y';
+import { PluginController } from '@/abstract/managers/plugin';
 import type { LazyPluginEntry } from '@/abstract/managers/plugin/LazyPluginLoader';
 import { SolutionChildBlock } from '@/lit/SolutionChildBlock';
 import { getCtxName } from '../utils/getCtxName';
@@ -33,9 +36,21 @@ class TestSolutionChild extends SolutionChildBlock {
   }
 }
 
+// A solution that renders no `<uc-drop-area>`, so only its own declaration can make the ctx an uploader.
+class TestUploaderSolution extends SolutionChildBlock {
+  public static override isUploader = true;
+  public readyCount = 0;
+
+  protected override controllerReady(...args: Parameters<SolutionChildBlock['controllerReady']>): void {
+    super.controllerReady(...args);
+    this.readyCount += 1;
+  }
+}
+
 declare global {
   interface HTMLElementTagNameMap {
     'uc-test-solution-child': TestSolutionChild;
+    'uc-test-uploader-solution': TestUploaderSolution;
   }
 }
 
@@ -44,6 +59,9 @@ beforeAll(async () => {
   UC.defineComponents(UC);
   if (!customElements.get('uc-test-solution-child')) {
     customElements.define('uc-test-solution-child', TestSolutionChild);
+  }
+  if (!customElements.get('uc-test-uploader-solution')) {
+    customElements.define('uc-test-uploader-solution', TestUploaderSolution);
   }
 });
 
@@ -62,6 +80,25 @@ afterEach(() => {
 });
 
 describe('SolutionChildBlock', () => {
+  it('attaches the upload stack for a solution that declares itself an uploader, without a drop area', async () => {
+    const ctxName = getCtxName();
+    const solution = append('uc-test-uploader-solution', { 'ctx-name': ctxName });
+
+    await expect.poll(() => solution.readyCount).toBe(1);
+    const container = containerOf(ctxName);
+    expect(container.getOrNull(UploadCollectionController)).not.toBeNull();
+    expect(container.getOrNull(UploadController)).not.toBeNull();
+    expect(container.getOrNull(PluginController)).not.toBeNull();
+  });
+
+  it('leaves a solution that is not an uploader without an upload stack', async () => {
+    const ctxName = getCtxName();
+    const child = append('uc-test-solution-child', { 'ctx-name': ctxName });
+
+    await expect.poll(() => child.readyCount).toBe(1);
+    expect(containerOf(ctxName).getOrNull(UploadController)).toBeNull();
+  });
+
   it('registers the a11y block + clipboard scope, sets the solution name, and publishes lazyPlugins on adoption', async () => {
     const ctxName = getCtxName();
     page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);

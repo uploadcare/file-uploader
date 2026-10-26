@@ -23,6 +23,7 @@ import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 export class FileUploaderMinimal extends SolutionChildBlock {
+  public static override isUploader = true;
   public static override lazyPlugins = fileUploaderLazyPlugins;
 
   // Type-only: feeds the JSX attribute typing (`ReflectAttributes` in

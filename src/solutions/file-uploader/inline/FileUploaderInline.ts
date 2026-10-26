@@ -24,6 +24,7 @@ import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
 
 export class FileUploaderInline extends SolutionChildBlock {
+  public static override isUploader = true;
   public static override hasModal = false;
   public static override lazyPlugins = fileUploaderLazyPlugins;
 
