@@ -85,6 +85,12 @@ happen, not on a sleep. `E2E_NET=live` runs against the real API instead (with
 `retry: 1`); tests that read or steer the emulator skip there via
 `it.skipIf(isLive)`.
 
+### e2e camera
+Chromium's fake capture device is shared by every page in the browser, and a file recording from it while another
+opens the camera leaves the second without video frames. So the files that open the camera are listed in
+`CAMERA_E2E` (`vitest.config.ts`) and run one at a time in the `e2e-camera` project, after the rest; `test:e2e` runs
+both. A new e2e file that opens the camera goes on that list, and a hand run of one uses `--project e2e-camera`.
+
 ---
 
 ## Code conventions
