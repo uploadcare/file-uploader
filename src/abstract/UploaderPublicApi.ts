@@ -89,10 +89,10 @@ export class UploaderPublicApi {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(LocaleController) private readonly _locale!: LocaleController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
-  // Token thunk: `UploadController` `@inject`s `UploaderPublicApi` back (for
-  // per-entry `metadata` resolution), so a direct token reference would form a
-  // value-import cycle that leaves one side `undefined` at decoration time. The
-  // thunk defers the lookup to resolution time (lazy field), breaking the cycle.
+  // Token thunk: `UploadController` reaches this class back through
+  // `ValidationController` (validators receive the api), so a direct token
+  // reference would form a value-import cycle that leaves one side `undefined` at
+  // decoration time. The thunk defers the lookup to resolution time.
   @inject(() => UploadController) private readonly _uploadController!: UploadController;
   @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
   @inject(RouterController) private readonly _router!: RouterController;

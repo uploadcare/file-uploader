@@ -2,14 +2,13 @@ import { CancelError, UploadcareError, type UploadcareFile, uploadFile } from '@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EventEmitter } from '../../blocks/UploadCtxProvider/EventEmitter';
 import type { Uid } from '../../lit/Uid';
-import type { ConfigType, OutputFileEntry } from '../../types';
+import type { ConfigType } from '../../types';
 import { ControllerContainer, containerOf } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
 import { __resetLoggerForTests } from '../logger';
 import { PluginController } from '../managers/plugin';
 import type { Owned, PluginFileHookRegistration } from '../managers/plugin/PluginTypes';
 import { TelemetryManager } from '../managers/TelemetryManager';
-import { UploaderPublicApi } from '../UploaderPublicApi';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
@@ -59,7 +58,6 @@ const makeHook = (overrides: Partial<FileHook> = {}): FileHook =>
   }) as FileHook;
 
 // A bare public output entry — only what the `metadata` callback receives.
-const makeOutputItem = (uid: Uid): OutputFileEntry => ({ internalId: uid }) as unknown as OutputFileEntry;
 
 type SetupOpts = {
   cfg?: Partial<ConfigType>;
@@ -73,9 +71,9 @@ const setup = (opts: SetupOpts = {}) => {
   applyConfig(config, opts.cfg ?? {});
   const collection = container.get(UploadCollectionController);
   // `beforeUpload` hooks come from the conditionally-bound `PluginController`
-  // (resolved via `containerOf` + `getOrNull`); the public output item comes
-  // from `UploaderPublicApi`; upload errors report to `TelemetryManager`. Bind a
-  // fake for each on the real container so `@inject` resolves them as production.
+  // (resolved via `containerOf` + `getOrNull`); upload errors report to
+  // `TelemetryManager`. Bind a fake for each on the real container so `@inject`
+  // resolves them as production.
   const getFileHooks = vi.fn<() => readonly FileHook[]>(() => opts.hooks ?? []);
   container.bind(
     PluginController,
@@ -85,8 +83,6 @@ const setup = (opts: SetupOpts = {}) => {
   // CONSTRUCTED instance, so force the fake into existence — the production
   // equivalent is `ensurePluginManager`'s `container.get(PluginController)`.
   container.get(PluginController);
-  const getOutputItem = vi.fn<(uid: Uid) => OutputFileEntry>((uid) => makeOutputItem(uid));
-  container.bind(UploaderPublicApi, () => ({ getOutputItem }) as unknown as UploaderPublicApi);
   // Validation is its own controller with its own spec: here every entry counts as validated unless a test says not.
   const whenValidated = vi.fn(opts.whenValidated ?? (() => Promise.resolve()));
   container.bind(ValidationController, () => ({ whenValidated }) as unknown as ValidationController);
@@ -100,7 +96,6 @@ const setup = (opts: SetupOpts = {}) => {
     collection,
     secureUploads,
     getFileHooks,
-    getOutputItem,
     onUploadError,
     whenValidated,
   };
@@ -859,14 +854,14 @@ describe('UploadController', () => {
       await expect(controller.getMetadataFor('x' as Uid)).resolves.toEqual({ a: '1' });
     });
 
-    it('invokes a metadata callback with the resolved output item', async () => {
+    it('invokes a metadata callback with the entry as an output item', async () => {
       const callback = vi.fn(() => ({ b: '2' }));
-      const { controller, getOutputItem } = setup({ cfg: { metadata: callback } });
+      const { controller, collection } = setup({ cfg: { metadata: callback } });
+      const uid = collection.add({ fileName: 'a.txt' });
 
-      const result = await controller.getMetadataFor('uid-7' as Uid);
+      const result = await controller.getMetadataFor(uid);
 
-      expect(getOutputItem).toHaveBeenCalledWith('uid-7');
-      expect(callback).toHaveBeenCalledWith(expect.objectContaining({ internalId: 'uid-7' }));
+      expect(callback).toHaveBeenCalledWith(expect.objectContaining({ internalId: uid, name: 'a.txt' }));
       expect(result).toEqual({ b: '2' });
     });
 

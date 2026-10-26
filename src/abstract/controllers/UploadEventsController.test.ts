@@ -7,7 +7,6 @@ import { ControllerContainer } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
 import { PluginController } from '../managers/plugin';
 import type { TypedData } from '../TypedData';
-import { UploaderPublicApi } from '../UploaderPublicApi';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import { CollectionStateController } from './CollectionStateController';
 import { ConfigController } from './ConfigController';
@@ -22,12 +21,16 @@ vi.mock('@uploadcare/upload-client', async (importOriginal) => {
   return { ...actual, uploadFileGroup: vi.fn() };
 });
 
+// The output collection state is built from the real collection; these specs hand the controllers a chosen one.
+vi.mock('../buildOutputCollectionState', () => ({ buildOutputCollectionState: vi.fn() }));
+
 // `applyInitialCrop` is now an internal method calling this util; mock it so the
 // crop-applied assertions have a spy to check (and avoid the real crop-utils).
 vi.mock('../applyInitialCrop', () => ({ applyInitialCrop: vi.fn() }));
 
 import { uploadFileGroup } from '@uploadcare/upload-client';
 import { applyInitialCrop } from '../applyInitialCrop';
+import { buildOutputCollectionState } from '../buildOutputCollectionState';
 
 const mockUploadFileGroup = vi.mocked(uploadFileGroup);
 const mockApplyInitialCrop = vi.mocked(applyInitialCrop);
@@ -67,17 +70,7 @@ const setup = (opts: { collectionState?: OutputCollectionState; deferPlugin?: bo
   }) as Mock & EventEmitter['emit'];
   container.bind(EventEmitter, () => ({ emit }) as unknown as EventEmitter);
   const outputCollectionState = opts.collectionState ?? makeState();
-  // `getOutputItem`/`getOutputCollectionState` come from the real
-  // `UploaderPublicApi` token the controller now `@inject`s; the inlined
-  // `getOutputData` derives from `collection.items()` + this `getOutputItem`.
-  container.bind(
-    UploaderPublicApi,
-    () =>
-      ({
-        getOutputItem: (uid: Uid) => ({ internalId: uid }),
-        getOutputCollectionState: () => outputCollectionState,
-      }) as unknown as UploaderPublicApi,
-  );
+  vi.mocked(buildOutputCollectionState).mockImplementation(() => outputCollectionState as never);
   // Plugin `onAdd` hooks fire through the conditionally-bound `PluginController`
   // (`containerOf(this).whenController(...)`), which resolves only a CONSTRUCTED
   // instance — bind a fake and force it into existence (production:
