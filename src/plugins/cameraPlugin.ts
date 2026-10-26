@@ -1,9 +1,9 @@
 import { ACTIVITY_TYPES } from '../abstract/activity-constants';
+import { parseCameraModes } from '../abstract/cameraModes';
 import { defineComponents } from '../abstract/defineComponents';
 import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import { CameraSource } from '../blocks/CameraSource/CameraSource';
 import { browserFeatures } from '../utils/browser-info';
-import { deserializeCsv } from '../utils/comma-separated';
 import { UploadSource, UploadSourceMobile } from '../utils/UploadSource';
 import { renderElement } from './renderElement';
 
@@ -22,8 +22,10 @@ export const cameraPlugin: UploaderPlugin = {
         if (!browserFeatures.htmlMediaCapture) {
           return [UploadSource.CAMERA];
         }
-        const modes = deserializeCsv(pluginApi.config.get('cameraModes'));
-        return modes.length ? modes.map((mode) => `mobile-${mode}-camera`) : [UploadSourceMobile.MOBILE_PHOTO_CAMERA];
+        const modes = parseCameraModes(pluginApi.config.get('cameraModes'));
+        return modes.length
+          ? modes.map((mode) => UploadSourceMobile[mode === 'video' ? 'MOBILE_VIDEO_CAMERA' : 'MOBILE_PHOTO_CAMERA'])
+          : [UploadSourceMobile.MOBILE_PHOTO_CAMERA];
       },
       onSelect: () => {
         uploaderApi.navigate(ACTIVITY_TYPES.CAMERA);
