@@ -4,7 +4,6 @@ import { CollectionStateController } from './controllers/CollectionStateControll
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import { ControllerContainer } from './di/ControllerContainer';
 import { __resetLoggerForTests } from './logger';
-import { UploaderPublicApi } from './UploaderPublicApi';
 
 // Cover-first parity net for `buildOutputCollectionState` (no dedicated test
 // existed) ahead of a single-pass perf refactor. Pins the derived counts /
@@ -20,8 +19,6 @@ describe('buildOutputCollectionState', () => {
     container = new ControllerContainer();
     collection = container.get(UploadCollectionController);
     collectionState = container.get(CollectionStateController);
-    // getOutputData resolves through the public API; force it into existence.
-    container.get(UploaderPublicApi);
   });
   afterEach(() => {
     container.dispose();
@@ -135,11 +132,11 @@ describe('buildOutputCollectionState', () => {
 
   it('builds no output entries for a read of the build-time fields', () => {
     addSuccess();
-    const getOutputItem = vi.spyOn(container.get(UploaderPublicApi), 'getOutputItem');
+    const read = vi.spyOn(collection, 'read');
     const state = buildOutputCollectionState(container);
 
     void [state.progress, state.errors, state.group, state.totalCount];
-    expect(getOutputItem).not.toHaveBeenCalled();
+    expect(read).not.toHaveBeenCalled();
   });
 
   it('spreads into a plain object carrying every documented field', () => {
@@ -173,13 +170,13 @@ describe('buildOutputCollectionState', () => {
 
   it('computes nothing until a field is read', () => {
     addSuccess();
-    const getOutputItem = vi.spyOn(container.get(UploaderPublicApi), 'getOutputItem');
+    const read = vi.spyOn(collection, 'read');
 
     const state = buildOutputCollectionState(container);
-    expect(getOutputItem).not.toHaveBeenCalled();
+    expect(read).not.toHaveBeenCalled();
 
     void state.allEntries;
-    expect(getOutputItem).toHaveBeenCalledTimes(1);
+    expect(read).toHaveBeenCalledTimes(1);
   });
 
   it('returns the same entries on every read', () => {

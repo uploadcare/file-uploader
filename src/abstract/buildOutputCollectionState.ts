@@ -1,4 +1,3 @@
-import { getOutputData } from '../lit/getOutputData';
 import type {
   GroupFlag,
   OutputCollectionState,
@@ -11,6 +10,7 @@ import { CollectionStateController } from './controllers/CollectionStateControll
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import type { ControllerContainer } from './di/ControllerContainer';
 import { logger } from './logger';
+import { outputEntries } from './outputFileEntry';
 
 const log = logger.scope('output-collection-state');
 
@@ -115,7 +115,7 @@ export function buildOutputCollectionState<
   const builtInTask = taskNow();
 
   const takeEntries = (): Fields<(typeof ENTRY_FIELDS)[number]> => {
-    const allEntries = getOutputData(container);
+    const allEntries = outputEntries(container);
     const { errors } = atBuild;
 
     const buckets = partitionByStatus(allEntries, (entry) => entry.status);
