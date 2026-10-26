@@ -69,6 +69,33 @@
   },
   "overrides": [
     {
+      "includes": ["src/abstract/**", "!src/abstract/**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "paths": {
+                  "@uploadcare/cdn-url": {
+                    "importNames": ["parseCdnUrl", "serializeCdnUrl"],
+                    "message": "Use the per-kind parseFileUrl/parseProxyUrl + serializeFileUrl/serializeProxyUrl instead. Every bundle measured smaller once the last consumer moved off the kind-dispatching pair. Lift this only alongside a call site that genuinely handles more than one URL kind."
+                  },
+                  "lit": "src/abstract is the DOM-free layer: no lit. Put the Lit side in src/lit."
+                },
+                "patterns": [
+                  {
+                    "group": ["lit/**", "**/lit/**", "**/blocks/**", "**/solutions/**"],
+                    "message": "src/abstract is the DOM-free layer and must not import from src/lit, src/blocks or src/solutions. Move the shared piece into src/abstract (or src/utils / src/types), or the DOM part out of src/abstract."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
       "includes": ["**/*.test-d.tsx"],
       "linter": {
         "rules": {
