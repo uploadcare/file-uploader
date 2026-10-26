@@ -2,7 +2,6 @@ import { RouterController } from '../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { A11y } from '../abstract/managers/a11y';
 import { LocaleManager } from '../abstract/managers/LocaleManager';
-import { PluginController } from '../abstract/managers/plugin';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
@@ -33,11 +32,10 @@ import { EventEmitter } from '../blocks/UploadCtxProvider/EventEmitter';
  * directly without breaching the `uc-cloud-image-editor` size-limit.
  *
  * It then activates `LocaleManager` (seed the `en` dictionary, subscribe to
- * `localeName`/`localeDefinitionOverride`). No `PluginController` exists yet on
- * this v1-free seam (it is bound later by `ensurePluginManager`), so pass its
- * current value if already resolved, else `null` — `LocaleManager.activate`
- * tolerates a null plugin manager and re-couples idempotently when
- * `ensurePluginManager` later activates it with the real one.
+ * `localeName`/`localeDefinitionOverride`) without touching its plugin-manager
+ * coupling: `ensurePluginManager` couples it when it creates the
+ * `PluginController`. Naming that class here would pull the plugin stack into the
+ * editor bundle, which shares this seam through `ChildBlock`.
  */
 export function ensureUploaderCtx(ctxName: string): ControllerContainer {
   const container = UploaderRegistry.ensure(ctxName);
@@ -48,7 +46,7 @@ export function ensureUploaderCtx(ctxName: string): ControllerContainer {
   container.get(RouterController);
   container.get(TelemetryManager);
 
-  container.get(LocaleManager).activate(container.getOrNull(PluginController));
+  container.get(LocaleManager).activate();
 
   return container;
 }
