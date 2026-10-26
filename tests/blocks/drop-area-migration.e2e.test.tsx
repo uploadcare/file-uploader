@@ -28,6 +28,21 @@ beforeAll(async () => {
 });
 
 describe('uc-drop-area — uploader-scope-attach (solution-only composition, no provider)', () => {
+  it('makes its ctx an uploader on a page of its own, with no solution and no provider', async () => {
+    const ctxName = getCtxName();
+
+    page.render(
+      <>
+        <uc-drop-area ctx-name={ctxName}></uc-drop-area>
+        <uc-config quality-insights="false" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+      </>,
+    );
+
+    await expect.poll(() => hasCtx(ctxName)).toBe(true);
+    await expect.poll(() => containerOf(ctxName).has(UploadController)).toBe(true);
+    expect(containerOf(ctxName).has(UploadCollectionController)).toBe(true);
+  });
+
   it('attaches the full uploader scope from a bare solution + config composition (no <uc-upload-ctx-provider>)', async () => {
     const ctxName = getCtxName();
 
