@@ -170,6 +170,7 @@ export abstract class EditorBlock extends EditorBlockBase {
    * component. `error`/`warn`/`warnOnce` always print; the verbose tier
    * (`log`/`debug`) is gated by the editor's `debug` config (null-safe before a
    * controller is adopted). No ctx-name — the editor base stays bundle-isolated.
+   * @internal
    */
   protected readonly _log = logger.scope('cloud-image-editor', {
     isVerbose: () => this.editorControllerOrNull?.getConfig('debug') ?? false,

@@ -29,6 +29,7 @@ export class Icon extends ChildBlock {
     this.setAttribute('aria-hidden', 'true');
   }
 
+  /** @internal */
   @subscription()
   protected _wirePluginIcons(): Unsubscribe {
     return this.container.whenController(PluginController, (pluginManager) => {

@@ -75,6 +75,7 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
   // `whenController` (fires now if resolved, else on resolution). `internalId`
   // comes from the router-params object, a per-activity contract (ExternalSource
   // precedent) rather than a runtime guard the router already enforces.
+  /** @internal */
   @subscription()
   protected _resolveEntry(): Unsubscribe {
     const { internalId } = this._router.params as ActivityParams;

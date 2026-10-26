@@ -104,6 +104,7 @@ export class FileUploaderInline extends SolutionChildBlock {
 
   // Re-seed start-from when everything closes. Atomic `observeCurrentActivity`
   // (dedup) + eager fire.
+  /** @internal */
   @subscription()
   protected _wireActivityCoordination(): Unsubscribe {
     return this._router.observeCurrentActivity(
@@ -119,6 +120,7 @@ export class FileUploaderInline extends SolutionChildBlock {
   // Background slot follows file state (drives `setActivity`, not a render read).
   // Atomic `observe('uploadList')` fires only on a real `uploadList` change, not
   // every collection-state notify. Does NOT drive `_couldCancel` (see its doc).
+  /** @internal */
   @subscription()
   protected _wireUploadListActivity(): Unsubscribe {
     return this._collectionState.observe(
@@ -137,6 +139,7 @@ export class FileUploaderInline extends SolutionChildBlock {
   // atomic. `_couldCancel` is written ONLY here (stale-by-design between router
   // transitions, see its doc), and `_couldShowList`/`_couldHistoryBack` read
   // imperatively, so this is the button's sole `?hidden` re-render trigger.
+  /** @internal */
   @subscription()
   protected _wireCouldCancel(): Unsubscribe {
     const recompute = () => {

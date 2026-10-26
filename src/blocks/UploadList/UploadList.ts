@@ -188,6 +188,7 @@ export class UploadList extends ActivityChildBlock {
   // on release, so the body reads its throwing `@inject` fields directly instead
   // of the old `useOrNull` bail. Callers keep using `this._throttledHandleCollectionUpdate`
   // (a stable bound reference, still safe to hand to `observeCollection`).
+  /** @internal */
   @throttled(COLLECTION_SUMMARY_THROTTLE_MS)
   protected _throttledHandleCollectionUpdate(): void {
     this._updateUploadsState();
@@ -295,6 +296,7 @@ export class UploadList extends ActivityChildBlock {
   // The predicate reads null-tolerantly (`useOrNull`) — it can fire during a
   // teardown-time navigation, after the container is released, where `use()`
   // would throw.
+  /** @internal */
   @subscription()
   protected _guardNonEmpty(): Unsubscribe {
     return this._router.guard(
@@ -309,6 +311,7 @@ export class UploadList extends ActivityChildBlock {
   // writes `@state` outside `render()`, so it's a subscription, not a tracked
   // render read. Per-key `observe` avoids re-firing on unrelated config changes;
   // the eager `rerun()` reproduces the former `subConfigValue` init fire.
+  /** @internal */
   @subscription()
   protected _wireGroupSizeConfig(): Unsubscribe[] {
     const rerun = () => this._throttledHandleCollectionUpdate();
@@ -322,6 +325,7 @@ export class UploadList extends ActivityChildBlock {
   // `groupInfo` (owned by `CollectionStateController`): fire the recompute only
   // when `groupInfo` itself changes (its atomic `observe` dedups, so an
   // unrelated collection-state write never re-triggers it), plus an eager pass.
+  /** @internal */
   @subscription()
   protected _wireGroupInfo(): Unsubscribe {
     return this._collectionState.observe(
@@ -344,6 +348,7 @@ export class UploadList extends ActivityChildBlock {
   // `uploadProgress` (that drives the progress bar, not this) — so we declare
   // only the status-affecting keys. This resolves the former "perf issue on many
   // files": progress ticks no longer wake this recompute.
+  /** @internal */
   @subscription()
   protected _wireCollectionObservers(): Unsubscribe {
     return this.container.whenController(UploadCollectionController, (collection) => [
@@ -382,6 +387,7 @@ export class UploadList extends ActivityChildBlock {
   // virtualizer's latched row metrics on the change to force a re-measure.
   // `observe` dedups per key and fires only on an actual change — no prev-value
   // bookkeeping.
+  /** @internal */
   @subscription()
   protected _invalidateVirtualListOnViewMode(): Unsubscribe {
     return this._config.observe('filesViewMode', () => this._virtualList.invalidate());

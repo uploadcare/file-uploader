@@ -180,6 +180,7 @@ export class Thumb extends FileItemConfig {
   }
 
   // `@debounced` drops a call after release and cancels a pending one on release.
+  /** @internal */
   @debounced(100)
   protected _debouncedGenerateThumb(): void {
     this.runTask(() => this._generateThumbnail());
@@ -351,6 +352,7 @@ export class Thumb extends FileItemConfig {
   // fires eagerly and synchronously on adoption — matching the former eager
   // `subConfigValue` fire, and after `controllerReady` sets `_firstViewMode` —
   // then again whenever `filesViewMode` changes.
+  /** @internal */
   @effect({ beforeUpdate: true })
   protected _regenerateThumbOnGridSwitch(): void {
     if (this._config.getTracked('filesViewMode') === 'grid' && !this._renderedGridOnce) {

@@ -23,6 +23,7 @@ export class SourceList extends ChildBlock {
   @property({ type: Boolean, attribute: 'wrap', noAccessor: true })
   public wrap = false;
 
+  /** @internal */
   @subscription()
   protected _wireSources(): Unsubscribe {
     return observeSources(this.container, (sources) => {

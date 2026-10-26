@@ -16,6 +16,7 @@ import { Listeners } from '../host-subscription';
  * the interface is intentionally satisfiable by a coarse `Listeners` store.
  */
 export class StateController<TState extends object> implements ReactiveStore<TState> {
+  /** @internal */
   protected _state: TState;
   private _listeners = new Listeners();
 

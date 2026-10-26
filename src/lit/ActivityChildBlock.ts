@@ -22,6 +22,7 @@ export class ActivityChildBlock extends ChildBlock {
   // `CloudImageEditorActivity`, `PluginActivityHost`) reuse this one inherited
   // `@inject` field instead of redeclaring their own (a duplicate private name
   // across the hierarchy would not type-check).
+  /** @internal */
   @inject(RouterController) protected readonly _router!: RouterController;
 
   // Reactive, so a type that arrives after adoption (`PluginActivityHost`'s late registration) re-renders the block,

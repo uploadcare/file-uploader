@@ -110,6 +110,7 @@ export class ExternalSource extends ChildBlock {
   }
 
   // Remount the iframe when the activity params change.
+  /** @internal */
   @subscription()
   protected _wireParamsRemount(): Unsubscribe {
     return this._router.subscribe(() => {
@@ -136,6 +137,7 @@ export class ExternalSource extends ChildBlock {
   // auto-disposed on release), posting `localeName` / `externalSourcesEmbedCss`
   // into the iframe. `_handleIframeLoad` also calls them directly to push the
   // current values to a freshly-mounted iframe.
+  /** @internal */
   @effect()
   protected _syncLocale(): void {
     this._messageBridge?.send({
@@ -144,6 +146,7 @@ export class ExternalSource extends ChildBlock {
     });
   }
 
+  /** @internal */
   @effect()
   protected _syncEmbedCss(): void {
     this._messageBridge?.send({
