@@ -1,4 +1,4 @@
-import type { CameraMode } from '../../abstract/cameraModes';
+import { type CameraMode, CameraSourceTypes } from '../../abstract/cameraModes';
 import type { NavigationEdge } from '../../abstract/controllers/RouterController';
 import { signalState } from '../../abstract/di/signalState';
 import { debounce } from '../../utils/debounce';
@@ -7,7 +7,6 @@ import { CameraDevices, type DeviceOption } from './CameraDevices';
 import { CameraRecorder, createCameraFile, RecordingClock } from './CameraRecorder';
 import { CameraStream, cameraConstraints, captureFrame } from './CameraStream';
 import type { CameraPermission, CameraPhase } from './cameraView';
-import { CameraSourceTypes } from './constants';
 
 const DEFAULT_PICTURE_FORMAT = 'image/jpeg';
 
