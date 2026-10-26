@@ -21,7 +21,7 @@ export type CameraDevicesHost = {
   onPermissionChange: () => void;
   onDevicesChange: (devices: { cameras: DeviceOption[]; microphones: DeviceOption[] }) => void;
   /** Reports a failure that the block recovers from: to the log with `message`, to telemetry with `context`. */
-  onError: (error: unknown, context: string, message: string) => void;
+  report: (message: string, error: unknown, context: string) => void;
 };
 
 /** The camera's permissions and devices: watches the permission state and lists the cameras and microphones. */
@@ -49,10 +49,10 @@ export class CameraDevices {
     } catch (error) {
       this.stopWatchingPermissions();
       if (isAbortError(error)) throw error;
-      this._host.onError(
+      this._host.report(
+        'Failed to use permissions API. Fallback to manual request mode.',
         error,
         'camera permissions. Failed to use permissions API',
-        'Failed to use permissions API. Fallback to manual request mode.',
       );
       return false;
     }
@@ -82,7 +82,7 @@ export class CameraDevices {
     } catch (error) {
       // Asks the lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
       if (this._host.lifetime.adoptionSignal().aborted) throw error;
-      this._host.onError(error, 'camera devices. Failed to get user media', 'Failed to get user media');
+      this._host.report('Failed to get user media', error, 'camera devices. Failed to get user media');
     }
   }
 
@@ -104,7 +104,7 @@ export class CameraDevices {
       this._host.onDevicesChange({ cameras, microphones });
     } catch (error) {
       if (isAbortError(error)) throw error;
-      this._host.onError(error, 'camera devices. Failed to get devices', 'Failed to get devices');
+      this._host.report('Failed to get devices', error, 'camera devices. Failed to get devices');
     }
   }
 }
