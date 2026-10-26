@@ -1,6 +1,6 @@
 import { InternalEventType } from '../../abstract/EventEmitter';
-import { A11y } from '../../abstract/managers/a11y';
 import { CloudImageEditorBlock } from '../../blocks/CloudImageEditor/src/CloudImageEditorBlock';
+import { A11y } from '../../lit/a11y';
 
 export class CloudImageEditor extends CloudImageEditorBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-wgt-common'];

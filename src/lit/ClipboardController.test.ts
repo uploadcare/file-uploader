@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { ActivityId } from '../activity-constants';
-import { ControllerContainer } from '../di/ControllerContainer';
-import { UploaderPublicApi } from '../UploaderPublicApi';
+import type { ActivityId } from '../abstract/activity-constants';
+import { ConfigController } from '../abstract/controllers/ConfigController';
+import { RouterController } from '../abstract/controllers/RouterController';
+import { ControllerContainer } from '../abstract/di/ControllerContainer';
+import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { ClipboardController, type PasteScope } from './ClipboardController';
-import { ConfigController } from './ConfigController';
-import { RouterController } from './RouterController';
 
 type FakeItem =
   | { kind: 'file'; type?: string; getAsFile: () => File | null }

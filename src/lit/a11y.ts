@@ -1,6 +1,6 @@
 import { focusGroupKeyUX, hiddenKeyUX, jumpKeyUX, pressKeyUX, startKeyUX } from 'keyux';
-import type { Destroyable } from '../di/ControllerContainer';
-import { Disposables } from '../di/Disposables';
+import type { Destroyable } from '../abstract/di/ControllerContainer';
+import { Disposables } from '../abstract/di/Disposables';
 
 /**
  * MinimalWindow interface is not exported by keyux, so we import it here using tricky way.

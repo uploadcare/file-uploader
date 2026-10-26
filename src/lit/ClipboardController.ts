@@ -1,11 +1,11 @@
-import { ACTIVITY_TYPES } from '../activity-constants';
-import type { PasteScope } from '../config/validatorsType';
-import { controllerLogger } from '../controllerLogger';
-import { lifetimeOf } from '../di/ControllerContainer';
-import { inject } from '../di/inject';
-import { UploaderPublicApi } from '../UploaderPublicApi';
-import { ConfigController } from './ConfigController';
-import { RouterController } from './RouterController';
+import { ACTIVITY_TYPES } from '../abstract/activity-constants';
+import type { PasteScope } from '../abstract/config/validatorsType';
+import { controllerLogger } from '../abstract/controllerLogger';
+import { ConfigController } from '../abstract/controllers/ConfigController';
+import { RouterController } from '../abstract/controllers/RouterController';
+import { lifetimeOf } from '../abstract/di/ControllerContainer';
+import { inject } from '../abstract/di/inject';
+import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 
 export type { PasteScope };
 
