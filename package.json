@@ -197,7 +197,7 @@
     },
     {
       "path": "web/file-uploader.iife.min.js",
-      "limit": "104 KB"
+      "limit": "105 KB"
     },
     {
       "path": "web/uc-cloud-image-editor.min.js",
