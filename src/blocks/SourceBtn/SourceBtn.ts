@@ -11,12 +11,9 @@ import './source-btn.css';
 import '../Icon/Icon';
 import { InternalEventType } from '../../abstract/EventEmitter';
 
-export type SourceButtonConfig = {
-  id: string;
-  label: string;
-  icon?: string;
-  onClick: () => void | Promise<void>;
-};
+import type { SourceButtonConfig } from '../../abstract/sources';
+
+export type { SourceButtonConfig };
 
 export class SourceBtn extends ChildBlock {
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;

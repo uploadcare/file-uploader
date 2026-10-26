@@ -1,9 +1,16 @@
-import type { SourceButtonConfig } from '../blocks/SourceBtn/SourceBtn';
 import { deserializeCsv } from '../utils/comma-separated';
 import { ConfigController } from './controllers/ConfigController';
 import type { ControllerContainer } from './di/ControllerContainer';
 import { Disposables } from './di/Disposables';
 import { PluginController, type PluginSourceRegistration } from './managers/plugin';
+
+/** What a source button shows and does. */
+export type SourceButtonConfig = {
+  id: string;
+  label: string;
+  icon?: string;
+  onClick: () => void | Promise<void>;
+};
 
 /**
  * The source buttons for a `sourceList`, in its order. A source that expands (camera on a phone) is replaced by what
