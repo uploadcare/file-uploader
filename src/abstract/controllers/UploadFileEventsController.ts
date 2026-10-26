@@ -47,14 +47,7 @@ export class UploadFileEventsController {
 
   /** `FILE_UPLOAD_PROGRESS` for each entry that is actively (non-silently) uploading. */
   public progress(ids: Iterable<Uid>): void {
-    for (const id of ids) {
-      const entry = TypedData.getByUid<UploadEntryData>(id);
-      if (!entry) continue;
-      const { isUploading, silent } = entry.values;
-      if (isUploading && !silent) {
-        this._emit(UploaderEventType.FILE_UPLOAD_PROGRESS, toOutputFileEntry(entry));
-      }
-    }
+    this._emitEach(ids, UploaderEventType.FILE_UPLOAD_PROGRESS, ({ isUploading, silent }) => isUploading && !silent);
   }
 
   /**
@@ -70,14 +63,7 @@ export class UploadFileEventsController {
 
   /** `FILE_UPLOAD_SUCCESS` for each entry that just got `fileInfo` (non-silently). */
   public success(ids: Iterable<Uid>): void {
-    for (const id of ids) {
-      const entry = TypedData.getByUid<UploadEntryData>(id);
-      if (!entry) continue;
-      const { fileInfo, silent } = entry.values;
-      if (fileInfo && !silent) {
-        this._emit(UploaderEventType.FILE_UPLOAD_SUCCESS, toOutputFileEntry(entry));
-      }
-    }
+    this._emitEach(ids, UploaderEventType.FILE_UPLOAD_SUCCESS, ({ fileInfo, silent }) => !!fileInfo && !silent);
   }
 
   /** `FILE_UPLOAD_FAILED` for `id` if it has errors. Returns whether it emitted (the caller pairs a common-failed emit). */
@@ -92,10 +78,23 @@ export class UploadFileEventsController {
 
   /** `FILE_URL_CHANGED` for each id whose `cdnUrl` is now set. */
   public urlChanged(ids: Iterable<Uid>): void {
+    this._emitEach(ids, UploaderEventType.FILE_URL_CHANGED, ({ cdnUrl }) => !!cdnUrl);
+  }
+
+  /** Emits `type` with each entry that still exists and passes `shouldEmit`. */
+  private _emitEach(
+    ids: Iterable<Uid>,
+    type:
+      | typeof UploaderEventType.FILE_UPLOAD_PROGRESS
+      | typeof UploaderEventType.FILE_UPLOAD_SUCCESS
+      | typeof UploaderEventType.FILE_URL_CHANGED,
+    shouldEmit: (values: Readonly<UploadEntryData>) => boolean,
+  ): void {
     for (const id of ids) {
       const entry = TypedData.getByUid<UploadEntryData>(id);
-      if (!entry?.values.cdnUrl) continue;
-      this._emit(UploaderEventType.FILE_URL_CHANGED, toOutputFileEntry(entry));
+      if (entry && shouldEmit(entry.values)) {
+        this._emit(type, toOutputFileEntry(entry));
+      }
     }
   }
 }
