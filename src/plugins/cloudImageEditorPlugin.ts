@@ -45,7 +45,7 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
       const cropPreset = pluginApi.config.get('cropPreset');
       const useEditor = pluginApi.config.get('useCloudImageEditor');
       const autoOpen = pluginApi.config.get('cloudImageEditorAutoOpen');
-      const collectionSize = uploaderApi._uploadCollection.size;
+      const collectionSize = uploaderApi.getOutputCollectionState().totalCount;
 
       if (useEditor && collectionSize === 1 && (cropPreset || autoOpen)) {
         uploaderApi.navigate(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
