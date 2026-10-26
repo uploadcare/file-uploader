@@ -80,17 +80,22 @@ describe('published types under consumer compiler settings', { timeout: 60_000 }
   it('nodenext (ESM), strict, skipLibCheck: false fails inside cdn-url', () => {
     const { ok, output } = compile(cases[1]);
     expect(ok).toBe(false);
-    expect(output.trim().split(/\r?\n/)).toEqual([
-      expect.stringMatching(
-        /^dist\/index\.d\.ts\(\d+,\d+\): error TS2305: Module '"@uploadcare\/cdn-url\/ops"' has no exported member 'FilterName'\.$/,
-      ),
-      expect.stringMatching(
-        /^dist\/index\.d\.ts\(\d+,\d+\): error TS2305: Module '"@uploadcare\/cdn-url"' has no exported member 'CdnOperation'\.$/,
-      ),
-      ...['index', 'ops'].map(
-        (entry) =>
-          `node_modules/@uploadcare/cdn-url/dist/types/${entry}.d.ts(1,15): error TS2834: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Consider adding an extension to the import path.`,
-      ),
-    ]);
+    // The same four errors in any order: which import the bundled d.ts emits first follows its module graph.
+    const lines = output.trim().split(/\r?\n/);
+    expect(lines).toHaveLength(4);
+    expect(lines).toEqual(
+      expect.arrayContaining([
+        expect.stringMatching(
+          /^dist\/index\.d\.ts\(\d+,\d+\): error TS2305: Module '"@uploadcare\/cdn-url\/ops"' has no exported member 'FilterName'\.$/,
+        ),
+        expect.stringMatching(
+          /^dist\/index\.d\.ts\(\d+,\d+\): error TS2305: Module '"@uploadcare\/cdn-url"' has no exported member 'CdnOperation'\.$/,
+        ),
+        ...['index', 'ops'].map(
+          (entry) =>
+            `node_modules/@uploadcare/cdn-url/dist/types/${entry}.d.ts(1,15): error TS2834: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Consider adding an extension to the import path.`,
+        ),
+      ]),
+    );
   });
 });
