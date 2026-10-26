@@ -1,4 +1,3 @@
-import type { PropertyValues } from 'lit';
 import { html } from 'lit';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { type CameraMode, parseCameraModes } from '../../abstract/cameraModes';
@@ -84,16 +83,6 @@ export class CameraSource extends ChildBlock {
   protected _syncCameraModes(): void {
     if (!this.isConnected) return;
     this._session.selectDefaultTab(parseCameraModes(this._config.getTracked('cameraModes')));
-  }
-
-  public override firstUpdated(changedProperties: PropertyValues<this>): void {
-    super.firstUpdated(changedProperties);
-    this._session.syncVideo();
-  }
-
-  public override updated(changedProperties: PropertyValues<this>): void {
-    super.updated(changedProperties);
-    this._session.syncVideo();
   }
 
   public override render() {

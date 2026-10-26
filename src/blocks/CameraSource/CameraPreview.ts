@@ -1,4 +1,4 @@
-import { html } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
@@ -27,6 +27,12 @@ export class CameraPreview extends ChildBlock {
   }
 
   private readonly _emit = (action: CameraActionEvent['action']) => this.dispatchEvent(new CameraActionEvent(action));
+
+  // The `<video>` exists from the first render on and is never replaced, so the camera shows its stream in it from here.
+  public override firstUpdated(changedProperties: PropertyValues<this>): void {
+    super.firstUpdated(changedProperties);
+    this._emit({ type: 'video-element' });
+  }
 
   public override render() {
     const view = this.view;
