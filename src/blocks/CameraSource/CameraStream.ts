@@ -54,6 +54,8 @@ export class CameraStream {
   private _stream: MediaStream | null = null;
   private _capturing = false;
   private _source: MediaStream | null = null;
+  /** Counts the opens, so one answered after a later open began knows it was superseded. */
+  private _opens = 0;
   /** Object URL of the clip being previewed; revoked when replaced or released. */
   private _clipUrl: string | null = null;
 
@@ -65,17 +67,24 @@ export class CameraStream {
 
   /**
    * Opens the camera with `constraints` and shows it. `guard` binds the wait to the owner's lifetime, stopping a
-   * stream that arrives after it.
+   * stream that arrives after it. Only the latest open is shown: one that a later open overtook is stopped and
+   * resolves to null, since a stream left running holds the camera and can freeze the one on screen.
    */
   public async open(
     constraints: MediaStreamConstraints,
     guard: (work: Promise<MediaStream>, dispose: (stream: MediaStream) => void) => Promise<MediaStream>,
-  ): Promise<MediaStream> {
+  ): Promise<MediaStream | null> {
+    const open = ++this._opens;
     const video = this._options.video();
     // Muted so Firefox doesn't feed the microphone back.
     if (video) video.volume = 0;
-    this._stream = await guard(navigator.mediaDevices.getUserMedia(constraints), stopTracks);
-    this._setSource(this._stream);
+    const stream = await guard(navigator.mediaDevices.getUserMedia(constraints), stopTracks);
+    if (open !== this._opens) {
+      stopTracks(stream);
+      return null;
+    }
+    this._stream = stream;
+    this._setSource(stream);
     this._capturing = true;
     return this._stream;
   }

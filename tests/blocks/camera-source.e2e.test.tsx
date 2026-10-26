@@ -1,6 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index.ts';
+import { delay } from '@/utils/delay';
 import { getCtxName } from '../utils/getCtxName';
 import '../../types/jsx';
 
@@ -96,6 +97,49 @@ describe('uc-camera-source (parity, render surface + permissions)', () => {
     await navigateToCameraSource();
 
     expect(document.querySelector('uc-camera-source')?.getAttribute('data-testid')).toBe('uc-camera-source');
+  });
+});
+
+describe('uc-camera-source (first access)', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('shows the one stream it keeps when granting access fires a permission change per device', async () => {
+    // A first visit asks for access. Granting it flips both the camera and the microphone permission, and each flip
+    // recaptures while the opens already in flight are still waiting on the camera. Every open but the last must be
+    // stopped, or the leaked streams hold the camera and the one on screen freezes.
+    const statuses = [new EventTarget(), new EventTarget()];
+    let queried = 0;
+    vi.spyOn(navigator.permissions, 'query').mockImplementation(
+      async () => Object.assign(statuses[queried++ % 2]!, { state: 'prompt' }) as PermissionStatus,
+    );
+    const realGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
+    const opened: MediaStream[] = [];
+    let granted = false;
+    vi.spyOn(navigator.mediaDevices, 'getUserMedia').mockImplementation(async (constraints) => {
+      const stream = await realGetUserMedia({ video: true, audio: Boolean(constraints?.audio) });
+      opened.push(stream);
+      if (!granted) {
+        granted = true;
+        for (const status of statuses) status.dispatchEvent(new Event('change'));
+      }
+      // Answers late, as a real camera does while it starts up, so the recaptures overlap.
+      await delay(100);
+      return stream;
+    });
+    onTestFinished(() => {
+      for (const stream of opened) for (const track of stream.getTracks()) track.stop();
+    });
+    renderRegularHost();
+    await navigateToCameraSource();
+    const video = () => document.querySelector('uc-camera-source video') as HTMLVideoElement | null;
+    await expect.poll(() => opened.length).toBeGreaterThanOrEqual(4);
+    await expect.poll(() => (video()?.srcObject as MediaStream | null)?.active).toBe(true);
+    await delay(300);
+
+    const shown = video()?.srcObject;
+    expect(opened.filter((stream) => stream.active)).toEqual([shown]);
   });
 });
 
