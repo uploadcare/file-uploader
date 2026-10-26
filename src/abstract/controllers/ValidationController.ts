@@ -72,7 +72,10 @@ type EntryValidationState = {
   retiredValidators: WeakSet<FuncFileValidator>;
   promise?: Promise<void>;
   lastErrorThrownByValidator: WeakMap<FuncFileValidator, OutputErrorFile | undefined>;
-  // The entry's first `add` and `change` runs (both start from its add): `firstPass` settles once both have.
+  // The entry's first `add` and `change` runs; `firstPass` settles once both have. Both start from its add, by way of
+  // `UploadEventsController`: the membership flush runs `add`, and the property flush runs `change` because
+  // `UploadCollectionController` queues every observed key of a new entry and `file` is one of the validation triggers
+  // `UploadEventsController` observes. Drop `file` from its observed keys and every upload waits on this forever.
   firstRuns: Set<FileValidatorDescriptor['runOn']>;
   firstPass: ReturnType<typeof withResolvers<void>>;
 };
