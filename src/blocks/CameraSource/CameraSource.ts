@@ -13,7 +13,6 @@ import './camera-source.css';
 import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { centerCrop } from './aspectRatio';
 import { audioBitsPerSecond, type BuildConstraintsInput, buildConstraints } from './buildConstraints';
 import {
   AUDIO_MODES,
@@ -27,6 +26,7 @@ import {
   toRatio,
 } from './cameraSettings';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
+import { canTakePhoto, drawPhoto, takePhoto } from './photoCapture';
 import { createRecordingSource, type RecordingSource } from './recordingSource';
 import { pickVideoMimeType, recordingFileType } from './videoFormat';
 
@@ -82,8 +82,14 @@ export class CameraSource extends LitUploaderBlock {
   @state()
   private _activeTab: CameraMode | null = null;
   private _options: MediaRecorderOptions = {};
+  /** The photo under review, already cropped and mirrored. */
   private _canvas: HTMLCanvasElement | null = null;
-  private _ctx: CanvasRenderingContext2D | null = null;
+
+  /** Incremented on every shot and retake, so a still that arrives late can tell it belongs to an older shot. */
+  private _shotId = 0;
+
+  /** Settles once `ImageCapture` has replaced the preview frame with a still, or given up. Never rejects. */
+  private _photoReady: Promise<void> | null = null;
   private _cameraDevices: CameraDeviceOption[] = [];
   private _audioDevices: AudioDeviceOption[] = [];
   private _permissionResponses: Partial<Record<(typeof DEFAULT_PERMISSIONS)[number], PermissionStatus>> = {};
@@ -542,6 +548,9 @@ export class CameraSource extends LitUploaderBlock {
 
   private _retake = (): void => {
     this._setCameraState(CameraSourceEvents.RETAKE);
+    // A still still on its way belongs to the discarded shot.
+    this._shotId++;
+    this._photoReady = null;
 
     /** Reset video */
     if (this._activeTab === CameraSourceTypes.VIDEO) {
@@ -559,17 +568,20 @@ export class CameraSource extends LitUploaderBlock {
     this._setCameraState(CameraSourceEvents.ACCEPT);
 
     if (this._activeTab === CameraSourceTypes.PHOTO) {
-      this._canvas?.toBlob(
-        (blob) => {
-          if (!blob) {
-            return;
-          }
-          const file = this._createFile('camera', 'jpeg', DEFAULT_PICTURE_FORMAT, blob);
-          this._toSend(file);
-        },
-        DEFAULT_PICTURE_FORMAT,
-        this.cfg.cameraPhotoQuality,
-      );
+      // Accepting while the still is still on its way waits for it rather than sending the preview frame.
+      void (this._photoReady ?? Promise.resolve()).then(() => {
+        this._canvas?.toBlob(
+          (blob) => {
+            if (!blob) {
+              return;
+            }
+            const file = this._createFile('camera', 'jpeg', DEFAULT_PICTURE_FORMAT, blob);
+            this._toSend(file);
+          },
+          DEFAULT_PICTURE_FORMAT,
+          this.cfg.cameraPhotoQuality,
+        );
+      });
       return;
     }
 
@@ -647,31 +659,50 @@ export class CameraSource extends LitUploaderBlock {
   private _shot(): void {
     this._setCameraState('shot');
 
-    this._canvas = document.createElement('canvas');
-    this._ctx = this._canvas.getContext('2d');
-
-    if (!this._ctx) {
-      throw new Error('Failed to get canvas context');
-    }
     const videoEl = this._videoRef.value;
     if (!videoEl) {
       throw new Error('Video element not found');
     }
-    const crop = this._aspectRatio
-      ? centerCrop(videoEl.videoWidth, videoEl.videoHeight, this._aspectRatio)
-      : { x: 0, y: 0, width: videoEl.videoWidth, height: videoEl.videoHeight };
-    this._canvas.height = crop.height;
-    this._canvas.width = crop.width;
+    const shotId = ++this._shotId;
+    // Taken at the moment of the shot, so a setting that changes while the still is on its way doesn't mix into it.
+    const aspectRatio = this._aspectRatio;
+    const mirror = this.cfg.cameraMirror;
 
-    // The crop is centered, so mirroring the canvas mirrors the crop too.
-    if (this.cfg.cameraMirror) {
-      this._ctx.translate(this._canvas.width, 0);
-      this._ctx.scale(-1, 1);
-    }
-
-    this._ctx.drawImage(videoEl, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+    // The preview frame first: it's instant, and it stays the photo where `ImageCapture` is missing or fails.
+    this._canvas = drawPhoto({
+      source: videoEl,
+      width: videoEl.videoWidth,
+      height: videoEl.videoHeight,
+      aspectRatio,
+      mirror,
+    });
     // TODO: There are troubles with this, image isn't freezed after shot due to rendering in progress
     videoEl.pause();
+
+    const track = this._stream?.getVideoTracks()[0];
+    this._photoReady = track && canTakePhoto() ? this._takeStill(track, shotId, aspectRatio, mirror) : null;
+  }
+
+  /**
+   * Replaces the preview frame with a still from `ImageCapture`, which can be sharper than the video, cropped and
+   * mirrored the same way.
+   */
+  private async _takeStill(
+    track: MediaStreamTrack,
+    shotId: number,
+    aspectRatio: number | null,
+    mirror: boolean,
+  ): Promise<void> {
+    try {
+      const still = await takePhoto(track, this._resolution);
+      if (shotId === this._shotId) {
+        this._canvas = drawPhoto({ source: still, width: still.width, height: still.height, aspectRatio, mirror });
+      }
+      still.close();
+    } catch (error) {
+      console.warn('ImageCapture could not take the photo, keeping the preview frame', error);
+      this.telemetryManager.sendEventError(error, 'camera capturing. ImageCapture failed to take a photo');
+    }
   }
 
   private _handleActiveTab = (tabId: CameraMode): void => {
