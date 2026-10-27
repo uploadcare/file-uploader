@@ -101,6 +101,13 @@ export default {
   'camera-aspect-ratio-native': 'Original',
   'camera-quality': 'Qualitat',
   'camera-quality-auto': 'Automàtica',
+  'camera-audio-quality': 'Qualitat de l’àudio',
+  'camera-audio-mode': 'Micròfon',
+  'camera-audio-quality-low': 'Baixa',
+  'camera-audio-quality-standard': 'Estàndard',
+  'camera-audio-quality-high': 'Alta',
+  'camera-audio-mode-voice': 'Veu',
+  'camera-audio-mode-music': 'Música',
   'files-count-limit-error-title': 'Límit de fitxers superat',
   'files-count-limit-error-too-few':
     "Has seleccionat {{total}} {{plural:file(total)}}. S'exigeix un mínim de {{min}} {{plural:file(min)}}.",

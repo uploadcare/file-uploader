@@ -15,6 +15,10 @@ import {
   asBoolean,
   asCameraAspectRatio,
   asCameraAspectRatioOptions,
+  asCameraAudioMode,
+  asCameraAudioModeOptions,
+  asCameraAudioQuality,
+  asCameraAudioQualityOptions,
   asCameraCapture,
   asCameraConstraints,
   asCameraMode,
@@ -118,6 +122,10 @@ const mapping: { [Key in keyof ConfigType]: ConfigNormalizer<Key> } = {
   cameraPhotoQuality: asCameraPhotoQuality,
   cameraAspectRatioOptions: asCameraAspectRatioOptions,
   cameraQualityOptions: asCameraQualityOptions,
+  cameraAudioQuality: asCameraAudioQuality,
+  cameraAudioMode: asCameraAudioMode,
+  cameraAudioQualityOptions: asCameraAudioQualityOptions,
+  cameraAudioModeOptions: asCameraAudioModeOptions,
 
   maxVideoRecordingDuration: asNumber,
 

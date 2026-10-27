@@ -107,6 +107,13 @@ export default {
   'camera-aspect-ratio-native': 'الأصلية',
   'camera-quality': 'الجودة',
   'camera-quality-auto': 'تلقائي',
+  'camera-audio-quality': 'جودة الصوت',
+  'camera-audio-mode': 'الميكروفون',
+  'camera-audio-quality-low': 'منخفضة',
+  'camera-audio-quality-standard': 'قياسية',
+  'camera-audio-quality-high': 'عالية',
+  'camera-audio-mode-voice': 'صوت',
+  'camera-audio-mode-music': 'موسيقى',
   'files-count-limit-error-title': 'تجاوز حد عدد الملفات',
   'files-count-limit-error-too-few':
     'لقد اخترت {{total}} {{plural:file(total)}}. على الأقل {{min}} {{plural:file(min)}} مطلوب.',

@@ -1,5 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  AUDIO_MODE_CONSTRAINTS,
+  audioBitsPerSecond,
   type BuildConstraintsInput,
   buildConstraints,
   DEFAULT_VIDEO_CONSTRAINTS,
@@ -9,6 +11,7 @@ import {
 const input = (overrides: Partial<BuildConstraintsInput> = {}): BuildConstraintsInput => ({
   mode: 'photo',
   enableAudio: false,
+  audioMode: 'voice',
   aspectRatio: null,
   quality: 'auto',
   custom: null,
@@ -131,5 +134,51 @@ describe('qualityResolution', () => {
     ['720p', 3 / 4, 720, 960],
   ] as const)('%s at ratio %s asks for %i×%i', (quality, ratio, width, height) => {
     expect(qualityResolution(quality, ratio)).toEqual({ width: { ideal: width }, height: { ideal: height } });
+  });
+});
+
+describe('audio mode', () => {
+  it('keeps the browser voice defaults', () => {
+    expect(buildConstraints(input({ enableAudio: true })).audio).toEqual({});
+  });
+
+  it('turns processing off and asks for stereo for music', () => {
+    expect(buildConstraints(input({ enableAudio: true, audioMode: 'music' })).audio).toEqual(
+      AUDIO_MODE_CONSTRAINTS.music,
+    );
+  });
+
+  it('lets custom audio constraints and the picked microphone win', () => {
+    const { audio } = buildConstraints(
+      input({
+        enableAudio: true,
+        audioMode: 'music',
+        audioId: 'mic-1',
+        custom: { audio: { noiseSuppression: true, deviceId: 'other' } },
+      }),
+    );
+
+    expect(audio).toMatchObject({ noiseSuppression: true, channelCount: { ideal: 2 }, deviceId: { exact: 'mic-1' } });
+  });
+
+  it('asks for no audio when recording audio is off', () => {
+    expect(buildConstraints(input({ audioMode: 'music' })).audio).toBe(false);
+  });
+});
+
+describe('audioBitsPerSecond', () => {
+  it.each([
+    ['auto', undefined],
+    ['low', 32_000],
+    ['standard', 96_000],
+    ['high', 192_000],
+  ] as const)('%s records at %s bps', (quality, bitrate) => {
+    expect(audioBitsPerSecond(null, quality)).toBe(bitrate);
+  });
+
+  it('lets an explicit mediaRecorderOptions bitrate win', () => {
+    expect(audioBitsPerSecond({ audioBitsPerSecond: 48_000 }, 'high')).toBe(48_000);
+    // `bitsPerSecond` covers audio too, so the preset must not override it.
+    expect(audioBitsPerSecond({ bitsPerSecond: 2_000_000 }, 'high')).toBeUndefined();
   });
 });

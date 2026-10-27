@@ -97,6 +97,13 @@ export default {
   'camera-aspect-ratio-native': 'Original',
   'camera-quality': 'Kvalitet',
   'camera-quality-auto': 'Automatisk',
+  'camera-audio-quality': 'Ljudkvalitet',
+  'camera-audio-mode': 'Mikrofon',
+  'camera-audio-quality-low': 'Låg',
+  'camera-audio-quality-standard': 'Standard',
+  'camera-audio-quality-high': 'Hög',
+  'camera-audio-mode-voice': 'Tal',
+  'camera-audio-mode-music': 'Musik',
   'files-count-limit-error-title': 'För många filer',
   'files-count-limit-error-too-few':
     'Du har valt {{total}} {{plural:file(total)}}. Minst {{min}} {{plural:file(min)}} krävs.',

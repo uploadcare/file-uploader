@@ -97,6 +97,13 @@ export default {
   'camera-aspect-ratio-native': 'Gốc',
   'camera-quality': 'Chất lượng',
   'camera-quality-auto': 'Tự động',
+  'camera-audio-quality': 'Chất lượng âm thanh',
+  'camera-audio-mode': 'Micrô',
+  'camera-audio-quality-low': 'Thấp',
+  'camera-audio-quality-standard': 'Tiêu chuẩn',
+  'camera-audio-quality-high': 'Cao',
+  'camera-audio-mode-voice': 'Giọng nói',
+  'camera-audio-mode-music': 'Âm nhạc',
   'files-count-limit-error-title': 'Quá giới hạn số lượng tệp',
   'files-count-limit-error-too-few':
     'Bạn đã chọn {{total}} {{plural:file(total)}}. Tối thiểu {{min}} {{plural:file(min)}} là cần thiết.',

@@ -1,4 +1,10 @@
-import type { CameraConstraints, CameraConstraintsResolver, CameraQuality } from '../../types/exported';
+import type {
+  CameraAudioMode,
+  CameraAudioQuality,
+  CameraConstraints,
+  CameraConstraintsResolver,
+  CameraQuality,
+} from '../../types/exported';
 import type { CameraMode } from './CameraSource';
 
 export const DEFAULT_VIDEO_CONSTRAINTS: MediaTrackConstraints = {
@@ -41,9 +47,46 @@ export const qualityResolution = (
   return { width: { ideal: shortSide }, height: { ideal: Math.round(shortSide / ratio) } };
 };
 
+/**
+ * Microphone settings per `cameraAudioMode`. `voice` keeps the browser defaults: mono, with echo cancellation, noise
+ * suppression and auto gain. `music` turns that processing off and asks for stereo; Chromium turns processing off for
+ * stereo anyway, so the two only make sense together.
+ */
+export const AUDIO_MODE_CONSTRAINTS: Record<CameraAudioMode, MediaTrackConstraints> = {
+  voice: {},
+  music: {
+    echoCancellation: { ideal: false },
+    noiseSuppression: { ideal: false },
+    autoGainControl: { ideal: false },
+    channelCount: { ideal: 2 },
+  },
+};
+
+/** Recorder audio bitrate per `cameraAudioQuality`. `'auto'` leaves it to the browser. */
+export const AUDIO_QUALITY_BITRATE: Record<Exclude<CameraAudioQuality, 'auto'>, number> = {
+  low: 32_000,
+  standard: 96_000,
+  high: 192_000,
+};
+
+/**
+ * The audio bitrate to record with. An explicit `mediaRecorderOptions` bitrate wins: `bitsPerSecond` covers audio and
+ * video together, so it counts too.
+ */
+export const audioBitsPerSecond = (
+  recorderOptions: MediaRecorderOptions | null,
+  quality: CameraAudioQuality,
+): number | undefined => {
+  if (recorderOptions?.audioBitsPerSecond || recorderOptions?.bitsPerSecond) {
+    return recorderOptions.audioBitsPerSecond;
+  }
+  return quality === 'auto' ? undefined : AUDIO_QUALITY_BITRATE[quality];
+};
+
 export type BuildConstraintsInput = {
   mode: CameraMode;
   enableAudio: boolean;
+  audioMode: CameraAudioMode;
   /** Width / height from `cameraAspectRatio`, or `null` for the camera's native shape. */
   aspectRatio: number | null;
   quality: CameraQuality;
@@ -72,11 +115,12 @@ export const resolveCustomConstraints = (
 /**
  * The constraints the camera opens with, layered per property:
  * built-in defaults < `cameraQuality` < `cameraAspectRatio` < `cameraConstraints` < the device picked in the camera
- * screen.
+ * screen. Audio: `cameraAudioMode` < `cameraConstraints` < the picked microphone.
  */
 export const buildConstraints = ({
   mode,
   enableAudio,
+  audioMode,
   aspectRatio,
   quality,
   custom,
@@ -100,7 +144,7 @@ export const buildConstraints = ({
     return { video, audio: false };
   }
 
-  const audio: MediaTrackConstraints = { ...resolved.audio };
+  const audio: MediaTrackConstraints = { ...AUDIO_MODE_CONSTRAINTS[audioMode], ...resolved.audio };
   if (audioId) {
     audio.deviceId = { exact: audioId };
   }

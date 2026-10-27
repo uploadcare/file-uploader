@@ -1,7 +1,7 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import type { CameraQuality } from '../../types/exported';
+import type { CameraAudioMode, CameraAudioQuality, CameraQuality } from '../../types/exported';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { debounce } from '../../utils/debounce';
@@ -14,12 +14,13 @@ import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { centerCrop, parseAspectRatio } from './aspectRatio';
-import { type BuildConstraintsInput, buildConstraints } from './buildConstraints';
+import { audioBitsPerSecond, type BuildConstraintsInput, buildConstraints } from './buildConstraints';
 import {
   filterQualityOptions,
   maxShortSideOf,
   NATIVE_ASPECT_RATIO,
   parseAspectRatioOptions,
+  parseOptions,
   parseQualityOptions,
   pickInitial,
   toRatio,
@@ -125,6 +126,12 @@ export class CameraSource extends LitUploaderBlock {
   @state()
   private _pickedQuality: CameraQuality | null = null;
 
+  @state()
+  private _pickedAudioQuality: CameraAudioQuality | null = null;
+
+  @state()
+  private _pickedAudioMode: CameraAudioMode | null = null;
+
   /** The largest short side the open camera reports, to leave out quality presets it can't do. */
   @state()
   private _maxShortSide: number | null = null;
@@ -198,6 +205,8 @@ export class CameraSource extends LitUploaderBlock {
           hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
           aspectRatio: this._aspectRatioValue,
           quality: this._quality,
+          audioQuality: this._audioQuality,
+          audioMode: this._audioMode,
         },
       },
     });
@@ -231,7 +240,7 @@ export class CameraSource extends LitUploaderBlock {
       return;
     }
     this._selectedAudioId = target.value;
-    void this._capture();
+    void this._applyAudioConstraints();
   };
 
   private _handleRequestPermissions = (): void => {
@@ -249,6 +258,8 @@ export class CameraSource extends LitUploaderBlock {
           hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
           aspectRatio: this._aspectRatioValue,
           quality: this._quality,
+          audioQuality: this._audioQuality,
+          audioMode: this._audioMode,
         },
       },
     });
@@ -370,6 +381,10 @@ export class CameraSource extends LitUploaderBlock {
       this._options = {
         ...this.cfg.mediaRecorderOptions,
       };
+      const audioBits = audioBitsPerSecond(this.cfg.mediaRecorderOptions, this._audioQuality);
+      if (audioBits !== undefined) {
+        this._options.audioBitsPerSecond = audioBits;
+      }
 
       const mimeType = pickVideoMimeType({
         explicit: this.cfg.mediaRecorderOptions?.mimeType,
@@ -423,6 +438,9 @@ export class CameraSource extends LitUploaderBlock {
 
       if (this._videoConstraintsPending) {
         void this._applyVideoConstraints();
+      }
+      if (this._audioConstraintsPending) {
+        void this._applyAudioConstraints();
       }
     });
 
@@ -697,6 +715,7 @@ export class CameraSource extends LitUploaderBlock {
     // Only the function form can differ between modes.
     if (typeof this.cfg.cameraConstraints === 'function') {
       void this._applyVideoConstraints();
+      void this._applyAudioConstraints();
     }
   };
 
@@ -763,6 +782,35 @@ export class CameraSource extends LitUploaderBlock {
     return this._pickedQuality ?? this.cfg.cameraQuality;
   }
 
+  private get _audioQuality(): CameraAudioQuality {
+    return this._pickedAudioQuality ?? this.cfg.cameraAudioQuality;
+  }
+
+  private get _audioMode(): CameraAudioMode {
+    return this._pickedAudioMode ?? this.cfg.cameraAudioMode;
+  }
+
+  private get _audioQualityOptions(): CameraAudioQuality[] {
+    return parseOptions(this.cfg.cameraAudioQualityOptions, ['auto', 'low', 'standard', 'high'] as const);
+  }
+
+  private get _audioModeOptions(): CameraAudioMode[] {
+    return parseOptions(this.cfg.cameraAudioModeOptions, ['voice', 'music'] as const);
+  }
+
+  /** Audio pickers only matter where sound is recorded: the video tab, with audio recording on. */
+  private get _isAudioPickerContext(): boolean {
+    return this._activeTab === CameraSourceTypes.VIDEO && this.cfg.enableAudioRecording;
+  }
+
+  private get _isAudioQualityPickerHidden(): boolean {
+    return this._pickedAudioQuality === null || !this._isAudioPickerContext;
+  }
+
+  private get _isAudioModePickerHidden(): boolean {
+    return this._pickedAudioMode === null || !this._isAudioPickerContext;
+  }
+
   private get _aspectRatioOptions(): string[] {
     return parseAspectRatioOptions(this.cfg.cameraAspectRatioOptions);
   }
@@ -783,7 +831,10 @@ export class CameraSource extends LitUploaderBlock {
     return (
       this._permissionState !== 'granted' ||
       this._captureState !== 'live' ||
-      (this._isAspectRatioPickerHidden && this._isQualityPickerHidden)
+      (this._isAspectRatioPickerHidden &&
+        this._isQualityPickerHidden &&
+        this._isAudioQualityPickerHidden &&
+        this._isAudioModePickerHidden)
     );
   }
 
@@ -810,20 +861,38 @@ export class CameraSource extends LitUploaderBlock {
     this._pickedAspectRatio = value;
   }
 
-  /** Starts the quality picker over from the config, among the presets the camera can do. */
-  private _resetQualityPick(): void {
-    const options = this._qualityOptions;
+  /**
+   * Where a picker starts: on the configured value if it's listed, else on the first option with a warning. `null`, no
+   * picker, with fewer than two options.
+   */
+  private _startPick<T extends string>(options: T[], configured: string, configName: string): T | null {
     if (options.length < 2) {
-      this._pickedQuality = null;
-      return;
+      return null;
     }
-    const { value, listed } = pickInitial(options, (option) => option === this.cfg.cameraQuality);
+    const { value, listed } = pickInitial(options, (option) => option === configured);
     if (!listed) {
       this._warnSettingsMismatch(
-        `cameraQuality "${this.cfg.cameraQuality}" is not among the available cameraQualityOptions, starting on "${value}".`,
+        `${configName} "${configured}" is not among the available ${configName}Options, starting on "${value}".`,
       );
     }
-    this._pickedQuality = value;
+    return value;
+  }
+
+  /** Starts the quality picker over from the config, among the presets the camera can do. */
+  private _resetQualityPick(): void {
+    this._pickedQuality = this._startPick(this._qualityOptions, this.cfg.cameraQuality, 'cameraQuality');
+  }
+
+  private _resetAudioQualityPick(): void {
+    this._pickedAudioQuality = this._startPick(
+      this._audioQualityOptions,
+      this.cfg.cameraAudioQuality,
+      'cameraAudioQuality',
+    );
+  }
+
+  private _resetAudioModePick(): void {
+    this._pickedAudioMode = this._startPick(this._audioModeOptions, this.cfg.cameraAudioMode, 'cameraAudioMode');
   }
 
   private _handleAspectRatioPick = (event: Event): void => {
@@ -842,6 +911,30 @@ export class CameraSource extends LitUploaderBlock {
     void this._applyVideoConstraints();
   };
 
+  /** The bitrate is set when a recording starts, so there is nothing to apply until the next one. */
+  private _handleAudioQualityPick = (event: Event): void => {
+    const value = (event.target as { value?: string } | null)?.value as CameraAudioQuality | undefined;
+    if (!value) return;
+    this._pickedAudioQuality = value;
+    this._sendSettingChange('audioQuality', value);
+  };
+
+  private _handleAudioModePick = (event: Event): void => {
+    const value = (event.target as { value?: string } | null)?.value as CameraAudioMode | undefined;
+    if (!value) return;
+    this._pickedAudioMode = value;
+    this._sendSettingChange('audioMode', value);
+    void this._applyAudioConstraints();
+  };
+
+  private _audioQualityLabel(value: CameraAudioQuality): string {
+    return value === 'auto' ? this.l10n('camera-quality-auto') : this.l10n(`camera-audio-quality-${value}`);
+  }
+
+  private _audioModeLabel(value: CameraAudioMode): string {
+    return this.l10n(`camera-audio-mode-${value}`);
+  }
+
   private _aspectRatioLabel(value: string): string {
     return value === NATIVE_ASPECT_RATIO ? this.l10n('camera-aspect-ratio-native') : value;
   }
@@ -850,7 +943,7 @@ export class CameraSource extends LitUploaderBlock {
     return value === 'auto' ? this.l10n('camera-quality-auto') : value.toUpperCase();
   }
 
-  private _sendSettingChange(setting: 'aspectRatio' | 'quality', value: string): void {
+  private _sendSettingChange(setting: 'aspectRatio' | 'quality' | 'audioQuality' | 'audioMode', value: string): void {
     this.telemetryManager.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
@@ -978,6 +1071,7 @@ export class CameraSource extends LitUploaderBlock {
     return {
       mode: this._currentMode,
       enableAudio: this.cfg.enableAudioRecording,
+      audioMode: this._audioMode,
       aspectRatio: this._aspectRatio,
       quality: this._quality,
       custom: this.cfg.cameraConstraints,
@@ -990,11 +1084,16 @@ export class CameraSource extends LitUploaderBlock {
    * Opens the stream. If `cameraConstraints` asks for something the camera can't do, opens it once more without them
    * rather than showing the camera as denied.
    */
-  private async _openStream(): Promise<{ stream: MediaStream; requested: MediaTrackConstraints }> {
+  private async _openStream(): Promise<{
+    stream: MediaStream;
+    requested: MediaTrackConstraints;
+    requestedAudio: MediaStreamConstraints['audio'];
+  }> {
     const input = this._constraintsInput;
     const constraints = buildConstraints(input);
+    const requested = { requested: constraints.video, requestedAudio: constraints.audio };
     try {
-      return { stream: await navigator.mediaDevices.getUserMedia(constraints), requested: constraints.video };
+      return { stream: await navigator.mediaDevices.getUserMedia(constraints), ...requested };
     } catch (error) {
       if (!input.custom || (error as Error | null)?.name !== 'OverconstrainedError') {
         throw error;
@@ -1003,8 +1102,8 @@ export class CameraSource extends LitUploaderBlock {
       this.telemetryManager.sendEventError(error, 'camera capturing. cameraConstraints could not be satisfied');
 
       const fallback = buildConstraints({ ...input, custom: null });
-      // Reported as the original request, so `_applyVideoConstraints` doesn't retry the same rejected constraints.
-      return { stream: await navigator.mediaDevices.getUserMedia(fallback), requested: constraints.video };
+      // Reported as the original request, so the apply methods don't retry the same rejected constraints.
+      return { stream: await navigator.mediaDevices.getUserMedia(fallback), ...requested };
     }
   }
 
@@ -1021,7 +1120,7 @@ export class CameraSource extends LitUploaderBlock {
 
     try {
       this._setPermissionsState('prompt');
-      const { stream, requested } = await this._openStream();
+      const { stream, requested, requestedAudio } = await this._openStream();
 
       if (captureId !== this._captureId) {
         for (const track of stream.getTracks()) {
@@ -1032,6 +1131,7 @@ export class CameraSource extends LitUploaderBlock {
 
       this._stream = stream;
       this._requestedVideoConstraints = JSON.stringify(requested);
+      this._requestedAudioConstraints = JSON.stringify(requestedAudio);
       this._stream.addEventListener('inactive', this._handleStreamInactive);
 
       this._setVideoSource(this._stream);
@@ -1088,6 +1188,88 @@ export class CameraSource extends LitUploaderBlock {
       console.warn('The camera cannot satisfy cameraConstraints, keeping the current settings', error);
       this.telemetryManager.sendEventError(error, 'camera capturing. cameraConstraints could not be applied');
     }
+  };
+
+  /** The audio constraints last asked of the open microphone, serialized to compare against the next request. */
+  private _requestedAudioConstraints: string | null = null;
+
+  /** Set when the audio constraints changed during a recording; they are applied once it stops. */
+  private _audioConstraintsPending = false;
+
+  /**
+   * Once the device list names the devices already in use, asking for them by id is the same request, not a change.
+   * Without this, the first unrelated change would reopen the microphone for nothing.
+   */
+  private _syncRequestedConstraints(): void {
+    const stream = this._stream;
+    if (!this._capturing || !stream) {
+      return;
+    }
+    const { video, audio } = buildConstraints(this._constraintsInput);
+    if (this._selectedCameraId && this._selectedCameraId === stream.getVideoTracks()[0]?.getSettings().deviceId) {
+      this._requestedVideoConstraints = JSON.stringify(video);
+    }
+    if (
+      audio &&
+      this._selectedAudioId &&
+      this._selectedAudioId === stream.getAudioTracks()[0]?.getSettings().deviceId
+    ) {
+      this._requestedAudioConstraints = JSON.stringify(audio);
+    }
+  }
+
+  /** Incremented on every microphone swap, so a slower, older one can tell it was superseded. */
+  private _audioSwapId = 0;
+
+  /**
+   * Applies changed microphone settings by opening the microphone again and swapping its track into the stream; the
+   * camera keeps running. A live track can't be changed instead: Chromium ignores processing changes on one and
+   * refuses stereo.
+   */
+  private _applyAudioConstraints = async (): Promise<void> => {
+    const stream = this._stream;
+    if (!this._capturing || !stream || !this.cfg.enableAudioRecording) {
+      return;
+    }
+    if (this._mediaRecorder?.state === 'recording') {
+      this._audioConstraintsPending = true;
+      return;
+    }
+    this._audioConstraintsPending = false;
+
+    const { audio } = buildConstraints(this._constraintsInput);
+    const serialized = JSON.stringify(audio);
+    if (!audio || serialized === this._requestedAudioConstraints) {
+      return;
+    }
+    this._requestedAudioConstraints = serialized;
+    const swapId = ++this._audioSwapId;
+
+    // The new microphone opens before the old one stops, so a failure keeps the sound that was working.
+    let next: MediaStream;
+    try {
+      next = await navigator.mediaDevices.getUserMedia({ audio });
+    } catch (error) {
+      console.warn('Failed to apply the microphone settings, keeping the current ones', error);
+      this.telemetryManager.sendEventError(error, 'camera capturing. Failed to reopen the microphone');
+      return;
+    }
+    const [track] = next.getAudioTracks();
+    if (swapId !== this._audioSwapId || this._stream !== stream || !track) {
+      for (const stale of next.getTracks()) {
+        stale.stop();
+      }
+      return;
+    }
+
+    const previous = stream.getAudioTracks();
+    // A muted microphone stays muted.
+    track.enabled = previous.every((old) => old.enabled);
+    for (const old of previous) {
+      stream.removeTrack(old);
+      old.stop();
+    }
+    stream.addTrack(track);
   };
 
   private _handlePermissionsChange = (): void => {
@@ -1183,6 +1365,7 @@ export class CameraSource extends LitUploaderBlock {
         this._selectedAudioId,
         this._stream?.getAudioTracks()[0],
       );
+      this._syncRequestedConstraints();
     } catch (error) {
       this.telemetryManager.sendEventError(error, 'camera devices. Failed to get devices');
       console.log('Failed to get devices', error);
@@ -1233,6 +1416,25 @@ export class CameraSource extends LitUploaderBlock {
 
     this.subConfigValue('cameraConstraints', () => {
       void this._applyVideoConstraints();
+      void this._applyAudioConstraints();
+    });
+
+    this.subConfigValue('cameraAudioQuality', () => {
+      this._resetAudioQualityPick();
+    });
+
+    this.subConfigValue('cameraAudioQualityOptions', () => {
+      this._resetAudioQualityPick();
+    });
+
+    this.subConfigValue('cameraAudioMode', () => {
+      this._resetAudioModePick();
+      void this._applyAudioConstraints();
+    });
+
+    this.subConfigValue('cameraAudioModeOptions', () => {
+      this._resetAudioModePick();
+      void this._applyAudioConstraints();
     });
 
     // A config change starts its picker over, dropping what the user picked.
@@ -1348,6 +1550,22 @@ export class CameraSource extends LitUploaderBlock {
                 .options=${this._qualityOptions.map((value) => ({ value, text: this._qualityLabel(value) }))}
                 .value=${this._pickedQuality ?? ''}
                 @change=${this._handleQualityPick}
+              ></uc-select>
+            </label>
+            <label ?hidden=${this._isAudioQualityPickerHidden}>
+              <span>${this.l10n('camera-audio-quality')}</span>
+              <uc-select
+                .options=${this._audioQualityOptions.map((value) => ({ value, text: this._audioQualityLabel(value) }))}
+                .value=${this._pickedAudioQuality ?? ''}
+                @change=${this._handleAudioQualityPick}
+              ></uc-select>
+            </label>
+            <label ?hidden=${this._isAudioModePickerHidden}>
+              <span>${this.l10n('camera-audio-mode')}</span>
+              <uc-select
+                .options=${this._audioModeOptions.map((value) => ({ value, text: this._audioModeLabel(value) }))}
+                .value=${this._pickedAudioMode ?? ''}
+                @change=${this._handleAudioModePick}
               ></uc-select>
             </label>
           </div>

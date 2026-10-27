@@ -97,6 +97,13 @@ export default {
   'camera-aspect-ratio-native': '原始',
   'camera-quality': '畫質',
   'camera-quality-auto': '自動',
+  'camera-audio-quality': '音訊品質',
+  'camera-audio-mode': '麥克風',
+  'camera-audio-quality-low': '低',
+  'camera-audio-quality-standard': '標準',
+  'camera-audio-quality-high': '高',
+  'camera-audio-mode-voice': '人聲',
+  'camera-audio-mode-music': '音樂',
   'files-count-limit-error-title': '檔案數量超出限制',
   'files-count-limit-error-too-few':
     '您選擇了 {{total}} {{plural:file(total)}}。至少需要 {{min}} {{plural:file(min)}}。',

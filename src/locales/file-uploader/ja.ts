@@ -97,6 +97,13 @@ export default {
   'camera-aspect-ratio-native': 'オリジナル',
   'camera-quality': '画質',
   'camera-quality-auto': '自動',
+  'camera-audio-quality': '音質',
+  'camera-audio-mode': 'マイク',
+  'camera-audio-quality-low': '低',
+  'camera-audio-quality-standard': '標準',
+  'camera-audio-quality-high': '高',
+  'camera-audio-mode-voice': '音声',
+  'camera-audio-mode-music': '音楽',
   'files-count-limit-error-title': 'ファイル数の上限超過',
   'files-count-limit-error-too-few':
     '選択されたファイルは{{total}} {{plural:file(total)}}です。最小{{min}} {{plural:file(min)}}が必要です。',

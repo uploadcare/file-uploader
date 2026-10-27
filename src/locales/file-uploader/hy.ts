@@ -97,6 +97,13 @@ export default {
   'camera-aspect-ratio-native': 'Բնօրինակ',
   'camera-quality': 'Որակ',
   'camera-quality-auto': 'Ավտոմատ',
+  'camera-audio-quality': 'Ձայնի որակ',
+  'camera-audio-mode': 'Խոսափող',
+  'camera-audio-quality-low': 'Ցածր',
+  'camera-audio-quality-standard': 'Ստանդարտ',
+  'camera-audio-quality-high': 'Բարձր',
+  'camera-audio-mode-voice': 'Ձայն',
+  'camera-audio-mode-music': 'Երաժշտություն',
   'files-count-limit-error-title': 'Ֆայլերի քանակի գերազանցում',
   'files-count-limit-error-too-few':
     'Դուք ընտրել եք {{total}} {{plural:file(total)}}։ Պետք է ընտրվեն առնվազն {{min}} {{plural:file(min)}}։',

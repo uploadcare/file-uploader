@@ -73,6 +73,10 @@ describe('documented config options', () => {
       // ships and the fixture is regenerated.
       'cameraAspectRatio',
       'cameraAspectRatioOptions',
+      'cameraAudioMode',
+      'cameraAudioModeOptions',
+      'cameraAudioQuality',
+      'cameraAudioQualityOptions',
       'cameraConstraints',
       'cameraPhotoQuality',
       'cameraQuality',

@@ -99,6 +99,13 @@ export default {
   'camera-aspect-ratio-native': 'Αρχική',
   'camera-quality': 'Ποιότητα',
   'camera-quality-auto': 'Αυτόματα',
+  'camera-audio-quality': 'Ποιότητα ήχου',
+  'camera-audio-mode': 'Μικρόφωνο',
+  'camera-audio-quality-low': 'Χαμηλή',
+  'camera-audio-quality-standard': 'Τυπική',
+  'camera-audio-quality-high': 'Υψηλή',
+  'camera-audio-mode-voice': 'Φωνή',
+  'camera-audio-mode-music': 'Μουσική',
   'files-count-limit-error-title': 'Υπέρβαση ορίου αριθμού αρχείων',
   'files-count-limit-error-too-few':
     'Έχετε επιλέξει {{total}} {{plural:file(total)}}. Απαιτούνται τουλάχιστον {{min}} {{plural:file(min)}}.',

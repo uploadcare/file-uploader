@@ -59,3 +59,7 @@ export const pickInitial = <T>(options: T[], isConfigured: (option: T) => boolea
   const configured = options.find(isConfigured);
   return configured === undefined ? { value: options[0] as T, listed: false } : { value: configured, listed: true };
 };
+
+/** The listed values that are one of `allowed`, in order and without repeats. */
+export const parseOptions = <T extends string>(csv: string, allowed: readonly T[]): T[] =>
+  [...new Set(deserializeCsv(csv))].filter((item): item is T => (allowed as readonly string[]).includes(item));

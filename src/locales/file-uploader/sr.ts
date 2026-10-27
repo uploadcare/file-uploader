@@ -99,6 +99,13 @@ export default {
   'camera-aspect-ratio-native': 'Оригинал',
   'camera-quality': 'Квалитет',
   'camera-quality-auto': 'Аутоматски',
+  'camera-audio-quality': 'Квалитет звука',
+  'camera-audio-mode': 'Микрофон',
+  'camera-audio-quality-low': 'Низак',
+  'camera-audio-quality-standard': 'Стандардан',
+  'camera-audio-quality-high': 'Висок',
+  'camera-audio-mode-voice': 'Глас',
+  'camera-audio-mode-music': 'Музика',
   'files-count-limit-error-title': 'Прекорачење лимита броја датотека',
   'files-count-limit-error-too-few':
     'Изабрали сте {{total}} {{plural:file(total)}}. Најмање {{min}} {{plural:file(min)}} је потребно.',

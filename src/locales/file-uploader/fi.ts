@@ -97,6 +97,13 @@ export default {
   'camera-aspect-ratio-native': 'Alkuperäinen',
   'camera-quality': 'Laatu',
   'camera-quality-auto': 'Automaattinen',
+  'camera-audio-quality': 'Äänenlaatu',
+  'camera-audio-mode': 'Mikrofoni',
+  'camera-audio-quality-low': 'Matala',
+  'camera-audio-quality-standard': 'Normaali',
+  'camera-audio-quality-high': 'Korkea',
+  'camera-audio-mode-voice': 'Puhe',
+  'camera-audio-mode-music': 'Musiikki',
   'files-count-limit-error-title': 'Tiedostojen lukumäärän ylitys',
   'files-count-limit-error-too-few':
     'Olet valinnut {{total}} {{plural:file(total)}}. Vähintään {{min}} {{plural:file(min)}} vaaditaan.',

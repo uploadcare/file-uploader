@@ -97,6 +97,13 @@ export default {
   'camera-aspect-ratio-native': 'Түпнұсқа',
   'camera-quality': 'Сапа',
   'camera-quality-auto': 'Автоматты',
+  'camera-audio-quality': 'Дыбыс сапасы',
+  'camera-audio-mode': 'Микрофон',
+  'camera-audio-quality-low': 'Төмен',
+  'camera-audio-quality-standard': 'Стандартты',
+  'camera-audio-quality-high': 'Жоғары',
+  'camera-audio-mode-voice': 'Дауыс',
+  'camera-audio-mode-music': 'Музыка',
   'files-count-limit-error-title': 'Файлдар санының шектеуі асып түсті',
   'files-count-limit-error-too-few':
     'Сіз {{total}} {{plural:file(total)}} таңдадыңыз. Кемінде {{min}} {{plural:file(min)}} қажет.',

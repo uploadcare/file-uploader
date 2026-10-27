@@ -99,6 +99,13 @@ export default {
   'camera-aspect-ratio-native': 'Original',
   'camera-quality': 'Calitate',
   'camera-quality-auto': 'Automat',
+  'camera-audio-quality': 'Calitatea sunetului',
+  'camera-audio-mode': 'Microfon',
+  'camera-audio-quality-low': 'Scăzută',
+  'camera-audio-quality-standard': 'Standard',
+  'camera-audio-quality-high': 'Înaltă',
+  'camera-audio-mode-voice': 'Voce',
+  'camera-audio-mode-music': 'Muzică',
   'files-count-limit-error-title': 'Limita numărului de fișiere depășită',
   'files-count-limit-error-too-few':
     'Ați selectat {{total}} {{plural:file(total)}}. Cel puțin {{min}} {{plural:file(min)}} sunt necesare.',

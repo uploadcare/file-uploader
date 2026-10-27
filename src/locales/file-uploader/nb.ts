@@ -97,6 +97,13 @@ export default {
   'camera-aspect-ratio-native': 'Original',
   'camera-quality': 'Kvalitet',
   'camera-quality-auto': 'Automatisk',
+  'camera-audio-quality': 'Lydkvalitet',
+  'camera-audio-mode': 'Mikrofon',
+  'camera-audio-quality-low': 'Lav',
+  'camera-audio-quality-standard': 'Standard',
+  'camera-audio-quality-high': 'Høy',
+  'camera-audio-mode-voice': 'Tale',
+  'camera-audio-mode-music': 'Musikk',
   'files-count-limit-error-title': 'Filtellgrensen overskredet',
   'files-count-limit-error-too-few':
     'Du har valgt {{total}} {{plural:file(total)}}. Minst {{min}} {{plural:file(min)}} kreves.',

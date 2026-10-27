@@ -99,6 +99,13 @@ export default {
   'camera-aspect-ratio-native': 'Algne',
   'camera-quality': 'Kvaliteet',
   'camera-quality-auto': 'Automaatne',
+  'camera-audio-quality': 'Helikvaliteet',
+  'camera-audio-mode': 'Mikrofon',
+  'camera-audio-quality-low': 'Madal',
+  'camera-audio-quality-standard': 'Tavaline',
+  'camera-audio-quality-high': 'Kõrge',
+  'camera-audio-mode-voice': 'Kõne',
+  'camera-audio-mode-music': 'Muusika',
   'files-count-limit-error-title': 'Failide arvu piir ületatud',
   'files-count-limit-error-too-few':
     'Valisid {{total}} {{plural:file(total)}}. Vähemalt {{min}} {{plural:file(min)}} on nõutud.',

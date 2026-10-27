@@ -99,6 +99,13 @@ export default {
   'camera-aspect-ratio-native': 'Orijinal',
   'camera-quality': 'Keyfiyyət',
   'camera-quality-auto': 'Avtomatik',
+  'camera-audio-quality': 'Səs keyfiyyəti',
+  'camera-audio-mode': 'Mikrofon',
+  'camera-audio-quality-low': 'Aşağı',
+  'camera-audio-quality-standard': 'Standart',
+  'camera-audio-quality-high': 'Yüksək',
+  'camera-audio-mode-voice': 'Səs',
+  'camera-audio-mode-music': 'Musiqi',
   'files-count-limit-error-title': 'Faylların say limiti aşıldı',
   'files-count-limit-error-too-few':
     '{{total}} {{plural:file(total)}} seçdiniz. Ən az {{min}} {{plural:file(min)}} tələb olunur.',

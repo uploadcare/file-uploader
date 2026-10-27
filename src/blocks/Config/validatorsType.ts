@@ -2,6 +2,8 @@ import { isAuthTokenResolver } from '@uploadcare/upload-client';
 import type { PasteScope } from '../../abstract/features/ClipboardLayer';
 import type {
   AuthToken,
+  CameraAudioMode,
+  CameraAudioQuality,
   CameraConstraints,
   CameraConstraintsResolver,
   CameraQuality,
@@ -149,6 +151,32 @@ const asCameraVideoFormats = (value: unknown): string => {
   return str;
 };
 
+/** A validator for one of `allowed`, and one for a comma-separated list of them. */
+const oneOf = <T extends string>(allowed: readonly T[]) => ({
+  value: (value: unknown): T => {
+    const strValue = asString(value);
+    if ((allowed as readonly string[]).includes(strValue)) {
+      return strValue as T;
+    }
+    throw new Error(`Invalid value: "${strValue}"`);
+  },
+  list: (value: unknown): string => {
+    const str = asString(value);
+    const invalid = deserializeCsv(str).filter((item) => !(allowed as readonly string[]).includes(item));
+    if (invalid.length > 0) {
+      throw new Error(`Invalid value: "${JSON.stringify(invalid)}"`);
+    }
+    return str;
+  },
+});
+
+const cameraAudioQualities = oneOf<CameraAudioQuality>(['auto', 'low', 'standard', 'high']);
+const cameraAudioModes = oneOf<CameraAudioMode>(['voice', 'music']);
+const asCameraAudioQuality = cameraAudioQualities.value;
+const asCameraAudioQualityOptions = cameraAudioQualities.list;
+const asCameraAudioMode = cameraAudioModes.value;
+const asCameraAudioModeOptions = cameraAudioModes.list;
+
 const asCameraAspectRatioOptions = (value: unknown): string => {
   const str = asString(value);
   for (const item of deserializeCsv(str)) {
@@ -223,6 +251,10 @@ export {
   asAuthToken,
   asBoolean,
   asCameraAspectRatio,
+  asCameraAudioMode,
+  asCameraAudioModeOptions,
+  asCameraAudioQuality,
+  asCameraAudioQualityOptions,
   asCameraAspectRatioOptions,
   asCameraCapture,
   asCameraConstraints,

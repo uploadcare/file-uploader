@@ -101,6 +101,13 @@ export default {
   'camera-aspect-ratio-native': 'Original',
   'camera-quality': 'Calidad',
   'camera-quality-auto': 'Automática',
+  'camera-audio-quality': 'Calidad del audio',
+  'camera-audio-mode': 'Micrófono',
+  'camera-audio-quality-low': 'Baja',
+  'camera-audio-quality-standard': 'Estándar',
+  'camera-audio-quality-high': 'Alta',
+  'camera-audio-mode-voice': 'Voz',
+  'camera-audio-mode-music': 'Música',
   'files-count-limit-error-title': 'Límite de cantidad de archivos excedido',
   'files-count-limit-error-too-few':
     'Has elegido {{total}} {{plural:file(total)}}. Se requiere al menos {{min}} {{plural:file(min)}}.',

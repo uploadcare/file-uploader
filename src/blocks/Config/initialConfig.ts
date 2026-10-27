@@ -85,6 +85,10 @@ const config = {
   cameraPhotoQuality: 0.92,
   cameraAspectRatioOptions: '',
   cameraQualityOptions: '',
+  cameraAudioQuality: 'auto',
+  cameraAudioMode: 'voice',
+  cameraAudioQualityOptions: '',
+  cameraAudioModeOptions: '',
 
   filesViewMode: 'list',
   gridShowFileNames: false,

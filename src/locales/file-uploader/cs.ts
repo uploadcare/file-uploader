@@ -103,6 +103,13 @@ export default {
   'camera-aspect-ratio-native': 'Původní',
   'camera-quality': 'Kvalita',
   'camera-quality-auto': 'Automaticky',
+  'camera-audio-quality': 'Kvalita zvuku',
+  'camera-audio-mode': 'Mikrofon',
+  'camera-audio-quality-low': 'Nízká',
+  'camera-audio-quality-standard': 'Standardní',
+  'camera-audio-quality-high': 'Vysoká',
+  'camera-audio-mode-voice': 'Hlas',
+  'camera-audio-mode-music': 'Hudba',
   'files-count-limit-error-title': 'Překročen limit počtu souborů',
   'files-count-limit-error-too-few':
     'Vybrali jste {{total}} {{plural:file(total)}}. Minimálně je vyžadováno {{min}} {{plural:file(min)}}.',

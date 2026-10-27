@@ -97,6 +97,13 @@ export default {
   'camera-aspect-ratio-native': 'ორიგინალი',
   'camera-quality': 'ხარისხი',
   'camera-quality-auto': 'ავტომატური',
+  'camera-audio-quality': 'ხმის ხარისხი',
+  'camera-audio-mode': 'მიკროფონი',
+  'camera-audio-quality-low': 'დაბალი',
+  'camera-audio-quality-standard': 'სტანდარტული',
+  'camera-audio-quality-high': 'მაღალი',
+  'camera-audio-mode-voice': 'ხმა',
+  'camera-audio-mode-music': 'მუსიკა',
   'files-count-limit-error-title': 'ფაილების რაოდენობის ზღვარის დამრღვევი',
   'files-count-limit-error-too-few':
     'თქვენ აირჩიეთ {{total}} {{plural:file(total)}}. მინიმუმ {{min}} {{plural:file(min)}} საჭიროა.',

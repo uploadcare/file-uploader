@@ -97,6 +97,13 @@ export default {
   'camera-aspect-ratio-native': 'Origineel',
   'camera-quality': 'Kwaliteit',
   'camera-quality-auto': 'Automatisch',
+  'camera-audio-quality': 'Audiokwaliteit',
+  'camera-audio-mode': 'Microfoon',
+  'camera-audio-quality-low': 'Laag',
+  'camera-audio-quality-standard': 'Standaard',
+  'camera-audio-quality-high': 'Hoog',
+  'camera-audio-mode-voice': 'Spraak',
+  'camera-audio-mode-music': 'Muziek',
   'files-count-limit-error-title': 'Bestandslimiet overschreden',
   'files-count-limit-error-too-few':
     'U heeft {{total}} {{plural:file(total)}} gekozen. Minimaal {{min}} {{plural:file(min)}} vereist.',

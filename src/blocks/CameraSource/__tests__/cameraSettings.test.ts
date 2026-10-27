@@ -3,6 +3,7 @@ import {
   filterQualityOptions,
   maxShortSideOf,
   parseAspectRatioOptions,
+  parseOptions,
   parseQualityOptions,
   pickInitial,
 } from '../cameraSettings';
@@ -64,5 +65,11 @@ describe('pickInitial', () => {
 
   it('starts on the first option otherwise', () => {
     expect(pickInitial(['a', 'b'], (o) => o === 'c')).toEqual({ value: 'a', listed: false });
+  });
+});
+
+describe('parseOptions', () => {
+  it('keeps allowed values in order, without repeats', () => {
+    expect(parseOptions('music, voice, music, karaoke', ['voice', 'music'] as const)).toEqual(['music', 'voice']);
   });
 });

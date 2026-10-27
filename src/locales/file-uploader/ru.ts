@@ -101,6 +101,13 @@ export default {
   'camera-aspect-ratio-native': 'Исходное',
   'camera-quality': 'Качество',
   'camera-quality-auto': 'Авто',
+  'camera-audio-quality': 'Качество звука',
+  'camera-audio-mode': 'Микрофон',
+  'camera-audio-quality-low': 'Низкое',
+  'camera-audio-quality-standard': 'Стандартное',
+  'camera-audio-quality-high': 'Высокое',
+  'camera-audio-mode-voice': 'Голос',
+  'camera-audio-mode-music': 'Музыка',
   'files-count-limit-error-title': 'Превышен лимит количества файлов',
   'files-count-limit-error-too-few':
     'Вы выбрали {{total}} {{plural:file(total)}}. Минимум требуется {{min}} {{plural:file(min)}}.',

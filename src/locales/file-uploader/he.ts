@@ -99,6 +99,13 @@ export default {
   'camera-aspect-ratio-native': 'מקורי',
   'camera-quality': 'איכות',
   'camera-quality-auto': 'אוטומטי',
+  'camera-audio-quality': 'איכות שמע',
+  'camera-audio-mode': 'מיקרופון',
+  'camera-audio-quality-low': 'נמוכה',
+  'camera-audio-quality-standard': 'רגילה',
+  'camera-audio-quality-high': 'גבוהה',
+  'camera-audio-mode-voice': 'דיבור',
+  'camera-audio-mode-music': 'מוזיקה',
   'files-count-limit-error-title': 'חריגה ממגבלת כמות הקבצים',
   'files-count-limit-error-too-few':
     'בחרת {{total}} {{plural:file(total)}}. לפחות {{min}} {{plural:file(min)}} נדרשים.',

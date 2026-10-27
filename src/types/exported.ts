@@ -50,6 +50,8 @@ export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatur
 export type IconHrefResolver = (iconName: string) => string;
 export type CameraConstraints = { video?: MediaTrackConstraints; audio?: MediaTrackConstraints };
 export type CameraQuality = 'auto' | '720p' | '1080p' | '4k';
+export type CameraAudioQuality = 'auto' | 'low' | 'standard' | 'high';
+export type CameraAudioMode = 'voice' | 'music';
 export type CameraConstraintsResolver = (context: { mode: CameraMode }) => CameraConstraints;
 export type FileValidators = FileValidator[];
 export type CollectionValidators = FuncCollectionValidator[];
@@ -420,6 +422,41 @@ export type ConfigType = {
    * @default ''
    */
   cameraQualityOptions: string;
+
+  /**
+   * Audio bitrate of video recordings: `low` (32 kbps), `standard` (96 kbps) or `high` (192 kbps). `'auto'` leaves it
+   * to the browser. An explicit `mediaRecorderOptions.audioBitsPerSecond` or `bitsPerSecond` takes precedence.
+   * @default 'auto'
+   */
+  cameraAudioQuality: CameraAudioQuality;
+
+  /**
+   * How the microphone is set up for video recordings.
+   *
+   * - `voice`: the browser defaults for speech: usually mono, with echo cancellation, noise suppression and auto gain.
+   * - `music`: stereo where the microphone supports it, with that processing off.
+   *
+   * `cameraConstraints.audio` overrides it setting by setting. A change applies to the open camera by reopening only the
+   * microphone; during a recording it waits until the recording stops.
+   * @default 'voice'
+   */
+  cameraAudioMode: CameraAudioMode;
+
+  /**
+   * Audio quality presets the user can pick from in the camera screen, as a comma-separated list of
+   * `cameraAudioQuality` values. Shows in video mode with audio recording on, and only with two or more options.
+   * @example 'auto, low, high'
+   * @default ''
+   */
+  cameraAudioQualityOptions: string;
+
+  /**
+   * Microphone modes the user can pick from in the camera screen, as a comma-separated list of `cameraAudioMode`
+   * values. Shows in video mode with audio recording on, and only with two or more options.
+   * @example 'voice, music'
+   * @default ''
+   */
+  cameraAudioModeOptions: string;
 
   filesViewMode: FilesViewMode;
 

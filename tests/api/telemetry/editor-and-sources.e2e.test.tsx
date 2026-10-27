@@ -132,6 +132,8 @@ describe('telemetry: sources', () => {
       qualityInsights: true,
       cameraAspectRatio: '1:1',
       cameraQuality: '720p',
+      cameraAudioQuality: 'high',
+      cameraAudioMode: 'music',
       cameraConstraints: { video: { deviceId: 'secret-camera-id' } },
     });
     await clickSource(root, 'Camera');
@@ -147,6 +149,8 @@ describe('telemetry: sources', () => {
       expect(body.payload.metadata).toMatchObject({
         aspect_ratio: '1:1',
         quality: '720p',
+        audio_quality: 'high',
+        audio_mode: 'music',
         has_custom_constraints: true,
       });
       expect(JSON.stringify(body)).not.toContain('secret-camera-id');

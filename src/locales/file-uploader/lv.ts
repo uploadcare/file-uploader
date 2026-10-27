@@ -99,6 +99,13 @@ export default {
   'camera-aspect-ratio-native': 'Oriģināls',
   'camera-quality': 'Kvalitāte',
   'camera-quality-auto': 'Automātiski',
+  'camera-audio-quality': 'Audio kvalitāte',
+  'camera-audio-mode': 'Mikrofons',
+  'camera-audio-quality-low': 'Zema',
+  'camera-audio-quality-standard': 'Standarta',
+  'camera-audio-quality-high': 'Augsta',
+  'camera-audio-mode-voice': 'Balss',
+  'camera-audio-mode-music': 'Mūzika',
   'files-count-limit-error-title': 'Failu skaita limits pārsniegts',
   'files-count-limit-error-too-few':
     'Jūs esat izvēlējies {{total}} {{plural:file(total)}}. Nepieciešami vismaz {{min}} {{plural:file(min)}}.',
