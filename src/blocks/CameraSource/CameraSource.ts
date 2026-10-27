@@ -25,6 +25,7 @@ import {
   toRatio,
 } from './cameraSettings';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
+import { createRecordingSource, type RecordingSource } from './recordingSource';
 
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
@@ -61,6 +62,13 @@ export class CameraSource extends LitUploaderBlock {
 
   private _mediaRecorder: MediaRecorder | null = null;
 
+  /** What the recorder records: the camera stream, or a canvas that crops and mirrors it like a photo. */
+  private _recordingSource: RecordingSource | null = null;
+
+  /** The recording under review has its mirroring baked in, so the preview must not mirror it again. */
+  @state()
+  private _playbackMirrored = false;
+
   private _stream: MediaStream | null = null;
 
   @state()
@@ -80,14 +88,18 @@ export class CameraSource extends LitUploaderBlock {
   private _permissionCleanupFns: Array<() => void> = [];
   private _currentVideoSource: MediaStream | null = null;
 
+  // Both guard against a teardown: removing the playing preview fires `pause` after the context is gone, and an icon
+  // re-rendering then can't reach its shared instances.
   private readonly _handlePreviewPlay = (): void => {
+    if (!this.isConnected) return;
     this._startTimeline();
     this._currentTimelineIcon = 'pause';
   };
 
   private readonly _handlePreviewPause = (): void => {
-    this._currentTimelineIcon = 'play';
     this._stopTimeline();
+    if (!this.isConnected) return;
+    this._currentTimelineIcon = 'play';
   };
 
   private _timerRef = createRef<HTMLElement>();
@@ -369,8 +381,17 @@ export class CameraSource extends LitUploaderBlock {
         this._options.mimeType = 'video/mp4';
       }
 
+      const videoEl = this._videoRef.value;
       if (this._stream) {
-        this._mediaRecorder = new MediaRecorder(this._stream, this._options);
+        this._recordingSource = videoEl
+          ? createRecordingSource({
+              video: videoEl,
+              stream: this._stream,
+              aspectRatio: this._aspectRatio,
+              mirror: this.cfg.cameraMirror,
+            })
+          : null;
+        this._mediaRecorder = new MediaRecorder(this._recordingSource?.stream ?? this._stream, this._options);
         this._mediaRecorder.start();
 
         this._mediaRecorder.addEventListener('dataavailable', (event: BlobEvent) => {
@@ -390,6 +411,8 @@ export class CameraSource extends LitUploaderBlock {
 
   private _stopRecording = (): void => {
     this._mediaRecorder?.addEventListener('stop', () => {
+      // Before the preview switches to the recording, or the canvas would start drawing the playback.
+      this._stopRecordingSource();
       this._previewVideo();
 
       this._stopTimer();
@@ -415,6 +438,12 @@ export class CameraSource extends LitUploaderBlock {
       },
     });
   };
+
+  private _stopRecordingSource(): void {
+    this._playbackMirrored = this._recordingSource?.mirrored ?? false;
+    this._recordingSource?.stop();
+    this._recordingSource = null;
+  }
 
   /** This method is used to toggle recording pause/resume */
   private _toggleRecording = (): void => {
@@ -575,6 +604,7 @@ export class CameraSource extends LitUploaderBlock {
 
     if (status === CameraSourceEvents.RETAKE || status === CameraSourceEvents.ACCEPT) {
       this._captureState = 'live';
+      this._playbackMirrored = false;
       this._timerHidden = true;
       this._cameraActionsHidden = true;
       this._audioToggleMicrophoneHidden = !this.cfg.enableAudioRecording;
@@ -739,9 +769,8 @@ export class CameraSource extends LitUploaderBlock {
     return filterQualityOptions(parseQualityOptions(this.cfg.cameraQualityOptions), this._maxShortSide);
   }
 
-  /** Cropping is a photo-only feature, so the ratio picker is too. */
   private get _isAspectRatioPickerHidden(): boolean {
-    return this._pickedAspectRatio === null || this._activeTab !== CameraSourceTypes.PHOTO;
+    return this._pickedAspectRatio === null;
   }
 
   private get _isQualityPickerHidden(): boolean {
@@ -840,12 +869,9 @@ export class CameraSource extends LitUploaderBlock {
     return this._pickedAspectRatio === NATIVE_ASPECT_RATIO ? '' : this._pickedAspectRatio;
   }
 
-  /**
-   * Photos are cropped to `cameraAspectRatio`, so the photo preview shows the same crop. Video isn't cropped, so its
-   * preview keeps the real frame.
-   */
+  /** Photos and recordings are both cropped to the ratio, so the preview shows the same crop in either mode. */
   private get _isPreviewCropped(): boolean {
-    return this._aspectRatio !== null && this._activeTab === CameraSourceTypes.PHOTO;
+    return this._aspectRatio !== null;
   }
 
   private _isTabHidden(mode: CameraMode): boolean {
@@ -928,6 +954,7 @@ export class CameraSource extends LitUploaderBlock {
       tracks?.[0]?.stop();
       this._detachPreviewListeners(this._videoRef.value);
       this._setVideoSource(null);
+      this._stopRecordingSource();
 
       this._makeStreamInactive();
       this._stream = null;
@@ -1340,7 +1367,7 @@ export class CameraSource extends LitUploaderBlock {
           playsinline
           class=${classMap({ 'uc-cropped': this._isPreviewCropped })}
           style=${styleMap({
-            transform: this._videoTransformCss,
+            transform: this._playbackMirrored ? null : this._videoTransformCss,
             aspectRatio: this._isPreviewCropped ? String(this._aspectRatio) : null,
           })}
           ?hidden=${this._videoHidden}

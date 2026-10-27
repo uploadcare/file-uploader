@@ -97,7 +97,7 @@ export type ConfigType = {
    */
   store: boolean | 'auto';
   /**
-   * Mirror the camera view.
+   * Mirror the camera view, and the photos and videos taken with it.
    */
   cameraMirror: boolean;
   /**
@@ -367,15 +367,17 @@ export type ConfigType = {
    * The shape of camera captures, as `"w:h"` (`"1:1"`, `"4:3"`, `"16:9"`, `"9:16"`, ...), taken literally whatever the
    * device orientation. Empty means the camera's native shape.
    *
-   * Photos are cropped to the ratio from the center, and the preview shows the same crop. For video the ratio is only
-   * requested from the camera: recordings are not cropped and may come out in the camera's native shape.
+   * Photos and videos are both cropped to the ratio from the center, and the preview shows the same crop. The ratio is
+   * also requested from the camera; when the camera can't deliver it, videos are cropped frame by frame, which costs
+   * some CPU while recording.
    * @default ''
    */
   cameraAspectRatio: string;
 
   /**
    * The resolution asked of the camera, for photo and video. A preset sets the short side (720, 1080 or 2160 px) and
-   * the long side follows `cameraAspectRatio`, or 16:9 when no ratio is set. `'auto'` asks for 1920×1080.
+   * the long side follows `cameraAspectRatio`, or 16:9 when no ratio is set. `'auto'` asks for a 1080 px short side in
+   * the `cameraAspectRatio` shape, or 1920×1080 without a ratio.
    *
    * It is a request, not a guarantee: the camera picks its closest supported resolution. Large resolutions make big
    * video files, which may exceed `maxLocalFileSizeBytes`.
@@ -392,7 +394,7 @@ export type ConfigType = {
   /**
    * Aspect ratios the user can pick from in the camera screen, as a comma-separated list of `"w:h"` values; `native`
    * stands for the camera's own shape. The picker starts on `cameraAspectRatio`, or on the first option when that
-   * value isn't listed. It shows in photo mode only, and only with two or more options.
+   * value isn't listed. It shows in photo and video mode, and only with two or more options.
    * @example 'native, 1:1, 4:3'
    * @default ''
    */

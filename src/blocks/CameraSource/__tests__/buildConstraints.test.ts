@@ -29,9 +29,11 @@ describe('buildConstraints', () => {
     });
   });
 
-  it('asks for the aspect ratio as ideal', () => {
+  it('asks for the aspect ratio as ideal, with a resolution in that shape', () => {
     expect(buildConstraints(input({ aspectRatio: 1 })).video).toEqual({
       ...DEFAULT_VIDEO_CONSTRAINTS,
+      width: { ideal: 1080 },
+      height: { ideal: 1080 },
       aspectRatio: { ideal: 1 },
     });
   });
@@ -110,8 +112,13 @@ describe('buildConstraints', () => {
 });
 
 describe('qualityResolution', () => {
-  it('keeps the defaults for auto', () => {
-    expect(qualityResolution('auto', 1)).toEqual({});
+  it('keeps the defaults for auto without a ratio', () => {
+    expect(qualityResolution('auto', null)).toEqual({});
+  });
+
+  it('asks for a 1080 short side in the ratio for auto with a ratio', () => {
+    expect(qualityResolution('auto', 1)).toEqual({ width: { ideal: 1080 }, height: { ideal: 1080 } });
+    expect(qualityResolution('auto', 9 / 16)).toEqual({ width: { ideal: 1080 }, height: { ideal: 1920 } });
   });
 
   it.each([

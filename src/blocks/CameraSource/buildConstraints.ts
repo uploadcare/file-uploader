@@ -20,15 +20,20 @@ export const QUALITY_SHORT_SIDE: Record<Exclude<CameraQuality, 'auto'>, number> 
   '4k': 2160,
 };
 
-/** The resolution a preset asks for: its short side, with the long side from the ratio (16:9 without one). */
+/**
+ * The resolution a preset asks for: its short side, with the long side from the ratio (16:9 without one).
+ *
+ * `'auto'` keeps the 1920×1080 defaults without a ratio. With one, it asks for a 1080 short side in that shape:
+ * fixed 1920×1080 ideals outweigh an `aspectRatio` ideal, so the camera would never deliver the ratio.
+ */
 export const qualityResolution = (
   quality: CameraQuality,
   aspectRatio: number | null,
 ): Pick<MediaTrackConstraints, 'width' | 'height'> => {
-  if (quality === 'auto') {
+  if (quality === 'auto' && aspectRatio === null) {
     return {};
   }
-  const shortSide = QUALITY_SHORT_SIDE[quality];
+  const shortSide = QUALITY_SHORT_SIDE[quality === 'auto' ? '1080p' : quality];
   const ratio = aspectRatio ?? 16 / 9;
   if (ratio >= 1) {
     return { width: { ideal: Math.round(shortSide * ratio) }, height: { ideal: shortSide } };

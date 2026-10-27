@@ -6,7 +6,7 @@ import '~/types/jsx';
 
 /**
  * `cameraAspectRatio` against chromium's fake camera (`--use-fake-device-for-media-stream`, vitest.config.ts): photos
- * are cropped to the ratio and the photo preview shows the crop; video is only asked for it.
+ * and videos are both cropped to the ratio, and the preview shows the crop.
  */
 
 const openCamera = async (configProps: Partial<Config> = {}) => {
@@ -51,6 +51,33 @@ const takePhoto = async ({ api, camera }: Awaited<ReturnType<typeof openCamera>>
   if (!entry.file) throw new Error('The photo entry has no file');
   const bitmap = await createImageBitmap(entry.file);
   return { width: bitmap.width, height: bitmap.height };
+};
+
+/** Records about a second of video, accepts it and returns the file and its pixel size. */
+const recordVideo = async ({ api, camera }: Awaited<ReturnType<typeof openCamera>>) => {
+  await camera.getByRole('button', { name: 'Video', exact: true }).click();
+  await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+  const timer = camera.getByTestId('uc-camera-source--recording-timer');
+  await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
+  await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+  await camera.getByRole('button', { name: 'Accept', exact: true }).click();
+
+  await expect.poll(() => api.getOutputCollectionState().totalCount, { timeout: 20_000 }).toBe(1);
+  const [entry] = api.getOutputCollectionState().allEntries;
+  if (!entry.file) throw new Error('The video entry has no file');
+  const player = document.createElement('video');
+  player.muted = true;
+  player.src = URL.createObjectURL(entry.file);
+  await new Promise((resolve, reject) => {
+    player.onloadedmetadata = resolve;
+    player.onerror = reject;
+  });
+  return { width: player.videoWidth, height: player.videoHeight };
+};
+
+/** Keeps the fake camera in its own 16:9 shape, so the recording has to be cropped frame by frame. */
+const NATIVE_FRAMES: Partial<Config> = {
+  cameraConstraints: { video: { resizeMode: 'none' } as MediaTrackConstraints },
 };
 
 describe('cameraAspectRatio', () => {
@@ -102,15 +129,6 @@ describe('cameraAspectRatio', () => {
     expect(Math.max(box.width / areaWidth, box.height / areaHeight)).toBeGreaterThan(0.95);
   });
 
-  it('shows the real frame in video mode', async () => {
-    const { camera } = await openCamera({ cameraAspectRatio: '1:1' });
-    await camera.getByRole('button', { name: 'Video', exact: true }).click();
-    const video = await preview(camera);
-
-    await expect.poll(() => getComputedStyle(video).objectFit).toBe('contain');
-    expect(video.style.aspectRatio).toBe('');
-  });
-
   it('applies a change to the open camera', async () => {
     const { camera, config, getUserMedia } = await openCamera();
     const video = await preview(camera);
@@ -132,5 +150,80 @@ describe('cameraAspectRatio', () => {
 
     expect(opened.config.cameraAspectRatio).toBe('');
     expect(await takePhoto(opened)).toEqual({ width: video.videoWidth, height: video.videoHeight });
+  });
+});
+
+describe('cameraAspectRatio in video mode', () => {
+  it('records a square clip when the camera delivers the ratio itself', async () => {
+    const captureStream = vi.spyOn(HTMLCanvasElement.prototype, 'captureStream');
+    const opened = await openCamera({ cameraAspectRatio: '1:1' });
+
+    const clip = await recordVideo(opened);
+
+    expect(clip.width).toBe(clip.height);
+    // Chromium crops the camera itself here, so there is nothing to redraw.
+    expect(captureStream).not.toHaveBeenCalled();
+  });
+
+  it('crops the clip frame by frame when the camera keeps its own shape', async () => {
+    const captureStream = vi.spyOn(HTMLCanvasElement.prototype, 'captureStream');
+    const opened = await openCamera({ cameraAspectRatio: '1:1', ...NATIVE_FRAMES });
+    const video = await preview(opened.camera);
+    expect(video.videoWidth / video.videoHeight).toBeCloseTo(16 / 9, 2);
+
+    const clip = await recordVideo(opened);
+
+    expect(clip.width).toBe(clip.height);
+    expect(clip.width).toBe(video.videoHeight);
+    expect(captureStream).toHaveBeenCalled();
+  });
+
+  it('records portrait from a landscape camera', async () => {
+    const opened = await openCamera({ cameraAspectRatio: '9:16', ...NATIVE_FRAMES });
+
+    const clip = await recordVideo(opened);
+
+    expect(clip.width / clip.height).toBeCloseTo(9 / 16, 1);
+  });
+
+  it('shows the video preview in the ratio', async () => {
+    const { camera } = await openCamera({ cameraAspectRatio: '1:1', ...NATIVE_FRAMES });
+    await camera.getByRole('button', { name: 'Video', exact: true }).click();
+    const video = await preview(camera);
+
+    expect(boxRatio(video)).toBeCloseTo(1, 1);
+    expect(getComputedStyle(video).objectFit).toBe('cover');
+  });
+
+  it('mirrors the clip like a photo, and plays it back without mirroring it again', async () => {
+    const scale = vi.spyOn(CanvasRenderingContext2D.prototype, 'scale');
+    const opened = await openCamera({ cameraMirror: true });
+
+    await opened.camera.getByRole('button', { name: 'Video', exact: true }).click();
+    await opened.camera.getByRole('button', { name: 'Shot', exact: true }).click();
+    const timer = opened.camera.getByTestId('uc-camera-source--recording-timer');
+    await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
+    await opened.camera.getByRole('button', { name: 'Shot', exact: true }).click();
+
+    expect(scale).toHaveBeenCalledWith(-1, 1);
+    await expect.element(opened.camera.getByRole('button', { name: 'Accept', exact: true })).toBeVisible();
+    const video = await preview(opened.camera);
+    expect(getComputedStyle(video).transform).toBe('none');
+  });
+
+  it('records the camera as is, with a warning, where canvas recording is missing', async () => {
+    const original = HTMLCanvasElement.prototype.captureStream;
+    Object.defineProperty(HTMLCanvasElement.prototype, 'captureStream', { value: undefined, configurable: true });
+    const warn = vi.spyOn(console, 'warn');
+    try {
+      const opened = await openCamera({ cameraAspectRatio: '1:1', ...NATIVE_FRAMES });
+
+      const clip = await recordVideo(opened);
+
+      expect(clip.width / clip.height).toBeCloseTo(16 / 9, 2);
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('cannot crop or mirror video recordings'));
+    } finally {
+      Object.defineProperty(HTMLCanvasElement.prototype, 'captureStream', { value: original, configurable: true });
+    }
   });
 });

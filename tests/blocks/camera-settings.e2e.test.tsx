@@ -107,14 +107,14 @@ describe('aspect ratio picker', () => {
     expect(opened.config.cameraAspectRatio).toBe('');
   });
 
-  it('is offered in photo mode only', async () => {
+  it('is offered in video mode too', async () => {
     const opened = await openCamera({ cameraAspectRatioOptions: 'native, 1:1', cameraQualityOptions: 'auto, 720p' });
     await opened.camera.getByRole('button', { name: 'Video', exact: true }).click();
 
     await opened.settingsButton.click();
 
     await expect.element(opened.qualityPicker).toBeVisible();
-    await expect.element(opened.ratioPicker).not.toBeVisible();
+    await expect.element(opened.ratioPicker).toBeVisible();
   });
 
   it('starts on the first option, with a warning, when the configured ratio is not listed', async () => {
