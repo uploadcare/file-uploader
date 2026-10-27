@@ -495,6 +495,15 @@
           ],
         },
       ],
+      cameraConstraints: [
+        { id: 'none', label: 'None', value: null },
+        { id: 'fps60', label: '60 fps video', value: { video: { frameRate: { ideal: 60 } } } },
+        {
+          id: 'by-mode',
+          label: 'Function of the mode',
+          value: ({ mode }) => ({ video: { frameRate: { ideal: mode === 'video' ? 30 : 15 } } }),
+        },
+      ],
       mediaRecorderOptions: [
         { id: 'none', label: 'None', value: null },
         { id: 'audio-opus', label: 'Audio opus', value: { mimeType: 'audio/webm;codecs=opus', bitsPerSecond: 128000 } },
