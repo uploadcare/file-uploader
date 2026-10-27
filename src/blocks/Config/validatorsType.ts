@@ -1,9 +1,20 @@
 import { isAuthTokenResolver } from '@uploadcare/upload-client';
 import type { PasteScope } from '../../abstract/features/ClipboardLayer';
-import type { AuthToken, Metadata, MetadataCallback, Tags, TagsCallback } from '../../types/index';
+import type {
+  AuthToken,
+  CameraConstraints,
+  CameraConstraintsResolver,
+  Metadata,
+  MetadataCallback,
+  Tags,
+  TagsCallback,
+} from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
+import { parseAspectRatio } from '../CameraSource/aspectRatio';
+import { AUDIO_MODES, AUDIO_QUALITIES, NATIVE_ASPECT_RATIO, RESOLUTIONS } from '../CameraSource/cameraSettings';
 import type { ModeCameraType } from '../CameraSource/constants';
 import { CameraSourceTypes } from '../CameraSource/constants';
+import { isVideoFormat } from '../CameraSource/videoFormat';
 import type { DynamicButtonMode } from '../DynamicBtn/DynamicBtn';
 import type { FilesViewMode } from '../UploadList/UploadList';
 
@@ -102,6 +113,64 @@ const asAuthToken = (value: unknown): AuthToken => {
   throw new Error('Invalid authToken value. Must be a string, a function, or a `{ getToken }` object.');
 };
 
+const asCameraConstraints = (value: unknown): CameraConstraints | CameraConstraintsResolver => {
+  if (typeof value === 'function') {
+    return value as CameraConstraintsResolver;
+  }
+  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+    return value as CameraConstraints;
+  }
+
+  throw new Error('Invalid cameraConstraints value. Must be an object or a function.');
+};
+
+const asCameraVideoFormats = (value: unknown): string => {
+  const str = asString(value);
+  const invalid = deserializeCsv(str).filter((item) => !isVideoFormat(item));
+  if (invalid.length > 0) {
+    throw new Error(`Invalid value: "${JSON.stringify(invalid)}"`);
+  }
+  return str;
+};
+
+/**
+ * A camera option that takes one value, or a comma-separated list of them for a picker. It needs at least one: an
+ * empty list has no default.
+ */
+const asCameraChoice =
+  (allowed: readonly string[]) =>
+  (value: unknown): string => {
+    const str = asString(value);
+    const items = deserializeCsv(str);
+    if (items.length === 0 || items.some((item) => !allowed.includes(item))) {
+      throw new Error(`Invalid value: "${str}"`);
+    }
+    return str;
+  };
+
+const asCameraResolution = asCameraChoice(RESOLUTIONS);
+const asCameraAudioQuality = asCameraChoice(AUDIO_QUALITIES);
+const asCameraAudioMode = asCameraChoice(AUDIO_MODES);
+
+/** `cameraAspectRatio`: empty for the native shape, or `"w:h"` ratios and `native`, one or a list. */
+const asCameraAspectRatio = (value: unknown): string => {
+  const str = asString(value).trim();
+  for (const item of deserializeCsv(str)) {
+    if (item !== NATIVE_ASPECT_RATIO) {
+      parseAspectRatio(item);
+    }
+  }
+  return str;
+};
+
+const asCameraPhotoQuality = (value: unknown): number => {
+  const number = asNumber(value);
+  if (number < 0 || number > 1) {
+    throw new Error(`Must be between 0 and 1, got ${number}`);
+  }
+  return number;
+};
+
 const asObject = <T>(value: unknown): T => {
   if (typeof value === 'object') {
     return value as T;
@@ -148,7 +217,14 @@ export {
   asArray,
   asAuthToken,
   asBoolean,
+  asCameraAspectRatio,
+  asCameraAudioMode,
+  asCameraAudioQuality,
   asCameraCapture,
+  asCameraConstraints,
+  asCameraPhotoQuality,
+  asCameraResolution,
+  asCameraVideoFormats,
   asCameraMode,
   asCameraModes,
   asFilesViewMode,

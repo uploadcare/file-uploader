@@ -1,0 +1,538 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Camera playground</title>
+    <style>
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          'Inter',
+          system-ui,
+          -apple-system,
+          'Segoe UI',
+          sans-serif;
+        background: linear-gradient(180deg, #f6f7fb 0%, #eef2ff 100%);
+        color: #0f172a;
+        min-height: 100vh;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body {
+          background: linear-gradient(180deg, #0b1221 0%, #0f172a 100%);
+          color: #e2e8f0;
+        }
+      }
+
+      .page {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 32px 20px 60px;
+        display: grid;
+        gap: 24px;
+      }
+
+      .hero,
+      .panel {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 20px 24px;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .hero,
+        .panel {
+          background: rgba(15, 23, 42, 0.85);
+          border-color: #1e293b;
+        }
+      }
+
+      .hero {
+        display: grid;
+        gap: 6px;
+      }
+
+      .hero h1 {
+        margin: 0;
+        font-size: 1.3rem;
+      }
+
+      .hero p {
+        margin: 0;
+        color: #64748b;
+        font-size: 0.9rem;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+
+      @media (max-width: 760px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .panel h2 {
+        margin: 0 0 12px;
+        font-size: 0.95rem;
+      }
+
+      .group {
+        display: grid;
+        gap: 6px;
+        margin-bottom: 16px;
+      }
+
+      .group-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: #64748b;
+      }
+
+      .group small {
+        color: #64748b;
+        font-size: 0.75rem;
+      }
+
+      .row {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 0.85rem;
+      }
+
+      select,
+      input[type='text'] {
+        width: 100%;
+        padding: 6px 8px;
+        border: 1px solid #cbd5e1;
+        border-radius: 8px;
+        font: inherit;
+        font-size: 0.85rem;
+        background: transparent;
+        color: inherit;
+      }
+
+      code,
+      pre {
+        font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+        font-size: 0.78rem;
+      }
+
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+
+      .main {
+        display: grid;
+        gap: 18px;
+      }
+
+      .open-btn {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 10px;
+        background: #4338ca;
+        color: #fff;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: max-content 1fr;
+        gap: 4px 12px;
+        font-size: 0.85rem;
+      }
+
+      .stats dt {
+        color: #64748b;
+      }
+
+      .stats dd {
+        margin: 0;
+        font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+      }
+
+      .stage {
+        height: 520px;
+        margin-top: 12px;
+      }
+
+      .capture img,
+      .capture video {
+        display: block;
+        max-width: 100%;
+        max-height: 320px;
+        margin-top: 12px;
+        border-radius: 8px;
+        outline: 1px dashed #94a3b8;
+      }
+    </style>
+  </head>
+  <body>
+    <script type="module">
+      import { html, LitElement } from 'lit';
+      import '@/solutions/file-uploader/inline/index.css';
+      import * as UC from '@/index.js';
+
+      UC.defineComponents(UC);
+
+      const CTX = 'camera-playground';
+
+      const ASPECT_RATIOS = ['', '1:1', '4:3', '3:4', '16:9', '9:16', '3:2'];
+      const QUALITIES = ['auto', '720p', '1080p', '4k'];
+
+      /** `cameraConstraints` cannot be set as an attribute, so the playground offers a few to switch between. */
+      const CONSTRAINT_PRESETS = [
+        { id: 'none', label: 'None', value: null, code: 'null' },
+        {
+          id: 'fps60',
+          label: '60 fps video',
+          value: { video: { frameRate: { ideal: 60 } } },
+          code: '{ video: { frameRate: { ideal: 60 } } }',
+        },
+        {
+          id: 'by-mode',
+          label: 'Function: 15 fps photo, 30 fps video',
+          value: ({ mode }) => ({ video: { frameRate: { ideal: mode === 'video' ? 30 : 15 } } }),
+          code: "({ mode }) => ({ video: { frameRate: { ideal: mode === 'video' ? 30 : 15 } } })",
+        },
+        {
+          id: 'front',
+          label: 'Front camera (facingMode: user)',
+          value: { video: { facingMode: 'user' } },
+          code: "{ video: { facingMode: 'user' } }",
+        },
+        {
+          id: 'impossible',
+          label: 'Impossible (width exact 99999): falls back',
+          value: { video: { width: { exact: 99999 } } },
+          code: '{ video: { width: { exact: 99999 } } }',
+        },
+      ];
+
+      /** The state that maps to config; the track and capture readouts refresh far more often and must not re-apply it. */
+      const CONFIG_STATE = [
+        '_modes',
+        '_aspectRatio',
+        '_quality',
+        '_photoQuality',
+        '_ratioOptions',
+        '_qualityOptions',
+        '_constraints',
+        '_mirror',
+        '_audio',
+      ];
+
+      const formatBytes = (bytes) => (bytes < 1024 * 1024 ? `${(bytes / 1024).toFixed(1)} KB` : `${(bytes / 1024 / 1024).toFixed(2)} MB`);
+
+      class CameraPlayground extends LitElement {
+        static properties = {
+          _modes: { state: true },
+          _aspectRatio: { state: true },
+          _quality: { state: true },
+          _photoQuality: { state: true },
+          _ratioOptions: { state: true },
+          _qualityOptions: { state: true },
+          _constraints: { state: true },
+          _mirror: { state: true },
+          _audio: { state: true },
+          _track: { state: true },
+          _capture: { state: true },
+        };
+
+        constructor() {
+          super();
+          this._modes = ['photo', 'video'];
+          this._aspectRatio = '';
+          this._quality = 'auto';
+          this._photoQuality = 0.92;
+          this._ratioOptions = 'native, 1:1, 4:3, 16:9';
+          this._qualityOptions = 'auto, 720p, 1080p, 4k';
+          this._constraints = 'none';
+          this._mirror = false;
+          this._audio = true;
+          this._track = null;
+          this._capture = null;
+        }
+
+        createRenderRoot() {
+          return this;
+        }
+
+        connectedCallback() {
+          super.connectedCallback();
+          // The live track isn't exposed, so it's read off the preview `<video>`.
+          this._poll = setInterval(() => this._readTrack(), 500);
+        }
+
+        disconnectedCallback() {
+          super.disconnectedCallback();
+          clearInterval(this._poll);
+        }
+
+        firstUpdated() {
+          this._configEl = this.querySelector('uc-config');
+          this._provider = this.querySelector('uc-upload-ctx-provider');
+          this._provider.addEventListener('file-added', (event) => this._showCapture(event.detail));
+          this._applyConfig();
+        }
+
+        updated(changed) {
+          if (CONFIG_STATE.some((key) => changed.has(key))) {
+            this._applyConfig();
+          }
+        }
+
+        _applyConfig() {
+          const config = this._configEl;
+          if (!config) return;
+          config.cameraModes = this._modes.join(', ');
+          config.cameraAspectRatio = this._aspectRatio;
+          config.cameraQuality = this._quality;
+          config.cameraPhotoQuality = this._photoQuality;
+          config.cameraAspectRatioOptions = this._ratioOptions;
+          config.cameraQualityOptions = this._qualityOptions;
+          config.cameraConstraints = CONSTRAINT_PRESETS.find((preset) => preset.id === this._constraints)?.value ?? null;
+          config.cameraMirror = this._mirror;
+          config.enableAudioRecording = this._audio;
+        }
+
+        _openCamera() {
+          const api = this._provider.getAPI();
+          api.setCurrentActivity('camera');
+        }
+
+        _readTrack() {
+          const video = document.querySelector('uc-camera-source video');
+          const stream = video?.srcObject;
+          const track = stream instanceof MediaStream ? stream.getVideoTracks()[0] : undefined;
+          if (!track || track.readyState !== 'live') {
+            if (this._track) this._track = null;
+            return;
+          }
+          const settings = track.getSettings();
+          const capabilities = track.getCapabilities?.() ?? {};
+          const box = video.getBoundingClientRect();
+          this._track = {
+            label: track.label,
+            size: `${settings.width}×${settings.height}`,
+            ratio: settings.width && settings.height ? (settings.width / settings.height).toFixed(3) : '?',
+            frameRate: settings.frameRate?.toFixed?.(1) ?? '?',
+            facingMode: settings.facingMode ?? '-',
+            max: capabilities.width?.max ? `${capabilities.width.max}×${capabilities.height?.max}` : 'not reported',
+            preview: `${Math.round(box.width)}×${Math.round(box.height)} (${(box.width / box.height).toFixed(3)}), object-fit: ${getComputedStyle(video).objectFit}`,
+          };
+        }
+
+        async _showCapture(entry) {
+          const file = entry?.file;
+          if (!file) return;
+          if (this._capture?.url) URL.revokeObjectURL(this._capture.url);
+          const url = URL.createObjectURL(file);
+          const info = { url, name: file.name, type: file.type, size: formatBytes(file.size), isImage: file.type.startsWith('image/') };
+          if (info.isImage) {
+            const bitmap = await createImageBitmap(file);
+            info.dimensions = `${bitmap.width}×${bitmap.height} (${(bitmap.width / bitmap.height).toFixed(3)})`;
+          }
+          this._capture = info;
+        }
+
+        _toggleMode(mode) {
+          const next = this._modes.includes(mode) ? this._modes.filter((m) => m !== mode) : [...this._modes, mode];
+          if (next.length > 0) this._modes = next;
+        }
+
+        _snippet() {
+          const preset = CONSTRAINT_PRESETS.find((p) => p.id === this._constraints);
+          return [
+            `<uc-config`,
+            `  ctx-name="my-uploader"`,
+            `  pubkey="YOUR_PUBLIC_KEY"`,
+            `  camera-modes="${this._modes.join(', ')}"`,
+            `  camera-aspect-ratio="${this._aspectRatio}"`,
+            `  camera-quality="${this._quality}"`,
+            `  camera-photo-quality="${this._photoQuality}"`,
+            `  camera-aspect-ratio-options="${this._ratioOptions}"`,
+            `  camera-quality-options="${this._qualityOptions}"`,
+            `></uc-config>`,
+            ``,
+            `// property only`,
+            `config.cameraConstraints = ${preset?.code ?? 'null'};`,
+          ].join('\n');
+        }
+
+        _renderSelect(value, options, onChange, label = (option) => option || '(native)') {
+          return html`
+            <select @change=${(e) => onChange(e.target.value)}>
+              ${options.map((option) => html`<option value=${option} ?selected=${option === value}>${label(option)}</option>`)}
+            </select>
+          `;
+        }
+
+        render() {
+          const track = this._track;
+          const capture = this._capture;
+          return html`
+            <div class="page">
+              <header class="hero">
+                <h1>Camera playground</h1>
+                <p>
+                  Aspect ratio, quality, custom constraints and the in-camera pickers. The camera renders inline, so
+                  settings can be changed while it's open. Captures stay local: upload needs confirming.
+                </p>
+              </header>
+
+              <div class="layout">
+                <aside class="panel">
+                  <h2>Config</h2>
+
+                  <div class="group">
+                    <div class="group-label">cameraModes</div>
+                    ${['photo', 'video'].map(
+                      (mode) => html`
+                        <label class="row">
+                          <input type="checkbox" .checked=${this._modes.includes(mode)} @change=${() => this._toggleMode(mode)} />
+                          ${mode}
+                        </label>
+                      `,
+                    )}
+                  </div>
+
+                  <div class="group">
+                    <div class="group-label">cameraAspectRatio</div>
+                    ${this._renderSelect(this._aspectRatio, ASPECT_RATIOS, (v) => (this._aspectRatio = v))}
+                    <small>Photos are cropped; video only asks the camera.</small>
+                  </div>
+
+                  <div class="group">
+                    <div class="group-label">cameraQuality</div>
+                    ${this._renderSelect(this._quality, QUALITIES, (v) => (this._quality = v), (v) => v)}
+                  </div>
+
+                  <div class="group">
+                    <div class="group-label">cameraPhotoQuality: ${this._photoQuality}</div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="1"
+                      step="0.01"
+                      .value=${String(this._photoQuality)}
+                      @input=${(e) => (this._photoQuality = Number(e.target.value))}
+                    />
+                  </div>
+
+                  <div class="group">
+                    <div class="group-label">cameraAspectRatioOptions</div>
+                    <input type="text" .value=${this._ratioOptions} @change=${(e) => (this._ratioOptions = e.target.value)} />
+                    <small>Empty or one option: no ratio picker.</small>
+                  </div>
+
+                  <div class="group">
+                    <div class="group-label">cameraQualityOptions</div>
+                    <input type="text" .value=${this._qualityOptions} @change=${(e) => (this._qualityOptions = e.target.value)} />
+                  </div>
+
+                  <div class="group">
+                    <div class="group-label">cameraConstraints</div>
+                    <select @change=${(e) => (this._constraints = e.target.value)}>
+                      ${CONSTRAINT_PRESETS.map(
+                        (preset) => html`<option value=${preset.id} ?selected=${preset.id === this._constraints}>${preset.label}</option>`,
+                      )}
+                    </select>
+                  </div>
+
+                  <div class="group">
+                    <div class="group-label">Other</div>
+                    <label class="row">
+                      <input type="checkbox" .checked=${this._mirror} @change=${(e) => (this._mirror = e.target.checked)} />
+                      cameraMirror
+                    </label>
+                    <label class="row">
+                      <input type="checkbox" .checked=${this._audio} @change=${(e) => (this._audio = e.target.checked)} />
+                      enableAudioRecording
+                    </label>
+                  </div>
+                </aside>
+
+                <div class="main">
+                  <div class="panel">
+                    <button type="button" class="open-btn" @click=${() => this._openCamera()}>Open camera</button>
+                    <div class="stage">
+                      <uc-file-uploader-inline ctx-name=${CTX}></uc-file-uploader-inline>
+                    </div>
+                  </div>
+
+                  <div class="panel">
+                    <h2>Live camera track</h2>
+                    ${
+                      track
+                        ? html`
+                            <dl class="stats">
+                              <dt>Device</dt><dd>${track.label}</dd>
+                              <dt>Resolution</dt><dd>${track.size}</dd>
+                              <dt>Ratio</dt><dd>${track.ratio}</dd>
+                              <dt>Frame rate</dt><dd>${track.frameRate}</dd>
+                              <dt>Facing mode</dt><dd>${track.facingMode}</dd>
+                              <dt>Max (capabilities)</dt><dd>${track.max}</dd>
+                              <dt>Preview box</dt><dd>${track.preview}</dd>
+                            </dl>
+                          `
+                        : html`<small>Open the camera to see what it actually delivers.</small>`
+                    }
+                  </div>
+
+                  <div class="panel capture">
+                    <h2>Last capture</h2>
+                    ${
+                      capture
+                        ? html`
+                            <dl class="stats">
+                              <dt>File</dt><dd>${capture.name}</dd>
+                              <dt>Type</dt><dd>${capture.type}</dd>
+                              <dt>Size</dt><dd>${capture.size}</dd>
+                              ${capture.dimensions ? html`<dt>Pixels</dt><dd>${capture.dimensions}</dd>` : ''}
+                            </dl>
+                            ${capture.isImage ? html`<img src=${capture.url} alt="Last photo" />` : html`<video src=${capture.url} controls></video>`}
+                          `
+                        : html`<small>Take a photo or record a clip and accept it.</small>`
+                    }
+                  </div>
+
+                  <div class="panel">
+                    <h2>Config snippet</h2>
+                    <pre>${this._snippet()}</pre>
+                  </div>
+                </div>
+              </div>
+
+              <uc-config ctx-name=${CTX} pubkey="demopublickey" quality-insights="false" confirm-upload debug></uc-config>
+              <uc-upload-ctx-provider ctx-name=${CTX}></uc-upload-ctx-provider>
+            </div>
+          `;
+        }
+      }
+
+      customElements.define('uc-camera-playground', CameraPlayground);
+    </script>
+    <uc-camera-playground></uc-camera-playground>
+  </body>
+</html>

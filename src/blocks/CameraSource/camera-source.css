@@ -9,6 +9,7 @@
     overflow: hidden;
     background-color: var(--uc-background);
     border-radius: var(--uc-radius);
+    anchor-scope: --uc-camera-settings;
   }
 
   [uc-modal] > dialog:has([activity="camera"][active]) {
@@ -24,6 +25,60 @@
     object-position: center center;
     background-color: var(--uc-muted);
     border-radius: var(--uc-radius);
+  }
+
+  /* Photo preview cropped to cameraAspectRatio: the box takes the ratio (set inline) and fits inside the content area. */
+  uc-camera-source video.uc-cropped {
+    align-self: center;
+    width: auto;
+    max-width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+
+  uc-camera-source .uc-camera-settings-btn {
+    anchor-name: --uc-camera-settings;
+  }
+
+  /* Anchored above the settings button where anchor positioning is supported; centered as a plain popover elsewhere. */
+  uc-camera-source .uc-camera-settings {
+    position-anchor: --uc-camera-settings;
+    position-area: top span-left;
+    margin: 0;
+    margin-block-end: 0.25rem;
+    padding: var(--uc-padding);
+    color: var(--uc-foreground);
+    background-color: var(--uc-background);
+    border: none;
+    border-radius: calc(var(--uc-radius) * 1.5);
+    box-shadow: var(--uc-dialog-shadow);
+  }
+
+  /* Two columns shared by every row, so labels and selects line up whatever the locale or device names. */
+  uc-camera-source .uc-camera-settings:popover-open {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: calc(var(--uc-padding) / 2) var(--uc-padding);
+    align-items: center;
+  }
+
+  /* Device names can be long; they're cut rather than stretching the popup. */
+  uc-camera-source .uc-camera-settings uc-select select {
+    max-width: 14em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  uc-camera-source .uc-camera-settings label {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+    align-items: center;
+  }
+
+  /* Every select takes the column's width, up to the 14em cap above. */
+  uc-camera-source .uc-camera-settings label uc-select select {
+    width: 100%;
   }
 
   uc-camera-source .uc-toolbar {
@@ -165,16 +220,10 @@
     z-index: 1;
   }
 
+  /* The mute and settings buttons, on the right of the bottom bar. */
   uc-camera-source .uc-select {
     display: flex;
-  }
-
-  uc-camera-source .uc-audio-select {
-    width: 98px;
-  }
-
-  uc-camera-source .uc-audio-select select {
-    width: 100%;
+    gap: calc(var(--uc-padding) / 2);
   }
 
   uc-camera-source .uc-camera-action {

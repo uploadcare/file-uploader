@@ -1,17 +1,34 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import type { CameraAudioMode, CameraAudioQuality, CameraResolution } from '../../types/exported';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { debounce } from '../../utils/debounce';
 import { stringToArray } from '../../utils/stringToArray';
+import { UID } from '../../utils/UID';
 import { UploadSource } from '../../utils/UploadSource';
 import { InternalEventType } from '../UploadCtxProvider/EventEmitter';
 import './camera-source.css';
 import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
+import { audioBitsPerSecond, type BuildConstraintsInput, buildConstraints } from './buildConstraints';
+import {
+  AUDIO_MODES,
+  AUDIO_QUALITIES,
+  filterResolutionOptions,
+  maxShortSideOf,
+  NATIVE_ASPECT_RATIO,
+  parseAspectRatioOptions,
+  parseOptions,
+  RESOLUTIONS,
+  toRatio,
+} from './cameraSettings';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
+import { type PhotoOptions, renderPhoto } from './photoCapture';
+import { createRecordingSource, type RecordingSource } from './recordingSource';
+import { pickVideoMimeType, recordingFileType } from './videoFormat';
 
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
@@ -19,18 +36,6 @@ import '../Select/Select';
 
 type CameraDeviceOption = { text: string; value: string };
 type AudioDeviceOption = { text: string; value: string };
-
-const DEFAULT_VIDEO_CONFIG = {
-  width: {
-    ideal: 1920,
-  },
-  height: {
-    ideal: 1080,
-  },
-  frameRate: {
-    ideal: 30,
-  },
-};
 
 const DEFAULT_PERMISSIONS = ['camera', 'microphone'];
 
@@ -45,7 +50,6 @@ function formatTime(time: number): string {
 }
 
 const DEFAULT_PICTURE_FORMAT = 'image/jpeg';
-const DEFAULT_VIDEO_FORMAT = 'video/webm';
 
 export type CameraMode = 'photo' | 'video';
 export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pause' | 'resume';
@@ -60,30 +64,44 @@ export class CameraSource extends LitUploaderBlock {
 
   private _mediaRecorder: MediaRecorder | null = null;
 
+  /** What the recorder records: the camera stream, or a canvas that crops and mirrors it like a photo. */
+  private _recordingSource: RecordingSource | null = null;
+
+  /** The recording under review has its mirroring baked in, so the preview must not mirror it again. */
+  @state()
+  private _playbackMirrored = false;
+
   private _stream: MediaStream | null = null;
 
+  @state()
   private _selectedAudioId: string | null = null;
 
+  @state()
   private _selectedCameraId: string | null = null;
 
+  @state()
   private _activeTab: CameraMode | null = null;
   private _options: MediaRecorderOptions = {};
-  private _canvas: HTMLCanvasElement | null = null;
-  private _ctx: CanvasRenderingContext2D | null = null;
+  /** The photo under review, as the JPEG it will be sent as. A retake drops it. */
+  private _photo: Promise<Blob> | null = null;
   private _cameraDevices: CameraDeviceOption[] = [];
   private _audioDevices: AudioDeviceOption[] = [];
   private _permissionResponses: Partial<Record<(typeof DEFAULT_PERMISSIONS)[number], PermissionStatus>> = {};
   private _permissionCleanupFns: Array<() => void> = [];
   private _currentVideoSource: MediaStream | null = null;
 
+  // Both guard against a teardown: removing the playing preview fires `pause` after the context is gone, and an icon
+  // re-rendering then can't reach its shared instances.
   private readonly _handlePreviewPlay = (): void => {
+    if (!this.isConnected) return;
     this._startTimeline();
     this._currentTimelineIcon = 'pause';
   };
 
   private readonly _handlePreviewPause = (): void => {
-    this._currentTimelineIcon = 'play';
     this._stopTimeline();
+    if (!this.isConnected) return;
+    this._currentTimelineIcon = 'play';
   };
 
   private _timerRef = createRef<HTMLElement>();
@@ -94,6 +112,28 @@ export class CameraSource extends LitUploaderBlock {
 
   @state()
   private _videoTransformCss: string | null = null;
+
+  /**
+   * The user's picks in the settings picker, as option values. `null` until the user picks, in which case the first
+   * listed value applies; a config change clears them again. They never write back to the config.
+   */
+  @state()
+  private _pickedAspectRatio: string | null = null;
+
+  @state()
+  private _pickedResolution: CameraResolution | null = null;
+
+  @state()
+  private _pickedAudioQuality: CameraAudioQuality | null = null;
+
+  @state()
+  private _pickedAudioMode: CameraAudioMode | null = null;
+
+  /** The largest short side the open camera reports, to leave out resolutions it can't do. */
+  @state()
+  private _maxShortSide: number | null = null;
+
+  private readonly _settingsPopoverId = `uc-camera-settings-${UID.generateFastUid()}`;
 
   @state()
   private _videoHidden = true;
@@ -108,37 +148,30 @@ export class CameraSource extends LitUploaderBlock {
   private _cameraSelectOptions: CameraDeviceOption[] = [];
 
   @state()
-  private _cameraSelectHidden = true;
-
-  @state()
   private _l10nMessage = '';
 
   @state()
   private _timerHidden = true;
 
   @state()
-  private _cameraHidden = true;
-
-  @state()
   private _cameraActionsHidden = true;
+
+  /** The last permission state shown. Together with `_captureState`, it decides which controls are on screen. */
+  @state()
+  private _permissionState: 'granted' | 'denied' | 'prompt' = 'prompt';
+
+  /** `live` while framing a shot, `recording` while recording, `review` while a photo or clip waits for retake or accept. */
+  @state()
+  private _captureState: 'live' | 'recording' | 'review' = 'live';
 
   @state()
   private _audioSelectOptions: AudioDeviceOption[] = [];
-
-  @state()
-  private _audioSelectHidden = true;
 
   @state()
   private _audioSelectDisabled = true;
 
   @state()
   private _audioToggleMicrophoneHidden = true;
-
-  @state()
-  private _tabCameraHidden = true;
-
-  @state()
-  private _tabVideoHidden = true;
 
   @state()
   private _currentIcon = 'camera-full';
@@ -160,6 +193,11 @@ export class CameraSource extends LitUploaderBlock {
           event: 'start-camera',
           node: this.tagName,
           tabId: this._activeTab,
+          hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
+          aspectRatio: this._aspectRatioValue,
+          resolution: this._resolution,
+          audioQuality: this._audioQuality,
+          audioMode: this._audioMode,
         },
       },
     });
@@ -193,7 +231,7 @@ export class CameraSource extends LitUploaderBlock {
       return;
     }
     this._selectedAudioId = target.value;
-    void this._capture();
+    void this._applyAudioConstraints();
   };
 
   private _handleRequestPermissions = (): void => {
@@ -208,6 +246,11 @@ export class CameraSource extends LitUploaderBlock {
           event: 'shot-camera',
           node: this.tagName,
           tabId: this._activeTab,
+          hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
+          aspectRatio: this._aspectRatioValue,
+          resolution: this._resolution,
+          audioQuality: this._audioQuality,
+          audioMode: this._audioMode,
         },
       },
     });
@@ -329,19 +372,34 @@ export class CameraSource extends LitUploaderBlock {
       this._options = {
         ...this.cfg.mediaRecorderOptions,
       };
-
-      const { mimeType } = this.cfg.mediaRecorderOptions || {};
-
-      if (mimeType && MediaRecorder.isTypeSupported(mimeType)) {
-        this._options.mimeType = mimeType;
-      } else if (MediaRecorder.isTypeSupported(DEFAULT_VIDEO_FORMAT)) {
-        this._options.mimeType = DEFAULT_VIDEO_FORMAT;
-      } else {
-        this._options.mimeType = 'video/mp4';
+      const audioBits = audioBitsPerSecond(this.cfg.mediaRecorderOptions, this._audioQuality);
+      if (audioBits !== undefined) {
+        this._options.audioBitsPerSecond = audioBits;
       }
 
+      const mimeType = pickVideoMimeType({
+        explicit: this.cfg.mediaRecorderOptions?.mimeType,
+        formats: this.cfg.cameraVideoFormats,
+        isSupported: (type) => MediaRecorder.isTypeSupported(type),
+      });
+      if (mimeType) {
+        this._options.mimeType = mimeType;
+      } else {
+        // An unsupported type would make the recorder throw: let the browser choose instead.
+        delete this._options.mimeType;
+      }
+
+      const videoEl = this._videoRef.value;
       if (this._stream) {
-        this._mediaRecorder = new MediaRecorder(this._stream, this._options);
+        this._recordingSource = videoEl
+          ? createRecordingSource({
+              video: videoEl,
+              stream: this._stream,
+              aspectRatio: this._aspectRatio,
+              mirror: this.cfg.cameraMirror,
+            })
+          : null;
+        this._mediaRecorder = new MediaRecorder(this._recordingSource?.stream ?? this._stream, this._options);
         this._mediaRecorder.start();
 
         this._mediaRecorder.addEventListener('dataavailable', (event: BlobEvent) => {
@@ -361,11 +419,20 @@ export class CameraSource extends LitUploaderBlock {
 
   private _stopRecording = (): void => {
     this._mediaRecorder?.addEventListener('stop', () => {
+      // Before the preview switches to the recording, or the canvas would start drawing the playback.
+      this._stopRecordingSource();
       this._previewVideo();
 
       this._stopTimer();
 
       this._setCameraState(CameraSourceEvents.STOP);
+
+      if (this._videoConstraintsPending) {
+        void this._applyVideoConstraints();
+      }
+      if (this._audioConstraintsPending) {
+        void this._applyAudioConstraints();
+      }
     });
 
     this._mediaRecorder?.stop();
@@ -382,6 +449,12 @@ export class CameraSource extends LitUploaderBlock {
       },
     });
   };
+
+  private _stopRecordingSource(): void {
+    this._playbackMirrored = this._recordingSource?.mirrored ?? false;
+    this._recordingSource?.stop();
+    this._recordingSource = null;
+  }
 
   /** This method is used to toggle recording pause/resume */
   private _toggleRecording = (): void => {
@@ -469,6 +542,7 @@ export class CameraSource extends LitUploaderBlock {
 
   private _retake = (): void => {
     this._setCameraState(CameraSourceEvents.RETAKE);
+    this._photo = null;
 
     /** Reset video */
     if (this._activeTab === CameraSourceTypes.VIDEO) {
@@ -486,13 +560,14 @@ export class CameraSource extends LitUploaderBlock {
     this._setCameraState(CameraSourceEvents.ACCEPT);
 
     if (this._activeTab === CameraSourceTypes.PHOTO) {
-      this._canvas?.toBlob((blob) => {
-        if (!blob) {
-          return;
-        }
-        const file = this._createFile('camera', 'jpeg', DEFAULT_PICTURE_FORMAT, blob);
-        this._toSend(file);
-      }, DEFAULT_PICTURE_FORMAT);
+      void this._photo?.then(
+        (blob) => this._toSend(this._createFile('camera', 'jpeg', DEFAULT_PICTURE_FORMAT, blob)),
+        (error: unknown) => {
+          console.error('Failed to create the photo', error);
+          this.telemetryManager.sendEventError(error, 'camera capturing. Failed to create the photo');
+        },
+      );
+      this._photo = null;
       return;
     }
 
@@ -501,7 +576,7 @@ export class CameraSource extends LitUploaderBlock {
     });
 
     const ext = this._guessExtensionByMime(this._mediaRecorder?.mimeType);
-    const file = this._createFile('video', ext, `video/${ext}`, blob);
+    const file = this._createFile('video', ext, recordingFileType(this._mediaRecorder?.mimeType), blob);
 
     this._toSend(file);
     this._chunks = [];
@@ -509,51 +584,40 @@ export class CameraSource extends LitUploaderBlock {
 
   private _handlePhoto = (status: CameraStatus): void => {
     if (status === CameraSourceEvents.SHOT) {
-      this._tabVideoHidden = true;
-      this._cameraHidden = true;
-      this._tabCameraHidden = true;
+      this._captureState = 'review';
       this._cameraActionsHidden = false;
-      this._cameraSelectHidden = true;
     }
 
     if (status === CameraSourceEvents.RETAKE || status === CameraSourceEvents.ACCEPT) {
-      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
-      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this._cameraHidden = false;
+      this._captureState = 'live';
       this._cameraActionsHidden = true;
-      this._cameraSelectHidden = this._cameraDevices.length <= 1;
     }
   };
 
   private _handleVideo = (status: CameraStatus): void => {
     if (status === CameraSourceEvents.PLAY) {
+      this._captureState = 'recording';
       this._timerHidden = false;
-      this._tabCameraHidden = true;
-      this._cameraSelectHidden = true;
-      this._audioSelectHidden = true;
       this._currentTimelineIcon = 'pause';
       this._currentIcon = 'square';
       this._mutableClassButton = 'uc-shot-btn uc-camera-action uc-stop-record';
     }
 
     if (status === CameraSourceEvents.STOP) {
+      this._captureState = 'review';
       this._timerHidden = false;
-      this._cameraHidden = true;
       this._audioToggleMicrophoneHidden = true;
       this._cameraActionsHidden = false;
     }
 
     if (status === CameraSourceEvents.RETAKE || status === CameraSourceEvents.ACCEPT) {
+      this._captureState = 'live';
+      this._playbackMirrored = false;
       this._timerHidden = true;
-      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
-      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this._cameraHidden = false;
       this._cameraActionsHidden = true;
       this._audioToggleMicrophoneHidden = !this.cfg.enableAudioRecording;
       this._currentIcon = 'video-camera-full';
       this._mutableClassButton = 'uc-shot-btn uc-camera-action';
-      this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
-      this._cameraSelectHidden = this._cameraDevices.length <= 1;
     }
   };
 
@@ -581,25 +645,22 @@ export class CameraSource extends LitUploaderBlock {
   private _shot(): void {
     this._setCameraState('shot');
 
-    this._canvas = document.createElement('canvas');
-    this._ctx = this._canvas.getContext('2d');
-
-    if (!this._ctx) {
-      throw new Error('Failed to get canvas context');
-    }
     const videoEl = this._videoRef.value;
     if (!videoEl) {
       throw new Error('Video element not found');
     }
-    this._canvas.height = videoEl.videoHeight;
-    this._canvas.width = videoEl.videoWidth;
+    const options: PhotoOptions = {
+      width: videoEl.videoWidth,
+      height: videoEl.videoHeight,
+      aspectRatio: this._aspectRatio,
+      mirror: this.cfg.cameraMirror,
+      quality: this.cfg.cameraPhotoQuality,
+    };
 
-    if (this.cfg.cameraMirror) {
-      this._ctx.translate(this._canvas.width, 0);
-      this._ctx.scale(-1, 1);
-    }
-
-    this._ctx.drawImage(videoEl, 0, 0);
+    // The preview frame as the shutter is pressed. `ImageCapture.takePhoto()` was tried instead: with a real camera the
+    // preview changed after a shot and a retake, most likely because taking a still switches some cameras into a photo
+    // mode.
+    this._photo = renderPhoto(videoEl, options);
     // TODO: There are troubles with this, image isn't freezed after shot due to rendering in progress
     videoEl.pause();
   }
@@ -607,14 +668,12 @@ export class CameraSource extends LitUploaderBlock {
   private _handleActiveTab = (tabId: CameraMode): void => {
     if (tabId === CameraSourceTypes.PHOTO) {
       this._currentIcon = 'camera-full';
-      this._audioSelectHidden = true;
       this._audioToggleMicrophoneHidden = true;
     }
 
     if (tabId === CameraSourceTypes.VIDEO) {
       this._currentTimelineIcon = 'play';
       this._currentIcon = 'video-camera-full';
-      this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
       this._audioToggleMicrophoneHidden = !this.cfg.enableAudioRecording;
     }
 
@@ -630,6 +689,12 @@ export class CameraSource extends LitUploaderBlock {
     });
 
     this._activeTab = tabId;
+
+    // Only the function form can differ between modes.
+    if (typeof this.cfg.cameraConstraints === 'function') {
+      void this._applyVideoConstraints();
+      void this._applyAudioConstraints();
+    }
   };
 
   private _createFile = (type: 'camera' | 'video', ext: string, format: string, blob: Blob): File => {
@@ -686,46 +751,211 @@ export class CameraSource extends LitUploaderBlock {
     this.routerLayer.navigateAfterFileAdd();
   };
 
+  // Each of these options takes one value, or a list for a picker. The value in effect is the user's pick, else the
+  // first listed value.
+
+  private get _aspectRatioOptions(): string[] {
+    return parseAspectRatioOptions(this.cfg.cameraAspectRatio);
+  }
+
+  /** The ratio option in effect, `native` for the camera's own shape. */
+  private get _aspectRatioChoice(): string {
+    return this._pickedAspectRatio ?? this._aspectRatioOptions[0] ?? NATIVE_ASPECT_RATIO;
+  }
+
+  /** Width / height in effect, or `null` for the camera's native shape. */
+  private get _aspectRatio(): number | null {
+    return toRatio(this._aspectRatioChoice) ?? null;
+  }
+
+  /** The listed resolutions the camera can do. */
+  private get _resolutionOptions(): CameraResolution[] {
+    return filterResolutionOptions(parseOptions(this.cfg.cameraResolution, RESOLUTIONS), this._maxShortSide);
+  }
+
+  /** A single value is a request rather than a picker option, so it applies even above what the camera reports. */
+  private get _resolution(): CameraResolution {
+    return (
+      this._pickedResolution ??
+      this._resolutionOptions[0] ??
+      parseOptions(this.cfg.cameraResolution, RESOLUTIONS)[0] ??
+      'auto'
+    );
+  }
+
+  private get _audioQualityOptions(): CameraAudioQuality[] {
+    return parseOptions(this.cfg.cameraAudioQuality, AUDIO_QUALITIES);
+  }
+
+  private get _audioQuality(): CameraAudioQuality {
+    return this._pickedAudioQuality ?? this._audioQualityOptions[0] ?? 'auto';
+  }
+
+  private get _audioModeOptions(): CameraAudioMode[] {
+    return parseOptions(this.cfg.cameraAudioMode, AUDIO_MODES);
+  }
+
+  private get _audioMode(): CameraAudioMode {
+    return this._pickedAudioMode ?? this._audioModeOptions[0] ?? 'voice';
+  }
+
+  /** Audio pickers only matter where sound is recorded: the video tab, with audio recording on. */
+  private get _isAudioPickerContext(): boolean {
+    return this._activeTab === CameraSourceTypes.VIDEO && this.cfg.enableAudioRecording;
+  }
+
+  private get _isAspectRatioPickerHidden(): boolean {
+    return this._aspectRatioOptions.length < 2;
+  }
+
+  private get _isResolutionPickerHidden(): boolean {
+    return this._resolutionOptions.length < 2;
+  }
+
+  /** Unlike the other pickers this one needs no config: it offers the microphones there are, as the bottom bar did. */
+  private get _isMicrophonePickerHidden(): boolean {
+    return this._audioSelectOptions.length < 2 || !this._isAudioPickerContext;
+  }
+
+  private get _isAudioQualityPickerHidden(): boolean {
+    return this._audioQualityOptions.length < 2 || !this._isAudioPickerContext;
+  }
+
+  private get _isAudioModePickerHidden(): boolean {
+    return this._audioModeOptions.length < 2 || !this._isAudioPickerContext;
+  }
+
+  private get _isSettingsHidden(): boolean {
+    return (
+      this._permissionState !== 'granted' ||
+      this._captureState !== 'live' ||
+      (this._isAspectRatioPickerHidden &&
+        this._isResolutionPickerHidden &&
+        this._isMicrophonePickerHidden &&
+        this._isAudioQualityPickerHidden &&
+        this._isAudioModePickerHidden)
+    );
+  }
+
+  private _handleAspectRatioPick = (event: Event): void => {
+    const value = (event.target as { value?: string } | null)?.value;
+    if (!value) return;
+    this._pickedAspectRatio = value;
+    this._sendSettingChange('aspectRatio', value);
+    void this._applyVideoConstraints();
+  };
+
+  private _handleResolutionPick = (event: Event): void => {
+    const value = (event.target as { value?: string } | null)?.value as CameraResolution | undefined;
+    if (!value) return;
+    this._pickedResolution = value;
+    this._sendSettingChange('resolution', value);
+    void this._applyVideoConstraints();
+  };
+
+  /** The bitrate is set when a recording starts, so there is nothing to apply until the next one. */
+  private _handleAudioQualityPick = (event: Event): void => {
+    const value = (event.target as { value?: string } | null)?.value as CameraAudioQuality | undefined;
+    if (!value) return;
+    this._pickedAudioQuality = value;
+    this._sendSettingChange('audioQuality', value);
+  };
+
+  private _handleAudioModePick = (event: Event): void => {
+    const value = (event.target as { value?: string } | null)?.value as CameraAudioMode | undefined;
+    if (!value) return;
+    this._pickedAudioMode = value;
+    this._sendSettingChange('audioMode', value);
+    void this._applyAudioConstraints();
+  };
+
+  private _audioQualityLabel(value: CameraAudioQuality): string {
+    return value === 'auto' ? this.l10n('camera-setting-auto') : this.l10n(`camera-audio-quality-${value}`);
+  }
+
+  private _audioModeLabel(value: CameraAudioMode): string {
+    return this.l10n(`camera-audio-mode-${value}`);
+  }
+
+  private _aspectRatioLabel(value: string): string {
+    return value === NATIVE_ASPECT_RATIO ? this.l10n('camera-aspect-ratio-native') : value;
+  }
+
+  private _resolutionLabel(value: CameraResolution): string {
+    return value === 'auto' ? this.l10n('camera-setting-auto') : value.toUpperCase();
+  }
+
+  private _sendSettingChange(
+    setting: 'aspectRatio' | 'resolution' | 'audioQuality' | 'audioMode',
+    value: string,
+  ): void {
+    this.telemetryManager.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: {
+        metadata: {
+          event: 'camera-setting-change',
+          node: this.tagName,
+          tabId: this._activeTab,
+          setting,
+          value,
+        },
+      },
+    });
+  }
+
+  /** The ratio in effect for telemetry: `''` for the native shape. */
+  private get _aspectRatioValue(): string {
+    return this._aspectRatioChoice === NATIVE_ASPECT_RATIO ? '' : this._aspectRatioChoice;
+  }
+
+  /** Photos and recordings are both cropped to the ratio, so the preview shows the same crop in either mode. */
+  private get _isPreviewCropped(): boolean {
+    return this._aspectRatio !== null;
+  }
+
+  private _isTabHidden(mode: CameraMode): boolean {
+    return this._permissionState !== 'granted' || this._captureState !== 'live' || !this._cameraModes.includes(mode);
+  }
+
+  private get _isShutterHidden(): boolean {
+    return this._permissionState !== 'granted' || this._captureState === 'review';
+  }
+
+  private get _isCameraSelectHidden(): boolean {
+    return this._captureState !== 'live' || this._cameraSelectOptions.length <= 1;
+  }
+
   private get _cameraModes(): CameraMode[] {
     return stringToArray(this.cfg.cameraModes).filter(
       (mode): mode is CameraMode => mode === CameraSourceTypes.PHOTO || mode === CameraSourceTypes.VIDEO,
     );
   }
 
+  /** Only updates the UI; stopping the stream is always an explicit `_stopCapture()` call. */
   private _setPermissionsState = debounce((state: 'granted' | 'denied' | 'prompt') => {
     this.classList.toggle('uc-initialized', state === 'granted');
+    this._permissionState = state;
 
     const visibleAudio = this._activeTab === CameraSourceTypes.VIDEO && this.cfg.enableAudioRecording;
     const currentIcon = this._activeTab === CameraSourceTypes.PHOTO ? 'camera-full' : 'video-camera-full';
 
     if (state === 'granted') {
       this._videoHidden = false;
-      this._cameraHidden = false;
-      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
       this._messageHidden = true;
       this._timerHidden = true;
       this._currentIcon = currentIcon;
       this._audioToggleMicrophoneHidden = !visibleAudio;
-      this._audioSelectHidden = !visibleAudio;
     } else if (state === 'prompt') {
       this._l10nMessage = 'camera-permissions-prompt';
       this._videoHidden = true;
-      this._cameraHidden = true;
-      this._tabCameraHidden = true;
       this._messageHidden = false;
-
-      this._stopCapture();
     } else {
       this._l10nMessage = 'camera-permissions-denied';
       this._videoHidden = true;
       this._messageHidden = false;
-      this._tabCameraHidden = !this._cameraModes.includes(CameraSourceTypes.PHOTO);
-      this._tabVideoHidden = !this._cameraModes.includes(CameraSourceTypes.VIDEO);
+      this._captureState = 'live';
       this._cameraActionsHidden = true;
       this._mutableClassButton = 'uc-shot-btn uc-camera-action';
-
-      this._stopCapture();
     }
   }, 300);
 
@@ -745,66 +975,244 @@ export class CameraSource extends LitUploaderBlock {
     return true;
   };
 
+  /** The stream ended without us stopping it, e.g. the permission was revoked or the device was unplugged. */
+  private _handleStreamInactive = (): void => {
+    this._stopCapture();
+    this._setPermissionsState('denied');
+  };
+
   private _stopCapture = (): void => {
     if (this._capturing) {
       if (this._videoRef.value) {
         this._videoRef.value.volume = 0;
       }
+      // Detach first: stopping the tracks ourselves must not be reported as an external stop.
+      this._stream?.removeEventListener('inactive', this._handleStreamInactive);
       const tracks = this._currentVideoSource?.getTracks?.();
       tracks?.[0]?.stop();
       this._detachPreviewListeners(this._videoRef.value);
       this._setVideoSource(null);
+      this._stopRecordingSource();
 
       this._makeStreamInactive();
+      this._stream = null;
       this._stopTimer();
 
       this._capturing = false;
     }
   };
 
-  private _capture = async (): Promise<void> => {
-    const constraints: MediaStreamConstraints = {
-      video: { ...DEFAULT_VIDEO_CONFIG },
-      audio: this.cfg.enableAudioRecording ? ({} as MediaTrackConstraints) : false,
+  /** Incremented on every `_capture()` call, so a slower, older `getUserMedia` call can tell it was superseded. */
+  private _captureId = 0;
+
+  /** The mode the camera is opening for: the active tab, or the tab that is about to become active. */
+  private get _currentMode(): CameraMode {
+    return this._activeTab ?? this._cameraModes[0] ?? CameraSourceTypes.PHOTO;
+  }
+
+  private get _constraintsInput(): BuildConstraintsInput {
+    return {
+      mode: this._currentMode,
+      enableAudio: this.cfg.enableAudioRecording,
+      audioMode: this._audioMode,
+      aspectRatio: this._aspectRatio,
+      resolution: this._resolution,
+      custom: this.cfg.cameraConstraints,
+      cameraId: this._selectedCameraId,
+      audioId: this._selectedAudioId,
     };
+  }
 
-    if (this._selectedCameraId) {
-      constraints.video = {
-        deviceId: {
-          exact: this._selectedCameraId,
-        },
-      } as MediaTrackConstraints;
-    }
+  /**
+   * Opens the stream. If `cameraConstraints` asks for something the camera can't do, opens it once more without them
+   * rather than showing the camera as denied.
+   */
+  private async _openStream(): Promise<{
+    stream: MediaStream;
+    requested: MediaTrackConstraints;
+    requestedAudio: MediaStreamConstraints['audio'];
+  }> {
+    const input = this._constraintsInput;
+    const constraints = buildConstraints(input);
+    const requested = { requested: constraints.video, requestedAudio: constraints.audio };
+    try {
+      return { stream: await navigator.mediaDevices.getUserMedia(constraints), ...requested };
+    } catch (error) {
+      if (!input.custom || (error as Error | null)?.name !== 'OverconstrainedError') {
+        throw error;
+      }
+      console.warn('The camera cannot satisfy cameraConstraints, opening it without them', error);
+      this.telemetryManager.sendEventError(error, 'camera capturing. cameraConstraints could not be satisfied');
 
-    if (this._selectedAudioId && this.cfg.enableAudioRecording) {
-      constraints.audio = {
-        deviceId: {
-          exact: this._selectedAudioId,
-        },
-      } as MediaTrackConstraints;
+      const fallback = buildConstraints({ ...input, custom: null });
+      // Reported as the original request, so the apply methods don't retry the same rejected constraints.
+      return { stream: await navigator.mediaDevices.getUserMedia(fallback), ...requested };
     }
+  }
+
+  private _capture = async (): Promise<void> => {
+    const captureId = ++this._captureId;
 
     // Mute the video to prevent feedback for Firefox
     if (this._videoRef.value) {
       this._videoRef.value.volume = 0;
     }
 
+    // Many mobile devices can't open two cameras at once, so the old stream has to go before asking for the new one.
+    this._stopCapture();
+
     try {
       this._setPermissionsState('prompt');
-      this._stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const { stream, requested, requestedAudio } = await this._openStream();
 
-      this._stream.addEventListener('inactive', () => {
-        this._setPermissionsState('denied');
-      });
+      if (captureId !== this._captureId) {
+        for (const track of stream.getTracks()) {
+          track.stop();
+        }
+        return;
+      }
+
+      this._stream = stream;
+      this._requestedVideoConstraints = JSON.stringify(requested);
+      this._requestedAudioConstraints = JSON.stringify(requestedAudio);
+      this._stream.addEventListener('inactive', this._handleStreamInactive);
 
       this._setVideoSource(this._stream);
       this._capturing = true;
       this._setPermissionsState('granted');
+
+      // Another camera may not do the picked preset: start the quality picker over if it's no longer offered.
+      this._maxShortSide = maxShortSideOf(stream.getVideoTracks()[0]);
+      if (this._pickedResolution !== null && !this._resolutionOptions.includes(this._pickedResolution)) {
+        this._pickedResolution = null;
+        void this._applyVideoConstraints();
+      }
     } catch (error) {
+      if (captureId !== this._captureId) {
+        return;
+      }
       this._setPermissionsState('denied');
       console.log('Failed to capture camera', error);
       this.telemetryManager.sendEventError(error, 'camera capturing. Failed to capture camera');
     }
+  };
+
+  /** The video constraints last asked of the open camera, serialized to compare against the next request. */
+  private _requestedVideoConstraints: string | null = null;
+
+  /** Set when the video constraints changed during a recording; they are applied once it stops. */
+  private _videoConstraintsPending = false;
+
+  /**
+   * Applies changed video constraints to the open camera without reopening it, so there is no new permission prompt
+   * and no black frame. Audio constraints need a new stream and wait for the next capture.
+   */
+  private _applyVideoConstraints = async (): Promise<void> => {
+    const track = this._stream?.getVideoTracks()[0];
+    if (!this._capturing || !track) {
+      return;
+    }
+    if (this._mediaRecorder?.state === 'recording') {
+      this._videoConstraintsPending = true;
+      return;
+    }
+    this._videoConstraintsPending = false;
+
+    const { video } = buildConstraints(this._constraintsInput);
+    const serialized = JSON.stringify(video);
+    if (serialized === this._requestedVideoConstraints) {
+      return;
+    }
+    this._requestedVideoConstraints = serialized;
+
+    try {
+      await track.applyConstraints(video);
+    } catch (error) {
+      console.warn('The camera cannot satisfy cameraConstraints, keeping the current settings', error);
+      this.telemetryManager.sendEventError(error, 'camera capturing. cameraConstraints could not be applied');
+    }
+  };
+
+  /** The audio constraints last asked of the open microphone, serialized to compare against the next request. */
+  private _requestedAudioConstraints: string | null = null;
+
+  /** Set when the audio constraints changed during a recording; they are applied once it stops. */
+  private _audioConstraintsPending = false;
+
+  /**
+   * Once the device list names the devices already in use, asking for them by id is the same request, not a change.
+   * Without this, the first unrelated change would reopen the microphone for nothing.
+   */
+  private _syncRequestedConstraints(): void {
+    const stream = this._stream;
+    if (!this._capturing || !stream) {
+      return;
+    }
+    const { video, audio } = buildConstraints(this._constraintsInput);
+    if (this._selectedCameraId && this._selectedCameraId === stream.getVideoTracks()[0]?.getSettings().deviceId) {
+      this._requestedVideoConstraints = JSON.stringify(video);
+    }
+    if (
+      audio &&
+      this._selectedAudioId &&
+      this._selectedAudioId === stream.getAudioTracks()[0]?.getSettings().deviceId
+    ) {
+      this._requestedAudioConstraints = JSON.stringify(audio);
+    }
+  }
+
+  /** Incremented on every microphone swap, so a slower, older one can tell it was superseded. */
+  private _audioSwapId = 0;
+
+  /**
+   * Applies changed microphone settings by opening the microphone again and swapping its track into the stream; the
+   * camera keeps running. A live track can't be changed instead: Chromium ignores processing changes on one and
+   * refuses stereo.
+   */
+  private _applyAudioConstraints = async (): Promise<void> => {
+    const stream = this._stream;
+    if (!this._capturing || !stream || !this.cfg.enableAudioRecording) {
+      return;
+    }
+    if (this._mediaRecorder?.state === 'recording') {
+      this._audioConstraintsPending = true;
+      return;
+    }
+    this._audioConstraintsPending = false;
+
+    const { audio } = buildConstraints(this._constraintsInput);
+    const serialized = JSON.stringify(audio);
+    if (!audio || serialized === this._requestedAudioConstraints) {
+      return;
+    }
+    this._requestedAudioConstraints = serialized;
+    const swapId = ++this._audioSwapId;
+
+    // The new microphone opens before the old one stops, so a failure keeps the sound that was working.
+    let next: MediaStream;
+    try {
+      next = await navigator.mediaDevices.getUserMedia({ audio });
+    } catch (error) {
+      console.warn('Failed to apply the microphone settings, keeping the current ones', error);
+      this.telemetryManager.sendEventError(error, 'camera capturing. Failed to reopen the microphone');
+      return;
+    }
+    const [track] = next.getAudioTracks();
+    if (swapId !== this._audioSwapId || this._stream !== stream || !track) {
+      for (const stale of next.getTracks()) {
+        stale.stop();
+      }
+      return;
+    }
+
+    const previous = stream.getAudioTracks();
+    // A muted microphone stays muted.
+    track.enabled = previous.every((old) => old.enabled);
+    for (const old of previous) {
+      stream.removeTrack(old);
+      old.stop();
+    }
+    stream.addTrack(track);
   };
 
   private _handlePermissionsChange = (): void => {
@@ -832,7 +1240,6 @@ export class CameraSource extends LitUploaderBlock {
       this._teardownPermissionListeners();
       console.log('Failed to use permissions API. Fallback to manual request mode.', error);
       this.telemetryManager.sendEventError(error, 'camera permissions. Failed to use permissions API');
-      this._capture();
     }
   };
 
@@ -847,21 +1254,26 @@ export class CameraSource extends LitUploaderBlock {
     this._unsubPermissions = null;
   }
 
-  private _requestDeviceAccess = async (): Promise<void> => {
-    try {
-      await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: this.cfg.enableAudioRecording,
-      });
-      await this._getDevices();
-
-      navigator.mediaDevices.addEventListener('devicechange', this._getDevices);
-    } catch (error) {
-      this.telemetryManager.sendEventError(error, 'camera devices. Failed to get user media');
-      console.log('Failed to get user media', error);
+  /**
+   * Picks the option to show as selected: the current choice if that device is still there, otherwise the device the
+   * open stream actually uses, otherwise the first one.
+   */
+  private _resolveSelectedId(
+    options: Array<{ value: string }>,
+    currentId: string | null,
+    track: MediaStreamTrack | undefined,
+  ): string | null {
+    if (currentId && options.some((option) => option.value === currentId)) {
+      return currentId;
     }
-  };
+    const activeId = track?.getSettings().deviceId;
+    if (activeId && options.some((option) => option.value === activeId)) {
+      return activeId;
+    }
+    return options[0]?.value ?? null;
+  }
 
+  /** Device labels are only exposed once permission is granted, so this runs after a successful capture. */
   private _getDevices = async (): Promise<void> => {
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
@@ -883,12 +1295,19 @@ export class CameraSource extends LitUploaderBlock {
         : [];
 
       this._cameraSelectOptions = this._cameraDevices;
-      this._cameraSelectHidden = this._cameraDevices.length <= 1;
-      this._selectedCameraId = this._cameraDevices[0]?.value ?? null;
+      this._selectedCameraId = this._resolveSelectedId(
+        this._cameraDevices,
+        this._selectedCameraId,
+        this._stream?.getVideoTracks()[0],
+      );
 
       this._audioSelectOptions = this._audioDevices;
-      this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
-      this._selectedAudioId = this._audioDevices[0]?.value ?? null;
+      this._selectedAudioId = this._resolveSelectedId(
+        this._audioDevices,
+        this._selectedAudioId,
+        this._stream?.getAudioTracks()[0],
+      );
+      this._syncRequestedConstraints();
     } catch (error) {
       this.telemetryManager.sendEventError(error, 'camera devices. Failed to get devices');
       console.log('Failed to get devices', error);
@@ -897,8 +1316,9 @@ export class CameraSource extends LitUploaderBlock {
 
   private _onActivate = async (): Promise<void> => {
     await this._permissionAccess();
-    await this._requestDeviceAccess();
     await this._capture();
+    await this._getDevices();
+    navigator.mediaDevices?.addEventListener('devicechange', this._getDevices);
 
     this._handleCameraModes(this._cameraModes);
   };
@@ -908,18 +1328,15 @@ export class CameraSource extends LitUploaderBlock {
       this._unsubPermissions();
     }
 
-    /** Calling this method here because safari and firefox don't support the inactive event yet */
-    const isChromium = Boolean((window as Window & { chrome?: unknown }).chrome);
-    if (!isChromium) {
-      this._setPermissionsState('denied');
-    }
+    // `_stopCapture()` detaches the `inactive` listener before stopping, so the UI is reset here in every browser.
+    this._setPermissionsState('denied');
 
     this._stopCapture();
   };
 
   private _handleCameraModes = (cameraModes: CameraMode[]): void => {
-    this._tabVideoHidden = !cameraModes.includes(CameraSourceTypes.VIDEO);
-    this._tabCameraHidden = !cameraModes.includes(CameraSourceTypes.PHOTO);
+    // The tabs are derived from `cameraModes`, which isn't reactive state.
+    this.requestUpdate();
 
     const defaultTab = cameraModes[0];
     if (defaultTab && (!this._activeTab || !cameraModes.includes(this._activeTab))) {
@@ -937,6 +1354,37 @@ export class CameraSource extends LitUploaderBlock {
     this.subConfigValue('enableAudioRecording', (val) => {
       this._audioToggleMicrophoneHidden = !val;
       this._audioSelectDisabled = !val;
+    });
+
+    this.subConfigValue('cameraConstraints', () => {
+      void this._applyVideoConstraints();
+      void this._applyAudioConstraints();
+    });
+
+    // A config change clears the user's pick, so the first listed value applies again. The values in effect are read
+    // from the config while rendering, so each change also asks for a render: clearing a pick that was never made
+    // changes no state.
+    this.subConfigValue('cameraAudioQuality', () => {
+      this._pickedAudioQuality = null;
+      this.requestUpdate();
+    });
+
+    this.subConfigValue('cameraAudioMode', () => {
+      this._pickedAudioMode = null;
+      this.requestUpdate();
+      void this._applyAudioConstraints();
+    });
+
+    this.subConfigValue('cameraResolution', () => {
+      this._pickedResolution = null;
+      this.requestUpdate();
+      void this._applyVideoConstraints();
+    });
+
+    this.subConfigValue('cameraAspectRatio', () => {
+      this._pickedAspectRatio = null;
+      this.requestUpdate();
+      void this._applyVideoConstraints();
     });
 
     this.subConfigValue('cameraModes', (val) => {
@@ -987,14 +1435,15 @@ export class CameraSource extends LitUploaderBlock {
         >
           <uc-icon name="back"></uc-icon>
         </button>
-        <div ?hidden=${!this._cameraSelectHidden}>
+        <div ?hidden=${!this._isCameraSelectHidden}>
           <uc-icon name="camera"></uc-icon>
           <span>${this.l10n('caption-camera')}</span>
         </div>
         <uc-select
           class="uc-camera-select"
           .options=${this._cameraSelectOptions}
-          ?hidden=${this._cameraSelectHidden}
+          .value=${this._selectedCameraId ?? ''}
+          ?hidden=${this._isCameraSelectHidden}
           @change=${this._handleCameraSelectChange}
         >
         </uc-select>
@@ -1013,8 +1462,10 @@ export class CameraSource extends LitUploaderBlock {
           muted
           autoplay
           playsinline
+          class=${classMap({ 'uc-cropped': this._isPreviewCropped })}
           style=${styleMap({
-            transform: this._videoTransformCss,
+            transform: this._playbackMirrored ? null : this._videoTransformCss,
+            aspectRatio: this._isPreviewCropped ? String(this._aspectRatio) : null,
           })}
           ?hidden=${this._videoHidden}
           ${ref(this._videoRef)}
@@ -1044,7 +1495,7 @@ export class CameraSource extends LitUploaderBlock {
             aria-label=${this.l10n('src-type-mobile-photo-camera')}
             aria-pressed=${this._activeTab === CameraSourceTypes.PHOTO}
             @click=${this._handleClickTab}
-            ?hidden=${this._tabCameraHidden}
+            ?hidden=${this._isTabHidden(CameraSourceTypes.PHOTO)}
             data-testid="tab-photo"
           >
             <uc-icon name="camera"></uc-icon>
@@ -1060,7 +1511,7 @@ export class CameraSource extends LitUploaderBlock {
             aria-label=${this.l10n('src-type-mobile-video-camera')}
             aria-pressed=${this._activeTab === CameraSourceTypes.VIDEO}
             @click=${this._handleClickTab}
-            ?hidden=${this._tabVideoHidden}
+            ?hidden=${this._isTabHidden(CameraSourceTypes.VIDEO)}
             data-testid="tab-video"
           >
             <uc-icon name="video-camera"></uc-icon>
@@ -1105,7 +1556,7 @@ export class CameraSource extends LitUploaderBlock {
           aria-label=${this.l10n('camera-shot')}
           @click=${this._handleStartCamera}
           class=${this._mutableClassButton}
-          ?hidden=${this._cameraHidden}
+          ?hidden=${this._isShutterHidden}
         >
           <uc-icon name=${this._currentIcon}></uc-icon>
         </button>
@@ -1120,16 +1571,60 @@ export class CameraSource extends LitUploaderBlock {
           >
             <uc-icon name=${this._toggleMicrophoneIcon}></uc-icon>
           </button>
-
-          <uc-select
-            class="uc-audio-select"
-            .options=${this._audioSelectOptions}
-            ?hidden=${this._audioSelectHidden}
-            ?disabled=${this._audioSelectDisabled}
-            @change=${this._handleAudioSelectChange}
-            data-testid="audio-select"
+          <button
+            type="button"
+            class="uc-mini-btn uc-camera-settings-btn"
+            popovertarget=${this._settingsPopoverId}
+            title=${this.l10n('camera-settings')}
+            aria-label=${this.l10n('camera-settings')}
+            ?hidden=${this._isSettingsHidden}
           >
-          </uc-select>
+            <uc-icon name="settings"></uc-icon>
+          </button>
+          <div id=${this._settingsPopoverId} class="uc-camera-settings" popover="auto">
+            <label ?hidden=${this._isAspectRatioPickerHidden}>
+              <span>${this.l10n('camera-aspect-ratio')}</span>
+              <uc-select
+                .options=${this._aspectRatioOptions.map((value) => ({ value, text: this._aspectRatioLabel(value) }))}
+                .value=${this._aspectRatioChoice}
+                @change=${this._handleAspectRatioPick}
+              ></uc-select>
+            </label>
+            <label ?hidden=${this._isResolutionPickerHidden}>
+              <span>${this.l10n('camera-resolution')}</span>
+              <uc-select
+                .options=${this._resolutionOptions.map((value) => ({ value, text: this._resolutionLabel(value) }))}
+                .value=${this._resolution}
+                @change=${this._handleResolutionPick}
+              ></uc-select>
+            </label>
+            <label ?hidden=${this._isMicrophonePickerHidden}>
+              <span>${this.l10n('camera-microphone')}</span>
+              <uc-select
+                class="uc-microphone-select"
+                .options=${this._audioSelectOptions}
+                .value=${this._selectedAudioId ?? ''}
+                ?disabled=${this._audioSelectDisabled}
+                @change=${this._handleAudioSelectChange}
+              ></uc-select>
+            </label>
+            <label ?hidden=${this._isAudioQualityPickerHidden}>
+              <span>${this.l10n('camera-audio-quality')}</span>
+              <uc-select
+                .options=${this._audioQualityOptions.map((value) => ({ value, text: this._audioQualityLabel(value) }))}
+                .value=${this._audioQuality}
+                @change=${this._handleAudioQualityPick}
+              ></uc-select>
+            </label>
+            <label ?hidden=${this._isAudioModePickerHidden}>
+              <span>${this.l10n('camera-audio-mode')}</span>
+              <uc-select
+                .options=${this._audioModeOptions.map((value) => ({ value, text: this._audioModeLabel(value) }))}
+                .value=${this._audioMode}
+                @change=${this._handleAudioModePick}
+              ></uc-select>
+            </label>
+          </div>
         </div>
       </div>
     `;

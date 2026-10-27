@@ -43,6 +43,7 @@ export const configAttributeBehavior = {
   fileValidators: { attribute: false },
   collectionValidators: { attribute: false },
   mediaRecorderOptions: { attribute: false },
+  cameraConstraints: { attribute: false },
   /**
    * Settable either way: the attribute carries a plain token, the property also
    * accepts a resolver. Never reflected — a resolver has no attribute form, and

@@ -69,6 +69,15 @@ describe('documented config options', () => {
       // transcribed from *published* docs only. Remove this entry once that page ships and the fixture is
       // regenerated — see `_source` in public-surface.json.
       'authToken',
+      // New, documented on the fern-docs side together with this release. Same as `authToken`: remove once the page
+      // ships and the fixture is regenerated.
+      'cameraAspectRatio',
+      'cameraAudioMode',
+      'cameraAudioQuality',
+      'cameraConstraints',
+      'cameraPhotoQuality',
+      'cameraResolution',
+      'cameraVideoFormats',
       'cdnCnamePrefixed',
       'externalSourcesEmbedCss',
       'mediaRecorderOptions',
