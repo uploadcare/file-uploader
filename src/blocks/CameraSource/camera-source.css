@@ -54,10 +54,12 @@
     box-shadow: var(--uc-dialog-shadow);
   }
 
+  /* Two columns shared by every row, so labels and selects line up whatever the locale or device names. */
   uc-camera-source .uc-camera-settings:popover-open {
-    display: flex;
-    flex-direction: column;
-    gap: calc(var(--uc-padding) / 2);
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: calc(var(--uc-padding) / 2) var(--uc-padding);
+    align-items: center;
   }
 
   /* Device names can be long; they're cut rather than stretching the popup. */
@@ -68,10 +70,15 @@
   }
 
   uc-camera-source .uc-camera-settings label {
-    display: flex;
-    gap: var(--uc-padding);
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
     align-items: center;
-    justify-content: space-between;
+  }
+
+  /* Every select takes the column's width, up to the 14em cap above. */
+  uc-camera-source .uc-camera-settings label uc-select select {
+    width: 100%;
   }
 
   uc-camera-source .uc-toolbar {
