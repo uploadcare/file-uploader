@@ -3,7 +3,7 @@ import type { Config } from '@/index';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
-/** `cameraQuality` and `cameraPhotoQuality` against chromium's fake camera (`--use-fake-device-for-media-stream`). */
+/** `cameraResolution` and `cameraPhotoQuality` against chromium's fake camera (`--use-fake-device-for-media-stream`). */
 
 const openCamera = async (configProps: Partial<Config> = {}) => {
   const getUserMedia = vi.spyOn(navigator.mediaDevices, 'getUserMedia');
@@ -32,7 +32,7 @@ const takePhoto = async ({ api, camera }: Awaited<ReturnType<typeof openCamera>>
   return entry.file;
 };
 
-describe('cameraQuality', () => {
+describe('cameraResolution', () => {
   it('asks for 1920×1080 by default', async () => {
     const { getUserMedia } = await openCamera();
 
@@ -40,7 +40,7 @@ describe('cameraQuality', () => {
   });
 
   it('sets the short side, with the long side from the aspect ratio', async () => {
-    const { getUserMedia } = await openCamera({ cameraQuality: '720p', cameraAspectRatio: '3:4' });
+    const { getUserMedia } = await openCamera({ cameraResolution: '720p', cameraAspectRatio: '3:4' });
 
     expect(getUserMedia.mock.lastCall?.[0]?.video).toMatchObject({ width: { ideal: 720 }, height: { ideal: 960 } });
   });
@@ -49,7 +49,7 @@ describe('cameraQuality', () => {
     const { config, getUserMedia } = await openCamera();
     const applyConstraints = vi.spyOn(MediaStreamTrack.prototype, 'applyConstraints');
 
-    config.cameraQuality = '720p';
+    config.cameraResolution = '720p';
 
     await vi.waitFor(() =>
       expect(applyConstraints).toHaveBeenCalledWith(
@@ -61,9 +61,9 @@ describe('cameraQuality', () => {
 
   it('falls back to auto for an unknown preset', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
-    const { config } = await openCamera({ cameraQuality: '8k' as Config['cameraQuality'] });
+    const { config } = await openCamera({ cameraResolution: '8k' });
 
-    expect(config.cameraQuality).toBe('auto');
+    expect(config.cameraResolution).toBe('auto');
   });
 });
 

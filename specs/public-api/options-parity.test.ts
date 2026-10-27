@@ -72,15 +72,11 @@ describe('documented config options', () => {
       // New, documented on the fern-docs side together with this release. Same as `authToken`: remove once the page
       // ships and the fixture is regenerated.
       'cameraAspectRatio',
-      'cameraAspectRatioOptions',
       'cameraAudioMode',
-      'cameraAudioModeOptions',
       'cameraAudioQuality',
-      'cameraAudioQualityOptions',
       'cameraConstraints',
       'cameraPhotoQuality',
-      'cameraQuality',
-      'cameraQualityOptions',
+      'cameraResolution',
       'cameraVideoFormats',
       'cdnCnamePrefixed',
       'externalSourcesEmbedCss',

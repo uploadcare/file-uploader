@@ -1,9 +1,9 @@
-import type { CameraQuality } from '../../types/exported';
+import type { CameraAudioMode, CameraAudioQuality, CameraResolution } from '../../types/exported';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { parseAspectRatio } from './aspectRatio';
-import { QUALITY_SHORT_SIDE } from './buildConstraints';
+import { RESOLUTION_SHORT_SIDE } from './buildConstraints';
 
-/** The `cameraAspectRatioOptions` keyword for the camera's own shape, i.e. `cameraAspectRatio: ''`. */
+/** The `cameraAspectRatio` keyword for the camera's own shape, the same as an empty value. */
 export const NATIVE_ASPECT_RATIO = 'native';
 
 /**
@@ -32,15 +32,18 @@ export const toRatio = (value: string): number | null | undefined => {
   }
 };
 
-export const parseQualityOptions = (csv: string): CameraQuality[] => {
-  const known: string[] = ['auto', ...Object.keys(QUALITY_SHORT_SIDE)];
-  return [...new Set(deserializeCsv(csv))].filter((item): item is CameraQuality => known.includes(item));
-};
+/** The values each list option takes. The config validates against them; the pickers keep only these. */
+export const RESOLUTIONS: readonly CameraResolution[] = ['auto', '720p', '1080p', '4k'];
+export const AUDIO_QUALITIES: readonly CameraAudioQuality[] = ['auto', 'low', 'standard', 'high'];
+export const AUDIO_MODES: readonly CameraAudioMode[] = ['voice', 'music'];
 
 /** Leaves out presets above the camera's largest short side. Without a known maximum, every preset stays. */
-export const filterQualityOptions = (options: CameraQuality[], maxShortSide: number | null): CameraQuality[] => {
+export const filterResolutionOptions = (
+  options: CameraResolution[],
+  maxShortSide: number | null,
+): CameraResolution[] => {
   if (maxShortSide === null) return options;
-  return options.filter((option) => option === 'auto' || QUALITY_SHORT_SIDE[option] <= maxShortSide);
+  return options.filter((option) => option === 'auto' || RESOLUTION_SHORT_SIDE[option] <= maxShortSide);
 };
 
 /** The largest short side the camera reports, if it reports one. */
@@ -49,15 +52,6 @@ export const maxShortSideOf = (track: MediaStreamTrack | undefined): number | nu
   const width = capabilities?.width?.max;
   const height = capabilities?.height?.max;
   return width && height ? Math.min(width, height) : null;
-};
-
-/**
- * Where a picker starts: the configured value when it is listed, otherwise the first option. `listed` tells the
- * caller whether to warn about the mismatch.
- */
-export const pickInitial = <T>(options: T[], isConfigured: (option: T) => boolean): { value: T; listed: boolean } => {
-  const configured = options.find(isConfigured);
-  return configured === undefined ? { value: options[0] as T, listed: false } : { value: configured, listed: true };
 };
 
 /** The listed values that are one of `allowed`, in order and without repeats. */

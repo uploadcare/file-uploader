@@ -28,7 +28,7 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
     getUserMedia,
     settingsButton: camera.getByRole('button', { name: 'Camera settings', exact: true, includeHidden: true }),
     ratioPicker: camera.getByRole('combobox', { name: 'Aspect ratio', exact: true, includeHidden: true }),
-    qualityPicker: camera.getByRole('combobox', { name: 'Quality', exact: true, includeHidden: true }),
+    resolutionPicker: camera.getByRole('combobox', { name: 'Resolution', exact: true, includeHidden: true }),
   };
 };
 
@@ -55,27 +55,27 @@ describe('camera settings button', () => {
   });
 
   it('is hidden when a list has a single option', async () => {
-    const { settingsButton } = await openCamera({ cameraAspectRatioOptions: '1:1', cameraQualityOptions: '720p' });
+    const { settingsButton } = await openCamera({ cameraAspectRatio: '1:1', cameraResolution: '720p' });
 
     await expect.element(settingsButton).not.toBeVisible();
   });
 
   it('opens both pickers, labelled', async () => {
     const opened = await openCamera({
-      cameraAspectRatioOptions: 'native, 1:1, 4:3',
-      cameraQualityOptions: 'auto, 720p',
+      cameraAspectRatio: 'native, 1:1, 4:3',
+      cameraResolution: 'auto, 720p',
     });
 
     await opened.settingsButton.click();
 
     await expect.element(opened.ratioPicker).toBeVisible();
-    await expect.element(opened.qualityPicker).toBeVisible();
+    await expect.element(opened.resolutionPicker).toBeVisible();
     expect(optionTexts(opened.ratioPicker)).toEqual(['Original', '1:1', '4:3']);
-    expect(optionTexts(opened.qualityPicker)).toEqual(['Auto', '720P']);
+    expect(optionTexts(opened.resolutionPicker)).toEqual(['Auto', '720P']);
   });
 
   it('hides while a photo waits for review', async () => {
-    const { camera, settingsButton } = await openCamera({ cameraAspectRatioOptions: 'native, 1:1' });
+    const { camera, settingsButton } = await openCamera({ cameraAspectRatio: 'native, 1:1' });
     await expect.element(settingsButton).toBeVisible();
 
     await camera.getByRole('button', { name: 'Shot', exact: true }).click();
@@ -84,7 +84,7 @@ describe('camera settings button', () => {
   });
 
   it('hides while recording', async () => {
-    const { camera, settingsButton } = await openCamera({ cameraQualityOptions: 'auto, 720p' });
+    const { camera, settingsButton } = await openCamera({ cameraResolution: 'auto, 720p' });
     await camera.getByRole('button', { name: 'Video', exact: true }).click();
     await expect.element(settingsButton).toBeVisible();
 
@@ -97,55 +97,54 @@ describe('camera settings button', () => {
 
 describe('aspect ratio picker', () => {
   it('crops the photo to the pick without changing the config', async () => {
-    const opened = await openCamera({ cameraAspectRatioOptions: 'native, 1:1' });
+    const opened = await openCamera({ cameraAspectRatio: 'native, 1:1' });
     await opened.settingsButton.click();
 
     await opened.ratioPicker.selectOptions('1:1');
     const photo = await takePhoto(opened);
 
     expect(photo.width).toBe(photo.height);
-    expect(opened.config.cameraAspectRatio).toBe('');
+    expect(opened.config.cameraAspectRatio).toBe('native, 1:1');
   });
 
   it('is offered in video mode too', async () => {
-    const opened = await openCamera({ cameraAspectRatioOptions: 'native, 1:1', cameraQualityOptions: 'auto, 720p' });
+    const opened = await openCamera({ cameraAspectRatio: 'native, 1:1', cameraResolution: 'auto, 720p' });
     await opened.camera.getByRole('button', { name: 'Video', exact: true }).click();
 
     await opened.settingsButton.click();
 
-    await expect.element(opened.qualityPicker).toBeVisible();
+    await expect.element(opened.resolutionPicker).toBeVisible();
     await expect.element(opened.ratioPicker).toBeVisible();
   });
 
-  it('starts on the first option, with a warning, when the configured ratio is not listed', async () => {
-    const warn = vi.spyOn(console, 'warn');
-    const opened = await openCamera({ cameraAspectRatio: '16:9', cameraAspectRatioOptions: '1:1, 4:3' });
+  it('starts on the first listed ratio', async () => {
+    const opened = await openCamera({ cameraAspectRatio: '1:1, 4:3' });
 
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('not in cameraAspectRatioOptions'));
     await opened.settingsButton.click();
+
     await expect.element(opened.ratioPicker).toHaveValue('1:1');
     const photo = await takePhoto(opened);
     expect(photo.width).toBe(photo.height);
   });
 
   it('starts over when the config changes', async () => {
-    const opened = await openCamera({ cameraAspectRatioOptions: 'native, 1:1, 4:3' });
+    const opened = await openCamera({ cameraAspectRatio: 'native, 1:1, 4:3' });
     await opened.settingsButton.click();
     await opened.ratioPicker.selectOptions('4:3');
 
-    opened.config.cameraAspectRatio = '1:1';
+    opened.config.cameraAspectRatio = '1:1, native';
 
     await expect.element(opened.ratioPicker).toHaveValue('1:1');
   });
 });
 
-describe('quality picker', () => {
+describe('resolution picker', () => {
   it('applies the pick to the open camera without reopening it', async () => {
-    const opened = await openCamera({ cameraQualityOptions: 'auto, 720p' });
+    const opened = await openCamera({ cameraResolution: 'auto, 720p' });
     const applyConstraints = vi.spyOn(MediaStreamTrack.prototype, 'applyConstraints');
     await opened.settingsButton.click();
 
-    await opened.qualityPicker.selectOptions('720p');
+    await opened.resolutionPicker.selectOptions('720p');
 
     await vi.waitFor(() =>
       expect(applyConstraints).toHaveBeenCalledWith(
@@ -153,7 +152,7 @@ describe('quality picker', () => {
       ),
     );
     expect(opened.getUserMedia).toHaveBeenCalledTimes(1);
-    expect(opened.config.cameraQuality).toBe('auto');
+    expect(opened.config.cameraResolution).toBe('auto, 720p');
   });
 
   it('leaves out presets the camera cannot do', async () => {
@@ -161,10 +160,10 @@ describe('quality picker', () => {
       width: { max: 1280 },
       height: { max: 720 },
     });
-    const opened = await openCamera({ cameraQualityOptions: 'auto, 720p, 1080p, 4k' });
+    const opened = await openCamera({ cameraResolution: 'auto, 720p, 1080p, 4k' });
 
     await opened.settingsButton.click();
 
-    expect(optionTexts(opened.qualityPicker)).toEqual(['Auto', '720P']);
+    expect(optionTexts(opened.resolutionPicker)).toEqual(['Auto', '720P']);
   });
 });

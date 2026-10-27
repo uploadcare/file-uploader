@@ -103,6 +103,13 @@ describe('cameraAudioMode', () => {
     expect(audioTrack(camera)?.getSettings()).toMatchObject({ channelCount: 2, echoCancellation: false });
   });
 
+  it('applies the first item of a list until the user picks', async () => {
+    const { camera, getUserMedia } = await openCamera({ cameraAudioMode: 'music, voice' });
+
+    expect(getUserMedia.mock.lastCall?.[0]?.audio).toEqual(MUSIC);
+    expect(audioTrack(camera)?.getSettings().channelCount).toBe(2);
+  });
+
   it('applies a change by reopening only the microphone', async () => {
     const { camera, config, getUserMedia } = await openCamera();
     const camTrack = videoTrack(camera);
@@ -207,8 +214,8 @@ describe('cameraAudioQuality', () => {
 
 describe('audio pickers', () => {
   const PICKERS: Partial<Config> = {
-    cameraAudioQualityOptions: 'auto, low, high',
-    cameraAudioModeOptions: 'voice, music',
+    cameraAudioQuality: 'auto, low, high',
+    cameraAudioMode: 'voice, music',
   };
 
   it('are offered in video mode, labelled', async () => {
@@ -250,7 +257,7 @@ describe('audio pickers', () => {
     await startRecording(opened.camera);
 
     expect(options.at(-1)?.audioBitsPerSecond).toBe(32_000);
-    expect(opened.config.cameraAudioMode).toBe('voice');
-    expect(opened.config.cameraAudioQuality).toBe('auto');
+    expect(opened.config.cameraAudioMode).toBe('voice, music');
+    expect(opened.config.cameraAudioQuality).toBe('auto, low, high');
   });
 });

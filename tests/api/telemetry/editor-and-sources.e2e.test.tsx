@@ -109,7 +109,7 @@ describe('telemetry: sources', () => {
   it('reports a pick in the camera settings', async () => {
     const { root } = await renderSolution('regular', {
       qualityInsights: true,
-      cameraAspectRatioOptions: 'native, 1:1',
+      cameraAspectRatio: 'native, 1:1',
     });
     await clickSource(root, 'Camera');
     const settings = within(root).getByRole('button', { name: 'Camera settings', exact: true });
@@ -131,7 +131,7 @@ describe('telemetry: sources', () => {
     const { root } = await renderSolution('regular', {
       qualityInsights: true,
       cameraAspectRatio: '1:1',
-      cameraQuality: '720p',
+      cameraResolution: '720p',
       cameraAudioQuality: 'high',
       cameraAudioMode: 'music',
       cameraConstraints: { video: { deviceId: 'secret-camera-id' } },
@@ -148,7 +148,7 @@ describe('telemetry: sources', () => {
       const [body] = bodiesWithAction(event);
       expect(body.payload.metadata).toMatchObject({
         aspect_ratio: '1:1',
-        quality: '720p',
+        resolution: '720p',
         audio_quality: 'high',
         audio_mode: 'music',
         has_custom_constraints: true,

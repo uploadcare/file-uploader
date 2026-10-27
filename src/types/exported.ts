@@ -49,7 +49,8 @@ export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureE
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
 export type IconHrefResolver = (iconName: string) => string;
 export type CameraConstraints = { video?: MediaTrackConstraints; audio?: MediaTrackConstraints };
-export type CameraQuality = 'auto' | '720p' | '1080p' | '4k';
+/** The values `cameraResolution`, `cameraAudioQuality` and `cameraAudioMode` take, alone or as a list. */
+export type CameraResolution = 'auto' | '720p' | '1080p' | '4k';
 export type CameraAudioQuality = 'auto' | 'low' | 'standard' | 'high';
 export type CameraAudioMode = 'voice' | 'music';
 export type CameraConstraintsResolver = (context: { mode: CameraMode }) => CameraConstraints;
@@ -379,25 +380,34 @@ export type ConfigType = {
 
   /**
    * The shape of camera captures, as `"w:h"` (`"1:1"`, `"4:3"`, `"16:9"`, `"9:16"`, ...), taken literally whatever the
-   * device orientation. Empty means the camera's native shape.
+   * device orientation. `native` or an empty value keeps the camera's own shape.
    *
    * Photos and videos are both cropped to the ratio from the center, and the preview shows the same crop. The ratio is
    * also requested from the camera; when the camera can't deliver it, videos are cropped frame by frame, which costs
    * some CPU while recording.
+   *
+   * A comma-separated list lets the user pick in the camera screen, starting on the first item.
+   * @example '1:1'
+   * @example '1:1, native, 4:3'
    * @default ''
    */
   cameraAspectRatio: string;
 
   /**
-   * The resolution asked of the camera, for photo and video. A preset sets the short side (720, 1080 or 2160 px) and
-   * the long side follows `cameraAspectRatio`, or 16:9 when no ratio is set. `'auto'` asks for a 1080 px short side in
-   * the `cameraAspectRatio` shape, or 1920×1080 without a ratio.
+   * The resolution asked of the camera, for photo and video: `720p`, `1080p` or `4k` set the short side (720, 1080 or
+   * 2160 px), and the long side follows `cameraAspectRatio`, or 16:9 without a ratio. `auto` asks for a 1080 px short
+   * side in the `cameraAspectRatio` shape, or 1920×1080 without a ratio.
    *
    * It is a request, not a guarantee: the camera picks its closest supported resolution. Large resolutions make big
    * video files, which may exceed `maxLocalFileSizeBytes`.
+   *
+   * A comma-separated list lets the user pick in the camera screen, starting on the first item the camera can do;
+   * presets above what it supports are left out.
+   * @example '1080p'
+   * @example 'auto, 720p, 4k'
    * @default 'auto'
    */
-  cameraQuality: CameraQuality;
+  cameraResolution: string;
 
   /**
    * JPEG quality of camera photos, from 0 to 1.
@@ -406,29 +416,16 @@ export type ConfigType = {
   cameraPhotoQuality: number;
 
   /**
-   * Aspect ratios the user can pick from in the camera screen, as a comma-separated list of `"w:h"` values; `native`
-   * stands for the camera's own shape. The picker starts on `cameraAspectRatio`, or on the first option when that
-   * value isn't listed. It shows in photo and video mode, and only with two or more options.
-   * @example 'native, 1:1, 4:3'
-   * @default ''
-   */
-  cameraAspectRatioOptions: string;
-
-  /**
-   * Quality presets the user can pick from in the camera screen, as a comma-separated list of `cameraQuality`
-   * values. Presets above what the camera supports are left out. The picker starts on `cameraQuality`, or on the first
-   * option when that value isn't listed, and only shows with two or more options.
-   * @example 'auto, 720p, 1080p'
-   * @default ''
-   */
-  cameraQualityOptions: string;
-
-  /**
-   * Audio bitrate of video recordings: `low` (32 kbps), `standard` (96 kbps) or `high` (192 kbps). `'auto'` leaves it
-   * to the browser. An explicit `mediaRecorderOptions.audioBitsPerSecond` or `bitsPerSecond` takes precedence.
+   * Audio bitrate of video recordings: `low` (32 kbps), `standard` (96 kbps) or `high` (192 kbps). `auto` leaves it to
+   * the browser. An explicit `mediaRecorderOptions.audioBitsPerSecond` or `bitsPerSecond` takes precedence.
+   *
+   * A comma-separated list lets the user pick in the camera screen, in video mode with audio recording on, starting on
+   * the first item.
+   * @example 'high'
+   * @example 'auto, low, high'
    * @default 'auto'
    */
-  cameraAudioQuality: CameraAudioQuality;
+  cameraAudioQuality: string;
 
   /**
    * How the microphone is set up for video recordings.
@@ -438,25 +435,14 @@ export type ConfigType = {
    *
    * `cameraConstraints.audio` overrides it setting by setting. A change applies to the open camera by reopening only the
    * microphone; during a recording it waits until the recording stops.
+   *
+   * A comma-separated list lets the user pick in the camera screen, in video mode with audio recording on, starting on
+   * the first item.
+   * @example 'music'
+   * @example 'voice, music'
    * @default 'voice'
    */
-  cameraAudioMode: CameraAudioMode;
-
-  /**
-   * Audio quality presets the user can pick from in the camera screen, as a comma-separated list of
-   * `cameraAudioQuality` values. Shows in video mode with audio recording on, and only with two or more options.
-   * @example 'auto, low, high'
-   * @default ''
-   */
-  cameraAudioQualityOptions: string;
-
-  /**
-   * Microphone modes the user can pick from in the camera screen, as a comma-separated list of `cameraAudioMode`
-   * values. Shows in video mode with audio recording on, and only with two or more options.
-   * @example 'voice, music'
-   * @default ''
-   */
-  cameraAudioModeOptions: string;
+  cameraAudioMode: string;
 
   filesViewMode: FilesViewMode;
 

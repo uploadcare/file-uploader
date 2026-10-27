@@ -1,11 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
-  filterQualityOptions,
+  filterResolutionOptions,
   maxShortSideOf,
   parseAspectRatioOptions,
   parseOptions,
-  parseQualityOptions,
-  pickInitial,
+  RESOLUTIONS,
 } from '../cameraSettings';
 
 describe('parseAspectRatioOptions', () => {
@@ -26,20 +25,14 @@ describe('parseAspectRatioOptions', () => {
   });
 });
 
-describe('parseQualityOptions', () => {
-  it('keeps known presets in order, without repeats', () => {
-    expect(parseQualityOptions('1080p, auto, 720p, 1080p, 8k')).toEqual(['1080p', 'auto', '720p']);
-  });
-});
-
-describe('filterQualityOptions', () => {
+describe('filterResolutionOptions', () => {
   it('leaves out presets above the camera maximum, never auto', () => {
-    expect(filterQualityOptions(['auto', '720p', '1080p', '4k'], 1080)).toEqual(['auto', '720p', '1080p']);
-    expect(filterQualityOptions(['auto', '720p'], 480)).toEqual(['auto']);
+    expect(filterResolutionOptions(['auto', '720p', '1080p', '4k'], 1080)).toEqual(['auto', '720p', '1080p']);
+    expect(filterResolutionOptions(['auto', '720p'], 480)).toEqual(['auto']);
   });
 
   it('keeps everything without a known maximum', () => {
-    expect(filterQualityOptions(['720p', '4k'], null)).toEqual(['720p', '4k']);
+    expect(filterResolutionOptions(['720p', '4k'], null)).toEqual(['720p', '4k']);
   });
 });
 
@@ -58,18 +51,12 @@ describe('maxShortSideOf', () => {
   });
 });
 
-describe('pickInitial', () => {
-  it('starts on the configured value when it is listed', () => {
-    expect(pickInitial(['a', 'b'], (o) => o === 'b')).toEqual({ value: 'b', listed: true });
-  });
-
-  it('starts on the first option otherwise', () => {
-    expect(pickInitial(['a', 'b'], (o) => o === 'c')).toEqual({ value: 'a', listed: false });
-  });
-});
-
 describe('parseOptions', () => {
   it('keeps allowed values in order, without repeats', () => {
     expect(parseOptions('music, voice, music, karaoke', ['voice', 'music'] as const)).toEqual(['music', 'voice']);
+  });
+
+  it('reads a resolution list, in order', () => {
+    expect(parseOptions('1080p, auto, 720p, 1080p, 8k', RESOLUTIONS)).toEqual(['1080p', 'auto', '720p']);
   });
 });

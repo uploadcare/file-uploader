@@ -1,7 +1,7 @@
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import type { CameraAudioMode, CameraAudioQuality, CameraQuality } from '../../types/exported';
+import type { CameraAudioMode, CameraAudioQuality, CameraResolution } from '../../types/exported';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { debounce } from '../../utils/debounce';
@@ -13,16 +13,17 @@ import './camera-source.css';
 import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { centerCrop, parseAspectRatio } from './aspectRatio';
+import { centerCrop } from './aspectRatio';
 import { audioBitsPerSecond, type BuildConstraintsInput, buildConstraints } from './buildConstraints';
 import {
-  filterQualityOptions,
+  AUDIO_MODES,
+  AUDIO_QUALITIES,
+  filterResolutionOptions,
   maxShortSideOf,
   NATIVE_ASPECT_RATIO,
   parseAspectRatioOptions,
   parseOptions,
-  parseQualityOptions,
-  pickInitial,
+  RESOLUTIONS,
   toRatio,
 } from './cameraSettings';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
@@ -112,19 +113,15 @@ export class CameraSource extends LitUploaderBlock {
   @state()
   private _videoTransformCss: string | null = null;
 
-  /** Width / height from `cameraAspectRatio`, or `null` for the camera's native shape. */
-  @state()
-  private _configAspectRatio: number | null = null;
-
   /**
-   * The user's picks in the settings picker, as option values. `null` while that picker isn't offered, in which case
-   * the config value applies. They never write back to the config.
+   * The user's picks in the settings picker, as option values. `null` until the user picks, in which case the first
+   * listed value applies; a config change clears them again. They never write back to the config.
    */
   @state()
   private _pickedAspectRatio: string | null = null;
 
   @state()
-  private _pickedQuality: CameraQuality | null = null;
+  private _pickedResolution: CameraResolution | null = null;
 
   @state()
   private _pickedAudioQuality: CameraAudioQuality | null = null;
@@ -132,14 +129,11 @@ export class CameraSource extends LitUploaderBlock {
   @state()
   private _pickedAudioMode: CameraAudioMode | null = null;
 
-  /** The largest short side the open camera reports, to leave out quality presets it can't do. */
+  /** The largest short side the open camera reports, to leave out resolutions it can't do. */
   @state()
   private _maxShortSide: number | null = null;
 
   private readonly _settingsPopoverId = `uc-camera-settings-${UID.generateFastUid()}`;
-
-  /** The last mismatch warned about, so subscriptions that fire together don't repeat it. */
-  private _lastSettingsWarning = '';
 
   @state()
   private _videoHidden = true;
@@ -204,7 +198,7 @@ export class CameraSource extends LitUploaderBlock {
           tabId: this._activeTab,
           hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
           aspectRatio: this._aspectRatioValue,
-          quality: this._quality,
+          resolution: this._resolution,
           audioQuality: this._audioQuality,
           audioMode: this._audioMode,
         },
@@ -257,7 +251,7 @@ export class CameraSource extends LitUploaderBlock {
           tabId: this._activeTab,
           hasCustomConstraints: Boolean(this.cfg.cameraConstraints),
           aspectRatio: this._aspectRatioValue,
-          quality: this._quality,
+          resolution: this._resolution,
           audioQuality: this._audioQuality,
           audioMode: this._audioMode,
         },
@@ -773,29 +767,52 @@ export class CameraSource extends LitUploaderBlock {
     this.routerLayer.navigateAfterFileAdd();
   };
 
-  /** Width / height in effect: the user's pick, else `cameraAspectRatio`. `null` is the camera's native shape. */
+  // Each of these options takes one value, or a list for a picker. The value in effect is the user's pick, else the
+  // first listed value.
+
+  private get _aspectRatioOptions(): string[] {
+    return parseAspectRatioOptions(this.cfg.cameraAspectRatio);
+  }
+
+  /** The ratio option in effect, `native` for the camera's own shape. */
+  private get _aspectRatioChoice(): string {
+    return this._pickedAspectRatio ?? this._aspectRatioOptions[0] ?? NATIVE_ASPECT_RATIO;
+  }
+
+  /** Width / height in effect, or `null` for the camera's native shape. */
   private get _aspectRatio(): number | null {
-    return this._pickedAspectRatio === null ? this._configAspectRatio : (toRatio(this._pickedAspectRatio) ?? null);
+    return toRatio(this._aspectRatioChoice) ?? null;
   }
 
-  private get _quality(): CameraQuality {
-    return this._pickedQuality ?? this.cfg.cameraQuality;
+  /** The listed resolutions the camera can do. */
+  private get _resolutionOptions(): CameraResolution[] {
+    return filterResolutionOptions(parseOptions(this.cfg.cameraResolution, RESOLUTIONS), this._maxShortSide);
   }
 
-  private get _audioQuality(): CameraAudioQuality {
-    return this._pickedAudioQuality ?? this.cfg.cameraAudioQuality;
-  }
-
-  private get _audioMode(): CameraAudioMode {
-    return this._pickedAudioMode ?? this.cfg.cameraAudioMode;
+  /** A single value is a request rather than a picker option, so it applies even above what the camera reports. */
+  private get _resolution(): CameraResolution {
+    return (
+      this._pickedResolution ??
+      this._resolutionOptions[0] ??
+      parseOptions(this.cfg.cameraResolution, RESOLUTIONS)[0] ??
+      'auto'
+    );
   }
 
   private get _audioQualityOptions(): CameraAudioQuality[] {
-    return parseOptions(this.cfg.cameraAudioQualityOptions, ['auto', 'low', 'standard', 'high'] as const);
+    return parseOptions(this.cfg.cameraAudioQuality, AUDIO_QUALITIES);
+  }
+
+  private get _audioQuality(): CameraAudioQuality {
+    return this._pickedAudioQuality ?? this._audioQualityOptions[0] ?? 'auto';
   }
 
   private get _audioModeOptions(): CameraAudioMode[] {
-    return parseOptions(this.cfg.cameraAudioModeOptions, ['voice', 'music'] as const);
+    return parseOptions(this.cfg.cameraAudioMode, AUDIO_MODES);
+  }
+
+  private get _audioMode(): CameraAudioMode {
+    return this._pickedAudioMode ?? this._audioModeOptions[0] ?? 'voice';
   }
 
   /** Audio pickers only matter where sound is recorded: the video tab, with audio recording on. */
@@ -803,28 +820,20 @@ export class CameraSource extends LitUploaderBlock {
     return this._activeTab === CameraSourceTypes.VIDEO && this.cfg.enableAudioRecording;
   }
 
+  private get _isAspectRatioPickerHidden(): boolean {
+    return this._aspectRatioOptions.length < 2;
+  }
+
+  private get _isResolutionPickerHidden(): boolean {
+    return this._resolutionOptions.length < 2;
+  }
+
   private get _isAudioQualityPickerHidden(): boolean {
-    return this._pickedAudioQuality === null || !this._isAudioPickerContext;
+    return this._audioQualityOptions.length < 2 || !this._isAudioPickerContext;
   }
 
   private get _isAudioModePickerHidden(): boolean {
-    return this._pickedAudioMode === null || !this._isAudioPickerContext;
-  }
-
-  private get _aspectRatioOptions(): string[] {
-    return parseAspectRatioOptions(this.cfg.cameraAspectRatioOptions);
-  }
-
-  private get _qualityOptions(): CameraQuality[] {
-    return filterQualityOptions(parseQualityOptions(this.cfg.cameraQualityOptions), this._maxShortSide);
-  }
-
-  private get _isAspectRatioPickerHidden(): boolean {
-    return this._pickedAspectRatio === null;
-  }
-
-  private get _isQualityPickerHidden(): boolean {
-    return this._pickedQuality === null;
+    return this._audioModeOptions.length < 2 || !this._isAudioPickerContext;
   }
 
   private get _isSettingsHidden(): boolean {
@@ -832,67 +841,10 @@ export class CameraSource extends LitUploaderBlock {
       this._permissionState !== 'granted' ||
       this._captureState !== 'live' ||
       (this._isAspectRatioPickerHidden &&
-        this._isQualityPickerHidden &&
+        this._isResolutionPickerHidden &&
         this._isAudioQualityPickerHidden &&
         this._isAudioModePickerHidden)
     );
-  }
-
-  private _warnSettingsMismatch(message: string): void {
-    if (message !== this._lastSettingsWarning) {
-      this._lastSettingsWarning = message;
-      console.warn(message);
-    }
-  }
-
-  /** Starts the ratio picker over from the config: on `cameraAspectRatio` if it's listed, else on the first option. */
-  private _resetAspectRatioPick(): void {
-    const options = this._aspectRatioOptions;
-    if (options.length < 2) {
-      this._pickedAspectRatio = null;
-      return;
-    }
-    const { value, listed } = pickInitial(options, (option) => toRatio(option) === this._configAspectRatio);
-    if (!listed) {
-      this._warnSettingsMismatch(
-        `cameraAspectRatio "${this.cfg.cameraAspectRatio}" is not in cameraAspectRatioOptions, starting on "${value}".`,
-      );
-    }
-    this._pickedAspectRatio = value;
-  }
-
-  /**
-   * Where a picker starts: on the configured value if it's listed, else on the first option with a warning. `null`, no
-   * picker, with fewer than two options.
-   */
-  private _startPick<T extends string>(options: T[], configured: string, configName: string): T | null {
-    if (options.length < 2) {
-      return null;
-    }
-    const { value, listed } = pickInitial(options, (option) => option === configured);
-    if (!listed) {
-      this._warnSettingsMismatch(
-        `${configName} "${configured}" is not among the available ${configName}Options, starting on "${value}".`,
-      );
-    }
-    return value;
-  }
-
-  /** Starts the quality picker over from the config, among the presets the camera can do. */
-  private _resetQualityPick(): void {
-    this._pickedQuality = this._startPick(this._qualityOptions, this.cfg.cameraQuality, 'cameraQuality');
-  }
-
-  private _resetAudioQualityPick(): void {
-    this._pickedAudioQuality = this._startPick(
-      this._audioQualityOptions,
-      this.cfg.cameraAudioQuality,
-      'cameraAudioQuality',
-    );
-  }
-
-  private _resetAudioModePick(): void {
-    this._pickedAudioMode = this._startPick(this._audioModeOptions, this.cfg.cameraAudioMode, 'cameraAudioMode');
   }
 
   private _handleAspectRatioPick = (event: Event): void => {
@@ -903,11 +855,11 @@ export class CameraSource extends LitUploaderBlock {
     void this._applyVideoConstraints();
   };
 
-  private _handleQualityPick = (event: Event): void => {
-    const value = (event.target as { value?: string } | null)?.value as CameraQuality | undefined;
+  private _handleResolutionPick = (event: Event): void => {
+    const value = (event.target as { value?: string } | null)?.value as CameraResolution | undefined;
     if (!value) return;
-    this._pickedQuality = value;
-    this._sendSettingChange('quality', value);
+    this._pickedResolution = value;
+    this._sendSettingChange('resolution', value);
     void this._applyVideoConstraints();
   };
 
@@ -928,7 +880,7 @@ export class CameraSource extends LitUploaderBlock {
   };
 
   private _audioQualityLabel(value: CameraAudioQuality): string {
-    return value === 'auto' ? this.l10n('camera-quality-auto') : this.l10n(`camera-audio-quality-${value}`);
+    return value === 'auto' ? this.l10n('camera-setting-auto') : this.l10n(`camera-audio-quality-${value}`);
   }
 
   private _audioModeLabel(value: CameraAudioMode): string {
@@ -939,11 +891,14 @@ export class CameraSource extends LitUploaderBlock {
     return value === NATIVE_ASPECT_RATIO ? this.l10n('camera-aspect-ratio-native') : value;
   }
 
-  private _qualityLabel(value: CameraQuality): string {
-    return value === 'auto' ? this.l10n('camera-quality-auto') : value.toUpperCase();
+  private _resolutionLabel(value: CameraResolution): string {
+    return value === 'auto' ? this.l10n('camera-setting-auto') : value.toUpperCase();
   }
 
-  private _sendSettingChange(setting: 'aspectRatio' | 'quality' | 'audioQuality' | 'audioMode', value: string): void {
+  private _sendSettingChange(
+    setting: 'aspectRatio' | 'resolution' | 'audioQuality' | 'audioMode',
+    value: string,
+  ): void {
     this.telemetryManager.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
       payload: {
@@ -958,10 +913,9 @@ export class CameraSource extends LitUploaderBlock {
     });
   }
 
-  /** The ratio in effect, spelled like `cameraAspectRatio`: `''` for the native shape. */
+  /** The ratio in effect for telemetry: `''` for the native shape. */
   private get _aspectRatioValue(): string {
-    if (this._pickedAspectRatio === null) return this.cfg.cameraAspectRatio;
-    return this._pickedAspectRatio === NATIVE_ASPECT_RATIO ? '' : this._pickedAspectRatio;
+    return this._aspectRatioChoice === NATIVE_ASPECT_RATIO ? '' : this._aspectRatioChoice;
   }
 
   /** Photos and recordings are both cropped to the ratio, so the preview shows the same crop in either mode. */
@@ -1073,7 +1027,7 @@ export class CameraSource extends LitUploaderBlock {
       enableAudio: this.cfg.enableAudioRecording,
       audioMode: this._audioMode,
       aspectRatio: this._aspectRatio,
-      quality: this._quality,
+      resolution: this._resolution,
       custom: this.cfg.cameraConstraints,
       cameraId: this._selectedCameraId,
       audioId: this._selectedAudioId,
@@ -1140,8 +1094,8 @@ export class CameraSource extends LitUploaderBlock {
 
       // Another camera may not do the picked preset: start the quality picker over if it's no longer offered.
       this._maxShortSide = maxShortSideOf(stream.getVideoTracks()[0]);
-      if (this._pickedQuality !== null && !this._qualityOptions.includes(this._pickedQuality)) {
-        this._resetQualityPick();
+      if (this._pickedResolution !== null && !this._resolutionOptions.includes(this._pickedResolution)) {
+        this._pickedResolution = null;
         void this._applyVideoConstraints();
       }
     } catch (error) {
@@ -1419,48 +1373,29 @@ export class CameraSource extends LitUploaderBlock {
       void this._applyAudioConstraints();
     });
 
+    // A config change clears the user's pick, so the first listed value applies again. The values in effect are read
+    // from the config while rendering, so each change also asks for a render: clearing a pick that was never made
+    // changes no state.
     this.subConfigValue('cameraAudioQuality', () => {
-      this._resetAudioQualityPick();
-    });
-
-    this.subConfigValue('cameraAudioQualityOptions', () => {
-      this._resetAudioQualityPick();
+      this._pickedAudioQuality = null;
+      this.requestUpdate();
     });
 
     this.subConfigValue('cameraAudioMode', () => {
-      this._resetAudioModePick();
+      this._pickedAudioMode = null;
+      this.requestUpdate();
       void this._applyAudioConstraints();
     });
 
-    this.subConfigValue('cameraAudioModeOptions', () => {
-      this._resetAudioModePick();
-      void this._applyAudioConstraints();
-    });
-
-    // A config change starts its picker over, dropping what the user picked.
-    this.subConfigValue('cameraQuality', () => {
-      this._resetQualityPick();
+    this.subConfigValue('cameraResolution', () => {
+      this._pickedResolution = null;
+      this.requestUpdate();
       void this._applyVideoConstraints();
     });
 
-    this.subConfigValue('cameraQualityOptions', () => {
-      this._resetQualityPick();
-      void this._applyVideoConstraints();
-    });
-
-    this.subConfigValue('cameraAspectRatio', (val) => {
-      // Already validated by the config; the fallback only guards against a value set around it.
-      try {
-        this._configAspectRatio = parseAspectRatio(val);
-      } catch {
-        this._configAspectRatio = null;
-      }
-      this._resetAspectRatioPick();
-      void this._applyVideoConstraints();
-    });
-
-    this.subConfigValue('cameraAspectRatioOptions', () => {
-      this._resetAspectRatioPick();
+    this.subConfigValue('cameraAspectRatio', () => {
+      this._pickedAspectRatio = null;
+      this.requestUpdate();
       void this._applyVideoConstraints();
     });
 
@@ -1540,23 +1475,23 @@ export class CameraSource extends LitUploaderBlock {
               <span>${this.l10n('camera-aspect-ratio')}</span>
               <uc-select
                 .options=${this._aspectRatioOptions.map((value) => ({ value, text: this._aspectRatioLabel(value) }))}
-                .value=${this._pickedAspectRatio ?? ''}
+                .value=${this._aspectRatioChoice}
                 @change=${this._handleAspectRatioPick}
               ></uc-select>
             </label>
-            <label ?hidden=${this._isQualityPickerHidden}>
-              <span>${this.l10n('camera-quality')}</span>
+            <label ?hidden=${this._isResolutionPickerHidden}>
+              <span>${this.l10n('camera-resolution')}</span>
               <uc-select
-                .options=${this._qualityOptions.map((value) => ({ value, text: this._qualityLabel(value) }))}
-                .value=${this._pickedQuality ?? ''}
-                @change=${this._handleQualityPick}
+                .options=${this._resolutionOptions.map((value) => ({ value, text: this._resolutionLabel(value) }))}
+                .value=${this._resolution}
+                @change=${this._handleResolutionPick}
               ></uc-select>
             </label>
             <label ?hidden=${this._isAudioQualityPickerHidden}>
               <span>${this.l10n('camera-audio-quality')}</span>
               <uc-select
                 .options=${this._audioQualityOptions.map((value) => ({ value, text: this._audioQualityLabel(value) }))}
-                .value=${this._pickedAudioQuality ?? ''}
+                .value=${this._audioQuality}
                 @change=${this._handleAudioQualityPick}
               ></uc-select>
             </label>
@@ -1564,7 +1499,7 @@ export class CameraSource extends LitUploaderBlock {
               <span>${this.l10n('camera-audio-mode')}</span>
               <uc-select
                 .options=${this._audioModeOptions.map((value) => ({ value, text: this._audioModeLabel(value) }))}
-                .value=${this._pickedAudioMode ?? ''}
+                .value=${this._audioMode}
                 @change=${this._handleAudioModePick}
               ></uc-select>
             </label>

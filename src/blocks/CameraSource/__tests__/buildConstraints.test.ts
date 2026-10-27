@@ -5,7 +5,7 @@ import {
   type BuildConstraintsInput,
   buildConstraints,
   DEFAULT_VIDEO_CONSTRAINTS,
-  qualityResolution,
+  resolutionConstraints,
 } from '../buildConstraints';
 
 const input = (overrides: Partial<BuildConstraintsInput> = {}): BuildConstraintsInput => ({
@@ -13,7 +13,7 @@ const input = (overrides: Partial<BuildConstraintsInput> = {}): BuildConstraints
   enableAudio: false,
   audioMode: 'voice',
   aspectRatio: null,
-  quality: 'auto',
+  resolution: 'auto',
   custom: null,
   cameraId: null,
   audioId: null,
@@ -47,14 +47,14 @@ describe('buildConstraints', () => {
     expect(video.aspectRatio).toEqual({ exact: 4 / 3 });
   });
 
-  it('replaces the default resolution with the quality preset', () => {
-    const { video } = buildConstraints(input({ quality: '720p', aspectRatio: 1 }));
+  it('replaces the default resolution with the preset', () => {
+    const { video } = buildConstraints(input({ resolution: '720p', aspectRatio: 1 }));
 
     expect(video).toMatchObject({ width: { ideal: 720 }, height: { ideal: 720 }, aspectRatio: { ideal: 1 } });
   });
 
-  it('lets a custom width replace the quality preset', () => {
-    const { video } = buildConstraints(input({ quality: '4k', custom: { video: { width: { ideal: 1000 } } } }));
+  it('lets a custom width replace the resolution preset', () => {
+    const { video } = buildConstraints(input({ resolution: '4k', custom: { video: { width: { ideal: 1000 } } } }));
 
     expect(video).toMatchObject({ width: { ideal: 1000 }, height: { ideal: 2160 } });
   });
@@ -114,14 +114,14 @@ describe('buildConstraints', () => {
   });
 });
 
-describe('qualityResolution', () => {
+describe('resolutionConstraints', () => {
   it('keeps the defaults for auto without a ratio', () => {
-    expect(qualityResolution('auto', null)).toEqual({});
+    expect(resolutionConstraints('auto', null)).toEqual({});
   });
 
   it('asks for a 1080 short side in the ratio for auto with a ratio', () => {
-    expect(qualityResolution('auto', 1)).toEqual({ width: { ideal: 1080 }, height: { ideal: 1080 } });
-    expect(qualityResolution('auto', 9 / 16)).toEqual({ width: { ideal: 1080 }, height: { ideal: 1920 } });
+    expect(resolutionConstraints('auto', 1)).toEqual({ width: { ideal: 1080 }, height: { ideal: 1080 } });
+    expect(resolutionConstraints('auto', 9 / 16)).toEqual({ width: { ideal: 1080 }, height: { ideal: 1920 } });
   });
 
   it.each([
@@ -132,8 +132,8 @@ describe('qualityResolution', () => {
     ['1080p', 4 / 3, 1440, 1080],
     ['1080p', 9 / 16, 1080, 1920],
     ['720p', 3 / 4, 720, 960],
-  ] as const)('%s at ratio %s asks for %i×%i', (quality, ratio, width, height) => {
-    expect(qualityResolution(quality, ratio)).toEqual({ width: { ideal: width }, height: { ideal: height } });
+  ] as const)('%s at ratio %s asks for %i×%i', (resolution, ratio, width, height) => {
+    expect(resolutionConstraints(resolution, ratio)).toEqual({ width: { ideal: width }, height: { ideal: height } });
   });
 });
 

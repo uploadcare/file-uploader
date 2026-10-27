@@ -2,11 +2,8 @@ import { isAuthTokenResolver } from '@uploadcare/upload-client';
 import type { PasteScope } from '../../abstract/features/ClipboardLayer';
 import type {
   AuthToken,
-  CameraAudioMode,
-  CameraAudioQuality,
   CameraConstraints,
   CameraConstraintsResolver,
-  CameraQuality,
   Metadata,
   MetadataCallback,
   Tags,
@@ -14,6 +11,7 @@ import type {
 } from '../../types/index';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { parseAspectRatio } from '../CameraSource/aspectRatio';
+import { AUDIO_MODES, AUDIO_QUALITIES, NATIVE_ASPECT_RATIO, RESOLUTIONS } from '../CameraSource/cameraSettings';
 import type { ModeCameraType } from '../CameraSource/constants';
 import { CameraSourceTypes } from '../CameraSource/constants';
 import { isVideoFormat } from '../CameraSource/videoFormat';
@@ -126,22 +124,6 @@ const asCameraConstraints = (value: unknown): CameraConstraints | CameraConstrai
   throw new Error('Invalid cameraConstraints value. Must be an object or a function.');
 };
 
-const asCameraAspectRatio = (value: unknown): string => {
-  const strValue = asString(value).trim();
-  parseAspectRatio(strValue);
-  return strValue;
-};
-
-const CAMERA_QUALITIES: readonly string[] = ['auto', '720p', '1080p', '4k'] satisfies CameraQuality[];
-
-const asCameraQuality = (value: unknown): CameraQuality => {
-  const strValue = asString(value);
-  if (CAMERA_QUALITIES.includes(strValue)) {
-    return strValue as CameraQuality;
-  }
-  throw new Error(`Invalid value: "${strValue}"`);
-};
-
 const asCameraVideoFormats = (value: unknown): string => {
   const str = asString(value);
   const invalid = deserializeCsv(str).filter((item) => !isVideoFormat(item));
@@ -151,47 +133,32 @@ const asCameraVideoFormats = (value: unknown): string => {
   return str;
 };
 
-/** A validator for one of `allowed`, and one for a comma-separated list of them. */
-const oneOf = <T extends string>(allowed: readonly T[]) => ({
-  value: (value: unknown): T => {
-    const strValue = asString(value);
-    if ((allowed as readonly string[]).includes(strValue)) {
-      return strValue as T;
-    }
-    throw new Error(`Invalid value: "${strValue}"`);
-  },
-  list: (value: unknown): string => {
+/**
+ * A camera option that takes one value, or a comma-separated list of them for a picker. It needs at least one: an
+ * empty list has no default.
+ */
+const asCameraChoice =
+  (allowed: readonly string[]) =>
+  (value: unknown): string => {
     const str = asString(value);
-    const invalid = deserializeCsv(str).filter((item) => !(allowed as readonly string[]).includes(item));
-    if (invalid.length > 0) {
-      throw new Error(`Invalid value: "${JSON.stringify(invalid)}"`);
+    const items = deserializeCsv(str);
+    if (items.length === 0 || items.some((item) => !allowed.includes(item))) {
+      throw new Error(`Invalid value: "${str}"`);
     }
     return str;
-  },
-});
+  };
 
-const cameraAudioQualities = oneOf<CameraAudioQuality>(['auto', 'low', 'standard', 'high']);
-const cameraAudioModes = oneOf<CameraAudioMode>(['voice', 'music']);
-const asCameraAudioQuality = cameraAudioQualities.value;
-const asCameraAudioQualityOptions = cameraAudioQualities.list;
-const asCameraAudioMode = cameraAudioModes.value;
-const asCameraAudioModeOptions = cameraAudioModes.list;
+const asCameraResolution = asCameraChoice(RESOLUTIONS);
+const asCameraAudioQuality = asCameraChoice(AUDIO_QUALITIES);
+const asCameraAudioMode = asCameraChoice(AUDIO_MODES);
 
-const asCameraAspectRatioOptions = (value: unknown): string => {
-  const str = asString(value);
+/** `cameraAspectRatio`: empty for the native shape, or `"w:h"` ratios and `native`, one or a list. */
+const asCameraAspectRatio = (value: unknown): string => {
+  const str = asString(value).trim();
   for (const item of deserializeCsv(str)) {
-    if (item !== 'native') {
+    if (item !== NATIVE_ASPECT_RATIO) {
       parseAspectRatio(item);
     }
-  }
-  return str;
-};
-
-const asCameraQualityOptions = (value: unknown): string => {
-  const str = asString(value);
-  const invalid = deserializeCsv(str).filter((item) => !CAMERA_QUALITIES.includes(item));
-  if (invalid.length > 0) {
-    throw new Error(`Invalid value: "${JSON.stringify(invalid)}"`);
   }
   return str;
 };
@@ -252,15 +219,11 @@ export {
   asBoolean,
   asCameraAspectRatio,
   asCameraAudioMode,
-  asCameraAudioModeOptions,
   asCameraAudioQuality,
-  asCameraAudioQualityOptions,
-  asCameraAspectRatioOptions,
   asCameraCapture,
   asCameraConstraints,
   asCameraPhotoQuality,
-  asCameraQuality,
-  asCameraQualityOptions,
+  asCameraResolution,
   asCameraVideoFormats,
   asCameraMode,
   asCameraModes,
