@@ -14,6 +14,7 @@ import { deserializeCsv } from '../../utils/comma-separated';
 import { parseAspectRatio } from '../CameraSource/aspectRatio';
 import type { ModeCameraType } from '../CameraSource/constants';
 import { CameraSourceTypes } from '../CameraSource/constants';
+import { isVideoFormat } from '../CameraSource/videoFormat';
 import type { DynamicButtonMode } from '../DynamicBtn/DynamicBtn';
 import type { FilesViewMode } from '../UploadList/UploadList';
 
@@ -139,6 +140,15 @@ const asCameraQuality = (value: unknown): CameraQuality => {
   throw new Error(`Invalid value: "${strValue}"`);
 };
 
+const asCameraVideoFormats = (value: unknown): string => {
+  const str = asString(value);
+  const invalid = deserializeCsv(str).filter((item) => !isVideoFormat(item));
+  if (invalid.length > 0) {
+    throw new Error(`Invalid value: "${JSON.stringify(invalid)}"`);
+  }
+  return str;
+};
+
 const asCameraAspectRatioOptions = (value: unknown): string => {
   const str = asString(value);
   for (const item of deserializeCsv(str)) {
@@ -219,6 +229,7 @@ export {
   asCameraPhotoQuality,
   asCameraQuality,
   asCameraQualityOptions,
+  asCameraVideoFormats,
   asCameraMode,
   asCameraModes,
   asFilesViewMode,

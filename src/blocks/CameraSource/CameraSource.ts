@@ -26,6 +26,7 @@ import {
 } from './cameraSettings';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
 import { createRecordingSource, type RecordingSource } from './recordingSource';
+import { pickVideoMimeType, recordingFileType } from './videoFormat';
 
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
@@ -47,7 +48,6 @@ function formatTime(time: number): string {
 }
 
 const DEFAULT_PICTURE_FORMAT = 'image/jpeg';
-const DEFAULT_VIDEO_FORMAT = 'video/webm';
 
 export type CameraMode = 'photo' | 'video';
 export type CameraStatus = 'shot' | 'retake' | 'accept' | 'play' | 'stop' | 'pause' | 'resume';
@@ -371,14 +371,16 @@ export class CameraSource extends LitUploaderBlock {
         ...this.cfg.mediaRecorderOptions,
       };
 
-      const { mimeType } = this.cfg.mediaRecorderOptions || {};
-
-      if (mimeType && MediaRecorder.isTypeSupported(mimeType)) {
+      const mimeType = pickVideoMimeType({
+        explicit: this.cfg.mediaRecorderOptions?.mimeType,
+        formats: this.cfg.cameraVideoFormats,
+        isSupported: (type) => MediaRecorder.isTypeSupported(type),
+      });
+      if (mimeType) {
         this._options.mimeType = mimeType;
-      } else if (MediaRecorder.isTypeSupported(DEFAULT_VIDEO_FORMAT)) {
-        this._options.mimeType = DEFAULT_VIDEO_FORMAT;
       } else {
-        this._options.mimeType = 'video/mp4';
+        // An unsupported type would make the recorder throw: let the browser choose instead.
+        delete this._options.mimeType;
       }
 
       const videoEl = this._videoRef.value;
@@ -567,7 +569,7 @@ export class CameraSource extends LitUploaderBlock {
     });
 
     const ext = this._guessExtensionByMime(this._mediaRecorder?.mimeType);
-    const file = this._createFile('video', ext, `video/${ext}`, blob);
+    const file = this._createFile('video', ext, recordingFileType(this._mediaRecorder?.mimeType), blob);
 
     this._toSend(file);
     this._chunks = [];

@@ -101,6 +101,7 @@ export const CONFIG_VALUES: { [K in keyof ConfigType]: ConfigType[K][] } = {
   enableVideoRecording: [true, false, null],
   maxVideoRecordingDuration: [0, 30, null],
   mediaRecorderOptions: [{}, { mimeType: 'video/webm' }, null],
+  cameraVideoFormats: ['webm, mp4', 'mp4', 'video/webm;codecs=vp9, webm', ''],
   cameraConstraints: [
     {},
     { video: { frameRate: { ideal: 60 } } },

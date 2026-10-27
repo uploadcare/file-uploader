@@ -77,6 +77,7 @@ describe('documented config options', () => {
       'cameraPhotoQuality',
       'cameraQuality',
       'cameraQualityOptions',
+      'cameraVideoFormats',
       'cdnCnamePrefixed',
       'externalSourcesEmbedCss',
       'mediaRecorderOptions',

@@ -78,6 +78,7 @@ const config = {
   enableVideoRecording: null,
   maxVideoRecordingDuration: null,
   mediaRecorderOptions: null,
+  cameraVideoFormats: 'webm, mp4',
   cameraConstraints: null,
   cameraAspectRatio: '',
   cameraQuality: 'auto',

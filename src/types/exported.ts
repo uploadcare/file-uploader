@@ -350,6 +350,18 @@ export type ConfigType = {
   mediaRecorderOptions: MediaRecorderOptions | null;
 
   /**
+   * Video formats to record in, best first, as a comma-separated list. The first one the browser can record wins.
+   *
+   * Takes `webm`, `mp4` (H.264 + AAC where available) or MIME types with a single codec, such as
+   * `video/webm;codecs=vp9`: the commas of a codec list would split it. For an exact codec list, set
+   * `mediaRecorderOptions.mimeType`, which takes precedence when supported. When nothing listed is supported, the
+   * browser picks.
+   * @example 'mp4, webm'
+   * @default 'webm, mp4'
+   */
+  cameraVideoFormats: string;
+
+  /**
    * Extra `getUserMedia` constraints for the camera, as an object or as a function of the active mode.
    *
    * Each property replaces the built-in value of the same name (`width`, `height`, `frameRate`, ...); the camera and
