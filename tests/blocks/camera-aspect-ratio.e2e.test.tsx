@@ -157,6 +157,9 @@ describe('cameraAspectRatio in video mode', () => {
   it('records a square clip when the camera delivers the ratio itself', async () => {
     const captureStream = vi.spyOn(HTMLCanvasElement.prototype, 'captureStream');
     const opened = await openCamera({ cameraAspectRatio: '1:1' });
+    // Until the camera has switched to square frames, recording correctly crops through the canvas instead.
+    const video = await preview(opened.camera);
+    await vi.waitFor(() => expect(video.videoWidth).toBe(video.videoHeight), { timeout: 10_000 });
 
     const clip = await recordVideo(opened);
 
