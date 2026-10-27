@@ -26,7 +26,7 @@ import {
   toRatio,
 } from './cameraSettings';
 import { CameraSourceEvents, CameraSourceTypes } from './constants';
-import { canTakePhoto, type PhotoOptions, renderPhoto, takePhoto } from './photoCapture';
+import { type PhotoOptions, renderPhoto } from './photoCapture';
 import { createRecordingSource, type RecordingSource } from './recordingSource';
 import { pickVideoMimeType, recordingFileType } from './videoFormat';
 
@@ -82,10 +82,7 @@ export class CameraSource extends LitUploaderBlock {
   @state()
   private _activeTab: CameraMode | null = null;
   private _options: MediaRecorderOptions = {};
-  /**
-   * The photo under review, as the JPEG it will be sent as. Each shot owns its promise: a retake drops it, so a still
-   * that arrives late resolves a promise nobody holds.
-   */
+  /** The photo under review, as the JPEG it will be sent as. A retake drops it. */
   private _photo: Promise<Blob> | null = null;
   private _cameraDevices: CameraDeviceOption[] = [];
   private _audioDevices: AudioDeviceOption[] = [];
@@ -545,7 +542,6 @@ export class CameraSource extends LitUploaderBlock {
 
   private _retake = (): void => {
     this._setCameraState(CameraSourceEvents.RETAKE);
-    // A still on its way belongs to the discarded shot.
     this._photo = null;
 
     /** Reset video */
@@ -564,7 +560,6 @@ export class CameraSource extends LitUploaderBlock {
     this._setCameraState(CameraSourceEvents.ACCEPT);
 
     if (this._activeTab === CameraSourceTypes.PHOTO) {
-      // Waits for a still that is still on its way, rather than sending the preview frame.
       void this._photo?.then(
         (blob) => this._toSend(this._createFile('camera', 'jpeg', DEFAULT_PICTURE_FORMAT, blob)),
         (error: unknown) => {
@@ -654,7 +649,6 @@ export class CameraSource extends LitUploaderBlock {
     if (!videoEl) {
       throw new Error('Video element not found');
     }
-    // Taken at the moment of the shot, so a setting that changes while the still is on its way doesn't mix into it.
     const options: PhotoOptions = {
       width: videoEl.videoWidth,
       height: videoEl.videoHeight,
@@ -663,26 +657,12 @@ export class CameraSource extends LitUploaderBlock {
       quality: this.cfg.cameraPhotoQuality,
     };
 
-    // The preview frame, captured as the shutter is pressed: the photo where `ImageCapture` is missing or fails.
-    const frame = renderPhoto(videoEl, options);
+    // The preview frame as the shutter is pressed. `ImageCapture.takePhoto()` was tried instead: with a real camera the
+    // preview changed after a shot and a retake, most likely because taking a still switches some cameras into a photo
+    // mode.
+    this._photo = renderPhoto(videoEl, options);
     // TODO: There are troubles with this, image isn't freezed after shot due to rendering in progress
     videoEl.pause();
-
-    const track = this._stream?.getVideoTracks()[0];
-    this._photo =
-      track && canTakePhoto()
-        ? takePhoto(track)
-            .then((still) => {
-              const photo = renderPhoto(still, { ...options, width: still.width, height: still.height });
-              still.close();
-              return photo;
-            })
-            .catch((error: unknown) => {
-              console.warn('ImageCapture could not take the photo, keeping the preview frame', error);
-              this.telemetryManager.sendEventError(error, 'camera capturing. ImageCapture failed to take a photo');
-              return frame;
-            })
-        : frame;
   }
 
   private _handleActiveTab = (tabId: CameraMode): void => {
