@@ -74,6 +74,25 @@ describe('camera settings button', () => {
     expect(optionTexts(opened.resolutionPicker)).toEqual(['Auto', '720P']);
   });
 
+  it('sits in the bottom bar, next to mute, and opens upward', async () => {
+    const opened = await openCamera({ cameraAspectRatio: 'native, 1:1' });
+    const button = opened.settingsButton.element();
+    expect(button.closest('.uc-controls')).not.toBeNull();
+    expect(button.closest('uc-activity-header')).toBeNull();
+
+    await opened.settingsButton.click();
+
+    await expect.element(opened.ratioPicker).toBeVisible();
+    // Chromium supports anchor positioning, so the popup is placed above the button rather than centered.
+    const popup = opened.ratioPicker.element().closest('[popover]');
+    expect(popup?.getBoundingClientRect().bottom).toBeLessThanOrEqual(button.getBoundingClientRect().top);
+
+    await opened.camera.getByRole('button', { name: 'Video', exact: true }).click();
+    const mute = opened.camera.getByTestId('uc-camera-source--toggle-microphone');
+    await expect.element(mute).toBeVisible();
+    expect(mute.element().parentElement).toBe(button.parentElement);
+  });
+
   it('hides while a photo waits for review', async () => {
     const { camera, settingsButton } = await openCamera({ cameraAspectRatio: 'native, 1:1' });
     await expect.element(settingsButton).toBeVisible();

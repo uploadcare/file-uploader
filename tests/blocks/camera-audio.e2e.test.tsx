@@ -273,8 +273,11 @@ describe('microphone picker', () => {
     const select = opened.microphonePicker.element() as HTMLSelectElement;
     expect(select.options.length).toBeGreaterThan(1);
     expect(select.value).toBe(audioTrack(opened.camera)?.getSettings().deviceId);
-    // Moved, not duplicated: the bottom bar keeps only the mute button.
-    expect(opened.camera.element().querySelector('.uc-controls uc-select')).toBeNull();
+    // Moved, not duplicated: outside the settings popup, the bottom bar has no picker, only the mute button.
+    const barPickers = [...opened.camera.element().querySelectorAll('.uc-controls uc-select')].filter(
+      (picker) => !picker.closest('[popover]'),
+    );
+    expect(barPickers).toEqual([]);
     await expect.element(opened.camera.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
   });
 

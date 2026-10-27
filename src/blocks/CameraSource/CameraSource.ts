@@ -1456,71 +1456,15 @@ export class CameraSource extends LitUploaderBlock {
           @change=${this._handleCameraSelectChange}
         >
         </uc-select>
-        <div class="uc-camera-header-actions">
-          <button
-            type="button"
-            class="uc-mini-btn uc-camera-settings-btn"
-            popovertarget=${this._settingsPopoverId}
-            title=${this.l10n('camera-settings')}
-            aria-label=${this.l10n('camera-settings')}
-            ?hidden=${this._isSettingsHidden}
-          >
-            <uc-icon name="settings"></uc-icon>
-          </button>
-          <div id=${this._settingsPopoverId} class="uc-camera-settings" popover="auto">
-            <label ?hidden=${this._isAspectRatioPickerHidden}>
-              <span>${this.l10n('camera-aspect-ratio')}</span>
-              <uc-select
-                .options=${this._aspectRatioOptions.map((value) => ({ value, text: this._aspectRatioLabel(value) }))}
-                .value=${this._aspectRatioChoice}
-                @change=${this._handleAspectRatioPick}
-              ></uc-select>
-            </label>
-            <label ?hidden=${this._isResolutionPickerHidden}>
-              <span>${this.l10n('camera-resolution')}</span>
-              <uc-select
-                .options=${this._resolutionOptions.map((value) => ({ value, text: this._resolutionLabel(value) }))}
-                .value=${this._resolution}
-                @change=${this._handleResolutionPick}
-              ></uc-select>
-            </label>
-            <label ?hidden=${this._isMicrophonePickerHidden}>
-              <span>${this.l10n('camera-microphone')}</span>
-              <uc-select
-                class="uc-microphone-select"
-                .options=${this._audioSelectOptions}
-                .value=${this._selectedAudioId ?? ''}
-                ?disabled=${this._audioSelectDisabled}
-                @change=${this._handleAudioSelectChange}
-              ></uc-select>
-            </label>
-            <label ?hidden=${this._isAudioQualityPickerHidden}>
-              <span>${this.l10n('camera-audio-quality')}</span>
-              <uc-select
-                .options=${this._audioQualityOptions.map((value) => ({ value, text: this._audioQualityLabel(value) }))}
-                .value=${this._audioQuality}
-                @change=${this._handleAudioQualityPick}
-              ></uc-select>
-            </label>
-            <label ?hidden=${this._isAudioModePickerHidden}>
-              <span>${this.l10n('camera-audio-mode')}</span>
-              <uc-select
-                .options=${this._audioModeOptions.map((value) => ({ value, text: this._audioModeLabel(value) }))}
-                .value=${this._audioMode}
-                @change=${this._handleAudioModePick}
-              ></uc-select>
-            </label>
-          </div>
-          <button
-            type="button"
-            class="uc-mini-btn uc-close-btn"
-            @click=${this.$['*closeModal']}
-            title=${this.l10n('a11y-activity-header-button-close')}
-            aria-label=${this.l10n('a11y-activity-header-button-close')}
-          >
-            <uc-icon name="close"></uc-icon>
-          </button>
-        </div>
+        <button
+          type="button"
+          class="uc-mini-btn uc-close-btn"
+          @click=${this.$['*closeModal']}
+          title=${this.l10n('a11y-activity-header-button-close')}
+          aria-label=${this.l10n('a11y-activity-header-button-close')}
+        >
+          <uc-icon name="close"></uc-icon>
+        </button>
       </uc-activity-header>
       <div class="uc-content">
         <video
@@ -1636,7 +1580,60 @@ export class CameraSource extends LitUploaderBlock {
           >
             <uc-icon name=${this._toggleMicrophoneIcon}></uc-icon>
           </button>
-
+          <button
+            type="button"
+            class="uc-mini-btn uc-camera-settings-btn"
+            popovertarget=${this._settingsPopoverId}
+            title=${this.l10n('camera-settings')}
+            aria-label=${this.l10n('camera-settings')}
+            ?hidden=${this._isSettingsHidden}
+          >
+            <uc-icon name="settings"></uc-icon>
+          </button>
+          <div id=${this._settingsPopoverId} class="uc-camera-settings" popover="auto">
+            <label ?hidden=${this._isAspectRatioPickerHidden}>
+              <span>${this.l10n('camera-aspect-ratio')}</span>
+              <uc-select
+                .options=${this._aspectRatioOptions.map((value) => ({ value, text: this._aspectRatioLabel(value) }))}
+                .value=${this._aspectRatioChoice}
+                @change=${this._handleAspectRatioPick}
+              ></uc-select>
+            </label>
+            <label ?hidden=${this._isResolutionPickerHidden}>
+              <span>${this.l10n('camera-resolution')}</span>
+              <uc-select
+                .options=${this._resolutionOptions.map((value) => ({ value, text: this._resolutionLabel(value) }))}
+                .value=${this._resolution}
+                @change=${this._handleResolutionPick}
+              ></uc-select>
+            </label>
+            <label ?hidden=${this._isMicrophonePickerHidden}>
+              <span>${this.l10n('camera-microphone')}</span>
+              <uc-select
+                class="uc-microphone-select"
+                .options=${this._audioSelectOptions}
+                .value=${this._selectedAudioId ?? ''}
+                ?disabled=${this._audioSelectDisabled}
+                @change=${this._handleAudioSelectChange}
+              ></uc-select>
+            </label>
+            <label ?hidden=${this._isAudioQualityPickerHidden}>
+              <span>${this.l10n('camera-audio-quality')}</span>
+              <uc-select
+                .options=${this._audioQualityOptions.map((value) => ({ value, text: this._audioQualityLabel(value) }))}
+                .value=${this._audioQuality}
+                @change=${this._handleAudioQualityPick}
+              ></uc-select>
+            </label>
+            <label ?hidden=${this._isAudioModePickerHidden}>
+              <span>${this.l10n('camera-audio-mode')}</span>
+              <uc-select
+                .options=${this._audioModeOptions.map((value) => ({ value, text: this._audioModeLabel(value) }))}
+                .value=${this._audioMode}
+                @change=${this._handleAudioModePick}
+              ></uc-select>
+            </label>
+          </div>
         </div>
       </div>
     `;
