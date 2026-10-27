@@ -168,9 +168,6 @@ export class CameraSource extends LitUploaderBlock {
   private _audioSelectOptions: AudioDeviceOption[] = [];
 
   @state()
-  private _audioSelectHidden = true;
-
-  @state()
   private _audioSelectDisabled = true;
 
   @state()
@@ -603,7 +600,6 @@ export class CameraSource extends LitUploaderBlock {
     if (status === CameraSourceEvents.PLAY) {
       this._captureState = 'recording';
       this._timerHidden = false;
-      this._audioSelectHidden = true;
       this._currentTimelineIcon = 'pause';
       this._currentIcon = 'square';
       this._mutableClassButton = 'uc-shot-btn uc-camera-action uc-stop-record';
@@ -624,7 +620,6 @@ export class CameraSource extends LitUploaderBlock {
       this._audioToggleMicrophoneHidden = !this.cfg.enableAudioRecording;
       this._currentIcon = 'video-camera-full';
       this._mutableClassButton = 'uc-shot-btn uc-camera-action';
-      this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
     }
   };
 
@@ -682,14 +677,12 @@ export class CameraSource extends LitUploaderBlock {
   private _handleActiveTab = (tabId: CameraMode): void => {
     if (tabId === CameraSourceTypes.PHOTO) {
       this._currentIcon = 'camera-full';
-      this._audioSelectHidden = true;
       this._audioToggleMicrophoneHidden = true;
     }
 
     if (tabId === CameraSourceTypes.VIDEO) {
       this._currentTimelineIcon = 'play';
       this._currentIcon = 'video-camera-full';
-      this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
       this._audioToggleMicrophoneHidden = !this.cfg.enableAudioRecording;
     }
 
@@ -828,6 +821,11 @@ export class CameraSource extends LitUploaderBlock {
     return this._resolutionOptions.length < 2;
   }
 
+  /** Unlike the other pickers this one needs no config: it offers the microphones there are, as the bottom bar did. */
+  private get _isMicrophonePickerHidden(): boolean {
+    return this._audioSelectOptions.length < 2 || !this._isAudioPickerContext;
+  }
+
   private get _isAudioQualityPickerHidden(): boolean {
     return this._audioQualityOptions.length < 2 || !this._isAudioPickerContext;
   }
@@ -842,6 +840,7 @@ export class CameraSource extends LitUploaderBlock {
       this._captureState !== 'live' ||
       (this._isAspectRatioPickerHidden &&
         this._isResolutionPickerHidden &&
+        this._isMicrophonePickerHidden &&
         this._isAudioQualityPickerHidden &&
         this._isAudioModePickerHidden)
     );
@@ -955,7 +954,6 @@ export class CameraSource extends LitUploaderBlock {
       this._timerHidden = true;
       this._currentIcon = currentIcon;
       this._audioToggleMicrophoneHidden = !visibleAudio;
-      this._audioSelectHidden = !visibleAudio;
     } else if (state === 'prompt') {
       this._l10nMessage = 'camera-permissions-prompt';
       this._videoHidden = true;
@@ -1313,7 +1311,6 @@ export class CameraSource extends LitUploaderBlock {
       );
 
       this._audioSelectOptions = this._audioDevices;
-      this._audioSelectHidden = !this.cfg.enableAudioRecording || this._audioDevices.length <= 1;
       this._selectedAudioId = this._resolveSelectedId(
         this._audioDevices,
         this._selectedAudioId,
@@ -1487,6 +1484,16 @@ export class CameraSource extends LitUploaderBlock {
                 @change=${this._handleResolutionPick}
               ></uc-select>
             </label>
+            <label ?hidden=${this._isMicrophonePickerHidden}>
+              <span>${this.l10n('camera-microphone')}</span>
+              <uc-select
+                class="uc-microphone-select"
+                .options=${this._audioSelectOptions}
+                .value=${this._selectedAudioId ?? ''}
+                ?disabled=${this._audioSelectDisabled}
+                @change=${this._handleAudioSelectChange}
+              ></uc-select>
+            </label>
             <label ?hidden=${this._isAudioQualityPickerHidden}>
               <span>${this.l10n('camera-audio-quality')}</span>
               <uc-select
@@ -1630,16 +1637,6 @@ export class CameraSource extends LitUploaderBlock {
             <uc-icon name=${this._toggleMicrophoneIcon}></uc-icon>
           </button>
 
-          <uc-select
-            class="uc-audio-select"
-            .options=${this._audioSelectOptions}
-            .value=${this._selectedAudioId ?? ''}
-            ?hidden=${this._audioSelectHidden}
-            ?disabled=${this._audioSelectDisabled}
-            @change=${this._handleAudioSelectChange}
-            data-testid="audio-select"
-          >
-          </uc-select>
         </div>
       </div>
     `;

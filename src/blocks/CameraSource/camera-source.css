@@ -64,6 +64,13 @@
     gap: calc(var(--uc-padding) / 2);
   }
 
+  /* Device names can be long; they're cut rather than stretching the popup. */
+  uc-camera-source .uc-camera-settings uc-select select {
+    max-width: 14em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
   uc-camera-source .uc-camera-settings label {
     display: flex;
     gap: var(--uc-padding);
@@ -212,14 +219,6 @@
 
   uc-camera-source .uc-select {
     display: flex;
-  }
-
-  uc-camera-source .uc-audio-select {
-    width: 98px;
-  }
-
-  uc-camera-source .uc-audio-select select {
-    width: 100%;
   }
 
   uc-camera-source .uc-camera-action {
