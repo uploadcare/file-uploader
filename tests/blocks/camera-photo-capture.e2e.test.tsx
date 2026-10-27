@@ -70,6 +70,22 @@ describe('photos with ImageCapture', () => {
     expect(await addedPhotoSize(opened.api)).toEqual({ width: 800, height: 600 });
   });
 
+  it('asks for the size the stream runs at, so the camera keeps its configuration', async () => {
+    // Real cameras can switch modes for any other size, leaving the preview changed after a retake; the fake camera
+    // can't show that, so this pins the request instead.
+    const takePhoto = vi.spyOn(ImageCaptureClass().prototype, 'takePhoto');
+    const opened = await openCamera({ cameraResolution: '720p' });
+    const track = (opened.camera.element().querySelector('video')?.srcObject as MediaStream).getVideoTracks()[0];
+    const before = track.getSettings();
+
+    await opened.shoot();
+    await vi.waitFor(() => expect(takePhoto).toHaveBeenCalled());
+    await opened.retake();
+
+    expect(takePhoto).toHaveBeenCalledWith({ imageWidth: before.width, imageHeight: before.height });
+    expect(track.getSettings()).toMatchObject({ width: before.width, height: before.height });
+  });
+
   it('crops the still to the aspect ratio', async () => {
     vi.spyOn(ImageCaptureClass().prototype, 'takePhoto').mockImplementation(() => still(800, 600));
     const opened = await openCamera({ cameraAspectRatio: '1:1' });

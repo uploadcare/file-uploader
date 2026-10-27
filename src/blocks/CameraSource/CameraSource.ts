@@ -671,7 +671,7 @@ export class CameraSource extends LitUploaderBlock {
     const track = this._stream?.getVideoTracks()[0];
     this._photo =
       track && canTakePhoto()
-        ? takePhoto(track, this._resolution)
+        ? takePhoto(track)
             .then((still) => {
               const photo = renderPhoto(still, { ...options, width: still.width, height: still.height });
               still.close();

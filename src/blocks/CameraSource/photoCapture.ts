@@ -1,6 +1,4 @@
-import type { CameraResolution } from '../../types/exported';
 import { centerCrop } from './aspectRatio';
-import { RESOLUTION_SHORT_SIDE } from './buildConstraints';
 
 /** The part of `ImageCapture` used here. It only exists in Chromium-based browsers, so TypeScript's DOM types lack it. */
 type PhotoCapabilities = {
@@ -23,35 +21,34 @@ const imageCaptureConstructor = (): ImageCaptureConstructor | undefined => {
 export const canTakePhoto = (): boolean => imageCaptureConstructor() !== undefined;
 
 /**
- * The still size to ask `takePhoto()` for: the camera's own shape, with the short side `cameraResolution` asks for
- * (1080 for `auto`), capped at what the camera reports. `undefined` when it reports no limits, leaving the size to it.
+ * The still size to ask `takePhoto()` for: the size the stream already runs at. Asking for any other size makes some
+ * cameras switch into a photo mode, and the preview can stay at that size or framing after the shot. The stream
+ * already follows `cameraResolution`, so photos do too. `undefined`, leaving the size to the camera, when it reports
+ * no photo limits or the stream size is outside them.
  */
 export const photoSettingsFor = ({
   width,
   height,
-  resolution,
   capabilities,
 }: {
   width: number;
   height: number;
-  resolution: CameraResolution;
   capabilities: PhotoCapabilities;
 }): PhotoSettings | undefined => {
-  const maxWidth = capabilities.imageWidth?.max;
-  const maxHeight = capabilities.imageHeight?.max;
-  if (!maxWidth || !maxHeight || !width || !height) {
+  const { imageWidth, imageHeight } = capabilities;
+  const fits = (size: number, range?: { max?: number; min?: number }) =>
+    range?.max !== undefined && size <= range.max && size >= (range.min ?? 0);
+  if (!width || !height || !fits(width, imageWidth) || !fits(height, imageHeight)) {
     return undefined;
   }
-  const shortSide = RESOLUTION_SHORT_SIDE[resolution === 'auto' ? '1080p' : resolution];
-  const scale = Math.min(shortSide / Math.min(width, height), maxWidth / width, maxHeight / height);
-  return { imageWidth: Math.round(width * scale), imageHeight: Math.round(height * scale) };
+  return { imageWidth: width, imageHeight: height };
 };
 
 /**
- * Takes a still with `ImageCapture`, at the size `photoSettingsFor` picks. Rejects where `ImageCapture` is missing or
- * the camera refuses, so the caller can keep the preview frame instead.
+ * Takes a still with `ImageCapture`, at the stream's own size. Rejects where `ImageCapture` is missing or the camera
+ * refuses, so the caller can keep the preview frame instead.
  */
-export const takePhoto = async (track: MediaStreamTrack, resolution: CameraResolution): Promise<ImageBitmap> => {
+export const takePhoto = async (track: MediaStreamTrack): Promise<ImageBitmap> => {
   const ImageCapture = imageCaptureConstructor();
   if (!ImageCapture) {
     throw new Error('ImageCapture is not supported');
@@ -60,7 +57,7 @@ export const takePhoto = async (track: MediaStreamTrack, resolution: CameraResol
   const { width = 0, height = 0 } = track.getSettings();
   // Capabilities are optional: some cameras take stills without reporting limits.
   const capabilities = await capture.getPhotoCapabilities().catch(() => ({}));
-  const blob = await capture.takePhoto(photoSettingsFor({ width, height, resolution, capabilities }));
+  const blob = await capture.takePhoto(photoSettingsFor({ width, height, capabilities }));
   return createImageBitmap(blob);
 };
 
