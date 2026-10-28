@@ -21,7 +21,10 @@ export const imageShrinkPlugin: UploaderPlugin = {
           const shrunk = await shrinkFile(file, settings);
           return { file: shrunk };
         } catch (error) {
-          pluginApi.logger.warn('Image shrink failed, uploading the original', error);
+          // image-shrink throws `Not required` for an image already under the limit: nothing to warn about.
+          if (!(error instanceof Error && error.message === 'Not required')) {
+            pluginApi.logger.warn('Image shrink failed, uploading the original', error);
+          }
           return { file };
         }
       },
