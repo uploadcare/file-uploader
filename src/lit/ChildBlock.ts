@@ -24,6 +24,8 @@ import { LightDomMixin } from './LightDomMixin';
 import { RegisterableElementMixin } from './RegisterableElementMixin';
 import { registerHostSubscriptions } from './subscription';
 
+const templateLog = logger.scope('block');
+
 // `SignalWatcher` sits at the base of the mixin chain so it wraps
 // `performUpdate` (not `render()`): a fully-overridden `render()`/`shouldUpdate()`
 // in a leaf block still auto-tracks any `@lit-labs/signals` signal read during
@@ -60,6 +62,16 @@ const isCustomElement = (el: Element): boolean => el.tagName?.includes('-') ?? f
  */
 export abstract class ChildBlock extends ChildBlockBase {
   public static styleAttrs: string[] = [];
+
+  /**
+   * @deprecated The Symbiote-era template override has had no effect since v1.26.0. Kept so assigning one still
+   * logs what `migration-to-1.26.0.mdx` says it does.
+   */
+  public static set template(_value: unknown) {
+    templateLog.error(
+      "Caution: static 'template' property is deprecated and has no effect. See https://github.com/uploadcare/file-uploader/releases/tag/v1.25.0 for details.",
+    );
+  }
 
   @property({ attribute: 'ctx-name' })
   public ctxName: string | undefined = undefined;

@@ -255,3 +255,16 @@ describe('ChildBlock test mode', () => {
     expect(el.querySelector('.inner')?.getAttribute('data-testid')).toBe('uc-test-testid-block--inner');
   });
 });
+
+describe('static template', () => {
+  it('logs the deprecation error v1 logged when a block class is given a template', () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    class TemplatedBlock extends UseBlock {}
+
+    (TemplatedBlock as unknown as { template: string }).template = '<div></div>';
+
+    expect(error.mock.calls.map((call) => call.join(' ')).join('\n')).toContain(
+      "Caution: static 'template' property is deprecated and has no effect.",
+    );
+  });
+});
