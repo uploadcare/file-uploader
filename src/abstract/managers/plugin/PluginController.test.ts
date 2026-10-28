@@ -34,7 +34,7 @@ const setup = () => {
       registerFileAction: (a) => registry.addFileAction(pluginId, a),
       registerFileHook: (h) => registry.addFileHook(pluginId, h),
       registerIcon: (i) => registry.addIcon(pluginId, i),
-      registerL10n: () => {},
+      registerL10n: (m) => registry.addL10n(pluginId, m),
       registerConfig: () => {},
     };
     return {
@@ -557,5 +557,47 @@ describe('PluginController', () => {
       onCompute?.(Promise.resolve([])); // remove 'x' → unregister → throwing sub caught
       await expect(controller.pluginsReady()).resolves.toBeUndefined();
     });
+  });
+});
+
+describe('plain-string labels', () => {
+  const labelPlugin = (labels: { source: string; action: string; l10n?: Record<string, string> }): UploaderPlugin => ({
+    id: 'labels',
+    setup: ({ pluginApi }) => {
+      if (labels.l10n) pluginApi.registry.registerL10n({ en: labels.l10n });
+      pluginApi.registry.registerSource({ id: 'src', label: labels.source, onSelect: () => {} });
+      pluginApi.registry.registerFileAction({
+        id: 'act',
+        icon: 'edit',
+        label: labels.action,
+        shouldRender: () => true,
+        onClick: () => {},
+      });
+    },
+  });
+  const warnings = () => vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+  it('warns once per label that is neither an l10n key nor plainText(), as v1 did', async () => {
+    const warn = warnings();
+    const { sync } = setup();
+
+    await sync([labelPlugin({ source: 'Plain Label', action: 'Edit it' })]);
+    await sync([labelPlugin({ source: 'Plain Label', action: 'Edit it' })]);
+
+    const messages = warn.mock.calls.map((call) => call.join(' '));
+    expect(messages.filter((m) => m.includes('"Plain Label"'))).toHaveLength(1);
+    expect(messages.filter((m) => m.includes('"Edit it"'))).toHaveLength(1);
+  });
+
+  it('does not warn for a built-in key, a registered key or plainText()', async () => {
+    const warn = warnings();
+    const { sync } = setup();
+
+    await sync([
+      labelPlugin({ source: 'src-type-local', action: 'my-plugin.edit', l10n: { 'my-plugin.edit': 'Edit' } }),
+    ]);
+    await sync([labelPlugin({ source: plainText('Shown as is'), action: 'upload-file' })]);
+
+    expect(warn).not.toHaveBeenCalled();
   });
 });

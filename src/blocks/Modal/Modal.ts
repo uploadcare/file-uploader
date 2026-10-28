@@ -8,7 +8,7 @@ import { property } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { RegisteredActivityType } from '../../abstract/activity-constants';
-import type { PluginLabel } from '../../abstract/managers/plugin/PluginTypes';
+import { type PluginLabel, pluginLabelKey } from '../../abstract/managers/plugin/PluginTypes';
 import { getScrollLock } from '../../utils/scroll-lock';
 
 export class Modal extends ChildBlock {
@@ -174,7 +174,7 @@ export class Modal extends ChildBlock {
 
   public override render() {
     return html`
-  <dialog data-testid="dialog" aria-label=${ifDefined(this.dialogLabel ? this.l10n(this.dialogLabel) : undefined)} ${ref(this._handleDialogRef)}>
+  <dialog data-testid="dialog" aria-label=${ifDefined(this.dialogLabel ? this.l10n(pluginLabelKey(this.dialogLabel)) : undefined)} ${ref(this._handleDialogRef)}>
     ${this.yield('')}
   </dialog>
 `;

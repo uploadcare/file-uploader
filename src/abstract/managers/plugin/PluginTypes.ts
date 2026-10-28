@@ -12,16 +12,26 @@ export type PluginIconRegistration = {
 };
 
 /**
- * Translations by locale name. Each key must be declared: built in, or added to `CustomLocaleDefinition` with
- * `declare module '@uploadcare/file-uploader' { interface CustomLocaleDefinition { 'my-plugin.title': string } }`.
+ * Translations by locale name. Declared keys — built in, or added to `CustomLocaleDefinition` with
+ * `declare module '@uploadcare/file-uploader' { interface CustomLocaleDefinition { 'my-plugin.title': string } }` —
+ * autocomplete; any other key is accepted too, as in v1.
  */
-export type PluginL10nRegistration = Record<string, Partial<Record<L10nKey, string>>>;
+export type PluginL10nRegistration = Record<string, Partial<Record<L10nKey | (string & {}), string>>>;
 
 /**
  * A plugin's label: an l10n key, built in or declared in `CustomLocaleDefinition` and registered via `registerL10n`,
  * or text marked with `plainText()`.
+ *
+ * Any other string still compiles and is shown as written, as in v1, but is deprecated: the uploader warns once per
+ * such label. A misspelt key is one of them, which is what the warning is for.
  */
-export type PluginLabel = L10nKey | PlainText;
+export type PluginLabel = L10nKey | PlainText | (string & {});
+
+/**
+ * A plugin label as the blocks' checked `l10n()` takes it. The lookup handles any string — an unknown one is shown as
+ * written — so this only narrows the type of what `PluginController` has already warned about.
+ */
+export const pluginLabelKey = (label: PluginLabel): L10nKey | PlainText => label as L10nKey | PlainText;
 
 export type PluginSourceRegistration = {
   id: string;

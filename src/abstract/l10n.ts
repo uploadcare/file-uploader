@@ -16,7 +16,16 @@ export type PlainText = string & { readonly [plainTextBrand]: true };
  * Marks `text` as meant to be shown as written, for a plugin label that is not an l10n key. It is still looked up in
  * the locale like any label, so text that happens to equal a key shows that key's translation.
  */
-export const plainText = (text: string): PlainText => text as PlainText;
+export const plainText = (text: string): PlainText => {
+  plainTexts.add(text);
+  return text as PlainText;
+};
+
+// ponytail: never shrinks; it holds plugin label strings, a handful per page.
+const plainTexts = new Set<string>();
+
+/** Whether `text` went through {@link plainText}, which exists only at the type level otherwise. */
+export const isPlainText = (text: string): boolean => plainTexts.has(text);
 
 /** A key has to exist in the dictionary, or be text marked `PlainText`; a bare `string` does not pass. */
 export type CheckedL10nKey<K extends string> = K extends L10nKey | PlainText ? K : never;
