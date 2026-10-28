@@ -386,6 +386,22 @@ describe('RouterController (v2)', () => {
       expect(emit).not.toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, expect.anything());
     });
 
+    it('switching the open modal to another activity opens the new one and closes the old, as v1 did', () => {
+      const { router, emit } = setup();
+      router.openModal('start-from');
+      emit.mockClear();
+
+      router.openModal('camera');
+
+      const modalEvents = emit.mock.calls.filter(
+        ([type]) => type === UploaderEventType.MODAL_OPEN || type === UploaderEventType.MODAL_CLOSE,
+      );
+      expect(modalEvents).toEqual([
+        [UploaderEventType.MODAL_OPEN, { modalId: 'camera' }, { debounce: true }],
+        [UploaderEventType.MODAL_CLOSE, { modalId: 'start-from', hasActiveModals: true }, { debounce: true }],
+      ]);
+    });
+
     it('closeModal emits MODAL_CLOSE only when a modal was open', () => {
       const { router, emit } = setup();
       router.closeModal(); // nothing open
