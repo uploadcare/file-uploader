@@ -164,6 +164,12 @@ describe('editorImageInfoUrl', () => {
     );
   });
 
+  it('measures before the operations the source put after its geometry, the space its crop was written in', () => {
+    expect(
+      editorImageInfoUrl(ORIGINAL, operationsFromModifiers('overlay/wm-uuid', 'crop/200x150/100,50', 'resize/100x')),
+    ).toBe(`https://ucarecdn.com/${UUID}/-/overlay/wm-uuid/-/json/`);
+  });
+
   it('excludes the modelled transformations', () => {
     // `crop` is what is being measured *for*, and the cropper accounts for its own
     // `rotate`; including either would make the measurement circular.
