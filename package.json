@@ -220,15 +220,6 @@
       "limit": "10 KB"
     }
   ],
-  "tsd": {
-    "compilerOptions": {
-      "paths": {
-        "@uploadcare/cdn-url/ops": [
-          "./node_modules/@uploadcare/cdn-url/dist/types/ops.d.ts"
-        ]
-      }
-    }
-  },
   "overrides": {
     "@vitest/mocker": {
       "msw": "$msw"
