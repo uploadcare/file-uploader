@@ -197,11 +197,15 @@ export class UploadController {
     // A file added in this same tick has not met its validators yet: wait for them, then re-check, so a rejected
     // file is never sent. A second call for the same entry finds it uploading once the first one resumes.
     await lifetime.guard(this._validation.whenValidated(entry));
+    if (entry.get('errors').length > 0) {
+      // Rejected, so never uploaded: the common progress counts only files that were ready to upload.
+      this.#activeBatch.delete(uid);
+      return;
+    }
     if (
       !this._collection.read(uid) ||
       entry.get('fileInfo') ||
       entry.get('isUploading') ||
-      entry.get('errors').length > 0 ||
       entry.get('isValidationPending')
     ) {
       return;

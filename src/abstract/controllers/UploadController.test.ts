@@ -62,7 +62,7 @@ const makeHook = (overrides: Partial<FileHook> = {}): FileHook =>
 type SetupOpts = {
   cfg?: Partial<ConfigType>;
   hooks?: readonly FileHook[];
-  whenValidated?: () => Promise<void>;
+  whenValidated?: (entry: Parameters<ValidationController['whenValidated']>[0]) => Promise<void>;
 };
 
 const setup = (opts: SetupOpts = {}) => {
@@ -354,6 +354,25 @@ describe('UploadController', () => {
       expect([...controller.uploadBatch].sort()).toEqual([a, b].sort());
       await vi.runAllTimersAsync();
       expect(mockUploadFile).toHaveBeenCalledTimes(2);
+    });
+
+    it('drops an entry its validators rejected from the active batch, so progress can reach 100', async () => {
+      vi.useFakeTimers();
+      const { controller, collection } = setup({
+        cfg: { multiple: true, multipleMax: 0 },
+        whenValidated: async (entry) => {
+          if (entry.get('file')?.name === 'bad.txt') {
+            entry.set('errors', [{ type: 'CUSTOM_ERROR', message: 'nope' }]);
+          }
+        },
+      });
+      const good = collection.add({ file: new File(['a'], 'good.txt') });
+      const bad = collection.add({ file: new File(['b'], 'bad.txt') });
+
+      controller.uploadEntries([good, bad]);
+      await vi.runAllTimersAsync();
+
+      expect(controller.uploadBatch).toEqual([good]);
     });
 
     it('excludes removed entries from the active batch', () => {
