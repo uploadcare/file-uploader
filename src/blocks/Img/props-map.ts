@@ -1,8 +1,7 @@
 import { DEFAULT_CDN_ORIGIN } from '../../utils/cdn/origin';
 
-/** `flag: true` marks the documented "number flag" settings, whose attribute value is read as a number. */
 export const PROPS_MAP = Object.freeze({
-  'dev-mode': { flag: true },
+  'dev-mode': {},
   pubkey: {},
   uuid: {},
   src: {},
@@ -10,9 +9,8 @@ export const PROPS_MAP = Object.freeze({
   // 'placeholder-src': {}, // available via CSS
   lazy: {
     default: 1,
-    flag: true,
   },
-  intersection: { flag: true },
+  intersection: {},
   breakpoints: {
     // '200, 300, 400'
   },
@@ -23,17 +21,15 @@ export const PROPS_MAP = Object.freeze({
   'secure-delivery-proxy': {},
   'hi-res-support': {
     default: 1,
-    flag: true,
   },
-  'ultra-res-support': { flag: true },
+  'ultra-res-support': {}, // ?
   format: {},
   'cdn-operations': {},
-  progressive: { flag: true },
+  progressive: {},
   quality: {},
   'is-background-for': {},
   'is-preview-blur': {
     default: 1,
-    flag: true,
   },
 });
 
