@@ -7,7 +7,8 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 /**
  * Compiles a two-line consumer of the published types under the compiler settings integrators actually use. tsd covers
- * one configuration; this covers module resolution and strictness flags tsd does not vary. The consumer lives inside
+ * one configuration; this covers the strictness flags tsd does not vary. Only bundler resolution: the package targets
+ * bundler-based projects, and its CDN URL dependency ships bundler-only declarations. The consumer lives inside
  * the repo so `@uploadcare/file-uploader` resolves through the package's own `exports` (Node self-reference), exactly
  * as it does for an installed copy.
  */
@@ -29,7 +30,6 @@ const STRICT = ['--strict', '--exactOptionalPropertyTypes', '--noUncheckedIndexe
 type Case = { name: string; file: string; flags: string[] };
 const cases: Case[] = [
   { name: 'bundler', file: 'consumer.ts', flags: ['--module', 'esnext', '--moduleResolution', 'bundler'] },
-  { name: 'nodenext (ESM)', file: 'consumer.mts', flags: ['--module', 'nodenext', '--moduleResolution', 'nodenext'] },
 ];
 
 const compile = ({ file, flags }: Case): { ok: boolean; output: string } => {
@@ -72,30 +72,5 @@ describe('published types under consumer compiler settings', { timeout: 60_000 }
     const { ok, output } = compile(cases[0]);
     expect(output).toBe('');
     expect(ok).toBe(true);
-  });
-
-  // QUIRK(types): the pinned alpha of @uploadcare/cdn-url ships extensionless relative imports in its ESM
-  // declarations. NodeNext rejects those imports and cannot resolve the public CdnOperation/FilterName types.
-  // Pin these diagnostics until the dependency fixes its declarations; unrelated type errors must still fail.
-  it('nodenext (ESM), strict, skipLibCheck: false fails inside cdn-url', () => {
-    const { ok, output } = compile(cases[1]);
-    expect(ok).toBe(false);
-    // The same four errors in any order: which import the bundled d.ts emits first follows its module graph.
-    const lines = output.trim().split(/\r?\n/);
-    expect(lines).toHaveLength(4);
-    expect(lines).toEqual(
-      expect.arrayContaining([
-        expect.stringMatching(
-          /^dist\/index\.d\.ts\(\d+,\d+\): error TS2305: Module '"@uploadcare\/cdn-url\/ops"' has no exported member 'FilterName'\.$/,
-        ),
-        expect.stringMatching(
-          /^dist\/index\.d\.ts\(\d+,\d+\): error TS2305: Module '"@uploadcare\/cdn-url"' has no exported member 'CdnOperation'\.$/,
-        ),
-        ...['index', 'ops'].map(
-          (entry) =>
-            `node_modules/@uploadcare/cdn-url/dist/types/${entry}.d.ts(1,15): error TS2834: Relative import paths need explicit file extensions in ECMAScript imports when '--moduleResolution' is 'node16' or 'nodenext'. Consider adding an extension to the import path.`,
-        ),
-      ]),
-    );
   });
 });
