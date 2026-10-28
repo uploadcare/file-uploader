@@ -9,7 +9,7 @@ import { type ImgPropKey, PROPS_MAP } from './props-map.js';
 
 export type CssPropValue = string | number | undefined | null;
 type CssPropRecord = Record<string, CssPropValue>;
-type PropConfig = { default?: CssPropValue; flag?: boolean };
+type PropConfig = { default?: CssPropValue };
 
 export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)) {
   private _state: CssPropRecord = {};
@@ -27,19 +27,6 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
       const config = PROPS_MAP[prop as keyof typeof PROPS_MAP] as PropConfig | undefined;
       this._state[CSS_PREF + prop] = (config as { default?: CssPropValue })?.default || '';
     }
-  }
-
-  /**
-   * Attribute values arrive as strings, so a number flag set to `"0"` would read as truthy and could only be switched
-   * off through the CSS property, which already yields a number. Non-numeric values are left as-is, not made NaN.
-   */
-  private static _coerceAttributeValue(name: string, value: string | null): CssPropValue {
-    const config: PropConfig | undefined = PROPS_MAP[name as keyof typeof PROPS_MAP];
-    if (!config?.flag || value === null || value.trim() === '') {
-      return value;
-    }
-    const asNumber = Number(value);
-    return Number.isFinite(asNumber) ? asNumber : value;
   }
 
   protected $$(key: ImgPropKey): CssPropValue {
@@ -154,9 +141,8 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
   public override attributeChangedCallback(name: string, _oldVal: string | null, newVal: string | null): void {
     window.setTimeout(() => {
       const fullKey = CSS_PREF + name;
-      const value = ImgConfig._coerceAttributeValue(name, newVal);
-      this._state[fullKey] = value;
-      this._notify(fullKey, value);
+      this._state[fullKey] = newVal;
+      this._notify(fullKey, newVal);
     });
   }
 }
