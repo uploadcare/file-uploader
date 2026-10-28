@@ -297,6 +297,8 @@ export class UploaderPublicApi {
         !entry.get('isRemoved') &&
         !entry.get('isUploading') &&
         !entry.get('fileInfo') &&
+        // A failed upload is final; its error joins `errors` only on the next validation run.
+        !entry.get('uploadError') &&
         entry.get('errors').length === 0 &&
         !entry.get('isValidationPending') &&
         !entry.get('isQueuedForValidation')

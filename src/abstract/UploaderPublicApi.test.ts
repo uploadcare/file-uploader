@@ -15,6 +15,7 @@ import { ControllerContainer } from './di/ControllerContainer';
 import { EventEmitter, EventType } from './EventEmitter';
 import { createL10n, plainText } from './l10n';
 import { PluginController } from './managers/plugin';
+import type { Uid } from './Uid';
 import type { UploaderPublicApi } from './UploaderPublicApi';
 import { UploaderPublicApi as UploaderPublicApiClass } from './UploaderPublicApi';
 import { UploaderRegistry } from './UploaderRegistry';
@@ -333,6 +334,24 @@ describe('UploaderPublicApi', () => {
       const uploadEntries = vi.spyOn(container.get(UploadController), 'uploadEntries').mockImplementation(() => {});
       const startHandler = vi.fn();
       api.on(EventType.COMMON_UPLOAD_START, startHandler);
+
+      api.uploadAll();
+
+      expect(uploadEntries).not.toHaveBeenCalled();
+      expect(startHandler).not.toHaveBeenCalled();
+    });
+
+    it('skips an entry whose upload failed, so a server rejection does not start the batch again', () => {
+      const { api, container } = setup();
+      const uploadEntries = vi.spyOn(container.get(UploadController), 'uploadEntries').mockImplementation(() => {});
+      const startHandler = vi.fn();
+      api.on(EventType.COMMON_UPLOAD_START, startHandler);
+      const { internalId } = api.addFileFromUrl('https://example.com/a.jpg');
+      // A rejected upload: the error is on the entry, and `errors` fills in only on the next validation run.
+      container
+        .get(UploadCollectionController)
+        .read(internalId as Uid)
+        ?.set('uploadError', new Error('rejected'));
 
       api.uploadAll();
 
