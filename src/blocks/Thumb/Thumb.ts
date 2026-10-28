@@ -100,7 +100,7 @@ export class Thumb extends FileItemConfig {
       let cdnThumbUrl: string | undefined;
       try {
         cdnThumbUrl = serializeFileUrl({
-          origin: new URL(this._config.get('cdnCname')).origin,
+          cdnBase: new URL(this._config.get('cdnCname')).origin,
           uuid,
           operations: [
             ...operationsFromModifiers(entry.get('cdnUrlModifiers')),

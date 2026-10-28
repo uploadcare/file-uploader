@@ -165,7 +165,7 @@
   "dependencies": {
     "@lit-labs/signals": "^0.3.0",
     "@lit/context": "^1.1.6",
-    "@uploadcare/cdn-url": "6.20.0-alpha.6",
+    "@uploadcare/cdn-url": "6.25.0",
     "@uploadcare/cname-prefix": "^6.19.0",
     "@uploadcare/image-shrink": "^6.19.0",
     "@uploadcare/quality-insights": "^6.19.0",

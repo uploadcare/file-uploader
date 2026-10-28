@@ -55,7 +55,7 @@ export type CloudImageEditorControllerState = {
   '*networkProblems': boolean;
   '*editorTransformations': Transformations;
   /** The full operation list from the incoming URL, unfiltered — edited in place on Apply. */
-  '*sourceOperations': CdnOperation[];
+  '*sourceOperations': readonly CdnOperation[];
   '*currentAspectRatio': CropAspectRatio | null;
   '*tabId': TabIdValue;
   '*colorPreview': ColorPreview;
