@@ -321,6 +321,8 @@ has been dissolved (M-god step 8e): blocks resolve the controllers they need via
   methods, 19 events, `--uc-*` CSS variables, the plugin API, and the
   `OutputFileEntry`/`OutputCollectionState` data shapes) defined in `fern-docs`.
   Until a future major, keep it working — add compat shims rather than breaking.
+  Mark each shim `// NEXT-MAJOR(<area>): <what to remove or replace>. Kept for 1.x compat.` so
+  `git grep NEXT-MAJOR` lists the cleanup a major release starts from.
 - **Undocumented** surface (the `$` proxy, `*`-prefixed keys, internal managers,
   `--cfg-*` CSS vars, `static template` setter) **may** change freely.
 

@@ -67,6 +67,7 @@ export abstract class ChildBlock extends ChildBlockBase {
    * @deprecated The Symbiote-era template override has had no effect since v1.26.0. Kept so assigning one still
    * logs what `migration-to-1.26.0.mdx` says it does.
    */
+  // NEXT-MAJOR(blocks): remove this setter. Kept for 1.x compat.
   public static set template(_value: unknown) {
     templateLog.error(
       "Caution: static 'template' property is deprecated and has no effect. See https://github.com/uploadcare/file-uploader/releases/tag/v1.25.0 for details.",

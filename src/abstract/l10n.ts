@@ -22,6 +22,8 @@ export const plainText = (text: string): PlainText => {
 };
 
 // ponytail: never shrinks; it holds plugin label strings, a handful per page.
+// NEXT-MAJOR(plugins): remove with the plain-string labels (see `PluginLabel`); `plainText` is then type-only again.
+// Kept for 1.x compat.
 const plainTexts = new Set<string>();
 
 /** Whether `text` went through {@link plainText}, which exists only at the type level otherwise. */
