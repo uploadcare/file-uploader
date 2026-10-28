@@ -402,6 +402,17 @@ describe('RouterController (v2)', () => {
       ]);
     });
 
+    it('restart keeps the target as the whole history when the flow is already there', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.navigate('url');
+      router.navigate('start-from');
+
+      router.restart('start-from');
+
+      expect(router.history).toEqual(['start-from']);
+    });
+
     it('closeModal emits MODAL_CLOSE only when a modal was open', () => {
       const { router, emit } = setup();
       router.closeModal(); // nothing open

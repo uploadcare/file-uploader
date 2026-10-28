@@ -594,25 +594,44 @@ describe('UploaderPublicApi', () => {
       expect(openModal).toHaveBeenCalledWith('start-from');
     });
 
-    it('doneFlow resets the router and lands on the configured done activity', () => {
+    it('doneFlow lands on the configured done activity with a fresh history, without closing everything first', () => {
       const { api, ctrl } = setup();
+      ctrl.router.navigationStrategy = () => 'background';
       ctrl.router.configure({ doneActivity: 'upload-list' });
-      const navigate = vi.spyOn(ctrl.router, 'navigate');
+      ctrl.router.navigate('start-from');
+      ctrl.router.navigate('url');
+      const activities: unknown[] = [];
+      api.on('activity-change', (payload) => activities.push(payload.activity));
 
       api.doneFlow();
 
-      expect(navigate).toHaveBeenNthCalledWith(1, null);
-      expect(navigate).toHaveBeenNthCalledWith(2, 'upload-list');
+      expect(ctrl.router.currentActivity).toBe('upload-list');
+      expect(ctrl.router.history).toEqual(['upload-list']);
+      expect(activities).not.toContain(null);
     });
 
-    it('doneFlow only resets when no done activity is configured', () => {
+    it('doneFlow leaves an open modal open when the done activity cannot be entered, as v1 did in minimal', () => {
       const { api, ctrl } = setup();
-      const navigate = vi.spyOn(ctrl.router, 'navigate');
+      // Minimal: the upload list is the background, everything else opens over it; an empty list can't be entered.
+      ctrl.router.navigationStrategy = (to) => (to === 'upload-list' ? 'background' : 'foreground');
+      ctrl.router.configure({ doneActivity: 'upload-list' });
+      ctrl.router.guard('upload-list', () => false);
+      ctrl.router.navigate('start-from');
 
       api.doneFlow();
 
-      expect(navigate).toHaveBeenCalledTimes(1);
-      expect(navigate).toHaveBeenCalledWith(null);
+      expect(ctrl.router.modal).toBe('start-from');
+    });
+
+    it('doneFlow closes everything when no done activity is configured', () => {
+      const { api, ctrl } = setup();
+      ctrl.router.navigationStrategy = () => 'foreground';
+      ctrl.router.navigate('start-from');
+
+      api.doneFlow();
+
+      expect(ctrl.router.modal).toBeNull();
+      expect(ctrl.router.currentActivity).toBeNull();
     });
   });
 

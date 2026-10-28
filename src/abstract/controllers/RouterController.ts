@@ -477,6 +477,16 @@ export class RouterController {
     this._transition(this._activity, id);
   }
 
+  /** Navigate to `to` with a fresh history, as if the flow started there; `back()` then has nowhere to go. */
+  public restart(to: ActivityId): void {
+    this._history = [];
+    this.navigate(to);
+    // Already there: the navigation changed nothing, so nothing pushed it.
+    if (this._history.length === 0 && this.currentActivity === to) {
+      this._history.push(to);
+    }
+  }
+
   /** Close the foreground modal; keeps the background activity. */
   public closeModal(): void {
     this._transition(this._activity, null);
