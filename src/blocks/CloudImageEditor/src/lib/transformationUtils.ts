@@ -242,6 +242,15 @@ export function preservedOperations(source: readonly CdnOperation[]): CdnOperati
 }
 
 /**
+ * The source operations before its first geometry operation: the image its `crop` coordinates address. Everything
+ * from that operation on is applied after the editor's geometry (see `mergeTransformationsIntoOperations`).
+ */
+export function operationsBeforeGeometry(source: readonly CdnOperation[]): readonly CdnOperation[] {
+  const firstGeometry = source.findIndex((operation) => GEOMETRY_OPERATION_NAMES.has(operation.name));
+  return firstGeometry === -1 ? source : source.slice(0, firstGeometry);
+}
+
+/**
  * Edit the source URL's operations in place rather than rebuilding the list
  * from scratch and appending what the editor cannot model. Placement matters
  * to the CDN for some pairs (`stretch` applies to a *following* resize), so an
@@ -262,11 +271,14 @@ export function preservedOperations(source: readonly CdnOperation[]): CdnOperati
  *   the editor's canonical `SUPPORTED_OPERATIONS_ORDERED` order relative to
  *   other newly-added ones.
  * - The editor's geometry operations (`mirror`, `flip`, `rotate`, `crop`) are
- *   always emitted last, regardless of where the source had them. `crop`
- *   coordinates are only meaningful relative to a point in the operation
- *   chain, and putting geometry after everything preserved makes that point
- *   unconditionally "original + preserved operations".
- * - An operation the editor does not model is kept verbatim, in place.
+ *   emitted together, at the point of the source's first geometry operation —
+ *   after everything else when the source had none. `crop` coordinates are
+ *   only meaningful relative to a point in the operation chain, and that point
+ *   is "original + the preserved operations before it", which is what
+ *   `editorImageInfoUrl` measures. A source `-/crop/…/-/resize/100x/` keeps
+ *   cropping before resizing.
+ * - An operation the editor does not model is kept verbatim, in place: before
+ *   the geometry if the source had it there, after it otherwise.
  * - Every `preview` in `source` is dropped. The merge itself no longer
  *   appends one — that marker belongs to the applied URL (`editorAppliedUrl`),
  *   so an open/apply cycle never stacks markers.
@@ -280,11 +292,10 @@ export function mergeTransformationsIntoOperations(
   transformations: Transformations,
 ): CdnOperation[] {
   const modelled = transformationsToOperations(transformations);
-  // Geometry operations are emitted last, whatever position the source had
-  // them in. `crop` coordinates are only meaningful relative to a point in
-  // the chain, and putting them after everything preserved makes that point
-  // unconditionally "original + preserved" — which is the space `_imageSize`
-  // measures.
+  // Geometry is emitted where the source's first geometry operation was, so `crop` coordinates keep addressing
+  // "original + the preserved operations before it", the space `_imageSize` measures.
+  const beforeGeometry = operationsBeforeGeometry(source).length;
+  const afterGeometry: CdnOperation[] = [];
   const geometry = modelled.filter((operation) => GEOMETRY_OPERATION_NAMES.has(operation.name));
   const appearance = modelled.filter((operation) => !GEOMETRY_OPERATION_NAMES.has(operation.name));
   const appearanceByName = new Map(appearance.map((operation) => [operation.name, operation]));
@@ -305,7 +316,7 @@ export function mergeTransformationsIntoOperations(
       return;
     }
     if (!MODELLED_OPERATION_NAMES.has(operation.name)) {
-      merged.push(operation);
+      (index < beforeGeometry ? merged : afterGeometry).push(operation);
       return;
     }
     // An earlier occurrence of a repeated modelled operation: its slot is
@@ -326,5 +337,5 @@ export function mergeTransformationsIntoOperations(
     }
   }
 
-  return [...merged, ...geometry];
+  return [...merged, ...geometry, ...afterGeometry];
 }

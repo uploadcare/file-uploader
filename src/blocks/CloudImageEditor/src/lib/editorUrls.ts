@@ -3,7 +3,12 @@ import type { Quality } from '@uploadcare/cdn-url/ops';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../../../env';
 import { operationsFromModifiers, withOperations } from '../../../../utils/cdn/operations';
 import type { Transformations } from '../types';
-import { COMMON_OPERATIONS, mergeTransformationsIntoOperations, preservedOperations } from './transformationUtils';
+import {
+  COMMON_OPERATIONS,
+  mergeTransformationsIntoOperations,
+  operationsBeforeGeometry,
+  preservedOperations,
+} from './transformationUtils';
 
 // The union in `OperationLiteral` cannot express an `@`-prefixed internal
 // directive, so this is the one site that reaches for `unsafeOperation`.
@@ -19,26 +24,22 @@ const PREVIEW_MARKER_OPERATIONS = operationsFromModifiers(modifiers('preview'));
 /**
  * The URL whose `/json` reports the dimensions the cropper measures in.
  *
- * Not the bare original: the editor's `crop` is emitted after everything the source
- * preserved, so its coordinates are interpreted against the image as those operations
- * leave it. Measure anywhere else and a preserved `resize` desynchronises the crop
- * overlay from the box the user drags.
+ * Not the bare original: the editor's `crop` is emitted where the source had its
+ * geometry, after the preserved operations before that point, so its coordinates are
+ * interpreted against the image as those operations leave it. Measure anywhere else and
+ * a preserved `resize` desynchronises the crop overlay from the box the user drags, or
+ * a crop read back out of the source no longer fits and is dropped. Operations the
+ * source put after its geometry (`-/crop/…/-/resize/300x/`) apply to the crop's result,
+ * so they are left out.
  *
  * The editor's own modelled transformations are excluded — the cropper accounts for
  * its own `rotate` itself, and the rest do not change geometry.
- *
- * Known limitation: this is only the right space for a `crop` read back out of the
- * source URL when that `crop` already sat after every size-changing operation the
- * source carried. It does for anything this editor produced (it emits geometry
- * last), but a hand-authored `-/crop/500x500/0,0/-/resize/300x/` means "crop the
- * original, then resize" — re-emitted after the `resize` its coordinates address a
- * smaller image, so the restored crop box is wrong. Fixing it properly means
- * rescaling the imported coordinates by whatever the preserved operations do to the
- * geometry, which needs per-operation sizing rules (`resize`, `scale_crop`,
- * `stretch`, …) rather than one measurement.
  */
 export function editorImageInfoUrl(originalUrl: string, sourceOperations: readonly CdnOperation[]): string {
-  return withOperations(originalUrl, [...preservedOperations(sourceOperations), ...JSON_OPERATIONS]);
+  return withOperations(originalUrl, [
+    ...preservedOperations(operationsBeforeGeometry(sourceOperations)),
+    ...JSON_OPERATIONS,
+  ]);
 }
 
 /**

@@ -392,18 +392,41 @@ describe('mergeTransformationsIntoOperations', () => {
     const source = ops('crop/1:1/center', unsafeOperation('overlay/wm-uuid'));
     const drawn = { crop: { dimensions: [640, 480], coords: [10, 20] } } as const satisfies Transformations;
 
-    // CHANGED: the crop is now emitted after everything preserved, so its
-    // coordinates are interpreted in the same space `_imageSize` measures.
+    // The drawn crop takes the source crop's place, ahead of the overlay the source applied to the crop's result.
     expect(mergeTransformationsIntoOperations(source, drawn)).toEqual(
-      ops(unsafeOperation('overlay/wm-uuid'), 'crop/640x480/10,20'),
+      ops('crop/640x480/10,20', unsafeOperation('overlay/wm-uuid')),
     );
   });
 
-  it('appends geometry operations after preserved ones, whatever the source order', () => {
+  it('keeps an operation the source put after its geometry after the geometry', () => {
     const source = ops('crop/100x100/0,0', unsafeOperation('overlay/wm-uuid'), 'blur/20');
 
-    // `crop` came first in the source; it now lands last, so its coordinates are
-    // interpreted after the overlay and blur rather than before them.
+    // The source cropped first and watermarked the crop; moving the overlay ahead of the crop would watermark the
+    // whole image and let the crop cut the watermark out.
+    expect(mergeTransformationsIntoOperations(source, { crop: { dimensions: [640, 480], coords: [10, 20] } })).toEqual(
+      ops('crop/640x480/10,20', unsafeOperation('overlay/wm-uuid'), 'blur/20'),
+    );
+  });
+
+  it('keeps a crop that was followed by a resize, cropping before resizing as the source did', () => {
+    const source = ops('crop/200x150/100,50', 'resize/100x');
+
+    expect(mergeTransformationsIntoOperations(source, operationsToTransformations(source))).toEqual(
+      ops('crop/200x150/100,50', 'resize/100x'),
+    );
+  });
+
+  it('appends geometry after the operations the source put before its own geometry', () => {
+    const source = ops(unsafeOperation('overlay/wm-uuid'), 'mirror', 'brightness/20', 'rotate/90', 'resize/100x');
+
+    expect(mergeTransformationsIntoOperations(source, operationsToTransformations(source))).toEqual(
+      ops(unsafeOperation('overlay/wm-uuid'), 'brightness/20', 'mirror', 'rotate/90', 'resize/100x'),
+    );
+  });
+
+  it('appends geometry after every preserved operation when the source has no geometry', () => {
+    const source = ops(unsafeOperation('overlay/wm-uuid'), 'blur/20');
+
     expect(mergeTransformationsIntoOperations(source, { crop: { dimensions: [640, 480], coords: [10, 20] } })).toEqual(
       ops(unsafeOperation('overlay/wm-uuid'), 'blur/20', 'crop/640x480/10,20'),
     );

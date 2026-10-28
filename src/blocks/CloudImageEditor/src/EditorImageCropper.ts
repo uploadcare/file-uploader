@@ -21,7 +21,7 @@ import { applyClassNames } from './lib/classNames.js';
 import { pick } from './lib/pick.js';
 import { TabId } from './toolbar-constants';
 import type { CropAspectRatio, ImageSize, Rectangle, Transformations } from './types';
-import { viewerImageSrc } from './util.js';
+import { cropperImageSrc } from './util.js';
 
 import './CropFrame';
 
@@ -576,16 +576,10 @@ export class EditorImageCropper extends EditorBlock {
     transformations: Transformations,
     signal: AbortSignal,
   ): Promise<HTMLImageElement> {
-    const width = this.offsetWidth;
-    transformations = {
-      ...transformations,
-      crop: undefined,
-      rotate: undefined,
-      flip: undefined,
-      mirror: undefined,
-    };
     const src = await this.whileAdopted(
-      controller.proxyUrl(viewerImageSrc(originalUrl, width, transformations, controller.get('*sourceOperations'))),
+      controller.proxyUrl(
+        cropperImageSrc(originalUrl, this.offsetWidth, transformations, controller.get('*sourceOperations')),
+      ),
     );
     // Before the loading flag goes up: an image that never starts loading would never clear it.
     signal.throwIfAborted();
