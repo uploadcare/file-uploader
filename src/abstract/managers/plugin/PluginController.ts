@@ -1,9 +1,11 @@
+import { default as en } from '../../../locales/file-uploader/en';
 import { fileDerivedFields } from '../../../utils/fileTypes';
 import { controllerLogger } from '../../controllerLogger';
 import { ConfigController } from '../../controllers/ConfigController';
 import { containerOf, lifetimeOf } from '../../di/ControllerContainer';
 import { Disposables } from '../../di/Disposables';
 import { isAbortError } from '../../di/Lifetime';
+import { isPlainText } from '../../l10n';
 import type { Logger } from '../../logger';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
@@ -160,7 +162,32 @@ export class PluginController {
     }
 
     this._plugins.set(plugin.id, { plugin, dispose: pluginDispose, configSubscriptions });
+    this._warnAboutPlainLabels(plugin.id);
     this._notifySubscribers();
+  }
+
+  /**
+   * A label that is neither an l10n key nor `plainText()` is shown as written, as in v1, which warned about it (on
+   * every render). Checked once its plugin's `setup()` is done, so keys that setup registers count.
+   */
+  private _warnAboutPlainLabels(pluginId: string): void {
+    const { sources, fileActions, activities, l10n } = this.registry.snapshot();
+    const keys = new Set<string>(Object.keys(en));
+    for (const { pluginId: _owner, ...locales } of l10n) {
+      for (const dictionary of Object.values(locales)) {
+        for (const key of Object.keys(dictionary ?? {})) keys.add(key);
+      }
+    }
+    const labels = [...sources, ...fileActions, ...activities]
+      .filter((item) => item.pluginId === pluginId)
+      .map((item) => item.label);
+    for (const label of labels) {
+      if (typeof label !== 'string' || keys.has(label) || isPlainText(label)) continue;
+      this._log.warnOnce(
+        `Plugin "${pluginId}" label "${label}" is not an l10n key, so it is shown as written. Register it with ` +
+          'registerL10n(), or mark it with plainText(); plain-string labels are deprecated.',
+      );
+    }
   }
 
   private _unregisterPlugin(pluginId: string): void {

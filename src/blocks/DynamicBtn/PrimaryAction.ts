@@ -16,6 +16,7 @@ import './primary-action.css';
 import '../Icon/Icon';
 import '../Thumb/Thumb';
 import type { L10nKey } from '../../abstract/l10n';
+import { pluginLabelKey } from '../../abstract/managers/plugin/PluginTypes';
 
 export class PrimaryAction extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-primary-action'];
@@ -66,10 +67,10 @@ export class PrimaryAction extends ChildBlock {
     if (!this.source?.label) return '';
 
     if ([UploadSource.LOCAL, UploadSource.URL, UploadSource.CAMERA].includes(this.source?.id)) {
-      return this.l10n(this.source.label).toLowerCase();
+      return this.l10n(pluginLabelKey(this.source.label)).toLowerCase();
     }
 
-    return this.l10n(this.source.label);
+    return this.l10n(pluginLabelKey(this.source.label));
   }
 
   private get textBasedOnLocale(): string {
