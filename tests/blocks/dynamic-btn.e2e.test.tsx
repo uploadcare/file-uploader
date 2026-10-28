@@ -31,7 +31,14 @@ describe('DynamicBtn remove/abort action', () => {
     page.render(
       <>
         <uc-file-uploader-regular dynamic-button ctx-name={ctxName}></uc-file-uploader-regular>
-        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+        {/* The click below opens the file chooser, as `auto` does; the default `plain` opens the upload flow. */}
+        <uc-config
+          qualityInsights={false}
+          ctx-name={ctxName}
+          pubkey="demopublickey"
+          testMode
+          dynamicButtonViewMode="auto"
+        ></uc-config>
         <uc-upload-ctx-provider ctx-name={ctxName}></uc-upload-ctx-provider>
       </>,
     );

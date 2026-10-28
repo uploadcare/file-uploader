@@ -147,7 +147,7 @@ export const BUILTIN_REGISTRY = {
   pasteScope: { default: 'local', coerce: asPasteScope },
 
   dynamicButtonShowFirstIcon: { default: true, coerce: asBoolean },
-  dynamicButtonViewMode: { default: 'auto', coerce: asDynamicButtonViewMode },
+  dynamicButtonViewMode: { default: 'plain', coerce: asDynamicButtonViewMode },
 } as const satisfies BuiltinRegistry;
 
 type Registry = typeof BUILTIN_REGISTRY;

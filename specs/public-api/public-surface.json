@@ -398,8 +398,9 @@
     },
     "dynamicButtonViewMode": {
       "attribute": "dynamic-button-view-mode",
-      "type": "auto | menu | toolbar | compact",
-      "documented": "auto"
+      "type": "auto | menu | toolbar | compact | plain",
+      "documented": "plain",
+      "value": "plain"
     },
     "dynamicButtonShowFirstIcon": {
       "attribute": "dynamic-button-show-first-icon",
