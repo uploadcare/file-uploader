@@ -88,6 +88,18 @@ describe('TelemetryManager', () => {
     expect(sendEventMock).not.toHaveBeenCalled();
   });
 
+  it('attributes later events to the component the init event named, so a standalone editor action has one', async () => {
+    const { manager, enable } = setup();
+    enable();
+
+    manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION, component: 'uc-cloud-image-editor' });
+    manager.sendActionEvent('apply', 'uc-cloud-image-editor');
+    await flush();
+
+    const components = sendEventMock.mock.calls.map(([payload]) => payload.component);
+    expect(components).toEqual(['uc-cloud-image-editor', 'uc-cloud-image-editor']);
+  });
+
   it('sends the init event with app/session/config metadata once enabled', async () => {
     const { manager, enable } = setup({ solution: 'uc-file-uploader-regular', activity: 'start-from' });
     enable();

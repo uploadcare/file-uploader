@@ -95,6 +95,9 @@ export class TelemetryManager {
   private readonly _telemetryInstance: TelemetryAPIService = new TelemetryAPIService();
   private _config: ConfigType = structuredClone(initialConfig);
   private _initialized = false;
+  // The component an init event named (the standalone editor's, which registers no `solutionName`), for every later
+  // event that names none.
+  private _initComponent: string | null = null;
   private _lastPayload: TelemetryState | null = null;
   /** The config as last shipped — what a `CHANGE_CONFIG` has to differ from to be worth sending. */
   private _reportedConfig: TelemetryState['config'] | null = null;
@@ -219,7 +222,7 @@ export class TelemetryManager {
       // A caller may attribute an event to its own component (the standalone
       // editor solution does this, since it registers no uploader
       // `solutionName`); otherwise fall back to the registered solution.
-      component: body.component ?? this._solution,
+      component: body.component ?? this._solution ?? this._initComponent,
       activity: this._router.currentActivity,
       projectPubkey: this._config.pubkey,
       userAgent: navigator.userAgent,
@@ -245,6 +248,9 @@ export class TelemetryManager {
     }
 
     this._markInitialized(body.eventType);
+    if (body.eventType === InternalEventType.INIT_SOLUTION && body.component) {
+      this._initComponent = body.component;
+    }
 
     if (this._isExcludedEvent(body.eventType)) {
       return;
