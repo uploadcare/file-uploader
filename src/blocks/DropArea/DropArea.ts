@@ -18,7 +18,7 @@ import './drop-area.css';
 import type { DropItem } from './getDropItems';
 
 import '../Icon/Icon';
-import { type L10nKey, type PlainText, plainText } from '../../abstract/l10n';
+import type { L10nKey, PlainText } from '../../abstract/l10n';
 
 const dropAreaRegistry = new Set<DropArea>();
 const ACTIVATION_CODES = new Set(['Enter', 'NumpadEnter', 'Space']);
@@ -93,7 +93,7 @@ export class DropArea extends ChildBlock {
     const customText = this.text;
     if (typeof customText === 'string' && customText.length > 0) {
       // The page author's text: a key or plain text.
-      return plainText(customText);
+      return customText as PlainText;
     }
     return this._config.getTracked('multiple') ? 'drop-files-here' : 'drop-file-here';
   }

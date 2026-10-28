@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { plainText } from '../../l10n';
+import type { PlainText } from '../../l10n';
 import { PluginRegistry } from './PluginRegistry';
 
 declare module '../../localeRegistry' {
@@ -29,12 +29,12 @@ describe('PluginRegistry — batched change notification', () => {
     registry.addIcon('p', { name: 'my-icon', svg: '<svg/>' });
     registry.addFileAction('p', {
       id: 'fa',
-      label: plainText('Action'),
+      label: 'Action' as PlainText,
       icon: 'my-icon',
       shouldRender: () => true,
       onClick: () => {},
     });
-    registry.addSource('p', { id: 's', label: plainText('Source'), onSelect: () => {} });
+    registry.addSource('p', { id: 's', label: 'Source' as PlainText, onSelect: () => {} });
 
     // Batched: nothing fired synchronously.
     expect(onChange).not.toHaveBeenCalled();
@@ -62,8 +62,8 @@ describe('PluginRegistry — batched change notification', () => {
     const onChange = vi.fn();
     const registry = new PluginRegistry(onChange);
 
-    registry.addSource('p', { id: 's', label: plainText('Source'), onSelect: () => {} });
-    registry.addSource('p2', { id: 's', label: plainText('Other'), onSelect: () => {} }); // duplicate id → skipped
+    registry.addSource('p', { id: 's', label: 'Source' as PlainText, onSelect: () => {} });
+    registry.addSource('p2', { id: 's', label: 'Other' as PlainText, onSelect: () => {} }); // duplicate id → skipped
 
     await flushBatch();
     expect(onChange).toHaveBeenCalledTimes(1);

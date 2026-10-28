@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { plainText } from '@/abstract/l10n';
+import type { PlainText } from '@/abstract/l10n';
 import type { PluginSetupParams } from '@/index';
 import { testFile } from '~/tests/fixtures/files';
 import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
@@ -25,7 +25,7 @@ describe('uploaderApi (from plugin)', () => {
       setup: ({ pluginApi, uploaderApi }) => {
         pluginApi.registry.registerSource({
           id: 'obj-add-source',
-          label: plainText('Add Object'),
+          label: 'Add Object' as PlainText,
           onSelect: () => {
             uploaderApi.addFileFromObject(testFile('test-file.txt', 'text/plain'));
             uploaderApi.setCurrentActivity('upload-list');

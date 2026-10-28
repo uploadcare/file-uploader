@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { plainText } from '@/abstract/l10n';
+import type { PlainText } from '@/abstract/l10n';
 import type { PluginApi } from '@/abstract/managers/plugin/PluginTypes';
 import { defineLocale } from '@/index';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
@@ -23,7 +23,7 @@ describe('plugin icons', () => {
         });
         pluginApi.registry.registerFileAction({
           id: 'icon-action',
-          label: plainText('Icon Action'),
+          label: 'Icon Action' as PlainText,
           icon: 'my-custom-icon',
           shouldRender: () => true,
           onClick: () => {},

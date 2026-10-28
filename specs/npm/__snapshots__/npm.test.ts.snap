@@ -103,7 +103,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/file-uploader
   "defineComponents": [Function],
   "defineLocale": [Function],
   "loadFileUploaderFrom": [Function],
-  "plainText": [Function],
   "toKebabCase": [Function],
 }
 `;
@@ -238,7 +237,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploa
   "defineComponents": [Function],
   "defineLocale": [Function],
   "loadFileUploaderFrom": [Function],
-  "plainText": [Function],
   "toKebabCase": [Function],
 }
 `;
@@ -336,7 +334,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploa
   "defineComponents": [Function],
   "defineLocale": [Function],
   "loadFileUploaderFrom": [Function],
-  "plainText": [Function],
   "toKebabCase": [Function],
 }
 `;
@@ -434,7 +431,6 @@ exports[`NPM package > exports \`web\` should match snapshot > web/uc-file-uploa
   "defineComponents": [Function],
   "defineLocale": [Function],
   "loadFileUploaderFrom": [Function],
-  "plainText": [Function],
   "toKebabCase": [Function],
 }
 `;
@@ -533,7 +529,6 @@ exports[`NPM package > root ssr stubs export should match snapshot > root export
   "defineComponents": [Function],
   "defineLocale": [Function],
   "loadFileUploaderFrom": [Function],
-  "plainText": [Function],
   "toKebabCase": [Function],
 }
 `;

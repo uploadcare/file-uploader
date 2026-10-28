@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { plainText } from '../../abstract/l10n';
+import type { PlainText } from '../../abstract/l10n';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
@@ -46,7 +46,7 @@ describe('SourceBtn', () => {
     const spy = vi.spyOn(telemetry!, 'sendEvent').mockImplementation(() => {});
 
     const el = await mount(ctxName);
-    el.source = { id: 'my-src', label: plainText('my-label-key'), onClick: () => {} };
+    el.source = { id: 'my-src', label: 'my-label-key' as PlainText, onClick: () => {} };
     await el.updateComplete;
 
     el.activate();

@@ -9,25 +9,11 @@ export type L10nKey = keyof LocaleDefinition | keyof CustomLocaleDefinition;
 
 declare const plainTextBrand: unique symbol;
 
-/** Text meant to be shown as written rather than as an l10n key. Made with {@link plainText}. */
-export type PlainText = string & { readonly [plainTextBrand]: true };
-
 /**
- * Marks `text` as meant to be shown as written, for a plugin label that is not an l10n key. It is still looked up in
- * the locale like any label, so text that happens to equal a key shows that key's translation.
+ * Text meant to be shown as written rather than as an l10n key: assert it, `'My source' as PlainText`. It is still
+ * looked up in the locale like any label, so text that happens to equal a key shows that key's translation.
  */
-export const plainText = (text: string): PlainText => {
-  plainTexts.add(text);
-  return text as PlainText;
-};
-
-// ponytail: never shrinks; it holds plugin label strings, a handful per page.
-// NEXT-MAJOR(plugins): remove with the plain-string labels (see `PluginLabel`); `plainText` is then type-only again.
-// Kept for 1.x compat.
-const plainTexts = new Set<string>();
-
-/** Whether `text` went through {@link plainText}, which exists only at the type level otherwise. */
-export const isPlainText = (text: string): boolean => plainTexts.has(text);
+export type PlainText = string & { readonly [plainTextBrand]: true };
 
 /** A key has to exist in the dictionary, or be text marked `PlainText`; a bare `string` does not pass. */
 export type CheckedL10nKey<K extends string> = K extends L10nKey | PlainText ? K : never;

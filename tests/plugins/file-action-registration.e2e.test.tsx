@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { plainText } from '@/abstract/l10n';
+import type { PlainText } from '@/abstract/l10n';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { createTestPlugin, renderSolution, within } from '~/tests/utils/render-solution';
 
@@ -15,7 +15,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'show-action',
           icon: 'test-action-icon',
-          label: plainText('Show Action'),
+          label: 'Show Action' as PlainText,
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -37,7 +37,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'hidden-action',
           icon: 'default',
-          label: plainText('Hidden Action'),
+          label: 'Hidden Action' as PlainText,
           shouldRender: () => false,
           onClick: () => {},
         });
@@ -66,7 +66,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'click-action',
           icon: 'default',
-          label: plainText('Click Action'),
+          label: 'Click Action' as PlainText,
           shouldRender: () => true,
           onClick,
         });
@@ -98,7 +98,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'status-action',
           icon: 'default',
-          label: plainText('Status Action'),
+          label: 'Status Action' as PlainText,
           shouldRender,
           onClick: () => {},
         });
@@ -121,7 +121,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'error-action',
           icon: 'default',
-          label: plainText('Error Action'),
+          label: 'Error Action' as PlainText,
           shouldRender: () => {
             throw new Error('shouldRender failed');
           },
@@ -153,7 +153,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'remove-file-action',
           icon: 'default',
-          label: plainText('Remove File Action'),
+          label: 'Remove File Action' as PlainText,
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -185,7 +185,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'temp-action',
           icon: 'temp-icon',
-          label: plainText('Temp Action'),
+          label: 'Temp Action' as PlainText,
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -210,7 +210,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'action-a',
           icon: 'default',
-          label: plainText('Action A'),
+          label: 'Action A' as PlainText,
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -223,7 +223,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'action-b',
           icon: 'default',
-          label: plainText('Action B'),
+          label: 'Action B' as PlainText,
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -246,7 +246,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'error-onclick',
           icon: 'default',
-          label: plainText('Error OnClick'),
+          label: 'Error OnClick' as PlainText,
           shouldRender: () => true,
           onClick: () => {
             throw new Error('boom');

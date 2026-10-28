@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { plainText } from '@/abstract/l10n';
+import type { PlainText } from '@/abstract/l10n';
 import { instagramPlugin } from '@/plugins/instagramPlugin';
 import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
 
@@ -16,7 +16,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'my-source',
-          label: plainText('My Custom Source'),
+          label: 'My Custom Source' as PlainText,
           onSelect: () => {},
         });
       },
@@ -36,7 +36,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'click-source',
-          label: plainText('Click Me'),
+          label: 'Click Me' as PlainText,
           onSelect,
         });
       },
@@ -84,7 +84,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'removable-source',
-          label: plainText('Removable Source'),
+          label: 'Removable Source' as PlainText,
           onSelect: () => {},
         });
       },
@@ -129,7 +129,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'shared-source',
-          label: plainText('First'),
+          label: 'First' as PlainText,
           onSelect: () => {},
         });
       },
@@ -140,7 +140,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'shared-source',
-          label: plainText('Second'),
+          label: 'Second' as PlainText,
           onSelect: () => {},
         });
       },
@@ -164,7 +164,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'unlisted-source',
-          label: plainText('Unlisted Source'),
+          label: 'Unlisted Source' as PlainText,
           onSelect: () => {},
         });
       },
