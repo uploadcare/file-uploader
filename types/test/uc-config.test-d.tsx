@@ -53,6 +53,7 @@ type DocumentedOption =
   | 'maxVideoRecordingDuration'
   | 'metadata'
   | 'multipartChunkSize'
+  | 'multipartMaxAttempts'
   | 'multipartMaxConcurrentRequests'
   | 'multipartMinFileSize'
   | 'multiple'
@@ -268,6 +269,7 @@ test('every documented option has its documented value type', () => {
   config.multipartChunkSize = 1;
   config.maxConcurrentRequests = 1;
   config.multipartMaxConcurrentRequests = 1;
+  config.multipartMaxAttempts = 1;
   config.validationTimeout = 1;
   config.validationConcurrency = 1;
   config.maxVideoRecordingDuration = 1;

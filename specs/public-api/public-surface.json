@@ -251,6 +251,12 @@
       "documented": "4",
       "value": 4
     },
+    "multipartMaxAttempts": {
+      "attribute": "multipart-max-attempts",
+      "type": "number",
+      "documented": "3",
+      "value": 3
+    },
     "checkForUrlDuplicates": {
       "attribute": "check-for-url-duplicates",
       "type": "boolean",

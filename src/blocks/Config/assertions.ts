@@ -31,6 +31,13 @@ const ASSERTIONS: Assertion[] = [
       'Please use the `cameraModes` parameter instead.',
   },
   {
+    // Its documented default; upload-client 5.0.0 dropped the option, so no value has done anything since.
+    test: (cfg) => cfg.multipartMaxAttempts !== 3,
+    message:
+      'The `multipartMaxAttempts` parameter is deprecated, has no effect and will be removed in the next major release.\n' +
+      'Failed multipart chunks are retried per `retryThrottledRequestMaxTimes` and `retryNetworkErrorMaxTimes`.',
+  },
+  {
     test: (cfg) => cfg.defaultCameraMode !== null,
     message:
       'The `defaultCameraMode` parameter is deprecated and will be removed in the next major release.\n' +
