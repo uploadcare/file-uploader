@@ -72,7 +72,8 @@ export class SourceBtn extends ChildBlock {
       payload: {
         metadata: { event: 'select-source', node: this.tagName, sourceId: this.source.id },
         // Backward compatibility: telemetry consumers read `source_id` at the payload root, where it was sent before
-        // it moved into `metadata` like every other action event's detail. Drop in the next major.
+        // it moved into `metadata` like every other action event's detail.
+        // NEXT-MAJOR(telemetry): drop the root `sourceId`. Kept for 1.x compat.
         sourceId: this.source.id,
       },
     });

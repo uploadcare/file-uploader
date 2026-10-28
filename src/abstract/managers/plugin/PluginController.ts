@@ -170,6 +170,7 @@ export class PluginController {
    * A label that is neither an l10n key nor `plainText()` is shown as written, as in v1, which warned about it (on
    * every render). Checked once its plugin's `setup()` is done, so keys that setup registers count.
    */
+  // NEXT-MAJOR(plugins): remove with the plain-string labels (see `PluginLabel`). Kept for 1.x compat.
   private _warnAboutPlainLabels(pluginId: string): void {
     const { sources, fileActions, activities, l10n } = this.registry.snapshot();
     const keys = new Set<string>(Object.keys(en));

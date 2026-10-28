@@ -104,6 +104,8 @@ export const BUILTIN_REGISTRY = {
   multipartChunkSize: { default: 5242880, coerce: asNumber },
   maxConcurrentRequests: { default: 10, coerce: asNumber },
   multipartMaxConcurrentRequests: { default: 4, coerce: asNumber },
+  // NEXT-MAJOR(config): remove `multipartMaxAttempts` here, in `ConfigType` and in `assertions.ts`; it does nothing.
+  // Kept for 1.x compat.
   multipartMaxAttempts: { default: 3, coerce: asNumber },
   checkForUrlDuplicates: { default: false, coerce: asBoolean },
   saveUrlForRecurrentUploads: { default: false, coerce: asBoolean },
@@ -147,6 +149,8 @@ export const BUILTIN_REGISTRY = {
   pasteScope: { default: 'local', coerce: asPasteScope },
 
   dynamicButtonShowFirstIcon: { default: true, coerce: asBoolean },
+  // NEXT-MAJOR(dynamic-btn): default to `auto`, the mode the docs used to describe. `plain` is v1's default, kept for
+  // 1.x compat.
   dynamicButtonViewMode: { default: 'plain', coerce: asDynamicButtonViewMode },
 } as const satisfies BuiltinRegistry;
 

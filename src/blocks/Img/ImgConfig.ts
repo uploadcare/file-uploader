@@ -141,6 +141,8 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
   public override attributeChangedCallback(name: string, _oldVal: string | null, newVal: string | null): void {
     window.setTimeout(() => {
       const fullKey = CSS_PREF + name;
+      // NEXT-MAJOR(uc-img): read the number flags' attribute values as numbers, so `is-preview-blur="0"` switches the
+      // flag off (6ed31267 did, and fixed the preview it then left on screen). Strings, as in v1, kept for 1.x compat.
       this._state[fullKey] = newVal;
       this._notify(fullKey, newVal);
     });

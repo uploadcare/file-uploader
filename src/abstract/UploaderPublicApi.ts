@@ -516,6 +516,7 @@ export class UploaderPublicApi {
         this._router.navigate(null);
         return;
       }
+      // NEXT-MAJOR(api): remove `setCurrentActivity` and `setModalState` in favour of `navigate()`. Kept for 1.x compat.
       if (this._router.modal !== null) {
         this._router.openModal(activityType, params[0]);
       } else {

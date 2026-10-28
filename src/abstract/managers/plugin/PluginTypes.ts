@@ -16,6 +16,7 @@ export type PluginIconRegistration = {
  * `declare module '@uploadcare/file-uploader' { interface CustomLocaleDefinition { 'my-plugin.title': string } }` —
  * autocomplete; any other key is accepted too, as in v1.
  */
+// NEXT-MAJOR(plugins): declared keys only (`Partial<Record<L10nKey, string>>`). Kept for 1.x compat.
 export type PluginL10nRegistration = Record<string, Partial<Record<L10nKey | (string & {}), string>>>;
 
 /**
@@ -25,6 +26,8 @@ export type PluginL10nRegistration = Record<string, Partial<Record<L10nKey | (st
  * Any other string still compiles and is shown as written, as in v1, but is deprecated: the uploader warns once per
  * such label. A misspelt key is one of them, which is what the warning is for.
  */
+// NEXT-MAJOR(plugins): `L10nKey | PlainText` only, then drop `pluginLabelKey`, `PluginController._warnAboutPlainLabels`
+// and the `plainText` registry in `l10n.ts`. Kept for 1.x compat.
 export type PluginLabel = L10nKey | PlainText | (string & {});
 
 /**

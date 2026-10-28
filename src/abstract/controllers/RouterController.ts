@@ -433,6 +433,8 @@ export class RouterController {
       this._log.debug(lazy(() => [`modal activity: ${prevModal ?? 'none'} → ${nextModal ?? 'none'}`]));
     }
 
+    // NEXT-MAJOR(router): fire these only when the dialog opens and closes; a screen change is `activity-change`.
+    // Kept for 1.x compat.
     // Each activity shown in the modal counts as a modal of its own, as in v1: switching the open modal to another
     // activity opens the new one, then closes the old one while the new one is still active.
     if (nextModal !== prevModal) {
