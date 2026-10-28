@@ -218,6 +218,13 @@ export type ConfigType = {
    */
   multipartMaxConcurrentRequests: number;
   /**
+   * Maximum number of attempts for multipart uploads.
+   *
+   * @deprecated Has no effect: failed chunks are retried per `retryThrottledRequestMaxTimes` and
+   * `retryNetworkErrorMaxTimes`. Will be removed in the next major release.
+   */
+  multipartMaxAttempts: number;
+  /**
    * Check for URL duplicates.
    */
   checkForUrlDuplicates: boolean;

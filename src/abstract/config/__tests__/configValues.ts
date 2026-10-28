@@ -66,6 +66,7 @@ export const CONFIG_VALUES: { [K in keyof ConfigType]: ConfigType[K][] } = {
   multipartChunkSize: [1, 5242880],
   maxConcurrentRequests: [1, 10],
   multipartMaxConcurrentRequests: [1, 4],
+  multipartMaxAttempts: [1, 3],
   checkForUrlDuplicates: [true, false],
   saveUrlForRecurrentUploads: [true, false],
   groupOutput: [true, false],

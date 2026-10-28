@@ -32,7 +32,7 @@ const expectedDefault = (name: string, documented: unknown) =>
 
 describe('documented config options', () => {
   it('covers every option the docs list', () => {
-    expect(names).toHaveLength(64);
+    expect(names).toHaveLength(65);
   });
 
   it.each(names)('%s exists on the default config', (name) => {
