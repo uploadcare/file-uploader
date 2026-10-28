@@ -37,13 +37,9 @@ export const buildItems: BuildItem[] = [
     format: 'esm',
     minify: true,
     bundleExternalDependencies: false,
-    // Same `/^_/` mangling the `web/` bundles have always used, now applied to
-    // the npm build too — worth ~4 KB brotli on `dist/index.js`, which sits
-    // close to its size limit. Safe because `_`-prefixed properties are
-    // internal by convention: none appear on the documented data shapes
-    // (`src/types/exported.ts`) and nothing reaches them through a computed
-    // key, so the renaming cannot escape the bundle.
-    mangleProps: true,
+    // No `mangleProps` here, unlike `web/`: `lit` stays external, so esbuild can't see the short names Lit's own
+    // production build uses and hands the same ones to our `_` fields (`_lifetime` became `C` and replaced one of
+    // Lit's methods). `specs/npm/production-bundle.test.ts` builds a consumer's production bundle to catch it.
   },
   // uc-blocks
   {

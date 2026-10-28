@@ -25,5 +25,6 @@ docs/superpowers/
 .claude/
 .superpowers/
 specs/npm/.types-matrix/
+specs/npm/.production-bundle/
 __screenshots__
 .vitest-attachments
