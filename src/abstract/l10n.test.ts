@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { LocaleController } from './controllers/LocaleController';
-import { type CheckedL10nFunction, createL10n, plainText } from './l10n';
+import { type CheckedL10nFunction, createL10n, type PlainText } from './l10n';
 
 // M-god step 7: `createL10n` reads the resolved dictionary directly from a
 // `LocaleController` (was the `*l10n/*` PubSub facade). These specs pin the
@@ -54,7 +54,7 @@ describe('createL10n (direct LocaleController)', () => {
 });
 
 describe('CheckedL10nFunction', () => {
-  it('rejects a misspelt key and a bare string at compile time, and takes text marked plainText()', () => {
+  it('rejects a misspelt key and a bare string at compile time, and takes text asserted as PlainText', () => {
     const l10n: CheckedL10nFunction = (key: string, _variables?: Record<string, string | number>) => key;
     const fromConfig: string = 'whatever';
 
@@ -63,7 +63,7 @@ describe('CheckedL10nFunction', () => {
     expect(l10n('upload')).toBe('upload');
     // @ts-expect-error a string from elsewhere is not a key until marked
     l10n(fromConfig);
-    expect(l10n(plainText(fromConfig))).toBe('whatever');
+    expect(l10n(fromConfig as PlainText)).toBe('whatever');
   });
 
   it("checks a key's variables against its English template", () => {
@@ -73,8 +73,8 @@ describe('CheckedL10nFunction', () => {
     // `{{plural:file(count)}}` needs `count` too.
     l10n('header-uploading', { count: 2 });
     l10n('upload-file');
-    // Text marked plainText() has no known template, so it takes any variables.
-    l10n(plainText('Hi {{name}}'), { name: 'Ada' });
+    // Text asserted as PlainText has no known template, so it takes any variables.
+    l10n('Hi {{name}}' as PlainText, { name: 'Ada' });
 
     // @ts-expect-error the template interpolates `source`
     l10n('waiting-for');

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { plainText } from '@/abstract/l10n';
+import type { PlainText } from '@/abstract/l10n';
 import type { PluginRender } from '@/index.ts';
 import { withResolvers } from '@/utils/withResolvers';
 import { addSource, createTestPlugin, renderSolution, within } from '~/tests/utils/render-solution';
@@ -72,7 +72,7 @@ describe('plugin activities', () => {
 
         pluginApi.registry.registerSource({
           id: 'dispose-source',
-          label: plainText('Dispose Source'),
+          label: 'Dispose Source' as PlainText,
           onSelect: () => {},
         });
       },

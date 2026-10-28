@@ -1,9 +1,8 @@
 import { test } from 'vitest';
-import type { PluginRegistryApi } from '../../dist/index';
-import { plainText } from '../../dist/index';
+import type { PlainText, PluginRegistryApi } from '../../dist/index';
 
 /**
- * A plugin's label is a declared l10n key, or text marked with `plainText()`. A plugin declares its own keys by
+ * A plugin's label is a declared l10n key, or text asserted `as PlainText`. A plugin declares its own keys by
  * augmenting `CustomLocaleDefinition`, which also lets `registerL10n` autocomplete them. Any other string compiles too,
  * as in v1.
  */
@@ -18,18 +17,18 @@ declare const registry: PluginRegistryApi;
 test('a label is a built-in key, a declared key, or marked plain text', () => {
   registry.registerSource({ id: 'a', label: 'src-type-local', onSelect: () => {} });
   registry.registerSource({ id: 'b', label: 'my-plugin.source', onSelect: () => {} });
-  registry.registerSource({ id: 'c', label: plainText('My source'), onSelect: () => {} });
+  registry.registerSource({ id: 'c', label: 'My source' as PlainText, onSelect: () => {} });
   registry.registerFileAction({
     id: 'edit',
     icon: 'edit',
-    label: plainText('Edit'),
+    label: 'Edit' as PlainText,
     shouldRender: () => true,
     onClick: () => {},
   });
   registry.registerActivity({ id: 'panel', label: 'my-plugin.source', render: () => undefined });
 });
 
-test('a plain string still compiles, as in v1 and the plugin docs (deprecated: it warns at runtime)', () => {
+test('a plain string still compiles, as in v1 and the plugin docs (deprecated)', () => {
   // extension-points.mdx
   registry.registerSource({ id: 'a', label: 'my-source.label', onSelect: () => {} });
   registry.registerFileAction({ id: 'edit', icon: 'edit', label: 'Edit', shouldRender: () => true, onClick: () => {} });

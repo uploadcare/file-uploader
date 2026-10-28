@@ -13,7 +13,8 @@ import { UploadCollectionController } from './controllers/UploadCollectionContro
 import { UploadController } from './controllers/UploadController';
 import { ControllerContainer } from './di/ControllerContainer';
 import { EventEmitter, EventType } from './EventEmitter';
-import { createL10n, plainText } from './l10n';
+import type { PlainText } from './l10n';
+import { createL10n } from './l10n';
 import { PluginController } from './managers/plugin';
 import type { Uid } from './Uid';
 import type { UploaderPublicApi } from './UploaderPublicApi';
@@ -538,7 +539,7 @@ describe('UploaderPublicApi', () => {
       const onSelect = vi.fn();
       ctrl.container
         .get(PluginController)
-        .registry.addSource('p', { id: 'local', label: plainText('Local'), onSelect });
+        .registry.addSource('p', { id: 'local', label: 'Local' as PlainText, onSelect });
 
       api.initFlow();
       await flush();
@@ -554,7 +555,7 @@ describe('UploaderPublicApi', () => {
       // so `find(expandedIds[0]) ?? registeredSource` falls back to the origin.
       ctrl.container.get(PluginController).registry.addSource('p', {
         id: 'local',
-        label: plainText('Local'),
+        label: 'Local' as PlainText,
         onSelect,
         expand: () => ['ghost'],
       });
@@ -571,7 +572,7 @@ describe('UploaderPublicApi', () => {
       const navigate = vi.spyOn(ctrl.router, 'navigate');
       ctrl.container.get(PluginController).registry.addSource('p', {
         id: 'group',
-        label: plainText('Group'),
+        label: 'Group' as PlainText,
         onSelect: vi.fn(),
         expand: () => ['a', 'b'],
       });
@@ -997,7 +998,7 @@ describe('UploaderPublicApi', () => {
       // `@inject(() => PluginController)` must see this exact registry.
       ctrl.container
         .get(PluginController)
-        .registry.addSource('p', { id: 'local', label: plainText('Local'), onSelect });
+        .registry.addSource('p', { id: 'local', label: 'Local' as PlainText, onSelect });
 
       api.initFlow();
       await flush();

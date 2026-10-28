@@ -21,18 +21,16 @@ export type PluginL10nRegistration = Record<string, Partial<Record<L10nKey | (st
 
 /**
  * A plugin's label: an l10n key, built in or declared in `CustomLocaleDefinition` and registered via `registerL10n`,
- * or text marked with `plainText()`.
+ * or text meant to be shown as written, asserted `'My source' as PlainText`.
  *
- * Any other string still compiles and is shown as written, as in v1, but is deprecated: the uploader warns once per
- * such label. A misspelt key is one of them, which is what the warning is for.
+ * Any other string still compiles and is shown as written, as in v1, but is deprecated.
  */
-// NEXT-MAJOR(plugins): `L10nKey | PlainText` only, then drop `pluginLabelKey`, `PluginController._warnAboutPlainLabels`
-// and the `plainText` registry in `l10n.ts`. Kept for 1.x compat.
+// NEXT-MAJOR(plugins): `L10nKey | PlainText` only, then drop `pluginLabelKey`. Kept for 1.x compat.
 export type PluginLabel = L10nKey | PlainText | (string & {});
 
 /**
  * A plugin label as the blocks' checked `l10n()` takes it. The lookup handles any string — an unknown one is shown as
- * written — so this only narrows the type of what `PluginController` has already warned about.
+ * written — so this only narrows the type.
  */
 export const pluginLabelKey = (label: PluginLabel): L10nKey | PlainText => label as L10nKey | PlainText;
 
