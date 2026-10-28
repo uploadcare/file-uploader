@@ -43,9 +43,9 @@ export const parseCdnUrlForEntry = ({ url, cdnBase }: ParseCdnUrlForEntryOptions
   let fallbackCdnBaseUrlObj: URL;
   try {
     parsed = parseFileUrl(url);
-    // `parsed.origin` is already the host the URL was parsed from — reuse it
+    // `parsed.cdnBase` is already the host the URL was parsed from — reuse it
     // instead of re-parsing `url` a second time just to read its host.
-    urlHost = new URL(parsed.origin).host;
+    urlHost = new URL(parsed.cdnBase).host;
     cdnBaseUrlObj = new URL(cdnBase);
     fallbackCdnBaseUrlObj = new URL(DEFAULT_CDN_CNAME);
   } catch (err) {

@@ -807,7 +807,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         this._scheduleInitialization();
         return;
       }
-      const originalUrl = serializeFileUrl({ origin: parsed.origin, uuid: parsed.uuid });
+      const originalUrl = serializeFileUrl({ cdnBase: parsed.cdnBase, uuid: parsed.uuid });
       if (originalUrl === editorController.get('*originalUrl')) {
         return;
       }
@@ -816,7 +816,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       editorController.set('*sourceOperations', parsed.operations);
     } else if (this.uuid) {
       const cdnCname = editorController.getConfig('cdnCname');
-      const originalUrl = serializeFileUrl({ origin: new URL(cdnCname).origin, uuid: this.uuid as string });
+      const originalUrl = serializeFileUrl({ cdnBase: new URL(cdnCname).origin, uuid: this.uuid as string });
       if (originalUrl === editorController.get('*originalUrl')) {
         return;
       }

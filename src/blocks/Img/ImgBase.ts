@@ -159,7 +159,7 @@ export class ImgBase extends ImgConfig {
       // `cdn-cname` carries a default, so a blank one means it was blanked on
       // purpose — `new URL('')` throws and the caller degrades, which is what the
       // previous implementation did by accident.
-      const url = serializeFileUrl({ origin: new URL(cdnCname).origin, uuid, operations });
+      const url = serializeFileUrl({ cdnBase: new URL(cdnCname).origin, uuid, operations });
       // `serializeFileUrl` builds without validating — it is `parseFileUrl` that
       // knows the UUID grammar. Parsing the result back keeps a garbage `uuid`
       // attribute degrading to "no image" instead of emitting a URL that 404s.
@@ -169,13 +169,13 @@ export class ImgBase extends ImgConfig {
 
     const proxyCname = this._str('proxy-cname');
     if (proxyCname) {
-      return this._proxyUrl(serializeProxyUrl({ origin: proxyCname, sourceUrl: this._fmtAbs(src), operations }));
+      return this._proxyUrl(serializeProxyUrl({ cdnBase: proxyCname, sourceUrl: this._fmtAbs(src), operations }));
     }
 
     const pubkey = this._str('pubkey');
     if (pubkey) {
       return this._proxyUrl(
-        serializeProxyUrl({ origin: deliveryProxyOrigin(pubkey), sourceUrl: this._fmtAbs(src), operations }),
+        serializeProxyUrl({ cdnBase: deliveryProxyOrigin(pubkey), sourceUrl: this._fmtAbs(src), operations }),
       );
     }
 
