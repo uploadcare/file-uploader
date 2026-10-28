@@ -429,12 +429,14 @@ export class UploaderPublicApi {
   };
 
   public doneFlow = (): void => {
-    // Reset the router: clear everything (also wipes history), then land on the
-    // preset's configured done activity (set via `router.configure`).
+    // As in v1: land on the preset's configured done activity (set via `router.configure`) with a fresh history, and
+    // close everything only when the preset has none. Not closing first keeps minimal's modal open when its done
+    // activity, the upload list, can't be entered because it is empty.
     const router = this._router;
-    router.navigate(null);
     if (router.doneActivity) {
-      router.navigate(router.doneActivity);
+      router.restart(router.doneActivity);
+    } else {
+      router.navigate(null);
     }
   };
 
