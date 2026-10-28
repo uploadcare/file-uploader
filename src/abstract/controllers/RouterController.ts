@@ -409,8 +409,8 @@ export class RouterController {
   /**
    * Apply a new pair of slot values, emitting the documented events for the
    * transitions that actually happened:
-   * - `MODAL_OPEN` when the modal slot goes closed → open,
-   * - `MODAL_CLOSE` (carrying the id that closed) when it goes open → closed,
+   * - `MODAL_OPEN` for the activity the modal slot now shows,
+   * - `MODAL_CLOSE` for the one it stopped showing, with `hasActiveModals` set when it switched rather than closed,
    * - `ACTIVITY_CHANGE` whenever the *effective* activity changes.
    * Always notifies subscribers, so params-only updates still re-render.
    */
@@ -433,10 +433,15 @@ export class RouterController {
       this._log.debug(lazy(() => [`modal activity: ${prevModal ?? 'none'} → ${nextModal ?? 'none'}`]));
     }
 
-    if (prevModal === null && nextModal !== null) {
-      this._emit(UploaderEventType.MODAL_OPEN, { modalId: nextModal });
-    } else if (prevModal !== null && nextModal === null) {
-      this._emit(UploaderEventType.MODAL_CLOSE, { modalId: prevModal, hasActiveModals: false });
+    // Each activity shown in the modal counts as a modal of its own, as in v1: switching the open modal to another
+    // activity opens the new one, then closes the old one while the new one is still active.
+    if (nextModal !== prevModal) {
+      if (nextModal !== null) {
+        this._emit(UploaderEventType.MODAL_OPEN, { modalId: nextModal });
+      }
+      if (prevModal !== null) {
+        this._emit(UploaderEventType.MODAL_CLOSE, { modalId: prevModal, hasActiveModals: nextModal !== null });
+      }
     }
 
     if (nextEffective !== prevEffective) {
