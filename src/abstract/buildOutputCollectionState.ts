@@ -50,9 +50,14 @@ export const __resetTaskClockForTests = (): void => {
   taskEndScheduled = false;
 };
 
-// Enumerable and `this`-based, so a spread copy carries it and calling it there just copies the copy.
+// Non-enumerable, so a spread copy is plain data that `structuredClone` and `postMessage` accept, as v1 states were.
+// The copy it returns carries it the same way, so calling it there just copies the copy.
 function snapshot<T extends object>(this: T): T {
-  return { ...this };
+  return withSnapshot({ ...this });
+}
+
+function withSnapshot<T extends object>(state: T): T {
+  return Object.defineProperty(state, 'snapshot', { value: snapshot });
 }
 
 /** Cheap to read, so they are read when the state is built. */
@@ -186,6 +191,5 @@ export function buildOutputCollectionState<
       enumerable: true,
     });
   }
-  Object.defineProperty(state, 'snapshot', { value: snapshot, enumerable: true });
-  return state;
+  return withSnapshot(state);
 }
