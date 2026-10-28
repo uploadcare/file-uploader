@@ -65,13 +65,14 @@ npm run test:e2e && \
 npm run lint
 ```
 
-`test:types` (tsd against `dist/index.d.ts`) and the full `tsc` (all four
-projects, not just `tsc:app`) both run in CI and both need the build output, so
-they belong after `build`. `tsc:app` alone will not catch a type error that only
-`tsconfig.test.json` / `tsconfig.e2e-test.json` / `tsconfig.node.json` sees, and
-neither will catch what `tsd` sees: tsd type-checks the **published** `.d.ts`
-under its own compiler options, so a public type that only resolves under
-`bundler` module resolution passes every `tsc` project and still fails CI.
+`test:types` (Vitest's typecheck of `types/test/*.test-d.tsx` against
+`dist/index.d.ts`) and the full `tsc` (all four projects, not just `tsc:app`) both
+run in CI and both need the build output, so they belong after `build`. `tsc:app`
+alone will not catch a type error that only `tsconfig.test.json` /
+`tsconfig.e2e-test.json` / `tsconfig.node.json` sees, and neither will catch what
+`test:types` sees: it type-checks the **published** `.d.ts` the way a consumer
+does (`tsconfig.types-test.json`, bundler resolution), so a public type the build
+emits wrong passes every `tsc` project and still fails CI.
 
 Pre-commit (husky + lint-staged) runs `biome check --write` on staged
 `*.{ts,js,cjs,tsx}`. The husky "DEPRECATED" warning on commit is benign.
