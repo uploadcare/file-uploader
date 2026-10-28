@@ -155,7 +155,6 @@ describe('buildOutputCollectionState', () => {
         'isSuccess',
         'isUploading',
         'progress',
-        'snapshot',
         'status',
         'successCount',
         'successEntries',
@@ -166,6 +165,14 @@ describe('buildOutputCollectionState', () => {
     );
     expect(Object.getOwnPropertyDescriptor(plain, 'allEntries')?.get).toBeUndefined();
     expect(plain.successCount).toBe(1);
+  });
+
+  it('spreads into a copy that structuredClone accepts, as v1 states did', () => {
+    addSuccess();
+    const state = buildOutputCollectionState(container);
+
+    expect(structuredClone({ ...state }).successCount).toBe(1);
+    expect(structuredClone(state.snapshot()).successCount).toBe(1);
   });
 
   it('computes nothing until a field is read', () => {
@@ -218,17 +225,16 @@ describe('buildOutputCollectionState', () => {
       expect([copy.totalCount, copy.allEntries.length, copy.status]).toEqual([1, 1, 'success']);
     });
 
-    it('on a spread copy, or a snapshot, copies that copy without a warning', () => {
+    it('on a snapshot, copies that copy without a warning', () => {
       vi.useFakeTimers();
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       addSuccess();
-      const state = buildOutputCollectionState(container);
-      const spread = { ...state };
+      const copy = buildOutputCollectionState(container).snapshot();
       vi.advanceTimersByTime(0);
       addUploading();
 
-      expect(spread.snapshot()).toEqual(spread);
-      expect(spread.snapshot().snapshot().totalCount).toBe(1);
+      expect(copy.snapshot()).toEqual(copy);
+      expect(copy.snapshot().snapshot().totalCount).toBe(1);
       expect(warn).not.toHaveBeenCalled();
     });
   });
