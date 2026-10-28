@@ -490,9 +490,10 @@ export class UploaderPublicApi {
 
   /**
    * @deprecated Use {@link navigate} instead — it sets the activity *and* shows
-   * it in one call. `setCurrentActivity` only sets the activity (in the
-   * background slot) without opening the modal, so it must be paired with
-   * `setModalState(true)`.
+   * it in one call. With the modal closed, `setCurrentActivity` only sets the
+   * activity (in the background slot) without opening the modal, so it must be
+   * paired with `setModalState(true)`; with the modal open it switches the modal
+   * to the activity, as in v1.
    */
   public setCurrentActivity = <T extends ActivityType>(
     activityType: T,
@@ -504,13 +505,18 @@ export class UploaderPublicApi {
   ) => {
     this._whenPluginsReady(() => {
       // `setCurrentActivity(null)` means "no current activity" — close every
-      // slot (background + modal). Otherwise set the background activity (no
-      // modal); a paired `setModalState(true)` opens it in the modal slot.
+      // slot (background + modal). An open modal switches to the activity, as
+      // in v1. Otherwise set the background activity (no modal); a paired
+      // `setModalState(true)` opens it in the modal slot.
       if (activityType === null) {
         this._router.navigate(null);
         return;
       }
-      this._router.setActivity(activityType, params[0]);
+      if (this._router.modal !== null) {
+        this._router.openModal(activityType, params[0]);
+      } else {
+        this._router.setActivity(activityType, params[0]);
+      }
       // Never rejects; returned so the wait belongs to the deferred navigation's task.
       return waitForActivityBlock(this._router, activityType, {
         onTimeout: () => this._log.warn(`Activity type "${activityType}" not found in the context`),
@@ -587,10 +593,10 @@ export class UploaderPublicApi {
         return;
       }
 
-      // Open the modal for the *intended* activity — the one `setCurrentActivity`
-      // put in the background slot — not the effective current activity (which,
-      // if a modal is already open, is that stale modal and would no-op).
-      const activityType = router.activity ?? router.currentActivity;
+      // An open modal already shows the intended activity: `setCurrentActivity`
+      // switches it. Otherwise open the one `setCurrentActivity` put in the
+      // background slot.
+      const activityType = router.modal ?? router.activity ?? router.currentActivity;
       if (!activityType) {
         this._log.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
         return;

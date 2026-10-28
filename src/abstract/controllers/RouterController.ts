@@ -462,9 +462,12 @@ export class RouterController {
   }
 
   /** Open a modal for `id` without touching the background activity. */
-  public openModal(id: ActivityId): void {
+  public openModal(id: ActivityId, params?: Record<string, unknown>): void {
     if (!this._canActivate(id)) {
       return;
+    }
+    if (params !== undefined) {
+      this._params = params;
     }
     this._transition(this._activity, id);
   }

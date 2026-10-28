@@ -668,6 +668,37 @@ describe('UploaderPublicApi', () => {
       expect(setActivity).toHaveBeenCalledWith('upload-list', undefined);
     });
 
+    it('setCurrentActivity switches an open modal to the activity, as v1 did', async () => {
+      const { api, ctrl } = setup();
+      ctrl.router.activityBlockMounted('upload-list' as never);
+      ctrl.router.activityBlockMounted('url' as never);
+      ctrl.router.openModal('upload-list' as never);
+      const changes: unknown[] = [];
+      api.on('activity-change', (payload) => changes.push(payload.activity));
+
+      api.setCurrentActivity('url');
+      await flush();
+
+      expect(ctrl.router.modal).toBe('url');
+      expect(api.getCurrentActivity()).toBe('url');
+      await vi.waitFor(() => expect(changes).toEqual(['url']));
+    });
+
+    it('setCurrentActivity then setModalState(true) leaves an open modal on the activity', async () => {
+      const { api, ctrl } = setup();
+      ctrl.router.setActivity('upload-list' as never);
+      ctrl.router.activityBlockMounted('upload-list' as never);
+      ctrl.router.activityBlockMounted('url' as never);
+      ctrl.router.openModal('upload-list' as never);
+
+      api.setCurrentActivity('url');
+      api.setModalState(true);
+      await vi.waitFor(() => expect(ctrl.router.modal).toBe('url'));
+      await flush();
+
+      expect(ctrl.router.modal).toBe('url');
+    });
+
     it('setModalState(false) closes everything', async () => {
       const { api, ctrl } = setup();
       const navigate = vi.spyOn(ctrl.router, 'navigate');
