@@ -484,6 +484,7 @@ export class UploaderPublicApi {
    * paired with `setModalState(true)`; with the modal open it switches the modal
    * to the activity, as in v1.
    */
+  // NEXT-MAJOR(api): remove `setCurrentActivity` in favour of `navigate()`. Kept for 1.x compat.
   public setCurrentActivity = <T extends ActivityType>(
     activityType: T,
     ...params: T extends keyof ActivityParamsMap
@@ -493,15 +494,11 @@ export class UploaderPublicApi {
       : []
   ) => {
     this._whenPluginsReady(() => {
-      // `setCurrentActivity(null)` means "no current activity" — close every
-      // slot (background + modal). An open modal switches to the activity, as
-      // in v1. Otherwise set the background activity (no modal); a paired
-      // `setModalState(true)` opens it in the modal slot.
+      // `null` means "no current activity": close every slot.
       if (activityType === null) {
         this._router.navigate(null);
         return;
       }
-      // NEXT-MAJOR(api): remove `setCurrentActivity` and `setModalState` in favour of `navigate()`. Kept for 1.x compat.
       const activityParams = params[0] ?? {};
       if (this._router.modal !== null) {
         this._router.openModal(activityType, activityParams);
@@ -562,6 +559,7 @@ export class UploaderPublicApi {
    * to close. `setModalState` only toggles the modal for the activity that was
    * already set via `setCurrentActivity`.
    */
+  // NEXT-MAJOR(api): remove `setModalState` in favour of `navigate()`. Kept for 1.x compat.
   public setModalState = (opened: boolean): void => {
     this._whenPluginsReady(() => {
       const router = this._router;
