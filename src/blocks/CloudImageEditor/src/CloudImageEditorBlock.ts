@@ -15,22 +15,19 @@ import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin'
 import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types';
 import { serializeCsv } from '../../../utils/comma-separated';
 import { getClosestAspectRatio, parseCropPreset } from '../../../utils/crop/cropPreset';
-import { debounce } from '../../../utils/debounce.js';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
 import { CloudImageEditorController, type EditorConfig, type EditorServices } from './CloudImageEditorController';
 import { subscribeUploaderConfigCompat } from './editor-config-compat';
 import { cloudImageEditorContext } from './editor-context';
 import { type EditorL10n, resolveEditorL10n } from './editor-locale';
-import { classNames } from './lib/classNames.js';
 import { editorAppliedUrl, editorImageInfoUrl } from './lib/editorUrls';
 import { parseTabs } from './lib/parseTabs.js';
 import { operationsToTransformations } from './lib/transformationUtils.js';
 import svgIconsSprite from './svg-sprite';
-import { ALL_TABS, TabId } from './toolbar-constants.js';
+import { ALL_TABS, type TabId } from './toolbar-constants.js';
 import type { ApplyResult, CropPresetList, ImageSize, Transformations } from './types';
 
 import './elements/presence-toggle/PresenceToggle';
-import './elements/line-loader/LineLoaderUi';
 import './elements/button/BtnUi';
 import './EditorImageCropper';
 import './EditorImageFader';
@@ -64,18 +61,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     }>;
 
   public static styleAttrs = ['uc-cloud-image-editor'];
-
-  @state()
-  private _statusMessage = '';
-
-  @state()
-  private _imageSrc = TRANSPARENT_PIXEL_SRC;
-
-  @state()
-  private _fileType = '';
-
-  @state()
-  private _showLoader = false;
 
   @property({ type: String, reflect: true })
   public uuid: string | null = null;
@@ -211,10 +196,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   // disconnected. The root is the provider, not an `EditorBlock`, so it holds its own.
   private _lifetime = Lifetime.ended();
 
-  private readonly _debouncedShowLoader = debounce((show: boolean) => {
-    this._showLoader = show;
-  }, 300);
-
   /**
    * The image container, passed to `<uc-editor-toolbar>` as a plain Lit prop
    * (UI-layer plumbing, not controller state) so it can measure the rendered
@@ -223,19 +204,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
    * prop binding evaluates.
    */
   private readonly _imgContainerRef = createRef<HTMLDivElement>();
-
-  private readonly _handleImageLoad = (): void => {
-    this._debouncedShowLoader(false);
-
-    if (this._imageSrc !== TRANSPARENT_PIXEL_SRC) {
-      this._editorController.set('*networkProblems', false);
-    }
-  };
-
-  private readonly _handleImageError = (): void => {
-    this._debouncedShowLoader(false);
-    this._editorController.set('*networkProblems', true);
-  };
 
   private readonly _handleRetryNetwork = (): void => {
     this._retryNetworkImages();
@@ -509,14 +477,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     );
   }
 
-  private get _imageClassName(): string {
-    const tabId = this._editorController.get('*tabId');
-    return classNames('uc-image', {
-      'uc-image_hidden_to_cropper': tabId === TabId.CROP,
-      'uc-image_hidden_effects': tabId !== TabId.CROP,
-    });
-  }
-
   /**
    * To proper work, we need non-zero size the element. So, we'll wait for it.
    */
@@ -601,10 +561,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   }
 
   public override render() {
-    const fileType = this._fileType ?? '';
-    const message = this._statusMessage ?? '';
-    const src = this._imageSrc || TRANSPARENT_PIXEL_SRC;
-    const showLoader = this._showLoader;
     const showNetworkProblems = this._hasNetworkProblems;
 
     return html`
@@ -626,21 +582,15 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
           </div>
         </uc-presence-toggle>
         <div class="uc-viewport">
-          <div class="uc-file_type_outer">
-            <div class="uc-file_type">${fileType}</div>
-          </div>
           <div class="uc-image_container" ${ref(this._imgContainerRef)}>
-            <img src=${src} class=${this._imageClassName} @load=${this._handleImageLoad} @error=${this._handleImageError} />
             ${when(
               this._isInitialized,
               () => html`<uc-editor-image-cropper .imageSize=${this._imageSize}></uc-editor-image-cropper>`,
             )}
             <uc-editor-image-fader .imageSize=${this._imageSize}></uc-editor-image-fader>
           </div>
-          <div class="uc-info_pan">${message}</div>
         </div>
         <div class="uc-toolbar">
-          <uc-line-loader-ui .active=${showLoader}></uc-line-loader-ui>
           <div class="uc-toolbar_content uc-toolbar_content__editor">
             ${when(
               this._isInitialized,
