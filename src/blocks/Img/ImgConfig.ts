@@ -3,15 +3,15 @@ import { LitElement } from 'lit';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env.js';
 import { RegisterableElementMixin } from '../../lit/RegisterableElementMixin.js';
 import { operationsFromModifiers } from '../../utils/cdn/operations';
-import { CssDataMixin } from './CssDataMixin.js';
 import { CSS_PREF } from './configurations.js';
+import { parseCssPropertyValue } from './parseCssPropertyValue';
 import { type ImgPropKey, PROPS_MAP } from './props-map.js';
 
 export type CssPropValue = string | number | undefined | null;
 type CssPropRecord = Record<string, CssPropValue>;
 type PropConfig = { default?: CssPropValue };
 
-export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)) {
+export class ImgConfig extends RegisterableElementMixin(LitElement) {
   private _state: CssPropRecord = {};
   private _subscribers: Map<string, Set<(val: CssPropValue) => void>> = new Map();
   private _isnObserver: IntersectionObserver | null = null;
@@ -95,9 +95,15 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
   }
 
   private _initCssProperties(): void {
+    const style = window.getComputedStyle(this);
     for (const prop in PROPS_MAP) {
       const fullKey = CSS_PREF + prop;
-      const val = this.getCssData(fullKey, true);
+      let val: ReturnType<typeof parseCssPropertyValue> = null;
+      try {
+        val = parseCssPropertyValue(style.getPropertyValue(fullKey).trim());
+      } catch {
+        // An unparseable value is skipped, like an unset one.
+      }
       if (val !== null && val !== undefined) {
         this._state[fullKey] = val as CssPropValue;
       }
