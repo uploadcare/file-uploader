@@ -347,6 +347,49 @@ describe('uc-cloud-image-editor', () => {
     await expect.poll(layout).toEqual(settled('1'));
   });
 
+  describe.skipIf(isLive)('network problems', () => {
+    const splash = (element: HTMLElement) =>
+      element.querySelector('.uc-network_problems_splash') as (HTMLElement & { visible: boolean }) | null;
+    const cropperSize = (element: HTMLElement) =>
+      (element.querySelector('uc-editor-image-cropper') as { imageSize?: { width: number } } | null)?.imageSize;
+
+    it('shows the network problems screen when the image info request fails, and Retry loads the image', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      let offline = true;
+      emulatorSession().on('GET /:uuid/-/json/', () =>
+        offline ? Response.error() : Response.json({ width: 640, height: 480 }),
+      );
+      const { element, editor } = renderEditor();
+
+      await expect.poll(() => splash(element)?.visible).toBe(true);
+
+      offline = false;
+      await editor.getByText('Retry').click();
+
+      await expect.poll(() => splash(element)?.visible).toBe(false);
+      await expect.poll(() => cropperSize(element)?.width).toBe(640);
+    });
+
+    it('shows the network problems screen when the image itself fails to load, and Retry loads it', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      let offline = true;
+      emulatorSession().on('GET /:uuid/*', ({ request }) =>
+        offline && !new URL(request.url).pathname.includes('/-/json/') ? Response.error() : undefined,
+      );
+      const { element, editor } = renderEditor();
+      // A width no other test uses, so the image URL (which carries it) can't come from the browser cache.
+      element.style.width = '517px';
+
+      await expect.poll(() => splash(element)?.visible).toBe(true);
+
+      offline = false;
+      await editor.getByText('Retry').click();
+
+      await expect.poll(() => splash(element)?.visible).toBe(false);
+      await expect.poll(() => activeClass(element.querySelector('uc-editor-image-cropper'))).toContain('uc-active');
+    });
+  });
+
   describe.skipIf(isLive)('while the cropper image loads', () => {
     /** Holds the editor's CDN image requests (not the image info) until `release()`. */
     const holdImages = () => {
