@@ -1,4 +1,5 @@
 import { applyTemplateData } from '../../../utils/template-utils';
+import { ALL_FILTERS } from './toolbar-constants';
 
 export type EditorL10nVariables = Record<string, string | number>;
 export type EditorL10n = (key: string, variables?: EditorL10nVariables) => string;
@@ -29,46 +30,8 @@ export const EDITOR_DEFAULT_LOCALE: Record<string, string> = {
   'crop-to-shape': 'Crop to {{value}}',
   custom: 'Freeform',
   'freeform-crop': 'Freeform crop',
-  adaris: 'Adaris',
-  briaril: 'Briaril',
-  calarel: 'Calarel',
-  carris: 'Carris',
-  cynarel: 'Cynarel',
-  cyren: 'Cyren',
-  elmet: 'Elmet',
-  elonni: 'Elonni',
-  enzana: 'Enzana',
-  erydark: 'Erydark',
-  fenralan: 'Fenralan',
-  ferand: 'Ferand',
-  galen: 'Galen',
-  gavin: 'Gavin',
-  gethriel: 'Gethriel',
-  iorill: 'Iorill',
-  iothari: 'Iothari',
-  iselva: 'Iselva',
-  jadis: 'Jadis',
-  lavra: 'Lavra',
-  misiara: 'Misiara',
-  namala: 'Namala',
-  nerion: 'Nerion',
-  nethari: 'Nethari',
-  pamaya: 'Pamaya',
-  sarnar: 'Sarnar',
-  sedis: 'Sedis',
-  sewen: 'Sewen',
-  sorahel: 'Sorahel',
-  sorlen: 'Sorlen',
-  tarian: 'Tarian',
-  thellassan: 'Thellassan',
-  varriel: 'Varriel',
-  varven: 'Varven',
-  vevera: 'Vevera',
-  virkas: 'Virkas',
-  yedis: 'Yedis',
-  yllara: 'Yllara',
-  zatvel: 'Zatvel',
-  zevcen: 'Zevcen',
+  // Filter labels are the capitalised filter name.
+  ...Object.fromEntries(ALL_FILTERS.map((name) => [name, name.charAt(0).toUpperCase() + name.slice(1)])),
 };
 
 export function resolveEditorL10n(overrides?: Record<string, string>): EditorL10n {
