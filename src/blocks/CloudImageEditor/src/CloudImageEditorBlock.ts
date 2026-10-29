@@ -6,7 +6,7 @@ import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { when } from 'lit/directives/when.js';
-import { isAbortError, Lifetime } from '../../../abstract/di/Lifetime';
+import { isAbortError } from '../../../abstract/di/Lifetime';
 import { logger } from '../../../abstract/logger';
 import type { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../../../abstract/secureDeliveryProxyUrl';
@@ -24,7 +24,7 @@ import {
   type EditorServices,
 } from './CloudImageEditorController';
 import { subscribeUploaderConfigCompat } from './editor-config-compat';
-import { cloudImageEditorContext } from './editor-context';
+import { AdoptionLifetime, cloudImageEditorContext } from './editor-context';
 import { type EditorL10n, resolveEditorL10n } from './editor-locale';
 import { editorAppliedUrl, editorImageInfoUrl } from './lib/editorUrls';
 import { parseTabs } from './lib/parseTabs.js';
@@ -197,9 +197,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   private _configChangeUnsub: (() => void) | undefined;
 
-  // One per connection, ended first thing on disconnect (which also destroys the controller); already ended while
-  // disconnected. The root is the provider, not an `EditorBlock`, so it holds its own.
-  private _lifetime = Lifetime.ended();
+  // One adoption per connection, ended first thing on disconnect (which also destroys the controller). The root is the
+  // provider, not an `EditorBlock`, so it begins and ends its own.
+  private readonly _lifetime = new AdoptionLifetime(this._log);
 
   /**
    * The image container, passed to `<uc-editor-toolbar>` as a plain Lit prop
@@ -255,7 +255,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   };
 
   public override connectedCallback(): void {
-    this._lifetime = new Lifetime();
+    this._lifetime.begin();
     super.connectedCallback();
     // Apply `styleAttrs` as bare attributes — the entire editor stylesheet is
     // scoped under `[uc-cloud-image-editor]` (incl. the `.uc-editor_ON`
@@ -272,7 +272,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     // The ended lifetime also aborted an image load still in flight, so a reconnect restarts one that hadn't finished.
     // Once `originalUrl` is set, `updateImage` treats the image as loaded, so only its info request is repeated.
     if (this.hasUpdated && !this._imageSize && (this.uuid || this.cdnUrl)) {
-      this._runTask(() => (this._editorController.originalUrl ? this._loadImageInfo() : this.updateImage()));
+      this._lifetime.run(() => (this._editorController.originalUrl ? this._loadImageInfo() : this.updateImage()));
     }
   }
 
@@ -391,7 +391,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   private readonly _handleRetryNetwork = (): void => {
     // The image info never arrived, so there is no image to reload yet: ask for it again.
     if (!this._imageSize) {
-      this._runTask(() => this._loadImageInfo());
+      this._lifetime.run(() => this._loadImageInfo());
       return;
     }
     const images = this.querySelectorAll('img');
@@ -520,13 +520,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     const hasInitialSource = Boolean(this.uuid || this.cdnUrl);
     const alreadyRequested = changedProperties.has('uuid') || changedProperties.has('cdnUrl');
     if (hasInitialSource && !alreadyRequested) {
-      this._runTask(() => this.updateImage());
+      this._lifetime.run(() => this.updateImage());
     }
-  }
-
-  /** Fire-and-forget work bound to this connection — the root's counterpart of `EditorBlock.runTask`. */
-  private _runTask(task: () => unknown): void {
-    this._lifetime.run(task, (error) => this._log.error('an async task failed', error));
   }
 
   public override disconnectedCallback(): void {
@@ -631,7 +626,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     super.updated(changedProperties);
 
     if ((changedProperties.has('uuid') && this.uuid) || (changedProperties.has('cdnUrl') && this.cdnUrl)) {
-      this._runTask(() => this.updateImage());
+      this._lifetime.run(() => this.updateImage());
     }
   }
 
@@ -684,7 +679,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       // `parseFileUrl` throws for anything that is not a single stored file
       // (a group or delivery-proxy URL); caught locally so a bad `cdn-url`
       // warns and opens the editor without transformations instead of
-      // throwing into the `_runTask(() => this.updateImage())` callers.
+      // throwing into the `_lifetime.run(() => this.updateImage())` callers.
       let parsed: ReturnType<typeof parseFileUrl>;
       try {
         parsed = parseFileUrl(cdnUrlValue);
