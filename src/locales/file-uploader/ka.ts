@@ -134,6 +134,8 @@ export default {
 
   custom: 'თავისუფალი ფორმა',
   'freeform-crop': 'თავისუფალი კვეთა',
+  'network-error': 'ქსელის შეცდომა',
+  retry: 'ხელახლა ცდა',
 
   'upload-from': 'ატვირთვა {{source}}-დან',
   'get-from': 'მიღება {{source}}-დან',

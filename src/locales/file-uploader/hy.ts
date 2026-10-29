@@ -132,6 +132,8 @@ export default {
 
   custom: 'Ազատ ձև',
   'freeform-crop': 'Ազատ կտրում',
+  'network-error': 'Ցանցի սխալ',
+  retry: 'Կրկին փորձել',
 
   'upload-from': 'Բեռնել {{source}}-ից',
   'get-from': 'Ստանալ {{source}}-ից',

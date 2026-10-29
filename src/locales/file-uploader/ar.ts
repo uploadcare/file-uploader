@@ -139,6 +139,8 @@ export default {
   'crop-to-shape': 'اقتصاص إلى {{value}}',
   custom: 'حر الشكل',
   'freeform-crop': 'قص حر',
+  'network-error': 'خطأ في الشبكة',
+  retry: 'إعادة المحاولة',
 
   'upload-from': 'رفع {{source}}',
   'get-from': 'الحصول من {{source}}',

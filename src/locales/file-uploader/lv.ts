@@ -136,6 +136,8 @@ export default {
 
   custom: 'Brīvā forma',
   'freeform-crop': 'Brīva apgriešana',
+  'network-error': 'Tīkla kļūda',
+  retry: 'Mēģināt vēlreiz',
 
   'upload-from': 'Augšupielādēt no {{source}}',
   'get-from': 'Iegūt no {{source}}',

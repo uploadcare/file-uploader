@@ -138,6 +138,8 @@ export default {
 
   custom: 'Voľná forma',
   'freeform-crop': 'Voľné orezávanie',
+  'network-error': 'Chyba siete',
+  retry: 'Skúsiť znova',
 
   'upload-from': 'Nahrať z {{source}}',
   'get-from': 'Získať z {{source}}',

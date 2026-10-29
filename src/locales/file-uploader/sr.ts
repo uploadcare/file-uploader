@@ -136,6 +136,8 @@ export default {
 
   custom: 'Слободна форма',
   'freeform-crop': 'Слободно исецање',
+  'network-error': 'Грешка мреже',
+  retry: 'Покушај поново',
 
   'upload-from': 'Отпреми са {{source}}',
   'get-from': 'Добиј са {{source}}',

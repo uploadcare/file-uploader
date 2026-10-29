@@ -133,6 +133,8 @@ export default {
 
   custom: 'Sərbəst forma',
   'freeform-crop': 'Sərbəst kəsmə',
+  'network-error': 'Şəbəkə xətası',
+  retry: 'Yenidən cəhd et',
 
   'upload-from': '{{source}} yüklə',
   'get-from': '{{source}}-dən al',

@@ -561,10 +561,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
             <div class="uc-network_problems_icon">
               <uc-editor-icon name="sad"></uc-editor-icon>
             </div>
-            <div class="uc-network_problems_text">Network error</div>
+            <div class="uc-network_problems_text">${this._editorController.l10n('network-error')}</div>
           </div>
           <div class="uc-network_problems_footer">
-            <uc-btn-ui theme="primary" text="Retry" @click=${this._handleRetryNetwork}></uc-btn-ui>
+            <uc-btn-ui theme="primary" .text=${this._editorController.l10n('retry')} @click=${this._handleRetryNetwork}></uc-btn-ui>
           </div>
         </uc-presence-toggle>
         <div class="uc-viewport">

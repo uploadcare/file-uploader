@@ -137,6 +137,8 @@ export default {
 
   custom: 'Formă liberă',
   'freeform-crop': 'Decupare liberă',
+  'network-error': 'Eroare de rețea',
+  retry: 'Reîncearcă',
 
   'upload-from': 'Încărcați din {{source}}',
   'get-from': 'Obțineți din {{source}}',

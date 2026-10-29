@@ -134,6 +134,8 @@ export default {
 
   custom: 'Serbest form',
   'freeform-crop': 'Serbest kırpma',
+  'network-error': 'Ağ hatası',
+  retry: 'Tekrar dene',
 
   'upload-from': '{{source}} kaynağından yükle',
   'get-from': '{{source}} kaynağından al',

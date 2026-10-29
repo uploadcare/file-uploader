@@ -132,6 +132,8 @@ export default {
   'crop-to-shape': '裁剪为 {{value}}',
   custom: '自由形式',
   'freeform-crop': '自由裁剪',
+  'network-error': '网络错误',
+  retry: '重试',
 
   'upload-from': '从 {{source}} 上传',
   'get-from': '从 {{source}} 获取',

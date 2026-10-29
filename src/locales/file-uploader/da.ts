@@ -135,6 +135,8 @@ export default {
 
   custom: 'Fri form',
   'freeform-crop': 'Fri beskæring',
+  'network-error': 'Netværksfejl',
+  retry: 'Prøv igen',
 
   'upload-from': 'Upload fra {{source}}',
   'get-from': 'Hent fra {{source}}',

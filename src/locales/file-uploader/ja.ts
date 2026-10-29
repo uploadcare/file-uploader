@@ -134,6 +134,8 @@ export default {
 
   custom: '自由形式',
   'freeform-crop': '自由切り抜き',
+  'network-error': 'ネットワークエラー',
+  retry: '再試行',
 
   'upload-from': '{{source}}からアップロード',
   'get-from': '{{source}}から取得',

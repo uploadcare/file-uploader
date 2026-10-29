@@ -134,6 +134,8 @@ export default {
 
   custom: 'Еркін форма',
   'freeform-crop': 'Еркін кесу',
+  'network-error': 'Желі қатесі',
+  retry: 'Қайталау',
 
   'upload-from': '{{source}} жүктеу',
   'get-from': '{{source}}-дан алу',

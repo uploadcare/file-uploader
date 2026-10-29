@@ -134,6 +134,8 @@ export default {
 
   custom: '自由形式',
   'freeform-crop': '自由裁剪',
+  'network-error': '網路錯誤',
+  retry: '重試',
 
   'upload-from': '從 {{source}} 上傳',
   'get-from': '從 {{source}} 取得',
