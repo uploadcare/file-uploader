@@ -181,3 +181,87 @@ describe('@debounced / @throttled on an EditorBlock', () => {
     }
   });
 });
+
+class AttachEditorChild extends EditorBlock {
+  public attachCallback(callback: () => void): void {
+    this.onEditorAttach(callback);
+  }
+  public get controller(): CloudImageEditorController {
+    return this.editorController;
+  }
+  public get log() {
+    return this._log;
+  }
+  public override render() {
+    return html``;
+  }
+}
+customElements.define('uc-test-attach-editor-child', AttachEditorChild);
+
+const mountAttach = (controller = new CloudImageEditorController()) => {
+  const root = document.createElement('uc-test-lifetime-editor-root') as LifetimeEditorRoot;
+  root.provider.setValue(controller);
+  document.body.append(root);
+  mounted.push(root);
+  const child = document.createElement('uc-test-attach-editor-child') as AttachEditorChild;
+  root.append(child);
+  return { root, child, controller };
+};
+
+describe('EditorBlock attach callbacks', () => {
+  it('throws reading the controller before any provider resolved', () => {
+    const detached = document.createElement('uc-test-attach-editor-child') as AttachEditorChild;
+    expect(() => detached.controller).toThrow(/CloudImageEditorController is not available yet/);
+  });
+
+  it('runs a callback registered after attach right away, and again on the next attach', () => {
+    const { root, child } = mountAttach();
+    const callback = vi.fn();
+
+    child.attachCallback(callback);
+    expect(callback).toHaveBeenCalledTimes(1);
+
+    root.provider.setValue(new CloudImageEditorController());
+    expect(callback).toHaveBeenCalledTimes(2);
+  });
+
+  it('warns about a throwing attach callback and still runs the others', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // Registered before attach: one registered after it runs right away, outside the isolation.
+    const child = document.createElement('uc-test-attach-editor-child') as AttachEditorChild;
+    const failure = new Error('boom');
+    const after = vi.fn();
+    child.attachCallback(() => {
+      throw failure;
+    });
+    child.attachCallback(after);
+
+    const root = document.createElement('uc-test-lifetime-editor-root') as LifetimeEditorRoot;
+    document.body.append(root);
+    mounted.push(root);
+    expect(() => root.append(child)).not.toThrow();
+
+    expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), 'An editor attach callback threw', failure);
+    expect(after).toHaveBeenCalledTimes(1);
+  });
+
+  it('prints the verbose log tier only when the debug config is on', () => {
+    const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+    let debug = false;
+    const controller = new CloudImageEditorController(undefined, {
+      l10n: (key) => key,
+      getConfig: ((key: string) => (key === 'debug' ? debug : undefined)) as CloudImageEditorController['getConfig'],
+      telemetry: { sendEvent: () => {}, sendEventError: () => {}, sendActionEvent: () => {} },
+      proxyUrl: async (url) => url,
+    });
+    const { child } = mountAttach(controller);
+
+    child.log.debug('quiet');
+    expect(log).not.toHaveBeenCalled();
+
+    debug = true;
+    child.log.debug('loud');
+    expect(log).toHaveBeenCalledTimes(1);
+    expect(log.mock.calls[0]?.at(-1)).toBe('loud');
+  });
+});

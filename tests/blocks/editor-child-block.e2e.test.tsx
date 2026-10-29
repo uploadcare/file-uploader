@@ -163,3 +163,73 @@ describe('EditorBlock / cloudImageEditorContext (light, non-ChildBlock base)', (
     expect(controller.get('*tabId')).toBe('tuning');
   });
 });
+
+class TestEditorKeyChild extends EditorBlock {
+  public readonly tabIds: string[] = [];
+
+  public constructor() {
+    super();
+    this.subEditorKey('*tabId', (tabId) => this.tabIds.push(tabId));
+  }
+
+  public override render() {
+    return html``;
+  }
+}
+
+if (!customElements.get('uc-test-editor-key-child'))
+  customElements.define('uc-test-editor-key-child', TestEditorKeyChild);
+
+describe('EditorBlock state reactions', () => {
+  const services = (l10n: EditorServices['l10n']): EditorServices => ({
+    l10n,
+    getConfig: (() => undefined) as EditorServices['getConfig'],
+    telemetry: { sendEvent: vi.fn(), sendEventError: vi.fn(), sendActionEvent: vi.fn() },
+    proxyUrl: async (url) => url,
+  });
+
+  it('re-renders a child reading l10n when the services change', async () => {
+    const root = append('uc-test-editor-root', 'test-editor-root-services');
+    const child = document.createElement('uc-test-editor-child');
+    root.append(child);
+    await expect.poll(() => child.querySelector('.l10n')?.textContent).toBe('Cancel');
+
+    root.controller.setServices(services((key) => `de:${key}`));
+    root.controller.notify();
+
+    await expect.poll(() => child.querySelector('.l10n')?.textContent).toBe('de:cancel');
+  });
+
+  it('runs a per-key reaction with the current value, then only when that key changes, and again after a reconnect', async () => {
+    const root = append('uc-test-editor-root', 'test-editor-root-key');
+    // After the root's first render, so its `yield` does not move (and so re-attach) the child.
+    await root.updateComplete;
+    const child = document.createElement('uc-test-editor-key-child') as TestEditorKeyChild;
+    root.append(child);
+    await expect.poll(() => child.tabIds).toEqual(['crop']);
+
+    root.controller.set('*networkProblems', true);
+    root.controller.set('*tabId', 'tuning');
+    expect(child.tabIds).toEqual(['crop', 'tuning']);
+
+    child.remove();
+    root.controller.set('*tabId', 'filters');
+    expect(child.tabIds).toEqual(['crop', 'tuning']);
+
+    root.append(child);
+    await expect.poll(() => child.tabIds).toEqual(['crop', 'tuning', 'filters']);
+    root.controller.set('*tabId', 'crop');
+    expect(child.tabIds).toEqual(['crop', 'tuning', 'filters', 'crop']);
+  });
+
+  it('leaves an operation control without an operation inactive when the transformations change', async () => {
+    const root = append('uc-test-editor-root', 'test-editor-root-operation');
+    const control = document.createElement('uc-editor-operation-control');
+    root.append(control);
+    await control.updateComplete;
+
+    root.controller.set('*editorTransformations', { brightness: 50 });
+
+    expect(control.active).toBe(false);
+  });
+});
