@@ -15,7 +15,6 @@ import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 import './primary-action.css';
 import '../Icon/Icon';
 import '../Thumb/Thumb';
-import type { L10nKey } from '../../abstract/l10n';
 
 export class PrimaryAction extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-primary-action'];
@@ -27,7 +26,7 @@ export class PrimaryAction extends ChildBlock {
   private static readonly DEFAULT_ICON = 'upload';
 
   /** The verb per built-in source; these read their source label lowercased. Other sources get `get-from`. */
-  private static readonly SOURCE_ACTION: Record<string, L10nKey> = {
+  private static readonly SOURCE_ACTION: Partial<Record<string, 'upload-from' | 'capture-with' | 'take' | 'record'>> = {
     [UploadSource.LOCAL]: 'upload-from',
     [UploadSource.URL]: 'upload-from',
     [UploadSource.CAMERA]: 'capture-with',
