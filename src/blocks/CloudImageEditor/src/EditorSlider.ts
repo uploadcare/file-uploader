@@ -122,6 +122,11 @@ export class EditorSlider extends EditorBlock {
     }
   }
 
+  /** The operation or filter and its value, as telemetry reports them; current as soon as `setOperation` returns. */
+  public get selection(): { filter: string; value: number } {
+    return { filter: this.state.filter ?? this.state.operation, value: this.state.value };
+  }
+
   /** The operation or filter and its value, as the tooltip shows them; current as soon as `setOperation` returns. */
   public get tooltip(): string {
     return `${this.state.filter ?? this.state.operation} ${this.state.value}`;

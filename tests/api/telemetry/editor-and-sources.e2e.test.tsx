@@ -51,6 +51,27 @@ describe('telemetry: cloud image editor', () => {
     });
   });
 
+  it('reports a negative tuning value when the slider is applied', async () => {
+    await userEvent.click(page.getByRole('tab', { name: /tuning/i }));
+    await waitForType('action-event');
+    clearSent();
+    await userEvent.click(page.getByRole('option', { name: /Brightness/i }));
+    await waitForType('action-event');
+    const range = page.getByRole('slider', { name: /brightness/i }).element() as HTMLInputElement;
+    range.value = '-20';
+    range.dispatchEvent(new Event('input', { bubbles: true }));
+    range.dispatchEvent(new Event('change', { bubbles: true }));
+    clearSent();
+
+    await userEvent.click(page.getByText(/^Apply$/));
+    const action = await waitForType('action-event');
+
+    expect(action.payload.metadata).toMatchObject({
+      action: 'apply-slider',
+      operation: { filter: 'brightness', value: -20 },
+    });
+  });
+
   it('reports the filter just picked, at its starting value', async () => {
     await userEvent.click(page.getByRole('tab', { name: /filters/i }));
     await waitForType('action-event');
