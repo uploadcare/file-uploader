@@ -126,12 +126,6 @@ export class DropArea extends ChildBlock {
   };
   private _sourceListAllowsLocal = true;
 
-  public constructor() {
-    super();
-    this.addEventListener('keydown', this._handleAreaInteraction);
-    this.addEventListener('click', this._handleAreaInteraction);
-  }
-
   // The stylesheet keys off flag presence (`[with-icon]`, `[ghost]`, …), so a flag written as `"false"` is dropped
   // to keep the styles in line with the property, which already reads it as off.
   public override attributeChangedCallback(name: string, old: string | null, value: string | null): void {
@@ -175,6 +169,11 @@ export class DropArea extends ChildBlock {
     this._destroyDropzone = null;
     this._destroyContentWrapperDropzone?.();
     this._destroyContentWrapperDropzone = null;
+
+    // Attached per adoption: the handler reads `@inject` fields, which a drop area without a ctx doesn't have.
+    const { adoptionSignal: signal } = this;
+    this.addEventListener('keydown', this._handleAreaInteraction, { signal });
+    this.addEventListener('click', this._handleAreaInteraction, { signal });
 
     dropAreaRegistry.add(this);
     this._updateIsEnabled();

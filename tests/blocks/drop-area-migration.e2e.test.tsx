@@ -77,6 +77,31 @@ describe('uc-drop-area — uploader-scope-attach (solution-only composition, no 
   });
 });
 
+describe('uc-drop-area — without a ctx', () => {
+  it('ignores a click and an Enter press on a clickable area that has no ctx', async () => {
+    const errors: string[] = [];
+    const onError = (event: ErrorEvent) => {
+      errors.push(String(event.error?.message ?? event.message));
+      event.preventDefault();
+    };
+    window.addEventListener('error', onError);
+
+    try {
+      page.render(<uc-drop-area clickable></uc-drop-area>);
+      const dropArea = document.querySelector('uc-drop-area') as DropArea;
+      await dropArea.updateComplete;
+
+      // A listener's throw is reported to `window` synchronously during dispatch.
+      dropArea.click();
+      dropArea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+
+      expect(errors).toEqual([]);
+    } finally {
+      window.removeEventListener('error', onError);
+    }
+  });
+});
+
 describe('uc-drop-area — drag & drop', () => {
   const renderRegularWithProvider = () => {
     const ctxName = getCtxName();
