@@ -13,7 +13,7 @@ import { resolveSecureDeliveryProxyUrl } from '../../../abstract/secureDeliveryP
 import { ctxNameContext } from '../../../lit/ctx-name-context';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
-import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types';
+import type { SecureDeliveryProxyUrlResolver } from '../../../types';
 import { serializeCsv } from '../../../utils/comma-separated';
 import { getClosestAspectRatio, parseCropPreset } from '../../../utils/crop/cropPreset';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
@@ -354,7 +354,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       // Precedence: this element's own prop → the removable uploader-config
       // compat bridge → `DEFAULT_EDITOR_CONFIG`. A `null` falls through like
       // `undefined`.
-      getConfig: <K extends keyof ConfigType>(key: K): ConfigType[K] => {
+      getConfig: (key) => {
         const own: Partial<EditorConfig> = {
           cdnCname: this.cdnCname,
           secureDeliveryProxy: this.secureDeliveryProxy,
@@ -362,8 +362,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
           cloudImageEditorMaskHref: this.maskHref,
           testMode: this.testMode,
         };
-        const k = key as keyof EditorConfig;
-        return (own[k] ?? this._uploaderConfigCompat[k] ?? DEFAULT_EDITOR_CONFIG[k]) as ConfigType[K];
+        return own[key] ?? this._uploaderConfigCompat[key] ?? DEFAULT_EDITOR_CONFIG[key];
       },
       telemetry: {
         sendEvent: (event) =>
