@@ -1,6 +1,6 @@
 import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
-import { property, state } from 'lit/decorators.js';
+import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { UID } from '../../../utils/UID';
 import {
@@ -62,7 +62,6 @@ export class CropFrame extends EditorBlock {
   private _dragStartCrop?: Rectangle;
   private _frameImage?: SVGImageElement;
   private _guidesHidden = false;
-  @state()
   private _draggingValue = false;
   private readonly _svgRef = createRef<SVGSVGElement>();
   private _svgReady = false;
@@ -307,30 +306,23 @@ export class CropFrame extends EditorBlock {
     });
     svg.appendChild(rect);
 
-    for (let i = 1; i <= 2; i++) {
-      const line = createSvgNode('line', {
-        x1: `${GUIDE_THIRD * i}%`,
-        y1: `0%`,
-        x2: `${GUIDE_THIRD * i}%`,
-        y2: `100%`,
-        stroke: 'currentColor',
-        'stroke-width': GUIDE_STROKE_WIDTH,
-        'stroke-opacity': 0.3,
-      });
-      svg.appendChild(line);
-    }
-
-    for (let i = 1; i <= 2; i++) {
-      const line = createSvgNode('line', {
-        x1: `0%`,
-        y1: `${GUIDE_THIRD * i}%`,
-        x2: `100%`,
-        y2: `${GUIDE_THIRD * i}%`,
-        stroke: 'currentColor',
-        'stroke-width': GUIDE_STROKE_WIDTH,
-        'stroke-opacity': 0.3,
-      });
-      svg.appendChild(line);
+    // Vertical thirds, then horizontal thirds.
+    for (const vertical of [true, false]) {
+      for (const i of [1, 2]) {
+        const at = `${GUIDE_THIRD * i}%`;
+        const [x1, y1, x2, y2] = vertical ? [at, '0%', at, '100%'] : ['0%', at, '100%', at];
+        svg.appendChild(
+          createSvgNode('line', {
+            x1,
+            y1,
+            x2,
+            y2,
+            stroke: 'currentColor',
+            'stroke-width': GUIDE_STROKE_WIDTH,
+            'stroke-opacity': 0.3,
+          }),
+        );
+      }
     }
 
     svg.classList.add('uc-guides', 'uc-guides--semi-hidden');
@@ -464,16 +456,7 @@ export class CropFrame extends EditorBlock {
       if (this._shouldThumbBeDisabled(thumb.direction)) {
         return false;
       }
-      const node = thumb.interactionNode;
-      const bounds = node.getBoundingClientRect();
-      const rect = {
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width,
-        height: bounds.height,
-      };
-      const hover = rectContainsPoint(rect, [e.x, e.y]);
-      return hover;
+      return rectContainsPoint(thumb.interactionNode.getBoundingClientRect(), [e.x, e.y]);
     });
 
     this._hoverThumb = hoverThumb as FrameThumb | undefined;
@@ -501,19 +484,7 @@ export class CropFrame extends EditorBlock {
       return;
     }
     this._pendingMaskHref = null;
-    const fr = document.createDocumentFragment();
-
-    const imageNode = createSvgNode('image', {
-      href,
-    }) as SVGImageElement;
-
-    imageNode.setAttribute('class', 'uc-cloud-mask');
-
-    fr.appendChild(imageNode);
-
-    svg.appendChild(fr);
-
-    this._frameImage = imageNode;
+    this._frameImage = svg.appendChild(createSvgNode('image', { href, class: 'uc-cloud-mask' }) as SVGImageElement);
   }
 
   private _updateMask(): void {

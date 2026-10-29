@@ -18,7 +18,6 @@ import {
 import { CROP_PADDING } from './cropper-constants.js';
 import { EditorBlock } from './editor-context';
 import { applyClassNames } from './lib/classNames.js';
-import { pick } from './lib/pick.js';
 import { TabId } from './toolbar-constants';
 import type { CropAspectRatio, ImageSize, Rectangle, Transformations } from './types';
 import { cropperImageSrc, trackImageLoading } from './util.js';
@@ -36,21 +35,10 @@ type Operations = {
 const OPERATION_KEYS = ['rotate', 'mirror', 'flip'] as const satisfies readonly (keyof Operations)[];
 const DEFAULT_OPERATIONS: Readonly<Operations> = { rotate: 0, mirror: false, flip: false };
 
-function validateCrop(crop: Transformations['crop']): boolean {
-  if (!crop) {
-    return true;
-  }
-  const shouldMatch: Array<(arg: CropTransform) => boolean> = [
-    ({ dimensions, coords }) =>
-      [...dimensions, ...coords].every((number) => Number.isInteger(number) && Number.isFinite(number)),
-    ({ dimensions, coords }) => dimensions.every((d) => d > 0) && coords.every((c) => c >= 0),
-  ];
-  return shouldMatch.every((matcher) => matcher(crop));
-}
+const isValidCrop = ({ dimensions, coords }: CropTransform): boolean =>
+  dimensions.every((d) => Number.isInteger(d) && d > 0) && coords.every((c) => Number.isInteger(c) && c >= 0);
 
 export class EditorImageCropper extends EditorBlock {
-  private readonly _padding = CROP_PADDING;
-
   // Cropper-subtree-local state (M12 step 2a): only this element + `CropFrame`
   // read these, so they live as plain Lit state instead of the shared ctx /
   // editor controller. `_imageBox`/`_cropBox` are passed down to `CropFrame`
@@ -195,9 +183,12 @@ export class EditorImageCropper extends EditorBlock {
 
   private _syncTransformations(): void {
     const transformations = this.editorController.get('*editorTransformations');
-    const pickedTransformations = pick(transformations, OPERATION_KEYS) as Partial<Operations>;
-    const operations: Operations = { ...this._operations, ...pickedTransformations };
-    this._operations = operations;
+    const {
+      rotate = this._operations.rotate,
+      mirror = this._operations.mirror,
+      flip = this._operations.flip,
+    } = transformations;
+    this._operations = { rotate, mirror, flip };
   }
 
   private _initCanvas(): void {
@@ -226,7 +217,7 @@ export class EditorImageCropper extends EditorBlock {
     }
 
     const image = this._image;
-    const padding = this._padding;
+    const padding = CROP_PADDING;
     const operations = this._operations;
     const { rotate } = operations;
 
@@ -315,13 +306,14 @@ export class EditorImageCropper extends EditorBlock {
     this._cropBox = constraintRect(roundRect(cropBox), imageBox);
   }
 
-  private _drawImage(): void {
+  private _draw(): void {
     const ctx = this._ctx;
-    if (!ctx) return;
     const image = this._image;
-    if (!image) {
+    const canvas = this._canvas;
+    if (!this._isActive || !image || !canvas || !ctx) {
       return;
     }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     const imageBox = this._imageBox;
     const operations = this._operations;
     const { mirror, flip, rotate } = operations;
@@ -332,18 +324,6 @@ export class EditorImageCropper extends EditorBlock {
     ctx.scale(mirror ? -1 : 1, flip ? -1 : 1);
     ctx.drawImage(image, -rotated.width / 2, -rotated.height / 2, rotated.width, rotated.height);
     ctx.restore();
-  }
-
-  private _draw(): void {
-    if (!this._isActive || !this._image || !this._canvas || !this._ctx) {
-      return;
-    }
-    const canvas = this._canvas;
-    const ctx = this._ctx;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    this._drawImage();
   }
 
   private _animateIn(): void {
@@ -398,7 +378,7 @@ export class EditorImageCropper extends EditorBlock {
         clamp(Math.round((cropY - previewY) / ratioH), 0, sourceHeight - dimensions[1]),
       ],
     };
-    if (!validateCrop(crop)) {
+    if (!isValidCrop(crop)) {
       this._log.error('Cropper is trying to create invalid crop object', {
         payload: crop,
       });
@@ -626,9 +606,7 @@ export class EditorImageCropper extends EditorBlock {
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
     this._observer?.disconnect();
-    if (this._image) {
-      this._image = null;
-    }
+    this._image = null;
   }
 
   public override render(): TemplateResult {
