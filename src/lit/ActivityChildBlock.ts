@@ -9,7 +9,7 @@ import { ChildBlock } from './ChildBlock';
 const ACTIVE_ATTR = 'active';
 
 /**
- * Base for activity blocks ported off `LitActivityBlock` (M9). A subclass
+ * Base for activity blocks. A subclass
  * declares its `activityType`; the base reflects the `activity` attribute and
  * toggles `[active]` whenever the block's slot owns the current transition.
  * Slot is chosen by DOM location: inside `<uc-modal>` tracks the foreground
@@ -58,8 +58,7 @@ export class ActivityChildBlock extends ChildBlock {
 
   /**
    * Report `this.activityType` as mounted with the router so API waits
-   * (navigate/setModalState) can find it now that ported blocks are not in
-   * `*blocksRegistry`. Idempotent: releases any prior report first, so a
+   * (navigate/setModalState) can find it. Idempotent: releases any prior report first, so a
    * changed `activityType` moves the report from the old id to the new one.
    * A no-op (after releasing the prior report) when `activityType` is `null`.
    */

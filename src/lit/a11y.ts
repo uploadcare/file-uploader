@@ -109,8 +109,7 @@ export class A11y implements Destroyable {
 
   /**
    * Only reaches into `scope` as a `Node` (forwarded to
-   * `ScopedMinimalWindow.registerScope`) — widened from `LitBlock` (v1) so
-   * v2 `ChildBlock`-based elements can register too, without a cast.
+   * `ScopedMinimalWindow.registerScope`).
    *
    * Returns an unregister disposer (delegating to {@link unregisterBlock}) so
    * callers can pair register/teardown without naming the scope twice — the same

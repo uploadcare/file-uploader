@@ -54,7 +54,7 @@ const isCustomElement = (el: Element): boolean => el.tagName.includes('-');
  * Subclasses declare the controllers they need as `@inject(Token)` /
  * `@injectOrNull(Token)` fields, resolved lazily off the adopted container:
  * no `$` proxy, no per-ctx store. Rendering is gated until a container
- * is adopted (matching v1's `shouldUpdate` gate on ctx init); do
+ * is adopted; do
  * container-dependent setup in `controllerReady`, never in `connectedCallback`.
  * Note: while the render gate is closed Lit still clears its
  * changed-properties tracking, so pre-adoption property writes will not
@@ -66,12 +66,12 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   /**
    * @deprecated The Symbiote-era template override has had no effect since v1.26.0. Kept so assigning one still
-   * logs what `migration-to-1.26.0.mdx` says it does.
+   * logs the error `migration-to-1.26.0.mdx` describes.
    */
   // NEXT-MAJOR(blocks): remove this setter. Kept for 1.x compat.
   public static set template(_value: unknown) {
     templateLog.error(
-      "Caution: static 'template' property is deprecated and has no effect. See https://github.com/uploadcare/file-uploader/releases/tag/v1.25.0 for details.",
+      "Caution: static 'template' property is deprecated and has no effect. See https://github.com/uploadcare/file-uploader/releases/tag/v1.26.0 for details.",
     );
   }
 
@@ -117,7 +117,7 @@ export abstract class ChildBlock extends ChildBlockBase {
     subscribe: true,
   });
 
-  /** The element's own `ctx-name` attribute wins over the inherited context (v1 parity). */
+  /** The element's own `ctx-name` attribute wins over the inherited context. */
   protected get effectiveCtxName(): string | undefined {
     return this.ctxName || this._inheritedCtxName;
   }
@@ -178,9 +178,8 @@ export abstract class ChildBlock extends ChildBlockBase {
   @inject(LocaleController) private readonly _locale!: LocaleController;
 
   /**
-   * This ctx's `EventEmitter`, or `null` when no container is adopted — a
-   * teardown-time `emit()` (released container) resolves `null` and no-ops,
-   * matching the v1 guard where a torn-down ctx had no emitter.
+   * This ctx's `EventEmitter`, or `null` when no container is adopted, so a
+   * teardown-time `emit()` (released container) no-ops.
    */
   @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
 
@@ -228,8 +227,6 @@ export abstract class ChildBlock extends ChildBlockBase {
     payload?: Parameters<EventEmitter['emit']>[1],
     options?: Parameters<EventEmitter['emit']>[2],
   ): void {
-    // `@injectOrNull`: a teardown-time emit (released container) resolves `null`
-    // → no-op, matching the v1 guard where a torn-down ctx had no emitter.
     this._eventEmitter?.emit(type, payload, options);
   }
 
@@ -239,7 +236,7 @@ export abstract class ChildBlock extends ChildBlockBase {
       if (!this.hasAttribute(attr)) this.setAttribute(attr, '');
     }
     // Keep `--uploadcare-blocks-window-height` live (consumed by
-    // `--uc-dialog-max-height`) — v1 registered this in `LitBlock.initCallback`.
+    // `--uc-dialog-max-height`).
     WindowHeightTracker.registerClient(this);
     this._watchRegistry();
   }
@@ -281,13 +278,10 @@ export abstract class ChildBlock extends ChildBlockBase {
     if (!ctxName) {
       return;
     }
-    // Unified consumer-refcount teardown (M9o Task 3): this block was one of
-    // possibly several things keeping the ctx alive (v1 `*blocksRegistry`
-    // members, other `ChildBlock`s watching via `UploaderRegistry`). Defer
-    // the check exactly like `LitBlock.disconnectedCallback` — same
-    // `setTimeout(0)` + reconnect-guard shape — so a same-tick disconnect ->
-    // reconnect (e.g. a DOM move) doesn't tear down a ctx this block is
-    // about to re-watch.
+    // This block was one of possibly several consumers keeping the ctx alive.
+    // Defer the unreferenced-ctx check a macrotask so a same-tick disconnect ->
+    // reconnect (e.g. a DOM move) doesn't tear down a ctx this block is about
+    // to re-watch.
     setTimeout(() => {
       if (this.isConnected) {
         return;
@@ -357,8 +351,8 @@ export abstract class ChildBlock extends ChildBlockBase {
     // scope's data while the new container is still pending.
     this._releaseController();
     if (oldCtxName) {
-      // This block may have been the ctx's only consumer (self-bootstrapped,
-      // no v1 block ever attached) — check whether it's now orphaned.
+      // This block may have been the ctx's only consumer — check whether it's
+      // now orphaned.
       this._scheduleAbandonedCtxTeardown(oldCtxName);
     }
     if (!ctxName) {

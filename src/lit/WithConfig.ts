@@ -573,7 +573,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
 
     /**
      * Fires on every controller adoption — the initial one and any re-adoption
-     * (ctx-name switch, or ctx death + re-adopt on a v1-managed ctx). The step
+     * (ctx-name switch, or ctx death + re-adopt). The step
      * ORDER is load-bearing: writer registration → custom configs → mutation
      * observer (backup for non-setAttribute paths) → change-log (BEFORE the
      * seed, so startup values are logged) → built-in seed (reads pre-existing
