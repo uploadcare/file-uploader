@@ -1,6 +1,7 @@
 import { SignalWatcher, signal } from '@lit-labs/signals';
 import { html, LitElement } from 'lit';
 import { describe, expect, it } from 'vitest';
+import { logger } from '../abstract/logger';
 import { delay } from '../utils/delay';
 import { type EffectHost, effect, registerHostEffects } from './effect';
 
@@ -47,7 +48,7 @@ describe('@effect integration (real SignalWatcher element)', () => {
     document.body.append(el);
 
     // Eager, synchronous first run at registration.
-    registerHostEffects(el as unknown as EffectHost);
+    registerHostEffects(el as unknown as EffectHost, logger);
     expect(el.seen).toEqual(['list']);
     expect(el.getAttribute('mode')).toBe('list');
 
@@ -80,7 +81,7 @@ describe('@effect integration (real SignalWatcher element)', () => {
     const el = document.createElement(tag) as El & { updateComplete: Promise<unknown> };
     document.body.append(el);
 
-    registerHostEffects(el as unknown as EffectHost);
+    registerHostEffects(el as unknown as EffectHost, logger);
     // Not yet — deferred to after the first update.
     expect(el.seen).toEqual([]);
     await el.updateComplete;

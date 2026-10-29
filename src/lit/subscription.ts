@@ -1,7 +1,5 @@
-import { type Logger, logger } from '../abstract/logger';
+import type { Logger } from '../abstract/logger';
 import { boundMethod, collectDecoratedMethods, makeMethodDecorator } from './reactive-method-registry';
-
-const log = logger.scope('subscription');
 
 /**
  * `@subscription()` — a method decorator for imperative (non-signal)
@@ -36,7 +34,7 @@ export const subscription = makeMethodDecorator<void>(SUBSCRIPTION);
  * host's scoped logger) so the remaining methods still register and any
  * teardowns already collected are kept.
  */
-export function registerHostSubscriptions(host: object, hostLog: Pick<Logger, 'warn'> = log): Array<Unsubscribe> {
+export function registerHostSubscriptions(host: object, hostLog: Pick<Logger, 'warn'>): Array<Unsubscribe> {
   const teardowns: Array<Unsubscribe> = [];
   for (const { key } of collectDecoratedMethods<void>(host, SUBSCRIPTION)) {
     const fn = boundMethod(host, key);

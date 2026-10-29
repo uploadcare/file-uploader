@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { logger } from '../abstract/logger';
 import { registerHostSubscriptions, subscription } from './subscription';
 
 afterEach(() => {
@@ -22,7 +23,7 @@ describe('@subscription / registerHostSubscriptions', () => {
     }
 
     const host = new Host();
-    const teardowns = registerHostSubscriptions(host);
+    const teardowns = registerHostSubscriptions(host, logger);
 
     expect(order).toEqual(['run:a', 'run:b']);
     expect(teardowns).toHaveLength(2);
@@ -41,7 +42,7 @@ describe('@subscription / registerHostSubscriptions', () => {
     }
 
     const host = new Host();
-    const teardowns = registerHostSubscriptions(host);
+    const teardowns = registerHostSubscriptions(host, logger);
 
     expect(teardowns).toHaveLength(2);
     for (const t of teardowns) t();
@@ -56,7 +57,7 @@ describe('@subscription / registerHostSubscriptions', () => {
       }
     }
     const host = new Host();
-    expect(registerHostSubscriptions(host)).toHaveLength(1);
+    expect(registerHostSubscriptions(host, logger)).toHaveLength(1);
   });
 
   it('binds `this` to the host inside the subscription method', () => {
@@ -68,7 +69,7 @@ describe('@subscription / registerHostSubscriptions', () => {
       }
     }
     const host = new Host();
-    registerHostSubscriptions(host);
+    registerHostSubscriptions(host, logger);
     expect(host.wired).toBe('host');
   });
 
@@ -80,7 +81,7 @@ describe('@subscription / registerHostSubscriptions', () => {
       }
     }
     const host = new Host();
-    expect(registerHostSubscriptions(host)).toHaveLength(0);
+    expect(registerHostSubscriptions(host, logger)).toHaveLength(0);
   });
 
   it('walks the prototype chain and registers an override once (subclass wins)', () => {
@@ -103,7 +104,7 @@ describe('@subscription / registerHostSubscriptions', () => {
     }
 
     const host = new Sub();
-    registerHostSubscriptions(host);
+    registerHostSubscriptions(host, logger);
     expect(ran).toEqual(['base', 'dup:sub']);
   });
 
@@ -129,7 +130,7 @@ describe('@subscription / registerHostSubscriptions', () => {
     const host = new Host();
     let teardowns: Array<() => void> = [];
     expect(() => {
-      teardowns = registerHostSubscriptions(host);
+      teardowns = registerHostSubscriptions(host, logger);
     }).not.toThrow();
 
     // The throwing method (b) is contained; a and c still registered.
@@ -141,7 +142,7 @@ describe('@subscription / registerHostSubscriptions', () => {
     expect(teardownC).toHaveBeenCalledTimes(1);
   });
 
-  it('warns through the logger it is given, instead of the module logger', () => {
+  it('warns through the logger it is given, not the root logger', () => {
     const scopedWarn = vi.fn();
     const moduleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     class Host {
