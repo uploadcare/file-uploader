@@ -27,12 +27,13 @@ export class PrimaryAction extends ChildBlock {
 
   private static readonly DEFAULT_ICON = 'upload';
 
-  private static readonly SOURCE_TEXT_CONFIG: Record<string, { action: L10nKey }> = {
-    [UploadSource.LOCAL]: { action: 'upload-from' },
-    [UploadSource.URL]: { action: 'upload-from' },
-    [UploadSource.CAMERA]: { action: 'capture-with' },
-    [UploadSource.MOBILE_PHOTO_CAMERA]: { action: 'take' },
-    [UploadSource.MOBILE_VIDEO_CAMERA]: { action: 'record' },
+  /** The verb per built-in source; these read their source label lowercased. Other sources get `get-from`. */
+  private static readonly SOURCE_ACTION: Record<string, L10nKey> = {
+    [UploadSource.LOCAL]: 'upload-from',
+    [UploadSource.URL]: 'upload-from',
+    [UploadSource.CAMERA]: 'capture-with',
+    [UploadSource.MOBILE_PHOTO_CAMERA]: 'take',
+    [UploadSource.MOBILE_VIDEO_CAMERA]: 'record',
   };
 
   @property({ attribute: false })
@@ -63,16 +64,6 @@ export class PrimaryAction extends ChildBlock {
     );
   }
 
-  private get localizedSourceLabel(): string {
-    if (!this.source?.label) return '';
-
-    if ([UploadSource.LOCAL, UploadSource.URL, UploadSource.CAMERA].includes(this.source?.id)) {
-      return this.l10n(pluginLabelKey(this.source.label)).toLowerCase();
-    }
-
-    return this.l10n(pluginLabelKey(this.source.label));
-  }
-
   private get textBasedOnLocale(): string {
     const headerText = this._headerTextDependentOnEntries();
     if (headerText) {
@@ -100,23 +91,13 @@ export class PrimaryAction extends ChildBlock {
   }
 
   private _getSourceLabelText(): string {
-    if (!this.source?.id) {
+    const { source } = this;
+    if (!source?.id) {
       return '';
     }
-
-    const config = PrimaryAction.SOURCE_TEXT_CONFIG[this.source.id];
-    const action = config?.action ?? 'get-from';
-
-    let sourceLabel: string;
-    if (this.source.id === UploadSource.MOBILE_PHOTO_CAMERA) {
-      sourceLabel = this.l10n('src-type-mobile-photo-camera').toLowerCase();
-    } else if (this.source.id === UploadSource.MOBILE_VIDEO_CAMERA) {
-      sourceLabel = this.l10n('src-type-mobile-video-camera').toLowerCase();
-    } else {
-      sourceLabel = this.localizedSourceLabel;
-    }
-
-    return this.l10n(action, { source: sourceLabel });
+    const action = PrimaryAction.SOURCE_ACTION[source.id];
+    const label = source.label ? this.l10n(pluginLabelKey(source.label)) : '';
+    return this.l10n(action ?? 'get-from', { source: action ? label.toLowerCase() : label });
   }
 
   private _handleClick() {
