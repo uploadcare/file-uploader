@@ -158,18 +158,6 @@ describe('CloudImageEditorController', () => {
     controller.setServices(stubEditorServices({ l10n: (key) => `de:${key}` }));
     expect(label.get()).toBe('de:cancel');
   });
-
-  it('destroy() clears observers and keeps the state', () => {
-    const controller = new CloudImageEditorController();
-    const listener = vi.fn();
-    controller.observe('tabId', listener);
-
-    controller.destroy();
-
-    controller.tabId = TabId.TUNING;
-    expect(listener).not.toHaveBeenCalled();
-    expect(controller.tabId).toBe(TabId.TUNING);
-  });
 });
 
 describe('CloudImageEditorController default services', () => {

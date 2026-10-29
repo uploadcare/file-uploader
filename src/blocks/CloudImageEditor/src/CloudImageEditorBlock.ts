@@ -197,8 +197,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   private _configChangeUnsub: (() => void) | undefined;
 
-  // One adoption per connection, ended first thing on disconnect (which also destroys the controller). The root is the
-  // provider, not an `EditorBlock`, so it begins and ends its own.
+  // One adoption per connection, ended first thing on disconnect, which also releases what `initEditor` observes. The
+  // root is the provider, not an `EditorBlock`, so it begins and ends its own.
   private readonly _lifetime = new AdoptionLifetime(this._log);
 
   /**
@@ -266,8 +266,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       if (!this.hasAttribute(attr)) this.setAttribute(attr, '');
     }
     this._setupEditor();
-    // Per connection: `disconnectedCallback` ends the lifetime and destroys the controller's listeners, so a
-    // reconnected editor (a DOM move) must re-subscribe.
+    // Per connection: `disconnectedCallback` ends the lifetime and with it the controller listeners, so a reconnected
+    // editor (a DOM move) must re-subscribe.
     this.initEditor();
     // The ended lifetime also aborted an image load still in flight, so a reconnect restarts one that hadn't finished.
     // Once `originalUrl` is set, `updateImage` treats the image as loaded, so only its info request is repeated.
@@ -532,7 +532,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     // drop it, so a reconnect buffers telemetry and falls back to the default locale until the next ctx supplies its own.
     this._telemetryManager = undefined;
     this._compatL10n = undefined;
-    this._editorController.destroy();
     this._pendingTelemetry = [];
 
     super.disconnectedCallback();
@@ -783,18 +782,20 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     const editorController = this._editorController;
 
-    editorController.observe('editorTransformations', (transformations) => {
-      if (Object.keys(transformations).length === 0) {
-        return;
-      }
-      this.dispatchEvent(
-        new CustomEvent<ApplyResult>('change', {
-          detail: this._result(editorController.originalUrl as string, transformations),
-          bubbles: true,
-          composed: true,
-        }),
-      );
-    });
+    this._lifetime.onEnd(
+      editorController.observe('editorTransformations', (transformations) => {
+        if (Object.keys(transformations).length === 0) {
+          return;
+        }
+        this.dispatchEvent(
+          new CustomEvent<ApplyResult>('change', {
+            detail: this._result(editorController.originalUrl as string, transformations),
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      }),
+    );
   }
 }
 

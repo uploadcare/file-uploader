@@ -55,6 +55,16 @@ export class AdoptionLifetime {
   public run(task: (signal: AbortSignal) => unknown): void {
     this.#current.run(task, (error) => this._log.error('an async task failed', error));
   }
+
+  /** Run `dispose` when the current adoption ends — right away if none is live. */
+  public onEnd(dispose: () => void): void {
+    const signal = this.#current.signal;
+    if (signal.aborted) {
+      dispose();
+    } else {
+      signal.addEventListener('abort', dispose, { once: true });
+    }
+  }
 }
 
 /**
@@ -65,7 +75,6 @@ export class CloudImageEditorContextController implements ReactiveController {
   private _controller?: CloudImageEditorController;
   /** One adoption per adopted controller, ended on detach (host disconnect or re-attach). */
   public readonly lifetime: AdoptionLifetime;
-  private _subscriptions = new Set<() => void>();
   // Attach listeners are persistent: `EditorBlock` needs its `@subscription` methods re-wired on every (re)attach, not just
   // the first, so a listener registered via `onAttach` fires immediately if a
   // controller is already adopted, and again on every later (re)attach.
@@ -87,9 +96,8 @@ export class CloudImageEditorContextController implements ReactiveController {
   }
 
   public hostDisconnected(): void {
-    // First, so async work still in flight stops at its next guarded await rather than running into the teardown below.
+    // Releases the adoption's subscriptions too (`onEnd`), and stops async work still in flight at its next guarded await.
     this.lifetime.end();
-    this._cleanupSubscriptions();
     // Forget the adopted controller (not just its subscriptions): the editor
     // base is light-DOM (`LightDomMixin`), and re-rendering an ancestor that
     // `yield()`s this host can physically re-`insertBefore` the same DOM node
@@ -115,16 +123,6 @@ export class CloudImageEditorContextController implements ReactiveController {
     return this._controller ?? null;
   }
 
-  /** Run `unsubscribe` on host disconnect or controller re-attach, if it has not run by then. */
-  public track(unsubscribe: () => void): () => void {
-    const tracked = () => {
-      unsubscribe();
-      this._subscriptions.delete(tracked);
-    };
-    this._subscriptions.add(tracked);
-    return tracked;
-  }
-
   /** Runs `callback` once immediately if a controller is already adopted, then again on every later (re)attach. */
   public onAttach(callback: () => void): void {
     this._onAttachCallbacks.add(callback);
@@ -138,7 +136,6 @@ export class CloudImageEditorContextController implements ReactiveController {
       return;
     }
     this.lifetime.end();
-    this._cleanupSubscriptions();
     this._controller = controller;
     this.lifetime.begin();
     for (const cb of this._onAttachCallbacks) {
@@ -149,16 +146,6 @@ export class CloudImageEditorContextController implements ReactiveController {
         log.warn('An editor attach callback threw', error);
       }
     }
-  }
-
-  private _cleanupSubscriptions(): void {
-    if (this._subscriptions.size === 0) {
-      return;
-    }
-    for (const unsubscribe of [...this._subscriptions]) {
-      unsubscribe();
-    }
-    this._subscriptions.clear();
   }
 }
 
@@ -207,7 +194,7 @@ export abstract class EditorBlock extends EditorBlockBase {
     // swap) ends the `@subscription` teardowns with the adoption.
     this._editorCtx.onAttach(() => {
       for (const teardown of registerHostSubscriptions(this, this._log)) {
-        this._editorCtx.track(teardown);
+        this._editorCtx.lifetime.onEnd(teardown);
       }
       // A render before the attach read no controller, so no signal tracks the
       // attach itself: anything computed then (a11y labels, translated text, …)
