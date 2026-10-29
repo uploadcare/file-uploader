@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path, { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postcssCascadeLayers from '@csstools/postcss-cascade-layers';
-import type { Plugin as EsbuildPlugin } from 'esbuild';
+import { type Plugin as EsbuildPlugin, build as esbuild } from 'esbuild';
 import { minifyTemplates, writeFiles } from 'esbuild-minify-templates';
 import postcss from 'postcss';
 import { build as tsupBuild } from 'tsup';
@@ -60,7 +60,51 @@ const forbidModules = (patterns: RegExp[]): EsbuildPlugin => ({
   },
 });
 
+const RESERVED_MANGLE_PREFIX = '__u';
+
+/**
+ * Maps every `_` name the build will mangle to a reserved `__u<base36>` name, collected by a probe build of the same
+ * entries. Rebuilt on every build: a stale cache would leave new names to esbuild, which picks its own short ones.
+ */
+async function reservedMangleCache(buildItem: BuildItem): Promise<Record<string, string>> {
+  const probe = await esbuild({
+    entryPoints: buildItem.entry,
+    outdir: buildItem.outDir,
+    bundle: true,
+    write: false,
+    packages: 'external',
+    tsconfig: TSCONFIG_PATH,
+    conditions: ['browser', 'production'],
+    mainFields: ['exports', 'module', 'main'],
+    platform: 'browser',
+    format: buildItem.format,
+    loader: { '.css': 'empty' },
+    logLevel: 'silent',
+    mangleProps: /^_/,
+    mangleCache: {},
+  });
+  return Object.fromEntries(
+    Object.keys(probe.mangleCache ?? {}).map((name, i) => [name, `${RESERVED_MANGLE_PREFIX}${i.toString(36)}`]),
+  );
+}
+
+/** Fails the build if esbuild mangled a name the probe missed, i.e. gave it a short name of its own. */
+const requireReservedMangle: EsbuildPlugin = {
+  name: 'require-reserved-mangle',
+  setup(build) {
+    build.onEnd((result) => {
+      const unreserved = Object.entries(result.mangleCache ?? {}).filter(
+        ([, mangled]) => typeof mangled === 'string' && !mangled.startsWith(RESERVED_MANGLE_PREFIX),
+      );
+      if (unreserved.length > 0) {
+        throw new Error(`Mangled outside the reserved prefix: ${unreserved.map(([name]) => name).join(', ')}`);
+      }
+    });
+  },
+};
+
 async function build(buildItem: BuildItem) {
+  const mangleCache = buildItem.mangleProps === 'reserved' ? await reservedMangleCache(buildItem) : undefined;
   await tsupBuild({
     tsconfig: TSCONFIG_PATH,
     outExtension: () => ({ js: '.js', dts: '.d.ts' }),
@@ -94,6 +138,7 @@ async function build(buildItem: BuildItem) {
       options.logOverride = { 'ignored-bare-import': 'silent' };
       if (buildItem.mangleProps) {
         options.mangleProps = /^_/;
+        options.mangleCache = mangleCache;
       }
       if (buildItem.forbiddenModules) {
         options.metafile = true;
@@ -102,6 +147,7 @@ async function build(buildItem: BuildItem) {
     esbuildPlugins: [
       ...(buildItem.minify ? [minifyTemplates(), writeFiles()] : []),
       ...(buildItem.forbiddenModules ? [forbidModules(buildItem.forbiddenModules)] : []),
+      ...(mangleCache ? [requireReservedMangle] : []),
     ],
     noExternal: buildItem.bundleExternalDependencies ? [/.*/] : undefined,
     globalName: buildItem.format === 'iife' ? 'UC' : undefined,
