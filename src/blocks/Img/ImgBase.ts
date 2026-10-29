@@ -222,20 +222,19 @@ export class ImgBase extends ImgConfig {
     return this._str('format').toLowerCase() === 'jpeg';
   }
 
+  /** Pixel-density multipliers: 1x, plus 2x/3x when hi-/ultra-res support is on. */
+  private get _densities(): number[] {
+    const k = [1];
+    if (this.$$('hi-res-support')) k.push(HI_RES_K);
+    if (this.$$('ultra-res-support')) k.push(ULTRA_RES_K);
+    return k;
+  }
+
   private _renderBg(el: HTMLElement): void {
     const imgSet = new Set<string>();
-    const add = (k: number): void => {
+    for (const k of this._densities) {
       const url = this._getUrlBase(this._getElSize(el, k));
       if (url) imgSet.add(`url("${url}") ${k}x`);
-    };
-
-    add(1);
-    if (this.$$('hi-res-support')) {
-      add(HI_RES_K);
-    }
-
-    if (this.$$('ultra-res-support')) {
-      add(ULTRA_RES_K);
     }
 
     if (!imgSet.size) {
@@ -252,24 +251,14 @@ export class ImgBase extends ImgConfig {
     const add = (url: string | undefined, descriptor: string | null | undefined): void => {
       if (url) srcset.add(`${url} ${descriptor}`);
     };
-    if (this._breakpoints) {
-      this._breakpoints.forEach((bp) => {
-        add(this._getUrlBase(`${bp}x`), this._validateSize(`${bp}w`));
-        if (this.$$('hi-res-support')) {
-          add(this._getUrlBase(`${bp * HI_RES_K}x`), this._validateSize(`${bp * HI_RES_K}w`));
-        }
-        if (this.$$('ultra-res-support')) {
-          add(this._getUrlBase(`${bp * ULTRA_RES_K}x`), this._validateSize(`${bp * ULTRA_RES_K}w`));
-        }
-      });
+    const densities = this._densities;
+    const breakpoints = this._breakpoints;
+    if (breakpoints) {
+      for (const bp of breakpoints) {
+        for (const k of densities) add(this._getUrlBase(`${bp * k}x`), this._validateSize(`${bp * k}w`));
+      }
     } else {
-      add(this._getUrlBase(this._getElSize(this._currentImg)), '1x');
-      if (this.$$('hi-res-support')) {
-        add(this._getUrlBase(this._getElSize(this._currentImg, 2)), '2x');
-      }
-      if (this.$$('ultra-res-support')) {
-        add(this._getUrlBase(this._getElSize(this._currentImg, 3)), '3x');
-      }
+      for (const k of densities) add(this._getUrlBase(this._getElSize(this._currentImg, k)), `${k}x`);
     }
     return [...srcset].join();
   }
@@ -338,68 +327,45 @@ export class ImgBase extends ImgConfig {
   }
 
   private async _renderImage(): Promise<void> {
+    // Load the final image, then swap it in for the preview whether or not it loaded.
+    const load = async (): Promise<void> => {
+      try {
+        await this._loaderImage({ src: this._getSrc(), srcset: this._getSrcset(), elNode: this._img });
+      } catch {}
+      if (this._hasPreviewImage) {
+        this._imgPreview.remove();
+      }
+      this.appendChild(this._img);
+    };
+
     if (this.$$('intersection')) {
       if (this._hasPreviewImage) {
         this._setupConfigForImage({ elNode: this._imgPreview });
         this.appendChild(this._imgPreview);
       }
 
-      this.initIntersection(this._currentImg, async () => {
+      this.initIntersection(this._currentImg, () => {
         const previewUrl = this._srcUrlPreview;
         if (this._hasPreviewImage && previewUrl) {
           this._imgPreview.src = previewUrl;
         }
-
-        try {
-          await this._loaderImage({
-            src: this._getSrc(),
-            srcset: this._getSrcset(),
-            elNode: this._img,
-          });
-
-          if (this._hasPreviewImage) {
-            await this._imgPreview.remove();
-          }
-
-          this.appendChild(this._img);
-        } catch {
-          if (this._hasPreviewImage) {
-            await this._imgPreview?.remove();
-          }
-          this.appendChild(this._img);
-        }
+        return load();
       });
-
       return;
     }
 
-    try {
-      if (this._hasPreviewImage) {
-        await this._loaderImage({
-          src: this._srcUrlPreview,
-          elNode: this._imgPreview,
-        });
-
+    if (this._hasPreviewImage) {
+      try {
+        await this._loaderImage({ src: this._srcUrlPreview, elNode: this._imgPreview });
         this.appendChild(this._imgPreview);
+      } catch {
+        // A failed preview skips loading the final image and shows it as is.
+        this._imgPreview.remove();
+        this.appendChild(this._img);
+        return;
       }
-
-      await this._loaderImage({
-        src: this._getSrc(),
-        srcset: this._getSrcset(),
-        elNode: this._img,
-      });
-
-      if (this._hasPreviewImage) {
-        await this._imgPreview?.remove();
-      }
-
-      this.appendChild(this._img);
-    } catch {
-      if (this._hasPreviewImage) {
-        await this._imgPreview?.remove();
-      }
-      this.appendChild(this._img);
     }
+    await load();
   }
 
   protected init(): void {
