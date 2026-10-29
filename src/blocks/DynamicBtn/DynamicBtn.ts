@@ -53,7 +53,6 @@ const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: DynamicBut
   };
 };
 
-
 const AUTO_MODE_INLINE_THRESHOLD = 3;
 
 export class DynamicBtn extends ChildBlock {
@@ -80,9 +79,6 @@ export class DynamicBtn extends ChildBlock {
   @state()
   private _sources: SourceButtonConfig[] = [];
 
-  @state()
-  private _status: 'idle' | 'success' | 'uploading' | 'failed' = 'idle';
-
   // Derived from `_sources` + the tracked `_mode` (both re-render triggers), so a
   // change in either re-splits.
   private get _mainAndRemainSources(): SourceSplit {
@@ -91,6 +87,10 @@ export class DynamicBtn extends ChildBlock {
 
   @state()
   private _collection!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
+
+  private get _status(): OutputCollectionStatus {
+    return this._collection?.status ?? 'idle';
+  }
 
   // Tracked read: `commonProgress` (owned by `CollectionStateController`) auto-
   // tracks under `SignalWatcher`.
@@ -166,7 +166,6 @@ export class DynamicBtn extends ChildBlock {
   @throttled(COLLECTION_SUMMARY_THROTTLE_MS)
   protected _throttledHandleCollectionUpdate(): void {
     this._collection = this._api.getOutputCollectionState();
-    this._status = this._collection.status;
   }
 
   /** @internal */
