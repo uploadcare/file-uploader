@@ -261,7 +261,7 @@ describe('static template', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     class TemplatedBlock extends UseBlock {}
 
-    (TemplatedBlock as unknown as { template: string }).template = '<div></div>';
+    TemplatedBlock.template = '<div></div>';
 
     expect(error.mock.calls.map((call) => call.join(' ')).join('\n')).toContain(
       "Caution: static 'template' property is deprecated and has no effect.",

@@ -1,6 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ControllerContainer } from '../../di/ControllerContainer';
-import type { PlainText } from '../../l10n';
 import { TypedData } from '../../TypedData';
 import { initialUploadEntryData, type UploadEntryData, type UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginController, type PluginControllerDeps } from './PluginController';
@@ -70,7 +69,7 @@ const sourcePlugin = (id: string, setup?: UploaderPlugin['setup']): UploaderPlug
   setup:
     setup ??
     (({ pluginApi }) => {
-      pluginApi.registry.registerSource({ id, label: id as PlainText, icon: id, onSelect: () => {} });
+      pluginApi.registry.registerSource({ id, label: id, icon: id, onSelect: () => {} });
     }),
 });
 
@@ -128,7 +127,7 @@ describe('PluginController', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const t = setup();
       const setupSpy = vi.fn(({ pluginApi }: Parameters<UploaderPlugin['setup']>[0]) =>
-        pluginApi.registry.registerSource({ id: 'dup', label: 'dup' as PlainText, icon: 'dup', onSelect: () => {} }),
+        pluginApi.registry.registerSource({ id: 'dup', label: 'dup', icon: 'dup', onSelect: () => {} }),
       );
 
       await t.sync([sourcePlugin('dup', setupSpy), sourcePlugin('dup', setupSpy)]);
@@ -150,7 +149,7 @@ describe('PluginController', () => {
       const error = vi.spyOn(console, 'error').mockImplementation(() => {});
       const t = setup();
       const boom = sourcePlugin('boom', ({ pluginApi }) => {
-        pluginApi.registry.registerSource({ id: 'boom', label: 'b' as PlainText, icon: 'b', onSelect: () => {} });
+        pluginApi.registry.registerSource({ id: 'boom', label: 'b', icon: 'b', onSelect: () => {} });
         throw new Error('setup failed');
       });
 
@@ -170,7 +169,7 @@ describe('PluginController', () => {
       const dispose = vi.fn();
       await t.sync([
         sourcePlugin('a', ({ pluginApi }) => {
-          pluginApi.registry.registerSource({ id: 'a', label: 'a' as PlainText, icon: 'a', onSelect: () => {} });
+          pluginApi.registry.registerSource({ id: 'a', label: 'a', icon: 'a', onSelect: () => {} });
           return dispose;
         }),
       ]);
@@ -196,7 +195,7 @@ describe('PluginController', () => {
       });
       await t.sync([
         sourcePlugin('a', ({ pluginApi }) => {
-          pluginApi.registry.registerSource({ id: 'a', label: 'a' as PlainText, icon: 'a', onSelect: () => {} });
+          pluginApi.registry.registerSource({ id: 'a', label: 'a', icon: 'a', onSelect: () => {} });
           return dispose;
         }),
       ]);
@@ -486,7 +485,7 @@ describe('PluginController', () => {
       const dispose = vi.fn();
       await t.sync([
         sourcePlugin('a', ({ pluginApi }) => {
-          pluginApi.registry.registerSource({ id: 'a', label: 'a' as PlainText, icon: 'a', onSelect: () => {} });
+          pluginApi.registry.registerSource({ id: 'a', label: 'a', icon: 'a', onSelect: () => {} });
           return dispose;
         }),
       ]);
