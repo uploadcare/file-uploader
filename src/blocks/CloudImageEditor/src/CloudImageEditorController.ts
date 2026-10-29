@@ -1,7 +1,7 @@
 import { Signal, signal } from '@lit-labs/signals';
 import type { CdnOperation } from '@uploadcare/cdn-url';
 import { type ObserveOptions, SignalMap } from '../../../abstract/di/SignalMap';
-import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types/index';
+import type { ConfigType } from '../../../types/index';
 import { DEFAULT_CDN_ORIGIN } from '../../../utils/cdn/origin';
 import { type ColorPreview, TabId, type TabIdValue } from './toolbar-constants';
 import type { CropAspectRatio, Transformations } from './types';
@@ -12,21 +12,22 @@ import type { CropAspectRatio, Transformations } from './types';
  * the element's own props, then the uploader-config compat bridge, then
  * `DEFAULT_EDITOR_CONFIG` (see `_setupEditorController`).
  */
-export type EditorConfig = {
-  cdnCname: string;
-  secureDeliveryProxy?: string;
-  secureDeliveryProxyUrlResolver?: SecureDeliveryProxyUrlResolver;
-  cloudImageEditorMaskHref?: string;
-  testMode: boolean;
-  debug: boolean;
-};
+export type EditorConfig = Pick<
+  ConfigType,
+  | 'cdnCname'
+  | 'secureDeliveryProxy'
+  | 'secureDeliveryProxyUrlResolver'
+  | 'cloudImageEditorMaskHref'
+  | 'testMode'
+  | 'debug'
+>;
 
 /** Built-in fallback config — the lowest precedence tier (below own props and the transitional ctx read). */
 export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   cdnCname: DEFAULT_CDN_ORIGIN,
-  secureDeliveryProxy: undefined,
-  secureDeliveryProxyUrlResolver: undefined,
-  cloudImageEditorMaskHref: undefined,
+  secureDeliveryProxy: '',
+  secureDeliveryProxyUrlResolver: null,
+  cloudImageEditorMaskHref: null,
   testMode: false,
   debug: false,
 };
@@ -85,7 +86,7 @@ function createDefaultState(): EditorState {
  */
 export interface EditorServices {
   l10n: (key: string, variables?: Record<string, string | number>) => string;
-  getConfig: <K extends keyof ConfigType>(key: K) => ConfigType[K];
+  getConfig: <K extends keyof EditorConfig>(key: K) => EditorConfig[K];
   telemetry: {
     sendEvent: (e: unknown) => void;
     sendEventError: (err: unknown, ctx?: unknown) => void;
@@ -99,9 +100,7 @@ export interface EditorServices {
 function createDefaultServices(): EditorServices {
   return {
     l10n: (key) => key,
-    // No real config to read yet — `undefined` as a stand-in until `setServices`
-    // injects the real accessor; narrow cast at this one boundary (default-only).
-    getConfig: <K extends keyof ConfigType>(_key: K) => undefined as unknown as ConfigType[K],
+    getConfig: (key) => DEFAULT_EDITOR_CONFIG[key],
     telemetry: { sendEvent: () => {}, sendEventError: () => {}, sendActionEvent: () => {} },
     proxyUrl: async (url) => url,
   };
@@ -170,7 +169,7 @@ export class CloudImageEditorController {
   }
 
   /** Read a config value from the injected services (today: the shared uploader ctx's config, resolved by the root). */
-  public getConfig<K extends keyof ConfigType>(key: K): ConfigType[K] {
+  public getConfig<K extends keyof EditorConfig>(key: K): EditorConfig[K] {
     this.#servicesRevision.get();
     return this.#services.getConfig(key);
   }

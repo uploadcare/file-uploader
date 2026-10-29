@@ -103,6 +103,7 @@ describe('CloudImageEditorController', () => {
   it('falls back to inert default services until setServices is called', () => {
     const controller = new CloudImageEditorController();
     expect(controller.l10n('cancel')).toBe('cancel'); // identity fallback
+    // @ts-expect-error `pubkey` is no editor config key, so nothing resolves it.
     expect(controller.getConfig('pubkey')).toBeUndefined();
     expect(controller.telemetry.sendEvent({})).toBeUndefined(); // no-op, doesn't throw
     expect(controller.telemetry.sendEventError(new Error('x'))).toBeUndefined();
@@ -123,6 +124,7 @@ describe('CloudImageEditorController', () => {
     });
 
     expect(controller.l10n('cancel', { n: 1 })).toBe('cancel:{"n":1}');
+    // @ts-expect-error `pubkey` is no editor config key; the injected accessor still answers it.
     expect(controller.getConfig('pubkey')).toBe('demopublickey');
     controller.telemetry.sendEvent({ type: 'x' });
     expect(sendEvent).toHaveBeenCalledWith({ type: 'x' });
