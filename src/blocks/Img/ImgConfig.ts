@@ -15,7 +15,6 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
   private _state: CssPropRecord = {};
   private _subscribers: Map<string, Set<(val: CssPropValue) => void>> = new Map();
   private _isnObserver: IntersectionObserver | null = null;
-  private _observed: Set<Element> | null = null;
 
   public override createRenderRoot(): HTMLElement | ShadowRoot {
     return this;
@@ -24,22 +23,12 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
   public constructor() {
     super();
     for (const prop in PROPS_MAP) {
-      const config = PROPS_MAP[prop as keyof typeof PROPS_MAP] as PropConfig | undefined;
-      this._state[CSS_PREF + prop] = (config as { default?: CssPropValue })?.default || '';
+      this._state[CSS_PREF + prop] = (PROPS_MAP[prop as ImgPropKey] as PropConfig).default || '';
     }
   }
 
   protected $$(key: ImgPropKey): CssPropValue {
     return this._state[CSS_PREF + key];
-  }
-
-  protected set$$(kvObj: Partial<Record<ImgPropKey, CssPropValue>>): void {
-    for (const key in kvObj) {
-      const fullKey = CSS_PREF + key;
-      const val = kvObj[key as ImgPropKey];
-      this._state[fullKey] = val;
-      this._notify(fullKey, val);
-    }
   }
 
   protected sub$$(key: ImgPropKey, kbFn: (val: CssPropValue) => void): void {
@@ -67,7 +56,7 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
   }
 
   protected analyticsParams(): string {
-    // `ImgBase`'s `_getCdnOperationFragments` → `parseObjectToString` pipeline
+    // `ImgBase`'s `_getCdnOperationFragments` pipeline
     // stays string-based (it also carries user-supplied `cdn-operations`
     // fragments, which must stay parsed strings — see AGENTS.md scope note).
     // Threading a `CdnOperation` through it would mean restructuring that
@@ -89,10 +78,6 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
   }
 
   protected initIntersection(el: HTMLElement, cbkFn: () => void): void {
-    const opts: IntersectionObserverInit = {
-      root: null,
-      rootMargin: '0px',
-    };
     this._isnObserver = new IntersectionObserver((entries) => {
       entries.forEach((ent) => {
         if (ent.isIntersecting) {
@@ -100,12 +85,8 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
           this._isnObserver?.unobserve(el);
         }
       });
-    }, opts);
+    });
     this._isnObserver.observe(el);
-    if (!this._observed) {
-      this._observed = new Set();
-    }
-    this._observed.add(el);
   }
 
   public override connectedCallback(): void {
@@ -125,12 +106,8 @@ export class ImgConfig extends CssDataMixin(RegisterableElementMixin(LitElement)
 
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
-    if (this._isnObserver) {
-      this._observed?.forEach((el) => {
-        this._isnObserver?.unobserve(el);
-      });
-      this._isnObserver = null;
-    }
+    this._isnObserver?.disconnect();
+    this._isnObserver = null;
     this._subscribers.clear();
   }
 
