@@ -1,6 +1,5 @@
 import { Signal } from '@lit-labs/signals';
 import { modifiers } from '@uploadcare/cdn-url';
-import type { FilterName } from '@uploadcare/cdn-url/ops';
 import { html, type PropertyValues, type TemplateResult } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
@@ -11,7 +10,7 @@ import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { operationsFromModifiers } from '../../../utils/cdn/operations';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
-import { FAKE_ORIGINAL_FILTER } from './EditorSlider.js';
+import { FAKE_ORIGINAL_FILTER, type SliderFilter } from './EditorSlider.js';
 import { editorPreviewUrl } from './lib/editorUrls';
 import type { Transformations } from './types';
 
@@ -27,7 +26,7 @@ export class FilterSelectEvent extends Event {
   public static readonly eventName = 'uc-internal:filter-select';
   public constructor(
     public readonly operation: 'filter',
-    public readonly filter: string,
+    public readonly filter: SliderFilter | '',
     public readonly active: boolean,
     public readonly isOriginal: boolean,
     public readonly originalEvent: MouseEvent,
@@ -43,7 +42,7 @@ declare global {
 }
 
 export class EditorFilterControl extends EditorButtonControl {
-  private _filter = '';
+  private _filter: SliderFilter | '' = '';
   private _originalUrl = '';
   private _observer?: IntersectionObserver;
   private _cancelPreload?: () => void;
@@ -68,7 +67,7 @@ export class EditorFilterControl extends EditorButtonControl {
    * the sole owner of this key now.
    */
   @property({ attribute: false })
-  public currentFilter = FAKE_ORIGINAL_FILTER;
+  public currentFilter: SliderFilter | '' = FAKE_ORIGINAL_FILTER;
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
@@ -78,11 +77,11 @@ export class EditorFilterControl extends EditorButtonControl {
   }
 
   @property({ type: String })
-  public get filter(): string {
+  public get filter(): SliderFilter | '' {
     return this._filter;
   }
 
-  public set filter(value: string) {
+  public set filter(value: SliderFilter | '') {
     const nextFilter = value ?? '';
     if (this._filter === nextFilter) {
       return;
@@ -110,7 +109,7 @@ export class EditorFilterControl extends EditorButtonControl {
     const transformations: Transformations = {
       ...this.editorController.editorTransformations,
       filter:
-        this._filter !== FAKE_ORIGINAL_FILTER ? { name: this._filter as FilterName, amount: filterValue } : undefined,
+        this._filter && this._filter !== FAKE_ORIGINAL_FILTER ? { name: this._filter, amount: filterValue } : undefined,
     };
     return editorPreviewUrl({
       originalUrl: this._originalUrl,
