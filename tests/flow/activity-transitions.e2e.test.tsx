@@ -164,9 +164,9 @@ describe('minimal: the upload list is the resting state', () => {
 });
 
 /**
- * As in v1, inline and minimal report their start screen with `activity-change` when they mount. The listener is on
- * the provider before anything mounts, the way the docs attach it; the uploader joins the ctx first, as it does when
- * its tag is defined before the provider's.
+ * As in v1, inline and minimal report their start screen with `activity-change` when they mount, and again on
+ * `doneFlow()`. The listener is on the provider before anything mounts, the way the docs attach it; the uploader joins
+ * the ctx first, as it does when its tag is defined before the provider's.
  */
 describe.each<Solution>(['inline', 'minimal'])('%s: activity-change for the start screen', (solution) => {
   const mount = async () => {
@@ -189,5 +189,16 @@ describe.each<Solution>(['inline', 'minimal'])('%s: activity-change for the star
     expect(api.getCurrentActivity()).toBe('start-from');
     // Every block has joined the ctx, so whatever mounting reports has been reported.
     expect(recorder.detailsOf('activity-change')).toEqual([{ activity: 'start-from' }]);
+  });
+
+  it('fires it again on doneFlow', async () => {
+    const { api, recorder } = await mount();
+    recorder.clear();
+
+    api.doneFlow();
+
+    // doneFlow navigates synchronously.
+    expect(recorder.detailsOf('activity-change')).toEqual([{ activity: 'start-from' }]);
+    expect(api.getCurrentActivity()).toBe('start-from');
   });
 });

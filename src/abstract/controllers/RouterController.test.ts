@@ -256,6 +256,38 @@ describe('RouterController (v2)', () => {
       expect(router.history).toEqual(['start-from']);
     });
 
+    it('restart reports the activity again when the flow is already there, as v1 did', () => {
+      const { router, emit } = setup();
+      router.navigate('start-from');
+      emit.mockClear();
+
+      router.restart('start-from');
+
+      expect(emit.mock.calls).toEqual([[UploaderEventType.ACTIVITY_CHANGE, { activity: 'start-from' }]]);
+    });
+
+    it('restart reports where the flow stays when a guard refuses the target', () => {
+      const { router, emit } = setup();
+      router.guard('upload-list', () => false);
+      router.navigate('start-from');
+      emit.mockClear();
+
+      router.restart('upload-list');
+
+      expect(router.currentActivity).toBe('start-from');
+      expect(emit.mock.calls).toEqual([[UploaderEventType.ACTIVITY_CHANGE, { activity: 'start-from' }]]);
+    });
+
+    it('restart reports a real change once', () => {
+      const { router, emit } = setup();
+      router.navigate('start-from');
+      emit.mockClear();
+
+      router.restart('url');
+
+      expect(emit.mock.calls).toEqual([[UploaderEventType.ACTIVITY_CHANGE, { activity: 'url' }]]);
+    });
+
     it('closeModal emits MODAL_CLOSE only when a modal was open', () => {
       const { router, emit } = setup();
       router.closeModal(); // nothing open
