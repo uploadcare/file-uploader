@@ -1,3 +1,4 @@
+import { initialConfig } from '../../abstract/config/builtin-registry';
 import { logger } from '../../abstract/logger';
 import type { ConfigType } from '../../types/index';
 import { debounce } from '../../utils/debounce';
@@ -31,8 +32,8 @@ const ASSERTIONS: Assertion[] = [
       'Please use the `cameraModes` parameter instead.',
   },
   {
-    // Its documented default; upload-client 5.0.0 dropped the option, so no value has done anything since.
-    test: (cfg) => cfg.multipartMaxAttempts !== 3,
+    // upload-client 5.0.0 dropped the option, so a value set away from the default does nothing.
+    test: (cfg) => cfg.multipartMaxAttempts !== initialConfig.multipartMaxAttempts,
     message:
       'The `multipartMaxAttempts` parameter is deprecated, has no effect and will be removed in the next major release.\n' +
       'Failed multipart chunks are retried per `retryThrottledRequestMaxTimes` and `retryNetworkErrorMaxTimes`.',
