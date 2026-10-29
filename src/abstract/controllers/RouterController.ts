@@ -338,14 +338,21 @@ export class RouterController {
     this._transition(this._activity, id);
   }
 
-  /** Navigate to `to` with a fresh history, as if the flow started there; `back()` then has nowhere to go. */
+  /**
+   * Navigate to `to` with a fresh history, as if the flow started there; `back()` then has nowhere to go. A restart
+   * that leaves the activity where it was (already there, or `to` refused by its guard) still reports it with
+   * `ACTIVITY_CHANGE`, as v1's `doneFlow()` did.
+   */
   public restart(to: ActivityId): void {
+    const prev = this._currentActivity;
     this._history = [];
     this.navigate(to);
+    if (this._currentActivity !== prev) return;
     // Already there: the navigation changed nothing, so nothing pushed it.
-    if (this._history.length === 0 && this.currentActivity === to) {
+    if (this._history.length === 0 && prev === to) {
       this._history.push(to);
     }
+    this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: prev });
   }
 
   /** Close the foreground modal; keeps the background activity. */
