@@ -406,6 +406,9 @@ export class RouterController {
       case 'onFileAdd':
         this.navigate(this._resolveFileAdd());
         break;
+      default:
+        // A new edge that isn't handled here fails to compile.
+        edge satisfies never;
     }
   }
 
