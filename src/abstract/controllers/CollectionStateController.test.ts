@@ -32,10 +32,10 @@ describe('CollectionStateController', () => {
     expect(a.get('collectionErrors')).not.toBe(b.get('collectionErrors'));
   });
 
-  it('subscribe fires (coarse) on a real change and dedups an equal write (Object.is)', () => {
+  it('observe fires on a real change and dedups an equal write (Object.is)', () => {
     const c = new CollectionStateController();
     const cb = vi.fn();
-    c.subscribe(cb);
+    c.observe('commonProgress', cb);
 
     c.set('commonProgress', 10);
     expect(cb).toHaveBeenCalledTimes(1);
@@ -50,7 +50,7 @@ describe('CollectionStateController', () => {
   it('reference-typed keys dedup by reference: replacing fires, mutating in place does not', () => {
     const c = new CollectionStateController();
     const cb = vi.fn();
-    c.subscribe(cb);
+    c.observe('uploadList', cb);
 
     const list1 = [uid('a')];
     c.set('uploadList', list1);
@@ -70,10 +70,10 @@ describe('CollectionStateController', () => {
     expect(cb).toHaveBeenCalledTimes(2);
   });
 
-  it('subscribe returns an unsubscribe that stops further notifications', () => {
+  it('observe returns an unsubscribe that stops further notifications', () => {
     const c = new CollectionStateController();
     const cb = vi.fn();
-    const unsub = c.subscribe(cb);
+    const unsub = c.observe('commonProgress', cb);
     c.set('commonProgress', 1);
     expect(cb).toHaveBeenCalledTimes(1);
     unsub();
@@ -94,22 +94,10 @@ describe('CollectionStateController', () => {
   it('destroy() clears the store', () => {
     const c = new CollectionStateController();
     const cb = vi.fn();
-    c.subscribe(cb);
+    c.observe('commonProgress', cb);
     c.destroy();
     // Listeners cleared — a post-destroy write must not notify the old subscriber.
     c.set('commonProgress', 99);
     expect(cb).not.toHaveBeenCalled();
-  });
-
-  it('setMany coalesces multiple genuinely-changed keys into one notify', () => {
-    const c = new CollectionStateController();
-    const listener = vi.fn();
-    c.subscribe(listener);
-    // Two keys that ACTUALLY change: commonProgress (0 -> 50) and a fresh
-    // collectionErrors array reference (Object.is-distinct from the seeded []).
-    // Without coalescing this would notify twice; with it, exactly once.
-    c.setMany({ commonProgress: 50, collectionErrors: [] });
-    expect(c.get('commonProgress')).toBe(50);
-    expect(listener).toHaveBeenCalledTimes(1);
   });
 });

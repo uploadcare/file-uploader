@@ -1,6 +1,4 @@
-import type { ReactiveStore } from '../di/ReactiveStore';
 import { SignalMap } from '../di/SignalMap';
-import type { ObserveOptions } from '../host-subscription';
 
 /**
  * Pure-logic locale string store. Knows nothing about DOM or Lit.
@@ -22,16 +20,8 @@ import type { ObserveOptions } from '../host-subscription';
  * change semantics the v1 ctx facade `*l10n/` routing depends on. A locale
  * key named `__proto__` is an ordinary map key, never a prototype write.
  */
-export class LocaleController implements ReactiveStore<Record<string, string>> {
+export class LocaleController {
   #values = new SignalMap<Record<string, string>>();
-
-  public get values(): Readonly<Record<string, string>> {
-    return this.#values.values;
-  }
-
-  public subscribe(listener: () => void): () => void {
-    return this.#values.subscribe(listener);
-  }
 
   public has(key: string): boolean {
     return this.#values.has(key);
@@ -54,19 +44,6 @@ export class LocaleController implements ReactiveStore<Record<string, string>> {
   /** Notifies only when the value actually changes (per-key change semantics). */
   public set(key: string, value: string): void {
     this.#values.set(key, value);
-  }
-
-  public observe(key: string, listener: (value: string | undefined) => void, options?: ObserveOptions): () => void {
-    return this.#values.observe(key, listener, options);
-  }
-
-  /** Batch set locale strings — one coalesced notify. */
-  public setMany(patch: Partial<Record<string, string>>): void {
-    this.#values.setMany(patch);
-  }
-
-  public notify(): void {
-    this.#values.notify();
   }
 
   public destroy(): void {

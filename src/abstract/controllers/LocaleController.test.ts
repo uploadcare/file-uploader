@@ -1,5 +1,5 @@
 import { computed } from '@lit-labs/signals';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { LocaleController } from './LocaleController';
 
 describe('LocaleController', () => {
@@ -11,21 +11,6 @@ describe('LocaleController', () => {
     locale.set('upload', 'Upload');
     expect(locale.has('upload')).toBe(true);
     expect(locale.get('upload')).toBe('Upload');
-  });
-
-  it('notifies on change and dedupes unchanged writes', () => {
-    const locale = new LocaleController();
-    const listener = vi.fn();
-    locale.subscribe(listener);
-
-    locale.set('upload', 'Upload');
-    expect(listener).toHaveBeenCalledTimes(1);
-
-    locale.set('upload', 'Upload'); // unchanged
-    expect(listener).toHaveBeenCalledTimes(1);
-
-    locale.set('upload', 'Send');
-    expect(listener).toHaveBeenCalledTimes(2);
   });
 
   it('getTracked() reads the value and auto-tracks the key under a computed', () => {
@@ -47,16 +32,6 @@ describe('LocaleController', () => {
     expect(locale.getTracked('missing')).toBeUndefined();
   });
 
-  it('unsubscribe stops notifications', () => {
-    const locale = new LocaleController();
-    const listener = vi.fn();
-    const off = locale.subscribe(listener);
-    off();
-
-    locale.set('upload', 'Upload');
-    expect(listener).not.toHaveBeenCalled();
-  });
-
   it('has() uses own-property semantics, not the prototype chain', () => {
     const locale = new LocaleController();
     expect(locale.has('toString')).toBe(false);
@@ -70,46 +45,12 @@ describe('LocaleController', () => {
     expect(locale.get('__proto__')).toBe('evil');
   });
 
-  it('destroy() clears values and listeners', () => {
+  it('destroy() clears values', () => {
     const locale = new LocaleController();
     locale.set('upload', 'Upload');
-    const listener = vi.fn();
-    locale.subscribe(listener);
 
     locale.destroy();
 
     expect(locale.has('upload')).toBe(false);
-    locale.set('upload', 'Upload');
-    expect(listener).not.toHaveBeenCalled();
-  });
-
-  it('values exposes the stored dictionary reflecting writes', () => {
-    const locale = new LocaleController();
-    expect(Object.keys(locale.values)).toEqual([]);
-
-    locale.set('upload', 'Upload');
-    expect(locale.values.upload).toBe('Upload');
-  });
-});
-
-describe('LocaleController ReactiveStore surface', () => {
-  it('observe fires per-key on change and immediately with { immediate }', () => {
-    const l = new LocaleController();
-    l.set('upload', 'Upload');
-    const seen: (string | undefined)[] = [];
-    l.observe('upload', (v) => seen.push(v), { immediate: true });
-    l.set('upload', 'Send');
-    l.set('cancel', 'Cancel'); // unrelated key — must not fire
-    expect(seen).toEqual(['Upload', 'Send']);
-  });
-
-  it('setMany applies several keys with one coalesced notify', () => {
-    const l = new LocaleController();
-    const listener = vi.fn();
-    l.subscribe(listener);
-    l.setMany({ upload: 'Upload', cancel: 'Cancel' });
-    expect(l.get('upload')).toBe('Upload');
-    expect(l.get('cancel')).toBe('Cancel');
-    expect(listener).toHaveBeenCalledTimes(1);
   });
 });

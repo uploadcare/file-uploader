@@ -4,7 +4,6 @@ import { initialConfig } from '../config/initialConfig';
 import { type ConfigKeyDescriptor, resolveConfigDescriptor } from '../config-descriptor';
 import { controllerLogger } from '../controllerLogger';
 import type { CustomConfig, CustomConfigDefinition } from '../customConfigOptions';
-import type { ReactiveStore } from '../di/ReactiveStore';
 import { type ObserveOptions, SignalMap } from '../di/SignalMap';
 
 /**
@@ -38,7 +37,7 @@ export type KnownConfig = ConfigType & CustomConfig;
  * routing depends on. The map is typed over `ConfigType` intersected with a
  * string index so runtime custom keys type cleanly.
  */
-export class ConfigController implements ReactiveStore<ConfigType> {
+export class ConfigController {
   private readonly _log = controllerLogger(this, 'config');
   // Signal-backed store, seeded with the built-in defaults. The `Record<string,
   // unknown>` arm models the dynamic plugin-registered keyspace so custom-key
@@ -102,11 +101,6 @@ export class ConfigController implements ReactiveStore<ConfigType> {
     this.#state.set(name, value);
   }
 
-  /** Batch set built-in keys — one coalesced notify (see `SignalMap.setMany`). */
-  public setMany(patch: Partial<ConfigType>): void {
-    this.#state.setMany(patch);
-  }
-
   /** Coarse subscribe — fires on any config change, not per-key. */
   public subscribe(listener: () => void): () => void {
     return this.#state.subscribe(listener);
@@ -132,11 +126,6 @@ export class ConfigController implements ReactiveStore<ConfigType> {
   /** Atomic per-key subscription for a key whose name is only known at runtime. */
   public observeDynamic(name: string, listener: (value: unknown) => void, options?: ObserveOptions): () => void {
     return this.#state.observe(name, listener, options);
-  }
-
-  /** Coarse notify with no state change — for a re-render on a non-keyed change. */
-  public notify(): void {
-    this.#state.notify();
   }
 
   /** True for any known key — a built-in default or a registered custom key. */

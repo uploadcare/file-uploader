@@ -1,5 +1,4 @@
 import { UID } from '../utils/UID';
-import type { ReactiveStore } from './di/ReactiveStore';
 import { SignalMap } from './di/SignalMap';
 import type { ObserveOptions } from './host-subscription';
 import { logger } from './logger';
@@ -13,10 +12,7 @@ const MSG_NAME = '[Typed State] Wrong property name: ';
  *
  * Composes a `SignalMap` (the same keyed reactive store backing
  * `ConfigController`/`LocaleController`) rather than hand-rolling its own
- * per-key `Set` bookkeeping, so it gets the canonical `ReactiveStore<T>`
- * surface (`get`/`set`/`setMany`/`values`/`subscribe`/`observe`/`getTracked`/
- * `notify`/`destroy`) — plus this class's own module-level `uid` registry,
- * which replaces the old per-entry `PubSub.getCtx(uid)` lookup that hot paths
+ * per-key `Set` bookkeeping, and keeps a module-level `uid` registry that hot paths
  * (`getOutputItem`, event emission) use to read entry state by id. Because the
  * collection defers `destroy()` ~10s after removal, `getByUid` keeps
  * returning a removed entry's data during that window, exactly as before.
@@ -24,7 +20,7 @@ const MSG_NAME = '[Typed State] Wrong property name: ';
  * The old immediate per-key `subscribe(prop, handler)` form has been removed;
  * callers use `observe(key, handler, { immediate: true })` instead.
  */
-export class TypedData<T extends Record<string, unknown>> implements ReactiveStore<T> {
+export class TypedData<T extends Record<string, unknown>> {
   private static _registry = new Map<string, TypedData<Record<string, unknown>>>();
 
   private _uid: Uid;
@@ -87,10 +83,6 @@ export class TypedData<T extends Record<string, unknown>> implements ReactiveSto
     this.#store.setMany(known);
   }
 
-  public subscribe(listener: () => void): () => void {
-    return this.#store.subscribe(listener);
-  }
-
   /**
    * Keyed subscription: `listener` fires with the changed key on each write.
    * Lets a consumer learn which field changed from ONE subscription — e.g.
@@ -107,10 +99,6 @@ export class TypedData<T extends Record<string, unknown>> implements ReactiveSto
     options?: ObserveOptions,
   ): () => void {
     return this.#store.observe(key, listener, options);
-  }
-
-  public notify(): void {
-    this.#store.notify();
   }
 
   public destroy(): void {

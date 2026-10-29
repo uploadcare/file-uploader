@@ -1,4 +1,3 @@
-import type { ReactiveStore } from '../../../abstract/di/ReactiveStore';
 import type { ObserveOptions } from '../../../abstract/host-subscription';
 import { Listeners } from '../../../abstract/host-subscription';
 
@@ -15,7 +14,7 @@ import { Listeners } from '../../../abstract/host-subscription';
  * is no signal backing here, so `getTracked` falls back to the plain read —
  * the interface is intentionally satisfiable by a coarse `Listeners` store.
  */
-export class StateController<TState extends object> implements ReactiveStore<TState> {
+export class StateController<TState extends object> {
   /** @internal */
   protected _state: TState;
   private _listeners = new Listeners();
