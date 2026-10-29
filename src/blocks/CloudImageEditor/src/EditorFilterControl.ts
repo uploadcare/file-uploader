@@ -19,8 +19,8 @@ import './EditorIcon';
 /**
  * Bubbles up to `EditorToolbar`, which owns the toolbar-local `currentFilter`/
  * `showSlider` state and the slider ref. `active`/`isOriginal` are threaded
- * through so the toolbar can reproduce the old "apply immediately vs. open
- * slider to adjust" branch without needing them back as props.
+ * through so the toolbar can choose between "apply immediately" and "open the
+ * slider to adjust" without needing them back as props.
  */
 export class FilterSelectEvent extends Event {
   public static readonly eventName = 'uc-internal:filter-select';
@@ -62,9 +62,8 @@ export class EditorFilterControl extends EditorButtonControl {
   private _iconSize = 20;
 
   /**
-   * Toolbar-local `currentFilter`, received as a reactive prop (replaces the
-   * old shared-ctx `this.sub('*currentFilter', ...)`) — `EditorToolbar` is
-   * the sole owner of this key now.
+   * Toolbar-local `currentFilter`, received as a reactive prop —
+   * `EditorToolbar` is the sole owner of this key.
    */
   @property({ attribute: false })
   public currentFilter: SliderFilter | '' = FAKE_ORIGINAL_FILTER;
@@ -132,8 +131,7 @@ export class EditorFilterControl extends EditorButtonControl {
   // Cross-cutting reactions, re-wired on every editor-controller (re)attach;
   // the `isConnected`-gated one-time setup (observer creation, initial
   // observe/schedule, label init) needs the `filter` property (set via
-  // template binding) already applied, so it stays in `connectedCallback` —
-  // same timing the old `initCallback` relied on.
+  // template binding) already applied, so it stays in `connectedCallback`.
   /** @internal */
   @subscription()
   protected _watchState(): Unsubscribe[] {

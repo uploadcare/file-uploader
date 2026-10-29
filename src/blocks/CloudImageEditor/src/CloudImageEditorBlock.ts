@@ -125,7 +125,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   private _isInitialized = false;
 
   // Root-owned, single-child data passed to `<uc-editor-toolbar>` as plain Lit
-  // props (not controller state — see the "State scoping principle").
+  // props (not controller state — see `EditorState`).
   @state()
   private _imageSize: ImageSize | null = null;
 
@@ -185,9 +185,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
    * The DOM-free editor controller — OWNS the editor's cross-cutting state
    * (see `EditorState`). Created and provided down the
    * editor DOM tree so descendants (`EditorBlock`) can read/write it
-   * directly; there is no more shared-ctx bridge (removed in M12 final —
-   * previously `EDITOR_CONTROLLER_BRIDGE_KEYS`/`_setupEditorControllerBridge`
-   * scaffolding).
+   * directly.
    */
   private readonly _editorController = new CloudImageEditorController();
 
@@ -379,9 +377,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   /**
    * Mirror `data-testid` from the `testMode` config for e2e/`getByTestId`
-   * locators — same contract as `ChildBlock._applyTestMode` / v1 `LitBlock`'s
-   * `subConfigValue('testMode', ...)`, reimplemented here since the root's
-   * light base deliberately isn't `ChildBlock`.
+   * locators — same contract as `ChildBlock._applyTestMode`, reimplemented
+   * here since the root's light base deliberately isn't `ChildBlock`.
    */
   private _syncTestId(): void {
     if (this._editorController.getConfig('testMode')) {
@@ -784,8 +781,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     this._scheduleInitialization();
   }
 
-  // No size needed here, only for loading an image (`updateImage` waits for one). Waiting here meant a container
-  // without a size for the wait's timeout left the editor without its `change` event for good.
+  // No size needed here, only for loading an image (`updateImage` waits for one): a container that never gets a size
+  // still emits `change`.
   public initEditor(): void {
     this.classList.add('uc-editor_ON');
 
@@ -811,7 +808,7 @@ declare global {
     'uc-cloud-image-editor-block': CloudImageEditorBlock;
   }
   interface HTMLElementEventMap {
-    /** Internal apply/cancel intents dispatched by descendants (e.g. the toolbar), listened for by the root — replaces the former controller callbacks. */
+    /** Internal apply/cancel intents dispatched by descendants (e.g. the toolbar), listened for by the root. */
     'uc-internal:apply': CustomEvent<Transformations>;
     'uc-internal:cancel': CustomEvent<void>;
   }

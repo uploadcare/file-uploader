@@ -41,8 +41,7 @@ export type CropBoxChangeEvent = CustomEvent<Rectangle>;
 
 export class CropFrame extends EditorBlock {
   // Passed down by `EditorImageCropper` (cropper-subtree-local state — see
-  // the M12 "State scoping principle"): NOT read from the shared ctx or the
-  // editor controller. Drag changes are reported back up via `cropboxchange`
+  // `EditorState`): NOT read from the editor controller. Drag changes are reported back up via `cropboxchange`
   // (see `_commitCropBox`); the parent is the single source of truth and
   // re-passes the (possibly clamped) value down.
   @property({ attribute: false })
@@ -533,8 +532,8 @@ export class CropFrame extends EditorBlock {
   public constructor() {
     super();
 
-    // Controller-dependent setup (mirrors `ChildBlock.controllerReady` /
-    // the v1 base's `initCallback`): reads the mask config once per
+    // Controller-dependent setup (mirrors `ChildBlock.controllerReady`):
+    // reads the mask config once per
     // (re)attach. `cloudImageEditorMaskHref` is effectively static for the
     // life of an editor instance, so a one-shot read is enough — no
     // observer is needed here.

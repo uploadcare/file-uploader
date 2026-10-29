@@ -222,12 +222,7 @@ export class EditorImageFader extends EditorBlock {
     }
   }
 
-  /**
-   * Reconcile the fader with controller state — the reactive replacement for
-   * the old imperative calls from the toolbar (`_applyTabState`,
-   * `editorTransformations`, `originalUrl`), the root (`_activateViewer`),
-   * and the slider (`set`/`activate`/`deactivate`).
-   */
+  /** Reconcile the fader with controller state and the `imageSize` prop. */
   private _syncFromState(): void {
     if (this._reacting) {
       return;
@@ -261,7 +256,7 @@ export class EditorImageFader extends EditorBlock {
 
       if (shouldShow && !this._shown) {
         // Enter viewer mode: seed `_transformations` so `activate` (original)
-        // renders the committed result, matching the old tab-switch behaviour.
+        // renders the committed result.
         this._shown = true;
         this._lastTransformations = transformations;
         this._transformations = transformations;
@@ -275,7 +270,7 @@ export class EditorImageFader extends EditorBlock {
         return;
       }
 
-      // Committed transformations → refresh the viewer image (old toolbar sub).
+      // Committed transformations → refresh the viewer image.
       if (transformations !== this._lastTransformations) {
         this._lastTransformations = transformations;
         this.runTask(() => this.setTransformations(transformations));

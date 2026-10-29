@@ -6,9 +6,7 @@ import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin'
 const X_THRESHOLD = 1;
 const noopScrollListener = () => {};
 
-// Pure UI element (M12 step 2b): no editor-controller/ctx/l10n access (verified
-// by grepping the original `LitBlock`-based implementation for `this.$`/
-// `this.sub`/`this.cfg`/`this.l10n` — none found), so this is plain Lit rather
+// Pure UI element: no editor-controller/l10n access, so this is plain Lit rather
 // than `EditorBlock` — no reason to pull in the editor context machinery.
 const EditorScrollerBase = RegisterableElementMixin(LightDomMixin(LitElement));
 

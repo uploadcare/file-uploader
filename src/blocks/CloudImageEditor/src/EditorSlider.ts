@@ -49,7 +49,7 @@ export class EditorSlider extends EditorBlock {
 
   private _handleInput = (e: CustomEvent<{ value: number }>): void => {
     const { value } = e.detail;
-    // Was `fader.set(value)`; the fader reacts to `colorPreview` now.
+    // The fader reacts to `colorPreview`.
     this._publishPreview(value);
     this.state = { ...this.state, value };
   };
@@ -59,7 +59,7 @@ export class EditorSlider extends EditorBlock {
 
     this._initializeValues();
 
-    // Was `fader.activate({...})`; publish the preview and let the fader react
+    // Publish the preview and let the fader react
     // (an operation/filter change rebuilds its keypoints — see EditorImageFader).
     this._publishPreview(this.state.value);
   }
@@ -109,7 +109,7 @@ export class EditorSlider extends EditorBlock {
   }
 
   public cancel(): void {
-    // Was `fader.deactivate({ hide: false })`; clearing the preview returns the
+    // Clearing the preview returns the
     // fader to the committed viewer (see EditorImageFader).
     this.editorController.colorPreview = null;
   }
