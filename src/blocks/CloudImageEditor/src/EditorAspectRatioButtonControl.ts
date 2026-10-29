@@ -1,6 +1,5 @@
-import { html, type TemplateResult } from 'lit';
+import { html, type PropertyValues, type TemplateResult } from 'lit';
 import { property } from 'lit/decorators.js';
-import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropAspectRatio } from './types';
 
@@ -55,18 +54,15 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
   @property({ attribute: false })
   public aspectRatio: CropAspectRatio | null = null;
 
-  /** @internal */
-  @subscription()
-  protected _syncActive(): Unsubscribe {
-    return this.editorController.observe(
-      'currentAspectRatio',
-      (opt) => {
-        this.active =
-          (opt && opt.id === this.aspectRatio?.id) ||
-          (opt?.width === this.aspectRatio?.width && opt?.height === this.aspectRatio?.height);
-      },
-      { immediate: true },
-    );
+  // Derived here, not in `render`, so the base's `updated` sees `active` change and toggles the host classes.
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+    const controller = this.editorControllerOrNull;
+    if (!controller) return;
+    const opt = controller.currentAspectRatio;
+    this.active =
+      (opt && opt.id === this.aspectRatio?.id) ||
+      (opt?.width === this.aspectRatio?.width && opt?.height === this.aspectRatio?.height);
   }
 
   protected override onClick(): void {
