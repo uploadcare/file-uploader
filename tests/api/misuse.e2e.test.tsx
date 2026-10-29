@@ -115,6 +115,25 @@ describe('setCurrentActivity / setModalState misuse', () => {
     });
   });
 
+  // As in v1, which reports an activity when its block activates: the activity is set, but nothing in the ctx shows it.
+  it('reports no activity-change for an activity nothing shows', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // No external source in the list, so the external-source plugin and its block are never loaded.
+    const { api, provider } = await renderSolution('regular', { sourceList: 'local, url, camera' });
+    const recorder = recordEvents(provider);
+    api.setCurrentActivity('external', { externalSourceType: 'gdrive' });
+
+    // The warning is the last thing the call does.
+    await vi.waitFor(() => {
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[uc]/),
+        expect.stringContaining('"external" not found in the context'),
+      );
+    });
+    expect(recorder.detailsOf('activity-change')).toEqual([]);
+    expect(api.getCurrentActivity()).toBe('external');
+  });
+
   it('warns when asked to open the modal with no current activity', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const { api } = await renderSolution();

@@ -690,6 +690,57 @@ describe('UploaderPublicApi', () => {
       expect(warn).toHaveBeenCalledWith(`[uc][${ctxName}][public-api]`, expect.stringContaining('camera'));
     });
 
+    // v1 sets the activity at once but reports it only when its block activates, so an activity nothing in the ctx
+    // shows is only warned about.
+    it.each([
+      ['setCurrentActivity', (api: UploaderPublicApi) => api.setCurrentActivity('camera')],
+      ['navigate', (api: UploaderPublicApi) => api.navigate('camera')],
+    ])('%s reports no activity-change when the target activity block never mounts', async (_name, go) => {
+      vi.useFakeTimers();
+      onTestFinished(() => {
+        vi.useRealTimers();
+      });
+      const { api, ctxName } = setup();
+      const warn = vi.spyOn(console, 'warn');
+      const changes: unknown[] = [];
+      api.on('activity-change', (payload) => changes.push(payload.activity));
+
+      go(api);
+      await vi.advanceTimersByTimeAsync(150);
+
+      expect(warn).toHaveBeenCalledWith(`[uc][${ctxName}][public-api]`, expect.stringContaining('camera'));
+      expect(changes).toEqual([]);
+      expect(api.getCurrentActivity()).toBe('camera');
+    });
+
+    it('setCurrentActivity reports the activity once its block mounts', async () => {
+      const { api, ctrl } = setup();
+      const changes: unknown[] = [];
+      api.on('activity-change', (payload) => changes.push(payload.activity));
+
+      api.setCurrentActivity('camera');
+      await flush();
+      expect(changes).toEqual([]);
+      ctrl.router.activityBlockMounted('camera');
+
+      expect(changes).toEqual(['camera']);
+    });
+
+    it('setCurrentActivity drops the held report once the flow moves on', async () => {
+      const { api, ctrl } = setup();
+      ctrl.router.activityBlockMounted('start-from');
+      const changes: unknown[] = [];
+      api.on('activity-change', (payload) => changes.push(payload.activity));
+
+      api.setCurrentActivity('camera');
+      await flush();
+      api.setCurrentActivity('start-from');
+      await flush();
+      ctrl.router.activityBlockMounted('camera');
+
+      expect(changes).toEqual(['start-from']);
+    });
+
     it('setCurrentActivity sets the background activity', async () => {
       const { api, ctrl } = setup();
       ctrl.router.activityBlockMounted('upload-list');
