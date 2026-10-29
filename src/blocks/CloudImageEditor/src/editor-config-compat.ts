@@ -27,7 +27,10 @@ const EDITOR_CONFIG_KEYS = [
 ] as const satisfies readonly (keyof EditorConfig)[];
 
 /** Hands the consumer an l10n function bound to the sibling `<uc-config>`'s locale (interpolating, reads the ctx live). */
-type LocaleCompatCallback = (l10n: (key: string, variables?: Record<string, string | number>) => string) => void;
+/** `undefined` once the container is gone: the consumer falls back to its own strings. */
+type LocaleCompatCallback = (
+  l10n: ((key: string, variables?: Record<string, string | number>) => string) | undefined,
+) => void;
 
 const noop = (): void => {};
 
@@ -106,6 +109,8 @@ export function subscribeUploaderConfigCompat(
     detach = noop;
     if (container) {
       detach = attach(container, onConfig, onLocale, onTelemetry);
+    } else {
+      onLocale?.(undefined);
     }
   });
   return () => {
