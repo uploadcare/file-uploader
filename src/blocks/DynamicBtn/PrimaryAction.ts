@@ -44,8 +44,7 @@ export class PrimaryAction extends ChildBlock {
 
   // Config-derived render inputs read through the tracked signal path: reading
   // them in `render()`/`_renderThumbnail()` auto-tracks the key under
-  // `SignalWatcher`, so a later `set()` re-renders — replacing the v1
-  // `subConfigValue` subscriptions that mirrored these into `@state`.
+  // `SignalWatcher`, so a later `set()` re-renders.
   private get showIcon(): boolean {
     return this._config.getTracked('dynamicButtonShowFirstIcon');
   }

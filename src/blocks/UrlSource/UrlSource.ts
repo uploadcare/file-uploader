@@ -14,8 +14,6 @@ import '../Icon/Icon';
 export class UrlSource extends ChildBlock {
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
   @inject(RouterController) private readonly _router!: RouterController;
-  // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
-  // token — it is container-resolved (M-god step 8a), injected via `@inject`.
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   @state()

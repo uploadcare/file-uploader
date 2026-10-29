@@ -91,15 +91,13 @@ export class PluginActivityRenderer extends ChildBlock {
 
   // Transiently null until the container resolves the `PluginController`
   // (`whenController`) — render falls back to an empty activity list meanwhile
-  // (Icon/FileItem precedent). M-god step 8c: `PluginController` is
-  // container-owned (bound by `ensurePluginManager`), but its binding is
-  // CONDITIONAL — it exists only once an uploader scope attaches
-  // (`ensureUploaderScope`), which may be after this block's `controllerReady`
-  // fires (or never, in a bare ctx — see the "renders an empty activity list"
-  // spec). A synchronous `use(PluginController)` would throw on an unresolved
-  // token; `whenController` fires now if resolved, else on first resolution,
-  // yielding the SAME container instance — the now-or-when-available successor
-  // to `bag.when('pluginManager')`.
+  // (Icon/FileItem precedent). `PluginController` is container-owned (bound by
+  // `ensurePluginManager`), but its binding is CONDITIONAL — it exists only once
+  // an uploader scope attaches (`ensureUploaderScope`), which may be after this
+  // block's `controllerReady` fires (or never, in a bare ctx — see the "renders
+  // an empty activity list" spec). A synchronous `use(PluginController)` would
+  // throw on an unresolved token; `whenController` fires now if resolved, else
+  // on first resolution, yielding the SAME container instance.
   private _pluginManager: PluginController | null = null;
 
   @injectOrNull(RouterController) private readonly _router!: RouterController | null;

@@ -14,8 +14,6 @@ export class SimpleBtn extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];
 
   @inject(ConfigController) private readonly _config!: ConfigController;
-  // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI token —
-  // it is container-resolved (M-god step 8a), injected here via `@inject`.
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   @property({ converter: booleanAttribute })

@@ -17,10 +17,9 @@ export class FormInput extends ChildBlock {
   };
   private _validationInputElement: HTMLInputElement | null = null;
   private _dynamicInputsContainer: HTMLDivElement | null = null;
-  // Dedup guard: the collection state is republished as a fresh object per change
-  // (`Object.is` differs), so this reproduces the v1 `bag.ctx.sub('*collectionState')`
-  // "rebuild only on an actual change" semantics now that the rebuild is driven by
-  // a re-render (which `willUpdate` also runs for unrelated updates, e.g. `ctx-name`).
+  // Dedup guard: the collection state is republished as a fresh object per change,
+  // and `willUpdate` also runs for unrelated updates (e.g. `ctx-name`), so the
+  // inputs are rebuilt only when the state object actually changed.
   private _lastSyncedState: OutputCollectionState | null = null;
 
   @property({ type: String, attribute: 'name' })
@@ -55,12 +54,10 @@ export class FormInput extends ChildBlock {
 
   protected override willUpdate(changed: PropertyValues<this>): void {
     super.willUpdate(changed);
-    // Reactive collection-state read (replaces the v1
-    // `bag.ctx.sub('*collectionState', …, false)` subscription): `getTracked`
-    // auto-tracks under `SignalWatcher`, so a new collection state re-runs this
-    // update and rebuilds the hidden `<input>`(s). The `false` (no immediate
-    // fire) of the v1 sub is preserved by the initial `null` state falling
-    // through the early-return in `_syncFormInputs`.
+    // Reactive collection-state read: `getTracked` auto-tracks under
+    // `SignalWatcher`, so a new collection state re-runs this update and rebuilds
+    // the hidden `<input>`(s). The initial `null` state falls through the
+    // early-return in `_syncFormInputs`.
     this._syncFormInputs(this._collectionState.getTracked('collectionState'));
     // Kept current on every update, not just at creation: the name attribute and
     // `multipleMin` can change after mount (tracked read re-runs this update).

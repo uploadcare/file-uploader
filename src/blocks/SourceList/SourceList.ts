@@ -35,9 +35,8 @@ export class SourceList extends ChildBlock {
     super.updated(changedProperties);
 
     // Imperative `updated()` read (host attribute side-effect) — `get()`, not
-    // the tracked `getTracked()`: v1 re-evaluated this only on re-render (driven
-    // by `_sources`), not as its own reactive trigger, so keep it untracked to
-    // preserve behavior exactly. `[nowrap]` maps to `display: contents` in the
+    // the tracked `getTracked()`: it is re-evaluated only on re-render (driven
+    // by `_sources`), not as its own reactive trigger. `[nowrap]` maps to `display: contents` in the
     // stylesheet, so a consumer's inline `display` still wins.
     this.toggleAttribute('nowrap', !this._config.get('sourceListWrap'));
   }

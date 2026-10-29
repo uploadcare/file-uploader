@@ -34,8 +34,7 @@ export class Thumb extends FileItemConfig {
   // generation (not render reads), so they read the always-bound
   // `ConfigController`/`TelemetryManager` `@inject` fields imperatively
   // (`.get()` / method calls). The thumb image itself renders from the per-entry
-  // `thumbUrl` observer, which has no DI token and stays on the v1 `subEntry`
-  // path (step 8). `UploadCollectionController` is the entry source for
+  // `thumbUrl` observer (`subEntry`). `UploadCollectionController` is the entry source for
   // `_bindToEntry`, which only runs while adopted (`controllerReady` and the
   // render-gated `firstUpdated`/`updated`).
   @inject(ConfigController) private readonly _config!: ConfigController;
@@ -330,9 +329,8 @@ export class Thumb extends FileItemConfig {
 
   // Side effect (not a render read): a one-time thumb regeneration on the first
   // list->grid switch so the higher grid resolution is fetched. `beforeUpdate`
-  // fires eagerly and synchronously on adoption — matching the former eager
-  // `subConfigValue` fire, and after `controllerReady` sets `_firstViewMode` —
-  // then again whenever `filesViewMode` changes.
+  // fires eagerly and synchronously on adoption — after `controllerReady` sets
+  // `_firstViewMode` — then again whenever `filesViewMode` changes.
   /** @internal */
   @effect({ beforeUpdate: true })
   protected _regenerateThumbOnGridSwitch(): void {

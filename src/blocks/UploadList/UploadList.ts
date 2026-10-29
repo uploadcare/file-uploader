@@ -43,14 +43,11 @@ export type { FilesViewMode };
 export type UploadListChrome = 'default' | 'compact';
 
 export class UploadList extends ActivityChildBlock {
-  // Controllers become `@inject` fields (the getter re-resolves from the
-  // current container on each access, so re-adoption is safe): `ConfigController`,
-  // `CollectionStateController`, `TelemetryManager`, plus `UploaderPublicApi`
-  // (flow actions) and `UploadCollectionController` (clear-all). `RouterController`
-  // is inherited from `ActivityChildBlock`. The throttled collection-update tick
-  // is now adoption-guarded by `@throttled` (it no-ops after release), so it
-  // reads these `@inject` fields directly; only the visibility predicate — which
-  // can also run during a teardown tick — still reads via `useOrNull`.
+  // `@inject` getters re-resolve from the current container on each access, so
+  // re-adoption is safe. `RouterController` is inherited from `ActivityChildBlock`.
+  // The throttled collection-update tick is adoption-guarded by `@throttled`, so
+  // it reads these fields directly; only the visibility predicate — which can
+  // also run during a teardown tick — reads via `useOrNull`.
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
@@ -139,9 +136,7 @@ export class UploadList extends ActivityChildBlock {
    * Tracked getter: the common (collection-level) error message, derived from
    * `collectionErrors` (owned by `CollectionStateController`). Reading it via
    * `getTracked` in `render()` auto-tracks under `SignalWatcher`, so a
-   * collection-error change re-renders — replacing the v1
-   * `ctx.sub('*collectionErrors')` subscription that mirrored the first
-   * non-`SOME_FILES_HAS_ERRORS` error into a `_commonErrorMessage` @state.
+   * collection-error change re-renders.
    */
   private get _commonErrorMessage(): string | null {
     const errors = this._collectionState.getTracked('collectionErrors');
@@ -172,9 +167,9 @@ export class UploadList extends ActivityChildBlock {
 
   // `@throttled` makes this adopted-guarded (a trailing tick after release —
   // e.g. a registry-unregistration race — no-ops) and cancels the pending timer
-  // on release, so the body reads its throwing `@inject` fields directly instead
-  // of the old `useOrNull` bail. Callers keep using `this._throttledHandleCollectionUpdate`
-  // (a stable bound reference, still safe to hand to `observeCollection`).
+  // on release, so the body reads its throwing `@inject` fields directly. Callers
+  // use `this._throttledHandleCollectionUpdate` (a stable bound reference, safe
+  // to hand to `observeCollection`).
   /** @internal */
   @throttled(COLLECTION_SUMMARY_THROTTLE_MS)
   protected _throttledHandleCollectionUpdate(): void {
@@ -297,7 +292,7 @@ export class UploadList extends ActivityChildBlock {
   // Group-size config re-runs the derived toolbar/button recompute — which
   // writes `@state` outside `render()`, so it's a subscription, not a tracked
   // render read. Per-key `observe` avoids re-firing on unrelated config changes;
-  // the eager `rerun()` reproduces the former `subConfigValue` init fire.
+  // `immediate` runs it once on wiring.
   /** @internal */
   @subscription()
   protected _wireGroupSizeConfig(): Unsubscribe[] {
@@ -333,8 +328,7 @@ export class UploadList extends ActivityChildBlock {
   //
   // The summary + buttons derive from counts/status/validation — NOT per-entry
   // `uploadProgress` (that drives the progress bar, not this) — so we declare
-  // only the status-affecting keys. This resolves the former "perf issue on many
-  // files": progress ticks no longer wake this recompute.
+  // only the status-affecting keys, so progress ticks don't wake this recompute.
   /** @internal */
   @subscription()
   protected _wireCollectionObservers(): Unsubscribe {
@@ -353,13 +347,11 @@ export class UploadList extends ActivityChildBlock {
     // HOST (grid/list box sizing), so drive it there from the tracked config
     // signal (the Modal/Copyright `willUpdate` + `getTracked` host-attr recipe).
     // Reading `filesViewMode` via `getTracked` auto-tracks under `SignalWatcher`,
-    // so a config change re-runs this update and re-sets the attribute — matching
-    // the reactivity of the v1 `subConfigValue('filesViewMode')` it replaces.
+    // so a config change re-runs this update and re-sets the attribute.
     // This block has no lazy-render gate (unlike FileItem's `_pauseRender`, which
     // is why FileItem keeps its `mode` host attr imperative), so `willUpdate`
-    // runs on the first post-adoption render — before first paint, matching v1's
-    // eager `subConfigValue` fire. `mode` is not a reactive property, so setting
-    // it schedules no further update.
+    // runs on the first post-adoption render, before first paint. `mode` is not a
+    // reactive property, so setting it schedules no further update.
     this.setAttribute('mode', this._config.getTracked('filesViewMode'));
   }
 
@@ -378,7 +370,7 @@ export class UploadList extends ActivityChildBlock {
     // Tracked render reads: `uploadList` drives the `<uc-file-item>` list and
     // `collectionErrors` (via `_commonErrorMessage`) drives the common-error row —
     // both `getTracked` off `CollectionStateController`, auto-tracked under
-    // `SignalWatcher`, so a collection change re-renders with no `ctx.sub`.
+    // `SignalWatcher`, so a collection change re-renders.
     const uploadList = this._collectionState.getTracked('uploadList');
     const commonErrorMessage = this._commonErrorMessage;
     const compact = this.chrome === 'compact';

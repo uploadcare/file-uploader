@@ -16,10 +16,7 @@ export class ProgressBarCommon extends ChildBlock {
   private _visible = false;
 
   // Tracked read: `commonProgress` (owned by `CollectionStateController`)
-  // auto-tracks under `SignalWatcher`, so a progress change re-renders —
-  // replacing the v1 `ctx.sub('*commonProgress')` subscription that mirrored it
-  // into a `_value` @state. No `init$`: `commonProgress` is seeded by the
-  // controller, not this block.
+  // auto-tracks under `SignalWatcher`, so a progress change re-renders.
   private get _value(): number {
     return this._collectionState.getTracked('commonProgress');
   }

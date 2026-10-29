@@ -54,8 +54,7 @@ export class Icon extends ChildBlock {
     }
 
     // Tracked read: reading `iconHrefResolver` here auto-tracks it under
-    // `SignalWatcher`, so a later config `set()` re-renders — replacing the v1
-    // `subConfigValue('iconHrefResolver', …)` mirror that fed `_resolvedHref`.
+    // `SignalWatcher`, so a later config `set()` re-renders.
     const iconHrefResolver = this._config.getTracked('iconHrefResolver');
     const href = iconHrefResolver?.(this.name) ?? `#uc-icon-${this.name}`;
     return html` ${this.yield('', renderIconSvg(href))} `;
