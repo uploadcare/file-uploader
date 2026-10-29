@@ -33,10 +33,7 @@ export const calcImageAcceptList = (): string[] => {
 export const IMAGE_ACCEPT_LIST = calcImageAcceptList();
 
 export const mergeFileTypes = (fileTypes?: string[]): string[] => {
-  if (!fileTypes) {
-    return [];
-  }
-  return fileTypes.filter((item): item is string => typeof item === 'string').flatMap((str) => deserializeCsv(str));
+  return fileTypes?.flatMap(deserializeCsv) ?? [];
 };
 
 export const matchMimeType = (mimeType: string, allowedFileTypes: string[]): boolean => {
@@ -61,11 +58,7 @@ export const matchExtension = (fileName: string, allowedFileTypes: string[]): bo
 };
 
 export const fileIsImage = (file: File | Blob): boolean => {
-  const type = file?.type;
-  if (!type) {
-    return false;
-  }
-  return matchMimeType(type, IMAGE_ACCEPT_LIST);
+  return !!file.type && matchMimeType(file.type, IMAGE_ACCEPT_LIST);
 };
 
 /** The entry fields read off a file. A `Blob` has no name, so it leaves `fileName` out. */
@@ -77,10 +70,6 @@ export const fileDerivedFields = (
   fileSize: file.size,
   ...(file instanceof File && { fileName: file.name }),
 });
-
-export const isBlob = (data: unknown): data is Blob => {
-  return typeof Blob !== 'undefined' && data instanceof Blob;
-};
 
 export const isFile = (data: unknown): data is File => {
   return typeof File !== 'undefined' && data instanceof File;
