@@ -43,13 +43,13 @@ describe('LocaleManager.activate', () => {
     const { config, manager } = setup();
     const observeSpy = vi.spyOn(config, 'observe');
 
-    manager.activate(null);
+    manager.activate();
     const afterFirst = observeSpy.mock.calls.length;
     // localeName + localeDefinitionOverride — exactly two atomic `observe`s wired.
     expect(afterFirst).toBe(2);
 
-    manager.activate(null);
-    manager.activate(null);
+    manager.activate();
+    manager.activate();
 
     expect(observeSpy).toHaveBeenCalledTimes(afterFirst);
   });
@@ -57,81 +57,14 @@ describe('LocaleManager.activate', () => {
   it('is idempotent: a second activate() does not re-seed the en dictionary over a value set since', () => {
     const { locale, manager } = setup();
 
-    manager.activate(null);
+    manager.activate();
     // Simulate a value having changed since first activation (e.g. a plugin
     // override, or the app writing a custom translation directly).
     locale.set('upload', 'Custom upload label');
 
-    manager.activate(null);
+    manager.activate();
 
     expect(locale.get('upload')).toBe('Custom upload label');
-  });
-
-  it('re-couples to a new plugin manager on re-activate without stacking the old subscription', () => {
-    const { manager } = setup();
-
-    const unsub1 = vi.fn();
-    const pm1: FakePluginManager = {
-      onPluginsChange: vi.fn(() => unsub1),
-      snapshot: vi.fn(() => ({ l10n: [] }) as never),
-    };
-    manager.activate(pm1);
-    expect(pm1.onPluginsChange).toHaveBeenCalledTimes(1);
-    expect(unsub1).not.toHaveBeenCalled();
-
-    const unsub2 = vi.fn();
-    const pm2: FakePluginManager = {
-      onPluginsChange: vi.fn(() => unsub2),
-      snapshot: vi.fn(() => ({ l10n: [] }) as never),
-    };
-    manager.activate(pm2);
-
-    // The old coupling is released exactly once, not left dangling alongside
-    // the new one.
-    expect(unsub1).toHaveBeenCalledTimes(1);
-    expect(pm2.onPluginsChange).toHaveBeenCalledTimes(1);
-    expect(unsub2).not.toHaveBeenCalled();
-
-    manager.destroy();
-    expect(unsub2).toHaveBeenCalledTimes(1);
-    // Still just once — destroy() must not double-release the already-swapped-
-    // out first coupling.
-    expect(unsub1).toHaveBeenCalledTimes(1);
-  });
-
-  it('re-activate isolate-and-warns: a throwing previous unsubscribe does not stop the new coupling being wired', () => {
-    const { manager } = setup();
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    const unsub1 = vi.fn(() => {
-      throw new Error('detach boom');
-    });
-    const pm1: FakePluginManager = {
-      onPluginsChange: vi.fn(() => unsub1),
-      snapshot: vi.fn(() => ({ l10n: [] }) as never),
-    };
-    manager.activate(pm1);
-
-    const unsub2 = vi.fn();
-    const pm2: FakePluginManager = {
-      onPluginsChange: vi.fn(() => unsub2),
-      snapshot: vi.fn(() => ({ l10n: [] }) as never),
-    };
-
-    // The old unsub throws on re-wire, but activate() contains it and still
-    // establishes the new coupling rather than aborting half re-wired.
-    expect(() => manager.activate(pm2)).not.toThrow();
-    expect(unsub1).toHaveBeenCalledTimes(1);
-    expect(warnSpy).toHaveBeenCalled();
-    expect(pm2.onPluginsChange).toHaveBeenCalledTimes(1);
-
-    // The stale (already-run) unsub was un-registered, so destroy() releases only
-    // the new coupling and never re-invokes the throwing one.
-    manager.destroy();
-    expect(unsub2).toHaveBeenCalledTimes(1);
-    expect(unsub1).toHaveBeenCalledTimes(1);
-
-    warnSpy.mockRestore();
   });
 
   it('destroy() isolate-and-warns: a throwing plugin-coupling teardown does not stop the config-subscription teardowns', () => {
@@ -223,7 +156,7 @@ describe('LocaleManager.activate', () => {
   it('ignores an empty localeName without attempting a resolution', async () => {
     const { config, manager } = setup();
     const resolveMock = vi.mocked(localeRegistry.resolveLocaleDefinition);
-    manager.activate(null);
+    manager.activate();
     await delay(0);
     resolveMock.mockClear();
 
@@ -235,7 +168,7 @@ describe('LocaleManager.activate', () => {
 
   it('applies a localeDefinitionOverride that targets the active locale', async () => {
     const { config, locale, manager } = setup();
-    manager.activate(null);
+    manager.activate();
     await delay(0);
 
     config.set('localeDefinitionOverride', { en: { 'upload-file': 'Overridden upload' } });
@@ -245,7 +178,7 @@ describe('LocaleManager.activate', () => {
 
   it('ignores a localeDefinitionOverride that targets a different locale', async () => {
     const { config, locale, manager } = setup();
-    manager.activate(null);
+    manager.activate();
     await delay(0);
     const before = locale.get('upload-file');
 
@@ -273,7 +206,7 @@ describe('LocaleManager.activate', () => {
     resolveMock.mockImplementationOnce(() => enPromise as Promise<LocaleDefinition>);
     resolveMock.mockImplementationOnce(() => frPromise as Promise<LocaleDefinition>);
 
-    manager.activate(null); // synchronously fires cb('en') -> resolveLocaleDefinition('en')
+    manager.activate(); // synchronously fires cb('en') -> resolveLocaleDefinition('en')
     config.set('localeName', 'fr'); // same tick -> resolveLocaleDefinition('fr')
 
     // Resolve out of order: the newer ("fr") request settles first, the
@@ -290,7 +223,7 @@ describe('LocaleManager.activate', () => {
 
   it('applies nothing from a resolution still in flight when the ctx is disposed', async () => {
     const { container, config, locale, manager } = setup();
-    manager.activate(null);
+    manager.activate();
     let resolveFr!: (definition: Partial<LocaleDefinition>) => void;
     const frPromise = new Promise<Partial<LocaleDefinition>>((resolve) => {
       resolveFr = resolve;

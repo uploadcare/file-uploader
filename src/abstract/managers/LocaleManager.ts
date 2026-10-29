@@ -31,21 +31,17 @@ export class LocaleManager {
   private _activated = false;
   readonly #disposables = new Disposables();
   private _pluginManager: Pick<PluginController, 'onPluginsChange' | 'snapshot'> | null = null;
-  /** The live plugin-manager unsubscribe, run on re-wire; also registered in `#disposables`. */
-  private _pluginManagerUnsub?: () => void;
-  /** Unregisters {@link _pluginManagerUnsub} from `#disposables` (without running it) on re-wire. */
-  private _cancelPluginManagerReg?: () => void;
 
   /**
    * Start: seed the `en` defaults, wire the
    * plugin-manager coupling, and subscribe to `localeName`/
    * `localeDefinitionOverride`. Idempotent — the one-time seeding +
    * subscriptions only run once, so calling this again (e.g. a second block
-   * sharing the ctx) is safe. A plugin manager passed in is (re-)coupled; called
-   * without one, the current coupling stays; `null` detaches it.
+   * sharing the ctx) is safe. A plugin manager passed in is coupled; called
+   * without one, the current coupling stays.
    */
-  public activate(pluginManager?: Pick<PluginController, 'onPluginsChange' | 'snapshot'> | null): void {
-    if (pluginManager !== undefined) {
+  public activate(pluginManager?: Pick<PluginController, 'onPluginsChange' | 'snapshot'>): void {
+    if (pluginManager) {
       this._couplePluginManager(pluginManager);
     }
 
@@ -167,38 +163,21 @@ export class LocaleManager {
     }
   }
 
-  private _couplePluginManager(pluginManager: Pick<PluginController, 'onPluginsChange' | 'snapshot'> | null): void {
-    // Re-wire the plugin-manager coupling: run the previous unsubscribe (detach
-    // the old manager's `onPluginsChange`) and un-register it from `#disposables`
-    // so `destroy()`'s `run()` won't double-invoke a stale unsub.
-    try {
-      this._pluginManagerUnsub?.();
-    } catch (err) {
-      // Isolate-and-warn: a throwing detach of the old manager's
-      // `onPluginsChange` must not abort re-wiring (matching `destroy()`'s
-      // `#disposables.run()` teardown convention), or the manager would be left
-      // half re-wired with the new coupling never established.
-      this._log.warn('LocaleManager: previous plugin-manager unsubscribe threw', err);
-    }
-    this._cancelPluginManagerReg?.();
-    this._pluginManagerUnsub = undefined;
-    this._cancelPluginManagerReg = undefined;
+  private _couplePluginManager(pluginManager: Pick<PluginController, 'onPluginsChange' | 'snapshot'>): void {
+    // `ensurePluginManager` builds one plugin manager per ctx and couples it once; it lives as long as the ctx.
     this._pluginManager = pluginManager;
-    if (pluginManager?.onPluginsChange) {
-      this._pluginManagerUnsub = pluginManager.onPluginsChange(() => {
+    this.#disposables.add(
+      pluginManager.onPluginsChange(() => {
         if (this._localeName) {
           this._applyPluginLocales(this._localeName);
         }
-      });
-      this._cancelPluginManagerReg = this.#disposables.add(this._pluginManagerUnsub);
-    }
+      }),
+    );
   }
 
   public destroy(): void {
     // `#disposables` holds the plugin-manager unsub (if wired) alongside the two
     // config subscriptions, so `run()` tears down all three (isolate-and-warn).
-    this._pluginManagerUnsub = undefined;
-    this._cancelPluginManagerReg = undefined;
     this.#disposables.run();
   }
 }
