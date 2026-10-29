@@ -30,7 +30,6 @@ import {
 } from './toolbar-constants';
 import type { CropAspectRatio, CropPresetList, ImageSize, Transformations } from './types';
 import { viewerImageSrc } from './util';
-import { parseFilterValue } from './utils/parseFilterValue';
 
 import './EditorAspectRatioButtonControl';
 import './EditorCropButtonControl';
@@ -435,7 +434,7 @@ export class EditorToolbar extends EditorBlock {
   private readonly _handleApplySlider = (e: MouseEvent): void => {
     this.sendClickEvent(e, {
       action: 'apply-slider',
-      operation: parseFilterValue(this._operationTooltip),
+      operation: this._sliderRef.value?.selection ?? null,
     });
     const slider = this._sliderRef.value;
     slider?.apply();
@@ -474,9 +473,9 @@ export class EditorToolbar extends EditorBlock {
       this._setShowSlider(true);
     }
 
-    // Read from the slider now: `_operationTooltip` only catches up when it renders, after this click.
+    // Read from the slider now: its tooltip only catches up when it renders, after this click.
     this.sendClickEvent(originalEvent, {
-      operation: parseFilterValue(this._sliderRef.value?.tooltip ?? null),
+      operation: this._sliderRef.value?.selection ?? null,
     });
 
     this._currentFilter = filter;
@@ -492,7 +491,7 @@ export class EditorToolbar extends EditorBlock {
     this._currentOperation = e.operation;
 
     this.sendClickEvent(e.originalEvent, {
-      operation: parseFilterValue(this._sliderRef.value?.tooltip ?? null),
+      operation: this._sliderRef.value?.selection ?? null,
     });
 
     this._updateInfoTooltip();
