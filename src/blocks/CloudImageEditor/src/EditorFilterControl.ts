@@ -1,4 +1,5 @@
 import { modifiers } from '@uploadcare/cdn-url';
+import type { FilterName } from '@uploadcare/cdn-url/ops';
 import { html, type PropertyValues, type TemplateResult } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
@@ -40,7 +41,6 @@ declare global {
 }
 
 export class EditorFilterControl extends EditorButtonControl {
-  private _operation = '';
   private _filter = '';
   private _originalUrl = '';
   private _observer?: IntersectionObserver;
@@ -88,7 +88,6 @@ export class EditorFilterControl extends EditorButtonControl {
     }
     const previousValue = this._filter;
     this._filter = nextFilter;
-    this._operation = 'filter';
     this.isOriginal = nextFilter === FAKE_ORIGINAL_FILTER;
     this.icon = this.isOriginal ? 'original' : 'slider';
     this._iconSize = this.isOriginal ? 40 : 20;
@@ -107,15 +106,11 @@ export class EditorFilterControl extends EditorButtonControl {
     const quality = dpr >= 2 ? 'lightest' : 'normal';
     const filterValue = 100;
 
-    const transformations: Transformations = { ...this.editorController.get('*editorTransformations') };
-    // @ts-expect-error FIXME: fix this
-    transformations[this._operation] =
-      this._filter !== FAKE_ORIGINAL_FILTER
-        ? {
-            name: this._filter,
-            amount: filterValue,
-          }
-        : undefined;
+    const transformations: Transformations = {
+      ...this.editorController.get('*editorTransformations'),
+      filter:
+        this._filter !== FAKE_ORIGINAL_FILTER ? { name: this._filter as FilterName, amount: filterValue } : undefined,
+    };
     return editorPreviewUrl({
       originalUrl: this._originalUrl,
       transformations,

@@ -210,19 +210,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
    */
   private readonly _imgContainerRef = createRef<HTMLDivElement>();
 
-  private readonly _handleRetryNetwork = (): void => {
-    this._retryNetworkImages();
-  };
-
-  /** Descendant apply/cancel intents arrive as bubbling `uc-internal:*` events (the controller holds no callbacks). */
-  private readonly _onInternalApply = (e: CustomEvent<Transformations>): void => {
-    this._handleApply(e.detail);
-  };
-
-  private readonly _onInternalCancel = (): void => {
-    this._handleCancel();
-  };
-
   private _scheduleInitialization(): void {
     if (this._isInitialized || this._pendingInitUpdate) {
       return;
@@ -403,7 +390,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     }
   }
 
-  private _retryNetworkImages(): void {
+  private readonly _handleRetryNetwork = (): void => {
     const images = this.querySelectorAll('img');
     for (const img of images) {
       const originalSrc = img.src;
@@ -411,34 +398,30 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       img.src = originalSrc;
     }
     this._editorController.set('*networkProblems', false);
-  }
+  };
 
-  private _handleApply(transformations: Transformations): void {
-    if (!transformations) {
-      return;
-    }
-    const originalUrl = this._editorController.get('*originalUrl');
-    if (!originalUrl) {
-      this._log.warn('Original URL is null, cannot apply transformations');
-      return;
-    }
+  /** The `apply`/`change` event detail for `transformations`. */
+  private _result(originalUrl: string, transformations: Transformations): ApplyResult {
     const sourceOperations = this._editorController.get('*sourceOperations');
     // Edited in place rather than rebuilt: an operation the editor cannot model
     // keeps its original position, which matters to the CDN for a few pairs
     // (`stretch` applies to a following resize) — enforced by `editorAppliedUrl`
     // composing the operation list once for both `cdnUrl` and `cdnUrlModifiers`.
-    try {
-      const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, sourceOperations });
+    const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, sourceOperations });
+    return { originalUrl, cdnUrlModifiers, cdnUrl, transformations };
+  }
 
-      const eventData: ApplyResult = {
-        originalUrl,
-        cdnUrlModifiers,
-        cdnUrl,
-        transformations,
-      };
+  /** Descendant apply/cancel intents arrive as bubbling `uc-internal:*` events (the controller holds no callbacks). */
+  private readonly _handleApply = ({ detail: transformations }: CustomEvent<Transformations>): void => {
+    const originalUrl = this._editorController.get('*originalUrl');
+    if (!originalUrl) {
+      this._log.warn('Original URL is null, cannot apply transformations');
+      return;
+    }
+    try {
       this.dispatchEvent(
         new CustomEvent<ApplyResult>('apply', {
-          detail: eventData,
+          detail: this._result(originalUrl, transformations),
           bubbles: true,
           composed: true,
         }),
@@ -448,9 +431,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       return;
     }
     this.remove();
-  }
+  };
 
-  private _handleCancel(): void {
+  private readonly _handleCancel = (): void => {
     // Dispatch before removing — once detached the element has no ancestor
     // path, so bubbling listeners on a container/document would miss `cancel`.
     this.dispatchEvent(
@@ -460,7 +443,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       }),
     );
     this.remove();
-  }
+  };
 
   /** Resolve a CDN url through the configured secure-delivery proxy, if any. */
   protected proxyUrl(url: string): Promise<string> {
@@ -564,8 +547,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       ${unsafeSVG(svgIconsSprite)}
       <div
         class="uc-wrapper uc-wrapper_desktop"
-        @uc-internal:apply=${this._onInternalApply}
-        @uc-internal:cancel=${this._onInternalCancel}
+        @uc-internal:apply=${this._handleApply}
+        @uc-internal:cancel=${this._handleCancel}
       >
         <uc-presence-toggle class="uc-network_problems_splash" .visible=${showNetworkProblems}>
           <div class="uc-network_problems_content">
@@ -646,11 +629,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
-    if (changedProperties.has('uuid') && this.uuid) {
-      this._runTask(() => this.updateImage());
-    }
-
-    if (changedProperties.has('cdnUrl') && this.cdnUrl) {
+    if ((changedProperties.has('uuid') && this.uuid) || (changedProperties.has('cdnUrl') && this.cdnUrl)) {
       this._runTask(() => this.updateImage());
     }
   }
@@ -813,19 +792,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       if (Object.keys(transformations).length === 0) {
         return;
       }
-      const originalUrl = editorController.get('*originalUrl') as string;
-      const sourceOperations = editorController.get('*sourceOperations');
-      const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, sourceOperations });
-
-      const eventData: ApplyResult = {
-        originalUrl,
-        cdnUrlModifiers,
-        cdnUrl,
-        transformations,
-      };
       this.dispatchEvent(
         new CustomEvent<ApplyResult>('change', {
-          detail: eventData,
+          detail: this._result(editorController.get('*originalUrl') as string, transformations),
           bubbles: true,
           composed: true,
         }),

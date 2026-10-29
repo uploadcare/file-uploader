@@ -32,8 +32,6 @@ export class EditorSlider extends EditorBlock {
   public state = {
     operation: 'filter' as SliderOperation,
     filter: undefined as SliderFilter | undefined,
-    originalUrl: '',
-    disabled: false,
     min: 0,
     max: 100,
     value: 0,
@@ -117,17 +115,6 @@ export class EditorSlider extends EditorBlock {
     this.editorController.set('*colorPreview', null);
   }
 
-  public constructor() {
-    super();
-
-    this.subEditorKey('*originalUrl', (originalUrl: string | null) => {
-      if (!originalUrl) {
-        return;
-      }
-      this.state = { ...this.state, originalUrl };
-    });
-  }
-
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
@@ -144,7 +131,6 @@ export class EditorSlider extends EditorBlock {
   public override render() {
     return html`
       <uc-slider-ui
-        .disabled=${this.state.disabled}
         .min=${this.state.min}
         .max=${this.state.max}
         .defaultValue=${this.state.defaultValue}
