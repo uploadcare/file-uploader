@@ -1,7 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
+import { page } from 'vitest/browser';
+import type { UploadCtxProvider } from '@/index';
 import { IMAGE } from '~/tests/fixtures/files';
 import { recordEvents } from '~/tests/utils/event-recorder';
-import { expectActivity, expectModal, renderSolution, within } from '~/tests/utils/render-solution';
+import {
+  createInCtx,
+  expectActivity,
+  expectModal,
+  renderSolution,
+  type Solution,
+  waitForBlocks,
+  within,
+} from '~/tests/utils/render-solution';
+import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
 
 /**
@@ -149,5 +160,34 @@ describe('minimal: the upload list is the resting state', () => {
 
     await expectModal(root, 'start-from', 'open');
     expect(api.getCurrentActivity()).toBe('start-from');
+  });
+});
+
+/**
+ * As in v1, inline and minimal report their start screen with `activity-change` when they mount. The listener is on
+ * the provider before anything mounts, the way the docs attach it; the uploader joins the ctx first, as it does when
+ * its tag is defined before the provider's.
+ */
+describe.each<Solution>(['inline', 'minimal'])('%s: activity-change for the start screen', (solution) => {
+  const mount = async () => {
+    const ctxName = getCtxName();
+    const root = createInCtx<HTMLElement>(`uc-file-uploader-${solution}`, ctxName);
+    const config = createInCtx('uc-config', ctxName, { pubkey: 'demopublickey', 'quality-insights': 'false' });
+    const provider = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
+    const recorder = recordEvents(provider);
+    page.render(<div ctx-name={ctxName}></div>);
+    const host = document.querySelector(`div[ctx-name="${ctxName}"]`)!;
+    host.append(root, config);
+    host.append(provider);
+    await waitForBlocks(root, provider);
+    return { api: provider.getAPI(), recorder };
+  };
+
+  it('fires it once the uploader mounts', async () => {
+    const { api, recorder } = await mount();
+
+    expect(api.getCurrentActivity()).toBe('start-from');
+    // Every block has joined the ctx, so whatever mounting reports has been reported.
+    expect(recorder.detailsOf('activity-change')).toEqual([{ activity: 'start-from' }]);
   });
 });
