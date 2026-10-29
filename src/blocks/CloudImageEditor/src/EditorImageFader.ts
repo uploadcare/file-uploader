@@ -4,6 +4,7 @@ import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { debounced } from '../../../lit/rate-limited-method';
+import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { batchPreloadImages } from '../../../utils/preloadImage.js';
 import type { CloudImageEditorController } from './CloudImageEditorController';
 import { EditorBlock } from './editor-context';
@@ -110,33 +111,37 @@ export class EditorImageFader extends EditorBlock {
   @property({ attribute: false })
   public imageSize: ImageSize | null = null;
 
-  // Last-seen controller values, to detect real per-key changes in the coarse
-  // `subscribeEditor` reaction (it fires on ANY state change).
+  // Last-seen controller values: `_syncFromState` runs for a change of any key
+  // it watches, so it diffs to tell which one changed.
   private _lastOriginalUrl: string | null = null;
   private _lastColorPreview: ColorPreview = null;
   private _lastTransformations?: Transformations;
   private _shown = false;
   // Guards the reaction against re-entering itself: the fader's own methods
-  // write state (`*loadingImages`, `*networkProblems`) and `set` notifies
-  // synchronously (same lesson as EditorImageCropper).
+  // write state (`loadingImages`, `networkProblems`) and a controller write
+  // notifies observers synchronously (same lesson as EditorImageCropper).
   private _reacting = false;
 
-  public constructor() {
-    super();
-
-    // Controller-dependent setup (mirrors EditorImageCropper): the fader now
-    // drives itself from state instead of the toolbar/root/slider calling its
-    // methods. It reacts to `*tabId`/`*originalUrl`/`*editorTransformations`/
-    // `*colorPreview` (+ the `imageSize` prop) and calls its own unchanged
-    // activate/set/deactivate/setTransformations.
-    this.onEditorAttach(() => {
-      const controller = this.editorController;
-      this._lastOriginalUrl = controller.originalUrl;
-      this._lastColorPreview = controller.colorPreview;
-      this.subscribeEditor(() => this._syncFromState());
-      // A (re)attach can find the fader ready to show already — e.g. after an activation aborted by a reconnect.
-      this._syncFromState();
-    });
+  /**
+   * Controller-dependent setup (mirrors EditorImageCropper): the fader drives
+   * itself from state instead of the toolbar/root/slider calling its methods.
+   * It reacts to `tabId`/`originalUrl`/`editorTransformations`/`colorPreview`
+   * (+ the `imageSize` prop, and `sourceOperations`, which the images it loads
+   * are built from) and calls its own activate/set/deactivate/setTransformations.
+   * @internal
+   */
+  @subscription()
+  protected _watchState(): Unsubscribe[] {
+    const controller = this.editorController;
+    this._lastOriginalUrl = controller.originalUrl;
+    this._lastColorPreview = controller.colorPreview;
+    const sync = () => this._syncFromState();
+    const unsubscribers = (
+      ['tabId', 'originalUrl', 'editorTransformations', 'colorPreview', 'sourceOperations'] as const
+    ).map((key) => controller.observe(key, sync));
+    // A (re)attach can find the fader ready to show already — e.g. after an activation aborted by a reconnect.
+    this._syncFromState();
+    return unsubscribers;
   }
 
   public override connectedCallback(): void {
@@ -208,8 +213,8 @@ export class EditorImageFader extends EditorBlock {
 
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
-    // `imageSize` is a prop, not controller state, so `subscribeEditor` won't
-    // fire for it — re-evaluate visibility when the root updates it.
+    // `imageSize` is a prop, not controller state, so no controller observer
+    // fires for it — re-evaluate visibility when the root updates it.
     if (changedProperties.has('imageSize')) {
       this._syncFromState();
     }

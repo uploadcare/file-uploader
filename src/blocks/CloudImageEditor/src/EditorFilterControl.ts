@@ -6,6 +6,7 @@ import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { isAbortError } from '../../../abstract/di/Lifetime';
+import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { operationsFromModifiers } from '../../../utils/cdn/operations';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
@@ -128,33 +129,42 @@ export class EditorFilterControl extends EditorButtonControl {
     }
   }
 
-  public constructor() {
-    super();
-
-    // Cross-cutting reactions — fine to wire once in the constructor
-    // (`onEditorAttach`/`subEditorKey` re-run on every editor-controller
-    // (re)attach); the `isConnected`-gated one-time setup below (observer
-    // creation, initial observe/schedule, label init) needs the `filter`
-    // property (set via template binding) already applied, so it stays in
-    // `connectedCallback` — same timing the old `initCallback` relied on.
-    this.subEditorKey('originalUrl', (nextUrl: string | null) => {
-      this._originalUrl = nextUrl ?? '';
-      if (!this.isOriginal && this._originalUrl && this.isConnected && !this._previewImage) {
-        this._observer?.observe(this);
-        this._schedulePreviewVisibilityCheck();
-      }
-    });
-
-    this.subEditorKey('networkProblems', (networkProblems: boolean) => {
-      if (networkProblems) {
-        return;
-      }
-      if (this._previewImage) {
-        this.runTask(() => this._loadPreview());
-      } else {
-        this._schedulePreviewVisibilityCheck();
-      }
-    });
+  // Cross-cutting reactions, re-wired on every editor-controller (re)attach;
+  // the `isConnected`-gated one-time setup (observer creation, initial
+  // observe/schedule, label init) needs the `filter` property (set via
+  // template binding) already applied, so it stays in `connectedCallback` —
+  // same timing the old `initCallback` relied on.
+  /** @internal */
+  @subscription()
+  protected _watchState(): Unsubscribe[] {
+    const controller = this.editorController;
+    return [
+      controller.observe(
+        'originalUrl',
+        (nextUrl) => {
+          this._originalUrl = nextUrl ?? '';
+          if (!this.isOriginal && this._originalUrl && this.isConnected && !this._previewImage) {
+            this._observer?.observe(this);
+            this._schedulePreviewVisibilityCheck();
+          }
+        },
+        { immediate: true },
+      ),
+      controller.observe(
+        'networkProblems',
+        (networkProblems) => {
+          if (networkProblems) {
+            return;
+          }
+          if (this._previewImage) {
+            this.runTask(() => this._loadPreview());
+          } else {
+            this._schedulePreviewVisibilityCheck();
+          }
+        },
+        { immediate: true },
+      ),
+    ];
   }
 
   public override connectedCallback(): void {

@@ -1,5 +1,6 @@
 import { html, type TemplateResult } from 'lit';
 import { property } from 'lit/decorators.js';
+import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropAspectRatio } from './types';
 
@@ -54,14 +55,18 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
   @property({ attribute: false })
   public aspectRatio: CropAspectRatio | null = null;
 
-  public constructor() {
-    super();
-
-    this.subEditorKey('currentAspectRatio', (opt: CropAspectRatio | null) => {
-      this.active =
-        (opt && opt.id === this.aspectRatio?.id) ||
-        (opt?.width === this.aspectRatio?.width && opt?.height === this.aspectRatio?.height);
-    });
+  /** @internal */
+  @subscription()
+  protected _syncActive(): Unsubscribe {
+    return this.editorController.observe(
+      'currentAspectRatio',
+      (opt) => {
+        this.active =
+          (opt && opt.id === this.aspectRatio?.id) ||
+          (opt?.width === this.aspectRatio?.width && opt?.height === this.aspectRatio?.height);
+      },
+      { immediate: true },
+    );
   }
 
   protected override onClick(): void {

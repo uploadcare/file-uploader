@@ -6,6 +6,7 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { when } from 'lit/directives/when.js';
 import { debounced } from '../../../lit/rate-limited-method';
+import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { debounce } from '../../../utils/debounce';
 import { batchPreloadImages } from '../../../utils/preloadImage';
 import type { FilterSelectEvent } from './EditorFilterControl';
@@ -331,27 +332,39 @@ export class EditorToolbar extends EditorBlock {
     }
   }
 
+  /** @internal */
+  @subscription()
+  protected _watchState(): Unsubscribe[] {
+    const controller = this.editorController;
+    return [
+      controller.observe(
+        'editorTransformations',
+        (editorTransformations) => {
+          const appliedFilter = editorTransformations?.filter?.name;
+          if (this._currentFilter !== appliedFilter) {
+            this._currentFilter = appliedFilter ?? '';
+          }
+          this._updateInfoTooltip();
+          this.runTask(() => this._preloadEditedImage());
+          // The fader reacts to `editorTransformations` itself.
+        },
+        { immediate: true },
+      ),
+      controller.observe(
+        'tabId',
+        (tabId) => {
+          this._applyTabState(tabId);
+          this._updateInfoTooltip();
+        },
+        { immediate: true },
+      ),
+      // The fader self-deactivates on an `originalUrl` change (see EditorImageFader).
+      controller.observe('loadingImages', (count) => this._debouncedShowLoader(count > 0), { immediate: true }),
+    ];
+  }
+
   public constructor() {
     super();
-
-    this.subEditorKey('editorTransformations', (editorTransformations) => {
-      const appliedFilter = editorTransformations?.filter?.name;
-      if (this._currentFilter !== appliedFilter) {
-        this._currentFilter = appliedFilter ?? '';
-      }
-      this._updateInfoTooltip();
-      this.runTask(() => this._preloadEditedImage());
-      // The fader reacts to `*editorTransformations` itself now.
-    });
-
-    this.subEditorKey('tabId', (tabId) => {
-      this._applyTabState(tabId);
-      this._updateInfoTooltip();
-    });
-
-    // The fader self-deactivates on `*originalUrl` change (see EditorImageFader).
-
-    this.subEditorKey('loadingImages', (count) => this._debouncedShowLoader(count > 0));
 
     this.onEditorAttach(() => {
       this._updateInfoTooltip();
@@ -372,8 +385,8 @@ export class EditorToolbar extends EditorBlock {
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
-    // Side effects reacting to the root-passed props (formerly `subEditorKey`
-    // subscriptions on the controller) — same transitions → same effects.
+    // Side effects reacting to the root-passed props (once controller
+    // subscriptions) — same transitions → same effects.
     if (changedProperties.has('tabList')) {
       const ctrl = this.editorControllerOrNull;
       if (ctrl && this.tabList.length > 0 && !this.tabList.includes(ctrl.tabId)) {

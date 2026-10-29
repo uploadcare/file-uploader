@@ -161,7 +161,6 @@ export class CloudImageEditorController {
    */
   public servicesChanged(): void {
     this.#servicesRevision.set(++this.#revision);
-    this.#state.notify();
   }
 
   /** Locale lookup — same contract as `ChildBlock.l10n`/`createL10n` (key fallback, template variables, pluralization upstream). */
@@ -268,18 +267,7 @@ export class CloudImageEditorController {
     return dispose;
   }
 
-  /** Coarse subscribe — fires on any state change and on `servicesChanged`, not per-key. */
-  public subscribe(listener: () => void): () => void {
-    const unsubscribe = this.#state.subscribe(listener);
-    const dispose = () => {
-      unsubscribe();
-      this.#observers.delete(dispose);
-    };
-    this.#observers.add(dispose);
-    return dispose;
-  }
-
-  /** Release every subscriber. The state stays: a reconnected root reuses it. */
+  /** Release every observer. The state stays: a reconnected root reuses it. */
   public destroy(): void {
     for (const dispose of [...this.#observers]) {
       dispose();
