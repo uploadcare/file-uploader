@@ -1,5 +1,5 @@
+import { EDITOR_SHARED_STRINGS } from '../../../abstract/editor-shared-strings';
 import { applyTemplateData } from '../../../utils/template-utils';
-import { EDITOR_SHARED_STRINGS } from './editor-shared-strings';
 import { ALL_FILTERS, type FilterId } from './toolbar-constants';
 
 /** Every key the editor's own locale holds: the standalone editor resolves no other. */
