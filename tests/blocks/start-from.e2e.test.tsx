@@ -26,7 +26,7 @@ import '../../types/jsx';
 // src/abstract/UploaderPublicApi.ts). A bare `addFileFromUrl()` call left
 // `uc-start-from` active with no navigation (verified empirically). The
 // actual v1 driver that navigates away from `start-from` once a file exists
-// is `UploaderPublicApi.initFlow()` (src/abstract/UploaderPublicApi.ts:312),
+// is `UploaderPublicApi.initFlow()`,
 // which — when the upload collection is non-empty — calls
 // `router.navigate(ACTIVITY_TYPES.UPLOAD_LIST)` directly; this is the same
 // call the "Upload files" button issues (see file-item.e2e.test.tsx's

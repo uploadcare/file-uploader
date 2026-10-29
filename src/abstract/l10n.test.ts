@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { LocaleController } from './controllers/LocaleController';
 import { type CheckedL10nFunction, createL10n, type PlainText } from './l10n';
 
-// M-god step 7: `createL10n` reads the resolved dictionary directly from a
-// `LocaleController` (was the `*l10n/*` PubSub facade). These specs pin the
+// `createL10n` reads the resolved dictionary directly from a
+// `LocaleController`. These specs pin the
 // key-fallback, empty-string, template-variable, and live-read contracts.
 describe('createL10n (direct LocaleController)', () => {
   const setup = () => {

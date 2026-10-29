@@ -21,10 +21,8 @@ import { containerOf, hasCtx } from '../utils/registry';
 import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
 
-// M-god step 8e dissolved the `UploaderController` facade; the registry/ctx now
-// resolve the ctx's `ControllerContainer`. This view reproduces the facade's
-// read surface off the container, so the existing `controller.X` assertions
-// below stay identical (each `.X` resolves the same container-owned instance).
+// Named handles onto the ctx's `ControllerContainer` (each `.X` resolves the
+// same container-owned instance).
 const ctrlView = (container: ControllerContainer) => ({
   get eventEmitter() {
     return container.get(EventEmitter);
@@ -97,9 +95,7 @@ describe('instance lifecycle (config-only ctx)', () => {
     expect(controller.telemetryManager).toBeTruthy();
 
     // The eagerly-constructed managers are present on the container the moment
-    // the ctx-creation seam (`ensureUploaderCtx`) ran — no v1 `LitBlock`
-    // required. (These were the `*`-keyed re-exposers before M-god step 9c-2;
-    // the container is now the sole home.)
+    // the ctx-creation seam (`ensureUploaderCtx`) ran.
     expect(container.has(EventEmitter)).toBe(true);
     expect(container.has(LocaleManager)).toBe(true);
     expect(container.has(A11y)).toBe(true);
@@ -505,10 +501,8 @@ describe('instance lifecycle (container-owned single-instance pins)', () => {
     const container = containerOf(ctxName);
 
     // The full roster of ctx-scoped controllers a live uploader composition
-    // constructs. After M-god step 9c-2 the container is the SOLE home for
-    // these — there is no parallel `*`-keyed re-exposer to keep in sync, so
-    // "no re-shadowing" reduces to: each token resolves, and resolves to the
-    // same cached instance every time.
+    // constructs: each token resolves, and resolves to the same cached instance
+    // every time.
     const tokens: Token<unknown>[] = [
       EventEmitter,
       LocaleManager,

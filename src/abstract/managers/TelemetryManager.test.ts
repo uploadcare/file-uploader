@@ -600,8 +600,7 @@ describe('TelemetryManager', () => {
 
   // `sendEventError` is a terminal error SINK (it reports failures from async
   // upload/validator/resolver handlers), so it must never throw back into the
-  // caller — that guarantee moved here from the removed `UploadHostBridge`
-  // telemetry sinks. When the underlying send throws, it swallows and logs via
+  // caller. When the underlying send throws, it swallows and logs via
   // the per-ctx gated debug tier rather than rethrowing.
   it('sendEventError never rethrows when the underlying send throws, logging via the gated debug', () => {
     const { manager, config } = setup();

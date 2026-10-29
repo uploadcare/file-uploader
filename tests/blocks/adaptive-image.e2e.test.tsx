@@ -55,8 +55,8 @@ describe('uc-img url building', () => {
 
   // QUIRK(uc-img): adaptive-image.mdx gives every setting both a CSS context property and an HTML attribute, but the
   // "number flag" ones cannot be switched off through the attribute. `$$('hi-res-support')` returns the *string*
-  // `"0"` for the attribute form and the *number* `0` for the CSS one, and `_getSrcset` only tests truthiness
-  // (ImgBase.ts:241) — so `hi-res-support="0"` still emits the 2x entry. The same applies to every documented number
+  // `"0"` for the attribute form and the *number* `0` for the CSS one, and `ImgBase._densities` only tests
+  // truthiness — so `hi-res-support="0"` still emits the 2x entry. The same applies to every documented number
   // flag: dev-mode, lazy, intersection, ultra-res-support, progressive, is-preview-blur.
   // Pinned as current behaviour, not endorsed.
   it('ignores the attribute form of the same switch', async () => {

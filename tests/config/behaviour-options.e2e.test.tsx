@@ -12,7 +12,7 @@ import '~/types/jsx';
  * `imageShrink`, `pasteScope` and `validationConcurrency`.
  *
  * `dynamicButtonShowFirstIcon` is deliberately not here. It only takes effect once `PrimaryAction` has a resolved
- * single source — with none, the default upload icon renders regardless (PrimaryAction.ts:155) — and driving the
+ * single source — with none, the default upload icon renders regardless (`PrimaryAction`'s icon render) — and driving the
  * button to that state needs the dynamic-button attribute set at parse time plus the plugin manager ready. A test
  * that skips that setup asserts the wrong branch and passes for the wrong reason.
  */
@@ -47,7 +47,7 @@ describe.skipIf(isLive)('imageShrink', () => {
 
   it('leaves the file alone when the setting cannot be parsed', async () => {
     // The plugin warns and passes the file through rather than failing the upload
-    // (src/plugins/imageShrinkPlugin.ts:17).
+    // (`imageShrinkPlugin`'s `beforeUpload` hook).
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect((await storedFile('not-a-size')).bytes).toEqual(await original());
   });

@@ -138,7 +138,7 @@ describe('disconnect and reconnect', () => {
     const parent = uploader.parentElement as HTMLElement;
     uploader.remove();
     parent.appendChild(uploader);
-    // A ctx teardown, had one been scheduled, lands in a `setTimeout(0)` (LitBlock.ts:166). Timers of equal delay run
+    // A ctx teardown, had one been scheduled, lands in a `setTimeout(0)` (`ChildBlock.disconnectedCallback`). Timers of equal delay run
     // in the order they were set, so this one ends after it.
     await afterPendingZeroTimers();
 
