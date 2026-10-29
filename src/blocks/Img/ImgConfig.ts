@@ -22,8 +22,8 @@ export class ImgConfig extends RegisterableElementMixin(LitElement) {
 
   public constructor() {
     super();
-    for (const prop in PROPS_MAP) {
-      this._state[CSS_PREF + prop] = (PROPS_MAP[prop as ImgPropKey] as PropConfig).default || '';
+    for (const [prop, config] of Object.entries<PropConfig>(PROPS_MAP)) {
+      this._state[CSS_PREF + prop] = config.default || '';
     }
   }
 
