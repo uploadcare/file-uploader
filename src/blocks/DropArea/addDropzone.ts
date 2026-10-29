@@ -1,19 +1,13 @@
 import { getDropItems } from './getDropItems';
 
-export const DropzoneState = Object.freeze({
-  ACTIVE: 'active',
-  INACTIVE: 'inactive',
-  NEAR: 'near',
-  OVER: 'over',
-} as const);
-
-export type DropzoneStateValue = (typeof DropzoneState)[keyof typeof DropzoneState];
+/** The drag state, written as is to the drop area's `drag-state` attribute. */
+export type DropzoneState = 'active' | 'inactive' | 'near' | 'over';
 
 type DropItems = Awaited<ReturnType<typeof getDropItems>>;
 
 type DropzoneDescriptor = {
   element: HTMLElement;
-  onChange: (state: DropzoneStateValue) => void;
+  onChange: (state: DropzoneState) => void;
   onItems: (items: DropItems) => void;
   shouldIgnore: () => boolean;
 };
@@ -36,10 +30,10 @@ export function addDropzone(desc: DropzoneDescriptor): () => void {
   const { signal } = listeners;
 
   const body = document.body;
-  let state: DropzoneStateValue = DropzoneState.INACTIVE;
+  let state: DropzoneState = 'inactive';
 
-  const setState = (newState: DropzoneStateValue) => {
-    if (desc.shouldIgnore() && newState !== DropzoneState.INACTIVE) {
+  const setState = (newState: DropzoneState) => {
+    if (desc.shouldIgnore() && newState !== 'inactive') {
       return;
     }
     if (state !== newState) {
@@ -52,24 +46,24 @@ export function addDropzone(desc: DropzoneDescriptor): () => void {
 
   const onResetEvent = () => {
     eventCounter = 0;
-    setState(DropzoneState.INACTIVE);
+    setState('inactive');
   };
   const onDragEnter = () => {
     eventCounter += 1;
-    if (state === DropzoneState.INACTIVE) {
-      setState(DropzoneState.ACTIVE);
+    if (state === 'inactive') {
+      setState('active');
     }
   };
   const onDragLeave = () => {
     eventCounter -= 1;
     if (!isDragging()) {
-      setState(DropzoneState.INACTIVE);
+      setState('inactive');
     }
   };
   const onDrop = (event: DragEvent) => {
     event.preventDefault();
     eventCounter = 0;
-    setState(DropzoneState.INACTIVE);
+    setState('inactive');
   };
 
   const onDragOver = (event: DragEvent) => {
@@ -93,11 +87,11 @@ export function addDropzone(desc: DropzoneDescriptor): () => void {
 
     if (isOver && isNearest) {
       event.preventDefault();
-      setState(DropzoneState.OVER);
+      setState('over');
     } else if (isNear && isNearest) {
-      setState(DropzoneState.NEAR);
+      setState('near');
     } else {
-      setState(DropzoneState.ACTIVE);
+      setState('active');
     }
   };
 
@@ -115,7 +109,7 @@ export function addDropzone(desc: DropzoneDescriptor): () => void {
       return;
     }
     desc.onItems(items);
-    setState(DropzoneState.INACTIVE);
+    setState('inactive');
   };
 
   body.addEventListener('drop', onDrop, { signal });
