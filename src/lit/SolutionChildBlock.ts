@@ -11,12 +11,10 @@ import { ClipboardController } from './ClipboardController';
 import { ensureUploaderScope } from './ensureUploaderScope';
 
 /**
- * v2 `ChildBlock`-based equivalent of `LitSolutionBlock` (v1). A solution tag
- * (`<uc-file-uploader-regular|minimal|inline>`, `<uc-cloud-image-editor>`)
- * extends this to get the same boot-time registrations `LitSolutionBlock`
- * performed in `initCallback`, re-run on every controller adoption
- * (`controllerReady` fires on initial adoption and on re-adoption, matching
- * v1's re-`initCallback`-on-reconnect behavior).
+ * Base of the solution tags (`<uc-file-uploader-regular|minimal|inline>`,
+ * `<uc-cloud-image-editor>`): the boot-time registrations, re-run on every
+ * controller adoption (`controllerReady` fires on initial adoption and on
+ * re-adoption).
  */
 export abstract class SolutionChildBlock extends ChildBlock {
   public static override styleAttrs = ['uc-wgt-common'];

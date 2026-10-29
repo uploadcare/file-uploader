@@ -32,15 +32,14 @@ export function WithApi<T extends abstract new (...args: any[]) => ChildBlock>(B
     /** Documented event-type constants (same as former UploadCtxProvider.EventType). */
     public static EventType = EventType;
 
-    // Always-bound after `ensureUploaderScope` — `@inject` throws pre-adoption,
-    // matching the v1 getters / prior UploadCtxProvider contract.
+    // Always-bound after `ensureUploaderScope` — `@inject` throws pre-adoption.
     @inject(EventBus) private readonly _eventBus!: EventBus;
     @inject(UploadCollectionController) private readonly _uploadCollection!: UploadCollectionController;
     @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
     protected override controllerReady(container: ControllerContainer): void {
       super.controllerReady(container);
-      // Idempotent attach so `getAPI()` works right after mount (v1 parity).
+      // Idempotent attach so `getAPI()` works right after mount.
       ensureUploaderScope(container);
     }
 
@@ -56,17 +55,17 @@ export function WithApi<T extends abstract new (...args: any[]) => ChildBlock>(B
       });
     }
 
-    /** Same contract as v1 `LitUploaderBlock.getAPI()`. */
+    /** This ctx's public API. */
     public getAPI(): UploaderPublicApi {
       return this._api;
     }
 
-    /** Same contract as v1 `LitUploaderBlock.get api()`. */
+    /** This ctx's public API, as a property. */
     public get api(): UploaderPublicApi {
       return this._api;
     }
 
-    /** Same contract as v1 `LitUploaderBlock.get uploadCollection()`. */
+    /** This ctx's upload collection. */
     public get uploadCollection(): UploadCollectionController {
       return this._uploadCollection;
     }
