@@ -9,7 +9,7 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { RegisteredActivityType } from '../../abstract/activity-constants';
 import { type PluginLabel, pluginLabelKey } from '../../abstract/managers/plugin/PluginTypes';
-import { getScrollLock } from '../../utils/scroll-lock';
+import { acquireScrollLock } from '../../utils/scroll-lock';
 
 export class Modal extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
@@ -139,7 +139,7 @@ export class Modal extends ChildBlock {
     // reactive trigger) — the router-slot signal is what re-runs this.
     const isForeground = this._router?.modal === (this.id as RegisteredActivityType);
     if (isForeground && this._config.get('modalScrollLock')) {
-      this._releaseScrollLock ??= getScrollLock(document).acquire();
+      this._releaseScrollLock ??= acquireScrollLock();
     } else {
       this._releaseScrollLock?.();
       this._releaseScrollLock = null;
