@@ -10,7 +10,6 @@ import type { AriaRole } from '../../types/dom';
 import './source-btn.css';
 
 import '../Icon/Icon';
-import { pluginLabelKey } from '../../abstract/managers/plugin/PluginTypes';
 import type { SourceButtonConfig } from '../../abstract/sources';
 
 export type { SourceButtonConfig };
@@ -51,7 +50,7 @@ export class SourceBtn extends ChildBlock {
 
   public override render() {
     const { source } = this;
-    const label = source?.label ? this.l10n(pluginLabelKey(source.label)) : '';
+    const label = this.pluginLabel(source?.label);
     return html`
       <button
         aria-label=${label}

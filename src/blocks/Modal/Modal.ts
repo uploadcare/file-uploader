@@ -8,7 +8,7 @@ import { property } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { RegisteredActivityType } from '../../abstract/activity-constants';
-import { type PluginLabel, pluginLabelKey } from '../../abstract/managers/plugin/PluginTypes';
+import type { PluginLabel } from '../../abstract/managers/plugin/PluginTypes';
 import { acquireScrollLock } from '../../utils/scroll-lock';
 
 export class Modal extends ChildBlock {
@@ -160,7 +160,7 @@ export class Modal extends ChildBlock {
 
   public override render() {
     return html`
-  <dialog data-testid="dialog" aria-label=${ifDefined(this.dialogLabel ? this.l10n(pluginLabelKey(this.dialogLabel)) : undefined)} ${ref(this.dialogEl)} @close=${() => this.closeDialog()} @mousedown=${this._handleDialogMouseDown} @mouseup=${this._handleDialogMouseUp}>
+  <dialog data-testid="dialog" aria-label=${ifDefined(this.pluginLabel(this.dialogLabel) || undefined)} ${ref(this.dialogEl)} @close=${() => this.closeDialog()} @mousedown=${this._handleDialogMouseDown} @mouseup=${this._handleDialogMouseUp}>
     ${this.yield('')}
   </dialog>
 `;

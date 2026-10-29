@@ -16,7 +16,6 @@ import './primary-action.css';
 import '../Icon/Icon';
 import '../Thumb/Thumb';
 import type { L10nKey } from '../../abstract/l10n';
-import { pluginLabelKey } from '../../abstract/managers/plugin/PluginTypes';
 
 export class PrimaryAction extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-primary-action'];
@@ -95,7 +94,7 @@ export class PrimaryAction extends ChildBlock {
       return '';
     }
     const action = PrimaryAction.SOURCE_ACTION[source.id];
-    const label = source.label ? this.l10n(pluginLabelKey(source.label)) : '';
+    const label = this.pluginLabel(source.label);
     return this.l10n(action ?? 'get-from', { source: action ? label.toLowerCase() : label });
   }
 
