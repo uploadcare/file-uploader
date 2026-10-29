@@ -3,7 +3,6 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { ConfigController } from '@/abstract/controllers/ConfigController';
 import { RouterController } from '@/abstract/controllers/RouterController';
-import { ControllerContainer } from '@/abstract/di/ControllerContainer';
 import { UploaderRegistry } from '@/abstract/UploaderRegistry';
 import type { Config, UploadCtxProvider } from '@/index.ts';
 import { ChildBlock } from '@/lit/ChildBlock';
@@ -129,13 +128,12 @@ describe('ChildBlock', () => {
 
   it('adopts a container already registered under its ctx-name (pre-existing registry entry)', async () => {
     // A `ControllerContainer` can already be registered for a ctx-name before
-    // the block connects — e.g. registered directly via `UploaderRegistry`, or
+    // the block connects — e.g. created directly via `UploaderRegistry`, or
     // by a sibling that got there first. The block must adopt that existing
     // container (its `whenAvailable` watch fires synchronously with it) rather
     // than gating forever or clobbering it with a second one.
     const ctxName = getCtxName();
-    const container = new ControllerContainer();
-    UploaderRegistry.register(ctxName, container);
+    const container = UploaderRegistry.ensure(ctxName);
     expect(hasCtx(ctxName)).toBe(true);
 
     const child = append('test-child-block', { 'ctx-name': ctxName });
@@ -485,8 +483,7 @@ describe('ChildBlock', () => {
 /**
  * M9o Task 3: unified consumer-refcount teardown. A ctx dies only when BOTH
  * halves release it — `*blocksRegistry` empty/absent (v1 `LitBlock`s) AND
- * `UploaderRegistry.hasConsumers` false (v2 `ChildBlock`s watching via
- * `whenAvailable`). Each `it` below is one named interleaving from the task
+ * no v2 `ChildBlock` still watching it via `whenAvailable`. Each `it` below is one named interleaving from the task
  * brief.
  */
 describe('mixed lifecycle (v1 blocks + ChildBlock on one ctx)', () => {
