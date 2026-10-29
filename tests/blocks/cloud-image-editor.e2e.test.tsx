@@ -388,6 +388,24 @@ describe('uc-cloud-image-editor', () => {
       await expect.poll(() => splash(element)?.visible).toBe(false);
       await expect.poll(() => activeClass(element.querySelector('uc-editor-image-cropper'))).toContain('uc-active');
     });
+
+    it('drops the network problems screen when a new image loads', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      let offline = true;
+      emulatorSession().on('GET /:uuid/-/json/', () =>
+        offline ? Response.error() : Response.json({ width: 640, height: 480 }),
+      );
+      const { element } = renderEditor();
+
+      await expect.poll(() => splash(element)?.visible).toBe(true);
+
+      offline = false;
+      element.setAttribute('uuid', DEMO_IMAGE_UUID);
+
+      await expect.poll(() => cropperSize(element)?.width).toBe(640);
+      await expect.poll(() => splash(element)?.visible).toBe(false);
+      await expect.poll(() => activeClass(element.querySelector('uc-editor-image-cropper'))).toContain('uc-active');
+    });
   });
 
   describe.skipIf(isLive)('while the cropper image loads', () => {
