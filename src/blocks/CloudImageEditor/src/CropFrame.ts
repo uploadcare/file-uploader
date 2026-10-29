@@ -118,21 +118,21 @@ export class CropFrame extends EditorBlock {
       return;
     }
 
-    const mask = createSvgNode('mask', { id: this._backdropMaskId }) as SVGMaskElement;
+    const mask = createSvgNode('mask', { id: this._backdropMaskId });
     const maskRectOuter = createSvgNode('rect', {
       x: 0,
       y: 0,
       width: '100%',
       height: '100%',
       fill: 'white',
-    }) as SVGRectElement;
+    });
     const maskRectInner = createSvgNode('rect', {
       x,
       y,
       width,
       height,
       fill: 'black',
-    }) as SVGRectElement;
+    });
     mask.appendChild(maskRectOuter);
     mask.appendChild(maskRectInner);
 
@@ -484,7 +484,7 @@ export class CropFrame extends EditorBlock {
       return;
     }
     this._pendingMaskHref = null;
-    this._frameImage = svg.appendChild(createSvgNode('image', { href, class: 'uc-cloud-mask' }) as SVGImageElement);
+    this._frameImage = svg.appendChild(createSvgNode('image', { href, class: 'uc-cloud-mask' }));
   }
 
   private _updateMask(): void {

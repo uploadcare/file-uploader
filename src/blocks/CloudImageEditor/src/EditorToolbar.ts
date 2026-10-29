@@ -134,15 +134,15 @@ export class EditorToolbar extends EditorBlock {
 
     if (controller.tabId === TabId.FILTERS) {
       visible = true;
-      if (this._currentFilter && transformations?.filter?.name === this._currentFilter) {
-        const value = transformations?.filter?.amount || 100;
+      if (this._currentFilter && transformations.filter?.name === this._currentFilter) {
+        const value = transformations.filter?.amount || 100;
         text = `${this._currentFilter} ${value}`;
       } else {
         text = controller.l10n(FAKE_ORIGINAL_FILTER);
       }
     } else if (this.showSubToolbar && controller.tabId === TabId.TUNING && currentOperation) {
       visible = true;
-      const value = transformations?.[currentOperation] || COLOR_OPERATIONS_CONFIG[currentOperation].zero;
+      const value = transformations[currentOperation] || COLOR_OPERATIONS_CONFIG[currentOperation].zero;
       text = `${controller.l10n(currentOperation)} ${value}`;
     }
     if (visible) {
@@ -339,7 +339,7 @@ export class EditorToolbar extends EditorBlock {
       controller.observe(
         'editorTransformations',
         (editorTransformations) => {
-          const appliedFilter = editorTransformations?.filter?.name;
+          const appliedFilter = editorTransformations.filter?.name;
           if (this._currentFilter !== appliedFilter) {
             this._currentFilter = appliedFilter ?? '';
           }

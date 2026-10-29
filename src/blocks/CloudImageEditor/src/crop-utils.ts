@@ -28,7 +28,10 @@ export function setSvgNodeAttrs(node: SVGElement, attrs: SvgAttributes): void {
   }
 }
 
-export function createSvgNode(name: string, attrs: SvgAttributes = {}): SVGElement {
+export function createSvgNode<K extends keyof SVGElementTagNameMap>(
+  name: K,
+  attrs: SvgAttributes = {},
+): SVGElementTagNameMap[K] {
   const node = document.createElementNS('http://www.w3.org/2000/svg', name);
   setSvgNodeAttrs(node, attrs);
   return node;

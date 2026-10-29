@@ -652,9 +652,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         // Throws for anything that is not a single stored file; this lifecycle
         // path tolerates a missing crop, so it just leaves `closest` at null.
         const parsed = parseFileUrl(this.cdnUrl);
-        const transformations = operationsToTransformations(parsed.operations) as Transformations;
+        const transformations = operationsToTransformations(parsed.operations);
 
-        if (Array.isArray(transformations?.crop?.dimensions)) {
+        if (Array.isArray(transformations.crop?.dimensions)) {
           const [w, h] = transformations.crop.dimensions;
           closest = getClosestAspectRatio(w, h, list, 0.1);
         }
@@ -706,7 +706,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         return;
       }
       editorController.originalUrl = originalUrl;
-      editorController.editorTransformations = operationsToTransformations(parsed.operations) as Transformations;
+      editorController.editorTransformations = operationsToTransformations(parsed.operations);
       editorController.sourceOperations = parsed.operations;
     } else if (this.uuid) {
       const cdnCname = editorController.getConfig('cdnCname');
