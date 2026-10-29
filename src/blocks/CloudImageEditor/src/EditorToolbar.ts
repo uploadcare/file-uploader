@@ -128,7 +128,7 @@ export class EditorToolbar extends EditorBlock {
   private _updateInfoTooltip(): void {
     const controller = this.editorController;
     const transformations = controller.editorTransformations;
-    const currentOperation = this._currentOperation as keyof typeof COLOR_OPERATIONS_CONFIG | null;
+    const currentOperation = this._currentOperation || null;
     let text = '';
     let visible = false;
 

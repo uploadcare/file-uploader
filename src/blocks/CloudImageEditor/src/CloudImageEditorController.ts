@@ -3,6 +3,7 @@ import type { CdnOperation } from '@uploadcare/cdn-url';
 import { type ObserveOptions, SignalMap } from '../../../abstract/di/SignalMap';
 import type { ConfigType } from '../../../types/index';
 import { DEFAULT_CDN_ORIGIN } from '../../../utils/cdn/origin';
+import type { EditorL10nKey } from './editor-locale';
 import { type ColorPreview, TabId, type TabIdValue } from './toolbar-constants';
 import type { CropAspectRatio, Transformations } from './types';
 
@@ -163,7 +164,7 @@ export class CloudImageEditorController {
   }
 
   /** Locale lookup — same contract as `ChildBlock.l10n`/`createL10n` (key fallback, template variables, pluralization upstream). */
-  public l10n(key: string, variables?: Record<string, string | number>): string {
+  public l10n(key: EditorL10nKey, variables?: Record<string, string | number>): string {
     this.#servicesRevision.get();
     return this.#services.l10n(key, variables);
   }

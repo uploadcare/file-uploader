@@ -2,12 +2,13 @@ import { ContextConsumer, createContext } from '@lit/context';
 import { SignalWatcher } from '@lit-labs/signals';
 import { LitElement, type ReactiveController, type ReactiveControllerHost } from 'lit';
 import { Lifetime } from '../../../abstract/di/Lifetime';
-import type { CheckedL10nKey, L10nArguments } from '../../../abstract/l10n';
+import type { L10nArguments } from '../../../abstract/l10n';
 import { logger } from '../../../abstract/logger';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 import { registerHostSubscriptions } from '../../../lit/subscription';
 import type { CloudImageEditorController } from './CloudImageEditorController';
+import type { EditorL10nKey } from './editor-locale';
 
 const log = logger.scope('cloud-image-editor');
 
@@ -233,7 +234,7 @@ export abstract class EditorBlock extends EditorBlockBase {
    * while connected/attached, so they can keep using `editorController.l10n`
    * directly.
    */
-  protected l10nSafe<K extends string>(key: CheckedL10nKey<K>, ...variables: L10nArguments<K>): string {
+  protected l10nSafe<K extends EditorL10nKey>(key: K, ...variables: L10nArguments<K>): string {
     return this.editorControllerOrNull?.l10n(key, variables[0]) ?? key;
   }
 

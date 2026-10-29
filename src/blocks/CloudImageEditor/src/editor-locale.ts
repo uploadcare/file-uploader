@@ -1,6 +1,9 @@
 import { applyTemplateData } from '../../../utils/template-utils';
 import { EDITOR_SHARED_STRINGS } from './editor-shared-strings';
-import { ALL_FILTERS } from './toolbar-constants';
+import { ALL_FILTERS, type FilterId } from './toolbar-constants';
+
+/** Every key the editor's own locale holds: the standalone editor resolves no other. */
+export type EditorL10nKey = keyof typeof EDITOR_SHARED_STRINGS | FilterId;
 
 export type EditorL10nVariables = Record<string, string | number>;
 export type EditorL10n = (key: string, variables?: EditorL10nVariables) => string;
