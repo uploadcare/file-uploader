@@ -85,10 +85,12 @@ describe('uc-drop-area — without a ctx', () => {
       event.preventDefault();
     };
     window.addEventListener('error', onError);
+    // Built by hand: the JSX typing requires a `ctx-name`, which is what this case leaves out.
+    const dropArea = document.createElement('uc-drop-area') as DropArea;
+    dropArea.setAttribute('clickable', '');
 
     try {
-      page.render(<uc-drop-area clickable></uc-drop-area>);
-      const dropArea = document.querySelector('uc-drop-area') as DropArea;
+      document.body.append(dropArea);
       await dropArea.updateComplete;
 
       // A listener's throw is reported to `window` synchronously during dispatch.
@@ -98,6 +100,7 @@ describe('uc-drop-area — without a ctx', () => {
       expect(errors).toEqual([]);
     } finally {
       window.removeEventListener('error', onError);
+      dropArea.remove();
     }
   });
 });
