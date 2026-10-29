@@ -27,10 +27,6 @@
     transition: background-color var(--uc-transition);
   }
 
-  uc-file-item > .uc-inner[data-focused] {
-    background-color: transparent;
-  }
-
   uc-file-item > .uc-inner[data-uploading] .uc-edit-btn {
     display: none;
   }

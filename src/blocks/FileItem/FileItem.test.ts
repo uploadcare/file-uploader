@@ -140,20 +140,6 @@ describe('FileItem', () => {
     expect(fileNameHidden(el)).toBe(true);
   });
 
-  it('shows the focus highlight from the focused property', async () => {
-    const ctxName = freshCtxName();
-    const { el } = await mount(ctxName);
-    await openRenderGate(el);
-
-    el.focused = true;
-    await el.updateComplete;
-    expect(inner(el).hasAttribute('data-focused')).toBe(true);
-
-    el.focused = false;
-    await el.updateComplete;
-    expect(inner(el).hasAttribute('data-focused')).toBe(false);
-  });
-
   it('wires the plugin manager via whenController once the PluginController resolves, and unsubscribes on disconnect', async () => {
     const ctxName = freshCtxName();
     ensureUploaderCtx(ctxName);
@@ -388,21 +374,6 @@ describe('FileItem entry-state rendering', () => {
     );
     expect(sendEvent).not.toHaveBeenCalled();
   });
-
-  it('hides the focus highlight while the bound entry is uploading', async () => {
-    const ctxName = freshCtxName();
-    const { el } = await mount(ctxName);
-    const collection = getCollection(ctxName);
-    const uid = await bindEntry(el, collection, { fileName: 'photo.png' });
-
-    el.focused = true;
-    await el.updateComplete;
-    expect(inner(el).hasAttribute('data-focused')).toBe(true);
-
-    collection.publishProp(uid, 'isUploading', true);
-    await el.updateComplete;
-    expect(inner(el).hasAttribute('data-focused')).toBe(false);
-  });
 });
 
 // The uid-change path must fully rebind: the render getters + side-effects read
@@ -466,23 +437,19 @@ describe('FileItem uid rebinding', () => {
     await el.updateComplete;
     await delay(0);
 
-    el.focused = true;
-    await el.updateComplete;
-    expect(inner(el).hasAttribute('data-focused')).toBe(true);
-
-    // The PREVIOUS entry starting to upload must NOT hide this item's focus —
+    // The PREVIOUS entry starting to upload must NOT mark this item uploading —
     // its signals are no longer tracked by render.
     vi.useFakeTimers();
     collection.publishProp(uidA, 'isUploading', true);
     await el.updateComplete;
     await vi.advanceTimersByTimeAsync(120);
     vi.useRealTimers();
-    expect(inner(el).hasAttribute('data-focused')).toBe(true);
+    expect(inner(el).hasAttribute('data-uploading')).toBe(false);
 
-    // The CURRENT entry uploading still hides it.
+    // The CURRENT entry uploading still marks it.
     collection.publishProp(uidB, 'isUploading', true);
     await el.updateComplete;
-    expect(inner(el).hasAttribute('data-focused')).toBe(false);
+    expect(inner(el).hasAttribute('data-uploading')).toBe(true);
   });
 });
 

@@ -335,62 +335,6 @@ describe('UploadList', () => {
     expect(tick).toHaveBeenCalledTimes(1);
   });
 
-  describe('row focus', () => {
-    const rows = (el: UploadList) => [...el.querySelectorAll('uc-file-item')];
-    const mountWithRows = async () => {
-      const ctxName = freshCtxName();
-      const mounted = await mount(ctxName, {
-        entries: [{ fileName: 'a.png' }, { fileName: 'b.png' }],
-        config: { confirmUpload: true },
-      });
-      mounted.collectionState.set('uploadList', [...mounted.collection.items()]);
-      await mounted.el.updateComplete;
-      return mounted;
-    };
-
-    it('focuses the clicked row and unfocuses the previous one', async () => {
-      const { el } = await mountWithRows();
-      const [a, b] = rows(el);
-
-      a?.click();
-      await el.updateComplete;
-      expect(rows(el).map((row) => row.focused)).toEqual([true, false]);
-
-      b?.click();
-      await el.updateComplete;
-      expect(rows(el).map((row) => row.focused)).toEqual([false, true]);
-    });
-
-    it('does not focus an uploading row', async () => {
-      const { el, collection } = await mountWithRows();
-      const [a] = rows(el);
-      collection.publishProp(a!.uid, 'isUploading', true);
-
-      a?.click();
-      await el.updateComplete;
-      expect(a?.focused).toBe(false);
-    });
-
-    it('drops focus once the focused row starts uploading', async () => {
-      const { el, collection } = await mountWithRows();
-      const [a] = rows(el);
-      a?.click();
-      await el.updateComplete;
-      expect(a?.focused).toBe(true);
-
-      collection.publishProp(a!.uid, 'isUploading', true);
-      await delay(0);
-      await el.updateComplete;
-      expect(a?.focused).toBe(false);
-
-      // The upload finishing does not bring the focus back.
-      collection.publishProp(a!.uid, 'isUploading', false);
-      await delay(0);
-      await el.updateComplete;
-      expect(a?.focused).toBe(false);
-    });
-  });
-
   describe('chrome variants', () => {
     it('default chrome leaves the chrome attribute off and renders full header + toolbar', async () => {
       const ctxName = freshCtxName();
