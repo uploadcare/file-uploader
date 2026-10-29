@@ -18,15 +18,10 @@ type Entry = TypedData<UploadEntryData>;
 export class UploadFileEventsController {
   @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
 
-  // Rest-forwarded so the 2-/3-arg call arity reaches `EventEmitter.emit` unchanged.
-  private _emit = (...args: Parameters<EventEmitter['emit']>): void => {
-    this._eventEmitter.emit(...args);
-  };
-
   /** `FILE_ADDED` for a newly added entry (unless it was added silently). */
   public added(entry: Entry): void {
     if (!entry.get('silent')) {
-      this._emit(UploaderEventType.FILE_ADDED, toOutputFileEntry(entry));
+      this._eventEmitter.emit(UploaderEventType.FILE_ADDED, toOutputFileEntry(entry));
     }
   }
 
@@ -42,7 +37,7 @@ export class UploadFileEventsController {
     if (thumbUrl) {
       URL.revokeObjectURL(thumbUrl);
     }
-    this._emit(UploaderEventType.FILE_REMOVED, toOutputFileEntry(entry));
+    this._eventEmitter.emit(UploaderEventType.FILE_REMOVED, toOutputFileEntry(entry));
   }
 
   /** `FILE_UPLOAD_PROGRESS` for each entry that is actively (non-silently) uploading. */
@@ -59,7 +54,7 @@ export class UploadFileEventsController {
     // A new attempt: its failure is news even when it repeats the last one.
     this._reportedFailures.delete(entry);
     if (!entry.get('silent')) {
-      this._emit(UploaderEventType.FILE_UPLOAD_START, toOutputFileEntry(entry));
+      this._eventEmitter.emit(UploaderEventType.FILE_UPLOAD_START, toOutputFileEntry(entry));
     }
   }
 
@@ -89,7 +84,7 @@ export class UploadFileEventsController {
     const verdict = JSON.stringify(errors.map(({ type, message }) => [type, message]));
     if (this._reportedFailures.get(entry) === verdict) return false;
     this._reportedFailures.set(entry, verdict);
-    this._emit(UploaderEventType.FILE_UPLOAD_FAILED, toOutputFileEntry(entry));
+    this._eventEmitter.emit(UploaderEventType.FILE_UPLOAD_FAILED, toOutputFileEntry(entry));
     return true;
   }
 
@@ -110,7 +105,7 @@ export class UploadFileEventsController {
     for (const id of ids) {
       const entry = TypedData.getByUid<UploadEntryData>(id);
       if (entry && shouldEmit(entry.values)) {
-        this._emit(type, toOutputFileEntry(entry));
+        this._eventEmitter.emit(type, toOutputFileEntry(entry));
       }
     }
   }

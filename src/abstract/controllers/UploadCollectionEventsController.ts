@@ -34,10 +34,6 @@ export class UploadCollectionEventsController {
    */
   private _isUploadSuccessReported = false;
 
-  private _emit = (...args: Parameters<EventEmitter['emit']>): void => {
-    this._eventEmitter.emit(...args);
-  };
-
   /** Membership changed → the current group no longer describes the collection, and its success is not reported yet. */
   public resetGroupIfMembershipChanged(added: Set<Entry>, removed: Set<Entry>): void {
     if (added.size || removed.size) {
@@ -66,7 +62,7 @@ export class UploadCollectionEventsController {
   public flushOutput(): OutputCollectionState {
     const collectionState = this._outputCollectionState();
     this._collectionState.set('collectionState', collectionState);
-    this._emit(UploaderEventType.CHANGE, () => this._outputCollectionState(), { debounce: true });
+    this._eventEmitter.emit(UploaderEventType.CHANGE, () => this._outputCollectionState(), { debounce: true });
     return collectionState;
   }
 
@@ -87,7 +83,7 @@ export class UploadCollectionEventsController {
     }
 
     this._collectionState.set('commonProgress', progress);
-    this._emit(
+    this._eventEmitter.emit(
       UploaderEventType.COMMON_UPLOAD_PROGRESS,
       this._outputCollectionState() as OutputCollectionState<'uploading'>,
     );
@@ -95,7 +91,7 @@ export class UploadCollectionEventsController {
 
   /** `COMMON_UPLOAD_FAILED` (debounced) — paired per errored entry by the coordinator. */
   public emitCommonFailed(): void {
-    this._emit(
+    this._eventEmitter.emit(
       UploaderEventType.COMMON_UPLOAD_FAILED,
       () => this._outputCollectionState() as OutputCollectionState<'failed'>,
       { debounce: true },
@@ -127,7 +123,7 @@ export class UploadCollectionEventsController {
       collection.size === loadedCount &&
       this._collectionState.get('collectionErrors').length === 0;
     if (isUploadSuccess && !this._isUploadSuccessReported) {
-      this._emit(
+      this._eventEmitter.emit(
         UploaderEventType.COMMON_UPLOAD_SUCCESS,
         this._outputCollectionState() as OutputCollectionState<'success'>,
       );
