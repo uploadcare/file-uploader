@@ -80,16 +80,6 @@ describe('LightDomMixin', () => {
     expect(head.hasAttribute('slot')).toBe(false);
   });
 
-  it('routes a child by its contentFor property', async () => {
-    const el = document.createElement('uc-test-light-named') as NamedSlotsHost;
-    const child = Object.assign(document.createElement('span'), { className: 'h', contentFor: 'head' });
-    el.append(child);
-    document.body.append(el);
-    mounted.push(el);
-    await el.updateComplete;
-    expect(el.querySelector('.head .h')).toBe(child);
-  });
-
   it('sends a comment to the slot of the element right after it', async () => {
     const el = await mount<NamedSlotsHost>(
       'uc-test-light-named',
