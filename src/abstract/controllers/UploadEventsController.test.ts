@@ -263,7 +263,7 @@ describe('UploadEventsController', () => {
       const t = setup();
       const id = addUploadingEntry(t);
       t.uploadBatchSet.add(id);
-      t.collection.publishProp(id, 'uploadProgress', 50);
+      t.collection.read(id)!.set('uploadProgress', 50);
 
       t.fireProperties({ uploadProgress: new Set([id]) });
 
@@ -287,7 +287,7 @@ describe('UploadEventsController', () => {
       const t = setup();
       t.config.set('cropPreset', '1:1');
       const id = t.collection.add({ fileName: 'a.txt' });
-      t.collection.publishProp(id, 'fileInfo', { uuid: 'u1' } as never);
+      t.collection.read(id)!.set('fileInfo', { uuid: 'u1' } as never);
 
       t.fireProperties({ fileInfo: new Set([id]) });
 
@@ -301,7 +301,7 @@ describe('UploadEventsController', () => {
     it('emits FILE_UPLOAD_FAILED + debounced COMMON_UPLOAD_FAILED for errored entries', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });
-      t.collection.publishProp(id, 'errors', [{ type: 'X', message: 'm' }] as never);
+      t.collection.read(id)!.set('errors', [{ type: 'X', message: 'm' }] as never);
 
       t.fireProperties({ errors: new Set([id]) });
 
@@ -319,8 +319,8 @@ describe('UploadEventsController', () => {
       const t = setup();
       const a = t.collection.add({ fileName: 'a.txt' });
       const b = t.collection.add({ fileName: 'b.txt' });
-      t.collection.publishProp(a, 'errors', [{ type: 'X', message: 'm' }] as never);
-      t.collection.publishProp(b, 'errors', [{ type: 'Y', message: 'n' }] as never);
+      t.collection.read(a)!.set('errors', [{ type: 'X', message: 'm' }] as never);
+      t.collection.read(b)!.set('errors', [{ type: 'Y', message: 'n' }] as never);
 
       t.fireProperties({ errors: new Set([a, b]) });
 
@@ -342,7 +342,7 @@ describe('UploadEventsController', () => {
     it('emits COMMON_UPLOAD_SUCCESS when all entries are loaded with no errors', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });
-      t.collection.publishProp(id, 'fileInfo', { uuid: 'u1' } as never);
+      t.collection.read(id)!.set('fileInfo', { uuid: 'u1' } as never);
       // errors changeMap with an entry that has no errors → triggers the success check
       t.fireProperties({ errors: new Set([id]) });
 
@@ -352,7 +352,7 @@ describe('UploadEventsController', () => {
     it('emits COMMON_UPLOAD_SUCCESS once per completion, even on repeated errors flushes', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });
-      t.collection.publishProp(id, 'fileInfo', { uuid: 'u1' } as never);
+      t.collection.read(id)!.set('fileInfo', { uuid: 'u1' } as never);
 
       t.fireProperties({ errors: new Set([id]) });
       t.fireProperties({ errors: new Set([id]) });
@@ -365,8 +365,8 @@ describe('UploadEventsController', () => {
       const t = setup();
       const a = t.collection.add({ fileName: 'a.txt' });
       const b = t.collection.add({ fileName: 'b.txt' });
-      t.collection.publishProp(a, 'fileInfo', { uuid: 'u1' } as never);
-      t.collection.publishProp(b, 'fileInfo', { uuid: 'u2' } as never);
+      t.collection.read(a)!.set('fileInfo', { uuid: 'u1' } as never);
+      t.collection.read(b)!.set('fileInfo', { uuid: 'u2' } as never);
       const successes = () =>
         t.emit.mock.calls.filter(([type]) => type === UploaderEventType.COMMON_UPLOAD_SUCCESS).length;
 
@@ -386,7 +386,7 @@ describe('UploadEventsController', () => {
     it('emits FILE_URL_CHANGED for entries that now have a cdnUrl and clears groupInfo', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });
-      t.collection.publishProp(id, 'cdnUrl', 'https://cdn/u1/');
+      t.collection.read(id)!.set('cdnUrl', 'https://cdn/u1/');
 
       t.fireProperties({ cdnUrl: new Set([id]) });
 
@@ -400,7 +400,7 @@ describe('UploadEventsController', () => {
     it('runs validation for watched-key changes', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });
-      t.collection.publishProp(id, 'fileInfo', { uuid: 'u1' } as never);
+      t.collection.read(id)!.set('fileInfo', { uuid: 'u1' } as never);
 
       t.fireProperties({ fileInfo: new Set([id]) });
 
@@ -412,7 +412,7 @@ describe('UploadEventsController', () => {
       const t = setup();
       const id = t.collection.add({ isUploading: false });
       t.uploadBatchSet.add(id);
-      t.collection.publishProp(id, 'uploadProgress', 50);
+      t.collection.read(id)!.set('uploadProgress', 50);
 
       t.fireProperties({ uploadProgress: new Set([id]) });
 
@@ -422,7 +422,7 @@ describe('UploadEventsController', () => {
     it('does not apply crop when no cropPreset is configured', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });
-      t.collection.publishProp(id, 'fileInfo', { uuid: 'u1' } as never);
+      t.collection.read(id)!.set('fileInfo', { uuid: 'u1' } as never);
 
       t.fireProperties({ fileInfo: new Set([id]) });
 
@@ -441,7 +441,7 @@ describe('UploadEventsController', () => {
     it('suppresses FILE_UPLOAD_SUCCESS for a silent entry with fileInfo', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt', silent: true });
-      t.collection.publishProp(id, 'fileInfo', { uuid: 'u1' } as never);
+      t.collection.read(id)!.set('fileInfo', { uuid: 'u1' } as never);
 
       t.fireProperties({ fileInfo: new Set([id]) });
 
@@ -787,8 +787,8 @@ describe('UploadEventsController', () => {
       const t = setup();
       const a = t.collection.add({ isUploading: true });
       const b = t.collection.add({ isUploading: true });
-      t.collection.publishProp(a, 'uploadProgress', 40);
-      t.collection.publishProp(b, 'uploadProgress', 60);
+      t.collection.read(a)!.set('uploadProgress', 40);
+      t.collection.read(b)!.set('uploadProgress', 60);
       t.uploadBatchSet.add(a);
       t.uploadBatchSet.add(b);
 
@@ -801,7 +801,7 @@ describe('UploadEventsController', () => {
     it('does not re-emit when the rounded progress is unchanged', () => {
       const t = setup();
       const a = t.collection.add({ isUploading: true });
-      t.collection.publishProp(a, 'uploadProgress', 0);
+      t.collection.read(a)!.set('uploadProgress', 0);
       t.uploadBatchSet.add(a);
 
       // common progress starts at 0; an all-zero average stays 0 → no emit

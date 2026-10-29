@@ -402,7 +402,7 @@ describe('UploaderPublicApi', () => {
     it('reports failed status when the entry has errors', () => {
       const { api, ctrl } = setup();
       const entry = api.addFileFromUrl('https://example.com/a.jpg');
-      ctrl.collection.publishProp(entry.internalId as never, 'errors', [{ type: 'someError' }] as never);
+      ctrl.collection.read(entry.internalId as never)!.set('errors', [{ type: 'someError' }] as never);
       const item = api.getOutputItem(entry.internalId);
       expect(item.status).toBe('failed');
       expect(item.isFailed).toBe(true);
@@ -411,7 +411,7 @@ describe('UploaderPublicApi', () => {
     it('reports uploading status when isUploading is set', () => {
       const { api, ctrl } = setup();
       const entry = api.addFileFromUrl('https://example.com/a.jpg');
-      ctrl.collection.publishProp(entry.internalId as never, 'isUploading', true as never);
+      ctrl.collection.read(entry.internalId as never)!.set('isUploading', true as never);
       const item = api.getOutputItem(entry.internalId);
       expect(item.status).toBe('uploading');
       expect(item.isUploading).toBe(true);
@@ -420,7 +420,7 @@ describe('UploaderPublicApi', () => {
     it('reports removed status when isRemoved is set', () => {
       const { api, ctrl } = setup();
       const entry = api.addFileFromUrl('https://example.com/a.jpg');
-      ctrl.collection.publishProp(entry.internalId as never, 'isRemoved', true as never);
+      ctrl.collection.read(entry.internalId as never)!.set('isRemoved', true as never);
       const item = api.getOutputItem(entry.internalId);
       expect(item.status).toBe('removed');
       expect(item.isRemoved).toBe(true);
