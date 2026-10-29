@@ -43,6 +43,8 @@
     --modal-header-height: var(--size-panel-heading);
     --modal-toolbar-height: var(--size-panel-heading);
 
+    /* The standalone editor's stylesheet has no uc-basic common.css to apply the theme font. */
+    font-family: var(--uc-font-family);
     display: block;
     width: 100%;
     height: 100%;
