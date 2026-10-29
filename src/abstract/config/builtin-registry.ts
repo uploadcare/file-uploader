@@ -131,8 +131,12 @@ export const BUILTIN_REGISTRY = {
   validationConcurrency: { default: 100, coerce: asNumber },
 
   cameraModes: { default: 'photo, video', coerce: asCameraModes },
+  // NEXT-MAJOR(config): remove `defaultCameraMode` here, in `ConfigType`, in `computed-properties.ts` and in
+  // `assertions.ts`; `cameraModes` replaces it. Kept for 1.x compat.
   defaultCameraMode: { default: null, coerce: asCameraMode },
   enableAudioRecording: { default: true, coerce: asBoolean },
+  // NEXT-MAJOR(config): remove `enableVideoRecording` here, in `ConfigType`, in `computed-properties.ts` and in
+  // `assertions.ts`; `cameraModes` replaces it. Kept for 1.x compat.
   enableVideoRecording: { default: null, coerce: asBoolean },
   mediaRecorderOptions: { default: null, coerce: asObject, attribute: false },
 

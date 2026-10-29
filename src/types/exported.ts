@@ -378,6 +378,7 @@ export type PropertyOnlyConfigType = Pick<ConfigType, PropertyOnlyConfigKey>;
 /** Options settable via an attribute (as well as as a property). */
 export type AttributeConfigType = Omit<ConfigType, PropertyOnlyConfigKey>;
 
+// NEXT-MAJOR(config): remove the `ConfigComplexType` and `ConfigPlainType` aliases. Kept for 1.x compat.
 /**
  * @deprecated Renamed to {@link PropertyOnlyConfigType}. Kept as an alias so
  *   existing imports keep compiling.
