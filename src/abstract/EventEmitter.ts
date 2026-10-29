@@ -30,9 +30,7 @@ export type { UploaderEventKey as EventKey, UploaderEventPayload as EventPayload
  *
  * Container-resolved with a zero-arg ctor, `@inject`-ing the per-ctx
  * `EventBus`; `container.get(EventEmitter)` yields the single per-ctx
- * instance. This facade stays PURE dispatch — no telemetry. `destroy()` is a
- * no-op — the facade itself holds no subscriptions to unwind; it exists so
- * the container can treat all its owned managers uniformly.
+ * instance. This facade stays PURE dispatch — no telemetry.
  */
 export class EventEmitter {
   @inject(EventBus) private readonly _bus!: EventBus;
@@ -55,9 +53,5 @@ export class EventEmitter {
     } else {
       this._bus.emit(type, resolve());
     }
-  }
-
-  public destroy(): void {
-    // No-op: the facade holds no subscriptions of its own.
   }
 }

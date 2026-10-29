@@ -317,7 +317,6 @@ describe('instance lifecycle (single-owner teardown)', () => {
     // The container-owned managers: teardown must call `.destroy()` on each
     // exactly once. `UploaderRegistry.dispose` disposes the container, which
     // destroys each cached controller a single time — nothing else may.
-    const eventEmitter = container.get(EventEmitter);
     const localeManager = container.get(LocaleManager);
     const telemetryManager = container.get(TelemetryManager);
     const router = container.get(RouterController);
@@ -329,7 +328,6 @@ describe('instance lifecycle (single-owner teardown)', () => {
     const validationManager = container.get(ValidationController);
     const uploadEvents = container.get(UploadEventsController);
 
-    const eventEmitterDestroy = vi.spyOn(eventEmitter, 'destroy');
     const localeManagerDestroy = vi.spyOn(localeManager, 'destroy');
     const telemetryManagerDestroy = vi.spyOn(telemetryManager, 'destroy');
     const routerDestroy = vi.spyOn(router, 'destroy');
@@ -342,7 +340,6 @@ describe('instance lifecycle (single-owner teardown)', () => {
     cleanup();
     await expect.poll(() => hasCtx(ctxName)).toBe(false);
 
-    expect(eventEmitterDestroy).toHaveBeenCalledTimes(1);
     expect(localeManagerDestroy).toHaveBeenCalledTimes(1);
     expect(telemetryManagerDestroy).toHaveBeenCalledTimes(1);
     expect(routerDestroy).toHaveBeenCalledTimes(1);
