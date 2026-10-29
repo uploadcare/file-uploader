@@ -3,7 +3,7 @@ import { SignalWatcher } from '@lit-labs/signals';
 import { LitElement, type ReactiveController, type ReactiveControllerHost } from 'lit';
 import { Lifetime } from '../../../abstract/di/Lifetime';
 import type { L10nArguments } from '../../../abstract/l10n';
-import { logger } from '../../../abstract/logger';
+import { type Logger, logger } from '../../../abstract/logger';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
 import { registerHostSubscriptions } from '../../../lit/subscription';
@@ -22,13 +22,49 @@ const log = logger.scope('cloud-image-editor');
 export const cloudImageEditorContext = createContext<CloudImageEditorController>('cloud-image-editor-controller');
 
 /**
+ * A fresh {@link Lifetime} per adoption, ended when the adoption is released and still ended between adoptions. One
+ * adoption is one attached controller for an `EditorBlock` and one connection for the root `<uc-cloud-image-editor>`,
+ * which provides the controller rather than adopting one.
+ */
+export class AdoptionLifetime {
+  #current = Lifetime.ended();
+
+  public constructor(private readonly _log: Pick<Logger, 'error'>) {}
+
+  /** Aborted once the current adoption ends; already aborted between adoptions. */
+  public get signal(): AbortSignal {
+    return this.#current.signal;
+  }
+
+  /** End the current adoption, if one is live, and start a fresh one. */
+  public begin(): void {
+    this.#current.end();
+    this.#current = new Lifetime();
+  }
+
+  public end(): void {
+    this.#current.end();
+  }
+
+  /** {@link Lifetime.guard} on the current adoption. */
+  public guard<T>(work: PromiseLike<T>, dispose?: (value: T) => void): Promise<T> {
+    return this.#current.guard(work, dispose);
+  }
+
+  /** {@link Lifetime.run} on the current adoption, logging a failure that is not its abort. */
+  public run(task: (signal: AbortSignal) => unknown): void {
+    this.#current.run(task, (error) => this._log.error('an async task failed', error));
+  }
+}
+
+/**
  * `ReactiveController` that adopts the `CloudImageEditorController` provided
  * by the nearest ancestor `ContextProvider`.
  */
 export class CloudImageEditorContextController implements ReactiveController {
   private _controller?: CloudImageEditorController;
-  // One per adopted controller, ended on detach (host disconnect or re-attach); already ended while none is adopted.
-  private _lifetime = Lifetime.ended();
+  /** One adoption per adopted controller, ended on detach (host disconnect or re-attach). */
+  public readonly lifetime: AdoptionLifetime;
   private _subscriptions = new Set<() => void>();
   // Attach listeners are persistent: `EditorBlock` needs its `@subscription` methods re-wired on every (re)attach, not just
   // the first, so a listener registered via `onAttach` fires immediately if a
@@ -36,7 +72,8 @@ export class CloudImageEditorContextController implements ReactiveController {
   private _onAttachCallbacks = new Set<() => void>();
   private readonly _consumer: ContextConsumer<typeof cloudImageEditorContext, ReactiveControllerHost & HTMLElement>;
 
-  public constructor(host: ReactiveControllerHost & HTMLElement) {
+  public constructor(host: ReactiveControllerHost & HTMLElement, hostLog: Pick<Logger, 'error'>) {
+    this.lifetime = new AdoptionLifetime(hostLog);
     host.addController(this);
     this._consumer = new ContextConsumer(host, {
       context: cloudImageEditorContext,
@@ -51,7 +88,7 @@ export class CloudImageEditorContextController implements ReactiveController {
 
   public hostDisconnected(): void {
     // First, so async work still in flight stops at its next guarded await rather than running into the teardown below.
-    this._lifetime.end();
+    this.lifetime.end();
     this._cleanupSubscriptions();
     // Forget the adopted controller (not just its subscriptions): the editor
     // base is light-DOM (`LightDomMixin`), and re-rendering an ancestor that
@@ -78,11 +115,6 @@ export class CloudImageEditorContextController implements ReactiveController {
     return this._controller ?? null;
   }
 
-  /** The span of the current adoption — see `EditorBlock.adoptionSignal`. */
-  public get lifetime(): Lifetime {
-    return this._lifetime;
-  }
-
   /** Run `unsubscribe` on host disconnect or controller re-attach, if it has not run by then. */
   public track(unsubscribe: () => void): () => void {
     const tracked = () => {
@@ -105,10 +137,10 @@ export class CloudImageEditorContextController implements ReactiveController {
     if (!controller || controller === this._controller) {
       return;
     }
-    this._lifetime.end();
+    this.lifetime.end();
     this._cleanupSubscriptions();
     this._controller = controller;
-    this._lifetime = new Lifetime();
+    this.lifetime.begin();
     for (const cb of this._onAttachCallbacks) {
       // Isolate-and-warn: one throwing callback must not stop the rest.
       try {
@@ -155,8 +187,6 @@ const EditorBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(Lit
  * descendants.
  */
 export abstract class EditorBlock extends EditorBlockBase {
-  private readonly _editorCtx = new CloudImageEditorContextController(this);
-
   /**
    * Shared editor logger for this block and every descendant `EditorBlock` —
    * one `cloud-image-editor` scope instead of a per-file scope in each editor
@@ -168,6 +198,8 @@ export abstract class EditorBlock extends EditorBlockBase {
   protected readonly _log = logger.scope('cloud-image-editor', {
     isVerbose: () => this.editorControllerOrNull?.getConfig('debug') ?? false,
   });
+
+  private readonly _editorCtx = new CloudImageEditorContextController(this, this._log);
 
   public constructor() {
     super();
@@ -250,7 +282,7 @@ export abstract class EditorBlock extends EditorBlockBase {
    * is released, and that abort is swallowed; any other error is logged rather than left as an unhandled rejection.
    */
   protected runTask(task: (signal: AbortSignal) => unknown): void {
-    this._editorCtx.lifetime.run(task, (error) => this._log.error('an async task failed', error));
+    this._editorCtx.lifetime.run(task);
   }
 
   /** Run `callback` once the editor controller is available (immediately if already attached, else on first/next attach). */
