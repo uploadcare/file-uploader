@@ -6,6 +6,7 @@ import { RouterController } from '@/abstract/controllers/RouterController';
 import { UploaderRegistry } from '@/abstract/UploaderRegistry';
 import type { Config, UploadCtxProvider } from '@/index.ts';
 import { ChildBlock } from '@/lit/ChildBlock';
+import { delay } from '@/utils/delay';
 import { getCtxName } from '../utils/getCtxName';
 import { containerOf, hasCtx } from '../utils/registry';
 import { cleanup } from '../utils/test-renderer';
@@ -609,8 +610,9 @@ describe('v1-free lifecycle (ChildBlock-only composition)', () => {
     child.remove();
 
     await expect.poll(() => hasCtx(ctxName)).toBe(false);
-    // Give any second deferred check a chance to run too.
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    // Both deferred checks are `setTimeout(0)`s set at the removals above; equal-delay timers run in the order they
+    // were set, so a zero timer set now fires after the second one.
+    await delay(0);
 
     expect(destroySpy).toHaveBeenCalledTimes(1);
     destroySpy.mockRestore();
