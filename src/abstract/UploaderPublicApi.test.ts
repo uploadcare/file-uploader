@@ -13,7 +13,6 @@ import { UploadCollectionController } from './controllers/UploadCollectionContro
 import { UploadController } from './controllers/UploadController';
 import { ControllerContainer } from './di/ControllerContainer';
 import { EventEmitter, EventType } from './EventEmitter';
-import type { PlainText } from './l10n';
 import { createL10n } from './l10n';
 import { PluginController } from './managers/plugin';
 import type { Uid } from './Uid';
@@ -156,7 +155,7 @@ describe('UploaderPublicApi', () => {
       it.each(adders)('%s adds a loud entry from the API by default, and takes both as options', (_, add) => {
         const { api, ctrl } = setup();
         const read = (id: string) => {
-          const entry = ctrl.collection.read(id as never);
+          const entry = ctrl.collection.read(id as Uid);
           return { silent: entry?.get('silent'), source: entry?.get('source') };
         };
 
@@ -402,7 +401,7 @@ describe('UploaderPublicApi', () => {
     it('reports failed status when the entry has errors', () => {
       const { api, ctrl } = setup();
       const entry = api.addFileFromUrl('https://example.com/a.jpg');
-      ctrl.collection.read(entry.internalId as never)!.set('errors', [{ type: 'someError' }] as never);
+      ctrl.collection.read(entry.internalId as Uid)!.set('errors', [{ type: 'someError' }] as never);
       const item = api.getOutputItem(entry.internalId);
       expect(item.status).toBe('failed');
       expect(item.isFailed).toBe(true);
@@ -411,7 +410,7 @@ describe('UploaderPublicApi', () => {
     it('reports uploading status when isUploading is set', () => {
       const { api, ctrl } = setup();
       const entry = api.addFileFromUrl('https://example.com/a.jpg');
-      ctrl.collection.read(entry.internalId as never)!.set('isUploading', true as never);
+      ctrl.collection.read(entry.internalId as Uid)!.set('isUploading', true);
       const item = api.getOutputItem(entry.internalId);
       expect(item.status).toBe('uploading');
       expect(item.isUploading).toBe(true);
@@ -420,7 +419,7 @@ describe('UploaderPublicApi', () => {
     it('reports removed status when isRemoved is set', () => {
       const { api, ctrl } = setup();
       const entry = api.addFileFromUrl('https://example.com/a.jpg');
-      ctrl.collection.read(entry.internalId as never)!.set('isRemoved', true as never);
+      ctrl.collection.read(entry.internalId as Uid)!.set('isRemoved', true);
       const item = api.getOutputItem(entry.internalId);
       expect(item.status).toBe('removed');
       expect(item.isRemoved).toBe(true);
@@ -537,9 +536,7 @@ describe('UploaderPublicApi', () => {
       const { api, ctrl } = setup();
       ctrl.config.set('sourceList', 'local');
       const onSelect = vi.fn();
-      ctrl.container
-        .get(PluginController)
-        .registry.addSource('p', { id: 'local', label: 'Local' as PlainText, onSelect });
+      ctrl.container.get(PluginController).registry.addSource('p', { id: 'local', label: 'Local', onSelect });
 
       api.initFlow();
       await flush();
@@ -555,7 +552,7 @@ describe('UploaderPublicApi', () => {
       // so `find(expandedIds[0]) ?? registeredSource` falls back to the origin.
       ctrl.container.get(PluginController).registry.addSource('p', {
         id: 'local',
-        label: 'Local' as PlainText,
+        label: 'Local',
         onSelect,
         expand: () => ['ghost'],
       });
@@ -572,7 +569,7 @@ describe('UploaderPublicApi', () => {
       const navigate = vi.spyOn(ctrl.router, 'navigate');
       ctrl.container.get(PluginController).registry.addSource('p', {
         id: 'group',
-        label: 'Group' as PlainText,
+        label: 'Group',
         onSelect: vi.fn(),
         expand: () => ['a', 'b'],
       });
@@ -586,7 +583,7 @@ describe('UploaderPublicApi', () => {
     it('initFlow re-opens the current activity when the single source is unregistered', async () => {
       const { api, ctrl } = setup();
       ctrl.config.set('sourceList', 'unregistered-source');
-      ctrl.router.setActivity('start-from' as never);
+      ctrl.router.setActivity('start-from');
       const openModal = vi.spyOn(ctrl.router, 'openModal');
 
       api.initFlow();
@@ -639,7 +636,7 @@ describe('UploaderPublicApi', () => {
   describe('navigate / setCurrentActivity / setModalState', () => {
     it('navigate routes to the requested activity after plugins are ready', async () => {
       const { api, ctrl } = setup();
-      ctrl.router.activityBlockMounted('upload-list' as never);
+      ctrl.router.activityBlockMounted('upload-list');
       const navigate = vi.spyOn(ctrl.router, 'navigate');
 
       api.navigate('upload-list');
@@ -698,7 +695,7 @@ describe('UploaderPublicApi', () => {
 
     it('setCurrentActivity sets the background activity', async () => {
       const { api, ctrl } = setup();
-      ctrl.router.activityBlockMounted('upload-list' as never);
+      ctrl.router.activityBlockMounted('upload-list');
       const setActivity = vi.spyOn(ctrl.router, 'setActivity');
 
       api.setCurrentActivity('upload-list');
@@ -709,9 +706,9 @@ describe('UploaderPublicApi', () => {
 
     it('setCurrentActivity switches an open modal to the activity, as v1 did', async () => {
       const { api, ctrl } = setup();
-      ctrl.router.activityBlockMounted('upload-list' as never);
-      ctrl.router.activityBlockMounted('url' as never);
-      ctrl.router.openModal('upload-list' as never);
+      ctrl.router.activityBlockMounted('upload-list');
+      ctrl.router.activityBlockMounted('url');
+      ctrl.router.openModal('upload-list');
       const changes: unknown[] = [];
       api.on('activity-change', (payload) => changes.push(payload.activity));
 
@@ -723,7 +720,7 @@ describe('UploaderPublicApi', () => {
       await vi.waitFor(() => expect(changes).toEqual(['url']));
     });
 
-    it('setCurrentActivity without params clears the previous activity\'s params', async () => {
+    it("setCurrentActivity without params clears the previous activity's params", async () => {
       const { api, ctrl } = setup();
       ctrl.router.activityBlockMounted('external');
       ctrl.router.activityBlockMounted('upload-list');
@@ -752,10 +749,10 @@ describe('UploaderPublicApi', () => {
 
     it('setCurrentActivity then setModalState(true) leaves an open modal on the activity', async () => {
       const { api, ctrl } = setup();
-      ctrl.router.setActivity('upload-list' as never);
-      ctrl.router.activityBlockMounted('upload-list' as never);
-      ctrl.router.activityBlockMounted('url' as never);
-      ctrl.router.openModal('upload-list' as never);
+      ctrl.router.setActivity('upload-list');
+      ctrl.router.activityBlockMounted('upload-list');
+      ctrl.router.activityBlockMounted('url');
+      ctrl.router.openModal('upload-list');
 
       api.setCurrentActivity('url');
       api.setModalState(true);
@@ -777,8 +774,8 @@ describe('UploaderPublicApi', () => {
 
     it('setModalState(true) opens the modal for the intended activity', async () => {
       const { api, ctrl } = setup();
-      ctrl.router.setActivity('upload-list' as never);
-      ctrl.router.activityBlockMounted('upload-list' as never);
+      ctrl.router.setActivity('upload-list');
+      ctrl.router.activityBlockMounted('upload-list');
       const openModal = vi.spyOn(ctrl.router, 'openModal');
 
       api.setModalState(true);
@@ -803,7 +800,7 @@ describe('UploaderPublicApi', () => {
         vi.useRealTimers();
       });
       const { api, ctrl } = setup();
-      ctrl.router.setActivity('camera' as never);
+      ctrl.router.setActivity('camera');
       const openModal = vi.spyOn(ctrl.router, 'openModal');
 
       api.setModalState(true);
@@ -815,7 +812,7 @@ describe('UploaderPublicApi', () => {
     it('drops a navigation still waiting for plugins when the ctx is torn down', async () => {
       const { api, ctrl, ctxName, container } = setup();
       const router = ctrl.router;
-      router.activityBlockMounted('upload-list' as never);
+      router.activityBlockMounted('upload-list');
       const navigate = vi.spyOn(router, 'navigate');
 
       api.navigate('upload-list');
@@ -859,7 +856,7 @@ describe('UploaderPublicApi', () => {
     it('getCurrentActivity reflects the router state', () => {
       const { api, ctrl } = setup();
       expect(api.getCurrentActivity()).toBeNull();
-      ctrl.router.setActivity('upload-list' as never);
+      ctrl.router.setActivity('upload-list');
       expect(api.getCurrentActivity()).toBe('upload-list');
     });
 
@@ -1023,9 +1020,7 @@ describe('UploaderPublicApi', () => {
       const onSelect = vi.fn();
       // Register on the container instance. The api's
       // `@inject(() => PluginController)` must see this exact registry.
-      ctrl.container
-        .get(PluginController)
-        .registry.addSource('p', { id: 'local', label: 'Local' as PlainText, onSelect });
+      ctrl.container.get(PluginController).registry.addSource('p', { id: 'local', label: 'Local', onSelect });
 
       api.initFlow();
       await flush();
