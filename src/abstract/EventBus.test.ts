@@ -62,8 +62,8 @@ describe('EventBus', () => {
     const thunk = vi.fn(() => undefined);
     bus.on(UploaderEventType.UPLOAD_CLICK, handler);
 
-    bus.emitDebounced(UploaderEventType.UPLOAD_CLICK, thunk, 20);
-    bus.emitDebounced(UploaderEventType.UPLOAD_CLICK, thunk, 20);
+    bus.emitDebounced(UploaderEventType.UPLOAD_CLICK, thunk);
+    bus.emitDebounced(UploaderEventType.UPLOAD_CLICK, thunk);
     expect(handler).not.toHaveBeenCalled();
 
     vi.advanceTimersByTime(20);
@@ -77,7 +77,7 @@ describe('EventBus', () => {
     const bus = new ControllerContainer().get(EventBus);
     const handler = vi.fn();
     bus.on(UploaderEventType.UPLOAD_CLICK, handler);
-    bus.emitDebounced(UploaderEventType.UPLOAD_CLICK, () => undefined, 20);
+    bus.emitDebounced(UploaderEventType.UPLOAD_CLICK, () => undefined);
 
     bus.destroy();
     vi.advanceTimersByTime(20);
@@ -112,15 +112,11 @@ describe('EventBus', () => {
     const handler = vi.fn();
     bus.on(UploaderEventType.UPLOAD_CLICK, handler);
 
-    bus.emitDebounced(
-      UploaderEventType.UPLOAD_CLICK,
-      () => {
-        throw new Error('thunk boom');
-      },
-      10,
-    );
+    bus.emitDebounced(UploaderEventType.UPLOAD_CLICK, () => {
+      throw new Error('thunk boom');
+    });
 
-    expect(() => vi.advanceTimersByTime(10)).not.toThrow();
+    expect(() => vi.advanceTimersByTime(20)).not.toThrow();
     expect(handler).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
@@ -151,11 +147,11 @@ describe('EventBus', () => {
         }
       }
       container.get(EmitsOnTeardown);
-      bus.emitDebounced(UploaderEventType.CHANGE, () => ({}) as never, 10);
+      bus.emitDebounced(UploaderEventType.CHANGE, () => ({}) as never);
 
       container.dispose();
       bus.emit(UploaderEventType.UPLOAD_CLICK, undefined);
-      vi.advanceTimersByTime(10);
+      vi.advanceTimersByTime(20);
 
       expect(any).not.toHaveBeenCalled();
     });

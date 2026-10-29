@@ -78,7 +78,6 @@ export class EventBus {
   private readonly _log = controllerLogger(this, 'event-bus');
   private _listeners = new Map<string, Set<(payload: unknown) => void>>();
   private _debounceTimers = new Map<string, number>();
-  private static readonly DEFAULT_DEBOUNCE_MS = 20;
 
   public on<K extends UploaderEventKey>(type: K, handler: (payload: UploaderEventPayload[K]) => void): () => void {
     let set = this._listeners.get(type);
@@ -124,15 +123,10 @@ export class EventBus {
   }
 
   /**
-   * Debounced emit. `payload` is a thunk so a heavy
+   * Debounced emit (20 ms window). `payload` is a thunk so a heavy
    * `buildOutputCollectionState` is only built once per debounce window.
-   * Mirrors v1's `EventEmitter.emit(type, fn, { debounce })`.
    */
-  public emitDebounced<K extends UploaderEventKey>(
-    type: K,
-    payload: () => UploaderEventPayload[K],
-    ms: number = EventBus.DEFAULT_DEBOUNCE_MS,
-  ): void {
+  public emitDebounced<K extends UploaderEventKey>(type: K, payload: () => UploaderEventPayload[K]): void {
     const existing = this._debounceTimers.get(type);
     if (existing) window.clearTimeout(existing);
     const timeoutId = window.setTimeout(() => {
@@ -142,7 +136,7 @@ export class EventBus {
       } catch (err) {
         this._log.warn(`payload thunk for "${type}" threw`, err);
       }
-    }, ms);
+    }, 20);
     this._debounceTimers.set(type, timeoutId);
   }
 

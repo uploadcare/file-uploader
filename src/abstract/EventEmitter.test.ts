@@ -63,19 +63,6 @@ describe('EventEmitter (EventBus facade)', () => {
     expect(handler).toHaveBeenCalledWith(expect.objectContaining({ internalId: '2' }));
   });
 
-  it('honors a numeric debounce window', () => {
-    const { emitter } = setup();
-    const handler = vi.fn();
-    emitter.on(EventType.FILE_ADDED, handler);
-
-    emitter.emit(EventType.FILE_ADDED, () => fileEntry('p'), { debounce: 100 });
-
-    vi.advanceTimersByTime(50);
-    expect(handler).not.toHaveBeenCalled();
-    vi.advanceTimersByTime(50);
-    expect(handler).toHaveBeenCalledTimes(1);
-  });
-
   it('stops notifying after the returned unsubscribe is called', () => {
     const { emitter } = setup();
     const handler = vi.fn();
