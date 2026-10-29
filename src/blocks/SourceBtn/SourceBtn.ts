@@ -1,5 +1,5 @@
-import { html, type PropertyValues } from 'lit';
-import { property, state } from 'lit/decorators.js';
+import { html } from 'lit';
+import { property } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { inject } from '../../abstract/di/inject';
 import { InternalEventType } from '../../abstract/EventEmitter';
@@ -10,7 +10,7 @@ import type { AriaRole } from '../../types/dom';
 import './source-btn.css';
 
 import '../Icon/Icon';
-import { type PluginLabel, pluginLabelKey } from '../../abstract/managers/plugin/PluginTypes';
+import { pluginLabelKey } from '../../abstract/managers/plugin/PluginTypes';
 import type { SourceButtonConfig } from '../../abstract/sources';
 
 export type { SourceButtonConfig };
@@ -31,39 +31,6 @@ export class SourceBtn extends ChildBlock {
   @property({ converter: booleanAttribute })
   public iconOnly = false;
 
-  @state()
-  private _iconName = 'default';
-
-  @state()
-  private _srcTypeKey: PluginLabel | '' = '';
-
-  protected override controllerReady(): void {
-    // A `source` set while the render gate was closed never reaches
-    // `willUpdate` (Lit clears changed-properties for gated cycles) —
-    // re-derive from the current value on adoption.
-    this._applySource(this.source);
-  }
-
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
-    super.willUpdate(changedProperties);
-
-    if (changedProperties.has('source')) {
-      this._applySource(this.source);
-    }
-  }
-
-  private _applySource(source?: SourceButtonConfig): void {
-    if (!source) {
-      this._srcTypeKey = '';
-      this._iconName = 'default';
-      return;
-    }
-
-    const { label, icon, id } = source;
-    this._srcTypeKey = label;
-    this._iconName = icon ?? id ?? 'default';
-  }
-
   public activate(): void {
     if (!this.source) return;
 
@@ -83,15 +50,17 @@ export class SourceBtn extends ChildBlock {
   }
 
   public override render() {
+    const { source } = this;
+    const label = source?.label ? this.l10n(pluginLabelKey(source.label)) : '';
     return html`
       <button
-        aria-label=${this._srcTypeKey ? this.l10n(pluginLabelKey(this._srcTypeKey)) : ''}
+        aria-label=${label}
         role=${ifDefined(this.buttonRole)}
         type="button"
         @click=${this.activate}
       >
-        ${this.textOnly ? '' : html`<uc-icon name=${this._iconName}></uc-icon>`}
-        ${this.iconOnly ? '' : html`<div class="uc-txt">${this._srcTypeKey ? this.l10n(pluginLabelKey(this._srcTypeKey)) : ''}</div>`}
+        ${this.textOnly ? '' : html`<uc-icon name=${source?.icon ?? source?.id ?? 'default'}></uc-icon>`}
+        ${this.iconOnly ? '' : html`<div class="uc-txt">${label}</div>`}
       </button>
     `;
   }
