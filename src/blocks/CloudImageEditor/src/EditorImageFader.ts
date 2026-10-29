@@ -1,3 +1,4 @@
+import { Signal } from '@lit-labs/signals';
 import type { FilterName } from '@uploadcare/cdn-url/ops';
 import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
@@ -214,9 +215,10 @@ export class EditorImageFader extends EditorBlock {
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
     // `imageSize` is a prop, not controller state, so no controller observer
-    // fires for it — re-evaluate visibility when the root updates it.
+    // fires for it — re-evaluate visibility when the root updates it. Untracked:
+    // its controller reads are no state the fader renders.
     if (changedProperties.has('imageSize')) {
-      this._syncFromState();
+      Signal.subtle.untrack(() => this._syncFromState());
     }
   }
 
