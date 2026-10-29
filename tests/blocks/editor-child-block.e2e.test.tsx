@@ -8,6 +8,7 @@ import {
 import { cloudImageEditorContext, EditorBlock } from '@/blocks/CloudImageEditor/src/editor-context';
 import { LightDomMixin } from '@/lit/LightDomMixin';
 import { RegisterableElementMixin } from '@/lit/RegisterableElementMixin';
+import { subscription, type Unsubscribe } from '@/lit/subscription';
 import '../../types/jsx';
 
 /**
@@ -118,6 +119,8 @@ describe('EditorBlock / cloudImageEditorContext (light, non-ChildBlock base)', (
 
     const requestUpdateSpy = vi.spyOn(child, 'requestUpdate');
     child.remove();
+    // `SignalWatcher` stops watching a microtask after the disconnect, so a move within the same task keeps it.
+    await Promise.resolve();
     requestUpdateSpy.mockClear();
 
     root.controller.tabId = 'tuning';
@@ -169,9 +172,9 @@ describe('EditorBlock / cloudImageEditorContext (light, non-ChildBlock base)', (
 class TestEditorKeyChild extends EditorBlock {
   public readonly tabIds: string[] = [];
 
-  public constructor() {
-    super();
-    this.subEditorKey('tabId', (tabId) => this.tabIds.push(tabId));
+  @subscription()
+  protected _watchTabId(): Unsubscribe {
+    return this.editorController.observe('tabId', (tabId) => this.tabIds.push(tabId), { immediate: true });
   }
 
   public override render() {

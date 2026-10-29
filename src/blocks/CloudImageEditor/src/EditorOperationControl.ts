@@ -1,8 +1,8 @@
 import { property } from 'lit/decorators.js';
+import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { ColorOperation } from './toolbar-constants';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
-import type { Transformations } from './types';
 
 /** Bubbles up to `EditorToolbar`, which owns the toolbar-local `currentOperation`/`showSlider` state and the slider ref. */
 export class OperationSelectEvent extends Event {
@@ -25,19 +25,23 @@ export class EditorOperationControl extends EditorButtonControl {
   @property({ type: String })
   public operation: ColorOperation | '' = '';
 
-  public constructor() {
-    super();
+  /** @internal */
+  @subscription()
+  protected _syncActive(): Unsubscribe {
+    return this.editorController.observe(
+      'editorTransformations',
+      (editorTransformations) => {
+        if (!this.operation) {
+          return;
+        }
 
-    this.subEditorKey('editorTransformations', (editorTransformations: Transformations) => {
-      if (!this.operation) {
-        return;
-      }
-
-      const { zero } = COLOR_OPERATIONS_CONFIG[this.operation];
-      const value = editorTransformations[this.operation];
-      const isActive = typeof value !== 'undefined' ? value !== zero : false;
-      this.active = isActive;
-    });
+        const { zero } = COLOR_OPERATIONS_CONFIG[this.operation];
+        const value = editorTransformations[this.operation];
+        const isActive = typeof value !== 'undefined' ? value !== zero : false;
+        this.active = isActive;
+      },
+      { immediate: true },
+    );
   }
 
   protected override updateLabels(): void {

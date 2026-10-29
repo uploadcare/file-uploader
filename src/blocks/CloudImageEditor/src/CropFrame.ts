@@ -536,8 +536,8 @@ export class CropFrame extends EditorBlock {
     // Controller-dependent setup (mirrors `ChildBlock.controllerReady` /
     // the v1 base's `initCallback`): reads the mask config once per
     // (re)attach. `cloudImageEditorMaskHref` is effectively static for the
-    // life of an editor instance, so a one-shot read is enough — unlike
-    // the cross-cutting keys, no coarse `subscribeEditor` is needed here.
+    // life of an editor instance, so a one-shot read is enough — no
+    // observer is needed here.
     this.onEditorAttach(() => {
       const maskHref = this.editorController.getConfig('cloudImageEditorMaskHref');
       if (maskHref) {

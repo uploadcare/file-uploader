@@ -4,6 +4,7 @@ import { property, state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { isAbortError } from '../../../abstract/di/Lifetime';
 import { debounced, throttled } from '../../../lit/rate-limited-method';
+import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import type { CloudImageEditorController } from './CloudImageEditorController';
 import type { CropBoxChangeEvent, CropFrame } from './CropFrame';
@@ -56,16 +57,13 @@ export class EditorImageCropper extends EditorBlock {
   private _lastImageBox: Rectangle = this._imageBox;
   private _lastCropBox: Rectangle = this._cropBox;
 
-  // Last-observed cross-cutting values read through the (coarse) editor
-  // controller subscribe — used to detect an actual change of a specific key
-  // among the many the controller's `subscribe` fires for (it notifies on
-  // ANY cross-cutting state change, not per-key like the old shared-ctx
-  // `sub(key, cb)`).
+  // Last-seen values of the keys `_reactToState` acts on — it runs for a change
+  // of any key it watches, so it diffs to tell which one changed.
   private _lastAspectRatio: CropAspectRatio | null = null;
   private _lastOriginalUrl: string | null = null;
-  // Guards the coarse `subscribeEditor` reaction against re-entering itself: it
-  // writes state (`_commit`, `deactivate`→`_commit`) and `CloudImageEditorController.set`
-  // notifies synchronously, so without this a commit would re-fire the reaction
+  // Guards `_reactToState` against re-entering itself: it writes state
+  // (`_commit`, `deactivate`→`_commit`) and a controller write notifies
+  // observers synchronously, so without this a commit would re-fire the reaction
   // (e.g. deactivate commits before flipping `_isActive`, recursing forever).
   private _reacting = false;
   // One per `activate()`, aborted by `deactivate` (incl. the new-image reset): the
@@ -96,67 +94,79 @@ export class EditorImageCropper extends EditorBlock {
     this._cropBox = e.detail;
   };
 
-  public constructor() {
-    super();
+  /**
+   * Seeds what `_reactToState` diffs against, reconciles once — a (re)attach
+   * can find the cropper ready to activate already, e.g. after an activation
+   * aborted by a reconnect — then reconciles on every change of the state the
+   * reaction reads or the activation it starts loads from.
+   * @internal
+   */
+  @subscription()
+  protected _watchState(): Unsubscribe[] {
+    const controller = this.editorController;
+    this._lastAspectRatio = controller.currentAspectRatio;
+    this._lastOriginalUrl = controller.originalUrl;
+    this._syncActivation();
+    const react = () => this._reactToState();
+    return (
+      [
+        'currentAspectRatio',
+        'originalUrl',
+        'tabId',
+        'networkProblems',
+        'editorTransformations',
+        'sourceOperations',
+      ] as const
+    ).map((key) => controller.observe(key, react));
+  }
 
-    // Controller-dependent setup (mirrors `ChildBlock.controllerReady` /
-    // `initCallback` from the v1 base): runs immediately if the editor
-    // controller is already adopted, and again on every later (re)attach.
-    this.onEditorAttach(() => {
-      this._lastAspectRatio = this.editorController.currentAspectRatio;
-      this._lastOriginalUrl = this.editorController.originalUrl;
-      // A (re)attach can find the cropper ready to activate already — e.g. after an activation aborted by a reconnect.
+  private _reactToState(): void {
+    if (this._reacting) {
+      return;
+    }
+    this._reacting = true;
+    try {
+      const aspectRatio = this.editorController.currentAspectRatio;
+      if (aspectRatio !== this._lastAspectRatio) {
+        this._lastAspectRatio = aspectRatio;
+        this._alignCrop();
+      }
+
+      // A new image (originalUrl change) invalidates the current crop.
+      // Reset the ops to a clean slate and stay INACTIVE until the root
+      // supplies the new image's `imageSize` prop — reactivation then
+      // happens in `updated`. Reactivating here would use the previous
+      // image's still-stale `imageSize` (the root clears it to null before
+      // the size fetch). `deactivate` also aborts the current activation, so an
+      // in-flight activation of the old image stops.
+      const originalUrl = this.editorController.originalUrl;
+      if (originalUrl !== this._lastOriginalUrl) {
+        this._lastOriginalUrl = originalUrl;
+        this._operations = { ...DEFAULT_OPERATIONS };
+        if (this._isActive) {
+          this.deactivate({ reset: true });
+        }
+        return;
+      }
+
+      // Self-activate/deactivate from controller state + the imageSize prop
+      // (replaces the root/toolbar calling `.activate()`/`.deactivate()`).
       this._syncActivation();
 
-      this.subscribeEditor(() => {
-        if (this._reacting) {
-          return;
-        }
-        this._reacting = true;
-        try {
-          const aspectRatio = this.editorController.currentAspectRatio;
-          if (aspectRatio !== this._lastAspectRatio) {
-            this._lastAspectRatio = aspectRatio;
-            this._alignCrop();
-          }
-
-          // A new image (originalUrl change) invalidates the current crop.
-          // Reset the ops to a clean slate and stay INACTIVE until the root
-          // supplies the new image's `imageSize` prop — reactivation then
-          // happens in `updated`. Reactivating here would use the previous
-          // image's still-stale `imageSize` (the root clears it to null before
-          // the size fetch). `deactivate` also aborts the current activation, so an
-          // in-flight activation of the old image stops.
-          const originalUrl = this.editorController.originalUrl;
-          if (originalUrl !== this._lastOriginalUrl) {
-            this._lastOriginalUrl = originalUrl;
-            this._operations = { ...DEFAULT_OPERATIONS };
-            if (this._isActive) {
-              this.deactivate({ reset: true });
-            }
-            return;
-          }
-
-          // Self-activate/deactivate from controller state + the imageSize prop
-          // (replaces the root/toolbar calling `.activate()`/`.deactivate()`).
-          this._syncActivation();
-
-          // Crop ops (rotate/flip/mirror) now arrive through
-          // `*editorTransformations` — `EditorCropButtonControl` writes them
-          // instead of calling `setValue`. Apply + re-commit the consistent
-          // crop; the re-entrancy guard swallows our own commit's notify.
-          if (this._isActive && this._cropOpsDiffer(this.editorController.editorTransformations)) {
-            this._syncTransformations();
-            this._alignImage();
-            this._alignCrop();
-            this._draw();
-            this._commit();
-          }
-        } finally {
-          this._reacting = false;
-        }
-      });
-    });
+      // Crop ops (rotate/flip/mirror) now arrive through
+      // `*editorTransformations` — `EditorCropButtonControl` writes them
+      // instead of calling `setValue`. Apply + re-commit the consistent
+      // crop; the re-entrancy guard swallows our own commit's notify.
+      if (this._isActive && this._cropOpsDiffer(this.editorController.editorTransformations)) {
+        this._syncTransformations();
+        this._alignImage();
+        this._alignCrop();
+        this._draw();
+        this._commit();
+      }
+    } finally {
+      this._reacting = false;
+    }
   }
 
   @debounced(300)
@@ -574,7 +584,7 @@ export class EditorImageCropper extends EditorBlock {
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
-    // The `imageSize` prop is not controller state, so `subscribeEditor` never
+    // The `imageSize` prop is not controller state, so no controller observer
     // fires for it — re-evaluate activation when the root updates it.
     if (changedProperties.has('imageSize')) {
       this._syncActivation();

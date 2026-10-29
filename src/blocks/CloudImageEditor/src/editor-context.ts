@@ -1,11 +1,13 @@
 import { ContextConsumer, createContext } from '@lit/context';
+import { SignalWatcher } from '@lit-labs/signals';
 import { LitElement, type ReactiveController, type ReactiveControllerHost } from 'lit';
 import { Lifetime } from '../../../abstract/di/Lifetime';
 import type { CheckedL10nKey, L10nArguments } from '../../../abstract/l10n';
 import { logger } from '../../../abstract/logger';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
-import type { CloudImageEditorController, EditorState } from './CloudImageEditorController';
+import { registerHostSubscriptions } from '../../../lit/subscription';
+import type { CloudImageEditorController } from './CloudImageEditorController';
 
 const log = logger.scope('cloud-image-editor');
 
@@ -33,7 +35,7 @@ export class CloudImageEditorContextController implements ReactiveController {
   private _subscriptions = new Set<() => void>();
   // Attach listeners are persistent (unlike the spike's one-shot `onAttach`,
   // which existed only to gate a single `initCallback` run): `EditorBlock`
-  // needs its re-render subscription re-wired on every (re)attach, not just
+  // needs its `@subscription` methods re-wired on every (re)attach, not just
   // the first, so a listener registered via `onAttach` fires immediately if a
   // controller is already adopted, and again on every later (re)attach.
   private _onAttachCallbacks = new Set<() => void>();
@@ -84,11 +86,6 @@ export class CloudImageEditorContextController implements ReactiveController {
   /** The span of the current adoption — see `EditorBlock.adoptionSignal`. */
   public get lifetime(): Lifetime {
     return this._lifetime;
-  }
-
-  /** Subscribe to the adopted controller; auto-unsubscribes on host disconnect or controller re-attach. Throws if no controller is adopted yet (see `onAttach`). */
-  public subscribe(callback: () => void): () => void {
-    return this.track(this.controller.subscribe(callback));
   }
 
   /** Run `unsubscribe` on host disconnect or controller re-attach, if it has not run by then. */
@@ -144,8 +141,13 @@ export class CloudImageEditorContextController implements ReactiveController {
 // "Bundle-independence constraints" section of the M12 plan
 // (`docs/superpowers/plans/2026-07-15-v2-m12-cloud-image-editor-port.md`):
 // editor blocks must not pull that machinery into the standalone editor
-// bundle. Only the two structural mixins ChildBlock itself is built on.
-const EditorBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
+// bundle. Only the mixins ChildBlock itself is built on.
+//
+// `SignalWatcher` sits at the base of the mixin chain, as on `ChildBlock`, so it
+// wraps `performUpdate` (not `render()`): a block's `willUpdate`/`render`/
+// `updated` auto-track the controller state and `l10n`/`getConfig` they read,
+// and re-render when it changes.
+const EditorBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)));
 
 /**
  * Base for editor descendants. Deliberately NOT `ChildBlock` — see the
@@ -163,7 +165,6 @@ const EditorBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
  */
 export abstract class EditorBlock extends EditorBlockBase {
   private readonly _editorCtx = new CloudImageEditorContextController(this);
-  private _editorRerenderSub?: () => void;
 
   /**
    * Shared editor logger for this block and every descendant `EditorBlock` —
@@ -179,23 +180,15 @@ export abstract class EditorBlock extends EditorBlockBase {
 
   public constructor() {
     super();
-    // Re-render whenever the editor controller notifies (state change,
-    // `notify()` after a services swap, etc.) — wired on every (re)attach so
-    // a controller swap (exotic, but symmetric with `ChildBlock`'s own
-    // controller re-adoption) doesn't leave a stale subscription behind.
+    // Wired on every (re)attach: a release (host disconnect or a controller
+    // swap) ends the `@subscription` teardowns with the adoption.
     this._editorCtx.onAttach(() => {
-      this._editorRerenderSub?.();
-      this._editorRerenderSub = this._editorCtx.subscribe(() => this.requestUpdate());
-      // A descendant's FIRST render can race ahead of the context actually
-      // resolving (property bindings from a parent's render commit before
-      // `ContextConsumer`'s own `hostConnected` dispatches the
-      // `context-request` event that finds the provider) — any
-      // `editorController`/`l10nSafe`-dependent output computed during that
-      // first pass (a11y labels, translated text, …) would otherwise be
-      // frozen on its no-controller fallback forever, since arming the
-      // subscription above only reacts to FUTURE controller notifications,
-      // not to the attach itself. Force one re-render right on attach so
-      // `render()`/`willUpdate()` recompute with the now-available controller.
+      for (const teardown of registerHostSubscriptions(this, this._log)) {
+        this._editorCtx.track(teardown);
+      }
+      // A render before the attach read no controller, so no signal tracks the
+      // attach itself: anything computed then (a11y labels, translated text, …)
+      // stays on its no-controller fallback unless this re-renders now.
       this.requestUpdate();
     });
 
@@ -203,9 +196,7 @@ export abstract class EditorBlock extends EditorBlockBase {
     // `ChildBlock._applyTestMode`/v1 `LitBlock.subConfigValue('testMode', ...)`,
     // reimplemented here since `EditorBlock` deliberately isn't `ChildBlock`
     // (see the class doc). `testMode` is read once per (re)attach rather than
-    // tracked reactively — `EditorServices.getConfig` has no dedicated
-    // config-change subscription (only the coarse controller `notify()`), and
-    // `testMode` isn't expected to flip after setup.
+    // tracked reactively — it isn't expected to flip after setup.
     this.onEditorAttach(() => {
       if (this.editorController.getConfig('testMode')) {
         this.setAttribute('data-testid', this.tagName.toLowerCase());
@@ -247,16 +238,6 @@ export abstract class EditorBlock extends EditorBlockBase {
   }
 
   /**
-   * Extra editor-controller subscription beyond the automatic re-render one
-   * above (e.g. to run side effects, not just `requestUpdate`). Auto-tracked
-   * with the editor context's lifecycle (unsubscribes on host disconnect or
-   * controller re-attach) — no manual teardown needed.
-   */
-  protected subscribeEditor(callback: () => void): () => void {
-    return this._editorCtx.subscribe(callback);
-  }
-
-  /**
    * Aborted when the editor controller is released (host disconnect or re-attach to another controller); already
    * aborted before the first attach. Pass it to APIs that take a signal — `addEventListener`, `fetch` — and they clean
    * up on their own. Same contract as `ChildBlock.adoptionSignal`, one adoption being one attached controller.
@@ -285,27 +266,5 @@ export abstract class EditorBlock extends EditorBlockBase {
   /** Run `callback` once the editor controller is available (immediately if already attached, else on first/next attach). */
   protected onEditorAttach(callback: () => void): void {
     this._editorCtx.onAttach(callback);
-  }
-
-  /**
-   * Per-key reactive subscription to a single cross-cutting controller state
-   * key. `subscribeEditor` above is coarse (fires on ANY controller state
-   * change, for "re-render on anything"); many descendants instead have
-   * per-key imperative reactions that must NOT fire on unrelated changes —
-   * this filters the coarse notifications down to one key
-   * via `Object.is` dedup, firing `cb` immediately with the current value and
-   * again only when that key's value actually changes.
-   *
-   * Wired through `onEditorAttach` (not just called once), so it re-seeds and
-   * re-subscribes on every (re)attach — same reasoning as `EditorImageCropper`
-   * /`EditorImageFader`'s constructor-time `onEditorAttach` setup: a
-   * controller re-attach tears down the previous coarse subscription (see
-   * `CloudImageEditorContextController.hostDisconnected`/`_attach`), so the
-   * per-key tracking must be re-established alongside it.
-   */
-  protected subEditorKey<K extends keyof EditorState>(key: K, cb: (value: EditorState[K]) => void): void {
-    this.onEditorAttach(() => {
-      this._editorCtx.track(this.editorController.observe(key, cb, { immediate: true }));
-    });
   }
 }
