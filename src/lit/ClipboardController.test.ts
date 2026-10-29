@@ -488,25 +488,6 @@ describe('ClipboardController', () => {
     expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(1);
   });
 
-  // White-box: `_arm`'s idempotency/destroyed guard is unreachable through the
-  // public API (`registerScope` only calls `_arm` on the 0 → 1 transition, and
-  // returns early once destroyed), so it is exercised directly here to pin the
-  // defensive behavior — a redundant or post-destroy arm attaches no listener.
-  it('_arm short-circuits when already armed or destroyed (defensive guard)', () => {
-    const addSpy = vi.spyOn(window, 'addEventListener');
-    const { layer, container } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
-    const armable = layer as unknown as { _arm(): void };
-
-    armable._arm(); // first arm attaches the listener
-    armable._arm(); // already armed → early return, no second listener
-    expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(1);
-
-    container.dispose(); // ends the ctx lifetime, then destroy() disarms (clears `_armed`)
-    addSpy.mockClear();
-    armable._arm(); // lifetime ended → early return
-    expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(0);
-  });
-
   it('the window paste listener add/remove count returns to baseline across a full construct → registerScope → unregister → destroy() cycle', () => {
     const addSpy = vi.spyOn(window, 'addEventListener');
     const removeSpy = vi.spyOn(window, 'removeEventListener');

@@ -40,12 +40,10 @@ export class ClipboardController {
   @inject(() => RouterController) private readonly _router!: RouterController;
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
-  private _armedEventTarget: Pick<Window, 'addEventListener' | 'removeEventListener'> | undefined;
   private _scopes: Set<Node> = new Set();
   // Scopes whose solution takes a paste anywhere on the page while it sits on its start screen.
   private _pagePasteScopes: Set<Node> = new Set();
   private _listener: (event: ClipboardEvent) => void;
-  private _armed = false;
 
   public constructor() {
     // Isolate-and-warn (AGENTS.md #3): a rejection from the injected api's
@@ -58,35 +56,6 @@ export class ClipboardController {
         (err) => this._log.warn('clipboard paste handling failed', err),
       );
     };
-  }
-
-  /**
-   * Attaches the `paste` listener on `window`. Lazy: called on the first
-   * registered scope (0 → 1) rather than at construction, and re-callable
-   * after a full disarm (scopes can cycle 0 → 1 → 0 → 1).
-   *
-   * The paste-event source is always `window` in production; v1 exposed it as
-   * an injectable ctor dep purely for tests, but the container needs a zero-arg
-   * ctor, so `window` is dereferenced lazily here (construction never touches
-   * `window` — safe in window-less contexts; tests exercise it via real
-   * `window.dispatchEvent`).
-   */
-  private _arm(): void {
-    if (this._armed || lifetimeOf(this).signal.aborted) {
-      return;
-    }
-    this._armed = true;
-    this._armedEventTarget = window;
-    this._armedEventTarget.addEventListener('paste', this._listener);
-  }
-
-  private _disarm(): void {
-    if (!this._armed) {
-      return;
-    }
-    this._armed = false;
-    this._armedEventTarget?.removeEventListener('paste', this._listener);
-    this._armedEventTarget = undefined;
   }
 
   private _isEditableTarget(target: EventTarget | null): boolean {
@@ -249,21 +218,25 @@ export class ClipboardController {
     if (ownsPagePaste) {
       this._pagePasteScopes.add(scope);
     }
+    // The `paste` listener is attached on the first scope (0 → 1), not at
+    // construction, so construction never touches `window`.
     if (wasEmpty) {
-      this._arm();
+      window.addEventListener('paste', this._listener);
     }
 
     return () => {
       this._scopes.delete(scope);
       this._pagePasteScopes.delete(scope);
       if (this._scopes.size === 0) {
-        this._disarm();
+        window.removeEventListener('paste', this._listener);
       }
     };
   }
 
   public destroy(): void {
-    this._disarm();
+    if (this._scopes.size > 0) {
+      window.removeEventListener('paste', this._listener);
+    }
     this._scopes.clear();
     this._pagePasteScopes.clear();
   }
