@@ -53,7 +53,6 @@ type CameraStreamOptions = {
  */
 export class CameraStream {
   private _stream: MediaStream | null = null;
-  private _capturing = false;
   private _source: MediaStream | null = null;
   /** Counts the opens, so one answered after a later open began knows it was superseded. */
   private _opens = 0;
@@ -93,21 +92,19 @@ export class CameraStream {
     }
     this._stream = stream;
     this._setSource(stream);
-    this._capturing = true;
-    return this._stream;
+    return stream;
   }
 
   /** Stops the camera. Returns whether it was running. */
   public close(): boolean {
-    if (!this._capturing) return false;
+    const stream = this._stream;
+    if (!stream) return false;
     const video = this._options.video();
     if (video) video.volume = 0;
-    this._source?.getTracks?.()[0]?.stop();
     this._detachClipListeners();
     this._setSource(null);
-    if (this._stream) stopTracks(this._stream);
+    stopTracks(stream);
     this._stream = null;
-    this._capturing = false;
     return true;
   }
 
