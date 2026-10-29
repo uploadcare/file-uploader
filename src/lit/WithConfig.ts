@@ -256,8 +256,8 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     }
 
     private _assertSameValueDifferentReference(key: string, previousValue: unknown, nextValue: unknown) {
-      // Copilot-hardened: toComparableJson swallows circular/throwing values so a
-      // debug-only compare never surfaces from `_setValue`.
+      // toComparableJson swallows circular/throwing values so a debug-only
+      // compare never surfaces from `_setValue`.
       if (this._config.values.debug) {
         const nextSerialized = toComparableJson(nextValue);
         const previousSerialized = toComparableJson(previousValue);

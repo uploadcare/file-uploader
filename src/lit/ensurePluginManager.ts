@@ -8,9 +8,7 @@ import { LazyPluginLoader } from '../abstract/managers/plugin/LazyPluginLoader';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 
 /**
- * ChildBlock-reachable construction of the ctx's `PluginController`, lifted from
- * `LitBlock.initCallback` (v1), which constructed it for any v1 block.
- * Everything `PluginController` needs is container-derived (config, the lazy
+ * ChildBlock-reachable construction of the ctx's `PluginController`. Everything `PluginController` needs is container-derived (config, the lazy
  * public API, the lazy-plugin owner) — no element/DOM dependency — so it can be
  * built from a pure-`ChildBlock` composition (e.g. `<uc-config>` +
  * `<uc-upload-ctx-provider>` with no solution/`<uc-drop-area>`).
@@ -23,7 +21,7 @@ import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
  * also (re-)activates the ctx locale's plugin coupling with the now-present
  * manager — idempotent via `LocaleManager`'s `_activated` guard.
  *
- * M-god step 8c: `PluginController` is container-owned. It has host/closure deps
+ * `PluginController` is container-owned. It has host/closure deps
  * (`buildApi` wraps `buildPluginApi` + the container, `watchPlugins` wraps the
  * `LazyPluginLoader` over the ctx's `LazyPluginsController`, `getUploaderApi`
  * resolves the public API), so it can't be a zero-arg container token —
@@ -36,7 +34,7 @@ export function ensurePluginManager(container: ControllerContainer): void {
     return;
   }
   // Resolve the ctx's `ConfigController` once — the plugin API and lazy loader
-  // read config directly off it (M-god step 7).
+  // read config directly off it.
   const config = container.get(ConfigController);
 
   // Bind `PluginController` as a host-value factory on the per-ctx container.
@@ -58,8 +56,7 @@ export function ensurePluginManager(container: ControllerContainer): void {
   );
 
   // Eagerly construct so lazy plugins / plugin sources start loading immediately
-  // (v1 parity: `LitBlock.initCallback` constructed the manager eagerly) and so
-  // the container records it for reverse-order disposal.
+  // and so the container records it for reverse-order disposal.
   const pluginManager = container.get(PluginController);
 
   container.get(LocaleManager).activate(pluginManager);

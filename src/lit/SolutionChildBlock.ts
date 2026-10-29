@@ -55,8 +55,8 @@ export abstract class SolutionChildBlock extends ChildBlock {
 
     const entries = solution.lazyPlugins;
     if (entries) {
-      // `LazyPluginsController` owns the lazy-plugin entries (M-god step 4); this
-      // is the same instance `LazyPluginLoader` reads + subscribes to, so setting
+      // `LazyPluginsController` owns the lazy-plugin entries; this is the same
+      // instance `LazyPluginLoader` reads + subscribes to, so setting
       // them here triggers the loader.
       container.get(LazyPluginsController).set(entries);
     }
