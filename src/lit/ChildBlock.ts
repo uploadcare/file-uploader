@@ -36,7 +36,7 @@ const templateLog = logger.scope('block');
 const ChildBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)));
 
 /** A custom element has a hyphen in its tag name (the test-mode rewrite skips these). */
-const isCustomElement = (el: Element): boolean => el.tagName?.includes('-') ?? false;
+const isCustomElement = (el: Element): boolean => el.tagName.includes('-');
 
 /**
  * Base class for uploader blocks. Resolves the per-ctx `ControllerContainer`
@@ -104,7 +104,6 @@ export abstract class ChildBlock extends ChildBlockBase {
   // Test-mode `data-testid` state (folded in from the former reactive
   // `TestModeController`): the inner non-custom `[data-testid]` elements this
   // host owns, and their original (unprefixed) values. Driven by `_applyTestMode`.
-  private _testModeTracked = new Set<Element>();
   private _testModeOriginal = new Map<Element, string>();
 
   // biome-ignore lint/correctness/noUnusedPrivateClassMembers: `ContextConsumer` subscribes by side effect — the field keeps it alive for the host's lifetime.
@@ -235,11 +234,7 @@ export abstract class ChildBlock extends ChildBlockBase {
   ): void {
     // `@injectOrNull`: a teardown-time emit (released container) resolves `null`
     // → no-op, matching the v1 guard where a torn-down ctx had no emitter.
-    const eventEmitter = this._eventEmitter;
-    if (!eventEmitter) {
-      return;
-    }
-    eventEmitter.emit(type, payload, options);
+    this._eventEmitter?.emit(type, payload, options);
   }
 
   public override connectedCallback(): void {
@@ -283,7 +278,6 @@ export abstract class ChildBlock extends ChildBlockBase {
     this._registryUnsub = undefined;
     this._watchedCtxName = undefined;
     // Drop the test-mode element refs (the `@effect` itself auto-disposes).
-    this._testModeTracked.clear();
     this._testModeOriginal.clear();
     this._releaseController();
     super.disconnectedCallback();
@@ -519,17 +513,13 @@ export abstract class ChildBlock extends ChildBlockBase {
     }
     const enabled = Boolean(config.getTracked('testMode'));
     // Production path: nothing to prefix and nothing to strip, so skip the subtree scan on every update.
-    if (!enabled && this._testModeTracked.size === 0) {
+    if (!enabled && this._testModeOriginal.size === 0) {
       return;
     }
 
     this._collectTestModeElements();
-    const prefix = this.testId || '';
-    for (const el of this._testModeTracked) {
-      const baseValue = this._testModeOriginal.get(el);
-      if (!baseValue) {
-        continue;
-      }
+    const prefix = this.testId;
+    for (const [el, baseValue] of this._testModeOriginal) {
       if (enabled) {
         el.setAttribute('data-testid', `${prefix}--${baseValue}`);
       } else {
@@ -544,10 +534,7 @@ export abstract class ChildBlock extends ChildBlockBase {
    * longer connected under this host. Ported verbatim from `TestModeController`.
    */
   private _collectTestModeElements(): void {
-    const root = (this.renderRoot ?? this) as Element | DocumentFragment;
-    if (!root) {
-      return;
-    }
+    const root = this.renderRoot;
     const owningBlock = (el: Element): Element | null => {
       for (let parent = el.parentElement; parent; parent = parent.parentElement) {
         if (isCustomElement(parent)) return parent;
@@ -560,19 +547,14 @@ export abstract class ChildBlock extends ChildBlockBase {
       if (owningBlock(el) !== this) {
         continue;
       }
-      if (!this._testModeTracked.has(el)) {
-        const attrValue = el.getAttribute('data-testid');
-        if (!attrValue) {
-          continue;
-        }
-        this._testModeTracked.add(el);
+      const attrValue = el.getAttribute('data-testid');
+      if (attrValue && !this._testModeOriginal.has(el)) {
         this._testModeOriginal.set(el, attrValue);
       }
     }
 
-    for (const el of Array.from(this._testModeTracked)) {
+    for (const el of this._testModeOriginal.keys()) {
       if (!el.isConnected || owningBlock(el) !== this) {
-        this._testModeTracked.delete(el);
         this._testModeOriginal.delete(el);
       }
     }
