@@ -64,7 +64,7 @@ export class EditorImageCropper extends EditorBlock {
   private _lastAspectRatio: CropAspectRatio | null = null;
   private _lastOriginalUrl: string | null = null;
   // Guards the coarse `subscribeEditor` reaction against re-entering itself: it
-  // writes state (`_commit`, `deactivate`→`_commit`) and `StateController.set`
+  // writes state (`_commit`, `deactivate`→`_commit`) and `CloudImageEditorController.set`
   // notifies synchronously, so without this a commit would re-fire the reaction
   // (e.g. deactivate commits before flipping `_isActive`, recursing forever).
   private _reacting = false;

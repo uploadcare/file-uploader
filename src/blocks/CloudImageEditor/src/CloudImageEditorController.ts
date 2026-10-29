@@ -1,7 +1,7 @@
 import type { CdnOperation } from '@uploadcare/cdn-url';
+import { Listeners } from '../../../abstract/host-subscription';
 import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types/index';
 import { DEFAULT_CDN_ORIGIN } from '../../../utils/cdn/origin';
-import { StateController } from './StateController';
 import { type ColorPreview, TabId, type TabIdValue } from './toolbar-constants';
 import type { CropAspectRatio, Transformations } from './types';
 
@@ -124,11 +124,13 @@ function createDefaultServices(): EditorServices {
  * machine, image-URL/modifier computation) accretes here as each block ports
  * in P5/P6 (strangler) — kept minimal in this phase (state container only).
  */
-export class CloudImageEditorController extends StateController<CloudImageEditorControllerState> {
+export class CloudImageEditorController {
+  private _state: CloudImageEditorControllerState;
+  private _listeners = new Listeners();
   private _services: EditorServices;
 
   public constructor(initial?: Partial<CloudImageEditorControllerState>, services?: EditorServices) {
-    super({ ...createDefaultState(), ...initial });
+    this._state = { ...createDefaultState(), ...initial };
     this._services = services ?? createDefaultServices();
   }
 
@@ -166,22 +168,33 @@ export class CloudImageEditorController extends StateController<CloudImageEditor
     return this._services.proxyUrl(url);
   }
 
-  /**
-   * `notify()` is inherited from `StateController` — the root calls it after
-   * swapping services (`setServices`) or otherwise mutating something
-   * descendants read through the controller but that isn't itself a
-   * `CloudImageEditorControllerState` key (e.g. a locale dictionary load or a
-   * config change upstream). Reuses the same `Listeners` instance as `set()`,
-   * so `EditorBlock`'s automatic re-render subscription picks it up for free.
-   *
-   * Current state snapshot (read-only reference — mutate via `set`). Thin
-   * alias over the inherited `values`, kept for the editor's established naming.
-   */
-  public get state(): Readonly<CloudImageEditorControllerState> {
-    return this.values;
+  public get<K extends keyof CloudImageEditorControllerState>(key: K): CloudImageEditorControllerState[K] {
+    return this._state[key];
   }
 
-  public getState(): Readonly<CloudImageEditorControllerState> {
-    return this.values;
+  /** Notifies only when the value actually changes (`Object.is` dedup). */
+  public set<K extends keyof CloudImageEditorControllerState>(key: K, value: CloudImageEditorControllerState[K]): void {
+    if (Object.is(this._state[key], value)) return;
+    this._state[key] = value;
+    this._listeners.notify();
+  }
+
+  /** Coarse subscribe — fires on any state change, not per-key. */
+  public subscribe(listener: () => void): () => void {
+    return this._listeners.subscribe(listener);
+  }
+
+  /**
+   * Coarse notify with no state change. The root calls it after swapping
+   * services (`setServices`) or another change descendants read through the
+   * controller that isn't a state key (a locale load, an upstream config
+   * change), so `EditorBlock`'s re-render subscription picks it up.
+   */
+  public notify(): void {
+    this._listeners.notify();
+  }
+
+  public destroy(): void {
+    this._listeners.clear();
   }
 }
