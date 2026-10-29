@@ -6,8 +6,9 @@
  * their dependencies on access, caches the singleton, and finally runs an
  * optional `init()`. Teardown happens in reverse insertion order.
  *
- * Controllers must NOT import `lit` or touch the DOM — host/boundary values
- * (the upload-client SDK, DOM callbacks, …) enter only through `bind()`.
+ * Controllers must NOT import `lit` or touch the DOM. A controller whose
+ * constructor needs host closures (`PluginController`) is `bind()`-ed with a
+ * factory.
  */
 
 import { logger } from '../logger';

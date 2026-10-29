@@ -61,12 +61,10 @@ const EXCLUDED_EVENTS: ReadonlySet<CommonEventType> = new Set([
 ]);
 
 /**
- * Quality-insights telemetry (M8 port): container-resolved (M-god step 3c) and
- * an EventBus OBSERVER. Enablement and config tracking read the v2
- * `ConfigController` directly (one coarse subscription + snapshot diff replaces
- * the per-`*cfg/*`-key ctx subscriptions); the solution/activity payload fields
- * read the container-owned `AppInfo`/`RouterController` lazily, so nothing here
- * touches the `$` state.
+ * Quality-insights telemetry: an EventBus OBSERVER. Enablement and config
+ * tracking read `ConfigController` (one coarse subscription + snapshot diff);
+ * the solution/activity payload fields read the container-owned
+ * `AppInfo`/`RouterController` lazily.
  *
  * `init()` subscribes to `bus.onAny` and forwards every emitted event to
  * `sendEvent`. The bus fires on every `EventEmitter.emit`, so telemetry sees

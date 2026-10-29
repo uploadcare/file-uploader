@@ -13,7 +13,7 @@ import { ConfigController } from './ConfigController';
  * Same resolver-vs-static precedence, same token caching with
  * expire-threshold-driven refresh, same warning/error/debug output (debug now
  * per-ctx gated via a scoped `logger`, keyed off this ctx's `debug` config).
- * Container-resolved (M-god step 5): its `ConfigController` peer and
+ * Container-resolved: its `ConfigController` peer and
  * `TelemetryManager` (the never-throwing sink for a resolver that throws) are
  * `@inject`-ed, so it constructs zero-arg without a DOM and is unit testable in
  * isolation.

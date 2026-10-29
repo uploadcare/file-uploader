@@ -85,7 +85,7 @@ type EntryValidationState = {
  *
  * Same built-in validators, same async queue with per-entry abort/timeout and
  * `runOn` (`add`/`upload`/`change`) semantics, same error-dedup behavior.
- * Container-resolved (M-god step 5): controller peers (config, collection, and
+ * Container-resolved: controller peers (config, collection, and
  * `CollectionStateController` — the collection-errors sink), the public API, the
  * per-ctx `EventEmitter` (for the debounced `common-upload-failed`) and
  * `TelemetryManager` (the never-throwing validator-error sink) are `@inject`-ed,

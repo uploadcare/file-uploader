@@ -55,14 +55,13 @@ export const createPluralizer = (getL10n: () => L10nFunction) => {
 
 /**
  * Build an l10n function that reads the resolved dictionary directly from the
- * ctx's {@link LocaleController} (M-god step 7: off the `*l10n/*` PubSub facade).
+ * ctx's {@link LocaleController}.
  * `getLocale` is called live on every lookup so a later dictionary load / locale
  * switch is reflected without re-creating the function.
  *
  * Lookups use the controller's `getTracked`, so calling `l10n(key)` inside a
  * `SignalWatcher` render (every `ChildBlock`) auto-tracks that key and re-renders
- * the block when the dictionary loads or the locale switches — replacing the
- * explicit `subscriptionsFor` locale subscription blocks used to declare. Outside
+ * the block when the dictionary loads or the locale switches. Outside
  * a watcher (e.g. `api.l10n(...)`) `getTracked` is a plain read, so callers that
  * are not reactive consumers are unaffected.
  */

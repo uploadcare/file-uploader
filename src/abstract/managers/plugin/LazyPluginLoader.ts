@@ -57,10 +57,9 @@ export class LazyPluginLoader {
     private readonly _config: ConfigController,
     private readonly _onCompute: (plugins: Promise<UploaderPlugin[] | undefined>) => void,
   ) {
-    // Read the current entries now and re-run on every change — reproducing the
-    // v1 `ctx.sub('*lazyPlugins', …, init=true)` semantics (fire once + on
-    // change). `LazyPluginsController` (the owner of the entries, M-god step 4)
-    // dedups on `Object.is` before notifying, so no spurious re-runs.
+    // Read the current entries now and re-run on every change.
+    // `LazyPluginsController` (the owner of the entries) dedups on `Object.is`
+    // before notifying, so no spurious re-runs.
     const apply = () => this._setEntries(this._lazyPlugins.get() ?? []);
     apply();
     this._unsubLazyPlugins = this._lazyPlugins.subscribe(apply);
@@ -72,8 +71,8 @@ export class LazyPluginLoader {
     if (entries.length === 0) return;
 
     // The config keys whose changes must recompute the resolved plugin list:
-    // `plugins` plus every entry's declared `configDeps`. Read directly off the
-    // `ConfigController` (M-god step 7: off the `*cfg/*` facade).
+    // `plugins` plus every entry's declared `configDeps`, read off the
+    // `ConfigController`.
     const deps = new Set<keyof ConfigType>(['plugins']);
     for (const entry of entries) {
       for (const dep of entry.configDeps) {
