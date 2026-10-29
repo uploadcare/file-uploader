@@ -33,6 +33,11 @@ const ATTR_REF = /<(?:script|link|img)\b[^>]*?\b(?:src|href)\s*=\s*["']([^"']+)[
 /** Static `import … from 'x'` / `import 'x'`, plus `import('x')`. */
 const STATIC_IMPORT = /\bimport\s+(?:[^'"();]*?\bfrom\s+)?["']([^"']+)["']/g;
 const DYNAMIC_IMPORT = /\bimport\s*\(\s*["']([^"']+)["']/g;
+/**
+ * A relative path to an asset inside a string, such as an `iconHrefResolver` returning `./test.svg#id`. Vite's dev
+ * server answers a missing one with its HTML fallback (200), so the page shows nothing rather than an error.
+ */
+const ASSET_STRING = /["'](\.{1,2}\/[^"'#?]+\.(?:svg|png|jpe?g|gif|webp))(?:[#?][^"']*)?["']/gi;
 
 const htmlFiles = readdirSync(DEMO_ROOT, { recursive: true, encoding: 'utf8' })
   .filter((entry) => entry.endsWith('.html'))
@@ -99,6 +104,7 @@ describe('demo pages', () => {
         ...collect(source, ATTR_REF),
         ...collect(source, STATIC_IMPORT),
         ...collect(source, DYNAMIC_IMPORT),
+        ...collect(source, ASSET_STRING),
       ];
 
       const broken: string[] = [];
