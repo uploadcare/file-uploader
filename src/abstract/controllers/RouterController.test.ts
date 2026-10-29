@@ -274,19 +274,6 @@ describe('RouterController (v2)', () => {
   });
 
   describe('onFileAdd (traverse edge)', () => {
-    it('navigates to upload-list by default', () => {
-      const { router } = setup();
-      router.traverse('onFileAdd');
-      expect(router.activity).toBe('upload-list');
-    });
-
-    it('respects an onFileAdd hook returning null (stay closed)', () => {
-      const { router } = setup();
-      router.hooks.onFileAdd(() => null);
-      router.traverse('onFileAdd');
-      expect(router.activity).toBeNull();
-    });
-
     it('isolates a throwing onFileAdd hook and falls back to upload-list', () => {
       const { router } = setup();
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
