@@ -2,6 +2,7 @@ import type { PropertyValues } from 'lit';
 import { html, type TemplateResult } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
+import type { CloudImageEditorController } from './CloudImageEditorController';
 import { EditorBlock } from './editor-context';
 
 import './EditorIcon';
@@ -44,9 +45,19 @@ export class EditorButtonControl extends EditorBlock {
    */
   protected updateLabels(): void {}
 
+  /** Whether the control shows as selected, derived from controller state. Keeps `active` by default. */
+  protected isActive(_controller: CloudImageEditorController): boolean {
+    return this.active;
+  }
+
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
     this.updateLabels();
+    // Derived here, not in `render`, so `updated` sees `active` change and toggles the host classes.
+    const controller = this.editorControllerOrNull;
+    if (controller) {
+      this.active = this.isActive(controller);
+    }
   }
 
   public override connectedCallback(): void {

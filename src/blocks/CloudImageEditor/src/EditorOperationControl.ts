@@ -1,5 +1,5 @@
-import type { PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
+import type { CloudImageEditorController } from './CloudImageEditorController';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { ColorOperation } from './toolbar-constants';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
@@ -25,14 +25,11 @@ export class EditorOperationControl extends EditorButtonControl {
   @property({ type: String })
   public operation: ColorOperation | '' = '';
 
-  // Derived here, not in `render`, so the base's `updated` sees `active` change and toggles the host classes.
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
-    super.willUpdate(changedProperties);
-    const controller = this.editorControllerOrNull;
-    if (!controller || !this.operation) return;
+  protected override isActive(controller: CloudImageEditorController): boolean {
+    if (!this.operation) return this.active;
     const { zero } = COLOR_OPERATIONS_CONFIG[this.operation];
     const value = controller.editorTransformations[this.operation];
-    this.active = typeof value !== 'undefined' ? value !== zero : false;
+    return typeof value !== 'undefined' ? value !== zero : false;
   }
 
   protected override updateLabels(): void {
