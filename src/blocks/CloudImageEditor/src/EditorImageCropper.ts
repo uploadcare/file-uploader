@@ -74,7 +74,6 @@ export class EditorImageCropper extends EditorBlock {
   // ANY cross-cutting state change, not per-key like the old shared-ctx
   // `sub(key, cb)`).
   private _lastAspectRatio: CropAspectRatio | null = null;
-  private _lastNetworkProblems = false;
   private _lastOriginalUrl: string | null = null;
   // Guards the coarse `subscribeEditor` reaction against re-entering itself: it
   // writes state (`_commit`, `deactivate`→`_commit`) and `StateController.set`
@@ -117,7 +116,6 @@ export class EditorImageCropper extends EditorBlock {
     // controller is already adopted, and again on every later (re)attach.
     this.onEditorAttach(() => {
       this._lastAspectRatio = this.editorController.get('*currentAspectRatio');
-      this._lastNetworkProblems = this.editorController.get('*networkProblems');
       this._lastOriginalUrl = this.editorController.get('*originalUrl');
       // A (re)attach can find the cropper ready to activate already — e.g. after an activation aborted by a reconnect.
       this._syncActivation();
@@ -133,7 +131,6 @@ export class EditorImageCropper extends EditorBlock {
             this._lastAspectRatio = aspectRatio;
             this._alignCrop();
           }
-          this._lastNetworkProblems = this.editorController.get('*networkProblems');
 
           // A new image (originalUrl change) invalidates the current crop.
           // Reset the ops to a clean slate and stay INACTIVE until the root
@@ -349,15 +346,14 @@ export class EditorImageCropper extends EditorBlock {
     this._drawImage();
   }
 
-  private _animateIn({ fromViewer }: { fromViewer?: boolean }): void {
+  private _animateIn(): void {
     if (this._image) {
       this._frameRef.value?.toggleThumbs(true);
       this._transitionToImage();
       // A later task, so the browser styles the transform above before the class change starts the CSS transition.
       setTimeout(() => {
         applyClassNames(this, {
-          'uc-active_from_viewer': fromViewer,
-          'uc-active_from_editor': !fromViewer,
+          'uc-active_from_editor': true,
           'uc-inactive_to_editor': false,
         });
       });
@@ -461,7 +457,7 @@ export class EditorImageCropper extends EditorBlock {
     }
   }
 
-  public async activate(imageSize: ImageSize, { fromViewer }: { fromViewer?: boolean } = {}): Promise<void> {
+  public async activate(imageSize: ImageSize): Promise<void> {
     if (this._isActive || this.adoptionSignal.aborted) {
       return;
     }
@@ -497,7 +493,7 @@ export class EditorImageCropper extends EditorBlock {
       this._image = image;
       this._syncTransformations();
       this._handleResizeThrottled();
-      this._animateIn({ fromViewer });
+      this._animateIn();
     } catch (err) {
       if (isAbortError(err)) throw err;
       this._log.error('Failed to activate cropper', { error: err });
@@ -530,7 +526,6 @@ export class EditorImageCropper extends EditorBlock {
     this._transitionToCrop();
 
     applyClassNames(this, {
-      'uc-active_from_viewer': false,
       'uc-active_from_editor': false,
       'uc-inactive_to_editor': true,
     });

@@ -35,7 +35,6 @@ type FaderActivation = {
   operation?: OperationKey;
   value?: number;
   filter?: FilterName;
-  fromViewer?: boolean;
 };
 
 function isOperationKey(value: unknown): value is OperationKey {
@@ -97,9 +96,7 @@ export class EditorImageFader extends EditorBlock {
   private _keypoints: Keypoint[] = [];
   private _previewImage?: HTMLImageElement;
   private _cancelLastImages?: () => void;
-  private _cancelBatchPreload?: () => void;
   private _url?: string;
-  private _fromViewer?: boolean;
   private _raf = 0;
   private readonly _previewHostRef = createRef<HTMLDivElement>();
   private readonly _layersHostRef = createRef<HTMLDivElement>();
@@ -261,7 +258,7 @@ export class EditorImageFader extends EditorBlock {
         this._shown = true;
         this._lastTransformations = transformations;
         this._transformations = transformations;
-        this.runTask(() => this.activate({ url: originalUrl as string, fromViewer: false }));
+        this.runTask(() => this.activate({ url: originalUrl as string }));
       } else if (!shouldShow && this._shown) {
         this._shown = false;
         this.deactivate();
@@ -292,7 +289,6 @@ export class EditorImageFader extends EditorBlock {
                 operation: colorPreview.operation,
                 value: colorPreview.value,
                 filter: colorPreview.filter,
-                fromViewer: false,
               }),
             );
           } else if (typeof colorPreview.value === 'number') {
@@ -393,13 +389,12 @@ export class EditorImageFader extends EditorBlock {
     return this._operation === operation && this._filter === filter;
   }
 
-  public set(value: string | number): void {
-    const numericValue = typeof value === 'string' ? parseInt(value, 10) : value;
-    if (!isOperationKey(this._operation) || !Number.isFinite(numericValue)) {
+  public set(value: number): void {
+    if (!isOperationKey(this._operation) || !Number.isFinite(value)) {
       return;
     }
-    this._update(this._operation, numericValue);
-    this._addKeypointDebounced(this._operation, this._filter, numericValue);
+    this._update(this._operation, value);
+    this._addKeypointDebounced(this._operation, this._filter, value);
   }
 
   private _update(operation: OperationKey, value: number): void {
@@ -498,35 +493,6 @@ export class EditorImageFader extends EditorBlock {
     }
   }
 
-  public async preload({
-    url,
-    filter,
-    operation,
-    value,
-  }: {
-    url: string;
-    filter?: FilterName;
-    operation?: OperationKey;
-    value?: number;
-  }): Promise<void> {
-    if (!operation || typeof value !== 'number') {
-      return;
-    }
-    const controller = this.editorControllerOrNull;
-    if (!controller) {
-      return;
-    }
-    this._cancelBatchPreload?.();
-
-    const keypoints = keypointsRange(operation, value);
-    const srcList = await Promise.all(
-      keypoints.map((kp) => this._imageSrc(controller, { url, filter, operation, value: kp })),
-    );
-    const { cancel } = batchPreloadImages(srcList);
-
-    this._cancelBatchPreload = cancel;
-  }
-
   private _setOriginalSrc(controller: CloudImageEditorController, src: string): void {
     const image = this._previewImage || this._createPreviewImage();
     this._ensurePreviewAttached(image);
@@ -537,8 +503,7 @@ export class EditorImageFader extends EditorBlock {
       image.style.transform = 'scale(1)';
 
       applyClassNames(this, {
-        'uc-active_from_viewer': this._fromViewer,
-        'uc-active_from_cropper': !this._fromViewer,
+        'uc-active_from_cropper': true,
         'uc-inactive_to_cropper': false,
       });
       return;
@@ -556,8 +521,7 @@ export class EditorImageFader extends EditorBlock {
           image.style.transform = 'scale(1)';
 
           applyClassNames(this, {
-            'uc-active_from_viewer': this._fromViewer,
-            'uc-active_from_cropper': !this._fromViewer,
+            'uc-active_from_cropper': true,
             'uc-inactive_to_cropper': false,
           });
         }
@@ -594,14 +558,13 @@ export class EditorImageFader extends EditorBlock {
     }
   }
 
-  private async _activate({ url, operation, value, filter, fromViewer }: FaderActivation): Promise<void> {
+  private async _activate({ url, operation, value, filter }: FaderActivation): Promise<void> {
     await this.whileAdopted(this.updateComplete);
     const controller = this.editorController;
     this._url = url;
     this._operation = operation ?? 'initial';
     this._value = value;
     this._filter = filter;
-    this._fromViewer = fromViewer;
 
     const isOriginal = typeof value !== 'number' && !filter;
     if (isOriginal) {
@@ -627,7 +590,6 @@ export class EditorImageFader extends EditorBlock {
     this._isActive = false;
 
     this._cancelLastImages?.();
-    this._cancelBatchPreload?.();
 
     if (hide && !this._hidden) {
       this._hidden = true;
@@ -636,7 +598,6 @@ export class EditorImageFader extends EditorBlock {
       }
 
       applyClassNames(this, {
-        'uc-active_from_viewer': false,
         'uc-active_from_cropper': false,
         'uc-inactive_to_cropper': true,
       });
