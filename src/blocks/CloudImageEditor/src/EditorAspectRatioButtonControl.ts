@@ -35,7 +35,7 @@ export class EditorFreeformButtonControl extends EditorButtonControl {
   // Named after the current preset, which `EditorBlock` re-renders on.
   protected override updateLabels(): void {
     this.icon = 'arrow-dropdown';
-    const aspectRatio = this.editorControllerOrNull?.get('*currentAspectRatio') ?? null;
+    const aspectRatio = this.editorControllerOrNull?.currentAspectRatio ?? null;
     this.caption = !aspectRatio
       ? ''
       : aspectRatio.hasFreeform
@@ -57,7 +57,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
   public constructor() {
     super();
 
-    this.subEditorKey('*currentAspectRatio', (opt: CropAspectRatio | null) => {
+    this.subEditorKey('currentAspectRatio', (opt: CropAspectRatio | null) => {
       this.active =
         (opt && opt.id === this.aspectRatio?.id) ||
         (opt?.width === this.aspectRatio?.width && opt?.height === this.aspectRatio?.height);
@@ -65,12 +65,12 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
   }
 
   protected override onClick(): void {
-    const currentAspectRatio = this.editorController.get('*currentAspectRatio');
+    const currentAspectRatio = this.editorController.currentAspectRatio;
     if (currentAspectRatio?.id === this.aspectRatio?.id) {
       return;
     }
 
-    this.editorController.set('*currentAspectRatio', this.aspectRatio);
+    this.editorController.currentAspectRatio = this.aspectRatio;
   }
 
   protected override updateLabels(): void {

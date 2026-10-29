@@ -103,8 +103,8 @@ export class EditorImageCropper extends EditorBlock {
     // `initCallback` from the v1 base): runs immediately if the editor
     // controller is already adopted, and again on every later (re)attach.
     this.onEditorAttach(() => {
-      this._lastAspectRatio = this.editorController.get('*currentAspectRatio');
-      this._lastOriginalUrl = this.editorController.get('*originalUrl');
+      this._lastAspectRatio = this.editorController.currentAspectRatio;
+      this._lastOriginalUrl = this.editorController.originalUrl;
       // A (re)attach can find the cropper ready to activate already — e.g. after an activation aborted by a reconnect.
       this._syncActivation();
 
@@ -114,7 +114,7 @@ export class EditorImageCropper extends EditorBlock {
         }
         this._reacting = true;
         try {
-          const aspectRatio = this.editorController.get('*currentAspectRatio');
+          const aspectRatio = this.editorController.currentAspectRatio;
           if (aspectRatio !== this._lastAspectRatio) {
             this._lastAspectRatio = aspectRatio;
             this._alignCrop();
@@ -127,7 +127,7 @@ export class EditorImageCropper extends EditorBlock {
           // image's still-stale `imageSize` (the root clears it to null before
           // the size fetch). `deactivate` also aborts the current activation, so an
           // in-flight activation of the old image stops.
-          const originalUrl = this.editorController.get('*originalUrl');
+          const originalUrl = this.editorController.originalUrl;
           if (originalUrl !== this._lastOriginalUrl) {
             this._lastOriginalUrl = originalUrl;
             this._operations = { ...DEFAULT_OPERATIONS };
@@ -145,7 +145,7 @@ export class EditorImageCropper extends EditorBlock {
           // `*editorTransformations` — `EditorCropButtonControl` writes them
           // instead of calling `setValue`. Apply + re-commit the consistent
           // crop; the re-entrancy guard swallows our own commit's notify.
-          if (this._isActive && this._cropOpsDiffer(this.editorController.get('*editorTransformations'))) {
+          if (this._isActive && this._cropOpsDiffer(this.editorController.editorTransformations)) {
             this._syncTransformations();
             this._alignImage();
             this._alignCrop();
@@ -182,7 +182,7 @@ export class EditorImageCropper extends EditorBlock {
   }
 
   private _syncTransformations(): void {
-    const transformations = this.editorController.get('*editorTransformations');
+    const transformations = this.editorController.editorTransformations;
     const {
       rotate = this._operations.rotate,
       mirror = this._operations.mirror,
@@ -257,7 +257,7 @@ export class EditorImageCropper extends EditorBlock {
     const imageBox = this._imageBox;
     const operations = this._operations;
     const { rotate } = operations;
-    const cropTransformation = this.editorController.get('*editorTransformations').crop;
+    const cropTransformation = this.editorController.editorTransformations.crop;
     const { width: previewWidth, x: previewX, y: previewY } = imageBox;
 
     if (cropTransformation) {
@@ -278,7 +278,7 @@ export class EditorImageCropper extends EditorBlock {
       );
     }
 
-    const cropPreset = this.editorController.get('*currentAspectRatio');
+    const cropPreset = this.editorController.currentAspectRatio;
     const cropAspectRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
 
     if (
@@ -400,7 +400,7 @@ export class EditorImageCropper extends EditorBlock {
     const operations = this._operations;
     const { rotate, mirror, flip } = operations;
     const crop = this._getCropTransformation();
-    const editorTransformations = this.editorController.get('*editorTransformations');
+    const editorTransformations = this.editorController.editorTransformations;
     const transformations: Transformations = {
       ...editorTransformations,
       crop,
@@ -409,7 +409,7 @@ export class EditorImageCropper extends EditorBlock {
       flip,
     };
 
-    this.editorController.set('*editorTransformations', transformations);
+    this.editorController.editorTransformations = transformations;
   }
 
   /** True when the committed crop ops differ from what the cropper has applied. */
@@ -424,10 +424,7 @@ export class EditorImageCropper extends EditorBlock {
       return;
     }
     const shouldBeActive =
-      controller.get('*tabId') === TabId.CROP &&
-      !!this.imageSize &&
-      !!controller.get('*originalUrl') &&
-      !controller.get('*networkProblems');
+      controller.tabId === TabId.CROP && !!this.imageSize && !!controller.originalUrl && !controller.networkProblems;
 
     if (shouldBeActive && !this._isActive) {
       const imageSize = this.imageSize as ImageSize;
@@ -463,8 +460,8 @@ export class EditorImageCropper extends EditorBlock {
 
     try {
       const controller = this.editorController;
-      const originalUrl = controller.get('*originalUrl') as string;
-      const transformations = controller.get('*editorTransformations');
+      const originalUrl = controller.originalUrl as string;
+      const transformations = controller.editorTransformations;
       const image = await this._waitForImage(controller, originalUrl, transformations, activation.signal);
       // Deactivated while the image loaded: its image is not ours to keep.
       if (activation.signal.aborted) {
@@ -552,9 +549,7 @@ export class EditorImageCropper extends EditorBlock {
     signal: AbortSignal,
   ): Promise<HTMLImageElement> {
     const src = await this.whileAdopted(
-      controller.proxyUrl(
-        cropperImageSrc(originalUrl, this.offsetWidth, transformations, controller.get('*sourceOperations')),
-      ),
+      controller.proxyUrl(cropperImageSrc(originalUrl, this.offsetWidth, transformations, controller.sourceOperations)),
     );
     // Before the loading flag goes up: an image that never starts loading would never clear it.
     signal.throwIfAborted();
@@ -571,7 +566,7 @@ export class EditorImageCropper extends EditorBlock {
     } catch (err) {
       if (isAbortError(err)) throw err;
       this._log.error('Failed to load image', { error: err });
-      controller.set('*networkProblems', true);
+      controller.networkProblems = true;
     }
     return image;
   }

@@ -1,3 +1,4 @@
+import { Signal } from '@lit-labs/signals';
 import { describe, expect, it, vi } from 'vitest';
 import { CloudImageEditorController } from './CloudImageEditorController';
 import { TabId } from './toolbar-constants';
@@ -5,67 +6,98 @@ import { TabId } from './toolbar-constants';
 describe('CloudImageEditorController', () => {
   it('seeds the cross-cutting defaults', () => {
     const controller = new CloudImageEditorController();
-    expect(controller.get('*originalUrl')).toBeNull();
-    expect(controller.get('*networkProblems')).toBe(false);
-    expect(controller.get('*tabId')).toBe(TabId.CROP);
-    expect(controller.get('*editorTransformations')).toEqual({});
-    expect(controller.get('*colorPreview')).toBeNull();
+    expect(controller.originalUrl).toBeNull();
+    expect(controller.networkProblems).toBe(false);
+    expect(controller.tabId).toBe(TabId.CROP);
+    expect(controller.editorTransformations).toEqual({});
+    expect(controller.colorPreview).toBeNull();
   });
 
   it('accepts a partial initial state overriding only the given keys', () => {
-    const controller = new CloudImageEditorController({ '*tabId': TabId.FILTERS, '*networkProblems': true });
-    expect(controller.get('*tabId')).toBe(TabId.FILTERS);
-    expect(controller.get('*networkProblems')).toBe(true);
+    const controller = new CloudImageEditorController({ tabId: TabId.FILTERS, networkProblems: true });
+    expect(controller.tabId).toBe(TabId.FILTERS);
+    expect(controller.networkProblems).toBe(true);
     // Untouched keys still get their default.
-    expect(controller.get('*originalUrl')).toBeNull();
+    expect(controller.originalUrl).toBeNull();
   });
 
-  it('set() stores the value and notifies, deduping unchanged writes (Object.is)', () => {
+  it('a write stores the value and notifies observers, deduping unchanged writes (Object.is)', () => {
     const controller = new CloudImageEditorController();
     const listener = vi.fn();
-    controller.subscribe(listener);
+    controller.observe('originalUrl', listener);
 
-    controller.set('*originalUrl', 'https://example.com/a.png');
-    expect(controller.get('*originalUrl')).toBe('https://example.com/a.png');
+    controller.originalUrl = 'https://example.com/a.png';
+    expect(controller.originalUrl).toBe('https://example.com/a.png');
     expect(listener).toHaveBeenCalledTimes(1);
 
-    controller.set('*originalUrl', 'https://example.com/a.png'); // unchanged — no notify
+    controller.originalUrl = 'https://example.com/a.png'; // unchanged — no notify
     expect(listener).toHaveBeenCalledTimes(1);
 
-    controller.set('*originalUrl', 'https://example.com/b.png');
+    controller.originalUrl = 'https://example.com/b.png';
     expect(listener).toHaveBeenCalledTimes(2);
   });
 
-  it('set() dedups a re-written same-reference value (no notify)', () => {
+  it('a write dedups a re-written same-reference value (no notify)', () => {
     const controller = new CloudImageEditorController();
     const listener = vi.fn();
-    controller.set('*currentAspectRatio', { type: 'aspect-ratio', width: 16, height: 9, id: 'x' });
-    controller.subscribe(listener);
+    controller.currentAspectRatio = { type: 'aspect-ratio', width: 16, height: 9, id: 'x' };
+    controller.observe('currentAspectRatio', listener);
     const ratio = { type: 'aspect-ratio' as const, width: 16, height: 9, id: 'y' };
-    controller.set('*currentAspectRatio', ratio); // new reference — notifies
+    controller.currentAspectRatio = ratio; // new reference — notifies
     expect(listener).toHaveBeenCalledTimes(1);
-    controller.set('*currentAspectRatio', ratio); // same reference — Object.is dedup, no notify
+    controller.currentAspectRatio = ratio; // same reference — Object.is dedup, no notify
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
-  it('subscribe fires on every changed key, coarse (not per-key)', () => {
+  it('observe fires with the new value for its own key only', () => {
     const controller = new CloudImageEditorController();
     const listener = vi.fn();
-    controller.subscribe(listener);
+    controller.observe('tabId', listener);
 
-    controller.set('*tabId', TabId.TUNING);
-    controller.set('*networkProblems', true);
-    expect(listener).toHaveBeenCalledTimes(2);
+    controller.networkProblems = true;
+    controller.tabId = TabId.TUNING;
+    expect(listener.mock.calls).toEqual([[TabId.TUNING]]);
+  });
+
+  it('observe with immediate also fires once with the current value', () => {
+    const controller = new CloudImageEditorController({ tabId: TabId.FILTERS });
+    const listener = vi.fn();
+    controller.observe('tabId', listener, { immediate: true });
+    expect(listener.mock.calls).toEqual([[TabId.FILTERS]]);
   });
 
   it('unsubscribe stops notifications', () => {
     const controller = new CloudImageEditorController();
     const listener = vi.fn();
-    const off = controller.subscribe(listener);
+    const off = controller.observe('tabId', listener);
     off();
 
-    controller.set('*tabId', TabId.TUNING);
+    controller.tabId = TabId.TUNING;
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('reads state tracked, so a computation over it recomputes on a write', () => {
+    const controller = new CloudImageEditorController();
+    const tab = new Signal.Computed(() => controller.tabId);
+    expect(tab.get()).toBe(TabId.CROP);
+
+    controller.tabId = TabId.TUNING;
+    expect(tab.get()).toBe(TabId.TUNING);
+  });
+
+  it('runs an observer untracked, so a computation that writes does not depend on what the observer reads', () => {
+    const controller = new CloudImageEditorController();
+    controller.observe('tabId', () => controller.networkProblems);
+    let runs = 0;
+    const writer = new Signal.Computed(() => {
+      runs += 1;
+      controller.tabId = TabId.TUNING;
+    });
+    writer.get();
+
+    controller.networkProblems = true;
+    writer.get();
+    expect(runs).toBe(1);
   });
 
   it('falls back to inert default services until setServices is called', () => {
@@ -111,26 +143,46 @@ describe('CloudImageEditorController', () => {
     expect(controller.l10n('cancel')).toBe('pre:cancel');
   });
 
-  it('notify() fires subscribers with no state change (e.g. after a services swap)', () => {
+  it('servicesChanged() re-runs a computation over l10n/getConfig with no state change (e.g. a locale load)', () => {
     const controller = new CloudImageEditorController();
-    const listener = vi.fn();
-    controller.subscribe(listener);
+    let runs = 0;
+    const label = new Signal.Computed(() => {
+      runs += 1;
+      return `${controller.l10n('cancel')}:${String(controller.getConfig('debug'))}`;
+    });
+    label.get();
 
-    controller.notify();
-    expect(listener).toHaveBeenCalledTimes(1);
+    controller.servicesChanged();
+    label.get();
+    expect(runs).toBe(2);
     // No state mutated.
-    expect(controller.get('*tabId')).toBe(TabId.CROP);
+    expect(controller.tabId).toBe(TabId.CROP);
   });
 
-  it('destroy() clears subscribers', () => {
+  it('setServices() re-runs a computation over l10n', () => {
+    const controller = new CloudImageEditorController();
+    const label = new Signal.Computed(() => controller.l10n('cancel'));
+    expect(label.get()).toBe('cancel');
+
+    controller.setServices({
+      l10n: (key) => `de:${key}`,
+      getConfig: (() => undefined) as CloudImageEditorController['getConfig'],
+      telemetry: { sendEvent: () => {}, sendEventError: () => {}, sendActionEvent: () => {} },
+      proxyUrl: async (url) => url,
+    });
+    expect(label.get()).toBe('de:cancel');
+  });
+
+  it('destroy() clears observers and keeps the state', () => {
     const controller = new CloudImageEditorController();
     const listener = vi.fn();
-    controller.subscribe(listener);
+    controller.observe('tabId', listener);
 
     controller.destroy();
 
-    controller.set('*tabId', TabId.TUNING);
+    controller.tabId = TabId.TUNING;
     expect(listener).not.toHaveBeenCalled();
+    expect(controller.tabId).toBe(TabId.TUNING);
   });
 });
 

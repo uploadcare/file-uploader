@@ -95,7 +95,7 @@ describe('editor state reactions', () => {
     await userEvent.click(preset1x1);
 
     await expect.element(preset1x1).toHaveAttribute('aria-selected', 'true');
-    expect(controllerOf(element).get('*currentAspectRatio')).toMatchObject({ width: 1, height: 1 });
+    expect(controllerOf(element).currentAspectRatio).toMatchObject({ width: 1, height: 1 });
   });
 
   it('switches to the first listed tab when the tabs no longer include the current one', async () => {
@@ -105,7 +105,7 @@ describe('editor state reactions', () => {
     element.setAttribute('tabs', 'tuning, filters');
 
     await expect.element(editor.getByRole('tab', { name: /tuning/i, selected: true })).toBeVisible();
-    expect(controllerOf(element).get('*tabId')).toBe('tuning');
+    expect(controllerOf(element).tabId).toBe('tuning');
     await faderActive(element);
   });
 
@@ -114,13 +114,13 @@ describe('editor state reactions', () => {
     const slider = await openBrightness(element, editor);
     await userEvent.click(slider);
     await userEvent.keyboard('[ArrowRight]');
-    await expect.poll(() => controllerOf(element).get('*colorPreview')?.operation).toBe('brightness');
+    await expect.poll(() => controllerOf(element).colorPreview?.operation).toBe('brightness');
 
     const sliderCancel = element.querySelector<HTMLElement>('.uc-controls-row uc-btn-ui[theme="secondary"] button')!;
     await userEvent.click(sliderCancel);
 
-    await expect.poll(() => controllerOf(element).get('*colorPreview')).toBeNull();
-    expect(controllerOf(element).get('*editorTransformations').brightness).toBeUndefined();
+    await expect.poll(() => controllerOf(element).colorPreview).toBeNull();
+    expect(controllerOf(element).editorTransformations.brightness).toBeUndefined();
   });
 
   it('adds a fader keypoint once the slider rests on a new value', async () => {
@@ -145,10 +145,10 @@ describe('editor state reactions', () => {
     await expect.element(thumbnail).toBeVisible();
     await expect.poll(() => thumbnail.element().querySelector('.uc-preview')?.hasAttribute('data-loaded')).toBe(true);
     const controller = controllerOf(element);
-    controller.set('*networkProblems', true);
+    controller.networkProblems = true;
     const proxyUrl = vi.spyOn(controller, 'proxyUrl');
 
-    controller.set('*networkProblems', false);
+    controller.networkProblems = false;
 
     await expect
       .poll(() => proxyUrl.mock.calls.filter(([url]) => url.includes('scale_crop')).length)
@@ -160,15 +160,15 @@ describe('editor state reactions', () => {
       'cdn-url': `https://ucarecdn.com/${EDITOR_IMAGE_UUID}/-/rotate/90/-/blur/20/`,
     });
     await cropperActive(element);
-    expect(controllerOf(element).get('*editorTransformations').rotate).toBe(90);
-    expect(controllerOf(element).get('*sourceOperations').length).toBeGreaterThan(0);
+    expect(controllerOf(element).editorTransformations.rotate).toBe(90);
+    expect(controllerOf(element).sourceOperations.length).toBeGreaterThan(0);
     const applied = onApply(element);
 
     element.removeAttribute('cdn-url');
     element.setAttribute('uuid', DEMO_IMAGE_UUID);
-    await expect.poll(() => controllerOf(element).get('*originalUrl')).toContain(DEMO_IMAGE_UUID);
+    await expect.poll(() => controllerOf(element).originalUrl).toContain(DEMO_IMAGE_UUID);
     await cropperActive(element);
-    expect(controllerOf(element).get('*sourceOperations')).toEqual([]);
+    expect(controllerOf(element).sourceOperations).toEqual([]);
 
     await userEvent.click(editor.getByRole('button', { name: /apply/i }));
     await expect.poll(() => applied.length).toBe(1);
@@ -182,12 +182,12 @@ describe('editor state reactions', () => {
     const slider = await openBrightness(element, editor);
     await userEvent.click(slider);
     await userEvent.keyboard('[ArrowRight]');
-    await expect.poll(() => controllerOf(element).get('*colorPreview')).not.toBeNull();
+    await expect.poll(() => controllerOf(element).colorPreview).not.toBeNull();
 
     element.setAttribute('uuid', DEMO_IMAGE_UUID);
 
-    await expect.poll(() => controllerOf(element).get('*originalUrl')).toContain(DEMO_IMAGE_UUID);
-    expect(controllerOf(element).get('*colorPreview')).toBeNull();
+    await expect.poll(() => controllerOf(element).originalUrl).toContain(DEMO_IMAGE_UUID);
+    expect(controllerOf(element).colorPreview).toBeNull();
   });
 
   it('shows the network problems screen when the state says so and Retry clears it with the image loaded', async () => {
@@ -196,13 +196,13 @@ describe('editor state reactions', () => {
     const splash = () =>
       (element.querySelector('.uc-network_problems_splash') as (HTMLElement & { visible: boolean }) | null)?.visible;
 
-    controllerOf(element).set('*networkProblems', true);
+    controllerOf(element).networkProblems = true;
     await expect.poll(splash).toBe(true);
 
     await editor.getByText('Retry').click();
 
     await expect.poll(splash).toBe(false);
-    expect(controllerOf(element).get('*networkProblems')).toBe(false);
+    expect(controllerOf(element).networkProblems).toBe(false);
     await cropperActive(element);
   });
 
@@ -223,7 +223,7 @@ describe('editor state reactions', () => {
     const { element } = renderEditor({ 'cdn-url': `https://ucarecdn.com/${EDITOR_IMAGE_UUID}/` });
     await cropperActive(element);
     const controller = controllerOf(element);
-    const originalUrl = controller.get('*originalUrl');
+    const originalUrl = controller.originalUrl;
     const fetchSpy = vi.spyOn(window, 'fetch');
 
     element.removeAttribute('cdn-url');
@@ -233,7 +233,7 @@ describe('editor state reactions', () => {
     await delay(50);
 
     expect(fetchSpy).not.toHaveBeenCalled();
-    expect(controller.get('*originalUrl')).toBe(originalUrl);
+    expect(controller.originalUrl).toBe(originalUrl);
   });
 
   it('ignores the operations of a cdn-url that names the image already open', async () => {
@@ -248,8 +248,8 @@ describe('editor state reactions', () => {
     // QUIRK(cloud-image-editor): `updateImage` returns early when the parsed original URL is unchanged
     // (CloudImageEditorBlock.ts `originalUrl === …originalUrl` check), so a cdn-url carrying new operations for the
     // open image is dropped. Pinned as current behaviour, not endorsed.
-    expect(controller.get('*editorTransformations').rotate ?? 0).toBe(0);
-    expect(controller.get('*sourceOperations')).toEqual([]);
+    expect(controller.editorTransformations.rotate ?? 0).toBe(0);
+    expect(controller.sourceOperations).toEqual([]);
   });
 
   it('shows the network problems screen when a filter preview URL cannot be resolved', async () => {
@@ -267,6 +267,6 @@ describe('editor state reactions', () => {
     await userEvent.click(editor.getByRole('tab', { name: /filters/i }));
 
     await expect.poll(splash).toBe(true);
-    expect(controller.get('*networkProblems')).toBe(true);
+    expect(controller.networkProblems).toBe(true);
   });
 });

@@ -35,7 +35,7 @@ export class EditorCropButtonControl extends EditorButtonControl {
     // consistent crop). No element ref needed — see `EditorImageCropper`.
     // Branch per operation so `patch` is a strongly-typed `Partial<Transformations>`
     // (`rotate` is a number, `flip`/`mirror` are booleans) — no assertions.
-    const transformations = this.editorController.get('*editorTransformations');
+    const transformations = this.editorController.editorTransformations;
     let prev: number | boolean;
     let next: number | boolean;
     let patch: Partial<Transformations>;
@@ -59,7 +59,7 @@ export class EditorCropButtonControl extends EditorButtonControl {
       prev,
     });
 
-    this.editorController.set('*editorTransformations', { ...transformations, ...patch });
+    this.editorController.editorTransformations = { ...transformations, ...patch };
   }
 }
 

@@ -125,12 +125,12 @@ export class EditorToolbar extends EditorBlock {
   @debounced(0)
   private _updateInfoTooltip(): void {
     const controller = this.editorController;
-    const transformations = controller.get('*editorTransformations');
+    const transformations = controller.editorTransformations;
     const currentOperation = this._currentOperation as keyof typeof COLOR_OPERATIONS_CONFIG | null;
     let text = '';
     let visible = false;
 
-    if (controller.get('*tabId') === TabId.FILTERS) {
+    if (controller.tabId === TabId.FILTERS) {
       visible = true;
       if (this._currentFilter && transformations?.filter?.name === this._currentFilter) {
         const value = transformations?.filter?.amount || 100;
@@ -138,7 +138,7 @@ export class EditorToolbar extends EditorBlock {
       } else {
         text = controller.l10n(FAKE_ORIGINAL_FILTER);
       }
-    } else if (this.showSubToolbar && controller.get('*tabId') === TabId.TUNING && currentOperation) {
+    } else if (this.showSubToolbar && controller.tabId === TabId.TUNING && currentOperation) {
       visible = true;
       const value = transformations?.[currentOperation] || COLOR_OPERATIONS_CONFIG[currentOperation].zero;
       text = `${controller.l10n(currentOperation)} ${value}`;
@@ -204,17 +204,17 @@ export class EditorToolbar extends EditorBlock {
   private _onSliderClose(): void {
     this._setShowSlider(false);
 
-    if (this.editorController.get('*tabId') === TabId.CROP) {
+    if (this.editorController.tabId === TabId.CROP) {
       this._setShowListAspectRatio(false);
     }
 
-    if (this.editorController.get('*tabId') === TabId.TUNING) {
+    if (this.editorController.tabId === TabId.TUNING) {
       this._tooltipVisible = false;
     }
   }
 
   private _activateTab(id: TabIdValue): void {
-    this.editorController.set('*tabId', id);
+    this.editorController.tabId = id;
     this._applyTabState(id);
   }
 
@@ -305,7 +305,7 @@ export class EditorToolbar extends EditorBlock {
   }
 
   private async _preloadEditedImage(): Promise<void> {
-    const originalUrl = this.editorController.get('*originalUrl');
+    const originalUrl = this.editorController.originalUrl;
     // Preload at the rendered viewer width, measured from the image container
     // the root passes down as a prop (UI-layer plumbing, not a controller state
     // ref). Skip if it isn't laid out yet (width 0).
@@ -316,8 +316,8 @@ export class EditorToolbar extends EditorBlock {
           viewerImageSrc(
             originalUrl,
             width,
-            this.editorController.get('*editorTransformations'),
-            this.editorController.get('*sourceOperations'),
+            this.editorController.editorTransformations,
+            this.editorController.sourceOperations,
           ),
         ),
       );
@@ -334,7 +334,7 @@ export class EditorToolbar extends EditorBlock {
   public constructor() {
     super();
 
-    this.subEditorKey('*editorTransformations', (editorTransformations) => {
+    this.subEditorKey('editorTransformations', (editorTransformations) => {
       const appliedFilter = editorTransformations?.filter?.name;
       if (this._currentFilter !== appliedFilter) {
         this._currentFilter = appliedFilter ?? '';
@@ -344,14 +344,14 @@ export class EditorToolbar extends EditorBlock {
       // The fader reacts to `*editorTransformations` itself now.
     });
 
-    this.subEditorKey('*tabId', (tabId) => {
+    this.subEditorKey('tabId', (tabId) => {
       this._applyTabState(tabId);
       this._updateInfoTooltip();
     });
 
     // The fader self-deactivates on `*originalUrl` change (see EditorImageFader).
 
-    this.subEditorKey('*loadingImages', (count) => this._debouncedShowLoader(count > 0));
+    this.subEditorKey('loadingImages', (count) => this._debouncedShowLoader(count > 0));
 
     this.onEditorAttach(() => {
       this._updateInfoTooltip();
@@ -376,7 +376,7 @@ export class EditorToolbar extends EditorBlock {
     // subscriptions on the controller) — same transitions → same effects.
     if (changedProperties.has('tabList')) {
       const ctrl = this.editorControllerOrNull;
-      if (ctrl && this.tabList.length > 0 && !this.tabList.includes(ctrl.get('*tabId'))) {
+      if (ctrl && this.tabList.length > 0 && !this.tabList.includes(ctrl.tabId)) {
         const [firstTab] = this.tabList;
         if (firstTab) {
           this._activateTab(firstTab);
@@ -386,7 +386,7 @@ export class EditorToolbar extends EditorBlock {
 
     const controller = this.editorControllerOrNull;
     if (changedProperties.has('imageSize') && this.imageSize && controller) {
-      this._activateTab(controller.get('*tabId'));
+      this._activateTab(controller.tabId);
     }
 
     if (changedProperties.has('activeTab') || changedProperties.has('tabList')) {
@@ -419,7 +419,7 @@ export class EditorToolbar extends EditorBlock {
     });
     this.dispatchEvent(
       new CustomEvent<Transformations>('uc-internal:apply', {
-        detail: this.editorController.get('*editorTransformations'),
+        detail: this.editorController.editorTransformations,
         bubbles: true,
         composed: true,
       }),

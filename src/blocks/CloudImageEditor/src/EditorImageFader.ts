@@ -131,8 +131,8 @@ export class EditorImageFader extends EditorBlock {
     // activate/set/deactivate/setTransformations.
     this.onEditorAttach(() => {
       const controller = this.editorController;
-      this._lastOriginalUrl = controller.get('*originalUrl');
-      this._lastColorPreview = controller.get('*colorPreview');
+      this._lastOriginalUrl = controller.originalUrl;
+      this._lastColorPreview = controller.colorPreview;
       this.subscribeEditor(() => this._syncFromState());
       // A (re)attach can find the fader ready to show already — e.g. after an activation aborted by a reconnect.
       this._syncFromState();
@@ -200,7 +200,7 @@ export class EditorImageFader extends EditorBlock {
     image.addEventListener(
       'error',
       () => {
-        controller.set('*networkProblems', true);
+        controller.networkProblems = true;
       },
       { once: true, signal: this.adoptionSignal },
     );
@@ -231,10 +231,10 @@ export class EditorImageFader extends EditorBlock {
       if (!controller) {
         return;
       }
-      const tabId = controller.get('*tabId');
-      const originalUrl = controller.get('*originalUrl');
-      const colorPreview = controller.get('*colorPreview');
-      const transformations = controller.get('*editorTransformations');
+      const tabId = controller.tabId;
+      const originalUrl = controller.originalUrl;
+      const colorPreview = controller.colorPreview;
+      const transformations = controller.editorTransformations;
       const shouldShow = tabId !== TabId.CROP && !!originalUrl && !!this.imageSize;
 
       // New image: hide and stay hidden until the root supplies the new image's
@@ -337,7 +337,7 @@ export class EditorImageFader extends EditorBlock {
 
     // do not use getBoundingClientRect because scale transform affects it
     const width = this.offsetWidth;
-    return controller.proxyUrl(viewerImageSrc(url, width, transformations, controller.get('*sourceOperations')));
+    return controller.proxyUrl(viewerImageSrc(url, width, transformations, controller.sourceOperations));
   }
 
   private async _constructKeypoint(
@@ -459,7 +459,7 @@ export class EditorImageFader extends EditorBlock {
       this._previewImage.addEventListener(
         'error',
         () => {
-          controller.set('*networkProblems', true);
+          controller.networkProblems = true;
         },
         { once: true, signal: this.adoptionSignal },
       );
@@ -504,7 +504,7 @@ export class EditorImageFader extends EditorBlock {
     image.addEventListener(
       'error',
       () => {
-        controller.set('*networkProblems', true);
+        controller.networkProblems = true;
       },
       { once: true, signal: this.adoptionSignal },
     );

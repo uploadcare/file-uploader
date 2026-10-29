@@ -40,11 +40,11 @@ export class EditorSlider extends EditorBlock {
 
   /** The live, uncommitted preview intent for the fader (see `*colorPreview`). `null` clears it. */
   private _publishPreview(value: number | undefined): void {
-    this.editorController.set('*colorPreview', {
+    this.editorController.colorPreview = {
       operation: this.state.operation,
       value: this.state.filter === FAKE_ORIGINAL_FILTER ? undefined : value,
       filter: this.state.filter === FAKE_ORIGINAL_FILTER ? undefined : this.state.filter,
-    });
+    };
   }
 
   private _handleInput = (e: CustomEvent<{ value: number }>): void => {
@@ -71,7 +71,7 @@ export class EditorSlider extends EditorBlock {
 
     this.state = { ...this.state, min, max, zero };
 
-    const editorTransformations = this.editorController.get('*editorTransformations');
+    const editorTransformations = this.editorController.editorTransformations;
     const transformation = editorTransformations[operation];
 
     if (operation === 'filter') {
@@ -90,7 +90,7 @@ export class EditorSlider extends EditorBlock {
   }
 
   public apply(): void {
-    const editorTransformations = this.editorController.get('*editorTransformations');
+    const editorTransformations = this.editorController.editorTransformations;
     const transformations: Transformations = { ...editorTransformations };
 
     if (this.state.operation === 'filter') {
@@ -103,15 +103,15 @@ export class EditorSlider extends EditorBlock {
       transformations[this.state.operation] = this.state.value as Transformations[typeof this.state.operation];
     }
 
-    this.editorController.set('*editorTransformations', transformations);
+    this.editorController.editorTransformations = transformations;
     // Committed — clear the live preview so the fader shows the committed result.
-    this.editorController.set('*colorPreview', null);
+    this.editorController.colorPreview = null;
   }
 
   public cancel(): void {
     // Was `fader.deactivate({ hide: false })`; clearing the preview returns the
     // fader to the committed viewer (see EditorImageFader).
-    this.editorController.set('*colorPreview', null);
+    this.editorController.colorPreview = null;
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
