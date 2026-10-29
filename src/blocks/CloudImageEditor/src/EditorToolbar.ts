@@ -377,8 +377,14 @@ export class EditorToolbar extends EditorBlock {
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+    const controller = this.editorControllerOrNull;
+    // Before `tabId` is read below: a write after this update read it would not re-render the toolbar.
+    const [firstTab] = this.tabList;
+    if (controller && changedProperties.has('tabList') && firstTab && !this.tabList.includes(controller.tabId)) {
+      controller.tabId = firstTab;
+    }
     // Here, not in `render`, so `updated` sees `activeTab` change and re-syncs the tab indicator.
-    this.activeTab = this.editorControllerOrNull?.tabId ?? this.activeTab;
+    this.activeTab = controller?.tabId ?? this.activeTab;
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
@@ -386,16 +392,6 @@ export class EditorToolbar extends EditorBlock {
 
     // Side effects reacting to the root-passed props (once controller
     // subscriptions) — same transitions → same effects.
-    if (changedProperties.has('tabList')) {
-      const ctrl = this.editorControllerOrNull;
-      if (ctrl && this.tabList.length > 0 && !this.tabList.includes(ctrl.tabId)) {
-        const [firstTab] = this.tabList;
-        if (firstTab) {
-          this._activateTab(firstTab);
-        }
-      }
-    }
-
     const controller = this.editorControllerOrNull;
     if (changedProperties.has('imageSize') && this.imageSize && controller) {
       this._activateTab(controller.tabId);
