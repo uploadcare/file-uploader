@@ -129,10 +129,6 @@ export class PluginController {
   }
 
   private async _registerPlugin(plugin: UploaderPlugin): Promise<void> {
-    if (this._plugins.has(plugin.id)) {
-      this._unregisterPlugin(plugin.id);
-    }
-
     const configSubscriptions: Unsubscribe[] = [];
     // A logger scoped to this plugin — `[uc][<ctx-name>][plugin:<id>]`, verbose
     // tier gated by the uploader's `debug` config. Exposed as `pluginApi.logger`
@@ -149,13 +145,7 @@ export class PluginController {
           this._disposePlugin(lateDispose ?? undefined),
         )) ?? undefined;
     } catch (error) {
-      for (const unsub of configSubscriptions) {
-        try {
-          unsub();
-        } catch (e) {
-          this._log.warn('Failed to unsubscribe config listener', e);
-        }
-      }
+      this._unsubscribeAll(configSubscriptions);
       throw error;
     }
 
@@ -169,17 +159,21 @@ export class PluginController {
 
     this._purgePlugin(pluginId);
 
-    for (const unsub of registered.configSubscriptions) {
+    this._unsubscribeAll(registered.configSubscriptions);
+
+    this._disposePlugin(registered.dispose);
+    this._plugins.delete(pluginId);
+    this._notifySubscribers();
+  }
+
+  private _unsubscribeAll(subscriptions: Unsubscribe[]): void {
+    for (const unsub of subscriptions) {
       try {
         unsub();
       } catch (error) {
         this._log.warn('Failed to unsubscribe config listener', error);
       }
     }
-
-    this._disposePlugin(registered.dispose);
-    this._plugins.delete(pluginId);
-    this._notifySubscribers();
   }
 
   private _disposePlugin(dispose: Unsubscribe | undefined): void {
