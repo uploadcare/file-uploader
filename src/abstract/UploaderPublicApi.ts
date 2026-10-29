@@ -576,7 +576,7 @@ export class UploaderPublicApi {
       // An open modal already shows the intended activity: `setCurrentActivity`
       // switches it. Otherwise open the one `setCurrentActivity` put in the
       // background slot.
-      const activityType = router.modal ?? router.activity ?? router.currentActivity;
+      const activityType = router.modal ?? router.activity;
       if (!activityType) {
         this._log.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
         return;
