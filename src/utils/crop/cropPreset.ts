@@ -15,40 +15,17 @@ export interface CropAspectRatio {
 
 export type CropPresetList = CropAspectRatio[];
 
-const EXCLUDED_TYPES = ['free'];
-
 export const parseCropPreset = (cropPreset: ConfigType['cropPreset']): CropAspectRatio[] => {
-  const items = deserializeCsv(cropPreset);
-  if (!items || items.length === 0) return [];
-
   const result: CropAspectRatio[] = [];
-  for (const item of items) {
-    const raw = item.trim();
-    if (!raw) continue;
-
-    const sep = raw.indexOf(':');
-    if (sep === -1 && !EXCLUDED_TYPES.includes(raw)) {
+  for (const raw of deserializeCsv(cropPreset)) {
+    const hasFreeform = raw === 'free';
+    const [w = NaN, h = NaN] = hasFreeform ? [0, 0] : raw.split(':').map(Number);
+    if (!hasFreeform && !(w > 0 && h > 0 && Number.isFinite(w) && Number.isFinite(h))) {
       log.warn(`Invalid crop preset: ${raw}`);
       continue;
     }
-
-    const w = Number(raw.slice(0, sep));
-    const h = Number(raw.slice(sep + 1));
-
-    if ((!Number.isFinite(w) || !Number.isFinite(h) || w <= 0 || h <= 0) && !EXCLUDED_TYPES.includes(raw)) {
-      log.warn(`Invalid crop preset: ${raw}`);
-      continue;
-    }
-
-    result.push({
-      id: UID.generateFastUid(),
-      type: 'aspect-ratio',
-      width: EXCLUDED_TYPES.includes(raw) ? 0 : w,
-      height: EXCLUDED_TYPES.includes(raw) ? 0 : h,
-      hasFreeform: EXCLUDED_TYPES.includes(raw),
-    });
+    result.push({ id: UID.generateFastUid(), type: 'aspect-ratio', width: w, height: h, hasFreeform });
   }
-
   return result;
 };
 
@@ -64,8 +41,7 @@ export const getClosestAspectRatio = (
   let minDiff = Infinity;
 
   for (const r of ratios) {
-    const [w, h] = [r.width, r.height];
-    const ratio = w / h;
+    const ratio = r.width / r.height;
 
     const diff = Math.abs(inputRatio - ratio);
 
@@ -76,8 +52,7 @@ export const getClosestAspectRatio = (
   }
 
   if (closest) {
-    const [cw, ch] = [closest.width, closest.height];
-    const closestRatio = cw / ch;
+    const closestRatio = closest.width / closest.height;
 
     const relDiff = Math.abs(inputRatio - closestRatio) / closestRatio;
     if (relDiff > tolerance) {
