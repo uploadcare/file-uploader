@@ -43,6 +43,8 @@ const renderEditor = (image: Record<string, string> = { uuid: UUID }, { qualityI
 /** Activation draws the image and marks the element `uc-active_from_*`, so the class is the "it really works" signal. */
 const activeClass = (element: Element | null | undefined) => element?.className ?? '';
 
+const cropperSize = (element: HTMLElement) => element.querySelector('uc-editor-image-cropper')?.imageSize;
+
 describe('uc-cloud-image-editor', () => {
   it('renders', async () => {
     const { element } = renderEditor();
@@ -363,8 +365,6 @@ describe('uc-cloud-image-editor', () => {
   describe.skipIf(isLive)('network problems', () => {
     const splash = (element: HTMLElement) =>
       element.querySelector('.uc-network_problems_splash') as (HTMLElement & { visible: boolean }) | null;
-    const cropperSize = (element: HTMLElement) =>
-      (element.querySelector('uc-editor-image-cropper') as { imageSize?: { width: number } } | null)?.imageSize;
 
     it('shows the network problems screen when the image info request fails, and Retry loads the image', async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -419,6 +419,24 @@ describe('uc-cloud-image-editor', () => {
       await expect.poll(() => splash(element)?.visible).toBe(false);
       await expect.poll(() => activeClass(element.querySelector('uc-editor-image-cropper'))).toContain('uc-active');
     });
+  });
+
+  it.skipIf(isLive)('loads the image when moved in the DOM while its info request is in flight', async () => {
+    const release = withResolvers<void>();
+    const requested = withResolvers<void>();
+    emulatorSession().on('GET /:uuid/-/json/', async () => {
+      requested.resolve();
+      await release.promise;
+      return Response.json({ width: 640, height: 480 });
+    });
+    const { element } = renderEditor();
+    await requested.promise;
+
+    element.parentElement?.append(element);
+    release.resolve();
+
+    await expect.poll(() => cropperSize(element)?.width).toBe(640);
+    await expect.poll(() => activeClass(element.querySelector('uc-editor-image-cropper'))).toContain('uc-active');
   });
 
   describe.skipIf(isLive)('while the cropper image loads', () => {

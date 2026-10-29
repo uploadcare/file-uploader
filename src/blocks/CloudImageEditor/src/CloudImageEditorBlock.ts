@@ -272,8 +272,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     // reconnected editor (a DOM move) must re-subscribe.
     this.initEditor();
     // The ended lifetime also aborted an image load still in flight, so a reconnect restarts one that hadn't finished.
+    // Once `originalUrl` is set, `updateImage` treats the image as loaded, so only its info request is repeated.
     if (this.hasUpdated && !this._imageSize && (this.uuid || this.cdnUrl)) {
-      this._runTask(() => this.updateImage());
+      this._runTask(() => (this._editorController.originalUrl ? this._loadImageInfo() : this.updateImage()));
     }
   }
 
