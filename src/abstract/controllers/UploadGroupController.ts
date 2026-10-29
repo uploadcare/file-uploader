@@ -24,10 +24,6 @@ export class UploadGroupController {
   @inject(UploadController) private readonly _upload!: UploadController;
   private readonly _log = controllerLogger(this, 'upload-group');
 
-  private _emit = (...args: Parameters<EventEmitter['emit']>): void => {
-    this._eventEmitter.emit(...args);
-  };
-
   public async create(collectionState: OutputCollectionState, isActive: () => boolean): Promise<void> {
     // The collection already has its group: `groupInfo` is cleared whenever the membership or a file's URL changes,
     // so it is never another collection's. A later flush that finds the collection successful again (a slow
@@ -61,8 +57,8 @@ export class UploadGroupController {
         'success',
         'has-group'
       >;
-      this._emit(UploaderEventType.GROUP_CREATED, collectionStateWithGroup);
-      this._emit(UploaderEventType.CHANGE, () => buildOutputCollectionState(requireContainerOf(this)), {
+      this._eventEmitter.emit(UploaderEventType.GROUP_CREATED, collectionStateWithGroup);
+      this._eventEmitter.emit(UploaderEventType.CHANGE, () => buildOutputCollectionState(requireContainerOf(this)), {
         debounce: true,
       });
       this._collectionState.set('collectionState', collectionStateWithGroup);
