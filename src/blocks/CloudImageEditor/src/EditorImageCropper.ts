@@ -74,7 +74,7 @@ export class EditorImageCropper extends EditorBlock {
   /**
    * Loaded image size, passed down from the root (`<uc-cloud-image-editor>`) as
    * a plain Lit prop — it's DOM-derived, not editor-controller state. The
-   * cropper self-activates once this and `*originalUrl` are ready on the crop
+   * cropper self-activates once this and `originalUrl` are ready on the crop
    * tab (see `_syncActivation`), so no external code drives `.activate()`.
    */
   @property({ attribute: false })
@@ -154,7 +154,7 @@ export class EditorImageCropper extends EditorBlock {
       this._syncActivation();
 
       // Crop ops (rotate/flip/mirror) now arrive through
-      // `*editorTransformations` — `EditorCropButtonControl` writes them
+      // `editorTransformations` — `EditorCropButtonControl` writes them
       // instead of calling `setValue`. Apply + re-commit the consistent
       // crop; the re-entrancy guard swallows our own commit's notify.
       if (this._isActive && this._cropOpsDiffer(this.editorController.editorTransformations)) {

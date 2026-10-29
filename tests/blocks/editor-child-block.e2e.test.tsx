@@ -140,7 +140,7 @@ describe('EditorBlock / cloudImageEditorContext (light, non-ChildBlock base)', (
     // ancestor re-render via `this.yield('')` does under the hood
     // (`insertBefore` fires disconnectedCallback + connectedCallback
     // back-to-back on the same element). The `CloudImageEditorContextController`
-    // must re-establish its re-render subscription; the reconnect fix (resetting
+    // must re-adopt the controller (re-running its attach callbacks); the reconnect fix (resetting
     // `_controller` in `hostDisconnected`) exists precisely so `_attach`'s
     // identity-dedup doesn't silently drop it. Without the fix this poll times
     // out (child stays 'crop').

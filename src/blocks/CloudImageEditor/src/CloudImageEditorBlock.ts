@@ -181,7 +181,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   /**
    * The DOM-free editor controller — OWNS the editor's cross-cutting state
-   * (see `CloudImageEditorControllerState`). Created and provided down the
+   * (see `EditorState`). Created and provided down the
    * editor DOM tree so descendants (`EditorBlock`) can read/write it
    * directly; there is no more shared-ctx bridge (removed in M12 final —
    * previously `EDITOR_CONTROLLER_BRIDGE_KEYS`/`_setupEditorControllerBridge`
@@ -730,12 +730,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     await this._loadImageInfo();
   }
 
-  /** Loads the size of the image `*originalUrl` names, then initializes. Retry runs it again after a network error. */
+  /** Loads the size of the image `originalUrl` names, then initializes. Retry runs it again after a network error. */
   private async _loadImageInfo(): Promise<void> {
     const editorController = this._editorController;
 
     // Drop any in-progress live slider preview so it isn't reapplied to the new
-    // image (the fader keys its preview off `*colorPreview`).
+    // image (the fader keys its preview off `colorPreview`).
     if (editorController.colorPreview) {
       editorController.colorPreview = null;
     }
@@ -744,7 +744,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     // fader take `imageSize` as a prop and self-activate only once it's set, so
     // this keeps them from reactivating with the *previous* image's dimensions
     // (a null→value transition also re-triggers activation even when the new
-    // size matches). Both also self-reset on the `*originalUrl` change above.
+    // size matches). Both also self-reset on the `originalUrl` change above.
     this._imageSize = null;
 
     try {
