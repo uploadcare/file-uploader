@@ -1,10 +1,5 @@
 import type { FilterName } from '@uploadcare/cdn-url/ops';
 /**
- * Mapping of loading resources per operation
- */
-export type LoadingOperations = Map<string, Map<string, boolean>>;
-
-/**
  * Image size
  */
 export interface ImageSize {

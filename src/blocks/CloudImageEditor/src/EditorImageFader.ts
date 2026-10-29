@@ -11,7 +11,7 @@ import { applyClassNames } from './lib/classNames.js';
 import { linspace } from './lib/linspace.js';
 import { COLOR_OPERATIONS_CONFIG, type ColorPreview, TabId } from './toolbar-constants.js';
 import type { ImageSize, Transformations } from './types';
-import { viewerImageSrc } from './util.js';
+import { trackImageLoading, viewerImageSrc } from './util.js';
 
 type OperationKey = keyof typeof COLOR_OPERATIONS_CONFIG;
 
@@ -117,7 +117,7 @@ export class EditorImageFader extends EditorBlock {
   private _lastTransformations?: Transformations;
   private _shown = false;
   // Guards the reaction against re-entering itself: the fader's own methods
-  // write state (`*loadingOperations`, `*networkProblems`) and `set` notifies
+  // write state (`*loadingImages`, `*networkProblems`) and `set` notifies
   // synchronously (same lesson as EditorImageCropper).
   private _reacting = false;
 
@@ -163,7 +163,7 @@ export class EditorImageFader extends EditorBlock {
     const image = new Image();
     image.src = keypoint.src;
     // Not bound to the adoption: the loading flag lives on the controller and must clear even if the load lands late.
-    const stop = this._handleImageLoading(controller, keypoint.src);
+    const stop = trackImageLoading(controller);
     image.addEventListener('load', stop, { once: true });
     image.addEventListener('error', stop, { once: true });
     keypoint.image = image;
@@ -303,33 +303,6 @@ export class EditorImageFader extends EditorBlock {
     }
   }
 
-  private _handleImageLoading(controller: CloudImageEditorController, src: string): () => void {
-    const operation = this._operation;
-
-    // Immutable update: `StateController.set` dedupes by `Object.is`, so we must
-    // publish a NEW Map reference (outer + inner) or subscribers never notify.
-    const current = controller.get('*loadingOperations');
-    if (!current.get(operation)?.get(src)) {
-      const next = new Map(current);
-      const operationMap = new Map(next.get(operation) ?? []);
-      operationMap.set(src, true);
-      next.set(operation, operationMap);
-      controller.set('*loadingOperations', next);
-    }
-
-    return () => {
-      const current = controller.get('*loadingOperations');
-      const operationMap = current.get(operation);
-      if (operationMap?.has(src)) {
-        const next = new Map(current);
-        const nextOperationMap = new Map(operationMap);
-        nextOperationMap.delete(src);
-        next.set(operation, nextOperationMap);
-        controller.set('*loadingOperations', next);
-      }
-    };
-  }
-
   private _flush(): void {
     window.cancelAnimationFrame(this._raf);
     this._raf = window.requestAnimationFrame(() => {
@@ -441,7 +414,7 @@ export class EditorImageFader extends EditorBlock {
 
     const { images, promise, cancel } = batchPreloadImages(srcList);
     images.forEach((node) => {
-      const stop = this._handleImageLoading(controller, node.src);
+      const stop = trackImageLoading(controller);
       node.addEventListener('load', stop);
       node.addEventListener('error', stop);
     });
@@ -477,7 +450,7 @@ export class EditorImageFader extends EditorBlock {
       const controller = this.editorController;
       const src = await this.whileAdopted(this._imageSrc(controller));
       // Not bound to the adoption, like the other loading flags.
-      const stop = this._handleImageLoading(controller, src);
+      const stop = trackImageLoading(controller);
       this._previewImage.src = src;
       this._previewImage.addEventListener('load', stop, { once: true });
       this._previewImage.addEventListener('error', stop, { once: true });
@@ -509,7 +482,7 @@ export class EditorImageFader extends EditorBlock {
       return;
     }
     image.style.opacity = '0';
-    const stop = this._handleImageLoading(controller, src);
+    const stop = trackImageLoading(controller);
     image.addEventListener('error', stop, { once: true });
     image.addEventListener('load', stop, { once: true });
     image.src = src;

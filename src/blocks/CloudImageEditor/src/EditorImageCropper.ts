@@ -21,7 +21,7 @@ import { applyClassNames } from './lib/classNames.js';
 import { pick } from './lib/pick.js';
 import { TabId } from './toolbar-constants';
 import type { CropAspectRatio, ImageSize, Rectangle, Transformations } from './types';
-import { cropperImageSrc } from './util.js';
+import { cropperImageSrc, trackImageLoading } from './util.js';
 
 import './CropFrame';
 
@@ -582,7 +582,7 @@ export class EditorImageCropper extends EditorBlock {
 
     // Not bound to the adoption: the loading flag lives on the controller and must clear even if the load lands late.
     // An abort cancels the load to a transparent pixel, whose `load` clears it too.
-    const stop = this._handleImageLoading(controller, src);
+    const stop = trackImageLoading(controller);
     image.addEventListener('load', stop, { once: true });
     image.addEventListener('error', stop, { once: true });
 
@@ -594,32 +594,6 @@ export class EditorImageCropper extends EditorBlock {
       controller.set('*networkProblems', true);
     }
     return image;
-  }
-
-  private _handleImageLoading(controller: CloudImageEditorController, src: string): () => void {
-    const operation = 'crop';
-    // Immutable update: `StateController.set` dedupes by `Object.is`, so we must
-    // publish a NEW Map reference (outer + inner) or subscribers never notify.
-    const current = controller.get('*loadingOperations');
-    if (!current.get(operation)?.get(src)) {
-      const next = new Map(current);
-      const operationMap = new Map(next.get(operation) ?? []);
-      operationMap.set(src, true);
-      next.set(operation, operationMap);
-      controller.set('*loadingOperations', next);
-    }
-
-    return () => {
-      const current = controller.get('*loadingOperations');
-      const operationMap = current.get(operation);
-      if (operationMap?.has(src)) {
-        const next = new Map(current);
-        const nextOperationMap = new Map(operationMap);
-        nextOperationMap.delete(src);
-        next.set(operation, nextOperationMap);
-        controller.set('*loadingOperations', next);
-      }
-    };
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {

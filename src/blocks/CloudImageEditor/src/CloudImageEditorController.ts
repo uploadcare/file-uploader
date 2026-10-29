@@ -3,7 +3,7 @@ import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types/
 import { DEFAULT_CDN_ORIGIN } from '../../../utils/cdn/origin';
 import { StateController } from './StateController';
 import { type ColorPreview, TabId, type TabIdValue } from './toolbar-constants';
-import type { CropAspectRatio, LoadingOperations, Transformations } from './types';
+import type { CropAspectRatio, Transformations } from './types';
 
 /**
  * Editor-owned config surface — the subset of `ConfigType` the editor cares
@@ -51,7 +51,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
  */
 export type CloudImageEditorControllerState = {
   '*originalUrl': string | null;
-  '*loadingOperations': LoadingOperations;
+  '*loadingImages': number;
   '*networkProblems': boolean;
   '*editorTransformations': Transformations;
   /** The full operation list from the incoming URL, unfiltered — edited in place on Apply. */
@@ -64,7 +64,7 @@ export type CloudImageEditorControllerState = {
 function createDefaultState(): CloudImageEditorControllerState {
   return {
     '*originalUrl': null,
-    '*loadingOperations': new Map(),
+    '*loadingImages': 0,
     '*networkProblems': false,
     '*editorTransformations': {},
     '*sourceOperations': [],
