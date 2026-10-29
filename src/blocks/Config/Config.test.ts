@@ -213,7 +213,7 @@ describe('Config (<uc-config>) — additive coverage: plain/complex keys, reflec
     // Deep-equal, but a fresh object reference.
     el.metadata = { a: '1' };
 
-    expect(stringArgs(warn).some((s) => s.includes('the reference is different'))).toBe(true);
+    expect(stringArgs(warn).some((s) => s.includes('with a new reference'))).toBe(true);
   });
 
   it('recomputes cameraModes from enableVideoRecording (computed property strips video)', async () => {
@@ -250,7 +250,7 @@ describe('Config (<uc-config>) — additive coverage: plain/complex keys, reflec
       expect(stringArgs(log).some((s) => s.includes('secureUploadsSignatureResolver: null → ƒ'))).toBe(true);
     });
 
-    it('falls back to String()/[unserializable] when JSON.stringify throws', async () => {
+    it('logs [unserializable] when JSON.stringify throws', async () => {
       const ctxName = freshCtxName();
       const config = controllerFor(ctxName);
       await mount(ctxName);
@@ -258,14 +258,7 @@ describe('Config (<uc-config>) — additive coverage: plain/complex keys, reflec
 
       config.set('debug', true);
 
-      // Circular object → JSON.stringify throws, String() still works.
-      // External write: change-log uses guarded formatConfigLogValue.
-      const circular: Record<string, unknown> = {};
-      circular.self = circular;
-      config.set('mediaRecorderOptions', circular as unknown as MediaRecorderOptions);
-      await delay(0);
-
-      // Circular AND a throwing toString → both JSON.stringify and String() throw.
+      // Circular AND a throwing toString → JSON.stringify throws; String() is never tried.
       const unserializable: Record<string, unknown> = {
         toString: () => {
           throw new Error('nope');
@@ -276,7 +269,6 @@ describe('Config (<uc-config>) — additive coverage: plain/complex keys, reflec
       await delay(0);
 
       const logged = stringArgs(log);
-      expect(logged.some((s) => s.includes('[object Object]'))).toBe(true);
       expect(logged.some((s) => s.includes('[unserializable]'))).toBe(true);
     });
 

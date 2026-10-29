@@ -28,23 +28,12 @@ import { subscription, type Unsubscribe } from './subscription';
  * `""`, functions as `ƒ`, and everything else via `JSON.stringify`.
  */
 const formatConfigLogValue = (value: unknown): string => {
-  if (value === undefined) return 'undefined';
   if (typeof value === 'function') return 'ƒ';
-  // `JSON.stringify` renders a function element as `null`, so an array of
-  // validators logs as `[null, null]`. Map the elements first.
-  if (Array.isArray(value) && value.some((item) => typeof item === 'function')) {
-    return `[${value.map(formatConfigLogValue).join(', ')}]`;
-  }
+  if (Array.isArray(value)) return `[${value.map(formatConfigLogValue).join(', ')}]`;
   try {
     return JSON.stringify(value) ?? String(value);
   } catch {
-    // `String(value)` can ALSO throw (a throwing `Symbol.toPrimitive`/`toString`),
-    // so guard it too — logging a config change must never surface an exception.
-    try {
-      return String(value);
-    } catch {
-      return '[unserializable]';
-    }
+    return '[unserializable]';
   }
 };
 
@@ -279,10 +268,10 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
           nextSerialized !== undefined &&
           nextSerialized === previousSerialized
         ) {
-          this._log.warn(`Option "${key}" value is the same as the previous one but the reference is different`);
-          this._log.warn(`You should avoid changing the reference of the object to prevent unnecessary calculations`);
-          this._log.warn(`"${key}" previous value:`, isSecretKey(key) ? REDACTED : previousValue);
-          this._log.warn(`"${key}" new value:`, isSecretKey(key) ? REDACTED : nextValue);
+          this._log.warn(
+            `Option "${key}" was set to an equal value with a new reference; keep the reference to avoid recomputation`,
+            isSecretKey(key) ? REDACTED : nextValue,
+          );
         }
       }
     }
@@ -295,28 +284,16 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      * neither is present.
      */
     private _readPreExistingCustomValue(descriptor: ConfigKeyDescriptor): { has: boolean; value: unknown } {
-      const name = descriptor.name;
-      const existingDescriptor = Object.getOwnPropertyDescriptor(this, name);
-      const isDataProperty = !!existingDescriptor && !existingDescriptor.get && !existingDescriptor.set;
-      if (isDataProperty && existingDescriptor.value !== undefined) {
+      const existingDescriptor = Object.getOwnPropertyDescriptor(this, descriptor.name);
+      if (
+        existingDescriptor &&
+        !existingDescriptor.get &&
+        !existingDescriptor.set &&
+        existingDescriptor.value !== undefined
+      ) {
         return { has: true, value: existingDescriptor.value };
       }
-
-      if (descriptor.attribute) {
-        for (const attrName of getConfigAttributeNames(name)) {
-          const attrValue = this.getAttribute(attrName);
-          if (attrValue !== undefined && attrValue !== null) {
-            try {
-              return { has: true, value: descriptor.fromAttribute(attrValue) };
-            } catch (error) {
-              this._log.warn(`fromAttribute() for "${name}" threw an error, using raw attribute value`, error);
-              return { has: true, value: attrValue };
-            }
-          }
-        }
-      }
-
-      return { has: false, value: undefined };
+      return this._readAttribute(descriptor);
     }
 
     // Sync the element's dynamic (custom) config wiring to the controller's
@@ -467,23 +444,15 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      */
     private _syncConfigAttributeFromDom(attrName: string): void {
       const builtInKey = builtinAttrKeyMapping[attrName];
-      if (builtInKey) {
-        if (this.containerOrNull) {
-          this._applyConfigAttributeChange(attrName);
-        } else {
-          // Only data-property stash when accessors are not yet installed.
-          const own = Object.getOwnPropertyDescriptor(this, builtInKey);
-          if (!own?.get && !own?.set) {
-            const current = this.getAttribute(attrName);
-            Reflect.set(this, builtInKey, current === null ? undefined : current);
-          }
+      if (builtInKey && !this.containerOrNull) {
+        const own = Object.getOwnPropertyDescriptor(this, builtInKey);
+        if (!own?.get && !own?.set) {
+          const current = this.getAttribute(attrName);
+          Reflect.set(this, builtInKey, current === null ? undefined : current);
         }
         return;
       }
-
-      if (this.containerOrNull && attrName in this._customAttrKeyMapping) {
-        this._applyConfigAttributeChange(attrName);
-      }
+      this._applyConfigAttributeChange(attrName);
     }
 
     /**
@@ -550,17 +519,17 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
      * for HTML-parsed attrs and any pre-connect write that left the attr on
      * the element without an own data property stash.
      */
-    private _readBuiltInAttribute(key: string): { has: boolean; value: unknown } {
-      const descriptor = this._config.descriptor(key);
-      if (!descriptor?.attribute) return { has: false, value: undefined };
-      for (const attrName of getConfigAttributeNames(key)) {
-        if (!this.hasAttribute(attrName)) continue;
-        const raw = this.getAttribute(attrName) as string;
-        try {
-          return { has: true, value: descriptor.fromAttribute(raw) };
-        } catch (error) {
-          this._log.warn(`fromAttribute() for "${key}" threw an error, using raw attribute value`, error);
-          return { has: true, value: raw };
+    private _readAttribute(descriptor: ConfigKeyDescriptor | undefined): { has: boolean; value: unknown } {
+      if (descriptor?.attribute) {
+        for (const attrName of getConfigAttributeNames(descriptor.name)) {
+          const raw = this.getAttribute(attrName);
+          if (raw === null) continue;
+          try {
+            return { has: true, value: descriptor.fromAttribute(raw) };
+          } catch (error) {
+            this._log.warn(`fromAttribute() for "${descriptor.name}" threw an error, using raw attribute value`, error);
+            return { has: true, value: raw };
+          }
         }
       }
       return { has: false, value: undefined };
@@ -580,7 +549,9 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         // attribute (HTML / setAttribute before adopt) → existing prop / controller.
         const own = Object.getOwnPropertyDescriptor(this, key);
         const isDataProperty = !!own && !own.get && !own.set && own.value !== undefined;
-        const fromAttr = isDataProperty ? { has: false, value: undefined } : this._readBuiltInAttribute(key);
+        const fromAttr = isDataProperty
+          ? { has: false, value: undefined }
+          : this._readAttribute(this._config.descriptor(key));
         const initialValue = isDataProperty
           ? own.value
           : fromAttr.has
