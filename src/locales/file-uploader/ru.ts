@@ -136,6 +136,8 @@ export default {
   'crop-to-shape': 'Обрезать до {{value}}',
   custom: 'Свободная форма',
   'freeform-crop': 'Свободная обрезка',
+  'network-error': 'Ошибка сети',
+  retry: 'Повторить',
 
   'upload-from': 'Загрузить из {{source}}',
   'get-from': 'Получить из {{source}}',

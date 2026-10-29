@@ -138,6 +138,8 @@ export default {
 
   custom: 'Forma swobodna',
   'freeform-crop': 'Swobodne kadrowanie',
+  'network-error': 'Błąd sieci',
+  retry: 'Spróbuj ponownie',
 
   'upload-from': 'Prześlij z {{source}}',
   'get-from': 'Pobierz z {{source}}',

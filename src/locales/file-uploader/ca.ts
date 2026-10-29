@@ -137,6 +137,8 @@ export default {
 
   custom: 'Forma lliure',
   'freeform-crop': 'Retallat lliure',
+  'network-error': 'Error de xarxa',
+  retry: 'Torna-ho a provar',
 
   'upload-from': 'Pujar des de {{source}}',
   'get-from': 'Obtenir de {{source}}',

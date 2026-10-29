@@ -134,6 +134,8 @@ export default {
 
   custom: 'Vaba vorm',
   'freeform-crop': 'Vaba lõikamine',
+  'network-error': 'Võrguviga',
+  retry: 'Proovi uuesti',
 
   'upload-from': 'Lae üles {{source}}',
   'get-from': 'Hangi {{source}}',

@@ -138,6 +138,8 @@ export default {
 
   custom: 'Вільна форма',
   'freeform-crop': 'Вільна обрізка',
+  'network-error': 'Помилка мережі',
+  retry: 'Повторити',
 
   'upload-from': 'Завантажити з {{source}}',
   'get-from': 'Отримати з {{source}}',

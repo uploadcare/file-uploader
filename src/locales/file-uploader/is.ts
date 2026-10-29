@@ -134,6 +134,8 @@ export default {
 
   custom: 'Frjáls form',
   'freeform-crop': 'Frjáls klipping',
+  'network-error': 'Netvilla',
+  retry: 'Reyna aftur',
 
   'upload-from': 'Hlaða upp frá {{source}}',
   'get-from': 'Sækja frá {{source}}',

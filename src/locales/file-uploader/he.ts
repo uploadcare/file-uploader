@@ -136,6 +136,8 @@ export default {
 
   custom: 'צורה חופשית',
   'freeform-crop': 'חיתוך חופשי',
+  'network-error': 'שגיאת רשת',
+  retry: 'נסה שוב',
 
   'upload-from': 'העלה מ{{source}}',
   'get-from': 'קבל מ{{source}}',

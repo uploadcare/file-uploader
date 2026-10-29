@@ -133,6 +133,8 @@ export default {
 
   custom: '자유형식',
   'freeform-crop': '자유 자르기',
+  'network-error': '네트워크 오류',
+  retry: '다시 시도',
 
   'upload-from': '{{source}}에서 업로드',
   'get-from': '{{source}}에서 가져오기',

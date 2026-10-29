@@ -134,6 +134,8 @@ export default {
 
   custom: 'Dạng tự do',
   'freeform-crop': 'Cắt tự do',
+  'network-error': 'Lỗi mạng',
+  retry: 'Thử lại',
 
   'upload-from': 'Tải lên từ {{source}}',
   'get-from': 'Lấy từ {{source}}',

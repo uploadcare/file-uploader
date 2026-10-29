@@ -135,6 +135,8 @@ export default {
 
   custom: 'Vrije vorm',
   'freeform-crop': 'Vrije uitsnijding',
+  'network-error': 'Netwerkfout',
+  retry: 'Opnieuw proberen',
 
   'upload-from': 'Uploaden van {{source}}',
   'get-from': 'Ophalen van {{source}}',

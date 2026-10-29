@@ -24,4 +24,6 @@ export const EDITOR_SHARED_STRINGS = {
   'crop-to-shape': 'Crop to {{value}}',
   custom: 'Freeform',
   'freeform-crop': 'Freeform crop',
+  'network-error': 'Network error',
+  retry: 'Retry',
 } as const;

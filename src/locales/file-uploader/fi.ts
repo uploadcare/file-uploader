@@ -135,6 +135,8 @@ export default {
 
   custom: 'Vapaa muoto',
   'freeform-crop': 'Vapaa rajaus',
+  'network-error': 'Verkkovirhe',
+  retry: 'Yritä uudelleen',
 
   'upload-from': 'Lataa {{source}}',
   'get-from': 'Hae kohteesta {{source}}',

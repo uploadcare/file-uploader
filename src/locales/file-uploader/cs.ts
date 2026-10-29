@@ -139,6 +139,8 @@ export default {
 
   custom: 'Volná forma',
   'freeform-crop': 'Volné ořezání',
+  'network-error': 'Chyba sítě',
+  retry: 'Zkusit znovu',
 
   'upload-from': 'Nahrát z {{source}}',
   'get-from': 'Získat z {{source}}',

@@ -136,6 +136,8 @@ export default {
 
   custom: 'Freiform',
   'freeform-crop': 'Freier Zuschnitt',
+  'network-error': 'Netzwerkfehler',
+  retry: 'Erneut versuchen',
 
   'upload-from': 'Hochladen von {{source}}',
   'get-from': 'Abrufen von {{source}}',
