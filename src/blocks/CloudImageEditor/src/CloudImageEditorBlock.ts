@@ -122,9 +122,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   private _ctxNameFromContext: string | undefined;
 
   @state()
-  private _hasNetworkProblems = false;
-
-  @state()
   private _isInitialized = false;
 
   // Root-owned, single-child data passed to `<uc-editor-toolbar>` as plain Lit
@@ -551,8 +548,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   }
 
   public override render() {
-    const showNetworkProblems = this._hasNetworkProblems;
-
     return html`
       ${unsafeSVG(svgIconsSprite)}
       <div
@@ -560,7 +555,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         @uc-internal:apply=${this._handleApply}
         @uc-internal:cancel=${this._handleCancel}
       >
-        <uc-presence-toggle class="uc-network_problems_splash" .visible=${showNetworkProblems}>
+        <uc-presence-toggle class="uc-network_problems_splash" .visible=${this._editorController.networkProblems}>
           <div class="uc-network_problems_content">
             <div class="uc-network_problems_icon">
               <uc-editor-icon name="sad"></uc-editor-icon>
@@ -794,14 +789,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     this.classList.add('uc-editor_ON');
 
     const editorController = this._editorController;
-
-    editorController.observe(
-      'networkProblems',
-      (networkProblems) => {
-        this._hasNetworkProblems = networkProblems;
-      },
-      { immediate: true },
-    );
 
     editorController.observe('editorTransformations', (transformations) => {
       if (Object.keys(transformations).length === 0) {
