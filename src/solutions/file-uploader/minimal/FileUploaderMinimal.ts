@@ -42,16 +42,15 @@ export class FileUploaderMinimal extends SolutionChildBlock {
 
   /**
    * Grid single-upload flag feeding `?single=` on the inline drop-area — true
-   * only in grid mode without `multiple`. A tracked `getTracked` getter (drops
-   * the v1 `@state` + nested `subConfigValue`): reading it in `render()`
-   * auto-tracks both keys under `SignalWatcher`, so a config change re-renders.
+   * only in grid mode without `multiple`. Read in `render()`, so it tracks both
+   * keys.
    */
   private get _singleUpload(): boolean {
     const config = this._config;
     return config.getTracked('filesViewMode') === 'grid' && !config.getTracked('multiple');
   }
 
-  /** Trigger label key, derived reactively from `multiple` (drops the v1 `@state`). */
+  /** Trigger label key, derived reactively from `multiple`. */
   private get _buttonTextKey(): L10nKey {
     return this._config.getTracked('multiple') ? 'choose-files' : 'choose-file';
   }

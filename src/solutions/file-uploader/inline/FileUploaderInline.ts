@@ -45,15 +45,14 @@ export class FileUploaderInline extends SolutionChildBlock {
    * Whether the cancel button shows — drives `.uc-cancel-btn[hidden]`, which the
    * inline `:has(.uc-cancel-btn[hidden])` CSS keys off.
    *
-   * This is recomputed ONLY on a router notify (see the subscription in
-   * `controllerReady`) and stored in `@state`. It is deliberately NOT a tracked
-   * render read of `uploadList`/`showEmptyList`: those are read imperatively
-   * inside the router-notify callback, so an upload-list change that does NOT
-   * coincide with a router transition (e.g. the list emptying without a
-   * `setActivity`) never refires the recompute and the previously-computed value
-   * is retained (stale-by-design, as in v1). A tracked getter would re-hide the
-   * button on such a change (flipping the inline `:has(.uc-cancel-btn[hidden])`
-   * layout). Do not "re-fix" this into a reactive read.
+   * This is recomputed ONLY on a router notify (`_wireCouldCancel`) and stored
+   * in `@state`. It is deliberately NOT a tracked render read of
+   * `uploadList`/`showEmptyList`: `_couldShowList` reads them untracked, so an
+   * upload-list change that does NOT coincide with a router transition (e.g. the
+   * list emptying without a `setActivity`) keeps the previously-computed value
+   * (stale by design). A tracked getter would re-hide the button on such a
+   * change (flipping the inline `:has(.uc-cancel-btn[hidden])` layout). Do not
+   * "re-fix" this into a reactive read.
    */
   @state()
   private _couldCancel = false;
@@ -78,11 +77,8 @@ export class FileUploaderInline extends SolutionChildBlock {
   }
 
   private get _couldShowList(): boolean {
-    // Imperative (non-tracking) reads — v1 read `*uploadList`/`showEmptyList` off
-    // the store inside the router-notify callback, NOT reactively. `get()` (not
-    // `getTracked()`) preserves that: this getter feeds the router-driven
-    // `_couldCancel` recompute, so it must not itself subscribe the render to
-    // these keys.
+    // Untracked `get()`: this feeds the router-driven `_couldCancel` recompute
+    // and must not subscribe the render to these keys (see `_couldCancel`).
     const uploadList = this._collectionState.get('uploadList');
     return this._config.get('showEmptyList') || uploadList.length > 0;
   }
@@ -133,11 +129,9 @@ export class FileUploaderInline extends SolutionChildBlock {
     );
   }
 
-  // v1-exact cancel-button recompute: fires eagerly, then on EVERY router notify
-  // (the v1 `subRouter` contract) — a coarse subscription, deliberately not
-  // atomic. `_couldCancel` is written ONLY here (stale-by-design between router
-  // transitions, see its doc), and `_couldShowList`/`_couldHistoryBack` read
-  // imperatively, so this is the button's sole `?hidden` re-render trigger.
+  // The cancel-button recompute: fires eagerly, then on EVERY router notify — a
+  // coarse subscription, deliberately not atomic. The button's sole `?hidden`
+  // re-render trigger (see `_couldCancel`).
   /** @internal */
   @subscription()
   protected _wireCouldCancel(): Unsubscribe {
