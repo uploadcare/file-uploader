@@ -5,7 +5,7 @@ import { UploadCollectionController } from '../../abstract/controllers/UploadCol
 import { deriveEntryStatus } from '../../abstract/deriveEntryStatus';
 import { inject } from '../../abstract/di/inject';
 import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
-import { type Owned, pluginLabelKey } from '../../abstract/managers/plugin/PluginTypes';
+import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryData, UploadEntryKeys } from '../../abstract/uploadEntrySchema';
@@ -378,20 +378,21 @@ export class FileItem extends FileItemConfig {
           <span class="uc-file-hint" ?hidden=${!this._hint}>${this._hint}</span>
         </div>
         <div class="uc-file-actions">
-          ${this._pluginFileActions.map(
-            (action) => html`
+          ${this._pluginFileActions.map((action) => {
+            const label = this.pluginLabel(action.label);
+            return html`
               <button
                 type="button"
                 @click=${() => this._handlePluginFileAction(action)}
-                title=${this.l10n(pluginLabelKey(action.label))}
-                aria-label=${this.l10n(pluginLabelKey(action.label))}
+                title=${label}
+                aria-label=${label}
                 class="uc-plugin-action-btn uc-mini-btn"
                 data-plugin-action-id=${action.id}
               >
                 <uc-icon name=${action.icon}></uc-icon>
               </button>
-            `,
-          )}
+            `;
+          })}
           <uc-file-action-button
             @uc:remove=${this._handleRemove}
             .uploading=${this._isUploading}

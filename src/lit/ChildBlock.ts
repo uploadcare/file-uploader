@@ -9,8 +9,9 @@ import { Disposables } from '../abstract/di/Disposables';
 import { inject, injectOrNull } from '../abstract/di/inject';
 import { Lifetime } from '../abstract/di/Lifetime';
 import { EventEmitter } from '../abstract/EventEmitter';
-import { type CheckedL10nFunction, createL10n } from '../abstract/l10n';
+import { type CheckedL10nFunction, createL10n, type L10nKey, type PlainText } from '../abstract/l10n';
 import { logger } from '../abstract/logger';
+import type { PluginLabel } from '../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { resolveSecureDeliveryProxyUrl } from '../abstract/secureDeliveryProxyUrl';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
@@ -194,6 +195,11 @@ export abstract class ChildBlock extends ChildBlockBase {
    * explicit subscription needed.
    */
   public l10n: CheckedL10nFunction = createL10n(() => this._locale);
+
+  /** A plugin's label through `l10n` (`''` without one). The lookup shows a string that is no key as written. */
+  protected pluginLabel(label: PluginLabel | null | undefined): string {
+    return label ? this.l10n(label as L10nKey | PlainText) : '';
+  }
 
   /**
    * Per-ctx logger for this block. `error`/`warn`/`warnOnce` always print; the
