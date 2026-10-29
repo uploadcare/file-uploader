@@ -3,7 +3,11 @@ import type { UploaderPlugin } from '../abstract/managers/plugin';
 import { parseShrink } from '../utils/parseShrink';
 
 // The message @uploadcare/image-shrink throws for an image already under the limit; it exports no error code.
+// shrinkFile rethrows it wrapped (`Failed to shrink image. Message: "Not required".`) with the original as `cause`.
 const SHRINK_NOT_REQUIRED = 'Not required';
+
+const isNotRequired = (error: unknown): boolean =>
+  error instanceof Error && (error.message === SHRINK_NOT_REQUIRED || isNotRequired(error.cause));
 
 export const imageShrinkPlugin: UploaderPlugin = {
   id: 'image-shrink',
@@ -25,7 +29,7 @@ export const imageShrinkPlugin: UploaderPlugin = {
           return { file: shrunk };
         } catch (error) {
           // Nothing to warn about when the image needed no shrinking.
-          if (!(error instanceof Error && error.message === SHRINK_NOT_REQUIRED)) {
+          if (!isNotRequired(error)) {
             pluginApi.logger.warn('Image shrink failed, uploading the original', error);
           }
           return { file };
