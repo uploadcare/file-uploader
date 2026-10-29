@@ -3,7 +3,6 @@ import { page } from 'vitest/browser';
 import type { UploadCtxProvider } from '@/index.js';
 import { TEST_IMAGE_URL } from '../utils/constants';
 import { getCtxName } from '../utils/getCtxName';
-import { renderSolution, within } from '../utils/render-solution';
 import '../../types/jsx';
 
 beforeAll(async () => {
@@ -65,29 +64,5 @@ describe('uc-upload-list common error rendering', () => {
     config.multipleMax = 2;
 
     await expect.poll(() => commonError()?.hasAttribute('hidden')).toBe(true);
-  });
-});
-
-describe('uc-upload-list row focus', () => {
-  const renderListWithOneFile = async () => {
-    const uploader = await renderSolution('inline', { confirmUpload: true });
-    uploader.api.addFileFromUrl(TEST_IMAGE_URL);
-    uploader.api.initFlow();
-    await expect.element(within(uploader.root).getByTestId('uc-file-item')).toBeVisible();
-    const row = uploader.root.querySelector('uc-file-item') as HTMLElement;
-    const isFocused = () => row.querySelector('.uc-inner')?.hasAttribute('data-focused');
-    return { row, isFocused };
-  };
-
-  it('keeps a row focused in one uploader when a row in another uploader is clicked', async () => {
-    const a = await renderListWithOneFile();
-    const b = await renderListWithOneFile();
-
-    a.row.click();
-    await expect.poll(a.isFocused).toBe(true);
-
-    b.row.click();
-    await expect.poll(b.isFocused).toBe(true);
-    expect(a.isFocused()).toBe(true);
   });
 });

@@ -71,10 +71,6 @@ export class FileItem extends FileItemConfig {
   })
   public uid: Uid = '' as Uid;
 
-  // Set by the parent `<uc-upload-list>`, which keeps one focused row per list.
-  @property({ attribute: false })
-  public focused = false;
-
   @state()
   private _pluginFileActions: Owned<PluginFileActionRegistration>[] = [];
 
@@ -380,7 +376,6 @@ export class FileItem extends FileItemConfig {
         ?data-finished=${this._isFinished}
         ?data-uploading=${this._isUploading}
         ?data-failed=${this._isFailed}
-        ?data-focused=${this.focused && !this._isUploading}
       >
         <uc-thumb .uid=${this.uid} .badgeIcon=${this._badgeIcon}></uc-thumb>
 

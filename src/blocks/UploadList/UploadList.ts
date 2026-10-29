@@ -15,7 +15,6 @@ import { deriveEntryStatus } from '../../abstract/deriveEntryStatus';
 import { inject } from '../../abstract/di/inject';
 import { EventType } from '../../abstract/EventEmitter';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
-import type { Uid } from '../../abstract/Uid';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
@@ -97,10 +96,6 @@ export class UploadList extends ActivityChildBlock {
   @state()
   private _latestSummary: CollectionSummary | null = null;
 
-  // The clicked row, by uid so it survives the virtualizer unmounting it.
-  @state()
-  private _focusedUid: Uid | null = null;
-
   // List virtualization: only ~viewport±overscan `<uc-file-item>` render at large
   // file counts. The shared controller measures the `.uc-files` scroll container
   // and turns `uploadList` into the visible slice + spacer heights; row metrics
@@ -168,15 +163,6 @@ export class UploadList extends ActivityChildBlock {
   private _handleDone = (): void => {
     this.emit(EventType.DONE_CLICK, this._api.getOutputCollectionState());
     this._api.doneFlow();
-  };
-
-  private _handleRowClick = (event: MouseEvent): void => {
-    const row = (event.target as Element).closest('uc-file-item');
-    // An uploading row doesn't take focus, the same rule as dropping it once an upload starts.
-    if (!row || this._uploadCollection.read(row.uid)?.get('isUploading')) {
-      return;
-    }
-    this._focusedUid = row.uid;
   };
 
   private _handleCancel = (): void => {
@@ -359,12 +345,6 @@ export class UploadList extends ActivityChildBlock {
         this._throttledHandleCollectionUpdate,
       ),
       collection.observeCollection(this._throttledHandleCollectionUpdate),
-      // Not throttled: a short upload would finish inside the window and keep its focus.
-      collection.observeProperties(['isUploading'], () => {
-        if (this._focusedUid && collection.read(this._focusedUid)?.get('isUploading')) {
-          this._focusedUid = null;
-        }
-      }),
     ]);
   }
 
@@ -440,12 +420,12 @@ export class UploadList extends ActivityChildBlock {
   </div>
 
   <div class="uc-files">
-    <div class="uc-files-wrapper" @click=${this._handleRowClick}>
+    <div class="uc-files-wrapper">
     ${topSpacer > 0 ? html`<div class="uc-list-spacer" style="height:${topSpacer}px"></div>` : ''}
     ${repeat(
       windowItems,
       (uid) => uid,
-      (uid) => html`<uc-file-item .uid=${uid} .focused=${uid === this._focusedUid}></uc-file-item>`,
+      (uid) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
     )}
     ${bottomSpacer > 0 ? html`<div class="uc-list-spacer" style="height:${bottomSpacer}px"></div>` : ''}
     </div>
