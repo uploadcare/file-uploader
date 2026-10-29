@@ -65,10 +65,6 @@ export class Modal extends ChildBlock {
     router.closeModal();
   };
 
-  private _handleDialogClose = (): void => {
-    this.closeDialog();
-  };
-
   private _handleDialogMouseDown = (e: MouseEvent): void => {
     this._mouseDownTarget = e.target;
   };
@@ -164,17 +160,9 @@ export class Modal extends ChildBlock {
     this._mouseDownTarget = undefined;
   }
 
-  private _handleDialogRef(dialog: Element | undefined): void {
-    this.dialogEl = { value: dialog } as typeof this.dialogEl;
-
-    this.dialogEl.value?.addEventListener('close', this._handleDialogClose);
-    this.dialogEl.value?.addEventListener('mousedown', this._handleDialogMouseDown);
-    this.dialogEl.value?.addEventListener('mouseup', this._handleDialogMouseUp);
-  }
-
   public override render() {
     return html`
-  <dialog data-testid="dialog" aria-label=${ifDefined(this.dialogLabel ? this.l10n(pluginLabelKey(this.dialogLabel)) : undefined)} ${ref(this._handleDialogRef)}>
+  <dialog data-testid="dialog" aria-label=${ifDefined(this.dialogLabel ? this.l10n(pluginLabelKey(this.dialogLabel)) : undefined)} ${ref(this.dialogEl)} @close=${() => this.closeDialog()} @mousedown=${this._handleDialogMouseDown} @mouseup=${this._handleDialogMouseUp}>
     ${this.yield('')}
   </dialog>
 `;
