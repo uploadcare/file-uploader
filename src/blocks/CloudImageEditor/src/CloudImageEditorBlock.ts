@@ -314,11 +314,11 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         // connect and set `testMode` after this element (documented composition
         // order), so the flag isn't known at first setup.
         this._syncTestId();
-        this._editorController.notify();
+        this._editorController.servicesChanged();
       },
       (l10n) => {
         this._compatL10n = l10n;
-        this._editorController.notify();
+        this._editorController.servicesChanged();
         this.requestUpdate();
       },
       (telemetryManager) => {
@@ -393,7 +393,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   private readonly _handleRetryNetwork = (): void => {
     // The image info never arrived, so there is no image to reload yet: ask for it again.
     if (!this._imageSize) {
-      this._editorController.set('*networkProblems', false);
+      this._editorController.networkProblems = false;
       this._runTask(() => this._loadImageInfo());
       return;
     }
@@ -403,12 +403,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       img.src = TRANSPARENT_PIXEL_SRC;
       img.src = originalSrc;
     }
-    this._editorController.set('*networkProblems', false);
+    this._editorController.networkProblems = false;
   };
 
   /** The `apply`/`change` event detail for `transformations`. */
   private _result(originalUrl: string, transformations: Transformations): ApplyResult {
-    const sourceOperations = this._editorController.get('*sourceOperations');
+    const sourceOperations = this._editorController.sourceOperations;
     // Edited in place rather than rebuilt: an operation the editor cannot model
     // keeps its original position, which matters to the CDN for a few pairs
     // (`stretch` applies to a following resize) — enforced by `editorAppliedUrl`
@@ -419,7 +419,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   /** Descendant apply/cancel intents arrive as bubbling `uc-internal:*` events (the controller holds no callbacks). */
   private readonly _handleApply = ({ detail: transformations }: CustomEvent<Transformations>): void => {
-    const originalUrl = this._editorController.get('*originalUrl');
+    const originalUrl = this._editorController.originalUrl;
     if (!originalUrl) {
       this._log.warn('Original URL is null, cannot apply transformations');
       return;
@@ -623,12 +623,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       // re-render on a config-prop change.
       if (this._editorInitialized) {
         this._syncTestId();
-        this._editorController.notify();
+        this._editorController.servicesChanged();
       }
     }
 
     if (changedProperties.has('localeDefinition')) {
-      this._editorController.notify();
+      this._editorController.servicesChanged();
     }
   }
 
@@ -666,7 +666,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     }
 
     this._cropPresetList = list;
-    this._editorController.set('*currentAspectRatio', closest ?? list?.[0] ?? null);
+    this._editorController.currentAspectRatio = closest ?? list?.[0] ?? null;
   }
 
   public async updateImage(): Promise<void> {
@@ -704,24 +704,24 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         return;
       }
       const originalUrl = serializeFileUrl({ cdnBase: parsed.cdnBase, uuid: parsed.uuid });
-      if (originalUrl === editorController.get('*originalUrl')) {
+      if (originalUrl === editorController.originalUrl) {
         return;
       }
-      editorController.set('*originalUrl', originalUrl);
-      editorController.set('*editorTransformations', operationsToTransformations(parsed.operations) as Transformations);
-      editorController.set('*sourceOperations', parsed.operations);
+      editorController.originalUrl = originalUrl;
+      editorController.editorTransformations = operationsToTransformations(parsed.operations) as Transformations;
+      editorController.sourceOperations = parsed.operations;
     } else if (this.uuid) {
       const cdnCname = editorController.getConfig('cdnCname');
       const originalUrl = serializeFileUrl({ cdnBase: new URL(cdnCname).origin, uuid: this.uuid as string });
-      if (originalUrl === editorController.get('*originalUrl')) {
+      if (originalUrl === editorController.originalUrl) {
         return;
       }
-      editorController.set('*originalUrl', originalUrl);
-      if (Object.keys(editorController.get('*editorTransformations')).length > 0) {
-        editorController.set('*editorTransformations', {});
+      editorController.originalUrl = originalUrl;
+      if (Object.keys(editorController.editorTransformations).length > 0) {
+        editorController.editorTransformations = {};
       }
-      if (editorController.get('*sourceOperations').length > 0) {
-        editorController.set('*sourceOperations', []);
+      if (editorController.sourceOperations.length > 0) {
+        editorController.sourceOperations = [];
       }
     } else {
       throw new Error('No UUID nor CDN URL provided');
@@ -736,8 +736,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     // Drop any in-progress live slider preview so it isn't reapplied to the new
     // image (the fader keys its preview off `*colorPreview`).
-    if (editorController.get('*colorPreview')) {
-      editorController.set('*colorPreview', null);
+    if (editorController.colorPreview) {
+      editorController.colorPreview = null;
     }
 
     // Clear the size until the new image's info loads below. The cropper and
@@ -748,9 +748,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     this._imageSize = null;
 
     try {
-      const originalUrlValue = editorController.get('*originalUrl') as string;
+      const originalUrlValue = editorController.originalUrl as string;
       const cdnUrl = await this._lifetime.guard(
-        this.proxyUrl(editorImageInfoUrl(originalUrlValue, editorController.get('*sourceOperations'))),
+        this.proxyUrl(editorImageInfoUrl(originalUrlValue, editorController.sourceOperations)),
       );
       const json = (await this._lifetime.guard(
         fetch(cdnUrl, { signal: this._lifetime.signal }).then((response) => {
@@ -762,7 +762,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       )) as { width: number; height: number };
 
       // The image changed while this request was in flight: its own `updateImage` sets the size and initializes.
-      if (editorController.get('*originalUrl') !== originalUrlValue) {
+      if (editorController.originalUrl !== originalUrlValue) {
         return;
       }
       const { width, height } = json;
@@ -777,7 +777,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       // `fetch` rejects with a TypeError only when the request never got an answer; offer a retry for that. An
       // error status (a missing file, say) won't go away on retry.
       if (err instanceof TypeError) {
-        editorController.set('*networkProblems', true);
+        editorController.networkProblems = true;
       }
     }
 
@@ -791,28 +791,21 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     const editorController = this._editorController;
 
-    editorController.subscribe(() => {
-      const networkProblems = Boolean(editorController.get('*networkProblems'));
-      if (networkProblems !== this._hasNetworkProblems) {
+    editorController.observe(
+      'networkProblems',
+      (networkProblems) => {
         this._hasNetworkProblems = networkProblems;
-      }
-    });
-    this._hasNetworkProblems = Boolean(editorController.get('*networkProblems'));
+      },
+      { immediate: true },
+    );
 
-    let lastTransformations = editorController.get('*editorTransformations');
-    editorController.subscribe(() => {
-      const transformations = editorController.get('*editorTransformations');
-      if (transformations === lastTransformations) {
-        return;
-      }
-      lastTransformations = transformations;
-
+    editorController.observe('editorTransformations', (transformations) => {
       if (Object.keys(transformations).length === 0) {
         return;
       }
       this.dispatchEvent(
         new CustomEvent<ApplyResult>('change', {
-          detail: this._result(editorController.get('*originalUrl') as string, transformations),
+          detail: this._result(editorController.originalUrl as string, transformations),
           bubbles: true,
           composed: true,
         }),

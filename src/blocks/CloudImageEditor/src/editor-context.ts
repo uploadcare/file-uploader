@@ -5,7 +5,7 @@ import type { CheckedL10nKey, L10nArguments } from '../../../abstract/l10n';
 import { logger } from '../../../abstract/logger';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin';
-import type { CloudImageEditorController, CloudImageEditorControllerState } from './CloudImageEditorController';
+import type { CloudImageEditorController, EditorState } from './CloudImageEditorController';
 
 const log = logger.scope('cloud-image-editor');
 
@@ -88,7 +88,11 @@ export class CloudImageEditorContextController implements ReactiveController {
 
   /** Subscribe to the adopted controller; auto-unsubscribes on host disconnect or controller re-attach. Throws if no controller is adopted yet (see `onAttach`). */
   public subscribe(callback: () => void): () => void {
-    const unsubscribe = this.controller.subscribe(callback);
+    return this.track(this.controller.subscribe(callback));
+  }
+
+  /** Run `unsubscribe` on host disconnect or controller re-attach, if it has not run by then. */
+  public track(unsubscribe: () => void): () => void {
     const tracked = () => {
       unsubscribe();
       this._subscriptions.delete(tracked);
@@ -223,7 +227,7 @@ export abstract class EditorBlock extends EditorBlockBase {
   /** Report a click as an action event on the current tab; `extra` adds metadata and can name another tab. */
   protected sendClickEvent(e: MouseEvent, extra: Record<string, unknown> = {}): void {
     this.editorController.telemetry.sendActionEvent(e.type, (e.currentTarget as HTMLElement | null)?.tagName, {
-      tabId: this.editorController.get('*tabId'),
+      tabId: this.editorController.tabId,
       ...extra,
     });
   }
@@ -299,20 +303,9 @@ export abstract class EditorBlock extends EditorBlockBase {
    * `CloudImageEditorContextController.hostDisconnected`/`_attach`), so the
    * per-key tracking must be re-established alongside it.
    */
-  protected subEditorKey<K extends keyof CloudImageEditorControllerState>(
-    key: K,
-    cb: (value: CloudImageEditorControllerState[K]) => void,
-  ): void {
+  protected subEditorKey<K extends keyof EditorState>(key: K, cb: (value: EditorState[K]) => void): void {
     this.onEditorAttach(() => {
-      let last = this.editorController.get(key);
-      cb(last);
-      this.subscribeEditor(() => {
-        const next = this.editorController.get(key);
-        if (!Object.is(next, last)) {
-          last = next;
-          cb(next);
-        }
-      });
+      this._editorCtx.track(this.editorController.observe(key, cb, { immediate: true }));
     });
   }
 }

@@ -28,7 +28,7 @@ export class EditorOperationControl extends EditorButtonControl {
   public constructor() {
     super();
 
-    this.subEditorKey('*editorTransformations', (editorTransformations: Transformations) => {
+    this.subEditorKey('editorTransformations', (editorTransformations: Transformations) => {
       if (!this.operation) {
         return;
       }

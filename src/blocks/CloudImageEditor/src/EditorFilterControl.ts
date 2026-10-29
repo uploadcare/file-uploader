@@ -106,14 +106,14 @@ export class EditorFilterControl extends EditorButtonControl {
     const filterValue = 100;
 
     const transformations: Transformations = {
-      ...this.editorController.get('*editorTransformations'),
+      ...this.editorController.editorTransformations,
       filter:
         this._filter !== FAKE_ORIGINAL_FILTER ? { name: this._filter as FilterName, amount: filterValue } : undefined,
     };
     return editorPreviewUrl({
       originalUrl: this._originalUrl,
       transformations,
-      sourceOperations: this.editorController.get('*sourceOperations'),
+      sourceOperations: this.editorController.sourceOperations,
       quality,
       sizeOperations: operationsFromModifiers(modifiers(`scale_crop/${size}x${size}/center`)),
     });
@@ -137,7 +137,7 @@ export class EditorFilterControl extends EditorButtonControl {
     // creation, initial observe/schedule, label init) needs the `filter`
     // property (set via template binding) already applied, so it stays in
     // `connectedCallback` — same timing the old `initCallback` relied on.
-    this.subEditorKey('*originalUrl', (nextUrl: string | null) => {
+    this.subEditorKey('originalUrl', (nextUrl: string | null) => {
       this._originalUrl = nextUrl ?? '';
       if (!this.isOriginal && this._originalUrl && this.isConnected && !this._previewImage) {
         this._observer?.observe(this);
@@ -145,7 +145,7 @@ export class EditorFilterControl extends EditorButtonControl {
       }
     });
 
-    this.subEditorKey('*networkProblems', (networkProblems: boolean) => {
+    this.subEditorKey('networkProblems', (networkProblems: boolean) => {
       if (networkProblems) {
         return;
       }
@@ -213,7 +213,7 @@ export class EditorFilterControl extends EditorButtonControl {
       src = await this.whileAdopted(this.editorController.proxyUrl(this._previewSrc()));
     } catch (err) {
       if (isAbortError(err)) throw err;
-      this.editorController.set('*networkProblems', true);
+      this.editorController.networkProblems = true;
       this._log.error('Failed to resolve preview URL', { error: err });
       return;
     }
@@ -239,7 +239,7 @@ export class EditorFilterControl extends EditorButtonControl {
       (observer ?? this._observer)?.unobserve(this);
     } catch (err) {
       if (isAbortError(err)) throw err;
-      this.editorController.set('*networkProblems', true);
+      this.editorController.networkProblems = true;
       this._log.error('Failed to load image', { error: err });
       this._schedulePreviewVisibilityCheck();
     } finally {
@@ -255,7 +255,7 @@ export class EditorFilterControl extends EditorButtonControl {
       this._previewImage ||
       this._previewLoaded ||
       this.isOriginal ||
-      this.editorController.get('*networkProblems')
+      this.editorController.networkProblems
     ) {
       this._clearPreviewVisibilityChecks();
       return;

@@ -428,7 +428,7 @@ export class CropFrame extends EditorBlock {
     const imageBox = this.imageBox;
     let rect = this._dragStartCrop ?? this.cropBox;
 
-    const cropPreset = this.editorController.get('*currentAspectRatio');
+    const cropPreset = this.editorController.currentAspectRatio;
     const aspectRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
 
     if (direction === '') {

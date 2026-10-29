@@ -43,8 +43,8 @@ describe.each(cases)('$name activation across a reconnect', ({ Block, tag, tabId
     document.body.append(root);
     mounted.push(root);
     const controller = root.provider.value;
-    controller.set('*originalUrl', 'https://ucarecdn.com/9a3c8d5e-0b1f-4c2a-8e7d-6f5b4a3c2d1e/');
-    controller.set('*tabId', tabId);
+    controller.originalUrl = 'https://ucarecdn.com/9a3c8d5e-0b1f-4c2a-8e7d-6f5b4a3c2d1e/';
+    controller.tabId = tabId;
     // Keep every activation in flight at its image-source await.
     vi.spyOn(controller, 'proxyUrl').mockReturnValue(new Promise<string>(() => {}));
 
@@ -69,7 +69,7 @@ describe('EditorImageCropper commit without a laid-out image box', () => {
     mounted.push(root);
     const controller = root.provider.value;
     const crop = { dimensions: [50, 50], coords: [10, 10] } as const;
-    controller.set('*editorTransformations', { crop: { dimensions: [...crop.dimensions], coords: [...crop.coords] } });
+    controller.editorTransformations = { crop: { dimensions: [...crop.dimensions], coords: [...crop.coords] } };
 
     const cropper = document.createElement('uc-test-activation-cropper') as EditorImageCropper;
     root.append(cropper);
@@ -79,7 +79,7 @@ describe('EditorImageCropper commit without a laid-out image box', () => {
     internals._imageSize = { width: 100, height: 100 };
     internals._commit();
 
-    expect(controller.get('*editorTransformations').crop).toEqual({ dimensions: [50, 50], coords: [10, 10] });
+    expect(controller.editorTransformations.crop).toEqual({ dimensions: [50, 50], coords: [10, 10] });
     expect(error).not.toHaveBeenCalled();
   });
 });

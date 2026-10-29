@@ -49,7 +49,7 @@ class TestEditorRoot extends TestEditorRootBase {
 
 class TestEditorChild extends EditorBlock {
   public override render() {
-    return html`<span class="tab-id">${this.editorControllerOrNull?.get('*tabId') ?? ''}</span
+    return html`<span class="tab-id">${this.editorControllerOrNull?.tabId ?? ''}</span
       ><span class="l10n">${this.editorControllerOrNull?.l10n('cancel') ?? ''}</span>`;
   }
 }
@@ -91,7 +91,7 @@ describe('EditorBlock / cloudImageEditorContext (light, non-ChildBlock base)', (
     // Services surface (`l10n`), read through the controller — not ChildBlock.
     await expect.poll(() => child.querySelector('.l10n')?.textContent).toBe('Cancel');
 
-    root.controller.set('*tabId', 'tuning');
+    root.controller.tabId = 'tuning';
     await expect.poll(() => child.querySelector('.tab-id')?.textContent).toBe('tuning');
   });
 
@@ -105,7 +105,7 @@ describe('EditorBlock / cloudImageEditorContext (light, non-ChildBlock base)', (
 
     await expect.poll(() => child.querySelector('.tab-id')?.textContent).toBe('crop');
 
-    root.controller.set('*tabId', 'filters');
+    root.controller.tabId = 'filters';
     await expect.poll(() => child.querySelector('.tab-id')?.textContent).toBe('filters');
   });
 
@@ -120,7 +120,7 @@ describe('EditorBlock / cloudImageEditorContext (light, non-ChildBlock base)', (
     child.remove();
     requestUpdateSpy.mockClear();
 
-    root.controller.set('*tabId', 'tuning');
+    root.controller.tabId = 'tuning';
     // Give any (incorrect) surviving subscription a tick to fire.
     await new Promise((resolve) => setTimeout(resolve, 10));
     expect(requestUpdateSpy).not.toHaveBeenCalled();
@@ -144,7 +144,7 @@ describe('EditorBlock / cloudImageEditorContext (light, non-ChildBlock base)', (
     child.remove();
     root.append(child);
 
-    root.controller.set('*tabId', 'tuning');
+    root.controller.tabId = 'tuning';
     await expect.poll(() => child.querySelector('.tab-id')?.textContent).toBe('tuning');
   });
 
@@ -159,8 +159,10 @@ describe('EditorBlock / cloudImageEditorContext (light, non-ChildBlock base)', (
     // The controller itself outlives this throwaway root (its lifecycle is
     // owned by whichever real element provides it — P5); it must still be a
     // plain, usable object post-disconnect.
-    expect(() => controller.set('*tabId', 'tuning')).not.toThrow();
-    expect(controller.get('*tabId')).toBe('tuning');
+    expect(() => {
+      controller.tabId = 'tuning';
+    }).not.toThrow();
+    expect(controller.tabId).toBe('tuning');
   });
 });
 
@@ -169,7 +171,7 @@ class TestEditorKeyChild extends EditorBlock {
 
   public constructor() {
     super();
-    this.subEditorKey('*tabId', (tabId) => this.tabIds.push(tabId));
+    this.subEditorKey('tabId', (tabId) => this.tabIds.push(tabId));
   }
 
   public override render() {
@@ -195,7 +197,6 @@ describe('EditorBlock state reactions', () => {
     await expect.poll(() => child.querySelector('.l10n')?.textContent).toBe('Cancel');
 
     root.controller.setServices(services((key) => `de:${key}`));
-    root.controller.notify();
 
     await expect.poll(() => child.querySelector('.l10n')?.textContent).toBe('de:cancel');
   });
@@ -208,17 +209,17 @@ describe('EditorBlock state reactions', () => {
     root.append(child);
     await expect.poll(() => child.tabIds).toEqual(['crop']);
 
-    root.controller.set('*networkProblems', true);
-    root.controller.set('*tabId', 'tuning');
+    root.controller.networkProblems = true;
+    root.controller.tabId = 'tuning';
     expect(child.tabIds).toEqual(['crop', 'tuning']);
 
     child.remove();
-    root.controller.set('*tabId', 'filters');
+    root.controller.tabId = 'filters';
     expect(child.tabIds).toEqual(['crop', 'tuning']);
 
     root.append(child);
     await expect.poll(() => child.tabIds).toEqual(['crop', 'tuning', 'filters']);
-    root.controller.set('*tabId', 'crop');
+    root.controller.tabId = 'crop';
     expect(child.tabIds).toEqual(['crop', 'tuning', 'filters', 'crop']);
   });
 
@@ -228,7 +229,7 @@ describe('EditorBlock state reactions', () => {
     root.append(control);
     await control.updateComplete;
 
-    root.controller.set('*editorTransformations', { brightness: 50 });
+    root.controller.editorTransformations = { brightness: 50 };
 
     expect(control.active).toBe(false);
   });

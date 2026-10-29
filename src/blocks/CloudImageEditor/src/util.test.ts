@@ -34,8 +34,8 @@ describe('trackImageLoading', () => {
     const stopB = trackImageLoading(controller);
     stopA();
     stopA();
-    expect(controller.get('*loadingImages')).toBe(1);
+    expect(controller.loadingImages).toBe(1);
     stopB();
-    expect(controller.get('*loadingImages')).toBe(0);
+    expect(controller.loadingImages).toBe(0);
   });
 });
