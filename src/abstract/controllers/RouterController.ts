@@ -22,51 +22,35 @@ export interface RouteTable {
 type FileAddHook = () => EdgeTarget | undefined;
 
 /**
- * v2-native dual-slot router. Tracks two independent activity slots:
+ * Dual-slot router. Tracks two independent activity slots:
  *
  * - `activity` (background): what's rendered inline in the host (minimal's
- *   trigger, inline's picker). v1 calls this `*currentActivity`.
+ *   trigger, inline's picker).
  * - `modal` (foreground): which activity is open in a modal. May be `null` or
  *   differ from `activity` (minimal: background `start-from` trigger +
- *   foreground `camera` modal). v1 keeps these decoupled via `modalManager`.
+ *   foreground `camera` modal).
  *
- * `<uc-modal>` opens when `router.modal === its id`. Replaces v1's
- * `LitActivityBlock` FSM + `ModalManager` + `RouterHooksLayer` +
- * `*currentActivity`. DOM-free + unit-testable: collaborators are injected and
- * the only side effect is the injected `emit`.
+ * `<uc-modal>` opens when `router.modal === its id`. DOM-free + unit-testable:
+ * collaborators are injected and the only side effect is the injected `emit`.
  */
 export class RouterController {
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
   // (resolved lazily at log time via the container that built this instance).
   private readonly _log = controllerLogger(this, 'router');
-  // Container-resolved emit target (M-god step 3c). Thunked `@inject` because
-  // the module graph around the event surface is circular-prone; resolution is
-  // lazy so there is zero construction cycle. Telemetry observes the bus, so
+  // Thunked `@inject` because the module graph around the event surface is
+  // circular-prone; resolution is lazy so there is zero construction cycle. Telemetry observes the bus, so
   // there is NO telemetry mirror here — `_emit` is pure dispatch + debounce.
   @inject(() => EventEmitter) private readonly _eventEmitter!: EventEmitter;
   private _listeners = new Listeners();
   private _table: RouteTable = {};
-  // The background activity slot. Backed by `@signalState` so a `SignalWatcher`
-  // consumer can track it directly — completing the trio with `_modal`/
-  // `_currentActivity`: `ActivityChildBlock.isActivityActive` reads
-  // `router.activity` for its background-slot branch (under `SignalWatcher` when
-  // `updated()` calls in), so a background transition now auto-re-tracks rather
-  // than relying solely on the coarse `_listeners.notify()`. That coarse notify
-  // is preserved unchanged for every existing `subscribe()` reader.
+  // The three slots are signal-backed so `SignalWatcher` blocks track them; `subscribe()` readers get the coarse
+  // `_listeners.notify()`. `_transition` is the only writer of all three.
+  // The background slot.
   @signalState() private _activity: ActivityId | null = null;
-  // Backed by `@signalState` so a `SignalWatcher` consumer can track the
-  // foreground modal slot directly (M-god step 6b-3: `<uc-modal>` reads
-  // `router.modal` in `willUpdate` to drive its `<dialog>` open/close). This is
-  // distinct from `_currentActivity` (`_modal ?? _activity`): a modal opening on
-  // the id that's already the background activity leaves the effective activity
-  // unchanged, so only the modal-slot signal captures that transition. The
-  // coarse `_listeners.notify()` every existing reader relies on is unchanged.
+  // The foreground (modal) slot. Its own signal: a modal opening on the background activity's id leaves
+  // `_currentActivity` unchanged.
   @signalState() private _modal: ActivityId | null = null;
-  // The single "effective" activity as a signal-backed field (M-god step 3c) —
-  // kept in lockstep with the two slots by `_transition` (its sole writer, via
-  // the two slots' sole writer). Backed by `@signalState` so a future
-  // `SignalWatcher` consumer can track it; the coarse `_listeners.notify()`
-  // change-notification every current reader relies on is preserved unchanged.
+  // The effective activity, `_modal ?? _activity`.
   @signalState() private _currentActivity: ActivityId | null = null;
   // Signal-backed, so a tracked reader sees new params even when the activity stays the same (one external activity
   // switching sources).
@@ -74,15 +58,10 @@ export class RouterController {
   private _history: ActivityId[] = [];
   private _fileAddHooks: FileAddHook[] = [];
 
-  // Zero-arg constructor: the container builds this with `new RouterController()`
-  // and the emit target resolves lazily through `@inject`.
-
   /**
    * Emit a router event to the container-owned {@link EventEmitter}, debouncing
-   * modal transitions (matches v1 `LitBlock._routerEmit`: modal open/close
-   * debounce, activity-change fires immediately). This is the debounce that
-   * used to live in `UploaderController`'s router-emit closure (M-god step 3c);
-   * telemetry sees the already-debounced bus event since it observes the bus.
+   * modal open/close (activity-change fires immediately). Telemetry sees the
+   * already-debounced bus event since it observes the bus.
    */
   private _emit<T extends UploaderEventKey>(type: T, payload: UploaderEventPayload[T]): void {
     if (type === UploaderEventType.MODAL_OPEN || type === UploaderEventType.MODAL_CLOSE) {
@@ -106,8 +85,8 @@ export class RouterController {
   }
   /**
    * The single "effective" activity — the foreground modal if one is open,
-   * otherwise the background activity. This is the v1 `*currentActivity`
-   * semantics: what the activity FSM activates on and what most readers want.
+   * otherwise the background activity: what activity blocks activate on and
+   * what most readers want.
    */
   public get currentActivity(): ActivityId | null {
     return this._currentActivity;
@@ -131,12 +110,11 @@ export class RouterController {
   }
 
   /**
-   * Atomic subscription to the current (background-slot) activity: fires only
-   * when `currentActivity` actually changes, not on every router notify (modal
-   * open/close, params, background/foreground). Pass `{ immediate: true }` to
-   * also fire once with the current value on subscribe. The router analogue of
-   * `ConfigController.observe`, encapsulating the per-key dedup callers used to
-   * hand-roll over `subscribe`.
+   * Atomic subscription to the effective activity (`modal ?? activity`): fires
+   * only when `currentActivity` actually changes, not on every router notify
+   * (params, a slot change that leaves it the same). Pass `{ immediate: true }`
+   * to also fire once with the current value on subscribe. The router analogue
+   * of `ConfigController.observe`.
    */
   public observeCurrentActivity(listener: (activity: ActivityId | null) => void, options?: ObserveOptions): () => void {
     return this._listeners.observe(() => this.currentActivity, listener, options);
@@ -195,11 +173,10 @@ export class RouterController {
 
   // ─── Mounted activities ───
 
-  // Mounted-activity signal: ported activity blocks (ActivityChildBlock)
-  // report themselves here on adoption/release, replacing their former
-  // membership in the v1 `*blocksRegistry` for "is this activity's block
-  // mounted?" waits. Refcounted — the same activityType can be mounted in
-  // several slots at once (e.g. minimal's two <uc-start-from>).
+  // Activity blocks (ActivityChildBlock) report themselves here on adoption and
+  // release, for "is this activity's block mounted?" waits. Refcounted — the
+  // same activityType can be mounted in several slots at once (e.g. minimal's
+  // two <uc-start-from>).
   private _mountedActivities = new Map<ActivityId, number>();
 
   /** Report a mounted activity block. Returns the matching un-mount call. */

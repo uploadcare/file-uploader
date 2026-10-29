@@ -41,7 +41,7 @@ export class UploadCollectionController {
   private static readonly _destroyDelayMs = 10_000;
 
   private _data = new Map<Uid, TypedData<UploadEntryData>>();
-  // One key-change subscription per entry (was `UPLOAD_WATCH_LIST.length` per entry).
+  // One key-change subscription per entry.
   private _entrySubs = new Map<Uid, Unsubscriber>();
   // Each property observer with the key-set it declared; `_observedKeys` is their
   // derived union — the gate for what enters the change-map.

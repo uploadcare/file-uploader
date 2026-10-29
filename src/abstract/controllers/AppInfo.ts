@@ -1,9 +1,7 @@
 import { signalState } from '../di/signalState';
 
 /**
- * Boot-time identity of an uploader scope. Container-owned (M-god step 3b),
- * split out of `UploaderController` so the solution identity is a
- * single-responsibility controller rather than a field on the god object.
+ * Boot-time identity of an uploader scope. Container-owned.
  *
  * `solutionName` is the solution (preset) tag that owns this scope — a
  * boot-time fact set once by the solution element and read lazily by telemetry

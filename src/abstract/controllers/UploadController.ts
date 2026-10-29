@@ -36,8 +36,8 @@ import { ValidationController } from './ValidationController';
  * `isUploading`/`isQueuedForUploading` state writes, the per-entry
  * `AbortController`, the `beforeUpload` hook chain (with per-hook timeout +
  * isolation), upload-client option assembly, the queued `uploadFile` call,
- * progress, and the success/cancel/error write-back. Container-resolved (M-god
- * step 5): controller peers (config, collection, secure-uploads), the public API
+ * progress, and the success/cancel/error write-back. Container-resolved:
+ * controller peers (config, collection, secure-uploads), the public API
  * (output-item resolver) and `TelemetryManager` (the never-throwing upload-error
  * sink) are `@inject`-ed; plugin `beforeUpload` hooks are read from the
  * conditionally-bound `PluginController` via the container (`containerOf`). So it

@@ -50,8 +50,8 @@ export const __resetTaskClockForTests = (): void => {
   taskEndScheduled = false;
 };
 
-// Non-enumerable, so a spread copy is plain data that `structuredClone` and `postMessage` accept, as v1 states were.
-// The copy it returns carries it the same way, so calling it there just copies the copy.
+// `snapshot` is non-enumerable, so a spread copy is plain data that `structuredClone` and `postMessage` accept. Each
+// copy gets its own `snapshot`, so calling it on a copy copies again.
 function snapshot<T extends object>(this: T): T {
   return withSnapshot({ ...this });
 }

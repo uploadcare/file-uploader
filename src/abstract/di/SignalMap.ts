@@ -9,11 +9,10 @@ const log = logger.scope('signal-map');
 export type { ObserveOptions };
 
 /**
- * DOM-free reactive key/value store for controllers with a DYNAMIC keyspace —
- * `ConfigController` (~55 built-ins plus plugin-registered keys) and
- * `LocaleController` (arbitrary locale strings). It is the has-a counterpart to
- * the per-static-field `@signalState` decorator (which can't model a keyspace
- * that grows at runtime).
+ * DOM-free reactive key/value store for controllers with a DYNAMIC keyspace
+ * (config with plugin-registered keys, locale strings, per-entry data). It is
+ * the has-a counterpart to the per-static-field `@signalState` decorator (which
+ * can't model a keyspace that grows at runtime).
  *
  * A null-prototype `#bag` is the authoritative store — it holds every value,
  * defines key presence, and is returned live by `values` (so a consumer that
@@ -35,7 +34,7 @@ export type { ObserveOptions };
 export class SignalMap<T extends object> {
   // Authoritative value + presence store, and the live view returned by `values`.
   #bag: T = Object.create(null);
-  // Lazily-populated per-key signals (created on first `get`), kept in sync with
+  // Lazily-populated per-key signals (created on first `signal()`), kept in sync with
   // `#bag` on write. Stored as `Signal.State<unknown>` — an erasure boundary,
   // cast back at the typed `get`/`set` edges (each is keyed by its own key).
   #signals = new Map<keyof T, Signal.State<unknown>>();
@@ -69,9 +68,7 @@ export class SignalMap<T extends object> {
 
   /**
    * Fast, non-tracking read from the bag. Returns `undefined` for a key that was
-   * never seeded or set (byte-for-byte with `StateController.get` /
-   * `LocaleController.get`). Use `signal(key).get()` when reactive tracking is
-   * needed.
+   * never seeded or set. Use `getTracked(key)` when reactive tracking is needed.
    */
   public get<K extends keyof T>(key: K): T[K] | undefined {
     return Object.hasOwn(this.#bag, key) ? this.#bag[key] : undefined;
@@ -79,8 +76,7 @@ export class SignalMap<T extends object> {
 
   /**
    * The per-key reactive signal (lazily materialized from the bag, kept in sync
-   * by `set`). Reading it under a `SignalWatcher` auto-tracks that key. Present
-   * for the forward migration; the compat read path uses the plain `get`.
+   * by `set`). Reading it under a `SignalWatcher` auto-tracks that key.
    */
   public signal<K extends keyof T>(key: K): Signal.State<T[K] | undefined> {
     let s = this.#signals.get(key);
@@ -109,8 +105,7 @@ export class SignalMap<T extends object> {
     // must never be treated as a present `undefined`: otherwise `set(key,
     // undefined)` would no-op and never materialize the key, so a caller like
     // `ConfigController.register` could not replace an explicit pre-registration
-    // `undefined` write. `Object.is` dedup is byte-for-byte with the v1
-    // `StateController.set` / `LocaleController.set` semantics.
+    // `undefined` write.
     if (Object.hasOwn(this.#bag, key) && Object.is(this.#bag[key], value)) {
       return;
     }
@@ -206,8 +201,7 @@ export class SignalMap<T extends object> {
   }
 
   /**
-   * The live value bag (a stable reference, mutated in place on write) — matches
-   * the v1 `StateController._state` semantics exactly.
+   * The live value bag (a stable reference, mutated in place on write).
    */
   public get values(): T {
     return this.#bag;
