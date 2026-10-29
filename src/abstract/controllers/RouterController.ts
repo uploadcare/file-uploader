@@ -556,7 +556,9 @@ export class RouterController {
   public back(): void {
     for (let i = this._history.length - 2; i >= 0; i--) {
       const prev = this._history[i]!;
-      if (this._canActivate(prev)) {
+      // An earlier entry of the activity already showing is no step back (v1 skipped them too): after "Add more"
+      // and an emptied list the history reads start-from, upload-list, start-from.
+      if (prev !== this.currentActivity && this._canActivate(prev)) {
         // Commit: truncate to the target (dropping the current entry and any
         // guarded-out entries above it); `_pushHistory` dedupes the re-push.
         // When a hook redirected to the activity we're already on, the
