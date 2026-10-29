@@ -40,7 +40,7 @@ type SourceSplit = {
 };
 
 const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: DynamicButtonMode): SourceSplit => {
-  if (mode === 'compact' || mode === 'plain' || sources.length === 0) {
+  if (mode === 'compact' || mode === 'plain') {
     return {
       main: null,
       remain: sources,
@@ -53,11 +53,6 @@ const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: DynamicBut
   };
 };
 
-const iconsBasedOnMode: Record<Exclude<DynamicButtonMode, 'toolbar' | 'plain'>, string> = {
-  compact: 'paperclip',
-  menu: 'arrow-dropdown',
-  auto: 'arrow-dropdown',
-};
 
 const AUTO_MODE_INLINE_THRESHOLD = 3;
 
@@ -109,7 +104,7 @@ export class DynamicBtn extends ChildBlock {
   // here `_mode` is a tracked getter, so a plain derived getter re-evaluates on
   // the same re-render and there is no mirror to keep in sync.
   private get _dropdownIconName(): string {
-    return iconsBasedOnMode[this._mode as Exclude<DynamicButtonMode, 'toolbar' | 'plain'>] ?? 'arrow-dropdown';
+    return this._mode === 'compact' ? 'paperclip' : 'arrow-dropdown';
   }
 
   private get isIdle() {
@@ -170,10 +165,6 @@ export class DynamicBtn extends ChildBlock {
     return (this._collection?.allEntries?.length ?? 0) > 0;
   }
 
-  private get shouldShowAbortAction(): boolean {
-    return !this.isIdle && this.hasCollectionEntries;
-  }
-
   // `@throttled` makes this adopted-guarded (a trailing tick after release
   // no-ops) and cancels the pending timer on release — replacing the old
   // `!this.isConnected` bail and the manual `.cancel()` in `controllerReleased`.
@@ -182,19 +173,8 @@ export class DynamicBtn extends ChildBlock {
   /** @internal */
   @throttled(COLLECTION_SUMMARY_THROTTLE_MS)
   protected _throttledHandleCollectionUpdate(): void {
-    this._updateButtonBasedOnCollectionState();
-  }
-
-  private _updateButtonBasedOnCollectionState() {
-    const collectionState = this._api.getOutputCollectionState();
-
-    if (!collectionState) {
-      this._log.warn('Collection state is undefined');
-      return;
-    }
-
-    this._collection = collectionState;
-    this._status = collectionState.status;
+    this._collection = this._api.getOutputCollectionState();
+    this._status = this._collection.status;
   }
 
   /** @internal */
@@ -246,7 +226,7 @@ export class DynamicBtn extends ChildBlock {
   private _renderInline() {
     return html`
       <uc-no-wrap-mode-dynamic-btn>
-        ${this._mainAndRemainSources?.remain?.map(
+        ${this._mainAndRemainSources.remain.map(
           (source) => html`<uc-source-btn .iconOnly=${true} .source=${source}></uc-source-btn>`,
         )}
       </uc-no-wrap-mode-dynamic-btn>
@@ -258,12 +238,7 @@ export class DynamicBtn extends ChildBlock {
   }
 
   private _clearAllFailedEntries() {
-    const collection = this._uploadCollection;
-    this._collection.failedEntries.forEach((it) => {
-      if (it && collection.hasItem(it.internalId as Uid)) {
-        collection.remove(it.internalId as Uid);
-      }
-    });
+    for (const it of this._collection.failedEntries) this._uploadCollection.remove(it.internalId as Uid);
   }
   private _abortAllEntries() {
     this._uploadCollection.abortAll();
@@ -286,7 +261,7 @@ export class DynamicBtn extends ChildBlock {
     return html` <uc-drop-down>
       <uc-icon content-for="dd-header-button" name=${this._dropdownIconName}></uc-icon>
       <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
-        ${this._mainAndRemainSources?.remain?.map(
+        ${this._mainAndRemainSources.remain.map(
           (source) => html`<uc-source-btn .buttonRole=${'menuitem'} .source=${source}></uc-source-btn>`,
         )}
       </div>
@@ -295,7 +270,7 @@ export class DynamicBtn extends ChildBlock {
 
   private _renderCompactSingleSource() {
     const source = this._sources[0];
-    const compactSource = source ? { ...source, icon: iconsBasedOnMode.compact } : source;
+    const compactSource = source ? { ...source, icon: 'paperclip' } : source;
 
     return html`
       <uc-no-wrap-mode-dynamic-btn>
@@ -307,7 +282,7 @@ export class DynamicBtn extends ChildBlock {
   private _renderPrimaryAction() {
     return html`<uc-primary-action
       .entries=${this._collection}
-      .source=${this._mainAndRemainSources?.main}
+      .source=${this._mainAndRemainSources.main}
     ></uc-primary-action>`;
   }
 
@@ -317,7 +292,6 @@ export class DynamicBtn extends ChildBlock {
       .uploading=${this.isUploading}
       .failed=${this.isFailed}
       .success=${this.isSuccess}
-      .idle=${this.isIdle}
       .progress=${this._progress}
     ></uc-file-action-button>`;
   }
@@ -344,10 +318,10 @@ export class DynamicBtn extends ChildBlock {
       <uc-drop-area .disabled=${!this.dropzone}>
         <div class=${this._getInnerClassMap()}>
           ${this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null}
-          ${!this.isPlainMode && this.shouldShowInline ? this._renderInline() : null}
-          ${!this.isPlainMode && this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null}
+          ${this.shouldShowInline ? this._renderInline() : null}
+          ${this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null}
           ${!this.isPlainMode && this.shouldShowDropdown ? this._renderDropdown() : null}
-          ${this.shouldShowAbortAction || this.hasCollectionEntries ? this._renderAbortAction() : null}
+          ${this.hasCollectionEntries ? this._renderAbortAction() : null}
           ${this._renderVisualDropArea()}
         </div>
       </uc-drop-area>
