@@ -1,5 +1,6 @@
 import { type CdnOperation, modifiers } from '@uploadcare/cdn-url';
 import { operationsFromModifiers } from '../../../utils/cdn/operations';
+import type { CloudImageEditorController } from './CloudImageEditorController';
 import { editorPreviewUrl } from './lib/editorUrls';
 import { operationsBeforeGeometry } from './lib/transformationUtils';
 import type { Transformations } from './types';
@@ -40,4 +41,15 @@ export function cropperImageSrc(
     { ...transformations, crop: undefined, rotate: undefined, flip: undefined, mirror: undefined },
     operationsBeforeGeometry(sourceOperations),
   );
+}
+
+/** Counts an image load in `*loadingImages`; the returned function (idempotent) uncounts it. */
+export function trackImageLoading(controller: CloudImageEditorController): () => void {
+  controller.set('*loadingImages', controller.get('*loadingImages') + 1);
+  let done = false;
+  return () => {
+    if (done) return;
+    done = true;
+    controller.set('*loadingImages', controller.get('*loadingImages') - 1);
+  };
 }

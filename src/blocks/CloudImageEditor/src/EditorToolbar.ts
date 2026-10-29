@@ -354,9 +354,7 @@ export class EditorToolbar extends EditorBlock {
 
     // The fader self-deactivates on `*originalUrl` change (see EditorImageFader).
 
-    this.subEditorKey('*loadingOperations', (loadingOperations) => {
-      this._debouncedShowLoader([...loadingOperations.values()].some((mapping) => mapping.size > 0));
-    });
+    this.subEditorKey('*loadingImages', (count) => this._debouncedShowLoader(count > 0));
 
     this.onEditorAttach(() => {
       this._updateInfoTooltip();
