@@ -394,7 +394,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   private readonly _handleRetryNetwork = (): void => {
     // The image info never arrived, so there is no image to reload yet: ask for it again.
     if (!this._imageSize) {
-      this._editorController.networkProblems = false;
       this._runTask(() => this._loadImageInfo());
       return;
     }
@@ -745,6 +744,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     // (a null→value transition also re-triggers activation even when the new
     // size matches). Both also self-reset on the `originalUrl` change above.
     this._imageSize = null;
+    // The flag describes the latest load only: a new image (or a retry) starts without it.
+    editorController.networkProblems = false;
 
     try {
       const originalUrlValue = editorController.originalUrl as string;
