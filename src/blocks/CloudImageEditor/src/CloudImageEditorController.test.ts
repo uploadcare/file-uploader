@@ -1,5 +1,6 @@
 import { Signal } from '@lit-labs/signals';
 import { describe, expect, it, vi } from 'vitest';
+import { stubEditorServices } from './__tests__/editor-fixtures';
 import { CloudImageEditorController } from './CloudImageEditorController';
 import { TabId } from './toolbar-constants';
 
@@ -129,12 +130,7 @@ describe('CloudImageEditorController', () => {
   });
 
   it('constructor accepts services up front, equivalent to setServices', () => {
-    const controller = new CloudImageEditorController({
-      l10n: (key) => `pre:${key}`,
-      getConfig: (() => undefined) as CloudImageEditorController['getConfig'],
-      telemetry: { sendEvent: () => {}, sendEventError: () => {}, sendActionEvent: () => {} },
-      proxyUrl: async (url) => url,
-    });
+    const controller = new CloudImageEditorController(stubEditorServices({ l10n: (key) => `pre:${key}` }));
     expect(controller.l10n('cancel')).toBe('pre:cancel');
   });
 
@@ -159,12 +155,7 @@ describe('CloudImageEditorController', () => {
     const label = new Signal.Computed(() => controller.l10n('cancel'));
     expect(label.get()).toBe('cancel');
 
-    controller.setServices({
-      l10n: (key) => `de:${key}`,
-      getConfig: (() => undefined) as CloudImageEditorController['getConfig'],
-      telemetry: { sendEvent: () => {}, sendEventError: () => {}, sendActionEvent: () => {} },
-      proxyUrl: async (url) => url,
-    });
+    controller.setServices(stubEditorServices({ l10n: (key) => `de:${key}` }));
     expect(label.get()).toBe('de:cancel');
   });
 
