@@ -1,4 +1,5 @@
 import { ContextConsumer, ContextProvider } from '@lit/context';
+import { SignalWatcher } from '@lit-labs/signals';
 import { parseFileUrl, serializeFileUrl } from '@uploadcare/cdn-url';
 import { html, LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
@@ -43,7 +44,11 @@ type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
 const DEFAULT_TABS = serializeCsv([...ALL_TABS]);
 
-const CloudImageEditorBlockBase = RegisterableElementMixin(LightDomMixin(LitElement));
+// `SignalWatcher` sits at the base of the mixin chain, as on `ChildBlock` and
+// `EditorBlock`, so it wraps `performUpdate` (not `render()`): the root's
+// `willUpdate`/`render`/`updated` auto-track the controller state and
+// `l10n`/`getConfig` they read, and re-render when it changes.
+const CloudImageEditorBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)));
 
 export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   // Shared `cloud-image-editor` scope — the same scope descendant `EditorBlock`s
@@ -319,7 +324,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       (l10n) => {
         this._compatL10n = l10n;
         this._editorController.servicesChanged();
-        this.requestUpdate();
       },
       (telemetryManager) => {
         this._telemetryManager = telemetryManager;
