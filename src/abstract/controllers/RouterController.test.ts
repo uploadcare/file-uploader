@@ -226,7 +226,10 @@ describe('RouterController (v2)', () => {
       expect(emit).not.toHaveBeenCalled();
     });
 
-    it('switching the open modal to another activity opens the new one and closes the old, as v1 did', () => {
+    // QUIRK(router): each activity shown in the modal counts as a modal of its own, so a switch emits `modal-open`
+    // and `modal-close` while the dialog stays open (NEXT-MAJOR(router) in `RouterController._transition`). Pinned as
+    // current behaviour, not endorsed.
+    it('switching the open modal to another activity emits modal-open for the new one and modal-close for the old', () => {
       const { router, emit } = setup();
       router.openModal('start-from');
       emit.mockClear();
@@ -411,6 +414,7 @@ describe('RouterController (v2)', () => {
   });
 
   describe('modal slot edges', () => {
+    // QUIRK(router): per-activity modal events, as above. Pinned as current behaviour, not endorsed.
     it('replacing one open modal with another emits open for the new one, close for the old, then the activity change', () => {
       const { router, emit } = setup();
       router.openModal('camera');

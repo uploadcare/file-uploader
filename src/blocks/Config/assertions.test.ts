@@ -16,6 +16,8 @@ const warningsFor = (cfg: Partial<typeof initialConfig>): string[] => {
   return warn.mock.calls.map((call) => call.join(' '));
 };
 
+// QUIRK(config): `multipartMaxAttempts` is still accepted and does nothing (NEXT-MAJOR(config) in builtin-registry.ts).
+// Pinned as current behaviour, not endorsed.
 it('warns once that multipartMaxAttempts is deprecated and does nothing', () => {
   const warnings = warningsFor({ multipartMaxAttempts: 5 });
 
