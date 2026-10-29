@@ -1,5 +1,5 @@
+import type { PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
-import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { ColorOperation } from './toolbar-constants';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
@@ -25,23 +25,14 @@ export class EditorOperationControl extends EditorButtonControl {
   @property({ type: String })
   public operation: ColorOperation | '' = '';
 
-  /** @internal */
-  @subscription()
-  protected _syncActive(): Unsubscribe {
-    return this.editorController.observe(
-      'editorTransformations',
-      (editorTransformations) => {
-        if (!this.operation) {
-          return;
-        }
-
-        const { zero } = COLOR_OPERATIONS_CONFIG[this.operation];
-        const value = editorTransformations[this.operation];
-        const isActive = typeof value !== 'undefined' ? value !== zero : false;
-        this.active = isActive;
-      },
-      { immediate: true },
-    );
+  // Derived here, not in `render`, so the base's `updated` sees `active` change and toggles the host classes.
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+    const controller = this.editorControllerOrNull;
+    if (!controller || !this.operation) return;
+    const { zero } = COLOR_OPERATIONS_CONFIG[this.operation];
+    const value = controller.editorTransformations[this.operation];
+    this.active = typeof value !== 'undefined' ? value !== zero : false;
   }
 
   protected override updateLabels(): void {
