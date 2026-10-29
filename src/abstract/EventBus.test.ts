@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from './controllers/ConfigController';
 import { ControllerContainer } from './di/ControllerContainer';
-import { EventBus, UploaderEventType } from './EventBus';
+import { EMIT_DEBOUNCE_MS, EventBus, UploaderEventType } from './EventBus';
 
 describe('EventBus', () => {
   afterEach(() => {
@@ -66,7 +66,7 @@ describe('EventBus', () => {
     bus.emitDebounced(UploaderEventType.UPLOAD_CLICK, thunk);
     expect(handler).not.toHaveBeenCalled();
 
-    vi.advanceTimersByTime(20);
+    vi.advanceTimersByTime(EMIT_DEBOUNCE_MS);
 
     expect(handler).toHaveBeenCalledTimes(1);
     expect(thunk).toHaveBeenCalledTimes(1);
@@ -80,7 +80,7 @@ describe('EventBus', () => {
     bus.emitDebounced(UploaderEventType.UPLOAD_CLICK, () => undefined);
 
     bus.destroy();
-    vi.advanceTimersByTime(20);
+    vi.advanceTimersByTime(EMIT_DEBOUNCE_MS);
     bus.emit(UploaderEventType.UPLOAD_CLICK, undefined);
 
     expect(handler).not.toHaveBeenCalled();
@@ -116,7 +116,7 @@ describe('EventBus', () => {
       throw new Error('thunk boom');
     });
 
-    expect(() => vi.advanceTimersByTime(20)).not.toThrow();
+    expect(() => vi.advanceTimersByTime(EMIT_DEBOUNCE_MS)).not.toThrow();
     expect(handler).not.toHaveBeenCalled();
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
@@ -151,7 +151,7 @@ describe('EventBus', () => {
 
       container.dispose();
       bus.emit(UploaderEventType.UPLOAD_CLICK, undefined);
-      vi.advanceTimersByTime(20);
+      vi.advanceTimersByTime(EMIT_DEBOUNCE_MS);
 
       expect(any).not.toHaveBeenCalled();
     });

@@ -4,6 +4,9 @@ import { controllerLogger } from './controllerLogger';
 import { lifetimeOf } from './di/ControllerContainer';
 import { lazy } from './logger';
 
+/** How long `emitDebounced` waits for the last of a burst of emits of one type. */
+export const EMIT_DEBOUNCE_MS = 20;
+
 /**
  * Canonical event surface for the whole library. `EventEmitter`
  * (`src/abstract/EventEmitter.ts`) re-exports these as the
@@ -121,7 +124,7 @@ export class EventBus {
   }
 
   /**
-   * Debounced emit (20 ms window). `payload` is a thunk so a heavy
+   * Debounced emit ({@link EMIT_DEBOUNCE_MS} window). `payload` is a thunk so a heavy
    * `buildOutputCollectionState` is only built once per debounce window.
    */
   public emitDebounced<K extends UploaderEventKey>(type: K, payload: () => UploaderEventPayload[K]): void {
@@ -134,7 +137,7 @@ export class EventBus {
       } catch (err) {
         this._log.warn(`payload thunk for "${type}" threw`, err);
       }
-    }, 20);
+    }, EMIT_DEBOUNCE_MS);
     this._debounceTimers.set(type, timeoutId);
   }
 
