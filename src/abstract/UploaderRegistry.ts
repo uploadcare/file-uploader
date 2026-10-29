@@ -100,78 +100,32 @@ class UploaderRegistryImpl {
       // Eager init threw: roll the half-built container back out of `_map` so a
       // later `ensure()` retries a clean creation (instead of returning the
       // partial container and skipping init) and no consumer is ever notified of
-      // it. Guard `=== container` in case a re-entrant `register()` already
-      // replaced it. Best-effort dispose, then rethrow.
+      // it. Guard `=== container` in case a re-entrant `dispose()` already
+      // removed it. Best-effort dispose, then rethrow.
       if (this._map.get(ctxName) === container) {
         this._map.delete(ctxName);
       }
       container.dispose();
       throw err;
     }
-    // Notify `whenAvailable` subscribers AFTER the eager init — the same point
-    // `register()` notifies from.
+    // Notify `whenAvailable` subscribers AFTER the eager init.
     this._notifyConsumers(ctxName, container);
     return container;
   }
 
-  /**
-   * Tear down the ctx's container: null-notify consumers (so they release
-   * BEFORE the controllers are destroyed — the v1 teardown order) then dispose.
-   * No-op if no container exists. Delegates to `unregister` for the delete +
-   * null-notify so that ordering stays identical.
-   */
+  /** Tear down the ctx's container: null-notify consumers (so they release before the controllers are destroyed), then dispose. */
   public dispose(ctxName: string): void {
     const container = this._map.get(ctxName);
     if (!container) {
       return;
     }
-    this.unregister(ctxName, container);
-    container.dispose();
-  }
-
-  public register(ctxName: string, container: ControllerContainer): void {
-    container.ctxName = ctxName; // informational, for logging attribution
-    const existing = this._map.get(ctxName);
-    if (existing && existing !== container) {
-      // Common case: the previous owning element disconnected and its
-      // deferred unregister hasn't fired yet. The new element takes over; the
-      // deferred unregister becomes a no-op (it checks identity before
-      // deleting).
-      log.warn(
-        `Replacing the container registered under ctx-name="${ctxName}". If two uploaders share this name simultaneously the second one wins.`,
-      );
-    }
-    this._map.set(ctxName, container);
-    // Notify every subscriber for this ctxName so they re-adopt the new
-    // container.
-    this._notifyConsumers(ctxName, container);
-  }
-
-  public unregister(ctxName: string, container: ControllerContainer): void {
-    if (this._map.get(ctxName) !== container) {
-      // Stale unregister (e.g. deferred from a disconnected element already
-      // replaced by a new registration) — the current owner is unaffected.
-      return;
-    }
     this._map.delete(ctxName);
     this._notifyConsumers(ctxName, null);
+    container.dispose();
   }
 
   public get(ctxName: string): ControllerContainer | undefined {
     return this._map.get(ctxName);
-  }
-
-  /**
-   * Whether any `whenAvailable` consumer is currently watching `ctxName`.
-   *
-   * Was the consumer-refcount teardown predicate until M-god step 6a, which
-   * moved that role onto the per-ctx `ControllerContainer`
-   * (`container.isUnreferenced()`, see `ctx-lifecycle.isCtxUnreferenced`). Kept
-   * as a standalone registry query. (The v1 `*blocksRegistry` half was removed
-   * with the v1 element layer in M11.)
-   */
-  public hasConsumers(ctxName: string): boolean {
-    return (this._consumers.get(ctxName)?.size ?? 0) > 0;
   }
 
   /**
