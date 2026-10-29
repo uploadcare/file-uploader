@@ -26,13 +26,12 @@ import { buildOutputCollectionState } from './buildOutputCollectionState';
 import { CameraSourceTypes, calcCameraModes, type ModeCameraType } from './cameraModes';
 import { controllerLogger } from './controllerLogger';
 import { AppInfo } from './controllers/AppInfo';
-import { CollectionStateController } from './controllers/CollectionStateController';
 import { ConfigController } from './controllers/ConfigController';
 import { LocaleController } from './controllers/LocaleController';
 import { RouterController } from './controllers/RouterController';
 import { UploadCollectionController } from './controllers/UploadCollectionController';
 import { UploadController } from './controllers/UploadController';
-import { CONTAINER, type ControllerContainer } from './di/ControllerContainer';
+import { type ControllerContainer, requireContainerOf } from './di/ControllerContainer';
 import { inject } from './di/inject';
 import { EventEmitter, type EventKey, type EventPayload, EventType } from './EventEmitter';
 import { createL10n } from './l10n';
@@ -76,7 +75,6 @@ const isFileUuid = (value: string): boolean => {
 export class UploaderPublicApi {
   @inject(AppInfo) private readonly _appInfo!: AppInfo;
   @inject(AuthTokenManager) private readonly _authToken!: AuthTokenManager;
-  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
 
   // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
   // (resolved lazily at log time via the container that built this instance).
@@ -100,18 +98,8 @@ export class UploaderPublicApi {
   // dictionary load / locale switch is reflected without recreating the fn.
   private _l10n = createL10n(() => this._locale);
 
-  /**
-   * The per-ctx `ControllerContainer` that built this instance, reached through
-   * the `CONTAINER` tag every container-built instance carries (the same tag
-   * `@inject` resolves through). Used by `getOutputCollectionState` to hand the
-   * container to `buildOutputCollectionState`.
-   */
   private get _container(): ControllerContainer {
-    const container = (this as { [CONTAINER]?: ControllerContainer })[CONTAINER];
-    if (!container) {
-      throw new Error('Unexpected error: UploaderPublicApi was not created by a container');
-    }
-    return container;
+    return requireContainerOf(this);
   }
 
   /** @internal Mangled in the build, so it is kept out of the published types. */
@@ -398,8 +386,9 @@ export class UploaderPublicApi {
     if (this._uploadCollection.size > 0 && !force) {
       router.navigate(ACTIVITY_TYPES.UPLOAD_LIST);
     } else {
-      if (this._sourceList?.length === 1) {
-        const srcKey = this._sourceList[0];
+      const sourceList = deserializeCsv(this.cfg.sourceList);
+      if (sourceList.length === 1) {
+        const srcKey = sourceList[0];
 
         this._whenPluginsReady(() => {
           const sources = this._pluginManager.snapshot().sources;
@@ -440,19 +429,12 @@ export class UploaderPublicApi {
     }
   };
 
-  private _pluginsReady(): Promise<void> {
-    // The plugin manager is container-resolved (`@inject`) and always bound by
-    // the time a plugin read fires (see class doc), so this resolves
-    // synchronously and returns its readiness promise directly.
-    return this._pluginManager.pluginsReady();
-  }
-
   /**
    * Run `then` once plugins are ready, unless the ctx is torn down first — it reads the router and plugin manager,
    * which are gone by then. A failure is logged rather than left as an unhandled rejection.
    */
   private _whenPluginsReady(then: () => unknown): void {
-    const ready = this._pluginsReady();
+    const ready = this._pluginManager.pluginsReady();
     const lifetime = this._container.lifetime;
     lifetime.run(
       async () => {
@@ -461,6 +443,14 @@ export class UploaderPublicApi {
       },
       (error) => this._log.error('a deferred navigation failed', error),
     );
+  }
+
+  /** Never rejects; returned so the wait belongs to the deferred navigation's task. */
+  private _waitForActivity(activityType: NonNullable<ActivityType>): Promise<boolean> {
+    return waitForActivityBlock(this._router, activityType, {
+      onTimeout: () => this._log.warn(`Activity type "${activityType}" not found in the context`),
+      timeout: 100,
+    });
   }
 
   /**
@@ -482,11 +472,7 @@ export class UploaderPublicApi {
     this._whenPluginsReady(() => {
       this._router.navigate(activityType, params[0] ?? {});
       if (activityType !== null) {
-        // Never rejects; returned so the wait belongs to the deferred navigation's task.
-        return waitForActivityBlock(this._router, activityType, {
-          onTimeout: () => this._log.warn(`Activity type "${activityType}" not found in the context`),
-          timeout: 100,
-        });
+        return this._waitForActivity(activityType);
       }
       return;
     });
@@ -522,11 +508,7 @@ export class UploaderPublicApi {
       } else {
         this._router.setActivity(activityType, params[0]);
       }
-      // Never rejects; returned so the wait belongs to the deferred navigation's task.
-      return waitForActivityBlock(this._router, activityType, {
-        onTimeout: () => this._log.warn(`Activity type "${activityType}" not found in the context`),
-        timeout: 100,
-      });
+      return this._waitForActivity(activityType);
     });
   };
 
@@ -623,14 +605,4 @@ export class UploaderPublicApi {
         });
     });
   };
-
-  private get _sourceList(): string[] {
-    return deserializeCsv(this.cfg.sourceList);
-  }
-
-  public destroy(): void {
-    // No subscriptions of its own to unwind (config/locale/router/… are
-    // container-owned and disposed by the container). Present so the container
-    // can treat every owned instance uniformly.
-  }
 }
