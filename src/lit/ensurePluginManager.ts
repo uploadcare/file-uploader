@@ -1,7 +1,6 @@
 import { ConfigController } from '../abstract/controllers/ConfigController';
 import { LazyPluginsController } from '../abstract/controllers/LazyPluginsController';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
-import { PluginManagerBridge } from '../abstract/di/PluginManagerBridge';
 import { LocaleManager } from '../abstract/managers/LocaleManager';
 import { PluginController } from '../abstract/managers/plugin';
 import { buildPluginApi } from '../abstract/managers/plugin/buildPluginApi';
@@ -62,16 +61,6 @@ export function ensurePluginManager(container: ControllerContainer): void {
   // (v1 parity: `LitBlock.initCallback` constructed the manager eagerly) and so
   // the container records it for reverse-order disposal.
   const pluginManager = container.get(PluginController);
-
-  // Bind + eagerly resolve the editor-safe `PluginManagerBridge` token so
-  // `<uc-config>` (which value-imports ONLY the declare-only token, keeping
-  // `PluginController` out of the editor bundle) can reach this same manager via
-  // `getOrNull`/`whenController` — WITHOUT dragging `PluginController` in. The
-  // eager `get` here constructs the bridge at the exact moment the manager
-  // becomes available, so any `whenController(PluginManagerBridge, cb)` waiter a
-  // sibling `<uc-config>` registered earlier fires now.
-  container.bind(PluginManagerBridge, (c) => ({ getPluginManager: () => c.get(PluginController) }));
-  container.get(PluginManagerBridge);
 
   container.get(LocaleManager).activate(pluginManager);
 }

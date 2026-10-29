@@ -153,9 +153,8 @@ tests/             Browser e2e (*.e2e.test.tsx)
   field resolution; a `() => X` thunk for circular refs) and hold reactive state
   via `@signalState` fields or a composed `SignalMap`, both backed by
   **`@lit-labs/signals`**. There is **no** global store and **no** `*`-keys.
-  Host/boundary values (upload-client SDK, DOM hooks, the api/plugin manager for
-  editor-bundle-isolated blocks) are provided via `declare`-only bridge tokens
-  (`UploadHostBridge`, `PluginManagerBridge`) + `container.bind`.
+  A controller whose constructor needs host closures (`PluginController`) is
+  `container.bind`-ed with a factory (`ensurePluginManager`).
 - **Base classes:** `ChildBlock`
   (`SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)))`) is the
   block base; `ActivityChildBlock` / `SolutionChildBlock` / `FileItemConfig`

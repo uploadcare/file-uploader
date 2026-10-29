@@ -89,7 +89,7 @@ const getConfigAttributeNames = (key: string): readonly string[] => {
  * built-in or plugin-registered — is described by a {@link ConfigKeyDescriptor}
  * read from `ConfigController.descriptor()`, and dynamic keys arrive via
  * `ConfigController.onSchemaChange`. Plugins are just callers of
- * `ConfigController.register`; the config layer has no `PluginManagerBridge`
+ * `ConfigController.register`; the config layer has no plugin-manager
  * dependency, which also keeps `PluginController` out of the editor-alone bundle.
  */
 export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock>(
@@ -386,7 +386,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     private _setupSchemaSync(): void {
       // Sync dynamic config wiring now (picks up any keys already registered) and
       // on every subsequent schema change. The controller owns the descriptor set,
-      // so this is plugin-agnostic — no `PluginManagerBridge`/`onPluginsChange`.
+      // so this is plugin-agnostic — no `onPluginsChange`.
       // `addDisposer`'d so a re-adoption tears the listener down and re-syncs fresh.
       this._syncCustomConfigs();
       this.addDisposer(this._config.onSchemaChange(() => this._syncCustomConfigs()));
