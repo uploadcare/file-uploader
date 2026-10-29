@@ -1,3 +1,4 @@
+import { Signal } from '@lit-labs/signals';
 import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
@@ -585,9 +586,10 @@ export class EditorImageCropper extends EditorBlock {
     super.updated(changedProperties);
 
     // The `imageSize` prop is not controller state, so no controller observer
-    // fires for it — re-evaluate activation when the root updates it.
+    // fires for it — re-evaluate activation when the root updates it. Untracked:
+    // its controller reads are no state the cropper renders.
     if (changedProperties.has('imageSize')) {
-      this._syncActivation();
+      Signal.subtle.untrack(() => this._syncActivation());
     }
 
     // `_imageBox`/`_cropBox` are private state, so their literal names can't

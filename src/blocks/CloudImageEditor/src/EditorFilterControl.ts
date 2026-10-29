@@ -1,3 +1,4 @@
+import { Signal } from '@lit-labs/signals';
 import { modifiers } from '@uploadcare/cdn-url';
 import type { FilterName } from '@uploadcare/cdn-url/ops';
 import { html, type PropertyValues, type TemplateResult } from 'lit';
@@ -195,7 +196,8 @@ export class EditorFilterControl extends EditorButtonControl {
         this._observer?.unobserve(this);
       } else {
         this._observer?.observe(this);
-        this._schedulePreviewVisibilityCheck();
+        // Untracked: the check's controller reads are no state this control renders.
+        Signal.subtle.untrack(() => this._schedulePreviewVisibilityCheck());
       }
     }
   }
