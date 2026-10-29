@@ -6,9 +6,6 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import { ChildBlock } from '../../lit/ChildBlock';
 
 export class ProgressBar extends ChildBlock {
-  @property({ type: Boolean, noAccessor: true })
-  public hasFileName = false;
-
   @property({ type: Number })
   public value = 0;
 

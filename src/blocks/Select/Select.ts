@@ -42,21 +42,9 @@ export class Select extends ChildBlock {
   }
 
   private _handleChange = (event: Event): void => {
-    if (this.disabled) {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-
-    event.preventDefault();
     event.stopPropagation();
-
-    const selectEl = event.currentTarget as HTMLSelectElement | null;
-    if (!selectEl) {
-      return;
-    }
-
-    this.value = selectEl.value;
+    if (this.disabled) return;
+    this.value = (event.currentTarget as HTMLSelectElement).value;
     this.dispatchEvent(new Event('change'));
   };
 }
