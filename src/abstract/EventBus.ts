@@ -6,7 +6,7 @@ import { lazy } from './logger';
 
 /**
  * Canonical event surface for the whole library. `EventEmitter`
- * (`src/blocks/UploadCtxProvider/EventEmitter.ts`) re-exports these as the
+ * (`src/abstract/EventEmitter.ts`) re-exports these as the
  * documented `EventType`/`EventPayload`, so the internal and documented names
  * cannot drift apart.
  */
@@ -66,10 +66,8 @@ export type UploaderEventPayload = {
 };
 
 /**
- * Pure pub/sub. No DOM, no CustomEvent — the UI layer bridges this to DOM
- * events on an element when one is desired (added in the events milestone).
- *
- * Introduced as a standalone primitive in M0; wired to nothing yet.
+ * Pure pub/sub. No DOM, no CustomEvent — `<uc-upload-ctx-provider>` bridges
+ * this to DOM events.
  */
 export class EventBus {
   // Per-ctx logger: `warn`/`error` always print; the verbose tier (event logging)

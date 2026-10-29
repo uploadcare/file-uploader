@@ -69,16 +69,11 @@ const EXCLUDED_EVENTS: ReadonlySet<CommonEventType> = new Set([
  * touches the `$` state.
  *
  * `init()` subscribes to `bus.onAny` and forwards every emitted event to
- * `sendEvent` — replacing the per-emit telemetry mirror that
- * `UploaderController.emit`/`ChildBlock.emit` used to carry (the "augmented
- * emit" god-method). The bus fires on every `EventEmitter.emit`, so telemetry
- * still sees every event those paths dispatch; it additionally sees the direct
- * `eventEmitter.emit` callers (`uploadAll`'s `common-upload-start`,
- * `emitCommonUploadFailed`'s `common-upload-failed`) that the old per-path
- * mirror never reached — an intended consistency improvement.
+ * `sendEvent`. The bus fires on every `EventEmitter.emit`, so telemetry sees
+ * every dispatched event.
  */
 export class TelemetryManager {
-  // Container-resolved collaborators (M-god step 3c). `ConfigController` is a
+  // Container-resolved collaborators. `ConfigController` is a
   // direct `@inject` (no import cycle); the rest are thunked because the event
   // surface's module graph is circular-prone. All resolve lazily on access.
   @inject(ConfigController) private readonly _configController!: ConfigController;
@@ -88,7 +83,7 @@ export class TelemetryManager {
 
   // Per-ctx gated logger: the verbose tier prints only when THIS ctx's `debug`
   // config is on; ctx-name + gate resolve lazily at log time via the container
-  // that built this instance. Used only by `sendEventError`'s never-throw guard.
+  // that built this instance.
   private readonly _log = controllerLogger(this, 'telemetry');
 
   private readonly _sessionId: string = UID.generateRandomUUID();

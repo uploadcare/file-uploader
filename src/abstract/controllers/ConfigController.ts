@@ -16,14 +16,9 @@ export type KnownConfig = ConfigType & CustomConfig;
 /**
  * Pure-logic config store. Knows nothing about DOM, attributes, or Lit.
  *
- * In the v1 → v2 strangler this is the source of truth for the `*cfg/*` state
- * that used to live in the per-ctx store map; the v1 ctx facade routes those
- * keys here (see its `*cfg/` facade). For now it is a raw typed container:
- * value coercion (built-in `normalize` via BUILTIN_DESCRIPTORS), the `cdnCname`/`cameraModes`
- * computed properties, and the attribute/property bridge all still live in the
- * `<uc-config>` element, so behavior is byte-identical to v1. Those concerns
- * migrate into this controller in later milestones (when `<uc-config>` is
- * finally retired).
+ * A raw typed container: value coercion (built-in `normalize` via
+ * BUILTIN_DESCRIPTORS), the `cdnCname`/`cameraModes` computed properties, and
+ * the attribute/property bridge live in the `<uc-config>` element.
  *
  * Custom (plugin-registered) keys live in the same signal-backed map as
  * built-ins — `register()` adds them. `get`/`set`/`observe` take the keys known
@@ -31,11 +26,9 @@ export type KnownConfig = ConfigType & CustomConfig;
  * at runtime goes through `getDynamic`/`setDynamic`/`observeDynamic`.
  *
  * Backed by a composed `SignalMap` (has-a, not a base class): reads auto-track
- * under a `SignalWatcher`, `set()` dedups with `Object.is` and fires the map's
- * coarse notify, and `subscribe()` fans out on any change — preserving the exact
- * `get`/`set`/`subscribe`/`values`/`notify` semantics the v1 ctx facade `*cfg/`
- * routing depends on. The map is typed over `ConfigType` intersected with a
- * string index so runtime custom keys type cleanly.
+ * under a `SignalWatcher`, `set()` dedups with `Object.is` and notifies, and
+ * `subscribe()` fans out on any change. The map is typed over `ConfigType`
+ * intersected with a string index so runtime custom keys type cleanly.
  */
 export class ConfigController {
   private readonly _log = controllerLogger(this, 'config');
@@ -77,15 +70,10 @@ export class ConfigController {
   /**
    * Reactive, auto-tracking read of a config key. Reading it inside a
    * `SignalWatcher` update (a migrated `ChildBlock.render()`) subscribes that
-   * render to THIS key, so a later `set()` re-renders the block with no manual
-   * `subConfigValue` subscription.
+   * render to THIS key, so a later `set()` re-renders the block.
    *
-   * Distinct from `get()`, which reads the fast bag and is NOT tracked — kept
-   * for the still-imperative readers (every `api.cfg` lookup, v1
-   * `subConfigValue`, non-migrated blocks) whose hot-path per-read signal
-   * overhead measurably destabilized the parallel e2e suite (see `SignalMap`).
-   * Both coexist only during the strangler migration: once every reader is a
-   * tracked reader, `get()` can route through the signal and this splits away.
+   * Distinct from `get()`, which reads the fast bag and is NOT tracked — for
+   * imperative readers (every `api.cfg` lookup) on the hot path (see `SignalMap`).
    */
   public getTracked<K extends keyof ConfigType>(key: K): ConfigType[K] {
     return this.#state.getTracked(key) as ConfigType[K];

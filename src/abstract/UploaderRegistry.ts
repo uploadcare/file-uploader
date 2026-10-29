@@ -6,34 +6,6 @@ import { TelemetryManager } from './managers/TelemetryManager';
 
 const log = logger.scope('uploader-registry');
 
-/**
- * Global registry of uploader scopes keyed by `ctx-name`, and the single
- * authoritative home of the per-ctx `ControllerContainer` lifecycle:
- * create-and-cache (`ensure`), reactive lookup (`whenAvailable`/`get`), and
- * dispose-on-teardown (`dispose`). Children that live outside the uploader's
- * DOM subtree resolve their per-ctx DI `ControllerContainer` through this
- * registry (the cross-DOM equivalent of `@lit/context`) and pull the
- * controllers they need off it.
- *
- * M-god step 9c: this registry is the SOLE per-ctx state/instance mechanism —
- * the v1 ctx/per-ctx store/`bag` layer is gone. `ensure` creates + caches the
- * container (with eager Config -> Router -> Telemetry init), `dispose` tears it
- * down, and `whenAvailable`/`get` are the reactive/plain lookups.
- *
- * The lookup is reactive — `whenAvailable(ctxName, cb)` fires synchronously
- * if a container is already registered, immediately when one registers, and
- * AGAIN whenever the registration changes (e.g. the owning element is removed
- * and a new one with the same `ctx-name` is rendered). This lets consumers
- * re-adopt across a remount without losing their bindings. It also fires with
- * `null` when the registered container for that `ctxName` is actually
- * unregistered (the owning element disconnected and nothing has taken its
- * place yet) — consumers must release the container, not just ignore the
- * notification, so they don't outlive the ctx they were reading from.
- *
- * Introduced as a standalone primitive in M0; the god-object `UploaderController`
- * it once registered was dissolved in M-god step 8e, so the registered value is
- * now the ctx's `ControllerContainer` directly.
- */
 /** A single `whenAvailable` subscription. Wrapped in its own object (rather
  * than storing the callback directly) so two subscriptions passing the SAME
  * callback reference still occupy two distinct entries — deduping by
@@ -42,6 +14,24 @@ interface ConsumerSubscription {
   cb: (c: ControllerContainer | null) => void;
 }
 
+/**
+ * Global registry of uploader scopes keyed by `ctx-name`, and the single
+ * authoritative home of the per-ctx `ControllerContainer` lifecycle:
+ * create-and-cache (`ensure`, with eager Config -> Router -> Telemetry init),
+ * reactive lookup (`whenAvailable`/`get`), and dispose-on-teardown (`dispose`).
+ * Children that live outside the uploader's DOM subtree resolve their per-ctx
+ * DI `ControllerContainer` through this registry (the cross-DOM equivalent of
+ * `@lit/context`) and pull the controllers they need off it.
+ *
+ * The lookup is reactive — `whenAvailable(ctxName, cb)` fires synchronously
+ * if a container is already registered, immediately when one is created, and
+ * AGAIN whenever the registration changes (e.g. the ctx is disposed and a new
+ * one with the same `ctx-name` is created). This lets consumers re-adopt
+ * across a remount without losing their bindings. It also fires with `null`
+ * when the container for that `ctxName` is disposed — consumers must release
+ * the container, not just ignore the notification, so they don't outlive the
+ * ctx they were reading from.
+ */
 class UploaderRegistryImpl {
   private _map = new Map<string, ControllerContainer>();
   private _consumers = new Map<string, Set<ConsumerSubscription>>();

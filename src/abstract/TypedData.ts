@@ -15,10 +15,7 @@ const MSG_NAME = '[Typed State] Wrong property name: ';
  * per-key `Set` bookkeeping, and keeps a module-level `uid` registry that hot paths
  * (`getOutputItem`, event emission) use to read entry state by id. Because the
  * collection defers `destroy()` ~10s after removal, `getByUid` keeps
- * returning a removed entry's data during that window, exactly as before.
- *
- * The old immediate per-key `subscribe(prop, handler)` form has been removed;
- * callers use `observe(key, handler, { immediate: true })` instead.
+ * returning a removed entry's data during that window.
  */
 export class TypedData<T extends Record<string, unknown>> {
   private static _registry = new Map<string, TypedData<Record<string, unknown>>>();

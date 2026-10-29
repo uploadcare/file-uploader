@@ -37,11 +37,6 @@ export const CONTAINER = Symbol('uc.container');
 export const containerOf = (instance: unknown): ControllerContainer | undefined =>
   (instance as { [CONTAINER]?: ControllerContainer })?.[CONTAINER];
 
-/**
- * The {@link ControllerContainer.lifetime} of the container that built `instance` — what a controller's async work
- * binds to (`lifetimeOf(this).guard(...)`), so it stops once the ctx is torn down instead of resuming against
- * released peers. Throws, like `@inject`, for an instance no container built.
- */
 /** The container that built `instance`; throws for an instance it didn't build. */
 export const requireContainerOf = (instance: unknown): ControllerContainer => {
   const container = containerOf(instance);
@@ -51,6 +46,11 @@ export const requireContainerOf = (instance: unknown): ControllerContainer => {
   return container;
 };
 
+/**
+ * The {@link ControllerContainer.lifetime} of the container that built `instance` — what a controller's async work
+ * binds to (`lifetimeOf(this).guard(...)`), so it stops once the ctx is torn down instead of resuming against
+ * released peers. Throws, like `@inject`, for an instance no container built.
+ */
 export const lifetimeOf = (instance: unknown): Lifetime => requireContainerOf(instance).lifetime;
 
 /**

@@ -61,7 +61,7 @@ export const initialUploadEntryData: UploadEntryData = {
 /**
  * Maps an already-uploaded Uploadcare file to the entry fields derived from its
  * uuid (cdnUrl, fileInfo, name, size, image flag, mime type). Shared by
- * `addFileFromUploadcareFile` and `replaceFileFromUploadcareFile` so the two
+ * `addFileFromUploadcareFile` and `replaceFile` so the two
  * derivations cannot drift apart.
  */
 export function uploadcareFileToEntryData(
