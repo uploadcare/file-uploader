@@ -1,5 +1,6 @@
-import { html, type PropertyValues, type TemplateResult } from 'lit';
+import { html, type TemplateResult } from 'lit';
 import { property } from 'lit/decorators.js';
+import type { CloudImageEditorController } from './CloudImageEditorController';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropAspectRatio } from './types';
 
@@ -54,15 +55,12 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
   @property({ attribute: false })
   public aspectRatio: CropAspectRatio | null = null;
 
-  // Derived here, not in `render`, so the base's `updated` sees `active` change and toggles the host classes.
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
-    super.willUpdate(changedProperties);
-    const controller = this.editorControllerOrNull;
-    if (!controller) return;
+  protected override isActive(controller: CloudImageEditorController): boolean {
     const opt = controller.currentAspectRatio;
-    this.active =
+    return (
       (opt && opt.id === this.aspectRatio?.id) ||
-      (opt?.width === this.aspectRatio?.width && opt?.height === this.aspectRatio?.height);
+      (opt?.width === this.aspectRatio?.width && opt?.height === this.aspectRatio?.height)
+    );
   }
 
   protected override onClick(): void {
