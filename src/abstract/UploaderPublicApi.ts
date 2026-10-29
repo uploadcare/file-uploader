@@ -101,11 +101,6 @@ export class UploaderPublicApi {
     return requireContainerOf(this);
   }
 
-  /** @internal Mangled in the build, so it is kept out of the published types. */
-  public get _uploadCollection(): UploadCollectionController {
-    return this._collection;
-  }
-
   /**
    * Read-only view of the live config (part of the documented api surface —
    * consumed by the built-in validators). Backed by the injected
@@ -125,7 +120,7 @@ export class UploaderPublicApi {
     url: string,
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'idle'> => {
-    const internalId = this._uploadCollection.add({
+    const internalId = this._collection.add({
       externalUrl: url,
       fileName: fileName ?? null,
       ...addOptions({ silent, source }),
@@ -140,7 +135,7 @@ export class UploaderPublicApi {
     if (!isFileUuid(uuid)) {
       throw new Error('Invalid UUID');
     }
-    const internalId = this._uploadCollection.add({
+    const internalId = this._collection.add({
       uuid,
       fileName: fileName ?? null,
       ...addOptions({ silent, source }),
@@ -159,7 +154,7 @@ export class UploaderPublicApi {
     if (!parsedCdnUrl) {
       throw new Error('Invalid CDN URL');
     }
-    const internalId = this._uploadCollection.add({
+    const internalId = this._collection.add({
       uuid: parsedCdnUrl.uuid,
       cdnUrl,
       cdnUrlModifiers: parsedCdnUrl.cdnUrlModifiers,
@@ -185,7 +180,7 @@ export class UploaderPublicApi {
   }
 
   public addFileFromObject = (file: File, options: ApiAddFileObjectOptions = {}): OutputFileEntry<'idle'> => {
-    const internalId = this._uploadCollection.add(this._objectFileInit(file, options));
+    const internalId = this._collection.add(this._objectFileInit(file, options));
     return this.getOutputItem(internalId);
   };
 
@@ -201,14 +196,14 @@ export class UploaderPublicApi {
     }
     // Pass the whole entry as options — `_objectFileInit` picks only named fields
     // (its extra `file` key is ignored), so we skip a rest-object alloc per entry.
-    this._uploadCollection.addMany(entries.map((entry) => this._objectFileInit(entry.file, entry)));
+    this._collection.addMany(entries.map((entry) => this._objectFileInit(entry.file, entry)));
   };
 
   public addFileFromUploadcareFile = (
     file: UploadcareFile,
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'success'> => {
-    const internalId = this._uploadCollection.add({
+    const internalId = this._collection.add({
       ...uploadcareFileToEntryData(file),
       // A caller-supplied name takes precedence over the file's own.
       fileName: fileName ?? file.originalFilename ?? null,
@@ -236,7 +231,7 @@ export class UploaderPublicApi {
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'success'> => {
     const oldId = internalId as Uid;
-    const collection = this._uploadCollection;
+    const collection = this._collection;
     const index = collection.items().indexOf(oldId);
     const oldEntry = collection.read(oldId);
     if (index === -1 || !oldEntry) {
@@ -266,19 +261,19 @@ export class UploaderPublicApi {
   };
 
   public removeFileByInternalId = (internalId: string): void => {
-    if (!this._uploadCollection.read(internalId as Uid)) {
+    if (!this._collection.read(internalId as Uid)) {
       throw new Error(`File with internalId ${internalId} not found`);
     }
-    this._uploadCollection.remove(internalId as Uid);
+    this._collection.remove(internalId as Uid);
   };
 
   public removeAllFiles(): void {
-    this._uploadCollection.clearAll();
+    this._collection.clearAll();
   }
 
   public uploadAll = (): void => {
-    const itemsToUpload = this._uploadCollection.items().filter((id) => {
-      const entry = this._uploadCollection.read(id);
+    const itemsToUpload = this._collection.items().filter((id) => {
+      const entry = this._collection.read(id);
       if (!entry) return false;
       return (
         !entry.get('isRemoved') &&
@@ -382,7 +377,7 @@ export class UploaderPublicApi {
 
   public initFlow = (force = false): void => {
     const router = this._router;
-    if (this._uploadCollection.size > 0 && !force) {
+    if (this._collection.size > 0 && !force) {
       router.navigate(ACTIVITY_TYPES.UPLOAD_LIST);
     } else {
       const sourceList = deserializeCsv(this.cfg.sourceList);
