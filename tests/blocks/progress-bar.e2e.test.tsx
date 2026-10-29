@@ -80,7 +80,7 @@ describe('uc-progress-bar', () => {
 
     // The lower value has to land while the bar is still hidden. Setting `value` and `visible` in the same tick
     // batches both into one update, and the `value` branch then sees the bar as already visible and keeps the
-    // higher figure (ProgressBar.ts:50).
+    // higher figure (`ProgressBar.updated`).
     await set(bar, { value: 20 });
     await set(bar, { visible: true });
 

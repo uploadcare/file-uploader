@@ -36,10 +36,8 @@ const flush = async (): Promise<void> => {
   await new Promise((resolve) => setTimeout(resolve, 0));
 };
 
-// M-god step 8e dissolved the `UploaderController` facade; the harness exposes
-// the same `locale`/`collection`/`router` handles the tests read, resolved
-// straight off the ctx's `ControllerContainer` (stable per-ctx identity), so
-// every behavioral assertion below is unchanged.
+// The harness exposes the `locale`/`collection`/`router` handles the tests read,
+// resolved straight off the ctx's `ControllerContainer` (stable per-ctx identity).
 type Ctrl = {
   readonly locale: LocaleController;
   readonly collection: UploadCollectionController;
@@ -462,8 +460,7 @@ describe('UploaderPublicApi', () => {
       expect(state.idleEntries).toHaveLength(1);
     });
 
-    // M-god step 9c-1: full output-shape coverage for the container-resolved
-    // build (was `buildOutputCollectionState(bag)`). A success entry exercises
+    // Full output-shape coverage. A success entry exercises
     // every derived getter — counts, status, boolean flags, and the filtered
     // entry arrays that all read through `outputEntries(container)`.
     it('reports a success collection state byte-shape from the container', () => {
@@ -978,8 +975,7 @@ describe('UploaderPublicApi', () => {
   describe('container wiring', () => {
     it('is reachable as container.get(UploaderPublicApi) as the same instance', () => {
       const { api, ctrl } = setup();
-      // M-god step 8b removed `ctrl.api`/`setApi` (the clipboard now `@inject`s
-      // the api directly); the single instance is reachable via the container.
+      // The single instance is reachable via the container.
       expect(ctrl.container.get(UploaderPublicApiClass)).toBe(api);
     });
 

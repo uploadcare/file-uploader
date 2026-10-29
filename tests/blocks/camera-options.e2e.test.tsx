@@ -64,7 +64,7 @@ describe('cameraMirror', () => {
 
 describe('enableAudioRecording', () => {
   // The microphone controls belong to video recording: the photo tab forces them hidden regardless of the option
-  // (CameraSource.ts:610), and only the video tab consults `enableAudioRecording` (CameraSource.ts:618).
+  // (`deriveCameraView`), and only the video tab consults `enableAudioRecording`.
   it('hides the microphone toggle on the photo tab whatever the setting', async () => {
     const { camera } = await openCamera({ enableAudioRecording: true });
 
@@ -113,7 +113,7 @@ describe('cameraModes', () => {
 
 describe('enableVideoRecording (deprecated)', () => {
   // The option is documented as deprecated in favour of `cameraModes`, and feeds it through a computed property
-  // (Config/computed-properties.ts:41): `false` strips `video` from the mode list, `true` adds it.
+  // (the `cameraModes` entry in Config/computed-properties.ts): `false` strips `video` from the mode list, `true` adds it.
   it('drops the video tab when disabled', async () => {
     const { camera } = await openCamera({ enableVideoRecording: false });
 

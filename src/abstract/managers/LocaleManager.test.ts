@@ -10,7 +10,7 @@ import type { PluginController } from './plugin';
 
 type FakePluginManager = Pick<PluginController, 'onPluginsChange' | 'snapshot'>;
 
-// `LocaleManager` is container-resolved now (M-god step 3b): a zero-arg ctor
+// `LocaleManager` is container-resolved: a zero-arg ctor
 // that `@inject`s `ConfigController`/`LocaleController`. Build all three through
 // one throwaway container so the manager injects the same config/locale the
 // specs then read/spy on.
@@ -31,12 +31,9 @@ vi.mock('../localeRegistry', async (importOriginal) => {
 });
 
 /**
- * Dedicated coverage for `LocaleManager.activate()` (M9k Task 3 follow-up):
- * construction is side-effect-free (see the class doc), so `activate` is
- * where all of v1's construction-time behavior — seeding, config
- * subscriptions, plugin-manager coupling — actually lives. Pins its
- * idempotency contract, which `UploaderController.test.ts` and the
- * instance-lifecycle e2e specs don't exercise directly.
+ * Construction is side-effect-free (see the class doc), so `activate` does the
+ * seeding, config subscriptions and plugin-manager coupling. Pins its
+ * idempotency.
  */
 describe('LocaleManager.activate', () => {
   it('is idempotent: a second activate() does not re-register the config subscriptions', () => {

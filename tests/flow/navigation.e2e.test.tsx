@@ -110,7 +110,7 @@ describe('regular', () => {
     await expectModal(root, 'start-from', 'open');
 
     // Modal only closes when mousedown and mouseup both land on the dialog element itself, so releasing a selection
-    // drag over the backdrop must not dismiss it (Modal.ts:52).
+    // drag over the backdrop must not dismiss it (`Modal._handleDialogMouseUp`).
     const dialog = modalDialog(root, 'start-from') as HTMLDialogElement;
     const inside = within(root).getByTestId('uc-start-from').element();
     inside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
@@ -220,7 +220,7 @@ describe('inline', () => {
     await expectActivity(root, 'start-from');
 
     // Correct here: history is back at start-from and the collection is empty, so cancelling would have nowhere to
-    // go (`_couldHistoryBack` and `_couldShowList` are both false — FileUploaderInline.ts:52).
+    // go (`_couldHistoryBack` and `_couldShowList` are both false).
     const cancel = inlineCancel(root);
     await expect.element(cancel).not.toBeVisible();
     // The sentinel: a file in the list is what shows the button. Nothing may have shown it before the file arrived.

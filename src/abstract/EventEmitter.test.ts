@@ -4,7 +4,7 @@ import { ControllerContainer } from './di/ControllerContainer';
 import { EventBus } from './EventBus';
 import { EventEmitter, EventType } from './EventEmitter';
 
-// The facade is container-resolved now (M-god step 3b): a zero-arg ctor that
+// The facade is container-resolved: a zero-arg ctor that
 // `@inject`s the per-ctx `EventBus`. Build both through one throwaway container
 // so we exercise the actual delegation to a real bus (not a mock of it).
 const setup = () => {

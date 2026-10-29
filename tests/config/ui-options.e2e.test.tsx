@@ -44,7 +44,7 @@ describe('showEmptyList', () => {
   });
 
   it('lets the empty upload list open when set', async () => {
-    // `UploadList.couldOpenActivity` is `showEmptyList || size > 0` (UploadList.ts:178); without it the activity
+    // `UploadList.couldOpenActivity` is `showEmptyList || size > 0`; without it the activity
     // bounces straight back to the init activity.
     const { root, api } = await renderSolution('inline', { showEmptyList: true });
     await expectActivity(root, 'start-from');
@@ -91,7 +91,7 @@ describe('filesViewMode', () => {
 });
 
 describe('gridShowFileNames', () => {
-  /** The name is always in the DOM; the option toggles `hidden` on it (FileItem.ts:557). */
+  /** The name is always in the DOM; the option toggles `hidden` on it (`FileItem._showFileNames`). */
   const fileName = async (configProps: Parameters<typeof renderSolution>[1]) => {
     const { root, api } = await renderSolution('regular', configProps);
     api.addFileFromObject(IMAGE.PIXEL);
@@ -115,7 +115,7 @@ describe('gridShowFileNames', () => {
   });
 
   it('is ignored in list mode, where names always show', async () => {
-    // `_updateShowFileNames` short-circuits for list mode (FileItem.ts:266), so the option only means anything in
+    // `FileItem._showFileNames` short-circuits for list mode, so the option only means anything in
     // grid mode — the docs describe it as grid-only and the code agrees.
     await expect
       .element(await fileName({ filesViewMode: 'list', gridShowFileNames: false }))
