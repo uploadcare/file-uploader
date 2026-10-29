@@ -222,12 +222,7 @@ export class UploadEventsController {
   // output group when configured and fully successful. Cancelled on `destroy()`.
   private _flushOutputItems = debounce(() => {
     const collectionState = this._collectionEvents.flushOutput();
-    if (
-      collectionState &&
-      this._config.get('groupOutput') &&
-      collectionState.totalCount > 0 &&
-      collectionState.status === 'success'
-    ) {
+    if (this._config.get('groupOutput') && collectionState.totalCount > 0 && collectionState.status === 'success') {
       const generation = this._groupGeneration;
       lifetimeOf(this).run(
         () => this._group.create(collectionState, () => !this._ended && generation === this._groupGeneration),

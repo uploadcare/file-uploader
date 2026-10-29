@@ -61,16 +61,9 @@ export class UploadCollectionEventsController {
 
   /**
    * Rebuild + publish the output collection state and emit the debounced `CHANGE`.
-   * Returns the freshly built state (for the group-output decision), or `null`
-   * when the item set is inconsistent (defensive early-return).
+   * Returns the freshly built state (for the group-output decision).
    */
-  public flushOutput(): OutputCollectionState | null {
-    const collection = this._collection;
-    // Defensive: bail on an inconsistent item set. Compare the uid-list length to
-    // `size` directly (no per-item `OutputFileEntry` build).
-    if (collection.items().length !== collection.size) {
-      return null;
-    }
+  public flushOutput(): OutputCollectionState {
     const collectionState = this._outputCollectionState();
     this._collectionState.set('collectionState', collectionState);
     this._emit(UploaderEventType.CHANGE, () => this._outputCollectionState(), { debounce: true });
