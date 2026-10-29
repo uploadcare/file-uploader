@@ -66,7 +66,6 @@ const isFileUuid = (value: string): boolean => {
   }
 };
 
-/** The documented `OutputFileEntry` shape of one upload entry. */
 /**
  * The documented public JS API (`element.getAPI()`): one instance per ctx, acting on that ctx's uploader. It holds no
  * state of its own; every method reads or drives the ctx's controllers. Once the uploader is destroyed, calling a

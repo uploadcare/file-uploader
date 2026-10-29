@@ -5,8 +5,8 @@ import type { Uid } from '../Uid';
 
 /**
  * The derived UI-state keys the upload stack publishes and the blocks read
- * every render — `*uploadList`, `*commonProgress`, `*collectionState`,
- * `*collectionErrors`, `*groupInfo`, signal-backed.
+ * every render — `uploadList`, `commonProgress`, `collectionState`,
+ * `collectionErrors`, `groupInfo`, `groupError`, signal-backed.
  */
 export type CollectionState = {
   uploadList: Uid[];
@@ -22,15 +22,8 @@ export type CollectionState = {
  * like `ConfigController`/`LocaleController`). Zero-arg ctor, container-resolved.
  *
  * `SignalMap` (not per-field `@signalState`) is deliberate: `get` reads the
- * fast null-proto bag directly, so the compat read path (`api.cfg`-style hot
- * reads — `uploadList`/`commonProgress` are read on every render) never routes
- * through `Signal.State.get()`. Step 3a proved that per-read signal overhead on
- * a hot path measurably destabilizes the parallel e2e suite. The per-key
- * signals stay write-maintained for the future `SignalWatcher` consumer (step 6).
- *
- * `subscribe()` is a COARSE notify (any-key granularity) — the v1 ctx facade's
- * `_subDerived` restores per-key granularity with an `Object.is` guard, so a
- * `commonProgress` write never fires an `uploadList` subscriber.
+ * fast null-proto bag directly, so imperative hot reads never route through
+ * `Signal.State.get()`; `getTracked` reads the write-maintained per-key signal.
  *
  * The initial values are built fresh per instance (in the field initializer, run
  * once per construction) so the mutable seeds — the `uploadList`/`collectionErrors`
@@ -56,13 +49,10 @@ export class CollectionStateController {
    * counterpart to `get()`. Reading it inside a migrated `ChildBlock`'s update
    * cycle (e.g. `ProgressBarCommon`/`DynamicBtn` reading `commonProgress` in
    * `render()`) subscribes that render to THIS key, so a later `set()`
-   * re-renders the block with no `ctx.sub('*commonProgress', …)` subscription.
+   * re-renders the block.
    *
    * Mirrors `ConfigController.getTracked`: `get()` stays the fast, non-tracking
-   * bag read (kept for the still-imperative the v1 ctx facade compat path, whose
-   * per-read signal overhead on this hot path measurably destabilizes the
-   * parallel e2e suite — see `SignalMap`/`CollectionState` docs); both coexist
-   * only during the strangler migration.
+   * bag read for imperative readers.
    */
   public getTracked<K extends keyof CollectionState>(key: K): CollectionState[K] {
     return this.#state.getTracked(key) as CollectionState[K];

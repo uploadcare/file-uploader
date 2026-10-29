@@ -16,22 +16,18 @@ export type { ObserveOptions };
  * that grows at runtime).
  *
  * A null-prototype `#bag` is the authoritative store — it holds every value,
- * defines key presence, and is returned live by `values` (byte-for-byte with
- * the `StateController._state` reference this replaces, so a consumer that
+ * defines key presence, and is returned live by `values` (so a consumer that
  * captured `config.values` once still observes later writes). Writes dedup with
  * `Object.is` and, on a real change, fire a COARSE `Listeners` notify (any-key
- * granularity) — the exact contract the v1 per-key derived subscriptions and
- * `ChildBlock.subConfigValue` lean on. No `lit`, no DOM.
+ * granularity) plus the per-key `observe` listeners. No `lit`, no DOM.
  *
  * Reactive layer: `signal(key)` lazily materializes a per-key
  * `@lit-labs/signals` `Signal.State` (seeded from the bag, kept in sync by
- * `set`), so a future `SignalWatcher` consumer can auto-track a specific key.
- * The plain `get(key)` deliberately reads the bag directly rather than routing
- * every access through `Signal.State.get()` — config is on an extremely hot
- * read path (every `api.cfg` lookup, every render), and no `SignalWatcher`
- * consumer exists yet, so per-read signal overhead would be a pure regression
- * (it measurably destabilizes the parallel e2e suite). Reads migrate to
- * `signal(key)` when the first reactive consumer lands.
+ * `set`), which `getTracked(key)` reads so a `SignalWatcher` consumer
+ * auto-tracks that key. The plain `get(key)` deliberately reads the bag
+ * directly rather than routing every access through `Signal.State.get()` —
+ * config is on an extremely hot read path (every `api.cfg` lookup), so
+ * untracked reads skip the per-read signal overhead.
  *
  * The bag is null-proto and keys live by their string name, so a plugin/locale
  * key named `__proto__` is an ordinary own property, never a prototype write.

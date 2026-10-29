@@ -27,16 +27,14 @@ export type CollectionObserver = (
  *   one tick per macrotask.
  * - `observeProperties(keys, handler)` — PER-PROP change-map, DEMAND-DRIVEN: a
  *   consumer declares the entry keys it cares about, and the controller gates
- *   the change-map to the live union of all observers' keys. This replaces the
- *   old hardcoded `UPLOAD_WATCH_LIST` — there is no global watch constant to
- *   drift, and firing is scoped to keys some consumer actually reads (so an
- *   internal-only mutation like `thumbUrl` can't spuriously drive downstream
- *   `change` events).
+ *   the change-map to the live union of all observers' keys, so firing is
+ *   scoped to keys some consumer actually reads (an internal-only mutation like
+ *   `thumbUrl` can't spuriously drive downstream `change` events).
  *
- * Each entry is watched with a SINGLE `TypedData.subscribeKeys` subscription
- * (was one `observe` per watched key), so per-entry cost is `1×N` rather than
- * `8×N` at large file counts. The three timers are `utils/debounce` instances
- * (re-arm on call, `.cancel()` on teardown).
+ * Each entry is watched with a SINGLE `TypedData.subscribeKeys` subscription,
+ * so per-entry cost is `1×N` rather than one subscription per watched key. The
+ * two timers are `utils/debounce` instances (re-arm on call, `.cancel()` on
+ * teardown).
  */
 export class UploadCollectionController {
   private readonly _log = controllerLogger(this, 'collection');
