@@ -127,40 +127,9 @@ function createDefaultServices(): EditorServices {
 export class CloudImageEditorController extends StateController<CloudImageEditorControllerState> {
   private _services: EditorServices;
 
-  // Only keys explicitly set via own element props live here — presence means
-  // "the editor's own prop set this", which lets `getConfig` distinguish an
-  // explicit value (even a falsy one) from "unset, fall through to ctx/default".
-  private _ownConfig: Partial<EditorConfig> = {};
-
   public constructor(initial?: Partial<CloudImageEditorControllerState>, services?: EditorServices) {
     super({ ...createDefaultState(), ...initial });
     this._services = services ?? createDefaultServices();
-  }
-
-  /**
-   * Patch the editor-owned config (own-element-prop layer — see `EditorConfig`).
-   * A key set to `undefined` is REMOVED (the prop was unset) so it falls back to
-   * the ctx/default tiers again; a defined value is stored as an explicit
-   * override. Does not itself `notify()`.
-   */
-  public setConfig(patch: Partial<EditorConfig>): void {
-    for (const key of Object.keys(patch) as (keyof EditorConfig)[]) {
-      if (patch[key] === undefined) {
-        delete this._ownConfig[key];
-      } else {
-        Object.assign(this._ownConfig, { [key]: patch[key] });
-      }
-    }
-  }
-
-  /** The own-prop override for `key` if one was explicitly set, else `undefined` (so callers can fall through to ctx/default). */
-  public getOwnConfigValue<K extends keyof EditorConfig>(key: K): EditorConfig[K] | undefined {
-    return key in this._ownConfig ? (this._ownConfig[key] as EditorConfig[K]) : undefined;
-  }
-
-  /** Read an editor-owned config value: explicit own-prop override if set, else the built-in default. */
-  public getConfigValue<K extends keyof EditorConfig>(key: K): EditorConfig[K] {
-    return key in this._ownConfig ? (this._ownConfig[key] as EditorConfig[K]) : DEFAULT_EDITOR_CONFIG[key];
   }
 
   /**
