@@ -36,12 +36,6 @@ export class BtnUi extends EditorBlock {
   @property({ attribute: 'title-prop' })
   public titleProp: L10nKey | '' = '';
 
-  /**
-   * CSS-only attribute
-   */
-  @property({ type: Boolean, noAccessor: true })
-  public active = false;
-
   protected override firstUpdated(changed: PropertyValues<this>): void {
     super.firstUpdated(changed);
     this._applyReverse();

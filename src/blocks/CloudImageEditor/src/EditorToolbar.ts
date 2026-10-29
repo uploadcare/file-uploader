@@ -55,9 +55,6 @@ export class EditorToolbar extends EditorBlock {
   @state()
   public showSubToolbar = false;
 
-  @state()
-  private _showTabToggles = true;
-
   // Passed in from the root (`<uc-cloud-image-editor>`) as plain Lit props —
   // root → single child, not controller state (see the "State scoping principle").
   @property({ attribute: false })
@@ -120,9 +117,6 @@ export class EditorToolbar extends EditorBlock {
   private readonly _handleWindowResize = () => {
     this._syncTabIndicator();
   };
-
-  @state()
-  private _cropPresets: CropAspectRatio[] = [];
 
   private _cancelPreload?: () => void;
 
@@ -222,36 +216,14 @@ export class EditorToolbar extends EditorBlock {
     }
   }
 
-  private _activateTab(id: TabIdValue, { force = false }: { force?: boolean } = {}): void {
-    if (this.editorController.get('*tabId') !== id) {
-      this.editorController.set('*tabId', id);
-    }
-    this._applyTabState(id, { force });
+  private _activateTab(id: TabIdValue): void {
+    this.editorController.set('*tabId', id);
+    this._applyTabState(id);
   }
 
-  private _applyTabState(id: TabIdValue, { force = false }: { force?: boolean } = {}): void {
-    if (!force && this.activeTab === id) {
-      this._syncTabIndicator();
-      return;
-    }
-
+  private _applyTabState(id: TabIdValue): void {
     this.activeTab = id;
-
-    // The cropper and fader both self-activate/deactivate from controller state
-    // (`*tabId`/`*originalUrl`/`*colorPreview`) + their `imageSize` prop — see
-    // `EditorImageCropper` / `EditorImageFader`. The toolbar only owns the tab
-    // UI now.
-    for (const tabId of ALL_TABS) {
-      const isCurrentTab = tabId === id;
-      const toggleRef = this.tabToggleRefs[tabId];
-      const toggleEl = toggleRef?.value as (HTMLElement & { active?: boolean }) | null;
-      if (toggleEl) {
-        toggleEl.active = isCurrentTab;
-      }
-      if (isCurrentTab) {
-        this._syncTabIndicator();
-      }
-    }
+    this._syncTabIndicator();
   }
 
   private _syncTabIndicator(): void {
@@ -273,7 +245,7 @@ export class EditorToolbar extends EditorBlock {
   }
 
   private get _hasAspectRatioPicker(): boolean {
-    return this._cropPresets.length >= 3;
+    return this.cropPresetList.length >= 3;
   }
 
   private _renderControlsByTab(tabId: TabIdValue): TemplateResult[] {
@@ -290,39 +262,20 @@ export class EditorToolbar extends EditorBlock {
   }
 
   private _renderCropTabControls(): TemplateResult[] {
-    const renderers: Array<() => TemplateResult> = [];
-    if (this._hasAspectRatioPicker) {
-      renderers.push(() => this._renderFreeformControl());
-    } else {
-      for (const preset of this._cropPresets) {
-        renderers.push(() => this._renderAspectRatioControl(preset));
-      }
-    }
-
-    for (const operation of ALL_CROP_OPERATIONS) {
-      renderers.push(() => this._renderCropOperationControl(operation));
-    }
-
-    return this._renderControlGroup(renderers);
+    return [
+      ...(this._hasAspectRatioPicker
+        ? [this._renderFreeformControl()]
+        : this.cropPresetList.map((preset) => this._renderAspectRatioControl(preset))),
+      ...ALL_CROP_OPERATIONS.map((operation) => this._renderCropOperationControl(operation)),
+    ];
   }
 
   private _renderFilterTabControls(): TemplateResult[] {
-    const filterIds = [FAKE_ORIGINAL_FILTER, ...ALL_FILTERS];
-    const renderers = filterIds.map((filterId) => () => this._renderFilterControl(filterId));
-    return this._renderControlGroup(renderers);
+    return [FAKE_ORIGINAL_FILTER, ...ALL_FILTERS].map((filterId) => this._renderFilterControl(filterId));
   }
 
   private _renderTuningTabControls(): TemplateResult[] {
-    const renderers = ALL_COLOR_OPERATIONS.map((operation) => () => this._renderOperationControl(operation));
-    return this._renderControlGroup(renderers);
-  }
-
-  private _renderControlGroup(renderers: Array<() => TemplateResult>): TemplateResult[] {
-    const total = renderers.length;
-    if (!total) {
-      return [];
-    }
-    return renderers.map((renderControl) => renderControl());
+    return ALL_COLOR_OPERATIONS.map((operation) => this._renderOperationControl(operation));
   }
 
   private _renderFreeformControl(): TemplateResult {
@@ -352,13 +305,6 @@ export class EditorToolbar extends EditorBlock {
       .operation=${operation}
       @uc-internal:operation-select=${this._handleOperationSelect}
     ></uc-editor-operation-control>`;
-  }
-
-  private _renderAspectRatioList(): TemplateResult[] {
-    if (!this._hasAspectRatioPicker) {
-      return [];
-    }
-    return this._cropPresets.map((preset) => this._renderAspectRatioControl(preset));
   }
 
   private async _preloadEditedImage(): Promise<void> {
@@ -402,26 +348,14 @@ export class EditorToolbar extends EditorBlock {
     });
 
     this.subEditorKey('*tabId', (tabId) => {
-      this._applyTabState(tabId, { force: true });
+      this._applyTabState(tabId);
       this._updateInfoTooltip();
     });
 
     // The fader self-deactivates on `*originalUrl` change (see EditorImageFader).
 
     this.subEditorKey('*loadingOperations', (loadingOperations) => {
-      let anyLoading = false;
-      for (const [, mapping] of loadingOperations.entries()) {
-        if (anyLoading) {
-          break;
-        }
-        for (const [, loading] of mapping.entries()) {
-          if (loading) {
-            anyLoading = true;
-            break;
-          }
-        }
-      }
-      this._debouncedShowLoader(anyLoading);
+      this._debouncedShowLoader([...loadingOperations.values()].some((mapping) => mapping.size > 0));
     });
 
     this.onEditorAttach(() => {
@@ -438,19 +372,6 @@ export class EditorToolbar extends EditorBlock {
     super.firstUpdated(changedProperties);
 
     this._syncTabIndicator();
-  }
-
-  protected override willUpdate(changedProperties: PropertyValues<this>): void {
-    super.willUpdate(changedProperties);
-
-    // Pure derived state from the root-passed props — compute in `willUpdate` so
-    // it folds into the current render (no follow-up update scheduled).
-    if (changedProperties.has('cropPresetList')) {
-      this._cropPresets = [...(this.cropPresetList ?? [])];
-    }
-    if (changedProperties.has('tabList')) {
-      this._showTabToggles = this.tabList.length > 1;
-    }
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
@@ -606,7 +527,6 @@ export class EditorToolbar extends EditorBlock {
           aria-controls=${isActive ? `tab_${id}` : ''}
           .selected=${isActive}
           .titleProp=${`a11y-editor-tab-${id}` as const}
-          .active=${isActive}
           style=${style}
           @click=${this._handleTabClick}
           ${ref(this.tabToggleRefs[id])}
@@ -661,7 +581,7 @@ export class EditorToolbar extends EditorBlock {
             <uc-presence-toggle
               role="tablist"
               class="uc-tab-toggles"
-              .visible=${this._showTabToggles}
+              .visible=${this.tabList.length > 1}
               .styles=${this._tabTogglesStyles}
               @uc-internal:initial-render=${() => this._syncTabIndicator()}
             >
@@ -692,7 +612,7 @@ export class EditorToolbar extends EditorBlock {
           <div class="uc-list-aspect-ratio-container" ?hidden=${this._useSliderPanel || !showAspectRatioList}>
             ${
               showAspectRatioList
-                ? html`<div class="uc-list-aspect-ratio">${this._renderAspectRatioList()}</div>`
+                ? html`<div class="uc-list-aspect-ratio">${this.cropPresetList.map((preset) => this._renderAspectRatioControl(preset))}</div>`
                 : nothing
             }
           </div>
