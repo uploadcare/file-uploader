@@ -77,7 +77,6 @@ export const buildItems: BuildItem[] = [
       /src\/abstract\/UploaderPublicApi\.ts$/,
       /src\/abstract\/managers\/plugin\/PluginController\.ts$/,
       /src\/abstract\/controllers\/UploadController\.ts$/,
-      /src\/abstract\/controllers\/registerUploadStack\.ts$/,
     ],
   },
   // file-uploader-regular
