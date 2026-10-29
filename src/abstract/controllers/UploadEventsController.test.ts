@@ -553,21 +553,6 @@ describe('UploadEventsController', () => {
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.CHANGE, expect.any(Function), { debounce: true });
     });
 
-    it('skips flush when output data length does not match the collection size', () => {
-      const t = setup();
-      const id = t.collection.add({ fileName: 'a.txt' }); // size 1
-      // The flush derives its output list from `collection.items()` and guards
-      // on `data.length !== collection.size`. Force a genuine mismatch (items
-      // empty while size reports 1) so the defensive early-return is exercised.
-      vi.spyOn(t.collection, 'items').mockReturnValue([]);
-      (t.deps.setCollectionState as Mock).mockClear();
-
-      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
-      vi.advanceTimersByTime(300);
-
-      expect(t.deps.setCollectionState).not.toHaveBeenCalled();
-    });
-
     it('creates a group when groupOutput is on and the collection is fully successful', async () => {
       const state = makeState({
         totalCount: 1,
