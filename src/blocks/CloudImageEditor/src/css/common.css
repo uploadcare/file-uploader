@@ -43,8 +43,6 @@
     --modal-header-height: var(--size-panel-heading);
     --modal-toolbar-height: var(--size-panel-heading);
 
-    --transparent-pixel: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
-
     display: block;
     width: 100%;
     height: 100%;
@@ -129,52 +127,6 @@
     overflow: hidden;
   }
 
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-image_container > .uc-image {
-    --viewer-image-opacity: 1;
-
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    z-index: 10;
-    display: block;
-    box-sizing: border-box;
-    width: 100%;
-    height: 100%;
-    object-fit: scale-down;
-    background-color: var(--color-image-background);
-    transform: scale(1);
-    opacity: var(--viewer-image-opacity);
-    user-select: none;
-    pointer-events: auto;
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-image_container > .uc-image.uc-image_visible_viewer {
-    transition:
-      opacity var(--transition-duration-3) ease-in-out,
-      transform var(--transition-duration-4);
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-image_container > .uc-image.uc-image_hidden_to_cropper {
-    --viewer-image-opacity: 0;
-
-    background-image: var(--transparent-pixel);
-    transform: scale(1);
-    transition:
-      transform var(--transition-duration-4),
-      opacity var(--transition-duration-3) steps(1, jump-end);
-    pointer-events: none;
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-image_container > .uc-image.uc-image_hidden_effects {
-    --viewer-image-opacity: 0;
-
-    transform: scale(1);
-    transition:
-      opacity var(--transition-duration-3) cubic-bezier(0.5, 0, 1, 1),
-      transform var(--transition-duration-4);
-    pointer-events: none;
-  }
-
   [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-image_container {
     position: relative;
     display: block;
@@ -211,24 +163,6 @@
 
   [uc-cloud-image-editor] > .uc-wrapper > .uc-toolbar > .uc-toolbar_content.uc-toolbar_content__editor {
     display: flex;
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-info_pan {
-    position: absolute;
-    user-select: none;
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-file_type_outer {
-    position: absolute;
-    z-index: 2;
-    display: flex;
-    max-width: 120px;
-    transform: translateX(-40px);
-    user-select: none;
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-file_type_outer > .uc-file_type {
-    padding: 4px 0.8em;
   }
 
   [uc-cloud-image-editor] > .uc-wrapper > .uc-network_problems_splash {
@@ -540,15 +474,6 @@
     pointer-events: auto;
   }
 
-  uc-editor-image-cropper.uc-active_from_viewer {
-    transform: scale(1) translate(0px, 0px);
-    opacity: 1;
-    transition:
-      transform var(--transition-duration-4) cubic-bezier(0.37, 0, 0.63, 1) 0.4s,
-      opacity var(--transition-duration-3);
-    pointer-events: auto;
-  }
-
   uc-editor-image-cropper.uc-inactive_to_editor {
     opacity: 0;
     transition:
@@ -574,16 +499,6 @@
     display: block;
     width: 100%;
     height: 100%;
-  }
-
-  uc-editor-image-fader.uc-active_from_viewer {
-    z-index: 3;
-    transform: scale(1);
-    opacity: 1;
-    transition:
-      transform var(--transition-duration-4),
-      opacity var(--transition-duration-3) steps(1, jump-start);
-    pointer-events: auto;
   }
 
   uc-editor-image-fader.uc-active_from_cropper {
