@@ -241,17 +241,11 @@ export class ExternalSource extends ChildBlock {
     // @ts-expect-error
     iframe.allowTransparency = true;
     iframe.addEventListener('load', this._handleIframeLoad.bind(this));
-
-    if (this._iframeRef.value) {
-      this._iframeRef.value.innerHTML = '';
-      this._iframeRef.value.appendChild(iframe);
-    }
-
+    // Always called right after `_unmountIframe`, which emptied the wrapper and dropped the old bridge.
+    this._iframeRef.value?.appendChild(iframe);
     if (!iframe.contentWindow) {
       return;
     }
-
-    this._messageBridge?.destroy();
 
     this._messageBridge = new MessageBridge(iframe.contentWindow, () => this._config.get('socialBaseUrl'));
     this._messageBridge.on('selected-files-change', this._handleSelectedFilesChange.bind(this));

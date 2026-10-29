@@ -214,10 +214,6 @@ export class FileItem extends FileItemConfig {
     }
 
     const outputFileEntry = this._api.getOutputItem(this.uid);
-    if (!outputFileEntry) {
-      return;
-    }
-
     this._telemetry.sendActionEvent(action.id, this.tagName, { pluginId: action.pluginId });
 
     this.runTask(async () => {
