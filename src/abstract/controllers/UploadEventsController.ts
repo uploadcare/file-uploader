@@ -69,7 +69,7 @@ const PROPERTY_OBSERVE_KEYS: (keyof UploadEntryData)[] = [
  * hooks fire through the conditionally-bound {@link PluginController} via the
  * container (`containerOf` + `whenController`, now-or-when-available). Everything
  * is container-resolved and runs without a DOM. `observe()` is called by
- * `registerUploadStack` once the whole stack is resolved.
+ * `ensureUploaderScope` once the whole stack is resolved.
  */
 export class UploadEventsController {
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;

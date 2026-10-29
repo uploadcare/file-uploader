@@ -83,6 +83,36 @@ describe('ensureUploaderScope (container signature)', () => {
     expect(container.get(PluginController)).toBe(pluginManager);
   });
 
+  it('starts the upload-events collection observation exactly once', () => {
+    const observeSpy = vi.spyOn(UploadEventsController.prototype, 'observe');
+    const { attach } = setup();
+
+    attach();
+    attach();
+
+    expect(observeSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it('container.dispose() tears the stack down in reverse construction order', () => {
+    const { container, attach } = setup();
+    attach();
+
+    const eventsDestroy = vi.spyOn(container.get(UploadEventsController), 'destroy');
+    const validationDestroy = vi.spyOn(container.get(ValidationController), 'destroy');
+    const uploadDestroy = vi.spyOn(container.get(UploadController), 'destroy');
+    const secureDestroy = vi.spyOn(container.get(SecureUploadsController), 'destroy');
+    // The collection is resolved before the stack, so it disposes after it: its observers detach while it's alive.
+    const collectionDestroy = vi.spyOn(container.get(UploadCollectionController), 'destroy');
+
+    container.dispose();
+
+    const order = (spy: ReturnType<typeof vi.spyOn>) => spy.mock.invocationCallOrder[0]!;
+    expect(order(eventsDestroy)).toBeLessThan(order(validationDestroy));
+    expect(order(validationDestroy)).toBeLessThan(order(uploadDestroy));
+    expect(order(uploadDestroy)).toBeLessThan(order(secureDestroy));
+    expect(order(secureDestroy)).toBeLessThan(order(collectionDestroy));
+  });
+
   it('registers a public api whose getOutputCollectionState resolves off its container', () => {
     const { container, attach } = setup();
     attach();

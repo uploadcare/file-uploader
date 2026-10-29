@@ -119,8 +119,8 @@ describe('instance lifecycle (config-only ctx)', () => {
     expect(container.has(UploadCollectionController)).toBe(false);
 
     // The four upload-stack controllers are only resolved by the element-layer
-    // `ensureUploaderScope`/`registerUploadStack` (M-god step 5) — a bare
-    // `<uc-config>` never runs that path, so none of them exist either.
+    // `ensureUploaderScope` — a bare `<uc-config>` never runs that path, so none
+    // of them exist either.
     expect(container.has(SecureUploadsController)).toBe(false);
     expect(container.has(UploadController)).toBe(false);
     expect(container.has(ValidationController)).toBe(false);
