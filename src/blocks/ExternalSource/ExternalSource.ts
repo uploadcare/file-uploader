@@ -35,8 +35,6 @@ export class ExternalSource extends ChildBlock {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(RouterController) private readonly _router!: RouterController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
-  // `api` (UploaderPublicApi) is host-boundary state with no dedicated DI
-  // token — it is container-resolved (M-god step 8a), injected via `@inject`.
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
   private _messageBridge?: MessageBridge;

@@ -81,9 +81,10 @@ export class Modal extends ChildBlock {
     const dialog = this.dialogEl.value as HTMLDialogElement & {
       showModal?: () => void;
     };
-    // Idempotent + null-safe (matching `hide()`): `subRouter` fires on every
-    // change, but `showModal()` throws on an already-open dialog, and the ref
-    // may be cleared by a teardown racing this async method.
+    // Idempotent + null-safe (matching `hide()`): `willUpdate` calls this on
+    // every update while the modal is in the foreground, but `showModal()`
+    // throws on an already-open dialog, and the ref may be cleared by a teardown
+    // racing this async method.
     if (!dialog) return;
     if (dialog.open) {
       // Moving an open dialog in the DOM takes it out of the top layer but keeps `open`, leaving it in-flow with no
@@ -117,26 +118,23 @@ export class Modal extends ChildBlock {
     // off `strokes` ON THE HOST, so drive it there from the tracked config
     // signal (the Copyright `willUpdate` + `getTracked` recipe). Reading
     // `modalBackdropStrokes` via `getTracked` auto-tracks under `SignalWatcher`,
-    // so a config change re-runs this update and re-toggles the attribute —
-    // matching the reactivity of the v1 `subConfigValue('modalBackdropStrokes')`
-    // it replaces. `strokes` is not a signal, so toggling it schedules no
-    // further update.
+    // so a config change re-runs this update and re-toggles the attribute.
+    // `strokes` is not a signal, so toggling it schedules no further update.
     this.toggleAttribute('strokes', !!this._config.getTracked('modalBackdropStrokes'));
 
     // Show when the router's foreground modal slot is this modal's id; hide
-    // otherwise. `router.modal` is a tracked signal (M-god step 6b-3), so a
-    // modal-open/close transition re-runs this update and drives the imperative
-    // `<dialog>` side-effects below — replacing the v1 `subRouter` subscription
-    // with no effective-activity dedup (a modal opening on the id that's already
-    // the background activity still transitions the modal slot, so it still shows).
+    // otherwise. `router.modal` is a tracked signal, so a modal-open/close
+    // transition re-runs this update and drives the imperative `<dialog>`
+    // side-effects below, with no effective-activity dedup (a modal opening on
+    // the id that's already the background activity still transitions the modal
+    // slot, so it still shows).
     //
     // The scroll lock follows *router* state, not dialog state — a native
     // Esc-close reaches here with the <dialog> already closed (so `hide()`
     // early-returns), and the lock must release regardless. The shared
     // refcount keeps the body locked across modal-to-modal swaps and across
     // other uploader instances on the same page. `modalScrollLock` is read
-    // untracked (v1 read it fresh inside the router callback, not as its own
-    // reactive trigger) — the router-slot signal is what re-runs this.
+    // untracked: the router-slot signal is what re-runs this.
     const isForeground = this._router?.modal === (this.id as RegisteredActivityType);
     if (isForeground && this._config.get('modalScrollLock')) {
       this._releaseScrollLock ??= acquireScrollLock();

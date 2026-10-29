@@ -72,8 +72,7 @@ export class DynamicBtn extends ChildBlock {
   public dropzone = true;
 
   // Tracked read: `dynamicButtonViewMode` auto-tracks under `SignalWatcher`, so a
-  // config change re-renders — replacing the v1 `subConfigValue` mirror that fed
-  // a `_mode` @state and imperatively recomputed `_mainAndRemainSources`.
+  // config change re-renders.
   private get _mode(): DynamicButtonMode {
     return this._config.getTracked('dynamicButtonViewMode');
   }
@@ -85,7 +84,7 @@ export class DynamicBtn extends ChildBlock {
   private _status: 'idle' | 'success' | 'uploading' | 'failed' = 'idle';
 
   // Derived from `_sources` + the tracked `_mode` (both re-render triggers), so a
-  // change in either re-splits with no imperative `_updateSourceSplit`.
+  // change in either re-splits.
   private get _mainAndRemainSources(): SourceSplit {
     return adjustSourceBasedOnMode(this._sources, this._mode);
   }
@@ -94,15 +93,11 @@ export class DynamicBtn extends ChildBlock {
   private _collection!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
 
   // Tracked read: `commonProgress` (owned by `CollectionStateController`) auto-
-  // tracks under `SignalWatcher` — replacing the v1 `ctx.sub('*commonProgress')`
-  // subscription that mirrored it into `_progress` @state.
+  // tracks under `SignalWatcher`.
   private get _progress(): number {
     return this._collectionState.getTracked('commonProgress');
   }
 
-  // v1 derived this into a `@state` from `willUpdate` on a `_mode` @state change;
-  // here `_mode` is a tracked getter, so a plain derived getter re-evaluates on
-  // the same re-render and there is no mirror to keep in sync.
   private get _dropdownIconName(): string {
     return this._mode === 'compact' ? 'paperclip' : 'arrow-dropdown';
   }
@@ -127,9 +122,6 @@ export class DynamicBtn extends ChildBlock {
     return this._mode === 'compact';
   }
 
-  /**
-   *
-   */
   private get isPlainMode() {
     return this._mode === 'plain';
   }

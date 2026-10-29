@@ -164,11 +164,8 @@ export class FileItem extends FileItemConfig {
 
   /**
    * Whether file names are shown: always in list mode, otherwise driven by
-   * `gridShowFileNames`. Tracked getter (drops the v1 `@state _showFileNames`,
-   * `_updateShowFileNames`, and the `subConfigValue('gridShowFileNames')` mirror):
-   * reading both keys via `getTracked` in `render()` auto-tracks them under
-   * `SignalWatcher`, so a config change re-renders — same reactivity as the v1
-   * subscription.
+   * `gridShowFileNames`. Reading both keys via `getTracked` in `render()`
+   * auto-tracks them under `SignalWatcher`, so a config change re-renders.
    */
   private get _showFileNames(): boolean {
     const config = this._config;

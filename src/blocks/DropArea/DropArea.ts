@@ -239,10 +239,8 @@ export class DropArea extends ChildBlock {
   // `sourceList` drives imperative drop-handler/host state read outside
   // `render()` — `_isEnabled` gates `_shouldIgnore`/`isActive`, and visibility
   // toggles the host `.hidden` attribute — so it's an effect, not a render read.
-  // `beforeUpdate` fires it eagerly and synchronously on adoption (matching the
-  // former eager `subConfigValue` fire) so `_isEnabled` is correct before the
-  // first drop, and again whenever `sourceList` changes. (`multiple` folded into
-  // the `_dropTextKey` getter.)
+  // `beforeUpdate` fires it eagerly and synchronously on adoption so `_isEnabled`
+  // is correct before the first drop, and again whenever `sourceList` changes.
   /** @internal */
   @effect({ beforeUpdate: true })
   protected _syncSourceList(): void {
@@ -307,8 +305,7 @@ export class DropArea extends ChildBlock {
 
   private _couldHandleFiles(): boolean {
     // Imperative reads (drop-handler path, not render) — `get()`, not the tracked
-    // `getTracked()`. `uploadCollection` is container-owned (M-god step 4),
-    // resolved here via `use()` (this path runs only after adoption).
+    // `getTracked()`.
     const isMultiple = this._config.get('multiple');
     const multipleMax = this._config.get('multipleMax');
     const currentFilesCount = this._collection.size;
