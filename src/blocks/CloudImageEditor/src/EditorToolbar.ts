@@ -91,7 +91,7 @@ export class EditorToolbar extends EditorBlock {
   // `OperationSelectEvent`, `ShowAspectRatioListEvent`,
   // `SliderTooltipChangeEvent`) instead of the old shared-ctx cross-writes.
   @state()
-  private _currentFilter: string = FAKE_ORIGINAL_FILTER;
+  private _currentFilter: SliderFilter | '' = FAKE_ORIGINAL_FILTER;
 
   @state()
   private _currentOperation: ColorOperation | '' | null = null;
@@ -466,10 +466,7 @@ export class EditorToolbar extends EditorBlock {
   /** `EditorFilterControl`'s reported selection — replaces the old cross-writes to `*sliderEl`/`*showSlider`/`*currentFilter`/`*tabId`-scoped telemetry. */
   private readonly _handleFilterSelect = (e: FilterSelectEvent): void => {
     const { operation, filter, active, isOriginal, originalEvent } = e;
-    // `EditorFilterControl.filter` is always a valid `FilterId`/`FAKE_ORIGINAL_FILTER`
-    // (bound from `ALL_FILTERS`/`FAKE_ORIGINAL_FILTER` in `_renderFilterTabControls`);
-    // narrowing here rather than widening `EditorSlider.setOperation`'s signature.
-    const sliderFilter = filter as SliderFilter;
+    const sliderFilter = filter || undefined;
 
     if (!active) {
       this._sliderRef.value?.setOperation(operation, sliderFilter);
