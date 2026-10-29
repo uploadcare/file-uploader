@@ -16,7 +16,12 @@ import type { ConfigType, SecureDeliveryProxyUrlResolver } from '../../../types'
 import { serializeCsv } from '../../../utils/comma-separated';
 import { getClosestAspectRatio, parseCropPreset } from '../../../utils/crop/cropPreset';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
-import { CloudImageEditorController, type EditorConfig, type EditorServices } from './CloudImageEditorController';
+import {
+  CloudImageEditorController,
+  DEFAULT_EDITOR_CONFIG,
+  type EditorConfig,
+  type EditorServices,
+} from './CloudImageEditorController';
 import { subscribeUploaderConfigCompat } from './editor-config-compat';
 import { cloudImageEditorContext } from './editor-context';
 import { type EditorL10n, resolveEditorL10n } from './editor-locale';
@@ -357,27 +362,19 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       // into the standalone editor bundle. `localeDefinition` covers an
       // explicit standalone override.
       l10n: this._resolveL10n,
-      // Precedence: this element's own prop (see `_ownEditorConfigValue`) →
-      // the removable uploader-config compat bridge → the controller's
-      // built-in default (`EditorConfig`'s defaults, reached via
-      // `getConfigValue` when neither of the above supplied a value).
+      // Precedence: this element's own prop → the removable uploader-config
+      // compat bridge → `DEFAULT_EDITOR_CONFIG`. A `null` falls through like
+      // `undefined`.
       getConfig: <K extends keyof ConfigType>(key: K): ConfigType[K] => {
-        const editorConfigKey = CloudImageEditorBlock._toEditorConfigKey(key);
-        // Own-prop tier: the explicit override the controller holds (present
-        // only when the element's prop set it), so a set value — even falsy —
-        // wins, and an unset prop falls through.
-        const ownValue = editorConfigKey ? this._editorController.getOwnConfigValue(editorConfigKey) : undefined;
-        if (ownValue !== undefined) {
-          return ownValue as unknown as ConfigType[K];
-        }
-        const compatValue = editorConfigKey ? this._uploaderConfigCompat[editorConfigKey] : undefined;
-        if (compatValue !== undefined) {
-          return compatValue as unknown as ConfigType[K];
-        }
-        // Built-in default tier.
-        return editorConfigKey
-          ? (this._editorController.getConfigValue(editorConfigKey) as unknown as ConfigType[K])
-          : (undefined as unknown as ConfigType[K]);
+        const own: Partial<EditorConfig> = {
+          cdnCname: this.cdnCname,
+          secureDeliveryProxy: this.secureDeliveryProxy,
+          secureDeliveryProxyUrlResolver: this.secureDeliveryProxyUrlResolver,
+          cloudImageEditorMaskHref: this.maskHref,
+          testMode: this.testMode,
+        };
+        const k = key as keyof EditorConfig;
+        return (own[k] ?? this._uploaderConfigCompat[k] ?? DEFAULT_EDITOR_CONFIG[k]) as ConfigType[K];
       },
       telemetry: {
         sendEvent: (event) =>
@@ -630,7 +627,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       changedProperties.has('maskHref') ||
       changedProperties.has('testMode')
     ) {
-      this._syncEditorConfigFromProps();
       // Own-prop `testMode` may have just changed the resolved config — re-sync
       // `data-testid` (standalone has no compat-bridge callback to do this, and
       // `_setupEditorController`'s initial sync ran before the prop was applied).
@@ -644,41 +640,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     if (changedProperties.has('localeDefinition')) {
       this._editorController.notify();
-    }
-  }
-
-  /**
-   * Own-element-prop layer of the editor config (see `EditorConfig`) — only
-   * forwards props that are actually set, so an unset prop doesn't clobber
-   * the ctx-fallback/default layers underneath with `undefined`.
-   */
-  private _syncEditorConfigFromProps(): void {
-    // Pass every editor prop each time (undefined when unset). `setConfig`
-    // removes the keys whose prop is undefined, so unsetting a prop restores
-    // the ctx/default fallback rather than leaving a stale override. All these
-    // props are optional with no initializer, so `undefined` means "not set on
-    // the editor element" — including `testMode` (never a spurious `false`).
-    this._editorController.setConfig({
-      cdnCname: this.cdnCname,
-      secureDeliveryProxy: this.secureDeliveryProxy,
-      secureDeliveryProxyUrlResolver: this.secureDeliveryProxyUrlResolver,
-      cloudImageEditorMaskHref: this.maskHref,
-      testMode: this.testMode,
-    });
-  }
-
-  /** Maps a `ConfigType` key onto its `EditorConfig` counterpart, if it's part of the editor's config surface. */
-  private static _toEditorConfigKey<K extends keyof ConfigType>(key: K): keyof EditorConfig | undefined {
-    switch (key) {
-      case 'cdnCname':
-      case 'secureDeliveryProxy':
-      case 'secureDeliveryProxyUrlResolver':
-      case 'cloudImageEditorMaskHref':
-      case 'testMode':
-      case 'debug':
-        return key;
-      default:
-        return undefined;
     }
   }
 
