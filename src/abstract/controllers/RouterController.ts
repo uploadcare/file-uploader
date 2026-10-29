@@ -9,14 +9,6 @@ import { lazy } from '../logger';
 
 export type EdgeTarget = ActivityId | null;
 
-/**
- * Hook return sentinel — short-circuits the navigation entirely (no activity
- * change, no modal change). Distinct from `null` (which closes everything) and
- * `undefined` (which lets the proposed target through).
- */
-export const NAVIGATE_CANCEL: unique symbol = Symbol('uc:navigate-cancel');
-export type NavigateCancel = typeof NAVIGATE_CANCEL;
-
 /** The navigation intents resolvable via {@link RouterController.traverse}. */
 export type NavigationEdge = 'onBack' | 'onCancel' | 'onClose' | 'onDone' | 'onFileAdd';
 
@@ -26,15 +18,8 @@ export interface RouteTable {
   doneActivity?: ActivityId | null;
 }
 
-export interface EdgeContext {
-  edge: string;
-  /** The current activity when the edge fires, or `null` when nothing is open. */
-  from: ActivityId | null;
-  proposed: EdgeTarget;
-  defaults: () => EdgeTarget;
-}
-
-type Hook = (ctx: EdgeContext) => EdgeTarget | NavigateCancel | undefined;
+/** An `onFileAdd` interceptor: a target (or `null` to close everything) overrides the default; `undefined` defers. */
+type FileAddHook = () => EdgeTarget | undefined;
 
 /**
  * v2-native dual-slot router. Tracks two independent activity slots:
@@ -87,14 +72,7 @@ export class RouterController {
   // switching sources).
   @signalState() private _params: Record<string, unknown> = {};
   private _history: ActivityId[] = [];
-  private _hooks = {
-    beforeChange: [] as Hook[],
-    onFileAdd: [] as Hook[],
-    onBack: [] as Hook[],
-    onCancel: [] as Hook[],
-    onClose: [] as Hook[],
-    onDone: [] as Hook[],
-  };
+  private _fileAddHooks: FileAddHook[] = [];
 
   // Zero-arg constructor: the container builds this with `new RouterController()`
   // and the emit target resolves lazily through `@inject`.
@@ -244,71 +222,14 @@ export class RouterController {
   }
 
   // ─── Hooks ───
-  /**
-   * Register interceptors for navigation intents. A hook may redirect (return
-   * an activity id), close everything (`null`), cancel the intent
-   * (`NAVIGATE_CANCEL`), or defer to the default (`undefined`). The edge hooks
-   * (`onFileAdd`/`onBack`/`onCancel`/`onClose`/`onDone`) fire from
-   * {@link traverse}; `beforeChange` fires from `navigate()` itself, once per
-   * actual navigation.
-   */
   public readonly hooks = {
-    beforeChange: (h: Hook) => this._register('beforeChange', h),
-    onFileAdd: (h: Hook) => this._register('onFileAdd', h),
-    onBack: (h: Hook) => this._register('onBack', h),
-    onCancel: (h: Hook) => this._register('onCancel', h),
-    onClose: (h: Hook) => this._register('onClose', h),
-    onDone: (h: Hook) => this._register('onDone', h),
+    onFileAdd: (h: FileAddHook): (() => void) => {
+      this._fileAddHooks.push(h);
+      return () => {
+        this._fileAddHooks = this._fileAddHooks.filter((x) => x !== h);
+      };
+    },
   };
-
-  private _register(name: keyof typeof this._hooks, h: Hook): () => void {
-    this._hooks[name].push(h);
-    this._log.debug(lazy(() => [`hook registered: "${name}" (${this._hooks[name].length} total)`]));
-    return () => {
-      const before = this._hooks[name].length;
-      this._hooks[name] = this._hooks[name].filter((x) => x !== h);
-      if (this._hooks[name].length !== before) {
-        this._log.debug(lazy(() => [`hook unregistered: "${name}" (${this._hooks[name].length} total)`]));
-      }
-    };
-  }
-
-  /**
-   * Invoke a single hook, isolating a throw (AGENTS.md #3): a broken hook must
-   * not abort the navigation or the rest of the chain. A throw is warned and
-   * treated as `undefined` (defer to the next hook / the default).
-   */
-  private _invokeHook(name: string, hook: Hook, ctx: EdgeContext): EdgeTarget | NavigateCancel | undefined {
-    try {
-      return hook(ctx);
-    } catch (err) {
-      this._log.warn(`router "${name}" hook threw; skipping it`, err);
-      return undefined;
-    }
-  }
-
-  /**
-   * Runs the hooks registered under a single edge name until one decides:
-   * a target (or `null`), or `NAVIGATE_CANCEL`. Returns `undefined` when
-   * every hook defers — what that means is the *caller's* call: `navigate()`
-   * proceeds to the proposed target, `traverse()` runs the edge's default
-   * action (`back()`/`close()`/…), which is why the fall-through can't be
-   * resolved here.
-   */
-  private _resolveHooks(name: keyof typeof this._hooks, ctx: EdgeContext): EdgeTarget | NavigateCancel | undefined {
-    for (const hook of this._hooks[name]) {
-      const r = this._invokeHook(name, hook, ctx);
-      this._log.debug(
-        lazy(() => [
-          `hook "${name}" → ${
-            r === NAVIGATE_CANCEL ? 'cancel' : r === undefined ? 'defer' : r === null ? 'close (null)' : `"${r}"`
-          }`,
-        ]),
-      );
-      if (r !== undefined) return r;
-    }
-    return undefined;
-  }
 
   // ─── Navigation ───
 
@@ -323,49 +244,11 @@ export class RouterController {
 
   /**
    * Navigate to `to` via the preset `navigationStrategy`. `navigate(null)`
-   * closes everything. Runs `hooks.beforeChange` first — a hook may redirect
-   * (return an id), close everything (`null`), or cancel (`NAVIGATE_CANCEL`);
-   * `undefined` lets the proposed target through.
+   * closes everything.
    */
   public navigate(to: EdgeTarget, params: Record<string, unknown> = {}): void {
-    this._navigate(to, params);
-  }
-
-  /**
-   * `navigate` with an optional commit callback: `onCommit` runs only once the
-   * navigation is definitely happening (hooks didn't cancel, guards didn't
-   * refuse), just before the transition, and receives the *resolved* target —
-   * which may differ from the proposed one when a hook redirected. `back()`
-   * uses it to mutate history at the commit point instead of up front, so
-   * `beforeChange` hooks observe the un-mutated history and a cancel costs
-   * nothing.
-   */
-  private _navigate(to: EdgeTarget, params: Record<string, unknown>, onCommit?: (resolved: EdgeTarget) => void): void {
-    // `from` is the *effective* current activity (modal if open, else the
-    // background slot), matching `traverse()` so `beforeChange` hooks always
-    // observe the same "current activity" regardless of which slot it's in.
-    const ctx: EdgeContext = { edge: 'navigate', from: this.currentActivity, proposed: to, defaults: () => to };
-    const resolved = this._resolveHooks('beforeChange', ctx);
-    if (resolved === NAVIGATE_CANCEL) {
-      this._log.debug(lazy(() => [`navigate to ${to ?? 'null'} cancelled by a beforeChange hook`]));
-      return;
-    }
-    if (resolved !== undefined && resolved !== to) {
-      this._log.debug(lazy(() => [`beforeChange hook redirected: ${to ?? 'null'} → ${resolved ?? 'null'}`]));
-    }
-    // All hooks deferred (`undefined`) → the proposed target goes through.
-    // Note `null` is a real decision (close everything), so no `??` here.
-    this._executeNavigate(resolved === undefined ? to : resolved, params, onCommit);
-  }
-
-  private _executeNavigate(
-    to: EdgeTarget,
-    params: Record<string, unknown>,
-    onCommit?: (resolved: EdgeTarget) => void,
-  ): void {
     if (to === null) {
       this._params = params;
-      onCommit?.(null);
       this._transition(null, null);
       return;
     }
@@ -377,7 +260,6 @@ export class RouterController {
       return;
     }
     this._params = params;
-    onCommit?.(to);
     // A background target closes any open modal first — the inline content is
     // the focus now; a foreground target leaves the background slot untouched.
     const slot = this.navigationStrategy(to);
@@ -390,7 +272,7 @@ export class RouterController {
   }
 
   /**
-   * Set the background activity directly (preset init); skips `beforeChange`.
+   * Set the background activity directly (preset init), bypassing `navigationStrategy`.
    * `params` is optional — omit it to change only the background slot without
    * clobbering the current activity's params (e.g. a preset reacting to the
    * upload list while a modal is open in the foreground slot).
@@ -502,30 +384,14 @@ export class RouterController {
   /**
    * Express a navigation *intent* and let the router resolve it — the way
    * activities and plugins should navigate instead of calling `back()`/`close()`
-   * directly. A registered edge hook may intercept (redirect / `null` / cancel);
-   * otherwise the built-in default applies:
+   * directly:
    * - `onBack` / `onCancel` → {@link back},
    * - `onClose` → {@link close},
    * - `onDone` → navigate to the configured {@link doneActivity},
-   * - `onFileAdd` → navigate to `upload-list`.
+   * - `onFileAdd` → the first `hooks.onFileAdd` decision, else `upload-list`.
    */
   public traverse(edge: NavigationEdge): void {
     this._log.debug(lazy(() => [`traverse "${edge}"`]));
-    // `proposed`/`defaults()` carry a concrete target only when the default
-    // *is* a target (`onDone` → done activity, `onFileAdd` → upload-list).
-    // For `onBack`/`onCancel`/`onClose` the default is an *action*
-    // (`back()`/`close()`), not a target, so `proposed` is `null`.
-    const proposed = edge === 'onDone' ? this.doneActivity : edge === 'onFileAdd' ? ACTIVITY_TYPES.UPLOAD_LIST : null;
-    // `from` is the effective (modal-aware) activity — `EdgeContext.from`
-    // always means "what the user currently sees".
-    const ctx: EdgeContext = { edge, from: this.currentActivity, proposed, defaults: () => proposed };
-    const resolved = this._resolveHooks(edge, ctx);
-    if (resolved === NAVIGATE_CANCEL) return;
-    if (resolved !== undefined) {
-      this.navigate(resolved);
-      return;
-    }
-    // All hooks deferred → the edge's default *action* applies.
     switch (edge) {
       case 'onBack':
       case 'onCancel':
@@ -535,10 +401,25 @@ export class RouterController {
         this.close();
         break;
       case 'onDone':
+        this.navigate(this.doneActivity);
+        break;
       case 'onFileAdd':
-        this.navigate(proposed);
+        this.navigate(this._resolveFileAdd());
         break;
     }
+  }
+
+  /** The first `onFileAdd` hook's decision, or the upload list when every hook defers. A throwing hook is skipped. */
+  private _resolveFileAdd(): EdgeTarget {
+    for (const hook of this._fileAddHooks) {
+      try {
+        const r = hook();
+        if (r !== undefined) return r;
+      } catch (err) {
+        this._log.warn('router "onFileAdd" hook threw; skipping it', err);
+      }
+    }
+    return ACTIVITY_TYPES.UPLOAD_LIST;
   }
 
   /**
@@ -546,12 +427,6 @@ export class RouterController {
    * none). History stores `[...past, current]`, so the target is the newest
    * entry below the top, skipping entries that are now guarded-out (e.g. an
    * upload list that emptied while a modal was open over it).
-   *
-   * History is only *peeked* here — it mutates at the commit point, after the
-   * `beforeChange` hooks have had their say. A hook that cancels (or a guard
-   * that refuses a redirect target) leaves history exactly as it was; a hook
-   * that redirects still drops the entry being left before the redirect target
-   * is pushed.
    */
   public back(): void {
     for (let i = this._history.length - 2; i >= 0; i--) {
@@ -559,16 +434,10 @@ export class RouterController {
       // An earlier entry of the activity already showing is no step back (v1 skipped them too): after "Add more"
       // and an emptied list the history reads start-from, upload-list, start-from.
       if (prev !== this.currentActivity && this._canActivate(prev)) {
-        // Commit: truncate to the target (dropping the current entry and any
-        // guarded-out entries above it); `_pushHistory` dedupes the re-push.
-        // When a hook redirected to the activity we're already on, the
-        // effective activity won't change, so `_transition` would never
-        // re-push it — keep history intact instead of dropping the top.
-        this._navigate(prev, {}, (resolved) => {
-          if (resolved !== this.currentActivity) {
-            this._history.length = i + 1;
-          }
-        });
+        // Truncate to the target (dropping the current entry and any guarded-out entries above it); `_pushHistory`
+        // dedupes the re-push.
+        this._history.length = i + 1;
+        this.navigate(prev);
         return;
       }
     }
@@ -579,6 +448,6 @@ export class RouterController {
     this._listeners.clear();
     this._guards.clear();
     this._mountedActivities.clear();
-    this._hooks = { beforeChange: [], onFileAdd: [], onBack: [], onCancel: [], onClose: [], onDone: [] };
+    this._fileAddHooks = [];
   }
 }

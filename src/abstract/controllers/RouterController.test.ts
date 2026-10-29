@@ -6,7 +6,7 @@ import { UploaderEventType } from '../EventBus';
 import { EventEmitter } from '../EventEmitter';
 import { SCOPE_BADGE_STYLE, UC_BADGE_STYLE } from '../logger';
 import { ConfigController } from './ConfigController';
-import { NAVIGATE_CANCEL, RouterController } from './RouterController';
+import { RouterController } from './RouterController';
 
 const setup = () => {
   // RouterController is container-resolved: it emits via the
@@ -105,74 +105,6 @@ describe('RouterController (v2)', () => {
     });
   });
 
-  describe('beforeChange hooks', () => {
-    it('redirects to a hook-provided target', () => {
-      const { router } = setup();
-      router.hooks.beforeChange(() => 'upload-list');
-      router.navigate('start-from');
-      expect(router.activity).toBe('upload-list');
-    });
-
-    it('cancels navigation on NAVIGATE_CANCEL', () => {
-      const { router } = setup();
-      router.hooks.beforeChange(() => NAVIGATE_CANCEL);
-      router.navigate('start-from');
-      expect(router.activity).toBeNull();
-    });
-
-    it('lets the proposed target through when the hook returns undefined', () => {
-      const { router } = setup();
-      router.hooks.beforeChange(() => undefined);
-      router.navigate('start-from');
-      expect(router.activity).toBe('start-from');
-    });
-
-    it('unsubscribes a hook', () => {
-      const { router } = setup();
-      const unsub = router.hooks.beforeChange(() => NAVIGATE_CANCEL);
-      unsub();
-      router.navigate('start-from');
-      expect(router.activity).toBe('start-from');
-    });
-
-    it('isolates a throwing beforeChange hook (proceeds to the proposed target, warns)', () => {
-      const { router } = setup();
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      router.hooks.beforeChange(() => {
-        throw new Error('boom');
-      });
-
-      router.navigate('start-from');
-
-      expect(router.activity).toBe('start-from'); // navigation not aborted
-      expect(warn).toHaveBeenCalled();
-    });
-
-    it('runs later hooks after an earlier one throws', () => {
-      const { router } = setup();
-      vi.spyOn(console, 'warn').mockImplementation(() => {});
-      router.hooks.beforeChange(() => {
-        throw new Error('boom');
-      });
-      router.hooks.beforeChange(() => 'upload-list'); // still runs → redirects
-
-      router.navigate('start-from');
-
-      expect(router.activity).toBe('upload-list');
-    });
-
-    it('exposes ctx.defaults() (the proposed target) to beforeChange hooks', () => {
-      const { router } = setup();
-      let seen: unknown;
-      router.hooks.beforeChange((ctx) => {
-        seen = ctx.defaults();
-        return undefined;
-      });
-      router.navigate('start-from');
-      expect(seen).toBe('start-from');
-    });
-  });
-
   describe('history + back', () => {
     it('pushes activated activities, deduping consecutive repeats', () => {
       const { router } = setup();
@@ -205,96 +137,6 @@ describe('RouterController (v2)', () => {
       router.back();
 
       expect(router.activity).toBe('start-from');
-    });
-
-    it('beforeChange hooks observe the un-mutated history when back() fires them', () => {
-      const { router } = setup();
-      router.navigate('start-from');
-      router.navigate('camera'); // history: [start-from, camera]
-      let seen: readonly ActivityId[] | undefined;
-      router.hooks.beforeChange(() => {
-        seen = [...router.history];
-        return undefined;
-      });
-
-      router.back();
-
-      // The hook decides whether the navigation happens at all, so it must see
-      // history as it was *before* back() touches it — including the entry
-      // being left.
-      expect(seen).toEqual(['start-from', 'camera']);
-      expect(router.currentActivity).toBe('start-from');
-      expect(router.history).toEqual(['start-from']);
-    });
-
-    it('a canceled back() leaves history intact and a later back() still works', () => {
-      const { router } = setup();
-      router.navigate('start-from');
-      router.navigate('upload-list');
-      router.navigate('camera'); // history: [start-from, upload-list, camera]
-      let block = true;
-      router.hooks.beforeChange(() => (block ? NAVIGATE_CANCEL : undefined));
-
-      router.back(); // canceled — nothing may change
-
-      expect(router.currentActivity).toBe('camera');
-      expect(router.history).toEqual(['start-from', 'upload-list', 'camera']);
-      expect(router.canGoBack).toBe(true);
-
-      block = false;
-      router.back(); // now allowed — lands on the real previous entry
-
-      expect(router.currentActivity).toBe('upload-list');
-      expect(router.history).toEqual(['start-from', 'upload-list']);
-    });
-
-    it('a beforeChange redirect during back() drops the left entry and records the target', () => {
-      const { router } = setup();
-      router.navigate('start-from');
-      router.navigate('camera'); // history: [start-from, camera]
-      router.hooks.beforeChange((ctx) => (ctx.proposed === 'start-from' ? 'url' : undefined));
-
-      router.back(); // back from camera, redirected to url
-
-      expect(router.currentActivity).toBe('url');
-      // camera (the entry being left) is gone; back from url returns to
-      // start-from, not to the screen the user just backed out of.
-      expect(router.history).toEqual(['start-from', 'url']);
-    });
-
-    it('a back() redirect to the current activity keeps history intact', () => {
-      const { router } = setup();
-      router.navigate('start-from');
-      router.navigate('camera'); // history: [start-from, camera]
-      let stay = true;
-      // Redirect the back() target (start-from) to the activity we're on.
-      router.hooks.beforeChange((ctx) => (stay && ctx.proposed === 'start-from' ? 'camera' : undefined));
-
-      router.back(); // resolved to "stay on camera" — nothing may be dropped
-
-      expect(router.currentActivity).toBe('camera');
-      expect(router.history).toEqual(['start-from', 'camera']);
-
-      stay = false;
-      router.back(); // a later real back still reaches start-from
-
-      expect(router.currentActivity).toBe('start-from');
-      expect(router.history).toEqual(['start-from']);
-    });
-
-    it('a back() redirect into a guarded-out target is refused with history untouched', () => {
-      const { router } = setup();
-      router.guard('upload-list', () => false);
-      router.navigate('start-from');
-      router.navigate('camera'); // history: [start-from, camera]
-      router.hooks.beforeChange((ctx) =>
-        ctx.edge === 'navigate' && ctx.from === 'camera' ? 'upload-list' : undefined,
-      );
-
-      router.back(); // redirect target is guarded-out → nothing happens
-
-      expect(router.currentActivity).toBe('camera');
-      expect(router.history).toEqual(['start-from', 'camera']);
     });
 
     it('back closes everything when there is no previous entry', () => {
@@ -344,24 +186,6 @@ describe('RouterController (v2)', () => {
       expect(router.currentActivity).toBeNull();
     });
 
-    it('a canceled back() keeps guarded-out entries it would have skipped', () => {
-      const { router } = setup();
-      let listAllowed = true;
-      router.guard('upload-list', () => listAllowed);
-      router.navigate('start-from');
-      router.navigate('upload-list');
-      router.navigate('camera'); // history: [start-from, upload-list, camera]
-      router.hooks.beforeChange(() => NAVIGATE_CANCEL);
-
-      listAllowed = false;
-      router.back(); // would skip upload-list and land on start-from — canceled
-
-      expect(router.currentActivity).toBe('camera');
-      // The guarded-out entry stays: its guard may hold again by the next
-      // back() (e.g. files get added back to the list).
-      expect(router.history).toEqual(['start-from', 'upload-list', 'camera']);
-    });
-
     it('back closes everything when every previous entry is guarded-out', () => {
       const { router } = setup();
       let allowed = true;
@@ -378,9 +202,8 @@ describe('RouterController (v2)', () => {
   });
 
   describe('setActivity / openModal / closeModal', () => {
-    it('setActivity sets the background slot directly (bypasses beforeChange)', () => {
+    it('setActivity sets the background slot directly', () => {
       const { router } = setup();
-      router.hooks.beforeChange(() => NAVIGATE_CANCEL); // would block navigate()
       router.setActivity('start-from', { x: 1 });
       expect(router.activity).toBe('start-from');
       expect(router.params).toEqual({ x: 1 });
@@ -462,40 +285,6 @@ describe('RouterController (v2)', () => {
       router.hooks.onFileAdd(() => null);
       router.traverse('onFileAdd');
       expect(router.activity).toBeNull();
-    });
-
-    it('cancels when the onFileAdd hook returns NAVIGATE_CANCEL', () => {
-      const { router } = setup();
-      router.setActivity('start-from');
-      router.hooks.onFileAdd(() => NAVIGATE_CANCEL);
-      router.traverse('onFileAdd');
-      expect(router.activity).toBe('start-from'); // unchanged
-    });
-
-    it('exposes the effective (modal-aware) activity as ctx.from', () => {
-      const { router } = setup();
-      router.setActivity('start-from');
-      router.openModal('camera'); // camera is what the user actually sees
-      let seen: unknown;
-      router.hooks.onFileAdd((ctx) => {
-        seen = ctx.from;
-        return NAVIGATE_CANCEL;
-      });
-
-      router.traverse('onFileAdd');
-
-      expect(seen).toBe('camera');
-    });
-
-    it('exposes ctx.defaults() (upload-list) to onFileAdd hooks', () => {
-      const { router } = setup();
-      let seen: unknown;
-      router.hooks.onFileAdd((ctx) => {
-        seen = ctx.defaults();
-        return undefined;
-      });
-      router.traverse('onFileAdd');
-      expect(seen).toBe('upload-list');
     });
 
     it('isolates a throwing onFileAdd hook and falls back to upload-list', () => {
@@ -620,31 +409,6 @@ describe('RouterController (v2)', () => {
       expect(router.currentActivity).toBe('upload-list');
     });
 
-    it('an edge hook can redirect the intent', () => {
-      const { router } = setup();
-      router.navigate('camera');
-      router.hooks.onCancel(() => 'upload-list');
-      router.traverse('onCancel');
-      expect(router.currentActivity).toBe('upload-list');
-    });
-
-    it('an edge hook can cancel the intent (NAVIGATE_CANCEL)', () => {
-      const { router } = setup();
-      router.navigate('camera');
-      router.hooks.onClose(() => NAVIGATE_CANCEL);
-      router.traverse('onClose');
-      expect(router.currentActivity).toBe('camera'); // unchanged
-    });
-
-    it('a hook returning undefined defers to the default', () => {
-      const { router } = setup();
-      router.navigate('start-from');
-      router.navigate('camera');
-      router.hooks.onBack(() => undefined);
-      router.traverse('onBack');
-      expect(router.currentActivity).toBe('start-from');
-    });
-
     it('onFileAdd defaults to navigating to upload-list', () => {
       const { router } = setup();
       router.traverse('onFileAdd');
@@ -656,20 +420,6 @@ describe('RouterController (v2)', () => {
       router.hooks.onFileAdd(() => null); // DynamicBtn: keep the modal closed
       router.traverse('onFileAdd');
       expect(router.currentActivity).toBeNull();
-    });
-
-    it('isolates a throwing edge hook and falls back to the default', () => {
-      const { router } = setup();
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      router.navigate('start-from');
-      router.hooks.onClose(() => {
-        throw new Error('boom');
-      });
-
-      router.traverse('onClose'); // hook throws → default close() still runs
-
-      expect(router.currentActivity).toBeNull();
-      expect(warn).toHaveBeenCalled();
     });
   });
 
@@ -818,16 +568,6 @@ describe('RouterController (v2)', () => {
     });
   });
 
-  describe('onDone edge hook', () => {
-    it('an onDone hook redirects the intent to its returned target', () => {
-      const { router } = setup();
-      router.configure({ doneActivity: 'upload-list' });
-      router.hooks.onDone(() => 'camera'); // override the configured done activity
-      router.traverse('onDone');
-      expect(router.currentActivity).toBe('camera');
-    });
-  });
-
   describe('edge cases (coverage)', () => {
     it('revalidate() with nothing active is a no-op (null is always activatable)', () => {
       const { router } = setup();
@@ -860,13 +600,13 @@ describe('RouterController (v2)', () => {
       const { router } = setup();
       const onChange = vi.fn();
       router.subscribe(onChange);
-      router.hooks.beforeChange(() => NAVIGATE_CANCEL);
+      router.hooks.onFileAdd(() => null);
 
       router.destroy();
 
-      router.navigate('start-from'); // hooks cleared → proceeds; listeners cleared → no notify
+      router.traverse('onFileAdd'); // hooks cleared → default upload-list; listeners cleared → no notify
       expect(onChange).not.toHaveBeenCalled();
-      expect(router.activity).toBe('start-from');
+      expect(router.activity).toBe('upload-list');
     });
   });
 
@@ -915,16 +655,13 @@ describe('RouterController (v2)', () => {
       );
     });
 
-    it('logs hook registration, hook execution result, and the applied navigation strategy', () => {
+    it('logs the applied navigation strategy', () => {
       const { router } = setupDebug();
       const log = vi.spyOn(console, 'log').mockImplementation(() => {});
       const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
 
-      router.hooks.beforeChange(() => 'upload-list'); // registration
-      router.navigate('start-from'); // hook runs → redirects; strategy applies to the resolved target
+      router.navigate('upload-list');
 
-      expect(log).toHaveBeenCalledWith(...badge, 'hook registered: "beforeChange" (1 total)');
-      expect(log).toHaveBeenCalledWith(...badge, 'hook "beforeChange" → "upload-list"');
       expect(log).toHaveBeenCalledWith(...badge, 'strategy for "upload-list": background');
     });
 
@@ -938,32 +675,6 @@ describe('RouterController (v2)', () => {
 
       off();
       expect(log).toHaveBeenCalledWith(...badge, 'guard unregistered: "camera"');
-    });
-
-    it('logs hook registration and unregistration', () => {
-      const { router } = setupDebug();
-      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
-
-      const off = router.hooks.onClose(() => undefined);
-      expect(log).toHaveBeenCalledWith(...badge, 'hook registered: "onClose" (1 total)');
-
-      off();
-      expect(log).toHaveBeenCalledWith(...badge, 'hook unregistered: "onClose" (0 total)');
-    });
-
-    it('does not log a second unregister when the hook was already removed', () => {
-      const { router } = setupDebug();
-      const off = router.hooks.onClose(() => undefined);
-      off();
-      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      // Idempotent unregister: the second call removes nothing, so it must not log.
-      off();
-      expect(log).not.toHaveBeenCalledWith(
-        ...(['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const),
-        'hook unregistered: "onClose" (0 total)',
-      );
     });
 
     it('logs the configured done activity', () => {
