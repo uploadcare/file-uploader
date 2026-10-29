@@ -54,7 +54,6 @@ export class EditorFilterControl extends EditorButtonControl {
   @state()
   private _previewLoaded = false;
 
-  // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
   public isOriginal = false;
 

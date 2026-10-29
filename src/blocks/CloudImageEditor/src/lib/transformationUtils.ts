@@ -50,7 +50,7 @@ const SUPPORTED_OPERATIONS_ORDERED = [
  * creators validated at runtime (`__DEV__`-only, so production shipped the
  * checking machinery without the checks). What is lost by moving off the
  * creators is dev-only numeric range checking (e.g. `brightness(500)`
- * throwing); `isMeaningful` above still keeps malformed shapes out.
+ * throwing); `isMeaningful` below still keeps malformed shapes out.
  */
 const OPERATION_WRITERS = {
   enhance: (value: number) => `enhance/${value}` as const,

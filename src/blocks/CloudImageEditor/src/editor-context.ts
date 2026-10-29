@@ -13,7 +13,7 @@ const log = logger.scope('cloud-image-editor');
  * The editor's own `@lit/context` — resolved by DOM ancestry, distinct from
  * (and coexisting with) the uploader ctx's `ctxNameContext`. The root
  * `<uc-cloud-image-editor>` provides a `CloudImageEditorController` instance
- * here (`ContextProvider`, wired in a later phase); descendants consume it
+ * here (`ContextProvider`); descendants consume it
  * through `CloudImageEditorContextController`/`EditorBlock` below.
  */
 export const cloudImageEditorContext = createContext<CloudImageEditorController>('cloud-image-editor-controller');
