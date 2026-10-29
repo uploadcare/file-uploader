@@ -42,56 +42,19 @@ export class ExternalSource extends ChildBlock {
   private _messageBridge?: MessageBridge;
 
   private _iframeRef = createRef<HTMLIFrameElement>();
-  private _latestSelectionSummary: {
-    selectedCount: number;
-    total: number;
-  } | null = null;
-
   private _lastActivityParams: Readonly<Record<string, unknown>> | undefined = undefined;
 
+  /** The iframe's latest selection report; null until it sends one for the mounted iframe. */
   @state()
-  private _selectedList: NonNullable<InputMessageMap['selected-files-change']['selectedFiles']> = [];
-
-  @state()
-  private _isSelectionReady = false;
-
-  @state()
-  private _isDoneBtnEnabled = false;
-
-  @state()
-  private _couldSelectAll = false;
-
-  @state()
-  private _couldDeselectAll = false;
-
-  @state()
-  private _showDoneBtn = false;
-
-  @state()
-  private _doneBtnTextClass = 'uc-hidden';
+  private _selection: InputMessageMap['selected-files-change'] | null = null;
 
   @state()
   private _toolbarVisible = true;
 
-  private get _counterText(): string {
-    if (!this._latestSelectionSummary) {
-      return '';
-    }
-
-    const { selectedCount, total } = this._latestSelectionSummary;
-    return this.l10n('selected-count', {
-      count: selectedCount,
-      total,
-    });
-  }
-
   // Derived: the selection-status box shows only in multiple mode once the
-  // iframe reports a non-empty selection. A pure function of config `multiple`
-  // (tracked) + the latest selection summary — same reactive coupling as
-  // `_counterText` (every `_latestSelectionSummary` write rides with sibling
-  // `@state` writes that re-render).
+  // iframe reports a non-empty selection.
   private get _showSelectionStatus(): boolean {
-    return this._config.getTracked('multiple') && (this._latestSelectionSummary?.total ?? 0) > 0;
+    return this._config.getTracked('multiple') && (this._selection?.total ?? 0) > 0;
   }
 
   protected override controllerReady(): void {
@@ -186,15 +149,7 @@ export class ExternalSource extends ChildBlock {
       return;
     }
 
-    this._setSelectionSummary(message.selectedCount, message.total);
-
-    this._doneBtnTextClass = message.isReady ? '' : 'uc-hidden';
-    this._isSelectionReady = message.isReady;
-    this._isDoneBtnEnabled = message.isReady && message.selectedFiles.length > 0;
-    this._couldSelectAll = message.selectedCount < message.total;
-    this._couldDeselectAll = message.selectedCount === message.total;
-    this._selectedList = message.selectedFiles ?? [];
-    this._showDoneBtn = message.total > 0;
+    this._selection = message;
   }
 
   private _handleIframeLoad(): void {
@@ -241,7 +196,8 @@ export class ExternalSource extends ChildBlock {
     if (!externalSourceType) {
       throw new Error(`Param "externalSourceType" is required for external source activity`);
     }
-    for (const message of this._selectedList) {
+    const selected = this._selection?.selectedFiles ?? [];
+    for (const message of selected) {
       const url = this._extractUrlFromSelectedFile(message);
       const { filename } = message;
       this._api.addFileFromUrl(url, {
@@ -252,7 +208,7 @@ export class ExternalSource extends ChildBlock {
     // Which source and how many files, never what they are.
     this._telemetry.sendActionEvent('select-external-files', this.tagName, {
       sourceId: externalSourceType,
-      filesCount: this._selectedList.length,
+      filesCount: selected.length,
     });
 
     this._router.traverse('onFileAdd');
@@ -269,10 +225,6 @@ export class ExternalSource extends ChildBlock {
   private _handleDeselectAll = (): void => {
     this._messageBridge?.send({ type: 'deselect-all' });
   };
-
-  private _setSelectionSummary(selectedCount: number, total: number): void {
-    this._latestSelectionSummary = { selectedCount, total };
-  }
 
   private _mountIframe(): void {
     const iframe = document.createElement('iframe');
@@ -305,7 +257,7 @@ export class ExternalSource extends ChildBlock {
     this._messageBridge.on('selected-files-change', this._handleSelectedFilesChange.bind(this));
     this._messageBridge.on('toolbar-state-change', this._handleToolbarStateChange.bind(this));
 
-    this._resetSelectionStatus();
+    this._selection = null;
   }
 
   private _unmountIframe(): void {
@@ -315,18 +267,7 @@ export class ExternalSource extends ChildBlock {
       this._iframeRef.value.innerHTML = '';
     }
 
-    this._resetSelectionStatus();
-  }
-
-  private _resetSelectionStatus(): void {
-    this._selectedList = [];
-    this._isSelectionReady = false;
-    this._isDoneBtnEnabled = false;
-    this._couldSelectAll = false;
-    this._couldDeselectAll = false;
-    this._showDoneBtn = false;
-    this._doneBtnTextClass = 'uc-hidden';
-    this._latestSelectionSummary = null;
+    this._selection = null;
   }
 
   // The iframe + `MessageBridge` mount is adoption-scoped (`controllerReady` and
@@ -338,6 +279,8 @@ export class ExternalSource extends ChildBlock {
   }
 
   public override render() {
+    const sel = this._selection;
+    const ready = !!sel?.isReady;
     return html`
       <uc-activity-header>
         <button
@@ -364,18 +307,18 @@ export class ExternalSource extends ChildBlock {
             class="uc-selection-status-box"
             ?hidden=${!this._showSelectionStatus}
           >
-            <span>${this._counterText}</span>
+            <span>${sel ? this.l10n('selected-count', { count: sel.selectedCount, total: sel.total }) : ''}</span>
             <button
               type="button"
               @click=${this._handleSelectAll}
-              ?hidden=${!this._couldSelectAll}
+              ?hidden=${!sel || sel.selectedCount >= sel.total}
             >
               ${this.l10n('select-all')}
             </button>
             <button
               type="button"
               @click=${this._handleDeselectAll}
-              ?hidden=${!this._couldDeselectAll}
+              ?hidden=${!sel || sel.selectedCount !== sel.total}
             >
               ${this.l10n('deselect-all')}
             </button>
@@ -384,11 +327,11 @@ export class ExternalSource extends ChildBlock {
             type="button"
             class="uc-done-btn uc-primary-btn"
             @click=${this._handleDone}
-            ?disabled=${!this._isDoneBtnEnabled}
-            ?hidden=${!this._showDoneBtn}
+            ?disabled=${!ready || !sel?.selectedFiles.length}
+            ?hidden=${!sel?.total}
           >
-            <uc-spinner ?hidden=${this._isSelectionReady}></uc-spinner>
-            <span class=${this._doneBtnTextClass}>${this.l10n('done')}</span>
+            <uc-spinner ?hidden=${ready}></uc-spinner>
+            <span class=${ready ? '' : 'uc-hidden'}>${this.l10n('done')}</span>
           </button>
         </div>
       </div>
