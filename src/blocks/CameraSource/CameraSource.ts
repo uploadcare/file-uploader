@@ -1,4 +1,4 @@
-import { html, type PropertyValues } from 'lit';
+import { html, nothing, type PropertyValues, type TemplateResult } from 'lit';
 import { state } from 'lit/decorators.js';
 import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
 import type { CameraAudioMode, CameraAudioQuality, CameraResolution } from '../../types/exported';
@@ -32,10 +32,12 @@ import { pickVideoMimeType, recordingFileType } from './videoFormat';
 
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
+import { renderAspectRatioIcon } from '../Icon/aspectRatioIcon';
 import '../Select/Select';
 
 type CameraDeviceOption = { text: string; value: string };
 type AudioDeviceOption = { text: string; value: string };
+type SettingOption = { text: string; value: string; icon?: TemplateResult };
 
 const DEFAULT_PERMISSIONS = ['camera', 'microphone'];
 
@@ -104,6 +106,14 @@ export class CameraSource extends LitUploaderBlock {
     this._currentTimelineIcon = 'play';
   };
 
+  /** Fires once the first frame is in and again whenever the camera's shape changes, as on turning a phone. */
+  private readonly _handlePreviewResize = (event: Event): void => {
+    const { videoWidth: width, videoHeight: height } = event.currentTarget as HTMLVideoElement;
+    if (width && height) {
+      this._previewShape = { width, height };
+    }
+  };
+
   private _timerRef = createRef<HTMLElement>();
   private _lineRef = createRef<HTMLElement>();
   private _videoRef = createRef<HTMLVideoElement>();
@@ -132,6 +142,10 @@ export class CameraSource extends LitUploaderBlock {
   /** The largest short side the open camera reports, to leave out resolutions it can't do. */
   @state()
   private _maxShortSide: number | null = null;
+
+  /** The camera's own shape as the preview shows it, which the native ratio's icon draws. */
+  @state()
+  private _previewShape: { width: number; height: number } | null = null;
 
   private readonly _settingsPopoverId = `uc-camera-settings-${UID.generateFastUid()}`;
 
@@ -217,7 +231,7 @@ export class CameraSource extends LitUploaderBlock {
   };
 
   private _handleCameraSelectChange = (event: Event): void => {
-    const target = event.target as HTMLSelectElement | null;
+    const target = event.target as HTMLInputElement | null;
     if (!target) {
       return;
     }
@@ -226,7 +240,7 @@ export class CameraSource extends LitUploaderBlock {
   };
 
   private _handleAudioSelectChange = (event: Event): void => {
-    const target = event.target as HTMLSelectElement | null;
+    const target = event.target as HTMLInputElement | null;
     if (!target) {
       return;
     }
@@ -825,17 +839,85 @@ export class CameraSource extends LitUploaderBlock {
     return this._audioModeOptions.length < 2 || !this._isAudioPickerContext;
   }
 
-  private get _isSettingsHidden(): boolean {
-    return (
-      this._permissionState !== 'granted' ||
-      this._captureState !== 'live' ||
-      (this._isAspectRatioPickerHidden &&
-        this._isResolutionPickerHidden &&
-        this._isMicrophonePickerHidden &&
-        this._isAudioQualityPickerHidden &&
-        this._isAudioModePickerHidden)
-    );
+  private get _visibleSettingsCount(): number {
+    return [
+      this._isCameraSelectHidden,
+      this._isAspectRatioPickerHidden,
+      this._isResolutionPickerHidden,
+      this._isMicrophonePickerHidden,
+      this._isAudioQualityPickerHidden,
+      this._isAudioModePickerHidden,
+    ].filter((hidden) => !hidden).length;
   }
+
+  private get _isSettingsHidden(): boolean {
+    return this._permissionState !== 'granted' || this._captureState !== 'live' || this._visibleSettingsCount === 0;
+  }
+
+  /**
+   * One section of the settings accordion: the setting and its current value, opening onto the options as radios.
+   * The sections share a `name`, so opening one closes the others. A lone section is always open, its heading hidden;
+   * any other disabled section is shut and stays shut, its value still on show.
+   */
+  private _renderSetting({
+    key,
+    label,
+    hidden,
+    options,
+    value,
+    disabled = false,
+    onChange,
+  }: {
+    key: string;
+    label: string;
+    hidden: boolean;
+    options: SettingOption[];
+    value: string;
+    disabled?: boolean;
+    onChange: (event: Event) => void;
+  }) {
+    const current = options.find((option) => option.value === value);
+    const lone = !hidden && this._visibleSettingsCount === 1;
+    return html`
+      <details
+        class=${classMap({ 'uc-camera-setting': true, 'uc-disabled': disabled, 'uc-lone': lone })}
+        name=${this._settingsPopoverId}
+        ?open=${lone}
+        ?hidden=${hidden}
+      >
+        <summary aria-disabled=${disabled ? 'true' : 'false'} @click=${this._handleSettingToggle}>
+          <span>${label}</span>
+          <span class="uc-camera-setting-value">${current?.text ?? ''}</span>
+          <uc-icon class="uc-camera-setting-chevron" name="arrow-dropdown"></uc-icon>
+        </summary>
+        <div class="uc-camera-setting-options" role="radiogroup" aria-label=${label}>
+          ${options.map(
+            (option) => html`
+              <label class="uc-camera-setting-option">
+                <input
+                  type="radio"
+                  name=${`${this._settingsPopoverId}-${key}`}
+                  value=${option.value}
+                  .checked=${option.value === value}
+                  ?disabled=${disabled}
+                  @change=${onChange}
+                />
+                ${option.icon ?? nothing}
+                <span>${option.text}</span>
+              </label>
+            `,
+          )}
+        </div>
+      </details>
+    `;
+  }
+
+  /** Clicks and Enter or Space alike reach the summary as a click; a disabled section doesn't open. */
+  private _handleSettingToggle = (event: Event): void => {
+    if ((event.currentTarget as HTMLElement).ariaDisabled === 'true') {
+      event.preventDefault();
+    }
+  };
 
   private _handleAspectRatioPick = (event: Event): void => {
     const value = (event.target as { value?: string } | null)?.value;
@@ -879,6 +961,13 @@ export class CameraSource extends LitUploaderBlock {
 
   private _aspectRatioLabel(value: string): string {
     return value === NATIVE_ASPECT_RATIO ? this.l10n('camera-aspect-ratio-native') : value;
+  }
+
+  /** The shape of a ratio option; the native one takes the camera's, once its first frame is in. */
+  private _aspectRatioIcon(value: string): TemplateResult | undefined {
+    const ratio = toRatio(value);
+    if (ratio) return renderAspectRatioIcon(ratio, 1);
+    return this._previewShape ? renderAspectRatioIcon(this._previewShape.width, this._previewShape.height) : undefined;
   }
 
   private _resolutionLabel(value: CameraResolution): string {
@@ -1408,6 +1497,12 @@ export class CameraSource extends LitUploaderBlock {
   public override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
     this._applyVideoSource();
+    // Muting while the microphone section is open shuts it, unless it is the only one; the `open` binding only covers that one.
+    for (const section of this.querySelectorAll<HTMLDetailsElement>(
+      '.uc-camera-setting.uc-disabled:not(.uc-lone)[open]',
+    )) {
+      section.open = false;
+    }
   }
 
   private _destroy(): void {
@@ -1435,18 +1530,10 @@ export class CameraSource extends LitUploaderBlock {
         >
           <uc-icon name="back"></uc-icon>
         </button>
-        <div ?hidden=${!this._isCameraSelectHidden}>
+        <div>
           <uc-icon name="camera"></uc-icon>
           <span>${this.l10n('caption-camera')}</span>
         </div>
-        <uc-select
-          class="uc-camera-select"
-          .options=${this._cameraSelectOptions}
-          .value=${this._selectedCameraId ?? ''}
-          ?hidden=${this._isCameraSelectHidden}
-          @change=${this._handleCameraSelectChange}
-        >
-        </uc-select>
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
@@ -1462,6 +1549,7 @@ export class CameraSource extends LitUploaderBlock {
           muted
           autoplay
           playsinline
+          @resize=${this._handlePreviewResize}
           class=${classMap({ 'uc-cropped': this._isPreviewCropped })}
           style=${styleMap({
             transform: this._playbackMirrored ? null : this._videoTransformCss,
@@ -1582,48 +1670,59 @@ export class CameraSource extends LitUploaderBlock {
             <uc-icon name="settings"></uc-icon>
           </button>
           <div id=${this._settingsPopoverId} class="uc-camera-settings" popover="auto">
-            <label ?hidden=${this._isAspectRatioPickerHidden}>
-              <span>${this.l10n('camera-aspect-ratio')}</span>
-              <uc-select
-                .options=${this._aspectRatioOptions.map((value) => ({ value, text: this._aspectRatioLabel(value) }))}
-                .value=${this._aspectRatioChoice}
-                @change=${this._handleAspectRatioPick}
-              ></uc-select>
-            </label>
-            <label ?hidden=${this._isResolutionPickerHidden}>
-              <span>${this.l10n('camera-resolution')}</span>
-              <uc-select
-                .options=${this._resolutionOptions.map((value) => ({ value, text: this._resolutionLabel(value) }))}
-                .value=${this._resolution}
-                @change=${this._handleResolutionPick}
-              ></uc-select>
-            </label>
-            <label ?hidden=${this._isMicrophonePickerHidden}>
-              <span>${this.l10n('camera-microphone')}</span>
-              <uc-select
-                class="uc-microphone-select"
-                .options=${this._audioSelectOptions}
-                .value=${this._selectedAudioId ?? ''}
-                ?disabled=${this._audioSelectDisabled}
-                @change=${this._handleAudioSelectChange}
-              ></uc-select>
-            </label>
-            <label ?hidden=${this._isAudioQualityPickerHidden}>
-              <span>${this.l10n('camera-audio-quality')}</span>
-              <uc-select
-                .options=${this._audioQualityOptions.map((value) => ({ value, text: this._audioQualityLabel(value) }))}
-                .value=${this._audioQuality}
-                @change=${this._handleAudioQualityPick}
-              ></uc-select>
-            </label>
-            <label ?hidden=${this._isAudioModePickerHidden}>
-              <span>${this.l10n('camera-audio-mode')}</span>
-              <uc-select
-                .options=${this._audioModeOptions.map((value) => ({ value, text: this._audioModeLabel(value) }))}
-                .value=${this._audioMode}
-                @change=${this._handleAudioModePick}
-              ></uc-select>
-            </label>
+            ${this._renderSetting({
+              key: 'camera',
+              label: this.l10n('caption-camera'),
+              hidden: this._isCameraSelectHidden,
+              options: this._cameraSelectOptions,
+              value: this._selectedCameraId ?? '',
+              onChange: this._handleCameraSelectChange,
+            })}
+            ${this._renderSetting({
+              key: 'aspect-ratio',
+              label: this.l10n('camera-aspect-ratio'),
+              hidden: this._isAspectRatioPickerHidden,
+              options: this._aspectRatioOptions.map((value) => ({
+                value,
+                text: this._aspectRatioLabel(value),
+                icon: this._aspectRatioIcon(value),
+              })),
+              value: this._aspectRatioChoice,
+              onChange: this._handleAspectRatioPick,
+            })}
+            ${this._renderSetting({
+              key: 'resolution',
+              label: this.l10n('camera-resolution'),
+              hidden: this._isResolutionPickerHidden,
+              options: this._resolutionOptions.map((value) => ({ value, text: this._resolutionLabel(value) })),
+              value: this._resolution,
+              onChange: this._handleResolutionPick,
+            })}
+            ${this._renderSetting({
+              key: 'microphone',
+              label: this.l10n('camera-microphone'),
+              hidden: this._isMicrophonePickerHidden,
+              options: this._audioSelectOptions,
+              value: this._selectedAudioId ?? '',
+              disabled: this._audioSelectDisabled,
+              onChange: this._handleAudioSelectChange,
+            })}
+            ${this._renderSetting({
+              key: 'audio-quality',
+              label: this.l10n('camera-audio-quality'),
+              hidden: this._isAudioQualityPickerHidden,
+              options: this._audioQualityOptions.map((value) => ({ value, text: this._audioQualityLabel(value) })),
+              value: this._audioQuality,
+              onChange: this._handleAudioQualityPick,
+            })}
+            ${this._renderSetting({
+              key: 'audio-mode',
+              label: this.l10n('camera-audio-mode'),
+              hidden: this._isAudioModePickerHidden,
+              options: this._audioModeOptions.map((value) => ({ value, text: this._audioModeLabel(value) })),
+              value: this._audioMode,
+              onChange: this._handleAudioModePick,
+            })}
           </div>
         </div>
       </div>

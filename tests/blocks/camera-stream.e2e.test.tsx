@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Locator } from 'vitest/browser';
 import type { Config } from '@/index';
+import { settingOf } from '~/tests/utils/camera-settings';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -34,14 +35,16 @@ const previewTrack = (camera: Locator): MediaStreamTrack => {
 };
 
 /**
- * Picks a camera the way the header picker does. The fake device exposes a single camera, which keeps the picker
- * hidden, so the change is dispatched on it directly; re-picking the same camera still opens a new stream.
+ * Picks a camera the way the settings popup does. The fake device exposes a single camera, which keeps the picker
+ * hidden, so the change is dispatched on its radio directly; re-picking the same camera still opens a new stream.
  */
 const pickCamera = (camera: Locator, deviceId: string): void => {
-  const select = camera.element().querySelector('uc-select.uc-camera-select');
-  if (!select) throw new Error('The camera picker is not rendered');
-  (select as HTMLElement & { value: string }).value = deviceId;
-  select.dispatchEvent(new Event('change'));
+  const radio = settingOf(camera, 'Camera')
+    .radios()
+    .find((input) => input.value === deviceId);
+  if (!radio) throw new Error(`The camera picker has no ${deviceId}`);
+  radio.checked = true;
+  radio.dispatchEvent(new Event('change', { bubbles: true }));
 };
 
 describe('opening the camera', () => {
@@ -56,8 +59,10 @@ describe('opening the camera', () => {
     const deviceId = previewTrack(camera).getSettings().deviceId;
 
     await vi.waitFor(() => {
-      const select = camera.element().querySelector('uc-select.uc-camera-select') as { value: string } | null;
-      expect(select?.value).toBe(deviceId);
+      const checked = settingOf(camera, 'Camera')
+        .radios()
+        .find((radio) => radio.checked);
+      expect(checked?.value).toBe(deviceId);
     });
   });
 });
