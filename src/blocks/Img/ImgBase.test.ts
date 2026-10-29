@@ -236,7 +236,7 @@ describe('_getUrlBase — modifiers', () => {
     expect(el._getUrlBase('800')).toBe(`https://c.example.com/${UUID}/${ANALYTICS}`);
   });
 
-  // `parseObjectToString` filters `undefined` and `''` but not `null`, so a
+  // `_getCdnOperationFragments` filters `undefined` and `''` but not `null`, so a
   // caller passing an explicit null blur puts the literal in the URL.
   it('PRE-FIX: emits blur/null when blur is passed as null', () => {
     const el = makeImg({ src: '', 'cdn-cname': 'https://c.example.com', uuid: UUID });

@@ -8,7 +8,6 @@ import { uniqueArray } from '../../utils/uniqueArray';
 import {
   DEV_MODE,
   HI_RES_K,
-  ImgTypeEnum,
   MAX_WIDTH,
   MAX_WIDTH_JPG,
   ULTRA_RES_K,
@@ -16,11 +15,8 @@ import {
 } from './configurations';
 import { type CssPropValue, ImgConfig } from './ImgConfig';
 import type { ImgPropKey } from './props-map';
-import { type ParseableParams, parseObjectToString } from './utils/parseObjectToString';
 
 const log = logger.scope('img');
-
-type ImgType = (typeof ImgTypeEnum)[keyof typeof ImgTypeEnum];
 
 type LoaderParams = {
   src?: string;
@@ -36,11 +32,6 @@ type AppendUrlParams = {
   elNode: HTMLImageElement;
   src?: string;
   srcset?: string;
-};
-
-type CurrentImg = {
-  type: ImgType;
-  img: HTMLImageElement;
 };
 
 export class ImgBase extends ImgConfig {
@@ -65,9 +56,8 @@ export class ImgBase extends ImgConfig {
     if (!size) {
       return undefined;
     }
-    const ensuredSize = size;
-    const numericPart = ensuredSize.match(/\d+/)?.[0];
-    const alphabeticPart = ensuredSize.match(/[a-zA-Z]+/)?.[0];
+    const numericPart = size.match(/\d+/)?.[0];
+    const alphabeticPart = size.match(/[a-zA-Z]+/)?.[0];
 
     if (!numericPart || !alphabeticPart) {
       return undefined;
@@ -75,40 +65,26 @@ export class ImgBase extends ImgConfig {
 
     const bp = parseInt(numericPart, 10);
 
-    if (Number(bp) > MAX_WIDTH_JPG && this._hasFormatJPG) {
-      return MAX_WIDTH_JPG + alphabeticPart;
-    } else if (Number(bp) > MAX_WIDTH && !this._hasFormatJPG) {
-      return MAX_WIDTH + alphabeticPart;
-    }
-
-    return size;
+    const max = this._hasFormatJPG ? MAX_WIDTH_JPG : MAX_WIDTH;
+    return bp > max ? max + alphabeticPart : size;
   }
 
-  private _getCdnOperationFragments(
-    size?: string | null,
-    blur?: string | null,
-  ): (string | number | boolean | null | undefined)[] {
-    const params: ParseableParams = {
-      format: this._getTypedCssValue('format'),
-      quality: this._getTypedCssValue('quality'),
+  private _getCdnOperationFragments(size?: string | null, blur?: string | null): CssPropValue[] {
+    const params: Record<string, CssPropValue> = {
+      format: this.$$('format'),
+      quality: this.$$('quality'),
       resize: this._validateSize(size),
       blur,
-      'cdn-operations': this._getTypedCssValue('cdn-operations') ?? undefined,
-      analytics: this.analyticsParams(),
     };
-
-    return parseObjectToString(params);
-  }
-
-  private _getTypedCssValue(key: ImgPropKey): string | number | boolean | null | undefined {
-    const value = this.$$(key);
-    if (value === null || value === undefined) {
-      return value;
-    }
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      return value;
-    }
-    return undefined;
+    // `null` is not filtered out, so a null value still emits `<key>/null`.
+    // `operationsFromModifiers` drops the non-string and empty fragments.
+    return [
+      ...Object.entries(params)
+        .filter(([, value]) => value !== undefined && value !== '')
+        .map(([key, value]) => `${key}/${value}`),
+      this.$$('cdn-operations'),
+      this.analyticsParams(),
+    ];
   }
 
   private _getUrlBase(size: string | null = '', blur: string | null = ''): string | undefined {
@@ -195,16 +171,9 @@ export class ImgBase extends ImgConfig {
   }
 
   /** @internal */
-  protected _getElSize(el: HTMLElement, k = 1, wOnly = true): string | null {
-    const rect = el.getBoundingClientRect();
-    const w = k * Math.round(rect.width);
-    const h = wOnly ? '' : k * Math.round(rect.height);
-
-    if (w || h) {
-      return `${w ? w : ''}x${h ? h : ''}`;
-    } else {
-      return null;
-    }
+  protected _getElSize(el: HTMLElement, k = 1): string | null {
+    const w = k * Math.round(el.getBoundingClientRect().width);
+    return w ? `${w}x` : null;
   }
 
   private _setupEventProxy(img: HTMLImageElement): void {
@@ -227,16 +196,8 @@ export class ImgBase extends ImgConfig {
     return this._img;
   }
 
-  private get _currentImg(): CurrentImg {
-    return this._hasPreviewImage
-      ? {
-          type: ImgTypeEnum.PREVIEW as ImgType,
-          img: this._imgPreview,
-        }
-      : {
-          type: ImgTypeEnum.MAIN as ImgType,
-          img: this.img,
-        };
+  private get _currentImg(): HTMLImageElement {
+    return this._hasPreviewImage ? this._imgPreview : this.img;
   }
 
   private get _hasPreviewImage(): CssPropValue {
@@ -302,12 +263,12 @@ export class ImgBase extends ImgConfig {
         }
       });
     } else {
-      add(this._getUrlBase(this._getElSize(this._currentImg.img)), '1x');
+      add(this._getUrlBase(this._getElSize(this._currentImg)), '1x');
       if (this.$$('hi-res-support')) {
-        add(this._getUrlBase(this._getElSize(this._currentImg.img, 2)), '2x');
+        add(this._getUrlBase(this._getElSize(this._currentImg, 2)), '2x');
       }
       if (this.$$('ultra-res-support')) {
-        add(this._getUrlBase(this._getElSize(this._currentImg.img, 3)), '3x');
+        add(this._getUrlBase(this._getElSize(this._currentImg, 3)), '3x');
       }
     }
     return [...srcset].join();
@@ -383,7 +344,7 @@ export class ImgBase extends ImgConfig {
         this.appendChild(this._imgPreview);
       }
 
-      this.initIntersection(this._currentImg.img, async () => {
+      this.initIntersection(this._currentImg, async () => {
         const previewUrl = this._srcUrlPreview;
         if (this._hasPreviewImage && previewUrl) {
           this._imgPreview.src = previewUrl;
