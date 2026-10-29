@@ -1,3 +1,7 @@
+/**
+ * The English strings the cloud image editor's own locale shares with the uploader's `en` locale. DOM-free so both
+ * may import it; outside `src/locales/`, which `test:locales` reads as locale groups.
+ */
 export const EDITOR_SHARED_STRINGS = {
   cancel: 'Cancel',
   apply: 'Apply',

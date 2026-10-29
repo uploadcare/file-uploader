@@ -1,4 +1,4 @@
-import { EDITOR_SHARED_STRINGS } from '../../blocks/CloudImageEditor/src/editor-shared-strings';
+import { EDITOR_SHARED_STRINGS } from '../../abstract/editor-shared-strings';
 
 export default {
   ...EDITOR_SHARED_STRINGS,
