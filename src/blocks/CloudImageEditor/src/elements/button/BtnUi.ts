@@ -5,8 +5,8 @@ import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import type { AriaRole } from '../../../../../types/dom';
 import { EditorBlock } from '../../editor-context';
+import type { EditorL10nKey } from '../../editor-locale';
 import '../../EditorIcon';
-import type { L10nKey } from '../../../../../abstract/l10n';
 
 type Theme = string | null;
 
@@ -34,7 +34,7 @@ export class BtnUi extends EditorBlock {
   public selected: boolean | undefined = undefined;
 
   @property({ attribute: 'title-prop' })
-  public titleProp: L10nKey | '' = '';
+  public titleProp: EditorL10nKey | '' = '';
 
   protected override firstUpdated(changed: PropertyValues<this>): void {
     super.firstUpdated(changed);
