@@ -3,8 +3,7 @@ import type { PlainText, PluginRegistryApi } from '../../dist/index';
 
 /**
  * A plugin's label is a declared l10n key, or text asserted `as PlainText`. A plugin declares its own keys by
- * augmenting `CustomLocaleDefinition`, which also lets `registerL10n` autocomplete them. Any other string compiles too,
- * as in v1.
+ * augmenting `CustomLocaleDefinition`, which also lets `registerL10n` autocomplete them. Any other string compiles too.
  */
 declare module '../../dist/index' {
   interface CustomLocaleDefinition {
@@ -28,7 +27,9 @@ test('a label is a built-in key, a declared key, or marked plain text', () => {
   registry.registerActivity({ id: 'panel', label: 'my-plugin.source', render: () => undefined });
 });
 
-test('a plain string still compiles, as in v1 and the plugin docs (deprecated)', () => {
+// QUIRK(plugins): `PluginLabel` takes any string through its deprecated `string & {}` arm (NEXT-MAJOR(plugins) in
+// PluginTypes.ts). Pinned as current behaviour, not endorsed.
+test('a plain string still compiles as a label (deprecated)', () => {
   // extension-points.mdx
   registry.registerSource({ id: 'a', label: 'my-source.label', onSelect: () => {} });
   registry.registerFileAction({ id: 'edit', icon: 'edit', label: 'Edit', shouldRender: () => true, onClick: () => {} });
@@ -36,7 +37,9 @@ test('a plain string still compiles, as in v1 and the plugin docs (deprecated)',
   registry.registerActivity({ id: 'panel', label: () => 'Panel', render: () => undefined });
 });
 
-test('registerL10n takes declared keys and, as in v1 and assets.mdx, any other key', () => {
+// QUIRK(plugins): `PluginL10nRegistration` takes undeclared keys (NEXT-MAJOR(plugins) in PluginTypes.ts). Pinned as
+// current behaviour, not endorsed.
+test('registerL10n takes declared keys and any other key', () => {
   registry.registerL10n({ en: { 'my-plugin.source': 'My source', 'upload-file': 'Upload' } });
   registry.registerL10n({ en: { 'my-source.label': 'My Source' }, de: { 'my-source.label': 'Meine Quelle' } });
 });

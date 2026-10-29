@@ -257,7 +257,9 @@ describe('ChildBlock test mode', () => {
 });
 
 describe('static template', () => {
-  it('logs the deprecation error v1 logged when a block class is given a template', () => {
+  // QUIRK(blocks): the Symbiote-era `static template` setter still exists and only logs (NEXT-MAJOR(blocks) in
+  // ChildBlock.ts). Pinned as current behaviour, not endorsed.
+  it('logs a deprecation error when a block class is given a template', () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     class TemplatedBlock extends UseBlock {}
 

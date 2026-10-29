@@ -701,7 +701,9 @@ describe('UploaderPublicApi', () => {
       expect(setActivity).toHaveBeenCalledWith('upload-list', {});
     });
 
-    it('setCurrentActivity switches an open modal to the activity, as v1 did', async () => {
+    // QUIRK(api): the deprecated `setCurrentActivity` switches an open modal rather than only setting the background
+    // activity (NEXT-MAJOR(api) on `UploaderPublicApi.setCurrentActivity`). Pinned as current behaviour, not endorsed.
+    it('setCurrentActivity switches an open modal to the activity', async () => {
       const { api, ctrl } = setup();
       ctrl.router.activityBlockMounted('upload-list');
       ctrl.router.activityBlockMounted('url');
