@@ -104,7 +104,7 @@ export class EditorImageFader extends EditorBlock {
 
   /**
    * Loaded image size, passed from the root as a plain Lit prop (DOM-derived,
-   * not controller state) — the fader shows only once it and `*originalUrl` are
+   * not controller state) — the fader shows only once it and `originalUrl` are
    * ready on a non-crop tab (see `_syncFromState`). Root clears it to null on a
    * new image, which reliably re-triggers the reaction.
    */
@@ -223,7 +223,7 @@ export class EditorImageFader extends EditorBlock {
   /**
    * Reconcile the fader with controller state — the reactive replacement for
    * the old imperative calls from the toolbar (`_applyTabState`,
-   * `*editorTransformations`, `*originalUrl`), the root (`_activateViewer`),
+   * `editorTransformations`, `originalUrl`), the root (`_activateViewer`),
    * and the slider (`set`/`activate`/`deactivate`).
    */
   private _syncFromState(): void {
@@ -246,7 +246,7 @@ export class EditorImageFader extends EditorBlock {
       // `imageSize` prop (reactivation then happens via `updated`). Returning
       // here avoids re-activating with the previous image's still-stale
       // `imageSize` (root clears it to null asynchronously) or reapplying its
-      // live preview — the root also clears `*colorPreview` on image change.
+      // live preview — the root also clears `colorPreview` on image change.
       if (originalUrl !== this._lastOriginalUrl) {
         this._lastOriginalUrl = originalUrl;
         this._lastColorPreview = null;

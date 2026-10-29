@@ -43,8 +43,8 @@ export type ColorOperationConfigKey = ColorOperation | 'filter';
 
 /**
  * The slider's live, uncommitted color/filter adjustment, published to the
- * controller (`*colorPreview`) so the fader reacts and renders the preview.
- * `null` = no live preview (render the committed `*editorTransformations`).
+ * controller (`colorPreview`) so the fader reacts and renders the preview.
+ * `null` = no live preview (render the committed `editorTransformations`).
  */
 export type ColorPreview = {
   operation: ColorOperationConfigKey;

@@ -43,7 +43,7 @@ export function cropperImageSrc(
   );
 }
 
-/** Counts an image load in `*loadingImages`; the returned function (idempotent) uncounts it. */
+/** Counts an image load in `loadingImages`; the returned function (idempotent) uncounts it. */
 export function trackImageLoading(controller: CloudImageEditorController): () => void {
   controller.loadingImages = controller.loadingImages + 1;
   let done = false;

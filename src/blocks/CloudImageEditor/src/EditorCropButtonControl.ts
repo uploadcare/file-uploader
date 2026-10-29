@@ -31,7 +31,7 @@ export class EditorCropButtonControl extends EditorButtonControl {
     }
 
     // Crop ops are modelled through state: write the next value to
-    // `*editorTransformations`; the cropper reacts (applies + re-commits the
+    // `editorTransformations`; the cropper reacts (applies + re-commits the
     // consistent crop). No element ref needed — see `EditorImageCropper`.
     // Branch per operation so `patch` is a strongly-typed `Partial<Transformations>`
     // (`rotate` is a number, `flip`/`mirror` are booleans) — no assertions.

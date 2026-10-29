@@ -213,7 +213,7 @@ export class EditorFilterControl extends EditorButtonControl {
       return;
     }
 
-    // The `*originalUrl` subscription checks again once the image is known.
+    // The `originalUrl` subscription checks again once the image is known.
     if (!this._originalUrl) {
       return;
     }

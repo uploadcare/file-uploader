@@ -38,7 +38,7 @@ export class EditorSlider extends EditorBlock {
     zero: 0,
   };
 
-  /** The live, uncommitted preview intent for the fader (see `*colorPreview`). `null` clears it. */
+  /** The live, uncommitted preview intent for the fader (see `colorPreview`). `null` clears it. */
   private _publishPreview(value: number | undefined): void {
     this.editorController.colorPreview = {
       operation: this.state.operation,
@@ -49,7 +49,7 @@ export class EditorSlider extends EditorBlock {
 
   private _handleInput = (e: CustomEvent<{ value: number }>): void => {
     const { value } = e.detail;
-    // Was `fader.set(value)`; the fader reacts to `*colorPreview` now.
+    // Was `fader.set(value)`; the fader reacts to `colorPreview` now.
     this._publishPreview(value);
     this.state = { ...this.state, value };
   };
