@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { logger } from '../abstract/logger';
 import { type EffectHost, type EffectOptions, effect, registerHostEffects } from './effect';
 
 afterEach(() => {
@@ -20,7 +21,7 @@ class FakeHost {
   }
 }
 
-const wire = (host: FakeHost): Array<() => void> => registerHostEffects(host as unknown as EffectHost);
+const wire = (host: FakeHost): Array<() => void> => registerHostEffects(host as unknown as EffectHost, logger);
 
 describe('@effect / registerHostEffects', () => {
   it('registers each decorated method via updateEffect, bound to the host, forwarding options', () => {
@@ -147,7 +148,7 @@ describe('@effect / registerHostEffects', () => {
     expect(host.ran).toEqual(['good']);
   });
 
-  it('warns through the logger it is given, instead of the module logger', () => {
+  it('warns through the logger it is given, not the root logger', () => {
     const scopedWarn = vi.fn();
     const moduleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     class Host extends FakeHost {

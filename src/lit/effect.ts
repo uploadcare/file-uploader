@@ -1,8 +1,6 @@
 import type { ReactiveElement } from 'lit';
-import { type Logger, logger } from '../abstract/logger';
+import type { Logger } from '../abstract/logger';
 import { boundMethod, collectDecoratedMethods, makeMethodDecorator } from './reactive-method-registry';
-
-const log = logger.scope('effect');
 
 /**
  * `@effect()` — a method decorator over the `SignalWatcher` mixin's built-in
@@ -61,7 +59,7 @@ export const effect = makeMethodDecorator<EffectOptions>(EFFECT);
  * `hostLog`, the host's scoped logger — so the remaining methods still register
  * and any disposers already collected stay intact.
  */
-export function registerHostEffects(host: EffectHost, hostLog: Pick<Logger, 'warn'> = log): Array<() => void> {
+export function registerHostEffects(host: EffectHost, hostLog: Pick<Logger, 'warn'>): Array<() => void> {
   const disposers: Array<() => void> = [];
   for (const { key, options } of collectDecoratedMethods<EffectOptions>(host, EFFECT)) {
     const fn = boundMethod(host, key);
