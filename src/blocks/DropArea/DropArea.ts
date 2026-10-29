@@ -102,6 +102,9 @@ export class DropArea extends ChildBlock {
   private _destroyContentWrapperDropzone: (() => void) | null = null;
   private _contentWrapperRef: Ref<HTMLDivElement> = createRef();
   private readonly _handleAreaInteraction = (event: Event) => {
+    if (!this.clickable) {
+      return;
+    }
     if (event instanceof KeyboardEvent) {
       // `key` covers NumpadEnter; `code` keeps synthetic events that only set it working.
       const isActivation = event.key === 'Enter' || event.key === ' ' || ACTIVATION_CODES.has(event.code);
@@ -122,7 +125,12 @@ export class DropArea extends ChildBlock {
     this._api.openSystemDialog();
   };
   private _sourceListAllowsLocal = true;
-  private _clickableListenersAttached = false;
+
+  public constructor() {
+    super();
+    this.addEventListener('keydown', this._handleAreaInteraction);
+    this.addEventListener('click', this._handleAreaInteraction);
+  }
 
   // The stylesheet keys off flag presence (`[with-icon]`, `[ghost]`, …), so a flag written as `"false"` is dropped
   // to keep the styles in line with the property, which already reads it as off.
@@ -171,7 +179,6 @@ export class DropArea extends ChildBlock {
     dropAreaRegistry.add(this);
     this._updateIsEnabled();
     this._updateVisibility();
-    this._updateClickableListeners();
     this._updateDragStateAttribute(DropzoneState.INACTIVE);
 
     this._destroyDropzone = addDropzone({
@@ -268,9 +275,6 @@ export class DropArea extends ChildBlock {
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
-    if (changedProperties.has('clickable')) {
-      this._updateClickableListeners();
-    }
     if (changedProperties.has('clickable') || changedProperties.has('disabled')) {
       this._updateButtonSemantics();
     }
@@ -298,13 +302,7 @@ export class DropArea extends ChildBlock {
     if (!this.fullscreen) {
       return false;
     }
-    const registry = dropAreaRegistry;
-    if (registry.size === 0) {
-      return false;
-    }
-    const otherTargets = [...registry].filter((el) => el !== this);
-    const activeTargets = otherTargets.filter((el) => el.isActive());
-    return activeTargets.length > 0;
+    return [...dropAreaRegistry].some((el) => el !== this && el.isActive());
   }
 
   private _couldHandleFiles(): boolean {
@@ -338,12 +336,7 @@ export class DropArea extends ChildBlock {
   }
 
   private _updateDragStateAttribute(state: DropzoneStateValue): void {
-    const stateText = Object.entries(DropzoneState)
-      .find(([, value]) => value === state)?.[0]
-      .toLowerCase();
-    if (stateText) {
-      this.setAttribute('drag-state', stateText);
-    }
+    this.setAttribute('drag-state', state);
   }
 
   private _setupContentWrapperDropzone(): void {
@@ -358,44 +351,10 @@ export class DropArea extends ChildBlock {
 
     this._destroyContentWrapperDropzone = addDropzone({
       element: contentWrapperEl,
-      onChange: (state: DropzoneStateValue) => {
-        const stateText = Object.entries(DropzoneState)
-          .find(([, value]) => value === state)?.[0]
-          .toLowerCase();
-        if (stateText) {
-          contentWrapperEl.setAttribute('drag-state', stateText);
-        }
-      },
+      onChange: (state: DropzoneStateValue) => contentWrapperEl.setAttribute('drag-state', state),
       onItems: () => {},
       shouldIgnore: () => this._shouldIgnore(),
     });
-  }
-
-  private _updateClickableListeners(): void {
-    if (this.clickable && !this._clickableListenersAttached) {
-      this.addEventListener('keydown', this._handleAreaInteraction);
-      this.addEventListener('click', this._handleAreaInteraction);
-      this._clickableListenersAttached = true;
-    } else if (!this.clickable && this._clickableListenersAttached) {
-      this.removeEventListener('keydown', this._handleAreaInteraction);
-      this.removeEventListener('click', this._handleAreaInteraction);
-      this._clickableListenersAttached = false;
-    }
-  }
-
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    // Registry membership + dropzone bindings are torn down by `controllerReleased`
-    // (which `super.disconnectedCallback()` → `_releaseController` invokes). Only
-    // the clickable host listeners are handled here: they're toggled by the
-    // `clickable` property via `updated()` (DOM lifecycle, not adoption), so their
-    // removal + reconnect-guard flag reset stays on the DOM disconnect.
-    if (this._clickableListenersAttached) {
-      this.removeEventListener('keydown', this._handleAreaInteraction);
-      this.removeEventListener('click', this._handleAreaInteraction);
-      this._clickableListenersAttached = false;
-    }
   }
 
   public override render() {
