@@ -23,7 +23,7 @@ export type ColorOperation = (typeof ALL_COLOR_OPERATIONS)[number];
  * `FILTER_NAMES` (40 names, same order), so keeping our own copy only risked
  * drifting from the CDN as presets are added or renamed.
  *
- * Each name still needs a label in `editor-locale.ts` to render in the toolbar.
+ * `editor-locale.ts` derives each name's label by capitalising it.
  */
 export const ALL_FILTERS = FILTER_NAMES;
 
