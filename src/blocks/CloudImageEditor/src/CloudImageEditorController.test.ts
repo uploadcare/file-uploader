@@ -133,3 +133,10 @@ describe('CloudImageEditorController', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 });
+
+describe('CloudImageEditorController default services', () => {
+  it('ignores an action event before setServices', () => {
+    const controller = new CloudImageEditorController();
+    expect(controller.telemetry.sendActionEvent('click', 'UC-BTN-UI', { tabId: TabId.CROP })).toBeUndefined();
+  });
+});
