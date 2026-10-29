@@ -45,15 +45,14 @@ export class FileUploaderInline extends SolutionChildBlock {
    * Whether the cancel button shows — drives `.uc-cancel-btn[hidden]`, which the
    * inline `:has(.uc-cancel-btn[hidden])` CSS keys off.
    *
-   * Behavior-preservation (M-god step 6b-4 review): this is recomputed ONLY on a
-   * router notify (see the subscription in `controllerReady`), stored in `@state`
-   * — exactly as v1 did via `subRouter`. It is deliberately NOT a tracked render
-   * read of `uploadList`/`showEmptyList`: v1 read those imperatively inside the
-   * router-notify callback, so an upload-list change that does NOT coincide with
-   * a router transition (e.g. the list emptying without a `setActivity`) never
-   * refires the recompute and the previously-computed value is retained
-   * (stale-by-design). A tracked getter would re-hide the button on such a
-   * change and diverge from v1 (flipping the inline `:has(.uc-cancel-btn[hidden])`
+   * This is recomputed ONLY on a router notify (see the subscription in
+   * `controllerReady`) and stored in `@state`. It is deliberately NOT a tracked
+   * render read of `uploadList`/`showEmptyList`: those are read imperatively
+   * inside the router-notify callback, so an upload-list change that does NOT
+   * coincide with a router transition (e.g. the list emptying without a
+   * `setActivity`) never refires the recompute and the previously-computed value
+   * is retained (stale-by-design, as in v1). A tracked getter would re-hide the
+   * button on such a change (flipping the inline `:has(.uc-cancel-btn[hidden])`
    * layout). Do not "re-fix" this into a reactive read.
    */
   @state()

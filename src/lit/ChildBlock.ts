@@ -101,9 +101,8 @@ export abstract class ChildBlock extends ChildBlockBase {
     return this.tagName.toLowerCase();
   }
 
-  // Test-mode `data-testid` state (folded in from the former reactive
-  // `TestModeController`): the inner non-custom `[data-testid]` elements this
-  // host owns, and their original (unprefixed) values. Driven by `_applyTestMode`.
+  // Test-mode `data-testid` state: the inner non-custom `[data-testid]` elements
+  // this host owns, and their original (unprefixed) values. Driven by `_applyTestMode`.
   private _testModeOriginal = new Map<Element, string>();
 
   // biome-ignore lint/correctness/noUnusedPrivateClassMembers: `ContextConsumer` subscribes by side effect — the field keeps it alive for the host's lifetime.
@@ -149,9 +148,7 @@ export abstract class ChildBlock extends ChildBlockBase {
    * (pre-adoption access is a bug — same contract as an `@inject` field read).
    * The non-null counterpart to `containerOrNull`, for the observer-registration reads that
    * run from `controllerReady` (where adoption is guaranteed) — e.g.
-   * `this.container.whenController(UploadCollectionController, cb)`, the direct
-   * successor to the `bag.when('uploadCollection', cb)` now-or-when-available
-   * registration.
+   * `this.container.whenController(UploadCollectionController, cb)`.
    */
   protected get container(): ControllerContainer {
     if (!this._container) {
@@ -187,9 +184,8 @@ export abstract class ChildBlock extends ChildBlockBase {
   @injectOrNull(EventEmitter) private readonly _eventEmitter!: EventEmitter | null;
 
   /**
-   * Same contract as v1 `LitBlock.l10n` (`createL10n`): dictionary lookup with
-   * key fallback, template variables, pluralization. Reads directly from this
-   * ctx's `LocaleController` (M-god step 7: off the `*l10n/*` PubSub facade).
+   * Dictionary lookup (`createL10n`) with key fallback, template variables and
+   * pluralization, read from this ctx's `LocaleController`.
    * Call at render time (the render gate guarantees the container is adopted, so
    * the `@inject` `_locale` read resolves). Lookups go through
    * `LocaleController.getTracked`, so an `l10n(key)` read inside
@@ -215,17 +211,11 @@ export abstract class ChildBlock extends ChildBlockBase {
   });
 
   /**
-   * Emit a documented uploader event — same contract as v1 `LitBlock.emit`.
-   * Guarded for teardown: emissions can race ctx destruction (queued events),
-   * so a missing emitter is a no-op.
-   *
-   * M-god step 3c removed the per-emit telemetry mirror that used to live here:
-   * telemetry is now an `EventBus` observer (`TelemetryManager.init()`
-   * subscribes to `bus.onAny`), and this `eventEmitter.emit` funnels into that
-   * same bus — so keeping a mirror here would double-count every event this
-   * path dispatches (buttons' `UPLOAD_CLICK`/`DONE_CLICK`, the upload stack's
-   * `COMMON_UPLOAD_SUCCESS`/`GROUP_CREATED`/…). The teardown guard stays: a
-   * suppressed emit reaches neither the bus nor, therefore, telemetry.
+   * Emit a documented uploader event. Guarded for teardown: emissions can race
+   * ctx destruction (queued events), so a missing emitter is a no-op. Telemetry
+   * observes the same `EventBus` (`TelemetryManager.init()` subscribes to
+   * `bus.onAny`), so there is no per-emit telemetry call here; a suppressed emit
+   * reaches neither.
    */
   public emit(
     type: Parameters<EventEmitter['emit']>[0],
@@ -387,13 +377,9 @@ export abstract class ChildBlock extends ChildBlockBase {
   private _adoptController(container: ControllerContainer): void {
     if (this._container === container) return;
     this._releaseController();
-    // Anchor the consumer refcount on the container (M-god step 6a): this block
-    // keeps its ctx alive by being a container consumer, not by holding a
-    // `UploaderRegistry.whenAvailable` subscription. `addConsumer`/`removeConsumer`
-    // run at adopt/release, which — because `whenAvailable` fires synchronously
-    // once `ensureUploaderCtx` has forced the container into existence — is the
-    // same instant the registry subscription used to be the refcount, preserving
-    // exact teardown timing (`isCtxUnreferenced` reads `container.isUnreferenced()`).
+    // Anchor the consumer refcount on the container: this block keeps its ctx
+    // alive by being a container consumer. `addConsumer`/`removeConsumer` run at
+    // adopt/release (`isCtxUnreferenced` reads `container.isUnreferenced()`).
     this._container = container;
     this._lifetime = new Lifetime();
     // Tag this element with the container so `@inject(Token)` fields on migrated
@@ -475,10 +461,8 @@ export abstract class ChildBlock extends ChildBlockBase {
 
   /**
    * Prefix every inner non-custom `[data-testid]` this block owns with its
-   * `testId` while the ctx's `testMode` config is on (folded in from the former
-   * reactive `TestModeController` + its `trySubscribeTestMode` hook). This
-   * `@effect` replaces the controller's manual subscribe/retry lifecycle: it
-   * re-runs when `testMode` changes. `updated()` also collects newly rendered
+   * `testId` while the ctx's `testMode` config is on. This `@effect` re-runs
+   * when `testMode` changes. `updated()` also collects newly rendered
    * elements, since signal effects cache their results between signal changes.
    * The effect is auto-disposed on release, so no hand-managed
    * subscribe/unsubscribe. (The HOST element's own `data-testid` is synced
@@ -531,7 +515,7 @@ export abstract class ChildBlock extends ChildBlockBase {
   /**
    * Collect the inner (non-custom-element) `[data-testid]` elements scoped to
    * this host, recording each one's original value, and drop any that are no
-   * longer connected under this host. Ported verbatim from `TestModeController`.
+   * longer connected under this host.
    */
   private _collectTestModeElements(): void {
     const root = this.renderRoot;
