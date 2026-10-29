@@ -71,31 +71,19 @@ type Teardown = () => void;
  * (void, a Promise, a non-function) yields no teardown.
  */
 const toTeardown = (result: void | Teardown | Teardown[]): Teardown | undefined => {
-  if (typeof result === 'function') {
-    return () => {
-      try {
-        result();
-      } catch (err) {
-        log.warn('a whenController teardown threw', err);
-      }
-    };
-  }
-  if (Array.isArray(result)) {
-    const fns = result.filter((fn): fn is Teardown => typeof fn === 'function');
-    return fns.length > 0
-      ? () => {
-          // Isolate-and-warn: one throwing teardown must not stop the rest.
-          for (const fn of fns) {
-            try {
-              fn();
-            } catch (err) {
-              log.warn('a whenController teardown threw', err);
-            }
+  const fns = (Array.isArray(result) ? result : [result]).filter((fn): fn is Teardown => typeof fn === 'function');
+  return fns.length > 0
+    ? () => {
+        // Isolate-and-warn: one throwing teardown must not stop the rest.
+        for (const fn of fns) {
+          try {
+            fn();
+          } catch (err) {
+            log.warn('a whenController teardown threw', err);
           }
         }
-      : undefined;
-  }
-  return undefined;
+      }
+    : undefined;
 };
 
 export interface Initializable {
