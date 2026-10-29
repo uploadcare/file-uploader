@@ -7,12 +7,10 @@ export interface UploadEntryData extends Record<string, unknown> {
   externalUrl: string | null;
   fileName: string | null;
   fileSize: number | null;
-  lastModified: number;
   uploadProgress: number;
   uuid: string | null;
   isImage: boolean;
   mimeType: string | null;
-  ctxName: string | null;
   cdnUrl: string | null;
   cdnUrlModifiers: string | null;
   fileInfo: UploadcareFile | null;
@@ -37,12 +35,10 @@ export const initialUploadEntryData: UploadEntryData = {
   externalUrl: null,
   fileName: null,
   fileSize: null,
-  lastModified: Date.now(),
   uploadProgress: 0,
   uuid: null,
   isImage: false,
   mimeType: null,
-  ctxName: null,
   cdnUrl: null,
   cdnUrlModifiers: null,
   fileInfo: null,
