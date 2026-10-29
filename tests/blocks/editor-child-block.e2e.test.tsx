@@ -1,10 +1,8 @@
 import { ContextProvider } from '@lit/context';
 import { html, LitElement } from 'lit';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
-import {
-  CloudImageEditorController,
-  type EditorServices,
-} from '@/blocks/CloudImageEditor/src/CloudImageEditorController';
+import { stubEditorServices } from '@/blocks/CloudImageEditor/src/__tests__/editor-fixtures';
+import { CloudImageEditorController } from '@/blocks/CloudImageEditor/src/CloudImageEditorController';
 import { cloudImageEditorContext, EditorBlock } from '@/blocks/CloudImageEditor/src/editor-context';
 import { LightDomMixin } from '@/lit/LightDomMixin';
 import { RegisterableElementMixin } from '@/lit/RegisterableElementMixin';
@@ -24,16 +22,16 @@ const TestEditorRootBase = RegisterableElementMixin(LightDomMixin(LitElement));
 class TestEditorRoot extends TestEditorRootBase {
   public readonly telemetrySendEvent = vi.fn();
   public readonly telemetrySendEventError = vi.fn();
-  public readonly controller = new CloudImageEditorController({
-    l10n: (key) => (key === 'cancel' ? 'Cancel' : key),
-    getConfig: ((key: string) => (key === 'pubkey' ? 'demopublickey' : undefined)) as EditorServices['getConfig'],
-    telemetry: {
-      sendEvent: this.telemetrySendEvent,
-      sendEventError: this.telemetrySendEventError,
-      sendActionEvent: vi.fn(),
-    },
-    proxyUrl: async (url) => url,
-  });
+  public readonly controller = new CloudImageEditorController(
+    stubEditorServices({
+      l10n: (key) => (key === 'cancel' ? 'Cancel' : key),
+      telemetry: {
+        sendEvent: this.telemetrySendEvent,
+        sendEventError: this.telemetrySendEventError,
+        sendActionEvent: vi.fn(),
+      },
+    }),
+  );
 
   // biome-ignore lint/correctness/noUnusedPrivateClassMembers: `ContextProvider` provides by side effect — the field keeps it alive for the host's lifetime.
   private readonly _provider = new ContextProvider(this, {
@@ -186,20 +184,13 @@ if (!customElements.get('uc-test-editor-key-child'))
   customElements.define('uc-test-editor-key-child', TestEditorKeyChild);
 
 describe('EditorBlock state reactions', () => {
-  const services = (l10n: EditorServices['l10n']): EditorServices => ({
-    l10n,
-    getConfig: (() => undefined) as EditorServices['getConfig'],
-    telemetry: { sendEvent: vi.fn(), sendEventError: vi.fn(), sendActionEvent: vi.fn() },
-    proxyUrl: async (url) => url,
-  });
-
   it('re-renders a child reading l10n when the services change', async () => {
     const root = append('uc-test-editor-root', 'test-editor-root-services');
     const child = document.createElement('uc-test-editor-child');
     root.append(child);
     await expect.poll(() => child.querySelector('.l10n')?.textContent).toBe('Cancel');
 
-    root.controller.setServices(services((key) => `de:${key}`));
+    root.controller.setServices(stubEditorServices({ l10n: (key) => `de:${key}` }));
 
     await expect.poll(() => child.querySelector('.l10n')?.textContent).toBe('de:cancel');
   });

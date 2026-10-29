@@ -1,6 +1,7 @@
 import { DEMO_IMAGE_UUID, EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
+import { activeClass, networkSplashVisible } from '@/blocks/CloudImageEditor/src/__tests__/editor-fixtures';
 import { EditorImageFader } from '@/blocks/CloudImageEditor/src/EditorImageFader';
 import { SliderUi } from '@/blocks/CloudImageEditor/src/elements/slider/SliderUi';
 import type { ApplyResult } from '@/blocks/CloudImageEditor/src/types';
@@ -39,9 +40,6 @@ const renderEditor = (image: Record<string, string> = { uuid: UUID }, { qualityI
   inCtx('div', ctxName).append(element, config);
   return { element, editor: within(element) };
 };
-
-/** Activation draws the image and marks the element `uc-active_from_*`, so the class is the "it really works" signal. */
-const activeClass = (element: Element | null | undefined) => element?.className ?? '';
 
 const cropperSize = (element: HTMLElement) => element.querySelector('uc-editor-image-cropper')?.imageSize;
 
@@ -170,19 +168,17 @@ describe('uc-cloud-image-editor', () => {
       return Response.json({ width: 640, height: 480 });
     });
     const { element } = renderEditor();
-    const cropperSize = () =>
-      (element.querySelector('uc-editor-image-cropper') as { imageSize?: { width: number } } | null)?.imageSize;
     await expect.poll(() => held).toBe(true);
 
     element.setAttribute('uuid', DEMO_IMAGE_UUID);
-    await expect.poll(() => cropperSize()?.width).toBe(640);
+    await expect.poll(() => cropperSize(element)?.width).toBe(640);
     released.resolve();
     // The sentinel: the held body is parsed; a task later anything that would apply it has run.
     await parsed.promise;
     await delay(0);
-    await (element as HTMLElement & { updateComplete: Promise<unknown> }).updateComplete;
+    await element.updateComplete;
 
-    expect(cropperSize()?.width).toBe(640);
+    expect(cropperSize(element)?.width).toBe(640);
   });
 
   // Fake-only: the error answer comes from the emulator.
@@ -239,10 +235,8 @@ describe('uc-cloud-image-editor', () => {
     const cropper = editor.getByTestId('uc-editor-image-cropper');
     await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
     // A new image while the editor has its size: this wait sees the size at once.
-    const imageSize = () =>
-      (element.querySelector('uc-editor-image-cropper') as { imageSize?: { width: number } } | null)?.imageSize;
     element.setAttribute('uuid', DEMO_IMAGE_UUID);
-    await expect.poll(() => imageSize()?.width).toBe(640);
+    await expect.poll(() => cropperSize(element)?.width).toBe(640);
 
     element.style.display = 'none';
     element.setAttribute('uuid', EDITOR_IMAGE_UUID);
@@ -363,9 +357,6 @@ describe('uc-cloud-image-editor', () => {
   });
 
   describe.skipIf(isLive)('network problems', () => {
-    const splash = (element: HTMLElement) =>
-      element.querySelector('.uc-network_problems_splash') as (HTMLElement & { visible: boolean }) | null;
-
     it('shows the network problems screen when the image info request fails, and Retry loads the image', async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
       let offline = true;
@@ -374,12 +365,12 @@ describe('uc-cloud-image-editor', () => {
       );
       const { element, editor } = renderEditor();
 
-      await expect.poll(() => splash(element)?.visible).toBe(true);
+      await expect.poll(() => networkSplashVisible(element)).toBe(true);
 
       offline = false;
       await editor.getByText('Retry').click();
 
-      await expect.poll(() => splash(element)?.visible).toBe(false);
+      await expect.poll(() => networkSplashVisible(element)).toBe(false);
       await expect.poll(() => cropperSize(element)?.width).toBe(640);
     });
 
@@ -393,12 +384,12 @@ describe('uc-cloud-image-editor', () => {
       // A width no other test uses, so the image URL (which carries it) can't come from the browser cache.
       element.style.width = '517px';
 
-      await expect.poll(() => splash(element)?.visible).toBe(true);
+      await expect.poll(() => networkSplashVisible(element)).toBe(true);
 
       offline = false;
       await editor.getByText('Retry').click();
 
-      await expect.poll(() => splash(element)?.visible).toBe(false);
+      await expect.poll(() => networkSplashVisible(element)).toBe(false);
       await expect.poll(() => activeClass(element.querySelector('uc-editor-image-cropper'))).toContain('uc-active');
     });
 
@@ -410,13 +401,13 @@ describe('uc-cloud-image-editor', () => {
       );
       const { element } = renderEditor();
 
-      await expect.poll(() => splash(element)?.visible).toBe(true);
+      await expect.poll(() => networkSplashVisible(element)).toBe(true);
 
       offline = false;
       element.setAttribute('uuid', DEMO_IMAGE_UUID);
 
       await expect.poll(() => cropperSize(element)?.width).toBe(640);
-      await expect.poll(() => splash(element)?.visible).toBe(false);
+      await expect.poll(() => networkSplashVisible(element)).toBe(false);
       await expect.poll(() => activeClass(element.querySelector('uc-editor-image-cropper'))).toContain('uc-active');
     });
   });
@@ -461,8 +452,7 @@ describe('uc-cloud-image-editor', () => {
       rendered.element.style.width = `${width}px`;
       return rendered;
     };
-    const loaderActive = (element: HTMLElement) =>
-      (element.querySelector('uc-line-loader-ui') as { active?: boolean } | null)?.active;
+    const loaderActive = (element: HTMLElement) => element.querySelector('uc-line-loader-ui')?.active;
 
     it('leaves a cropper deactivated before its image arrived inactive', async () => {
       const images = holdImages();
@@ -747,8 +737,7 @@ describe.skipIf(isLive)('uc-cloud-image-editor container size', () => {
     };
     if (!sized) hide();
     container.append(element, config);
-    const openWidth = () =>
-      (element.querySelector('uc-editor-image-cropper') as { imageSize?: { width: number } } | null)?.imageSize?.width;
+    const openWidth = () => element.querySelector('uc-editor-image-cropper')?.imageSize?.width;
     const isOn = () => element.classList.contains('uc-editor_ON');
     return { element, show, hide, openWidth, isOn };
   };

@@ -1,10 +1,10 @@
 import { DEMO_IMAGE_UUID, EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
+import { activeClass, networkSplashVisible } from '@/blocks/CloudImageEditor/src/__tests__/editor-fixtures';
 import type { CloudImageEditorBlock } from '@/blocks/CloudImageEditor/src/CloudImageEditorBlock';
 import type { CloudImageEditorController } from '@/blocks/CloudImageEditor/src/CloudImageEditorController';
 import type { ApplyResult } from '@/blocks/CloudImageEditor/src/types';
-import { delay } from '@/utils/delay';
 import '~/types/jsx';
 import { within } from '~/tests/utils/render-solution';
 
@@ -38,7 +38,14 @@ const renderEditor = (image: { uuid: string } | { 'cdn-url': string } = { uuid: 
 const controllerOf = (element: CloudImageEditorBlock) =>
   (element as unknown as { _editorController: CloudImageEditorController })._editorController;
 
-const activeClass = (element: Element | null | undefined) => element?.className ?? '';
+/** Resolves once the next `updateImage` call (an image attribute change) has settled. */
+const updateImageSettled = (element: CloudImageEditorBlock) => {
+  const updateImage = vi.spyOn(element, 'updateImage');
+  return async () => {
+    await expect.poll(() => updateImage.mock.calls.length).toBe(1);
+    await updateImage.mock.results[0]?.value;
+  };
+};
 
 const cropperActive = (element: HTMLElement) =>
   expect.poll(() => activeClass(element.querySelector('uc-editor-image-cropper'))).toMatch(/uc-active_from_/);
@@ -193,15 +200,13 @@ describe('editor state reactions', () => {
   it('shows the network problems screen when the state says so and Retry clears it with the image loaded', async () => {
     const { element, editor } = renderEditor();
     await cropperActive(element);
-    const splash = () =>
-      (element.querySelector('.uc-network_problems_splash') as (HTMLElement & { visible: boolean }) | null)?.visible;
 
     controllerOf(element).networkProblems = true;
-    await expect.poll(splash).toBe(true);
+    await expect.poll(() => networkSplashVisible(element)).toBe(true);
 
     await editor.getByText('Retry').click();
 
-    await expect.poll(splash).toBe(false);
+    await expect.poll(() => networkSplashVisible(element)).toBe(false);
     expect(controllerOf(element).networkProblems).toBe(false);
     await cropperActive(element);
   });
@@ -225,12 +230,12 @@ describe('editor state reactions', () => {
     const controller = controllerOf(element);
     const originalUrl = controller.originalUrl;
     const fetchSpy = vi.spyOn(window, 'fetch');
+    const updated = updateImageSettled(element);
 
     element.removeAttribute('cdn-url');
     element.setAttribute('uuid', EDITOR_IMAGE_UUID);
-    await element.updateComplete;
-    // Negative wait: a reload would request the image info on the next tick; nothing marks that it did not.
-    await delay(50);
+    // A reload would have requested the image info before `updateImage` settled.
+    await updated();
 
     expect(fetchSpy).not.toHaveBeenCalled();
     expect(controller.originalUrl).toBe(originalUrl);
@@ -240,10 +245,10 @@ describe('editor state reactions', () => {
     const { element } = renderEditor({ 'cdn-url': `https://ucarecdn.com/${EDITOR_IMAGE_UUID}/` });
     await cropperActive(element);
     const controller = controllerOf(element);
+    const updated = updateImageSettled(element);
 
     element.setAttribute('cdn-url', `https://ucarecdn.com/${EDITOR_IMAGE_UUID}/-/rotate/90/`);
-    await element.updateComplete;
-    await delay(50);
+    await updated();
 
     // QUIRK(cloud-image-editor): `updateImage` returns early when the parsed original URL is unchanged
     // (CloudImageEditorBlock.ts `originalUrl === …originalUrl` check), so a cdn-url carrying new operations for the
@@ -261,12 +266,10 @@ describe('editor state reactions', () => {
     vi.spyOn(controller, 'proxyUrl').mockImplementation((url) =>
       url.includes('scale_crop') ? Promise.reject(new Error('offline')) : proxyUrl(url),
     );
-    const splash = () =>
-      (element.querySelector('.uc-network_problems_splash') as (HTMLElement & { visible: boolean }) | null)?.visible;
 
     await userEvent.click(editor.getByRole('tab', { name: /filters/i }));
 
-    await expect.poll(splash).toBe(true);
+    await expect.poll(() => networkSplashVisible(element)).toBe(true);
     expect(controller.networkProblems).toBe(true);
   });
 });

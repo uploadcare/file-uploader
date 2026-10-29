@@ -3,7 +3,8 @@ import { html, LitElement } from 'lit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { LightDomMixin } from '../../../lit/LightDomMixin';
 import { debounced, throttled } from '../../../lit/rate-limited-method';
-import { CloudImageEditorController } from './CloudImageEditorController';
+import { stubEditorServices } from './__tests__/editor-fixtures';
+import { CloudImageEditorController, DEFAULT_EDITOR_CONFIG } from './CloudImageEditorController';
 import { cloudImageEditorContext, EditorBlock } from './editor-context';
 
 class LifetimeEditorRoot extends LightDomMixin(LitElement) {
@@ -247,19 +248,14 @@ describe('EditorBlock attach callbacks', () => {
 
   it('prints the verbose log tier only when the debug config is on', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-    let debug = false;
-    const controller = new CloudImageEditorController({
-      l10n: (key) => key,
-      getConfig: ((key: string) => (key === 'debug' ? debug : undefined)) as CloudImageEditorController['getConfig'],
-      telemetry: { sendEvent: () => {}, sendEventError: () => {}, sendActionEvent: () => {} },
-      proxyUrl: async (url) => url,
-    });
+    const config = { ...DEFAULT_EDITOR_CONFIG };
+    const controller = new CloudImageEditorController(stubEditorServices({ getConfig: (key) => config[key] }));
     const { child } = mountAttach(controller);
 
     child.log.debug('quiet');
     expect(log).not.toHaveBeenCalled();
 
-    debug = true;
+    config.debug = true;
     child.log.debug('loud');
     expect(log).toHaveBeenCalledTimes(1);
     expect(log.mock.calls[0]?.at(-1)).toBe('loud');
