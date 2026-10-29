@@ -158,18 +158,19 @@ tests/             Browser e2e (*.e2e.test.tsx)
 - **Base classes:** `ChildBlock`
   (`SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)))`) is the
   block base; `ActivityChildBlock` / `SolutionChildBlock` / `FileItemConfig`
-  extend it. Blocks declare `static uses = [...]` and resolve controllers via
-  `this.use(Token)` / `useOrNull(Token)` / `container.whenController(Token, cb)`,
-  reading reactive state via `getTracked(...)` under `SignalWatcher` (imperative
-  reads use `get(...)`). Controllers are plain DOM-free classes owned by the
-  container — they must **not** import `lit` or touch the DOM. A Biome
-  `noRestrictedImports` override in `biome.json` fails any `src/abstract` import of
+  extend it. Blocks `@inject` the controllers they need (`@injectOrNull` for an
+  optional one) or resolve them via `useOrNull(Token)` /
+  `container.whenController(Token, cb)`, reading reactive state via
+  `getTracked(...)` under `SignalWatcher` (imperative reads use `get(...)`).
+  Controllers are plain DOM-free classes owned by the container — they must
+  **not** import `lit` or touch the DOM. A Biome `noRestrictedImports` override in `biome.json` fails any `src/abstract` import of
   `lit`, `src/lit`, `src/blocks` or `src/solutions` (specs are exempt). Shared
   DOM-free pieces live in `src/abstract`, `src/utils` or `src/types`; controllers
   that do need the DOM (`A11y`, `ClipboardController`) live in `src/lit`.
 - **Public JS API:** `element.getAPI()` → `UploaderPublicApi` (a thin `@inject`
   facade resolved from the container). Events dispatch on
-  `<uc-upload-ctx-provider>` (`EventType` in `EventEmitter.ts`).
+  `<uc-upload-ctx-provider>` (`UploaderEventType` in `EventBus.ts`, re-exported
+  as `EventType`).
 
 Symbiote and the v1 state layer (`@symbiotejs/symbiote`, `nanostores`,
 `PubSubCompat`, `SymbioteCompatMixin`, `shared-instances`/the `$` proxy, the
@@ -268,16 +269,16 @@ and one of them corrupted any path whose last segment recurred earlier.
   uuid (`overlay/<uuid>`) or an `@`-prefixed internal directive (`@clib`), so those go
   through it rather than a hand-written `as`.
 - **The tiny URL API (`tinyParse`/`tinyBuild`) is not used here, on purpose.**
-  Measured: putting `withOperations` on it took the editor bundle 49.14 → 49.38 KB
-  brotli, because `parseFileUrl`/`serializeFileUrl` stay in every bundle for the
-  upload-entry parse, the editor's read path and `<uc-img>`'s src handling — so tiny
+  Measured when it was tried: putting `withOperations` on it added ~0.24 KB brotli
+  to the editor bundle, because `parseFileUrl`/`serializeFileUrl` stay in every
+  bundle for the upload-entry parse, the editor's read path and `<uc-img>`'s src handling — so tiny
   is added weight, not a replacement. Going tiny-only would recover ~0.5 KB and cost
   the uuid validation behind `addFileFromCdnUrl`'s documented error, the kind
   discrimination the editor and `<uc-img>` degrade on, and `CdnOperation` itself,
   which the editor's merge needs because it matches operations by name. Re-measure
   before revisiting.
 - **Bundle budgets are tight and `size-limit` runs inside `npm run build`.** The
-  editor sits near 47.1 KB of 51, the IIFE near 95.8 of 100, `dist/index.js` near 97.3 of 99, `<uc-img>` near 8.6 of
+  editor sits near 47.4 KB of 51, the IIFE near 95.8 of 100, `dist/index.js` near 97.4 of 99, `<uc-img>` near 8.6 of
   10. Treat ~100 B as build-to-build variance and do not quote a single run to tighter
   precision. If a change crosses a limit, that is a decision to raise the budget or
   trim, not something to work around.
@@ -299,9 +300,9 @@ A **strangler migration** is underway, incrementally adopting a v2 architecture
 `ControllerContainer`, `EventBus`, the `Listeners` primitive, a central router)
 under the existing v1 public tags — one testable milestone per PR. The
 monolithic `UploaderController` god object that once fronted these controllers
-has been dissolved (M-god step 8e): blocks resolve the controllers they need via
-`ChildBlock.use(Token)`, and the ctx's `ControllerContainer` (registered in
-`UploaderRegistry`) is the ownership/teardown unit.
+has been dissolved: blocks `@inject` the controllers they need, and the ctx's
+`ControllerContainer` (registered in `UploaderRegistry`) is the
+ownership/teardown unit.
 
 - Integration branch: **`feat/v2-migration`**; each milestone branches off it
   and PRs back into it (`feat/v2-m<N>-<name>` → `feat/v2-migration`).
@@ -316,14 +317,15 @@ has been dissolved (M-god step 8e): blocks resolve the controllers they need via
 
 ## Do not break
 
-- **Documented public API** (tags, ~55 `<uc-config>` options, `getAPI()`
-  methods, 19 events, `--uc-*` CSS variables, the plugin API, and the
+- **Documented public API** (tags, 65 `<uc-config>` options, `getAPI()`
+  methods, 18 events, `--uc-*` CSS variables, the plugin API, and the
   `OutputFileEntry`/`OutputCollectionState` data shapes) defined in `fern-docs`.
   Until a future major, keep it working — add compat shims rather than breaking.
   Mark each shim `// NEXT-MAJOR(<area>): <what to remove or replace>. Kept for 1.x compat.` so
   `git grep NEXT-MAJOR` lists the cleanup a major release starts from.
-- **Undocumented** surface (the `$` proxy, `*`-prefixed keys, internal managers,
-  `--cfg-*` CSS vars, `static template` setter) **may** change freely.
+- **Undocumented** surface (internal managers, `--cfg-*` CSS vars) **may**
+  change freely. An undocumented 1.x compat shim (the `static template` setter)
+  is the exception: it carries a NEXT-MAJOR marker and stays until the major.
 
 ---
 
