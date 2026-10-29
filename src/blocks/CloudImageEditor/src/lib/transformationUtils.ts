@@ -279,8 +279,8 @@ export function operationsBeforeGeometry(source: readonly CdnOperation[]): reado
  *   cropping before resizing.
  * - An operation the editor does not model is kept verbatim, in place: before
  *   the geometry if the source had it there, after it otherwise.
- * - Every `preview` in `source` is dropped. The merge itself no longer
- *   appends one — that marker belongs to the applied URL (`editorAppliedUrl`),
+ * - Every `preview` in `source` is dropped. The merge itself does not
+ *   append one — that marker belongs to the applied URL (`editorAppliedUrl`),
  *   so an open/apply cycle never stacks markers.
  * - A modelled operation appearing more than once in `source` keeps the
  *   position of its *last* occurrence; earlier occurrences are dropped. That

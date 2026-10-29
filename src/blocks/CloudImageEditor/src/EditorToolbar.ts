@@ -82,14 +82,14 @@ export class EditorToolbar extends EditorBlock {
   @state()
   private _operationTooltip: string | null = null;
 
-  // Toolbar-subtree-local state (M12 "State scoping principle") — only this
+  // Toolbar-subtree-local state (see `EditorState`) — only this
   // element + its descendant controls/slider read these, so they live as
   // plain Lit state instead of the cross-cutting editor controller. Passed
   // down to descendants as reactive props where they need to read them
   // (`_currentFilter` -> `EditorFilterControl.currentFilter`); descendants
   // report changes back up via bubbling custom events (`FilterSelectEvent`,
   // `OperationSelectEvent`, `ShowAspectRatioListEvent`,
-  // `SliderTooltipChangeEvent`) instead of the old shared-ctx cross-writes.
+  // `SliderTooltipChangeEvent`).
   @state()
   private _currentFilter: SliderFilter | '' = FAKE_ORIGINAL_FILTER;
 
@@ -171,7 +171,7 @@ export class EditorToolbar extends EditorBlock {
     visible: 'uc-tab-toggles--visible',
   };
 
-  /** Sets the toolbar-local `showSlider`/sub-toolbar-visibility state, deriving `showMainToolbar`/`showSubToolbar`/`_useSliderPanel` exactly as the old `sub('*showSlider', ...)` reaction did. */
+  /** Sets the toolbar-local `showSlider` state and derives `showMainToolbar`/`showSubToolbar`/`_useSliderPanel` from it. */
   private _setShowSlider(show: boolean): void {
     if (Object.is(this._showSlider, show)) {
       return;
@@ -187,7 +187,7 @@ export class EditorToolbar extends EditorBlock {
     }
   }
 
-  /** Sets the toolbar-local `showListAspectRatio` state — mirrors the old `sub('*showListAspectRatio', ...)` reaction. */
+  /** Sets the toolbar-local `showListAspectRatio` state and derives the toolbar visibility from it. */
   private _setShowListAspectRatio(show: boolean): void {
     if (Object.is(this._showListAspectRatio, show)) {
       return;
@@ -351,7 +351,6 @@ export class EditorToolbar extends EditorBlock {
       ),
       // `activeTab` follows `tabId` in `willUpdate`; the tooltip is a debounced side effect.
       controller.observe('tabId', () => this._updateInfoTooltip()),
-      // The fader self-deactivates on an `originalUrl` change (see EditorImageFader).
       controller.observe('loadingImages', (count) => this._debouncedShowLoader(count > 0), { immediate: true }),
     ];
   }
@@ -390,8 +389,7 @@ export class EditorToolbar extends EditorBlock {
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
-    // Side effects reacting to the root-passed props (once controller
-    // subscriptions) — same transitions → same effects.
+    // Reacts to the root's `tabList`/`imageSize` props.
     const controller = this.editorControllerOrNull;
     if (changedProperties.has('imageSize') && this.imageSize && controller) {
       this._activateTab(controller.tabId);
@@ -463,7 +461,7 @@ export class EditorToolbar extends EditorBlock {
     this._activateTab(id);
   };
 
-  /** `EditorFilterControl`'s reported selection — replaces the old cross-writes to `*sliderEl`/`*showSlider`/`*currentFilter`/`*tabId`-scoped telemetry. */
+  /** `EditorFilterControl`'s reported selection: drives the slider, `currentFilter` and the click telemetry. */
   private readonly _handleFilterSelect = (e: FilterSelectEvent): void => {
     const { operation, filter, active, isOriginal, originalEvent } = e;
     const sliderFilter = filter || undefined;
@@ -485,11 +483,10 @@ export class EditorToolbar extends EditorBlock {
     this._updateInfoTooltip();
   };
 
-  /** `EditorOperationControl`'s reported selection — replaces the old cross-writes to `*sliderEl`/`*showSlider`/`*currentOperation`. */
+  /** `EditorOperationControl`'s reported selection: drives the slider, `currentOperation` and the click telemetry. */
   private readonly _handleOperationSelect = (e: OperationSelectEvent): void => {
-    // `EditorOperationControl.operation` is only ever '' in its unset default
-    // (never actually clicked in that state, mirroring the old code's own
-    // loosely-typed `*sliderEl` cast at this same boundary).
+    // `EditorOperationControl.operation` is only ever '' in its unset default,
+    // which is never clicked.
     this._sliderRef.value?.setOperation(e.operation as ColorOperation);
     this._setShowSlider(true);
     this._currentOperation = e.operation;
@@ -501,12 +498,12 @@ export class EditorToolbar extends EditorBlock {
     this._updateInfoTooltip();
   };
 
-  /** `EditorFreeformButtonControl`'s reported click — replaces the old `$['*showListAspectRatio'] = true` cross-write. */
+  /** `EditorFreeformButtonControl`'s reported click: opens the aspect-ratio list. */
   private readonly _handleShowAspectRatioList = (): void => {
     this._setShowListAspectRatio(true);
   };
 
-  /** `EditorSlider`'s reported live tooltip recompute — replaces the old `$['*operationTooltip'] = tooltip` cross-write. */
+  /** `EditorSlider`'s reported live tooltip recompute. */
   private readonly _handleSliderTooltipChange = (e: SliderTooltipChangeEvent): void => {
     this._operationTooltip = e.tooltip;
   };

@@ -23,20 +23,14 @@ export const cloudImageEditorContext = createContext<CloudImageEditorController>
 
 /**
  * `ReactiveController` that adopts the `CloudImageEditorController` provided
- * by the nearest ancestor `ContextProvider`. Adapted from the
- * `refactor/editor-separate-state` spike's `CloudImageEditorContextController`
- * (`git show 682d7172:.../context.ts`) for the v2 DOM-free-controller
- * architecture: the spike wrapped a raw `PubSub` store, this wraps the real
- * `CloudImageEditorController`.
+ * by the nearest ancestor `ContextProvider`.
  */
 export class CloudImageEditorContextController implements ReactiveController {
   private _controller?: CloudImageEditorController;
   // One per adopted controller, ended on detach (host disconnect or re-attach); already ended while none is adopted.
   private _lifetime = Lifetime.ended();
   private _subscriptions = new Set<() => void>();
-  // Attach listeners are persistent (unlike the spike's one-shot `onAttach`,
-  // which existed only to gate a single `initCallback` run): `EditorBlock`
-  // needs its `@subscription` methods re-wired on every (re)attach, not just
+  // Attach listeners are persistent: `EditorBlock` needs its `@subscription` methods re-wired on every (re)attach, not just
   // the first, so a listener registered via `onAttach` fires immediately if a
   // controller is already adopted, and again on every later (re)attach.
   private _onAttachCallbacks = new Set<() => void>();
@@ -138,11 +132,9 @@ export class CloudImageEditorContextController implements ReactiveController {
 
 // Light-DOM Lit base with NO ChildBlock coupling: no forced uploader-scope
 // creation, no uploader controller graph, no registry adoption machinery,
-// no ctx-lifecycle, no upload stack. See the
-// "Bundle-independence constraints" section of the M12 plan
-// (`docs/superpowers/plans/2026-07-15-v2-m12-cloud-image-editor-port.md`):
-// editor blocks must not pull that machinery into the standalone editor
-// bundle. Only the mixins ChildBlock itself is built on.
+// no ctx-lifecycle, no upload stack: editor blocks must not pull that
+// machinery into the standalone editor bundle (its build lists
+// `forbiddenModules`). Only the mixins ChildBlock itself is built on.
 //
 // `SignalWatcher` sits at the base of the mixin chain, as on `ChildBlock`, so it
 // wraps `performUpdate` (not `render()`): a block's `willUpdate`/`render`/
@@ -151,16 +143,14 @@ export class CloudImageEditorContextController implements ReactiveController {
 const EditorBlockBase = SignalWatcher(RegisterableElementMixin(LightDomMixin(LitElement)));
 
 /**
- * Base for editor descendants. Deliberately NOT `ChildBlock` — see the
- * "Bundle-independence constraints" in the M12 plan: `ChildBlock`
+ * Base for editor descendants. Deliberately NOT `ChildBlock`: `ChildBlock`
  * value-imports the uploader adoption graph, which would bloat the standalone `<uc-cloud-image-editor>`
- * bundle with uploader machinery it doesn't use today.
+ * bundle with uploader machinery it doesn't use.
  *
  * Descendants get EVERYTHING — cross-cutting editor state AND the
  * l10n/config/telemetry/proxy services — through `this.editorController`,
- * which the root injects (`CloudImageEditorController.setServices`) from
- * whatever it resolves them from (today: the shared uploader ctx read by the
- * root only; see the plan for the deferred fully-standalone follow-up). No
+ * which the root injects (`CloudImageEditorController.setServices`) from its
+ * own props and, through the root only, a sibling `<uc-config>`. No
  * ctx-name resolution, no uploader ctx read, happens in this base or its
  * descendants.
  */
@@ -194,8 +184,7 @@ export abstract class EditorBlock extends EditorBlockBase {
     });
 
     // `data-testid` for e2e/`getByTestId` locators — same contract as
-    // `ChildBlock._applyTestMode`/v1 `LitBlock.subConfigValue('testMode', ...)`,
-    // reimplemented here since `EditorBlock` deliberately isn't `ChildBlock`
+    // `ChildBlock._applyTestMode`, reimplemented here since `EditorBlock` deliberately isn't `ChildBlock`
     // (see the class doc). `testMode` is read once per (re)attach rather than
     // tracked reactively — it isn't expected to flip after setup.
     this.onEditorAttach(() => {

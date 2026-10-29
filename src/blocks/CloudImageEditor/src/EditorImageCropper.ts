@@ -41,9 +41,8 @@ const isValidCrop = ({ dimensions, coords }: CropTransform): boolean =>
   dimensions.every((d) => Number.isInteger(d) && d > 0) && coords.every((c) => Number.isInteger(c) && c >= 0);
 
 export class EditorImageCropper extends EditorBlock {
-  // Cropper-subtree-local state (M12 step 2a): only this element + `CropFrame`
-  // read these, so they live as plain Lit state instead of the shared ctx /
-  // editor controller. `_imageBox`/`_cropBox` are passed down to `CropFrame`
+  // Cropper-subtree-local state: only this element + `CropFrame` read these,
+  // so they live as plain Lit state instead of the editor controller. `_imageBox`/`_cropBox` are passed down to `CropFrame`
   // as reactive props (`.imageBox`/`.cropBox`); `CropFrame` reports drag
   // changes back up via a `cropboxchange` event (see `_handleCropBoxChange`).
   @state()
@@ -150,13 +149,12 @@ export class EditorImageCropper extends EditorBlock {
         return;
       }
 
-      // Self-activate/deactivate from controller state + the imageSize prop
-      // (replaces the root/toolbar calling `.activate()`/`.deactivate()`).
+      // Self-activate/deactivate from controller state + the imageSize prop.
       this._syncActivation();
 
-      // Crop ops (rotate/flip/mirror) now arrive through
-      // `editorTransformations` — `EditorCropButtonControl` writes them
-      // instead of calling `setValue`. Apply + re-commit the consistent
+      // Crop ops (rotate/flip/mirror) arrive through
+      // `editorTransformations`, which `EditorCropButtonControl` writes.
+      // Apply + re-commit the consistent
       // crop; the re-entrancy guard swallows our own commit's notify.
       if (this._isActive && this._cropOpsDiffer(this.editorController.editorTransformations)) {
         this._syncTransformations();
@@ -595,8 +593,7 @@ export class EditorImageCropper extends EditorBlock {
     // `_imageBox`/`_cropBox` are private state, so their literal names can't
     // be used with `changedProperties.has(...)` (that requires a `keyof
     // this` that survives declaration-bundling of private members — see the
-    // `dts` build). Diff against the last-seen value instead; equivalent to
-    // the old shared-ctx `sub('*imageBox'|'*cropBox', ...)` reactions.
+    // `dts` build). Diff against the last-seen value instead.
     if (!Object.is(this._imageBox, this._lastImageBox)) {
       this._lastImageBox = this._imageBox;
       this._draw();

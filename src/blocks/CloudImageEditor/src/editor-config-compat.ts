@@ -10,10 +10,8 @@ import type { EditorConfig } from './CloudImageEditorController';
 // Deletion steps: delete this file + its single call site in
 // CloudImageEditorBlock; the editor's own props remain the config source.
 //
-// M-god step 9b-3: repointed off the v1 ctx facade onto the ctx's DI container. The
-// sibling `<uc-config>`'s `ConfigController`/`LocaleController`/`TelemetryManager`
-// are resolved through `UploaderRegistry.whenAvailable` and read directly, so
-// this no longer touches `PubSub`/the `*cfg/` key helper/the `*`-keyed store. Those
+// The sibling `<uc-config>`'s `ConfigController`/`LocaleController`/`TelemetryManager`
+// are resolved through `UploaderRegistry.whenAvailable` and read directly. Those
 // three controllers are already in the editor bundle (safe — no `PluginController`
 // / `UploaderPublicApi` value import lands here).
 
@@ -65,18 +63,17 @@ function attach(
     onConfig(initialPatch);
   }
 
-  // Hand over an l10n bound to this ctx's locale — restores the interpolating
-  // labels the editor used to read from the shared ctx directly. `createL10n`
+  // Hand over an l10n bound to this ctx's locale, interpolating. `createL10n`
   // reads the `LocaleController` live, so later locale population is reflected.
   onLocale?.(createL10n(() => container.get(LocaleController)));
 
   // The `TelemetryManager` is eagerly constructed with the container
   // (`UploaderRegistry.ensure`), so it is always present here — no need to wait
-  // on / re-subscribe to a `*telemetryManager` registration as the v1 store did.
+  // for it.
   onTelemetry?.(container.get(TelemetryManager));
 
-  // Per-key change forwarding via the atomic `observe` (its `Object.is` dedup
-  // reproduces the v1 per-`*cfg/*`-key `ctx.sub(..., false)`). No `{ immediate }`:
+  // Per-key change forwarding via the atomic `observe` (it dedups with
+  // `Object.is`). No `{ immediate }`:
   // the initial values already went out via `initialPatch`.
   const unsubscribers = EDITOR_CONFIG_KEYS.map((key) =>
     config.observe(key, (next) => {

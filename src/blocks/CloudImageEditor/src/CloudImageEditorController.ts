@@ -34,8 +34,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
 };
 
 /**
- * The cross-cutting editor state owned by the controller (M12 "State scoping
- * principle") — keys read/written across more than one component subtree of
+ * The cross-cutting editor state owned by the controller — keys read/written across more than one component subtree of
  * the editor. The cropper-local (padding/operations/imageBox/cropBox) and
  * toolbar-local (showListAspectRatio/showSlider/currentFilter/currentOperation/
  * operationTooltip) state is deliberately excluded — it is plain Lit `@state`
@@ -77,8 +76,8 @@ function createDefaultState(): EditorState {
 
 /**
  * Cross-cutting services the editor needs but does not own — injected by the
- * root (from whatever it resolves them from: today's shared uploader ctx,
- * later potentially a fully standalone config/locale). Descendants read them
+ * root (from its own props, falling back to a sibling `<uc-config>`).
+ * Descendants read them
  * ALL through the controller (`controller.l10n(...)`, `controller.getConfig`,
  * `controller.telemetry`, `controller.proxyUrl`) instead of reaching back
  * into `ChildBlock`/the uploader ctx directly — this is what lets editor
