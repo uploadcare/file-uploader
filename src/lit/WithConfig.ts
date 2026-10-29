@@ -277,21 +277,19 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     }
 
     /**
-     * Resolve a custom config's pre-existing value on (re-)adoption: a DOM data
-     * property set before the plugin registered (framework binding) wins;
-     * otherwise a pre-existing attribute, deserialized via the definition's
+     * Resolve a config key's pre-existing value on (re-)adoption: a DOM data
+     * property set before the accessor existed (framework binding) wins;
+     * otherwise a pre-existing attribute, deserialized via the descriptor's
      * `fromAttribute` (raw value if it throws). Returns `{ has: false }` when
      * neither is present.
      */
-    private _readPreExistingCustomValue(descriptor: ConfigKeyDescriptor): { has: boolean; value: unknown } {
-      const existingDescriptor = Object.getOwnPropertyDescriptor(this, descriptor.name);
-      if (
-        existingDescriptor &&
-        !existingDescriptor.get &&
-        !existingDescriptor.set &&
-        existingDescriptor.value !== undefined
-      ) {
-        return { has: true, value: existingDescriptor.value };
+    private _readPreExistingValue(
+      key: string,
+      descriptor: ConfigKeyDescriptor | undefined,
+    ): { has: boolean; value: unknown } {
+      const own = Object.getOwnPropertyDescriptor(this, key);
+      if (own && !own.get && !own.set && own.value !== undefined) {
+        return { has: true, value: own.value };
       }
       return this._readAttribute(descriptor);
     }
@@ -327,7 +325,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         // `_installPropertyAccessor` overwrites a pre-upgrade data property with
         // the getter/setter, which would otherwise destroy that value first.
         // (State value was already seeded by `ConfigController.register`.)
-        const preExisting = this._readPreExistingCustomValue(descriptor);
+        const preExisting = this._readPreExistingValue(descriptor.name, descriptor);
 
         // Custom accessors are enumerable + configurable (distinct from built-ins).
         this._installPropertyAccessor(name, { enumerable: true, configurable: true });
@@ -515,9 +513,10 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     }
 
     /**
-     * Read a built-in key's pre-existing attribute (if any). Used at seed time
-     * for HTML-parsed attrs and any pre-connect write that left the attr on
-     * the element without an own data property stash.
+     * Read a config key's attribute through its descriptor (raw value if
+     * `fromAttribute` throws). Used at seed time for HTML-parsed attrs and any
+     * pre-connect write that left the attr on the element without an own data
+     * property stash.
      */
     private _readAttribute(descriptor: ConfigKeyDescriptor | undefined): { has: boolean; value: unknown } {
       if (descriptor?.attribute) {
@@ -547,16 +546,8 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       for (const key of allConfigKeys) {
         // Priority: pre-upgrade own data property (framework binding) → live
         // attribute (HTML / setAttribute before adopt) → existing prop / controller.
-        const own = Object.getOwnPropertyDescriptor(this, key);
-        const isDataProperty = !!own && !own.get && !own.set && own.value !== undefined;
-        const fromAttr = isDataProperty
-          ? { has: false, value: undefined }
-          : this._readAttribute(this._config.descriptor(key));
-        const initialValue = isDataProperty
-          ? own.value
-          : fromAttr.has
-            ? fromAttr.value
-            : (Reflect.get(this, key) ?? this._config.get(key));
+        const preExisting = this._readPreExistingValue(key, this._config.descriptor(key));
+        const initialValue = preExisting.has ? preExisting.value : (Reflect.get(this, key) ?? this._config.get(key));
 
         if (this._detachedWrites.has(key) || initialValue !== initialConfig[key]) {
           this._setValue(key, initialValue);
