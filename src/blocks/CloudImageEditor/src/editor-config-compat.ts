@@ -36,10 +36,7 @@ const noop = (): void => {};
  *
  * The controller is seeded with every built-in default at construction, so each
  * of these keys is always present — the `undefined` guard only ever elides a key
- * whose default is genuinely `undefined` (none of the five are). This is the
- * documented step-9 behavior: the initial patch now always includes every key
- * (accepted), whereas the v1 `*cfg/*` store-presence check could omit keys whose
- * `<uc-config>` sibling hadn't written them yet.
+ * whose default is genuinely `undefined` (none of the six are).
  */
 function readConfigPatch(config: ConfigController): Partial<EditorConfig> {
   const patch: Partial<EditorConfig> = {};

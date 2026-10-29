@@ -47,11 +47,9 @@ export class EditorToolbar extends EditorBlock {
   @state()
   private _showLoader = false;
 
-  // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
   public showMainToolbar = true;
 
-  // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
   public showSubToolbar = false;
 
@@ -70,7 +68,6 @@ export class EditorToolbar extends EditorBlock {
   @property({ attribute: false })
   public imageContainer: HTMLElement | null = null;
 
-  // This is public because it's used in the updated lifecycle to assign to the shared state.
   @state()
   public activeTab: TabIdValue = TabId.CROP;
 

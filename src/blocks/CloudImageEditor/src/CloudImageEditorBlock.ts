@@ -338,7 +338,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   /**
    * Wires the `CloudImageEditorController`'s injected services (l10n/config/
-   * telemetry/proxy) and action handlers. Config and telemetry may be supplied
+   * telemetry/proxy). Config and telemetry may be supplied
    * transitionally by a removable read-only uploader-ctx compat bridge.
    */
   private _setupEditorController(): void {
@@ -613,8 +613,8 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       // Own-prop `testMode` may have just changed the resolved config — re-sync
       // `data-testid` (standalone has no compat-bridge callback to do this, and
       // `_setupEditorController`'s initial sync ran before the prop was applied).
-      // Notify descendants that read config through the controller (`setConfig`
-      // itself does not notify) so they re-render on a config-prop change.
+      // Notify descendants that read config through the controller so they
+      // re-render on a config-prop change.
       if (this._editorInitialized) {
         this._syncTestId();
         this._editorController.notify();
@@ -683,7 +683,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       // `parseFileUrl` throws for anything that is not a single stored file
       // (a group or delivery-proxy URL); caught locally so a bad `cdn-url`
       // warns and opens the editor without transformations instead of
-      // throwing into the `void this.updateImage()` callers.
+      // throwing into the `_runTask(() => this.updateImage())` callers.
       let parsed: ReturnType<typeof parseFileUrl>;
       try {
         parsed = parseFileUrl(cdnUrlValue);

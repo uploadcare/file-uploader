@@ -7,10 +7,9 @@ import type { CropAspectRatio, Transformations } from './types';
 
 /**
  * Editor-owned config surface — the subset of `ConfigType` the editor cares
- * about, held directly by the controller (not read through the shared
- * uploader ctx). Populated from the element's own props (`willUpdate` on
- * `<uc-cloud-image-editor>`), with the shared ctx kept only as a transitional
- * fallback (see `_setupEditorController`) until the compat bridge lands.
+ * about. `<uc-cloud-image-editor>`'s `getConfig` service resolves each key from
+ * the element's own props, then the uploader-config compat bridge, then
+ * `DEFAULT_EDITOR_CONFIG` (see `_setupEditorController`).
  */
 export type EditorConfig = {
   cdnCname: string;
@@ -119,10 +118,6 @@ function createDefaultServices(): EditorServices {
  * Provided down the editor DOM tree via `cloudImageEditorContext`
  * (`@lit/context`) from the root `<uc-cloud-image-editor>`; consumed by
  * `EditorBlock` descendants.
- *
- * Block-coupled DOM-free logic (transformations, tab/filter/operation state
- * machine, image-URL/modifier computation) accretes here as each block ports
- * in P5/P6 (strangler) — kept minimal in this phase (state container only).
  */
 export class CloudImageEditorController {
   private _state: CloudImageEditorControllerState;
