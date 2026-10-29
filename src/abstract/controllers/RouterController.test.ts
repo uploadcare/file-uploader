@@ -223,7 +223,7 @@ describe('RouterController (v2)', () => {
       expect(router.modal).toBe('camera');
       emit.mockClear();
       router.openModal('camera');
-      expect(emit).not.toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, expect.anything());
+      expect(emit).not.toHaveBeenCalled();
     });
 
     it('switching the open modal to another activity opens the new one and closes the old, as v1 did', () => {
@@ -424,7 +424,7 @@ describe('RouterController (v2)', () => {
   });
 
   describe('modal slot edges', () => {
-    it('replacing one open modal with another emits no extra open/close', () => {
+    it('replacing one open modal with another emits open for the new one, close for the old, then the activity change', () => {
       const { router, emit } = setup();
       router.openModal('camera');
       emit.mockClear();
@@ -432,8 +432,11 @@ describe('RouterController (v2)', () => {
       router.openModal('url'); // a modal was already open
 
       expect(router.modal).toBe('url');
-      expect(emit).not.toHaveBeenCalledWith(UploaderEventType.MODAL_OPEN, expect.anything());
-      expect(emit).not.toHaveBeenCalledWith(UploaderEventType.MODAL_CLOSE, expect.anything());
+      expect(emit.mock.calls).toEqual([
+        [UploaderEventType.MODAL_OPEN, { modalId: 'url' }, { debounce: true }],
+        [UploaderEventType.MODAL_CLOSE, { modalId: 'camera', hasActiveModals: true }, { debounce: true }],
+        [UploaderEventType.ACTIVITY_CHANGE, { activity: 'url' }],
+      ]);
     });
   });
 
