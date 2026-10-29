@@ -15,10 +15,6 @@ export type DropItem =
 
 function checkIsDirectory(file: File): Promise<boolean> {
   return new Promise((resolve) => {
-    if (typeof window.FileReader !== 'function') {
-      resolve(false);
-    }
-
     try {
       const reader = new FileReader();
       reader.onerror = () => {

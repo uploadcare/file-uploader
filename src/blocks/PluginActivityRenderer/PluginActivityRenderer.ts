@@ -119,13 +119,7 @@ export class PluginActivityRenderer extends ChildBlock {
   }
 
   private _syncActivities(): void {
-    const pluginManager = this._pluginManager;
-    if (!pluginManager) {
-      this._activities = [];
-      return;
-    }
-
-    this._activities = pluginManager.snapshot().activities;
+    this._activities = this._pluginManager?.snapshot().activities ?? [];
   }
 
   private _dialogLabel(activity: Owned<PluginActivityRegistration>): PluginLabel | undefined {

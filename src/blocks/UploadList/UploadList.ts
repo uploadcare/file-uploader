@@ -145,8 +145,7 @@ export class UploadList extends ActivityChildBlock {
    */
   private get _commonErrorMessage(): string | null {
     const errors = this._collectionState.getTracked('collectionErrors');
-    const firstError = errors.filter((err) => err.type !== 'SOME_FILES_HAS_ERRORS')[0];
-    return firstError?.message ?? null;
+    return errors.find((err) => err.type !== 'SOME_FILES_HAS_ERRORS')?.message ?? null;
   }
 
   private _handleAdd = (): void => {
