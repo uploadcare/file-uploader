@@ -42,4 +42,26 @@ describe('imageShrinkPlugin', () => {
     expect(result?.file).toBe(file);
     expect(warn).not.toHaveBeenCalled();
   });
+
+  it('uploads the original without a warning when image-shrink wraps its "Not required" error', async () => {
+    // shrinkFile rethrows every inner failure in this shape (index.browser.mjs, the catch at the end of shrinkFile).
+    vi.mocked(shrinkFile).mockRejectedValueOnce(
+      new Error('Failed to shrink image. Message: "Not required".', { cause: new Error('Not required') }),
+    );
+
+    const { file, result, warn } = await runHook();
+
+    expect(result?.file).toBe(file);
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('warns when image-shrink wraps a real failure', async () => {
+    vi.mocked(shrinkFile).mockRejectedValueOnce(
+      new Error('Failed to shrink image. Message: "Not supported".', { cause: 'Not supported' }),
+    );
+
+    const { warn } = await runHook();
+
+    expect(warn).toHaveBeenCalledWith('Image shrink failed, uploading the original', expect.any(Error));
+  });
 });
