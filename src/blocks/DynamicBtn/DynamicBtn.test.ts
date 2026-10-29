@@ -103,20 +103,12 @@ describe('DynamicBtn', () => {
     const collectionState = UploaderRegistry.get(ctxName)?.get(CollectionStateController);
     if (!collectionState) throw new Error('collection-state controller not resolved');
 
-    // `_status`/`_collection` are normally populated from
-    // `bag.apiOrNull.getOutputCollectionState()` via the real
-    // `observeProperties`/`observeCollection` wiring in `controllerReady` — set
-    // directly here (same private-field-poke recipe as
-    // UploadController.test.ts / ValidationController.test.ts) to reach the
-    // `shouldShowAbortAction || hasCollectionEntries` render branch
-    // (`_renderAbortAction`) without standing up a full upload-collection
-    // instance. `_status`/`_collection` are Lit `@state` fields, so assigning
-    // them schedules a render exactly as the real observer callback would.
-    const target = el as unknown as {
-      _status: 'idle' | 'success' | 'uploading' | 'failed';
-      _collection: Entries;
-    };
-    target._status = 'uploading';
+    // `_collection` (the status derives from it) is normally populated from
+    // `getOutputCollectionState()` by the collection observers — set directly
+    // here to reach the `_renderAbortAction` branch without standing up a full
+    // upload collection. It is a Lit `@state` field, so assigning it schedules a
+    // render exactly as the real observer callback would.
+    const target = el as unknown as { _collection: Entries };
     target._collection = makeEntries({ status: 'uploading', totalCount: 1, allEntries: [{}] });
     await el.updateComplete;
     await delay(0);
