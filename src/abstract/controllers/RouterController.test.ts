@@ -327,6 +327,23 @@ describe('RouterController (v2)', () => {
       expect(router.history).toEqual(['start-from']);
     });
 
+    it('back skips earlier entries of the activity already showing, as v1 did', () => {
+      const { router } = setup();
+      let listAllowed = true;
+      router.guard('upload-list', () => listAllowed);
+      // Upload, "Add more", upload again, then remove every file.
+      router.navigate('start-from');
+      router.navigate('upload-list');
+      router.navigate('start-from');
+      router.navigate('upload-list');
+      listAllowed = false;
+      router.revalidate(); // the emptied list goes back to start-from: [start-from, upload-list, start-from]
+
+      router.back(); // Cancel on start-from
+
+      expect(router.currentActivity).toBeNull();
+    });
+
     it('a canceled back() keeps guarded-out entries it would have skipped', () => {
       const { router } = setup();
       let listAllowed = true;
