@@ -1,6 +1,5 @@
 import { focusGroupKeyUX, hiddenKeyUX, jumpKeyUX, pressKeyUX, startKeyUX } from 'keyux';
 import type { Destroyable } from '../abstract/di/ControllerContainer';
-import { Disposables } from '../abstract/di/Disposables';
 
 /**
  * MinimalWindow interface is not exported by keyux, so we import it here using tricky way.
@@ -14,12 +13,10 @@ type KeyEventListener = (event: KeyboardEvent) => void;
  * It is used to scope the key UX to the widget.
  */
 class ScopedMinimalWindow implements MinimalWindow {
-  // Each entry carries the wrapped listener plus its `#disposables` canceller, so
-  // `removeEventListener` can both detach the listener and un-register its
-  // teardown — keeping `destroy()`'s `run()` from re-removing an already-removed
-  // listener (keyux's own teardown removes each listener before `destroy()`).
-  private readonly _listeners = new Map<KeyEventListener, { wrapped: KeyEventListener; cancel: () => void }>();
-  readonly #disposables = new Disposables();
+  // Maps each keyux listener to its scoped wrapper; every wrapper is attached
+  // with `#abort.signal`, so `destroy()` detaches whatever is still attached.
+  private readonly _listeners = new Map<KeyEventListener, KeyEventListener>();
+  readonly #abort = new AbortController();
   // A `Set` (matching `ClipboardController._scopes`): registering the same node
   // twice is idempotent, and one `unregisterScope` fully removes it.
   private _scope = new Set<Node>();
@@ -43,17 +40,13 @@ class ScopedMinimalWindow implements MinimalWindow {
         listener(event);
       }
     };
-    window.addEventListener(type, wrappedListener);
-    const cancel = this.#disposables.add(() => window.removeEventListener(type, wrappedListener));
-    this._listeners.set(listener, { wrapped: wrappedListener, cancel });
+    window.addEventListener(type, wrappedListener, { signal: this.#abort.signal });
+    this._listeners.set(listener, wrappedListener);
   }
 
   public removeEventListener(type: 'keydown' | 'keyup', listener: KeyEventListener): void {
-    const entry = this._listeners.get(listener);
-    if (entry) {
-      window.removeEventListener(type, entry.wrapped);
-      entry.cancel();
-    }
+    const wrapped = this._listeners.get(listener);
+    if (wrapped) window.removeEventListener(type, wrapped);
     this._listeners.delete(listener);
   }
 
@@ -81,9 +74,7 @@ class ScopedMinimalWindow implements MinimalWindow {
 
   public destroy(): void {
     this._scope.clear();
-    // Runs one `removeEventListener('keydown'/'keyup', …)` teardown per attached
-    // wrapped listener (isolate-and-warn), matching the previous manual loop.
-    this.#disposables.run();
+    this.#abort.abort();
     this._listeners.clear();
   }
 }
