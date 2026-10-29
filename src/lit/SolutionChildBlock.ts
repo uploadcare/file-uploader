@@ -9,7 +9,6 @@ import { A11y } from './a11y';
 import { ChildBlock } from './ChildBlock';
 import { ClipboardController } from './ClipboardController';
 import { ensureUploaderScope } from './ensureUploaderScope';
-import { HostScopeController } from './HostScopeController';
 
 /**
  * v2 `ChildBlock`-based equivalent of `LitSolutionBlock` (v1). A solution tag
@@ -35,29 +34,16 @@ export abstract class SolutionChildBlock extends ChildBlock {
   protected override controllerReady(container: ControllerContainer): void {
     super.controllerReady(container);
 
-    // A single per-host `HostScopeController` registers this host's DOM scope
-    // with BOTH shared per-ctx window-listener aggregators — `ClipboardController`
-    // (`paste`) and `A11y` (`keydown`/`keyup`) — on `hostConnected`, returning
-    // one combined unregister (each aggregator hands back its own disposer). Its
-    // teardown is `addDisposer`'d so `ChildBlock` drains it on release: that
-    // covers a plain disconnect AND an in-place `ctx-name` switch (which releases
-    // while `isConnected` stays true, so Lit's own `hostDisconnected` never
-    // fires), and stops a re-adoption from stacking a second registration.
+    // Register this host's DOM scope with the per-ctx window-listener
+    // aggregators — `ClipboardController` (`paste`) and `A11y`
+    // (`keydown`/`keyup`). `addDisposer` drains both on release, which covers a
+    // plain disconnect and an in-place `ctx-name` switch, and a re-adoption
+    // registers afresh instead of stacking.
     const solution = this.constructor as typeof SolutionChildBlock;
     const clipboard = container.get(ClipboardController);
     const a11y = container.get(A11y);
-    const scope = new HostScopeController(this, () => {
-      const unregisterClipboard = clipboard.registerScope(this, { ownsPagePaste: solution.ownsPagePaste });
-      const unregisterA11y = a11y.registerBlock(this);
-      return () => {
-        unregisterClipboard();
-        unregisterA11y();
-      };
-    });
-    this.addDisposer(() => {
-      scope.hostDisconnected();
-      this.removeController(scope);
-    });
+    this.addDisposer(clipboard.registerScope(this, { ownsPagePaste: solution.ownsPagePaste }));
+    this.addDisposer(a11y.registerBlock(this));
 
     // A boot-time identity fact on the container-owned `AppInfo`, not pub/sub
     // state — read lazily by telemetry as the payload's `component`.
