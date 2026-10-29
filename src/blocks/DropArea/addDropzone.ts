@@ -1,10 +1,10 @@
 import { getDropItems } from './getDropItems';
 
 export const DropzoneState = Object.freeze({
-  ACTIVE: 0,
-  INACTIVE: 1,
-  NEAR: 2,
-  OVER: 3,
+  ACTIVE: 'active',
+  INACTIVE: 'inactive',
+  NEAR: 'near',
+  OVER: 'over',
 } as const);
 
 export type DropzoneStateValue = (typeof DropzoneState)[keyof typeof DropzoneState];
