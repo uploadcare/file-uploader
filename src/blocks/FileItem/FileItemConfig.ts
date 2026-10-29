@@ -8,38 +8,19 @@ export class FileItemConfig extends ChildBlock {
 
   protected entry: UploadEntryTypedData | null = null;
 
-  protected withEntry<A extends unknown[], R>(
-    fn: (entry: UploadEntryTypedData, ...args: A) => R,
-  ): (...args: A) => R | undefined {
-    return (...args: A) => {
-      const entry = this.entry;
-      if (!entry) {
-        this._log.warn('No entry found');
-        return undefined;
-      }
-      return fn(entry, ...args);
-    };
-  }
-
   protected subEntry<K extends UploadEntryKeys>(
     prop: K,
     handler: (value: UploadEntryData[K] | undefined) => void,
   ): void {
-    this.withEntry<[K, (value: UploadEntryData[K] | undefined) => void], void>((entry, propInner, handlerInner) => {
-      const sub = entry.observe(
-        propInner,
-        (value) => {
-          // Deliver the value even when it's `undefined` — clearing an optional
-          // field (e.g. `thumbUrl`/`fileName` reset to `undefined`) is a real
-          // observation consumers must see, not one to drop. Only bail if we're
-          // no longer connected (a trailing tick after teardown).
-          if (!this.isConnected) return;
-          handlerInner(value);
-        },
-        { immediate: true },
-      );
-      this._entrySubs.add(sub);
-    })(prop, handler);
+    const sub = this.entry?.observe(
+      prop,
+      // `undefined` is delivered too: clearing an optional field is a real change.
+      (value) => {
+        if (this.isConnected) handler(value);
+      },
+      { immediate: true },
+    );
+    if (sub) this._entrySubs.add(sub);
   }
 
   /**
@@ -51,13 +32,10 @@ export class FileItemConfig extends ChildBlock {
    * This is the large-N win — 1 subscription per row instead of ~15.
    */
   protected subEntryKeys(handler: (key: UploadEntryKeys) => void): void {
-    this.withEntry((entry) => {
-      const sub = entry.subscribeKeys((key) => {
-        if (!this.isConnected) return;
-        handler(key);
-      });
-      this._entrySubs.add(sub);
-    })();
+    const sub = this.entry?.subscribeKeys((key) => {
+      if (this.isConnected) handler(key);
+    });
+    if (sub) this._entrySubs.add(sub);
   }
 
   protected reset(): void {
