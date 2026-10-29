@@ -6,6 +6,7 @@ import { SliderUi } from '@/blocks/CloudImageEditor/src/elements/slider/SliderUi
 import type { ApplyResult } from '@/blocks/CloudImageEditor/src/types';
 import { delay } from '@/utils/delay';
 import '~/types/jsx';
+import { UploaderRegistry } from '@/abstract/UploaderRegistry';
 import { withResolvers } from '@/utils/withResolvers';
 import type { TelemetryBody } from '~/tests/api/telemetry/sink';
 import { emulatorSession, isLive } from '~/tests/utils/emulator.browser';
@@ -24,7 +25,7 @@ const IMAGE_INFO_ERROR = 'Error in cloud editor image. Failed to load image info
  */
 const renderEditor = (image: Record<string, string> = { uuid: UUID }, { qualityInsights = false } = {}) => {
   const ctxName = getCtxName();
-  const element = createInCtx<HTMLElement>('uc-cloud-image-editor', ctxName, {
+  const element = createInCtx<HTMLElementTagNameMap['uc-cloud-image-editor']>('uc-cloud-image-editor', ctxName, {
     'crop-preset': '1:1, 16:9, 4:3, 3:4, 9:16',
     ...image,
   });
@@ -345,6 +346,18 @@ describe('uc-cloud-image-editor', () => {
     slider.style.width = '200px';
     await expect.poll(() => slider.getBoundingClientRect().width).toBe(200);
     await expect.poll(layout).toEqual(settled('1'));
+  });
+
+  it('falls back to its own strings once its sibling <uc-config> is removed', async () => {
+    const { element, editor } = renderEditor();
+    const ctxName = element.getAttribute('ctx-name') ?? '';
+    await expect.element(editor.getByRole('option', { name: 'Apply rotate operation' })).toBeVisible();
+
+    document.querySelector(`uc-config[ctx-name="${ctxName}"]`)?.remove();
+    await expect.poll(() => UploaderRegistry.get(ctxName)).toBeUndefined();
+    await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
+
+    await expect.element(editor.getByRole('option', { name: 'Apply Brightness tuning' })).toBeVisible();
   });
 
   describe.skipIf(isLive)('network problems', () => {
