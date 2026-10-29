@@ -25,7 +25,6 @@ import '../Icon/Icon';
 const CDN_MAX_OUTPUT_DIMENSION = 3000;
 
 type PendingThumbUpdate = {
-  controller: AbortController;
   rafId?: number;
   cancel: () => void;
 };
@@ -71,11 +70,8 @@ export class Thumb extends FileItemConfig {
       this._thumbRect = this.getBoundingClientRect();
     }
 
-    let size = Math.max(
-      parseInt(String(this?._thumbRect?.height || 0), 10),
-      parseInt(String(this?._thumbRect?.width || 0), 10),
-      this._config.get('thumbSize'),
-    );
+    const rect = this._thumbRect;
+    let size = Math.max(Math.trunc(rect?.height || 0), Math.trunc(rect?.width || 0), this._config.get('thumbSize'));
 
     if (window.devicePixelRatio > 1) {
       size *= window.devicePixelRatio;
@@ -87,8 +83,9 @@ export class Thumb extends FileItemConfig {
   // Runs as an adoption task (`runTask`): each await of outside work goes through `whileAdopted`, so a thumb released
   // mid-generation stops instead of reaching its `@inject` fields. A thumbnail that arrives late is still stored on the
   // entry (its `dispose`), since the entry outlives this block — a row scrolled out of the virtualized list keeps it.
-  // biome-ignore lint/style/noInferrableTypes: Here the type is needed because `_withEntry` could not infer it correctly
-  private _generateThumbnail = this.withEntry(async (entry, force: boolean = false) => {
+  private async _generateThumbnail(force = false): Promise<void> {
+    const entry = this.entry;
+    if (!entry) return;
     const fileInfo = entry.get('fileInfo');
     const isImage = entry.get('isImage');
     const uuid = entry.get('uuid');
@@ -159,7 +156,7 @@ export class Thumb extends FileItemConfig {
     } else {
       entry.set('thumbUrl', this._placeholderThumb());
     }
-  });
+  }
 
   /** Store a thumbnail drawn from the local file, or the placeholder if that fails. */
   private async _storeLocalThumb(entry: UploadEntryTypedData, file: File, size: number): Promise<void> {
@@ -205,7 +202,6 @@ export class Thumb extends FileItemConfig {
 
     const abortController = new AbortController();
     const pending: PendingThumbUpdate = {
-      controller: abortController,
       cancel: () => {
         abortController.abort();
         if (pending.rafId !== undefined) {
@@ -228,14 +224,8 @@ export class Thumb extends FileItemConfig {
         });
       })
       .catch((error) => {
-        // Ignore decode failures (but don't run the success update path).
-        if (abortController.signal.aborted) {
-          return;
-        }
-        if (error instanceof DOMException && error.name === 'AbortError') {
-          return;
-        }
-        this._log.warn('Failed to decode thumbnail image', error);
+        // An abort is ours; anything else is a decode failure, which skips the success path.
+        if (!abortController.signal.aborted) this._log.warn('Failed to decode thumbnail image', error);
       });
   }
 
@@ -297,14 +287,7 @@ export class Thumb extends FileItemConfig {
 
   private _bindToEntry(): void {
     const id = this.uid?.trim() as Uid;
-    if (!id) {
-      if (this.entry) {
-        this.reset();
-      }
-      return;
-    }
-
-    const entry = this._collection.read(id);
+    const entry = id ? this._collection.read(id) : null;
     if (!entry) {
       // The uid no longer resolves (entry removed, scope lost, or uid swapped
       // to an unknown id) — drop the previous entry's subscriptions and image
