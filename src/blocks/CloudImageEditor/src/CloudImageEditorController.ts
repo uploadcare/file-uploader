@@ -131,8 +131,6 @@ export class CloudImageEditorController {
   // render that uses them re-renders. The value itself means nothing.
   readonly #servicesRevision = signal(0);
   #revision = 0;
-  // Every live `observe`r, so `destroy` can release the ones their owners did not.
-  readonly #observers = new Set<() => void>();
   #services: EditorServices;
 
   public constructor(services?: EditorServices) {
@@ -245,32 +243,19 @@ export class CloudImageEditorController {
    * synchronously from the write; `{ immediate: true }` also runs it once now.
    * The listener runs untracked: it is a side effect, and a write made inside a
    * block's update must not make that block depend on what the listener reads.
-   * Returns the unsubscriber; `destroy` releases whatever is still subscribed.
+   * Returns the unsubscriber.
    */
   public observe<K extends keyof EditorState>(
     key: K,
     listener: (value: EditorState[K]) => void,
     options?: ObserveOptions,
   ): () => void {
-    const unsubscribe = this.#state.observe(
+    return this.#state.observe(
       key,
       // Every key is seeded in the constructor, so the value is never the absent `undefined`.
       (value) => Signal.subtle.untrack(() => listener(value as EditorState[K])),
       options,
     );
-    const dispose = () => {
-      unsubscribe();
-      this.#observers.delete(dispose);
-    };
-    this.#observers.add(dispose);
-    return dispose;
-  }
-
-  /** Release every observer. The state stays: a reconnected root reuses it. */
-  public destroy(): void {
-    for (const dispose of [...this.#observers]) {
-      dispose();
-    }
   }
 
   #read<K extends keyof EditorState>(key: K): EditorState[K] {
