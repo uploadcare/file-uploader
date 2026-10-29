@@ -44,7 +44,7 @@ npx playwright install chromium   # one-time: required for e2e (browser tests)
 | Command | What it does |
 |---------|--------------|
 | `npm run tsc:app` | App typecheck (`tsconfig.app.json`, `noEmit`). Fast first check. |
-| `npm run build` | `svg-sprites → lib → ssr-stubs → jsx:types`, then `attw` + `publint` + `size-limit`. **Prereq for specs/e2e.** |
+| `npm run build` | `svg-sprites → lib → ssr-stubs`, then `dts-internals` + `attw` + `publint` + `size-limit`. **Prereq for specs/e2e.** |
 | `npm run test:specs` | Vitest **specs** project (happy-dom). Colocated `**/*.test.{ts,js}` + `specs/npm/*.test.ts`. |
 | `npm run test:e2e` | Vitest **e2e** project — real Chromium via `@vitest/browser-playwright`. Needs playwright + built `web/`. |
 | `npm run test:e2e:dev` | Same, headed, for debugging. |
