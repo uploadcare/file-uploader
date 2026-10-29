@@ -28,9 +28,6 @@ export class FileActionButton extends ChildBlock {
   public success = false;
 
   @property({ type: Boolean })
-  public idle = false;
-
-  @property({ type: Boolean })
   public hideRemove = false;
 
   @property({ type: Number })
@@ -53,7 +50,6 @@ export class FileActionButton extends ChildBlock {
     const classes = classMap({
       'uc-remove-btn': true,
       'uc-mini-btn': true,
-      'uc-idle': this.idle,
       'uc-uploading': this.uploading,
       'uc-queued': this.queued,
       'uc-hide-remove': this.hideRemove,
