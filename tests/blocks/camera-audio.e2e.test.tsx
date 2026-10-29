@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Locator } from 'vitest/browser';
 import type { Config } from '@/index';
+import { settingOf } from '~/tests/utils/camera-settings';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -37,9 +38,9 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
     camera,
     getUserMedia,
     settingsButton: camera.getByRole('button', { name: 'Camera settings', exact: true, includeHidden: true }),
-    audioQualityPicker: camera.getByRole('combobox', { name: 'Audio quality', exact: true, includeHidden: true }),
-    audioModePicker: camera.getByRole('combobox', { name: 'Sound', exact: true, includeHidden: true }),
-    microphonePicker: camera.getByRole('combobox', { name: 'Microphone', exact: true, includeHidden: true }),
+    audioQuality: settingOf(camera, 'Audio quality'),
+    audioMode: settingOf(camera, 'Sound'),
+    microphone: settingOf(camera, 'Microphone'),
   };
 };
 
@@ -53,13 +54,14 @@ const liveStream = (camera: Locator): MediaStream => {
 const audioTrack = (camera: Locator) => liveStream(camera).getAudioTracks()[0];
 const videoTrack = (camera: Locator) => liveStream(camera).getVideoTracks()[0];
 
-/** The microphone picker in the settings popup, for dispatching changes without opening the popup. */
-const audioPicker = (camera: Locator) => {
-  const select = camera.element().querySelector('uc-select.uc-microphone-select') as
-    | (HTMLElement & { value: string; options: { value: string }[] })
-    | null;
-  if (!select) throw new Error('The microphone picker is not rendered');
-  return select;
+/** Picks a microphone in the settings popup without opening it, as a user's pick would. */
+const pickMicrophone = (camera: Locator, deviceId: string) => {
+  const radio = settingOf(camera, 'Microphone')
+    .radios()
+    .find((input) => input.value === deviceId);
+  if (!radio) throw new Error(`The microphone picker has no ${deviceId}`);
+  radio.checked = true;
+  radio.dispatchEvent(new Event('change', { bubbles: true }));
 };
 
 /** Microphone-only requests: what a swap asks for, as opposed to opening the camera. */
@@ -154,10 +156,8 @@ describe('cameraAudioMode', () => {
 
   it('does nothing when the microphone in use is picked again', async () => {
     const { camera, getUserMedia } = await openCamera();
-    const select = audioPicker(camera);
 
-    select.value = audioTrack(camera)?.getSettings().deviceId ?? '';
-    select.dispatchEvent(new Event('change'));
+    pickMicrophone(camera, audioTrack(camera)?.getSettings().deviceId ?? '');
 
     await new Promise((resolve) => setTimeout(resolve, 500));
     expect(microphoneRequests(getUserMedia)).toEqual([]);
@@ -166,13 +166,13 @@ describe('cameraAudioMode', () => {
   it('switches to another microphone without reopening the camera', async () => {
     const { camera, getUserMedia } = await openCamera();
     const camTrack = videoTrack(camera);
-    const select = audioPicker(camera);
     const inUse = audioTrack(camera)?.getSettings().deviceId;
-    const other = select.options.find((option) => option.value !== inUse)?.value;
+    const other = settingOf(camera, 'Microphone')
+      .radios()
+      .find((radio) => radio.value !== inUse)?.value;
     if (!other) throw new Error('The fake device offers a single microphone');
 
-    select.value = other;
-    select.dispatchEvent(new Event('change'));
+    pickMicrophone(camera, other);
 
     await vi.waitFor(() =>
       expect(microphoneRequests(getUserMedia)).toEqual([{ audio: { deviceId: { exact: other } } }]),
@@ -224,12 +224,10 @@ describe('audio pickers', () => {
 
     await opened.settingsButton.click();
 
-    await expect.element(opened.audioQualityPicker).toBeVisible();
-    await expect.element(opened.audioModePicker).toBeVisible();
-    const texts = (picker: Locator) =>
-      [...(picker.element() as HTMLSelectElement).options].map((option) => option.textContent);
-    expect(texts(opened.audioQualityPicker)).toEqual(['Auto', 'Low', 'High']);
-    expect(texts(opened.audioModePicker)).toEqual(['Voice', 'Music']);
+    await expect.element(opened.audioQuality.row).toBeVisible();
+    await expect.element(opened.audioMode.row).toBeVisible();
+    expect(opened.audioQuality.texts()).toEqual(['Auto', 'Low', 'High']);
+    expect(opened.audioMode.texts()).toEqual(['Voice', 'Music']);
   });
 
   it('are not offered in photo mode', async () => {
@@ -251,8 +249,8 @@ describe('audio pickers', () => {
     const opened = await openCamera(PICKERS);
     await opened.settingsButton.click();
 
-    await opened.audioModePicker.selectOptions('music');
-    await opened.audioQualityPicker.selectOptions('low');
+    await opened.audioMode.pick('Music');
+    await opened.audioQuality.pick('Low');
     await vi.waitFor(() => expect(microphoneRequests(opened.getUserMedia)).toEqual([{ audio: MUSIC_ON_THE_SAME_MIC }]));
     await opened.settingsButton.click();
     await startRecording(opened.camera);
@@ -269,14 +267,15 @@ describe('microphone picker', () => {
 
     await opened.settingsButton.click();
 
-    await expect.element(opened.microphonePicker).toBeVisible();
-    const select = opened.microphonePicker.element() as HTMLSelectElement;
-    expect(select.options.length).toBeGreaterThan(1);
-    expect(select.value).toBe(audioTrack(opened.camera)?.getSettings().deviceId);
+    // The only setting here, so the popup shows its options without a heading.
+    await expect.element(opened.microphone.options).toBeVisible();
+    const radios = opened.microphone.radios();
+    expect(radios.length).toBeGreaterThan(1);
+    expect(radios.find((radio) => radio.checked)?.value).toBe(audioTrack(opened.camera)?.getSettings().deviceId);
     // Moved, not duplicated: outside the settings popup, the bottom bar has no picker, only the mute button.
-    const barPickers = [...opened.camera.element().querySelectorAll('.uc-controls uc-select')].filter(
-      (picker) => !picker.closest('[popover]'),
-    );
+    const barPickers = [
+      ...opened.camera.element().querySelectorAll('.uc-controls uc-select, .uc-controls [role="radiogroup"]'),
+    ].filter((picker) => !picker.closest('[popover]'));
     expect(barPickers).toEqual([]);
     await expect.element(opened.camera.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
   });
@@ -286,26 +285,43 @@ describe('microphone picker', () => {
     const camTrack = videoTrack(opened.camera);
     const inUse = audioTrack(opened.camera)?.getSettings().deviceId;
     await opened.settingsButton.click();
-    const other = [...(opened.microphonePicker.element() as HTMLSelectElement).options].find(
-      (option) => option.value !== inUse,
-    )?.value;
-    if (!other) throw new Error('The fake device offers a single microphone');
+    const other = opened.microphone.radios().find((radio) => radio.value !== inUse);
+    const otherText = other?.labels?.[0]?.textContent?.trim();
+    if (!other || !otherText) throw new Error('The fake device offers a single microphone');
 
-    await opened.microphonePicker.selectOptions(other);
+    await opened.microphone.pick(otherText);
 
     await vi.waitFor(() =>
-      expect(microphoneRequests(opened.getUserMedia)).toEqual([{ audio: { deviceId: { exact: other } } }]),
+      expect(microphoneRequests(opened.getUserMedia)).toEqual([{ audio: { deviceId: { exact: other.value } } }]),
     );
     expect(videoTrack(opened.camera)).toBe(camTrack);
   });
 
-  it('is disabled while the microphone is muted', async () => {
+  it('is disabled while the microphone is muted, open if it is the only setting', async () => {
     const opened = await openCamera();
     await opened.camera.getByTestId('uc-camera-source--toggle-microphone').click();
 
     await opened.settingsButton.click();
 
-    await expect.element(opened.microphonePicker).toBeDisabled();
+    await expect.poll(() => opened.microphone.radios().every((radio) => radio.disabled)).toBe(true);
+    expect(opened.microphone.isOpen()).toBe(true);
+  });
+
+  it('shuts its whole section while the microphone is muted, and keeps it shut', async () => {
+    const opened = await openCamera({ cameraAudioQuality: 'auto, low, high' });
+    await opened.settingsButton.click();
+    if (!opened.microphone.isOpen()) await opened.microphone.row.click();
+    await expect.poll(() => opened.microphone.isOpen()).toBe(true);
+
+    // The click outside also dismisses the popup.
+    await opened.camera.getByTestId('uc-camera-source--toggle-microphone').click();
+    await opened.settingsButton.click();
+
+    const summary = opened.microphone.options.element().closest('details')?.querySelector('summary');
+    await expect.poll(() => summary?.getAttribute('aria-disabled')).toBe('true');
+    expect(opened.microphone.isOpen()).toBe(false);
+    await opened.microphone.row.click();
+    expect(opened.microphone.isOpen()).toBe(false);
   });
 
   it('is not offered in photo mode', async () => {

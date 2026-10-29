@@ -46,39 +46,165 @@
     position-area: top span-left;
     margin: 0;
     margin-block-end: 0.25rem;
-    padding: var(--uc-padding);
+    padding: calc(var(--uc-padding) / 2);
     color: var(--uc-foreground);
     background-color: var(--uc-background);
     border: none;
     border-radius: calc(var(--uc-radius) * 1.5);
     box-shadow: var(--uc-dialog-shadow);
+    font-variant-numeric: tabular-nums;
   }
 
-  /* Two columns shared by every row, so labels and selects line up whatever the locale or device names. */
+  /* As wide as the widest row or option, closed sections included, so the popup doesn't jump as sections open;
+     up to 300px, past which values and device names are cut to fit. */
   uc-camera-source .uc-camera-settings:popover-open {
-    display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: calc(var(--uc-padding) / 2) var(--uc-padding);
-    align-items: center;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: max-content;
+    max-width: min(300px, 100vw - 2 * var(--uc-padding));
   }
 
-  /* Device names can be long; they're cut rather than stretching the popup. */
-  uc-camera-source .uc-camera-settings uc-select select {
-    max-width: 14em;
+  /* A closed section's options are left out of layout by default; keep them sized but unseen, so they count towards the width.
+     Sections slide open and shut by animating to and from their natural height. */
+  uc-camera-source .uc-camera-setting::details-content {
+    content-visibility: visible;
+    block-size: 0;
     overflow: hidden;
+    visibility: hidden;
+    interpolate-size: allow-keywords;
+    transition:
+      block-size var(--uc-transition),
+      visibility var(--uc-transition);
+  }
+
+  uc-camera-source .uc-camera-setting[open]::details-content {
+    block-size: auto;
+    visibility: visible;
+  }
+
+  uc-camera-source .uc-camera-setting summary {
+    display: flex;
+    gap: var(--uc-padding);
+    align-items: center;
+    min-height: var(--uc-button-size);
+    padding: 0 10px;
+    border-radius: var(--uc-radius);
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    transition: background-color var(--uc-transition);
+  }
+
+  uc-camera-source .uc-camera-setting summary::-webkit-details-marker {
+    display: none;
+  }
+
+  uc-camera-source .uc-camera-setting summary:hover,
+  uc-camera-source .uc-camera-setting-option:hover {
+    background-color: var(--uc-secondary);
+  }
+
+  /* A disabled section doesn't toggle, so its row doesn't look clickable. */
+  uc-camera-source .uc-camera-setting.uc-disabled summary {
+    background-color: transparent;
+    opacity: 0.6;
+    cursor: default;
+  }
+
+  /* The only section has nothing to toggle or tell apart from, so it is just its options; the radio group keeps the label. */
+  uc-camera-source .uc-camera-setting.uc-lone summary {
+    display: none;
+  }
+
+  uc-camera-source .uc-camera-setting-value {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    color: var(--uc-muted-foreground);
+    white-space: nowrap;
+    text-align: end;
     text-overflow: ellipsis;
   }
 
-  uc-camera-source .uc-camera-settings label {
-    display: grid;
-    grid-column: 1 / -1;
-    grid-template-columns: subgrid;
-    align-items: center;
+  /* Sized to the arrow itself, so it sits as close to the value and the edge as the label does to the other edge. */
+  uc-camera-source .uc-camera-setting-chevron {
+    flex: none;
+    width: 16px;
+    height: 16px;
+    transition: transform var(--uc-transition);
   }
 
-  /* Every select takes the column's width, up to the 14em cap above. */
-  uc-camera-source .uc-camera-settings label uc-select select {
-    width: 100%;
+  uc-camera-source .uc-camera-setting[open] .uc-camera-setting-chevron {
+    transform: rotate(180deg);
+  }
+
+  uc-camera-source .uc-camera-setting-options {
+    display: flex;
+    flex-direction: column;
+    padding-block: 2px 4px;
+  }
+
+  uc-camera-source .uc-camera-setting-option {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    min-height: calc(var(--uc-button-size) * 0.9);
+    padding: 0 10px 0 15px;
+    border-radius: var(--uc-radius);
+    cursor: pointer;
+  }
+
+  /* The options sit in from their heading; with the heading hidden, they line up with the popup's edge as rows do. */
+  uc-camera-source .uc-camera-setting.uc-lone .uc-camera-setting-option {
+    padding-inline-start: 10px;
+  }
+
+  /* An option's icon, such as an aspect ratio's shape, at the size of its own drawing. */
+  uc-camera-source :where(.uc-camera-setting-option) > uc-icon {
+    flex: none;
+    width: 16px;
+    height: 16px;
+  }
+
+  uc-camera-source :where(.uc-camera-setting-option) > uc-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  uc-camera-source .uc-camera-setting-option span {
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
+  /* The radio is just a dot beside the chosen option; the others keep its space blank so labels line up. */
+  uc-camera-source .uc-camera-setting-option input {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    margin: 0;
+    appearance: none;
+    border-radius: 50%;
+  }
+
+  uc-camera-source .uc-camera-setting-option input:checked {
+    background-color: var(--uc-primary);
+  }
+
+  uc-camera-source .uc-camera-setting-option input:focus-visible {
+    outline: 2px solid var(--uc-primary);
+    outline-offset: 2px;
+  }
+
+  uc-camera-source .uc-camera-setting-option:has(:checked) {
+    color: var(--uc-primary);
+  }
+
+  uc-camera-source .uc-camera-setting-option:has(:disabled) {
+    opacity: 0.6;
+    cursor: default;
   }
 
   uc-camera-source .uc-toolbar {
@@ -157,6 +283,13 @@
     justify-content: space-between;
     padding: 0 var(--uc-padding) var(--uc-padding);
     min-height: 74px;
+  }
+
+  /* Wider than the theme's tablet breakpoint, the bar's buttons sit further in from the sides. */
+  @media only screen and (min-width: 681px) {
+    uc-camera-source .uc-controls {
+      padding-inline: calc(var(--uc-padding) * 2);
+    }
   }
 
   uc-camera-source:not(.uc-initialized) .uc-controls {
