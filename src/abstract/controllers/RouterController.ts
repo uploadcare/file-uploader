@@ -57,6 +57,10 @@ export class RouterController {
   @signalState() private _params: Record<string, unknown> = {};
   private _history: ActivityId[] = [];
   private _fileAddHooks: FileAddHook[] = [];
+  // Set while a `reportWhenShown` navigation runs.
+  private _holdUnshown = false;
+  // The activity whose `ACTIVITY_CHANGE` waits for its block to mount (see `reportWhenShown`).
+  private _unreported: ActivityId | null = null;
 
   /**
    * Emit a router event to the container-owned {@link EventEmitter}, debouncing
@@ -182,6 +186,10 @@ export class RouterController {
   /** Report a mounted activity block. Returns the matching un-mount call. */
   public activityBlockMounted(activityType: ActivityId): () => void {
     this._mountedActivities.set(activityType, (this._mountedActivities.get(activityType) ?? 0) + 1);
+    if (this._unreported === activityType && this._currentActivity === activityType) {
+      this._unreported = null;
+      this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: activityType });
+    }
     this._listeners.notify();
     let released = false;
     return () => {
@@ -307,7 +315,12 @@ export class RouterController {
 
     if (nextEffective !== prevEffective) {
       this._pushHistory(nextEffective);
-      this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: nextEffective });
+      if (this._holdUnshown && nextEffective !== null && !this._mountedActivities.has(nextEffective)) {
+        this._unreported = nextEffective;
+      } else {
+        this._unreported = null;
+        this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: nextEffective });
+      }
     }
     this._listeners.notify();
   }
@@ -325,6 +338,20 @@ export class RouterController {
     if (this._history[this._history.length - 1] === to) return;
     this._history.push(to);
     if (this._history.length > 10) this._history.shift();
+  }
+
+  /**
+   * Run `navigation`, holding its `ACTIVITY_CHANGE` until the new activity's block mounts: as in v1, which reported an
+   * activity when its block activated, an activity nothing in the ctx shows is switched to but not reported. The held
+   * report is dropped once the activity changes again.
+   */
+  public reportWhenShown(navigation: () => void): void {
+    this._holdUnshown = true;
+    try {
+      navigation();
+    } finally {
+      this._holdUnshown = false;
+    }
   }
 
   /** Open a modal for `id` without touching the background activity. */

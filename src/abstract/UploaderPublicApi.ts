@@ -467,7 +467,7 @@ export class UploaderPublicApi {
       : []
   ) => {
     this._whenPluginsReady(() => {
-      this._router.navigate(activityType, params[0] ?? {});
+      this._router.reportWhenShown(() => this._router.navigate(activityType, params[0] ?? {}));
       if (activityType !== null) {
         return this._waitForActivity(activityType);
       }
@@ -498,11 +498,13 @@ export class UploaderPublicApi {
         return;
       }
       const activityParams = params[0] ?? {};
-      if (this._router.modal !== null) {
-        this._router.openModal(activityType, activityParams);
-      } else {
-        this._router.setActivity(activityType, activityParams);
-      }
+      this._router.reportWhenShown(() => {
+        if (this._router.modal !== null) {
+          this._router.openModal(activityType, activityParams);
+        } else {
+          this._router.setActivity(activityType, activityParams);
+        }
+      });
       return this._waitForActivity(activityType);
     });
   };
