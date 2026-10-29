@@ -439,11 +439,14 @@ export class UploaderPublicApi {
     );
   }
 
-  /** Never rejects; returned so the wait belongs to the deferred navigation's task. */
-  private _waitForActivity(activityType: NonNullable<ActivityType>): Promise<boolean> {
+  /**
+   * Never rejects; returned so the wait belongs to the deferred navigation's task. Navigation only warns on a timeout,
+   * so it waits briefly; `setModalState` opens the modal only once the block is there, so it waits longer.
+   */
+  private _waitForActivity(activityType: NonNullable<ActivityType>, timeout = 100): Promise<boolean> {
     return waitForActivityBlock(this._router, activityType, {
       onTimeout: () => this._log.warn(`Activity type "${activityType}" not found in the context`),
-      timeout: 100,
+      timeout,
     });
   }
 
@@ -582,20 +585,14 @@ export class UploaderPublicApi {
         return;
       }
 
-      return this._container.lifetime
-        .guard(
-          waitForActivityBlock(router, activityType, {
-            onTimeout: () => this._log.warn(`Activity block "${activityType}" not found in the context`),
-          }),
-        )
-        .then((found) => {
-          if (!found) {
-            // Timeout — the activity's block never appeared; keep the modal
-            // closed (same observable behavior as before the promise settled).
-            return;
-          }
-          router.openModal(activityType);
-        });
+      return this._container.lifetime.guard(this._waitForActivity(activityType, 1000)).then((found) => {
+        if (!found) {
+          // Timeout — the activity's block never appeared; keep the modal
+          // closed (same observable behavior as before the promise settled).
+          return;
+        }
+        router.openModal(activityType);
+      });
     });
   };
 }
