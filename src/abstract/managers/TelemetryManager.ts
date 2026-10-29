@@ -194,12 +194,6 @@ export class TelemetryManager {
     return sanitized as TelemetryState['config'];
   }
 
-  private _markInitialized(type: CommonEventType | undefined): void {
-    if (type === InternalEventType.INIT_SOLUTION) {
-      this._initialized = true;
-    }
-  }
-
   private _formattingPayload(
     body: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config' | 'component'>>,
   ): TelemetryState {
@@ -222,22 +216,18 @@ export class TelemetryManager {
       // A caller may attribute an event to its own component (the standalone
       // editor solution does this, since it registers no uploader
       // `solutionName`); otherwise fall back to the registered solution.
-      component: body.component ?? this._solution ?? this._initComponent,
+      component: body.component ?? this._appInfo.solutionName ?? this._initComponent,
       activity: this._router.currentActivity,
       projectPubkey: this._config.pubkey,
       userAgent: navigator.userAgent,
       eventType: result.eventType ?? '',
-      eventTimestamp: this._timestamp,
+      eventTimestamp: Date.now(),
 
       payload: {
-        location: this._location,
+        location: location.origin,
         ...payload,
       } as TelemetryState['payload'],
     } as TelemetryState;
-  }
-
-  private _isExcludedEvent(type: CommonEventType | undefined): boolean {
-    return type !== undefined && EXCLUDED_EVENTS.has(type);
   }
 
   public sendEvent(body: TelemetryEventBody): void {
@@ -247,12 +237,14 @@ export class TelemetryManager {
       return;
     }
 
-    this._markInitialized(body.eventType);
-    if (body.eventType === InternalEventType.INIT_SOLUTION && body.component) {
-      this._initComponent = body.component;
+    if (body.eventType === InternalEventType.INIT_SOLUTION) {
+      this._initialized = true;
+      if (body.component) {
+        this._initComponent = body.component;
+      }
     }
 
-    if (this._isExcludedEvent(body.eventType)) {
+    if (EXCLUDED_EVENTS.has(body.eventType)) {
       return;
     }
     // Copied now, while the config waits for the send: event payloads such as `OutputCollectionState` are getters over
@@ -352,18 +344,6 @@ export class TelemetryManager {
     }
 
     return true;
-  }
-
-  private get _timestamp(): number {
-    return Date.now();
-  }
-
-  private get _solution(): string | null {
-    return this._appInfo.solutionName;
-  }
-
-  private get _location(): string {
-    return location.origin;
   }
 
   public destroy(): void {
