@@ -391,6 +391,12 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   }
 
   private readonly _handleRetryNetwork = (): void => {
+    // The image info never arrived, so there is no image to reload yet: ask for it again.
+    if (!this._imageSize) {
+      this._editorController.set('*networkProblems', false);
+      this._runTask(() => this._loadImageInfo());
+      return;
+    }
     const images = this.querySelectorAll('img');
     for (const img of images) {
       const originalSrc = img.src;
@@ -721,6 +727,13 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       throw new Error('No UUID nor CDN URL provided');
     }
 
+    await this._loadImageInfo();
+  }
+
+  /** Loads the size of the image `*originalUrl` names, then initializes. Retry runs it again after a network error. */
+  private async _loadImageInfo(): Promise<void> {
+    const editorController = this._editorController;
+
     // Drop any in-progress live slider preview so it isn't reapplied to the new
     // image (the fader keys its preview off `*colorPreview`).
     if (editorController.get('*colorPreview')) {
@@ -761,6 +774,11 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       }
       editorController.telemetry.sendEventError(err, 'cloud editor image. Failed to load image info');
       this._log.error('Failed to load image info', err);
+      // `fetch` rejects with a TypeError only when the request never got an answer; offer a retry for that. An
+      // error status (a missing file, say) won't go away on retry.
+      if (err instanceof TypeError) {
+        editorController.set('*networkProblems', true);
+      }
     }
 
     this._scheduleInitialization();
