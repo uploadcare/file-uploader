@@ -332,7 +332,7 @@ describe('FileItem entry-state rendering', () => {
     const uid = await bindEntry(el, collection, { fileName: 'old.png' });
     expect(fileNameText(el)).toBe('old.png');
 
-    collection.publishProp(uid, 'fileName', 'new.png');
+    collection.read(uid)!.set('fileName', 'new.png');
     await el.updateComplete;
     await delay(0);
     expect(fileNameText(el)).toBe('new.png');
@@ -396,14 +396,14 @@ describe('FileItem uid rebinding', () => {
     // A write to the PREVIOUS entry must not leak into this item (subscription
     // torn down by reset(); its signals no longer tracked by render).
     vi.useFakeTimers();
-    collection.publishProp(uidA, 'fileName', 'a-changed.png');
+    collection.read(uidA)!.set('fileName', 'a-changed.png');
     await el.updateComplete;
     await vi.advanceTimersByTimeAsync(120);
     vi.useRealTimers();
     expect(fileNameText(el)).toBe('b.png');
 
     // A write to the CURRENT entry still updates it.
-    collection.publishProp(uidB, 'fileName', 'b-changed.png');
+    collection.read(uidB)!.set('fileName', 'b-changed.png');
     await el.updateComplete;
     await delay(0);
     expect(fileNameText(el)).toBe('b-changed.png');
@@ -440,14 +440,14 @@ describe('FileItem uid rebinding', () => {
     // The PREVIOUS entry starting to upload must NOT mark this item uploading —
     // its signals are no longer tracked by render.
     vi.useFakeTimers();
-    collection.publishProp(uidA, 'isUploading', true);
+    collection.read(uidA)!.set('isUploading', true);
     await el.updateComplete;
     await vi.advanceTimersByTimeAsync(120);
     vi.useRealTimers();
     expect(inner(el).hasAttribute('data-uploading')).toBe(false);
 
     // The CURRENT entry uploading still marks it.
-    collection.publishProp(uidB, 'isUploading', true);
+    collection.read(uidB)!.set('isUploading', true);
     await el.updateComplete;
     expect(inner(el).hasAttribute('data-uploading')).toBe(true);
   });

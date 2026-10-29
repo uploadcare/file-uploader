@@ -68,7 +68,6 @@ export class UploadCollectionController {
     }
     this._flushProperties();
   }, 0);
-  private _scheduleProperties = (): void => this._scheduleFlush();
   private _scheduleMembership = (): void => {
     this._membershipPending = true;
     this._scheduleFlush();
@@ -107,7 +106,7 @@ export class UploadCollectionController {
 
   private _recordPropChange(key: keyof UploadEntryData, uid: Uid): void {
     if (this._queuePropChange(key, uid)) {
-      this._scheduleProperties();
+      this._scheduleFlush();
     }
   }
 
@@ -169,11 +168,7 @@ export class UploadCollectionController {
     if (this._items.size > 0) {
       this._scheduleMembership();
     }
-    return () => this.unobserveCollection(handler);
-  }
-
-  public unobserveCollection(handler: CollectionObserver): void {
-    this._collectionObservers.delete(handler);
+    return () => this._collectionObservers.delete(handler);
   }
 
   /**
@@ -185,12 +180,10 @@ export class UploadCollectionController {
   public observeProperties(keys: readonly (keyof UploadEntryData)[], handler: PropertyObserver): Unsubscriber {
     this._propertyObservers.set(handler, new Set(keys));
     this._recomputeObservedKeys();
-    return () => this.unobserveProperties(handler);
-  }
-
-  public unobserveProperties(handler: PropertyObserver): void {
-    this._propertyObservers.delete(handler);
-    this._recomputeObservedKeys();
+    return () => {
+      this._propertyObservers.delete(handler);
+      this._recomputeObservedKeys();
+    };
   }
 
   // Insert one entry's state + key-subscription WITHOUT arming any flush. Shared
@@ -244,7 +237,7 @@ export class UploadCollectionController {
     // `FILE_UPLOAD_SUCCESS`.
     this._scheduleMembership();
     if (this._queueImmediateOnAdd(item)) {
-      this._scheduleProperties();
+      this._scheduleFlush();
     }
     return item.uid;
   }
@@ -266,7 +259,7 @@ export class UploadCollectionController {
       queued = this._queueImmediateOnAdd(item) || queued;
     }
     if (queued) {
-      this._scheduleProperties();
+      this._scheduleFlush();
     }
     return items.map((item) => item.uid);
   }
@@ -285,14 +278,6 @@ export class UploadCollectionController {
       throw new Error(`UploadCollectionController#readProp: Item with id ${id} not found`);
     }
     return item.get(propName);
-  }
-
-  public publishProp<K extends keyof UploadEntryData>(id: Uid, propName: K, value: UploadEntryData[K]): void {
-    const item = this.read(id);
-    if (!item) {
-      throw new Error(`UploadCollectionController#publishProp: Item with id ${id} not found`);
-    }
-    item.set(propName, value);
   }
 
   public remove(id: Uid): void {

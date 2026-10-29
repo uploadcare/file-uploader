@@ -27,7 +27,7 @@ describe('UploadCollectionController', () => {
     collection.destroy();
   });
 
-  it('read/readProp/publishProp work and an observed key change notifies property observers per-key', () => {
+  it('read/readProp work and an observed key change notifies property observers per-key', () => {
     const collection = new UploadCollectionController();
     const propObserver = vi.fn();
     collection.observeProperties(['uploadProgress'], propObserver);
@@ -36,7 +36,7 @@ describe('UploadCollectionController', () => {
     vi.runOnlyPendingTimers(); // flush the immediate-on-add fire for observed keys
     propObserver.mockClear();
 
-    collection.publishProp(id, 'uploadProgress', 50);
+    collection.read(id)!.set('uploadProgress', 50);
     expect(collection.readProp(id, 'uploadProgress')).toBe(50);
 
     vi.runOnlyPendingTimers();
@@ -73,7 +73,7 @@ describe('UploadCollectionController', () => {
     collection.observeProperties(['uploadProgress'], progressObs);
     collection.observeProperties(['isUploading'], uploadingObs);
 
-    collection.publishProp(id, 'uploadProgress', 50); // only uploadProgress changes
+    collection.read(id)!.set('uploadProgress', 50); // only uploadProgress changes
     vi.runOnlyPendingTimers();
 
     expect(progressObs).toHaveBeenCalledTimes(1);
@@ -127,7 +127,7 @@ describe('UploadCollectionController', () => {
 
     // Queue a property change, then remove the entry in the same macrotask —
     // the pending flush must not report the now-unresolvable uid.
-    collection.publishProp(id, 'uploadProgress', 50);
+    collection.read(id)!.set('uploadProgress', 50);
     collection.remove(id);
     vi.runOnlyPendingTimers();
 
@@ -145,7 +145,7 @@ describe('UploadCollectionController', () => {
 
     const propObserver = vi.fn();
     collection.observeProperties(['uploadProgress'], propObserver); // only uploadProgress observed
-    collection.publishProp(id, 'thumbUrl', 'blob:x'); // thumbUrl is not observed
+    collection.read(id)!.set('thumbUrl', 'blob:x'); // thumbUrl is not observed
     vi.runOnlyPendingTimers();
 
     expect(propObserver).not.toHaveBeenCalled();
@@ -160,8 +160,8 @@ describe('UploadCollectionController', () => {
     const propObserver = vi.fn();
     collection.observeProperties(['isUploading'], propObserver);
     // Two keys change in one macrotask; only the declared one may enter the map.
-    collection.publishProp(id, 'thumbUrl', 'blob:x');
-    collection.publishProp(id, 'isUploading', true);
+    collection.read(id)!.set('thumbUrl', 'blob:x');
+    collection.read(id)!.set('isUploading', true);
     vi.runOnlyPendingTimers();
 
     expect(propObserver).toHaveBeenCalledTimes(1);
@@ -177,7 +177,7 @@ describe('UploadCollectionController', () => {
 
     const propObserver = vi.fn();
     collection.observeProperties(['cdnUrlModifiers'], propObserver);
-    collection.publishProp(id, 'cdnUrlModifiers', '-/preview/');
+    collection.read(id)!.set('cdnUrlModifiers', '-/preview/');
     vi.runOnlyPendingTimers();
 
     const changeMap = (propObserver.mock.calls[0]?.[0] ?? {}) as Record<string, Set<string>>;
@@ -230,10 +230,9 @@ describe('UploadCollectionController', () => {
     collection.destroy();
   });
 
-  it('readProp / publishProp throw for an unknown id', () => {
+  it('readProp throws for an unknown id', () => {
     const collection = new UploadCollectionController();
     expect(() => collection.readProp('ghost' as never, 'uploadProgress')).toThrow(/not found/);
-    expect(() => collection.publishProp('ghost' as never, 'uploadProgress', 1)).toThrow(/not found/);
     collection.destroy();
   });
 
@@ -332,7 +331,7 @@ describe('UploadCollectionController', () => {
     offProp();
 
     collection.add({});
-    collection.publishProp(id, 'uploadProgress', 42);
+    collection.read(id)!.set('uploadProgress', 42);
     vi.runOnlyPendingTimers();
 
     expect(collObserver).not.toHaveBeenCalled();
