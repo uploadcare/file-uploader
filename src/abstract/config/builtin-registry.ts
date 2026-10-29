@@ -153,8 +153,7 @@ export const BUILTIN_REGISTRY = {
   pasteScope: { default: 'local', coerce: asPasteScope },
 
   dynamicButtonShowFirstIcon: { default: true, coerce: asBoolean },
-  // NEXT-MAJOR(dynamic-btn): default to `auto`, the mode the docs used to describe. `plain` is v1's default, kept for
-  // 1.x compat.
+  // NEXT-MAJOR(dynamic-btn): default to `auto`, the default the docs give. `plain` kept for 1.x compat.
   dynamicButtonViewMode: { default: 'plain', coerce: asDynamicButtonViewMode },
 } as const satisfies BuiltinRegistry;
 
