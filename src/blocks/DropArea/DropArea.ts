@@ -13,7 +13,7 @@ import { effect } from '../../lit/effect';
 import { ensureUploaderScope } from '../../lit/ensureUploaderScope';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { UploadSource } from '../../utils/UploadSource';
-import { addDropzone, DropzoneState, type DropzoneStateValue } from './addDropzone';
+import { addDropzone, type DropzoneState } from './addDropzone';
 import './drop-area.css';
 import type { DropItem } from './getDropItems';
 
@@ -178,13 +178,13 @@ export class DropArea extends ChildBlock {
     dropAreaRegistry.add(this);
     this._updateIsEnabled();
     this._updateVisibility();
-    this._updateDragStateAttribute(DropzoneState.INACTIVE);
+    this.setAttribute('drag-state', 'inactive');
 
     this._destroyDropzone = addDropzone({
       element: this,
       shouldIgnore: () => this._shouldIgnore(),
-      onChange: (state: DropzoneStateValue) => {
-        this._updateDragStateAttribute(state);
+      onChange: (state: DropzoneState) => {
+        this.setAttribute('drag-state', state);
       },
       onItems: (items: DropItem[]) => {
         if (!items.length) {
@@ -331,10 +331,6 @@ export class DropArea extends ChildBlock {
     this.hidden = !shouldBeVisible;
   }
 
-  private _updateDragStateAttribute(state: DropzoneStateValue): void {
-    this.setAttribute('drag-state', state);
-  }
-
   private _setupContentWrapperDropzone(): void {
     if (this._destroyContentWrapperDropzone) {
       return;
@@ -347,7 +343,7 @@ export class DropArea extends ChildBlock {
 
     this._destroyContentWrapperDropzone = addDropzone({
       element: contentWrapperEl,
-      onChange: (state: DropzoneStateValue) => contentWrapperEl.setAttribute('drag-state', state),
+      onChange: (state: DropzoneState) => contentWrapperEl.setAttribute('drag-state', state),
       onItems: () => {},
       shouldIgnore: () => this._shouldIgnore(),
     });
