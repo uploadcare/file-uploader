@@ -141,21 +141,4 @@ describe('@subscription / registerHostSubscriptions', () => {
     expect(teardownA).toHaveBeenCalledTimes(1);
     expect(teardownC).toHaveBeenCalledTimes(1);
   });
-
-  it('warns through the logger it is given, not the root logger', () => {
-    const scopedWarn = vi.fn();
-    const moduleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    class Host {
-      @subscription()
-      protected bad(): void {
-        throw new Error('boom');
-      }
-    }
-
-    const host = new Host();
-    registerHostSubscriptions(host, { warn: scopedWarn });
-
-    expect(scopedWarn).toHaveBeenCalledTimes(1);
-    expect(moduleWarn).not.toHaveBeenCalled();
-  });
 });

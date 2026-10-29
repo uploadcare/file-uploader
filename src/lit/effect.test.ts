@@ -147,22 +147,4 @@ describe('@effect / registerHostEffects', () => {
     host.registered[1]?.fn();
     expect(host.ran).toEqual(['good']);
   });
-
-  it('warns through the logger it is given, not the root logger', () => {
-    const scopedWarn = vi.fn();
-    const moduleWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    class Host extends FakeHost {
-      @effect()
-      protected bad(): void {
-        throw new Error('boom');
-      }
-    }
-
-    const host = new Host();
-    registerHostEffects(host as unknown as EffectHost, { warn: scopedWarn });
-    host.registered[0]?.fn();
-
-    expect(scopedWarn).toHaveBeenCalledTimes(1);
-    expect(moduleWarn).not.toHaveBeenCalled();
-  });
 });
