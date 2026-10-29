@@ -69,6 +69,7 @@ export class EditorToolbar extends EditorBlock {
   @property({ attribute: false })
   public imageContainer: HTMLElement | null = null;
 
+  /** Follows `editorController.tabId`, derived in `willUpdate`. */
   @state()
   public activeTab: TabIdValue = TabId.CROP;
 
@@ -216,10 +217,8 @@ export class EditorToolbar extends EditorBlock {
 
   private _activateTab(id: TabIdValue): void {
     this.editorController.tabId = id;
-    this._applyTabState(id);
-  }
-
-  private _applyTabState(id: TabIdValue): void {
+    // Set here too: a `tabId` write from `updated` lands inside the update that read it, which `SignalWatcher` does
+    // not re-run, so `willUpdate` alone would leave `activeTab` behind.
     this.activeTab = id;
     this._syncTabIndicator();
   }
@@ -350,14 +349,8 @@ export class EditorToolbar extends EditorBlock {
         },
         { immediate: true },
       ),
-      controller.observe(
-        'tabId',
-        (tabId) => {
-          this._applyTabState(tabId);
-          this._updateInfoTooltip();
-        },
-        { immediate: true },
-      ),
+      // `activeTab` follows `tabId` in `willUpdate`; the tooltip is a debounced side effect.
+      controller.observe('tabId', () => this._updateInfoTooltip()),
       // The fader self-deactivates on an `originalUrl` change (see EditorImageFader).
       controller.observe('loadingImages', (count) => this._debouncedShowLoader(count > 0), { immediate: true }),
     ];
@@ -380,6 +373,12 @@ export class EditorToolbar extends EditorBlock {
     super.firstUpdated(changedProperties);
 
     this._syncTabIndicator();
+  }
+
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+    // Here, not in `render`, so `updated` sees `activeTab` change and re-syncs the tab indicator.
+    this.activeTab = this.editorControllerOrNull?.tabId ?? this.activeTab;
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
