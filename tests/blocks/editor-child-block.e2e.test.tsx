@@ -24,7 +24,7 @@ const TestEditorRootBase = RegisterableElementMixin(LightDomMixin(LitElement));
 class TestEditorRoot extends TestEditorRootBase {
   public readonly telemetrySendEvent = vi.fn();
   public readonly telemetrySendEventError = vi.fn();
-  public readonly controller = new CloudImageEditorController(undefined, {
+  public readonly controller = new CloudImageEditorController({
     l10n: (key) => (key === 'cancel' ? 'Cancel' : key),
     getConfig: ((key: string) => (key === 'pubkey' ? 'demopublickey' : undefined)) as EditorServices['getConfig'],
     telemetry: {

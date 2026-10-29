@@ -136,8 +136,8 @@ export class CloudImageEditorController {
   readonly #observers = new Set<() => void>();
   #services: EditorServices;
 
-  public constructor(initial?: Partial<EditorState>, services?: EditorServices) {
-    this.#state = new SignalMap<EditorState>({ ...createDefaultState(), ...initial });
+  public constructor(services?: EditorServices) {
+    this.#state = new SignalMap<EditorState>(createDefaultState());
     this.#services = services ?? createDefaultServices();
   }
 
@@ -279,3 +279,7 @@ export class CloudImageEditorController {
     return this.#state.getTracked(key) as EditorState[K];
   }
 }
+
+/** Fails to compile when an `EditorState` key has no accessor on the controller, or one of another type. */
+type AccessorsCoverState<T extends EditorState> = T;
+type _CheckAccessors = AccessorsCoverState<CloudImageEditorController>;

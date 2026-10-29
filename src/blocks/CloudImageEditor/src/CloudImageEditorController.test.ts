@@ -13,14 +13,6 @@ describe('CloudImageEditorController', () => {
     expect(controller.colorPreview).toBeNull();
   });
 
-  it('accepts a partial initial state overriding only the given keys', () => {
-    const controller = new CloudImageEditorController({ tabId: TabId.FILTERS, networkProblems: true });
-    expect(controller.tabId).toBe(TabId.FILTERS);
-    expect(controller.networkProblems).toBe(true);
-    // Untouched keys still get their default.
-    expect(controller.originalUrl).toBeNull();
-  });
-
   it('a write stores the value and notifies observers, deduping unchanged writes (Object.is)', () => {
     const controller = new CloudImageEditorController();
     const listener = vi.fn();
@@ -60,7 +52,8 @@ describe('CloudImageEditorController', () => {
   });
 
   it('observe with immediate also fires once with the current value', () => {
-    const controller = new CloudImageEditorController({ tabId: TabId.FILTERS });
+    const controller = new CloudImageEditorController();
+    controller.tabId = TabId.FILTERS;
     const listener = vi.fn();
     controller.observe('tabId', listener, { immediate: true });
     expect(listener.mock.calls).toEqual([[TabId.FILTERS]]);
@@ -136,7 +129,7 @@ describe('CloudImageEditorController', () => {
   });
 
   it('constructor accepts services up front, equivalent to setServices', () => {
-    const controller = new CloudImageEditorController(undefined, {
+    const controller = new CloudImageEditorController({
       l10n: (key) => `pre:${key}`,
       getConfig: (() => undefined) as CloudImageEditorController['getConfig'],
       telemetry: { sendEvent: () => {}, sendEventError: () => {}, sendActionEvent: () => {} },

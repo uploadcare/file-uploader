@@ -248,7 +248,7 @@ describe('EditorBlock attach callbacks', () => {
   it('prints the verbose log tier only when the debug config is on', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     let debug = false;
-    const controller = new CloudImageEditorController(undefined, {
+    const controller = new CloudImageEditorController({
       l10n: (key) => key,
       getConfig: ((key: string) => (key === 'debug' ? debug : undefined)) as CloudImageEditorController['getConfig'],
       telemetry: { sendEvent: () => {}, sendEventError: () => {}, sendActionEvent: () => {} },
