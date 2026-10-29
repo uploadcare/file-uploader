@@ -1,7 +1,6 @@
 import { type Signal, signal } from '@lit-labs/signals';
 import { Listeners, type ObserveOptions } from '../host-subscription';
 import { logger } from '../logger';
-import type { ReactiveStore } from './ReactiveStore';
 
 const log = logger.scope('signal-map');
 
@@ -37,7 +36,7 @@ export type { ObserveOptions };
  * The bag is null-proto and keys live by their string name, so a plugin/locale
  * key named `__proto__` is an ordinary own property, never a prototype write.
  */
-export class SignalMap<T extends object> implements ReactiveStore<T> {
+export class SignalMap<T extends object> {
   // Authoritative value + presence store, and the live view returned by `values`.
   #bag: T = Object.create(null);
   // Lazily-populated per-key signals (created on first `get`), kept in sync with
@@ -97,9 +96,8 @@ export class SignalMap<T extends object> implements ReactiveStore<T> {
   }
 
   /**
-   * Trackable read — the `ReactiveStore` counterpart to `get`. Reads through the
-   * per-key signal, so under a `SignalWatcher` it auto-tracks `key`. The facades'
-   * hand-rolled `signal(key).get()` wrappers collapse to this.
+   * Trackable read — the counterpart to `get`. Reads through the per-key
+   * signal, so under a `SignalWatcher` it auto-tracks `key`.
    */
   public getTracked<K extends keyof T>(key: K): T[K] | undefined {
     return this.signal(key).get();

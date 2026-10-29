@@ -195,15 +195,6 @@ describe('ConfigController', () => {
     });
   });
 
-  it('notify() fires subscribers without a state change', () => {
-    const config = new ConfigController();
-    const listener = vi.fn();
-    config.subscribe(listener);
-
-    config.notify();
-    expect(listener).toHaveBeenCalledTimes(1);
-  });
-
   it('getTracked returns the current value, matching get()', () => {
     const config = new ConfigController();
     expect(config.getTracked('removeCopyright')).toBe(config.get('removeCopyright'));
@@ -244,16 +235,6 @@ describe('ConfigController', () => {
     expect(listener).not.toHaveBeenCalled();
 
     config.setDynamic('unsplashApiKey', 'w'); // changed → notify
-    expect(listener).toHaveBeenCalledTimes(1);
-  });
-
-  it('setMany applies several keys with one coalesced notify', () => {
-    const c = new ConfigController();
-    const listener = vi.fn();
-    c.subscribe(listener);
-    c.setMany({ multiple: true, imgOnly: true });
-    expect(c.get('multiple')).toBe(true);
-    expect(c.get('imgOnly')).toBe(true);
     expect(listener).toHaveBeenCalledTimes(1);
   });
 

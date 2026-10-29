@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { TypedData } from './TypedData';
 
-describe('TypedData (ReactiveStore)', () => {
+describe('TypedData', () => {
   const make = () => new TypedData<{ a: number; b: string }>({ a: 0, b: '' });
 
   it('creates a unique uid and is discoverable via the registry', () => {
@@ -80,17 +80,6 @@ describe('TypedData (ReactiveStore)', () => {
     d.destroy();
   });
 
-  it('subscribe fires coarsely on any key change', () => {
-    const d = make();
-    const listener = vi.fn();
-    d.subscribe(listener);
-    d.set('a', 1);
-    expect(listener).toHaveBeenCalledTimes(1);
-    d.set('b', 'y');
-    expect(listener).toHaveBeenCalledTimes(2);
-    d.destroy();
-  });
-
   it('subscribeKeys reports the changed key on each write', () => {
     const d = make();
     const keys: string[] = [];
@@ -101,15 +90,6 @@ describe('TypedData (ReactiveStore)', () => {
     off();
     d.set('a', 2);
     expect(keys).toEqual(['a', 'b']); // unsubscribed
-    d.destroy();
-  });
-
-  it('notify() forces a coarse notification with no state change', () => {
-    const d = make();
-    const listener = vi.fn();
-    d.subscribe(listener);
-    d.notify();
-    expect(listener).toHaveBeenCalledTimes(1);
     d.destroy();
   });
 

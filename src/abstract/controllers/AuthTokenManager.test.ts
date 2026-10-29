@@ -7,7 +7,7 @@ import { ConfigController } from './ConfigController';
 const createManager = (cfgOverrides: Partial<ConfigType> = {}) => {
   const container = new ControllerContainer();
   const config = container.get(ConfigController);
-  config.setMany(cfgOverrides);
+  for (const [key, value] of Object.entries(cfgOverrides)) config.setDynamic(key, value);
   const manager = container.get(AuthTokenManager);
   return { manager, cfg: config.values as ConfigType };
 };
