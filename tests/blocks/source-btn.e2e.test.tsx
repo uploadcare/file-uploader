@@ -35,7 +35,7 @@ const iconName = () => document.querySelector('uc-source-btn uc-icon')?.getAttri
 const txtContent = () => document.querySelector('uc-source-btn .uc-txt')?.textContent;
 
 describe('uc-source-btn', () => {
-  it('renders the l10n of the label as aria-label and text; unknown key falls back to the key itself', async () => {
+  it('renders a plain-text label as written, as aria-label and text', async () => {
     const { btn } = renderSourceBtn();
     const source: SourceButtonConfig = { id: 'my-src', label: 'my-label-key' as PlainText, onClick: () => {} };
     btn.source = source;
