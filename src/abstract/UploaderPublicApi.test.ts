@@ -704,7 +704,7 @@ describe('UploaderPublicApi', () => {
       api.setCurrentActivity('upload-list');
       await flush();
 
-      expect(setActivity).toHaveBeenCalledWith('upload-list', undefined);
+      expect(setActivity).toHaveBeenCalledWith('upload-list', {});
     });
 
     it('setCurrentActivity switches an open modal to the activity, as v1 did', async () => {
@@ -721,6 +721,33 @@ describe('UploaderPublicApi', () => {
       expect(ctrl.router.modal).toBe('url');
       expect(api.getCurrentActivity()).toBe('url');
       await vi.waitFor(() => expect(changes).toEqual(['url']));
+    });
+
+    it('setCurrentActivity without params clears the previous activity\'s params', async () => {
+      const { api, ctrl } = setup();
+      ctrl.router.activityBlockMounted('external');
+      ctrl.router.activityBlockMounted('upload-list');
+      api.setCurrentActivity('external', { externalSourceType: 'dropbox' });
+      await flush();
+      expect(ctrl.router.params).toEqual({ externalSourceType: 'dropbox' });
+
+      api.setCurrentActivity('upload-list');
+      await flush();
+
+      expect(ctrl.router.params).toEqual({});
+    });
+
+    it('setCurrentActivity without params clears the params of the activity an open modal shows', async () => {
+      const { api, ctrl } = setup();
+      ctrl.router.activityBlockMounted('external');
+      ctrl.router.activityBlockMounted('upload-list');
+      ctrl.router.openModal('external', { externalSourceType: 'dropbox' });
+
+      api.setCurrentActivity('upload-list');
+      await flush();
+
+      expect(ctrl.router.modal).toBe('upload-list');
+      expect(ctrl.router.params).toEqual({});
     });
 
     it('setCurrentActivity then setModalState(true) leaves an open modal on the activity', async () => {
