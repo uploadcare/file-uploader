@@ -57,9 +57,7 @@ export class ExternalSource extends ChildBlock {
 
   protected override controllerReady(): void {
     // The iframe container ref only exists after the first render, so the
-    // initial mount is deferred a tick (v1 relied on its immediate-fire
-    // params subscription for exactly this — its pre-render direct
-    // `_mountIframe()` call was a no-op against an empty ref).
+    // initial mount is deferred a tick.
     this._lastActivityParams = this._router.params;
     this.runTask(async () => {
       await this.whileAdopted(delay(0));

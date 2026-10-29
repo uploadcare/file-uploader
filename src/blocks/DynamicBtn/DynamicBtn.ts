@@ -158,10 +158,8 @@ export class DynamicBtn extends ChildBlock {
   }
 
   // `@throttled` makes this adopted-guarded (a trailing tick after release
-  // no-ops) and cancels the pending timer on release — replacing the old
-  // `!this.isConnected` bail and the manual `.cancel()` in `controllerReleased`.
-  // The name is unchanged, so the `@subscription` observers can still hand this
-  // stable bound reference to `observeCollection`.
+  // no-ops) and cancels the pending timer on release. The `@subscription`
+  // observers hand this stable bound reference to `observeCollection`.
   /** @internal */
   @throttled(COLLECTION_SUMMARY_THROTTLE_MS)
   protected _throttledHandleCollectionUpdate(): void {
