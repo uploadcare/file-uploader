@@ -1,6 +1,7 @@
 import { CancelError, UploadcareError, type UploadcareFile, uploadFile } from '@uploadcare/upload-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ConfigType } from '../../types';
+import { REDACTED } from '../../utils/redactSecrets';
 import { ControllerContainer, containerOf } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
 import { EventEmitter } from '../EventEmitter';
@@ -717,28 +718,6 @@ describe('UploadController', () => {
     });
   });
 
-  describe('abort', () => {
-    it('aborts the in-flight controller stored on the entry', () => {
-      const { controller, collection } = setup();
-      const id = collection.add({ file: new File(['x'], 'a.txt') });
-      const ac = new AbortController();
-      const spy = vi.spyOn(ac, 'abort');
-      collection.read(id)?.set('abortController', ac);
-
-      controller.abort(id);
-
-      expect(spy).toHaveBeenCalled();
-    });
-
-    it('is a no-op for a missing entry or an entry without a controller', () => {
-      const { controller, collection } = setup();
-      const id = collection.add({ file: new File(['x'], 'a.txt') });
-
-      expect(() => controller.abort('missing' as Uid)).not.toThrow();
-      expect(() => controller.abort(id)).not.toThrow();
-    });
-  });
-
   describe('queue concurrency', () => {
     it('initializes concurrency from maxConcurrentRequests', () => {
       const { controller } = setup({ cfg: { maxConcurrentRequests: 4 } });
@@ -811,7 +790,7 @@ describe('UploadController', () => {
 
       const optionsCall = logSpy.mock.calls.find((c) => c.includes('upload options'));
       expect(optionsCall).toBeDefined();
-      expect((optionsCall?.at(-1) as { secureSignature?: string }).secureSignature).toBe('[redacted]');
+      expect((optionsCall?.at(-1) as { secureSignature?: string }).secureSignature).toBe(REDACTED);
       // The real credential must never reach the console.
       expect(JSON.stringify(logSpy.mock.calls)).not.toContain('SECRET-SIG');
     });

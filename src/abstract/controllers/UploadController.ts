@@ -287,15 +287,7 @@ export class UploadController {
         // Redact the signing credential from debug output — never print
         // `secureSignature` to the console. Lazy so the redacted copy is only
         // built when this ctx is verbose.
-        this._log.debug(
-          lazy(() => [
-            'upload options',
-            {
-              ...redactSecrets(uploadClientOptions),
-              ...(uploadClientOptions.secureSignature ? { secureSignature: '[redacted]' } : {}),
-            },
-          ]),
-        );
+        this._log.debug(lazy(() => ['upload options', redactSecrets(uploadClientOptions)]));
         return uploadFile(fileInput, uploadClientOptions);
       };
 
@@ -348,10 +340,6 @@ export class UploadController {
     } finally {
       lifetime.signal.removeEventListener('abort', abortOnTeardown);
     }
-  }
-
-  public abort(uid: Uid): void {
-    this._collection.read(uid)?.get('abortController')?.abort();
   }
 
   public destroy(): void {
