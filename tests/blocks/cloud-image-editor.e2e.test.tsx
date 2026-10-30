@@ -430,6 +430,29 @@ describe('uc-cloud-image-editor', () => {
     await expect.poll(() => activeClass(element.querySelector('uc-editor-image-cropper'))).toContain('uc-active');
   });
 
+  // Fake-only: the info request is held at the emulator.
+  it.skipIf(isLive)('fetches the image while its info request is in flight, and only once', async () => {
+    const release = withResolvers<void>();
+    const imageRequests: string[] = [];
+    emulatorSession().on('GET /:uuid/*', async ({ request }) => {
+      if (!new URL(request.url).pathname.includes('/-/json/')) {
+        imageRequests.push(request.url);
+        return undefined;
+      }
+      await release.promise;
+      return Response.json({ width: 640, height: 480 });
+    });
+    const { element } = renderEditor();
+    // A width no other test uses, so the image URL (which carries it) can't come from the browser cache.
+    element.style.width = '523px';
+
+    await expect.poll(() => imageRequests).toHaveLength(1);
+    release.resolve();
+
+    await expect.poll(() => activeClass(element.querySelector('uc-editor-image-cropper'))).toContain('uc-active');
+    expect(imageRequests).toHaveLength(1);
+  });
+
   describe.skipIf(isLive)('while the cropper image loads', () => {
     /** Holds the editor's CDN image requests (not the image info) until `release()`. */
     const holdImages = () => {
