@@ -66,10 +66,7 @@ describe('NPM package', () => {
   });
 
   test('jsx types should be exported', async () => {
-    await expect(
-      // @ts-expect-error
-      import('@uploadcare/file-uploader/types/jsx'),
-    ).resolves.not.toThrow();
+    await expect(import('@uploadcare/file-uploader/types/jsx')).resolves.not.toThrow();
   });
 
   test('locales should be exported', async () => {

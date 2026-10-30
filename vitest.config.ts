@@ -178,6 +178,21 @@ export default defineConfig({
           },
         },
       },
+      {
+        extends: true,
+        tsconfig: './tsconfig.types-test-react19.json',
+        test: {
+          name: 'types-react19',
+          include: ['./types/test-react19/**/*.test-d.tsx'],
+          // The same JSX typing checked against React 19's types, which read only `React.JSX`.
+          typecheck: {
+            enabled: true,
+            only: true,
+            include: ['./types/test-react19/**/*.test-d.tsx'],
+            tsconfig: './tsconfig.types-test-react19.json',
+          },
+        },
+      },
       e2eProject({
         name: 'e2e',
         include: ['./tests/**/*.e2e.test.{ts,tsx}'],
