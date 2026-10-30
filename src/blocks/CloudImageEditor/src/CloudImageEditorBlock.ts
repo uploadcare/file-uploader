@@ -16,6 +16,7 @@ import { RegisterableElementMixin } from '../../../lit/RegisterableElementMixin'
 import type { SecureDeliveryProxyUrlResolver } from '../../../types';
 import { serializeCsv } from '../../../utils/comma-separated';
 import { getClosestAspectRatio, parseCropPreset } from '../../../utils/crop/cropPreset';
+import { batchPreloadImages } from '../../../utils/preloadImage';
 import { TRANSPARENT_PIXEL_SRC } from '../../../utils/transparentPixelSrc';
 import {
   CloudImageEditorController,
@@ -30,8 +31,9 @@ import { editorAppliedUrl, editorImageInfoUrl } from './lib/editorUrls';
 import { parseTabs } from './lib/parseTabs.js';
 import { operationsToTransformations } from './lib/transformationUtils.js';
 import svgIconsSprite from './svg-sprite';
-import { ALL_TABS, type TabId } from './toolbar-constants.js';
+import { ALL_TABS, TabId } from './toolbar-constants.js';
 import type { ApplyResult, CropPresetList, ImageSize, Transformations } from './types';
+import { cropperImageSrc, viewerImageSrc } from './util';
 
 import './elements/presence-toggle/PresenceToggle';
 import './elements/button/BtnUi';
@@ -737,6 +739,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     this._imageSize = null;
     // The flag describes the latest load only: a new image (or a retry) starts without it.
     editorController.networkProblems = false;
+    this._lifetime.run(() => this._preloadImage());
 
     try {
       const originalUrlValue = editorController.originalUrl as string;
@@ -773,6 +776,23 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     }
 
     this._scheduleInitialization();
+  }
+
+  /**
+   * Fetches the image the first tab will show alongside its info request, so it is cached by the time the info arrives
+   * and the cropper or fader asks for it. Without this the image request waits for the info.
+   */
+  private async _preloadImage(): Promise<void> {
+    const { originalUrl, tabId, editorTransformations, sourceOperations } = this._editorController;
+    const width = this._imgContainerRef.value?.offsetWidth ?? 0;
+    if (!originalUrl || width === 0) {
+      return;
+    }
+    const imageSrc = tabId === TabId.CROP ? cropperImageSrc : viewerImageSrc;
+    const src = await this._lifetime.guard(
+      this.proxyUrl(imageSrc(originalUrl, width, editorTransformations, sourceOperations)),
+    );
+    batchPreloadImages([src]);
   }
 
   // No size needed here, only for loading an image (`updateImage` waits for one): a container that never gets a size
