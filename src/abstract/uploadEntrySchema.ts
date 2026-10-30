@@ -7,12 +7,10 @@ export interface UploadEntryData extends Record<string, unknown> {
   externalUrl: string | null;
   fileName: string | null;
   fileSize: number | null;
-  lastModified: number;
   uploadProgress: number;
   uuid: string | null;
   isImage: boolean;
   mimeType: string | null;
-  ctxName: string | null;
   cdnUrl: string | null;
   cdnUrlModifiers: string | null;
   fileInfo: UploadcareFile | null;
@@ -37,12 +35,10 @@ export const initialUploadEntryData: UploadEntryData = {
   externalUrl: null,
   fileName: null,
   fileSize: null,
-  lastModified: Date.now(),
   uploadProgress: 0,
   uuid: null,
   isImage: false,
   mimeType: null,
-  ctxName: null,
   cdnUrl: null,
   cdnUrlModifiers: null,
   fileInfo: null,
@@ -65,7 +61,7 @@ export const initialUploadEntryData: UploadEntryData = {
 /**
  * Maps an already-uploaded Uploadcare file to the entry fields derived from its
  * uuid (cdnUrl, fileInfo, name, size, image flag, mime type). Shared by
- * `addFileFromUploadcareFile` and `replaceFileFromUploadcareFile` so the two
+ * `addFileFromUploadcareFile` and `replaceFile` so the two
  * derivations cannot drift apart.
  */
 export function uploadcareFileToEntryData(

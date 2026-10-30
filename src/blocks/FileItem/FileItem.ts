@@ -1,24 +1,19 @@
-import {
-  AuthTokenResolverError,
-  CancelError,
-  type FileFromOptions,
-  UploadcareError,
-  type UploadcareFile,
-  uploadFile,
-} from '@uploadcare/upload-client';
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import type { PluginFileActionRegistration } from '../../abstract/managers/plugin';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { deriveEntryStatus } from '../../abstract/deriveEntryStatus';
+import { inject } from '../../abstract/di/inject';
+import { PluginController, type PluginFileActionRegistration } from '../../abstract/managers/plugin';
 import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
-import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
-import { debounce } from '../../utils/debounce';
-import { fileIsImage } from '../../utils/fileTypes';
-import { redactSecrets } from '../../utils/redactSecrets';
-import { throttle } from '../../utils/throttle';
-import { canonicalSourceName, ExternalUploadSource } from '../../utils/UploadSource';
-import { EventType } from '../UploadCtxProvider/EventEmitter';
+import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import type { UploadEntryData, UploadEntryKeys } from '../../abstract/uploadEntrySchema';
+import { isExternalSource, sourceLabelKey } from '../../utils/UploadSource';
 import './file-item.css';
-import type { Uid } from '../../lit/Uid';
+import type { Uid } from '../../abstract/Uid';
+import { effect } from '../../lit/effect';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { FileItemConfig } from './FileItemConfig';
 
 import '../Thumb/Thumb';
@@ -26,21 +21,48 @@ import '../Icon/Icon';
 import '../ProgressBar/ProgressBar';
 import './FileActionButton';
 
+// The file-item display state machine. This — and everything derived from it
+// (badge, flags, hint, progress, name, aria) — is UI/presentation logic and
+// lives in the element; only file/upload/collection *side-effects* (aborting an
+// upload, removing an entry, telemetry) belong in the controller layer.
+// Each value is also the l10n key of the state's name in the row's aria label.
 const FileItemState = Object.freeze({
-  FINISHED: Symbol('FINISHED'),
-  FAILED: Symbol('FAILED'),
-  UPLOADING: Symbol('UPLOADING'),
-  VALIDATION: Symbol('VALIDATION'),
-  QUEUED_UPLOADING: Symbol('QUEUED-UPLOADING'),
-  QUEUED_VALIDATION: Symbol('QUEUED-VALIDATION'),
-  IDLE: Symbol('IDLE'),
+  FINISHED: 'finished',
+  FAILED: 'failed',
+  UPLOADING: 'uploading',
+  VALIDATION: 'validation',
+  QUEUED_UPLOADING: 'queued-uploading',
+  QUEUED_VALIDATION: 'queued-validation',
+  IDLE: 'idle',
 } as const);
 
 type FileItemStateValue = (typeof FileItemState)[keyof typeof FileItemState];
 
-export class FileItem extends FileItemConfig {
-  protected override couldBeCtxOwner = true;
+// Entry keys whose change re-evaluates plugin file actions.
+const PLUGIN_ACTION_KEYS: ReadonlySet<UploadEntryKeys> = new Set<UploadEntryKeys>([
+  'fileInfo',
+  'isUploading',
+  'errors',
+]);
 
+export class FileItem extends FileItemConfig {
+  // `@inject` fields, read only while adopted: from `controllerReady`, the
+  // render-gated `willUpdate`, the rendered row's click handlers, and plugin-action
+  // recomputes that bail once `controllerReleased` drops the plugin manager.
+  // `PluginController` is conditionally bound and wired via `whenController`.
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+
+  // Off-screen render gate. Complements list virtualization rather than being
+  // superseded by it: virtualization caps mounted rows in the bounded/steady
+  // case, but when the list can't be windowed yet — the first render of a large
+  // bulk-populate (row geometry not measured) and unbounded/page-scroll
+  // containers — the row still mounts, and this keeps that render CHEAP (empty)
+  // until it scrolls into view. Without it, a bulk add renders every FileItem
+  // template synchronously in one frame (Thumb's own lazy observer only defers
+  // the thumbnail image, not the template), blocking the summary update.
   @state()
   private _pauseRender = true;
 
@@ -50,153 +72,53 @@ export class FileItem extends FileItemConfig {
   public uid: Uid = '' as Uid;
 
   @state()
-  private _itemName = '';
-
-  @state()
-  private _errorText = '';
-
-  @state()
-  private _hint = '';
-
-  @state()
-  private _progressValue = 0;
-
-  @state()
-  private _progressVisible = false;
-
-  @state()
-  private _badgeIcon = '';
-
-  @state()
-  private _isFinished = false;
-
-  @state()
-  private _isFailed = false;
-
-  @state()
-  private _isUploading = false;
-
-  @state()
-  private _hideRemoveAction = false;
-
-  @state()
-  private _isFocused = false;
-
-  @state()
-  private _showFileNames = false;
-
-  @state()
-  private _ariaLabelStatusFile = '';
-
-  @state()
   private _pluginFileActions: Owned<PluginFileActionRegistration>[] = [];
 
   private _renderedOnce = false;
   private _observer?: IntersectionObserver;
-  private _unsubscribePlugins?: () => void;
+  private _pluginManager: PluginController | null = null;
 
   private _handleRemove = (): void => {
-    this.telemetryManager.sendEvent({
-      payload: {
-        metadata: {
-          event: 'remove-file',
-          node: this.tagName,
-        },
-      },
-    });
-
-    if (this.uid && this.uploadCollection.hasItem(this.uid)) {
-      this.entry?.getValue('abortController')?.abort();
-      this.uploadCollection.remove(this.uid);
-    }
-  };
-
-  private _handleUploadClick = (): void => {
-    this._upload();
-  };
-
-  private _calculateState(): void {
-    const entry = this.entry;
-    if (!entry) {
+    const collection = this._collection;
+    if (!this.uid || !collection.hasItem(this.uid)) {
       return;
     }
+    // Telemetry only for a real removal — guard first, so a stale/double
+    // `uc:remove` (or an unset uid) doesn't record a phantom `remove-file`.
+    this._telemetry.sendActionEvent('remove-file', this.tagName);
+    // Aborting the in-flight upload is file/upload logic and lives in
+    // `UploadCollectionController.remove` — the UI just requests the removal.
+    collection.remove(this.uid);
+  };
 
-    let state: FileItemStateValue = FileItemState.IDLE;
-
-    if (entry.getValue('errors').length > 0) {
-      state = FileItemState.FAILED;
-    } else if (entry.getValue('isQueuedForUploading')) {
-      state = FileItemState.QUEUED_UPLOADING;
-    } else if (entry.getValue('isQueuedForValidation')) {
-      state = FileItemState.QUEUED_VALIDATION;
-    } else if (entry.getValue('isValidationPending')) {
-      state = FileItemState.VALIDATION;
-    } else if (entry.getValue('isUploading')) {
-      state = FileItemState.UPLOADING;
-    } else if (entry.getValue('fileInfo')) {
-      state = FileItemState.FINISHED;
+  // The state-machine verdict: the output status (`deriveEntryStatus`), with the queue and validation steps checked
+  // after a failure and before the rest. `read` is `getTracked`, so `SignalWatcher` re-renders on the exact keys read.
+  private _deriveState(read: <K extends UploadEntryKeys>(key: K) => UploadEntryData[K]): FileItemStateValue {
+    const status = deriveEntryStatus({
+      isRemoved: false,
+      errors: read('errors'),
+      fileInfo: read('fileInfo'),
+      isUploading: read('isUploading'),
+    });
+    if (status === 'failed') {
+      return FileItemState.FAILED;
     }
-
-    this._handleState(entry, state);
-  }
-
-  private _debouncedCalculateState = debounce(() => this._calculateState(), 100);
-
-  private _updateHintAndProgress = this.withEntry(
-    throttle((entry: UploadEntryTypedData, state?: FileItemStateValue) => {
-      const errorText = entry.getValue('errors')?.[0]?.message ?? '';
-      const source = entry.getValue('source');
-      const externalUrl = entry.getValue('externalUrl');
-      const isFinished = state === FileItemState.FINISHED;
-      const isUploading = state === FileItemState.UPLOADING;
-      const isQueuedForUploading = state === FileItemState.QUEUED_UPLOADING;
-      const isQueuedForValidation = state === FileItemState.QUEUED_VALIDATION;
-      const isValidationPending = state === FileItemState.VALIDATION;
-      const fileName = entry.getValue('fileName');
-      let hint = '';
-
-      if (errorText) {
-        hint = '';
-      } else if (!isFinished && externalUrl && source && Object.values(ExternalUploadSource).includes(source)) {
-        hint = this.l10n('waiting-for', { source: this.l10n(`src-type-${canonicalSourceName(source)}`) });
-      }
-
-      this._hint = hint;
-      this._errorText = errorText;
-      this._progressVisible = isUploading || isQueuedForUploading || isQueuedForValidation || isValidationPending;
-      this._progressValue = isQueuedForValidation || isValidationPending ? 0 : entry.getValue('uploadProgress');
-      this._ariaLabelStatusFile = fileName
-        ? this.l10n('a11y-file-item-status', {
-            fileName,
-            status: this.l10n(state?.description?.toLocaleLowerCase() ?? '').toLocaleLowerCase(),
-          })
-        : '';
-    }, 100),
-  );
-
-  private _handleState(_entry: UploadEntryTypedData, state: FileItemStateValue): void {
-    if (state === FileItemState.FAILED) {
-      this._badgeIcon = 'badge-error';
-    } else if (state === FileItemState.FINISHED) {
-      this._badgeIcon = 'badge-success';
+    if (read('isQueuedForUploading')) {
+      return FileItemState.QUEUED_UPLOADING;
     }
-
-    if (state === FileItemState.UPLOADING) {
-      this._isFocused = false;
-      this.removeAttribute('focused');
+    if (read('isQueuedForValidation')) {
+      return FileItemState.QUEUED_VALIDATION;
     }
-
-    this._isFailed = state === FileItemState.FAILED;
-    this._isUploading = state === FileItemState.UPLOADING;
-    this._hideRemoveAction = state === FileItemState.QUEUED_UPLOADING || state === FileItemState.UPLOADING;
-    this._isFinished = state === FileItemState.FINISHED;
-
-    this._updateHintAndProgress(state);
-  }
-
-  protected override reset(): void {
-    super.reset();
-    this._debouncedCalculateState.cancel();
+    if (read('isValidationPending')) {
+      return FileItemState.VALIDATION;
+    }
+    if (status === 'success') {
+      return FileItemState.FINISHED;
+    }
+    if (status === 'uploading') {
+      return FileItemState.UPLOADING;
+    }
+    return FileItemState.IDLE;
   }
 
   private _observerCallback(entries: IntersectionObserverEntry[]): void {
@@ -208,13 +130,17 @@ export class FileItem extends FileItemConfig {
     if (entry.isIntersecting && !this._renderedOnce) {
       this._pauseRender = false;
       this._renderedOnce = true;
+      // One-shot: the observer's only job is to un-pause on first view. Disconnect
+      // so it stops firing on every subsequent scroll for this row's whole life
+      // (matches Thumb).
+      this._observer?.disconnect();
     }
   }
 
   private _handleEntryId(id: Uid): void {
     this.reset();
 
-    const entry = this.uploadCollection?.read(id);
+    const entry = this._collection.read(id) ?? null;
     this.entry = entry;
 
     if (!entry) {
@@ -222,58 +148,28 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    this.subEntry('isQueuedForValidation', () => {
-      this._debouncedCalculateState();
+    // ONE keyed subscription drives the only side-effect that is NOT pure
+    // render: the plugin file-action recompute. Everything the row *displays*
+    // (name, badge, flags, hint, progress, aria) is a `getTracked` read in
+    // `render()`, so Lit re-renders on the exact entry keys it reads.
+    this.subEntryKeys((key) => {
+      if (PLUGIN_ACTION_KEYS.has(key)) {
+        this._updatePluginFileActions();
+      }
     });
 
-    this.subEntry('isValidationPending', () => {
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('uploadProgress', () => {
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('isQueuedForUploading', () => {
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('fileName', (name) => {
-      this._itemName = name || entry.getValue('externalUrl') || this.l10n('file-no-name');
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('externalUrl', (externalUrl) => {
-      this._itemName = entry.getValue('fileName') || externalUrl || this.l10n('file-no-name');
-    });
-
-    this.subEntry('fileInfo', () => {
-      this._debouncedCalculateState();
-    });
-
-    this.subEntry('errors', () => this._debouncedCalculateState());
-    this.subEntry('isUploading', () => this._debouncedCalculateState());
-    this.subEntry('fileSize', () => this._debouncedCalculateState());
-    this.subEntry('mimeType', () => this._debouncedCalculateState());
-    this.subEntry('isImage', () => this._debouncedCalculateState());
-
-    // Update plugin file actions when file status changes
-    this.subEntry('fileInfo', () => this._updatePluginFileActions());
-    this.subEntry('isUploading', () => this._updatePluginFileActions());
-    this.subEntry('errors', () => this._updatePluginFileActions());
-
-    this._calculateState();
+    // Seed the initial side-effect (subscribeKeys does not replay current state).
     this._updatePluginFileActions();
   }
 
-  private _updateShowFileNames(value: boolean): void {
-    const isListMode = this.cfg.filesViewMode === 'list';
-    if (isListMode) {
-      this._showFileNames = true;
-      return;
-    }
-
-    this._showFileNames = value;
+  /**
+   * Whether file names are shown: always in list mode, otherwise driven by
+   * `gridShowFileNames`. Reading both keys via `getTracked` in `render()`
+   * auto-tracks them under `SignalWatcher`, so a config change re-renders.
+   */
+  private get _showFileNames(): boolean {
+    const config = this._config;
+    return config.getTracked('filesViewMode') === 'list' ? true : config.getTracked('gridShowFileNames');
   }
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
@@ -282,28 +178,28 @@ export class FileItem extends FileItemConfig {
     if (changedProperties.has('uid')) {
       this._handleEntryId(this.uid);
     }
+    // Derived once per update for the getters below; `getTracked` re-runs the update when a read key changes.
+    const { entry } = this;
+    this._state = entry ? this._deriveState((key) => entry.getTracked(key)) : FileItemState.IDLE;
   }
 
   private _updatePluginFileActions(): void {
-    const pluginManager = this._sharedInstancesBag.pluginManager;
-    if (!pluginManager || !this.uid) {
+    const pluginManager = this._pluginManager;
+    // A row can briefly hold the uid of an entry that is gone — e.g. right after a remount into a fresh ctx, before the
+    // list re-renders — and `getOutputItem` throws for those.
+    if (!pluginManager || !this.uid || !this._collection.hasItem(this.uid)) {
       this._pluginFileActions = [];
       return;
     }
 
     const allFileActions = pluginManager.snapshot().fileActions;
-    const outputFileEntry = this.api.getOutputItem(this.uid);
-
-    if (!outputFileEntry) {
-      this._pluginFileActions = [];
-      return;
-    }
+    const outputFileEntry = this._api.getOutputItem(this.uid);
 
     this._pluginFileActions = allFileActions.filter((action) => {
       try {
         return action.shouldRender(outputFileEntry);
       } catch (error) {
-        console.error(`Error in plugin file action shouldRender (${action.id}):`, error);
+        this._log.error(`Error in plugin file action shouldRender (${action.id}):`, error);
         return false;
       }
     });
@@ -314,72 +210,56 @@ export class FileItem extends FileItemConfig {
       return;
     }
 
-    const outputFileEntry = this.api.getOutputItem(this.uid);
-    if (!outputFileEntry) {
-      return;
-    }
+    const outputFileEntry = this._api.getOutputItem(this.uid);
+    this._telemetry.sendActionEvent(action.id, this.tagName, { pluginId: action.pluginId });
 
-    this.telemetryManager.sendEvent({
-      payload: {
-        metadata: {
-          event: action.id,
-          node: this.tagName,
-          pluginId: action.pluginId,
-        },
-      },
+    this.runTask(async () => {
+      try {
+        await action.onClick(outputFileEntry);
+      } catch (error) {
+        this._log.error(`Error in plugin file action onClick (${action.id}):`, error);
+      }
     });
-
-    try {
-      action.onClick(outputFileEntry);
-    } catch (error) {
-      console.error(`Error in plugin file action onClick (${action.id}):`, error);
-    }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  // Host `[mode]` attribute: the `uc-file-item[mode="grid"]` CSS selectors key off
+  // it, driving the grid/list box sizing, so it must be set eagerly before first
+  // paint. `beforeUpdate` fires this synchronously on adoption AND keeps firing on
+  // `filesViewMode` change even while `_pauseRender` holds `shouldUpdate` off —
+  // which a plain `willUpdate`+`getTracked` host-attr write could not do.
+  /** @internal */
+  @effect({ beforeUpdate: true })
+  protected _applyMode(): void {
+    this.setAttribute('mode', this._config.getTracked('filesViewMode'));
+  }
 
+  protected override controllerReady(): void {
     this._handleEntryId(this.uid);
+  }
 
-    this.subConfigValue('filesViewMode', (mode) => {
-      this._updateShowFileNames(this.cfg.gridShowFileNames);
-
-      this.setAttribute('mode', mode);
+  // The uploader-scope `PluginController` is bound + resolved only once an
+  // uploader scope attaches (`ensurePluginManager`, conditional) — possibly after
+  // adoption, or never in a bare ctx — so go through `whenController`; its
+  // callback returns the plugin-change subscription, which the unsubscribe disposes.
+  /** @internal */
+  @subscription()
+  protected _wirePluginFileActions(): Unsubscribe {
+    return this.container.whenController(PluginController, (pm) => {
+      this._pluginManager = pm;
+      this._updatePluginFileActions();
+      return pm.onPluginsChange(() => this._updatePluginFileActions());
     });
+  }
 
-    this.subConfigValue('gridShowFileNames', (value) => {
-      this._updateShowFileNames(value);
-    });
-
-    this.onclick = () => {
-      FileItem.activeInstances.forEach((inst) => {
-        if (inst === this) {
-          inst.setAttribute('focused', '');
-        } else {
-          inst.removeAttribute('focused');
-        }
-      });
-    };
-
-    this.sub('*uploadTrigger', (itemsToUpload) => {
-      if (this.entry && !itemsToUpload.has(this.entry.uid)) {
-        return;
-      }
-      setTimeout(() => this.isConnected && this._upload());
-    });
-
-    const pluginManager = this._sharedInstancesBag.pluginManager;
-    if (pluginManager?.onPluginsChange) {
-      this._unsubscribePlugins = pluginManager.onPluginsChange(() => this._updatePluginFileActions());
-    }
-    this._updatePluginFileActions();
-
-    FileItem.activeInstances.add(this);
+  protected override controllerReleased(): void {
+    this._pluginManager = null;
   }
 
   public override connectedCallback(): void {
     super.connectedCallback();
 
+    // One-shot render gate: un-pause on first view (see `_pauseRender`). The
+    // observer watches this element's own node.
     this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
       threshold: [0, 1],
     });
@@ -387,171 +267,99 @@ export class FileItem extends FileItemConfig {
   }
 
   public override disconnectedCallback(): void {
-    this._unsubscribePlugins?.();
-    this._unsubscribePlugins = undefined;
+    // `super.disconnectedCallback()` (via `_releaseController` / FileItemConfig)
+    // drops membership and calls `reset()`; also tear down this element's own
+    // IntersectionObserver.
     super.disconnectedCallback();
-
     this._observer?.disconnect();
-
-    FileItem.activeInstances.delete(this);
-
-    this.reset();
   }
 
-  private _upload = this.withEntry(async (entry) => {
-    if (!this.uploadCollection.read(entry.uid)) {
-      return;
-    }
-
-    if (
-      entry.getValue('fileInfo') ||
-      entry.getValue('isUploading') ||
-      entry.getValue('errors').length > 0 ||
-      entry.getValue('isValidationPending')
-    ) {
-      return;
-    }
-    const multipleMax = this.cfg.multiple ? this.cfg.multipleMax : 1;
-    if (multipleMax && this.uploadCollection.size > multipleMax) {
-      return;
-    }
-
-    entry.setMultipleValues({
-      isUploading: true,
-      errors: [],
-      isQueuedForUploading: true,
-    });
-    // Here rather than in the collection observer: its changes arrive batched, and an upload that finishes inside one
-    // batch would never be seen uploading.
-    if (!entry.getValue('silent')) {
-      this.emit(EventType.FILE_UPLOAD_START, this.api.getOutputItem(entry.uid));
-    }
-
-    this._debouncedCalculateState();
-
-    try {
-      const abortController = new AbortController();
-      entry.setValue('abortController', abortController);
-
-      const uploadTask = async (): Promise<UploadcareFile> => {
-        entry.setValue('isQueuedForUploading', false);
-        let file: File | Blob | null = entry.getValue('file');
-
-        if (file instanceof File || file instanceof Blob) {
-          const pluginManager = this._sharedInstancesBag.pluginManager;
-          const beforeUploadHooks = (pluginManager?.snapshot().fileHooks ?? []).filter(
-            (h) => h.type === 'beforeUpload',
-          );
-          for (const hook of beforeUploadHooks) {
-            try {
-              const hookPromise = hook.handler({ file, signal: abortController.signal });
-              const timeoutPromise = new Promise<never>((_, reject) =>
-                setTimeout(() => reject(new Error(`beforeUpload hook timed out`)), hook.timeout),
-              );
-              const { file: newFile } = await Promise.race([hookPromise, timeoutPromise]);
-              if (newFile !== file) {
-                file = newFile;
-                entry.setValue('mimeType', file.type || null);
-                entry.setValue('isImage', fileIsImage(file));
-                entry.setValue('fileSize', file.size);
-                if (file instanceof File) {
-                  entry.setValue('fileName', file.name);
-                }
-              }
-            } catch (error) {
-              console.warn(`File hook "beforeUpload" from plugin "${hook.pluginId}" failed`, error);
-            }
-          }
-        }
-
-        const fileInput = file || entry.getValue('externalUrl') || entry.getValue('uuid');
-        if (!fileInput) {
-          throw new Error('No file input');
-        }
-        const baseUploadClientOptions = await this.getUploadClientOptions();
-        const uploadClientOptions: FileFromOptions = {
-          ...baseUploadClientOptions,
-          fileName: entry.getValue('fileName') ?? undefined,
-          source: entry.getValue('source') ?? undefined,
-          onProgress: (progress) => {
-            if (progress.isComputable) {
-              const percentage = progress.value * 100;
-              entry.setValue('uploadProgress', percentage);
-            }
-          },
-          signal: abortController.signal,
-          metadata: await this.getMetadataFor(entry.uid),
-          tags: await this.getTagsFor(entry.uid),
-        };
-        this.debugPrint('upload options', fileInput, redactSecrets(uploadClientOptions));
-        return uploadFile(fileInput, uploadClientOptions);
-      };
-
-      const fileInfo = await this.$['*uploadQueue'].add(uploadTask);
-      entry.setMultipleValues({
-        fileInfo,
-        isQueuedForUploading: false,
-        isUploading: false,
-        fileName: fileInfo.originalFilename,
-        fileSize: fileInfo.size,
-        isImage: fileInfo.isImage ?? false,
-        mimeType: fileInfo.contentInfo?.mime?.mime ?? fileInfo.mimeType,
-        uuid: fileInfo.uuid,
-        cdnUrl: entry.getValue('cdnUrl') ?? fileInfo.cdnUrl,
-        cdnUrlModifiers: entry.getValue('cdnUrlModifiers') ?? '',
-        uploadProgress: 100,
-        source: entry.getValue('source') ?? null,
-      });
-
-      if (entry === this.entry) {
-        this._debouncedCalculateState();
-      }
-    } catch (cause) {
-      const isCancelError = cause instanceof CancelError && cause.isCancel;
-      if (isCancelError) {
-        entry.setMultipleValues({
-          isUploading: false,
-          uploadProgress: 0,
-        });
-      } else if (cause instanceof UploadcareError || cause instanceof AuthTokenResolverError) {
-        // `AuthTokenResolverError` is not an `UploadcareError` (it comes from
-        // the dependency-free `@uploadcare/signed-uploads`), but it is just as
-        // well understood, so it reaches the entry intact instead of being
-        // buried under "Something went wrong".
-        entry.setMultipleValues({
-          isUploading: false,
-          uploadProgress: 0,
-          uploadError: cause,
-        });
-      } else {
-        console.error('Unknown upload error', cause);
-        entry.setMultipleValues({
-          isUploading: false,
-          uploadProgress: 0,
-          // TODO: Add translation?
-          uploadError: new Error('Something went wrong', {
-            cause,
-          }),
-        });
-      }
-
-      if (entry === this.entry) {
-        this._debouncedCalculateState();
-      }
-
-      if (this.isConnected && !isCancelError) {
-        this.telemetryManager.sendEventError(cause, 'file upload. Failed to upload file');
-      }
-    }
-  });
-
-  public static activeInstances: Set<FileItem> = new Set<FileItem>();
+  // The upload mechanics (queue, beforeUpload chain, progress/abort, error
+  // handling) live in the DOM-free UploadController. This block reflects the
+  // resulting entry mutations through `getTracked` reads in `render()`
+  // (state/badge/progress/…) plus the keyed side-effect subscription.
 
   protected override shouldUpdate(changedProperties: PropertyValues<this>): boolean {
     if (this._pauseRender) {
       return false;
     }
     return super.shouldUpdate(changedProperties);
+  }
+
+  private _state: FileItemStateValue = FileItemState.IDLE;
+
+  private get _isFinished(): boolean {
+    return this._state === FileItemState.FINISHED;
+  }
+
+  private get _isFailed(): boolean {
+    return this._state === FileItemState.FAILED;
+  }
+
+  private get _isUploading(): boolean {
+    return this._state === FileItemState.UPLOADING;
+  }
+
+  // Waiting in the upload queue (accepted, not yet uploading) — surfaced in the UI
+  // as an indeterminate progress indicator so it's clear the file is queued.
+  private get _isQueued(): boolean {
+    return this._state === FileItemState.QUEUED_UPLOADING;
+  }
+
+  private get _hideRemoveAction(): boolean {
+    const state = this._state;
+    return state === FileItemState.QUEUED_UPLOADING || state === FileItemState.UPLOADING;
+  }
+
+  private get _badgeIcon(): string {
+    const state = this._state;
+    return state === FileItemState.FAILED ? 'badge-error' : state === FileItemState.FINISHED ? 'badge-success' : '';
+  }
+
+  private get _errorText(): string {
+    return this.entry?.getTracked('errors')?.[0]?.message ?? '';
+  }
+
+  private get _progressValue(): number {
+    const { entry } = this;
+    if (!entry) {
+      return 0;
+    }
+    const state = this._state;
+    const isValidating = state === FileItemState.QUEUED_VALIDATION || state === FileItemState.VALIDATION;
+    return isValidating ? 0 : entry.getTracked('uploadProgress');
+  }
+
+  private get _itemName(): string {
+    const { entry } = this;
+    if (!entry) {
+      return '';
+    }
+    return entry.getTracked('fileName') || entry.getTracked('externalUrl') || this.l10n('file-no-name');
+  }
+
+  private get _hint(): string {
+    const { entry } = this;
+    if (!entry || this._errorText || this._isFinished) {
+      return '';
+    }
+    const source = entry.getTracked('source');
+    const externalUrl = entry.getTracked('externalUrl');
+    if (externalUrl && source && isExternalSource(source)) {
+      return this.l10n('waiting-for', { source: this.l10n(sourceLabelKey(source)) });
+    }
+    return '';
+  }
+
+  private get _statusText(): string {
+    const fileName = this.entry?.getTracked('fileName') ?? null;
+    if (!fileName) {
+      return '';
+    }
+    return this.l10n('a11y-file-item-status', {
+      fileName,
+      status: this.l10n(this._state).toLocaleLowerCase(),
+    });
   }
 
   public override render() {
@@ -561,33 +369,34 @@ export class FileItem extends FileItemConfig {
         ?data-finished=${this._isFinished}
         ?data-uploading=${this._isUploading}
         ?data-failed=${this._isFailed}
-        ?data-focused=${this._isFocused}
       >
         <uc-thumb .uid=${this.uid} .badgeIcon=${this._badgeIcon}></uc-thumb>
 
-        <div aria-atomic="true" aria-live="polite" class="uc-file-name-wrapper" aria-label=${this._ariaLabelStatusFile}>
+        <div class="uc-file-name-wrapper" role="group" aria-label=${this._statusText}>
           <span class="uc-file-name" data-testid="file-name" ?hidden=${!this._showFileNames}>${this._itemName}</span>
           <span class="uc-file-error" ?hidden=${!this._errorText}>${this._errorText}</span>
           <span class="uc-file-hint" ?hidden=${!this._hint}>${this._hint}</span>
         </div>
         <div class="uc-file-actions">
-          ${this._pluginFileActions.map(
-            (action) => html`
+          ${this._pluginFileActions.map((action) => {
+            const label = this.pluginLabel(action.label);
+            return html`
               <button
                 type="button"
                 @click=${() => this._handlePluginFileAction(action)}
-                title=${this.l10n(action.label)}
-                aria-label=${this.l10n(action.label)}
+                title=${label}
+                aria-label=${label}
                 class="uc-plugin-action-btn uc-mini-btn"
                 data-plugin-action-id=${action.id}
               >
                 <uc-icon name=${action.icon}></uc-icon>
               </button>
-            `,
-          )}
+            `;
+          })}
           <uc-file-action-button
             @uc:remove=${this._handleRemove}
             .uploading=${this._isUploading}
+            .queued=${this._isQueued}
             .hideRemove=${this._hideRemoveAction}
             .progress=${this._progressValue}
             .failed=${this._isFailed}

@@ -28,6 +28,11 @@
       "documented": "https://:subdomain.ucarecd.net",
       "actual": "https://ucarecdn.com",
       "note": "Not a bug: the docs give the *resolved* CNAME for new accounts, which is computed asynchronously from the pubkey (Config/computed-properties.ts). initialConfig.ts holds the pre-resolution literal. Resolution itself is covered by tests/config.e2e.test.tsx."
+    },
+    "dynamicButtonViewMode": {
+      "documented": "auto",
+      "actual": "plain",
+      "note": "Docs say `auto` and do not list `plain`; the code keeps v1's undocumented `plain` default for 1.x compat. See NEXT-MAJOR(dynamic-btn) in builtin-registry.ts."
     }
   },
   "options": {
@@ -399,7 +404,8 @@
     "dynamicButtonViewMode": {
       "attribute": "dynamic-button-view-mode",
       "type": "auto | menu | toolbar | compact",
-      "documented": "auto"
+      "documented": "auto",
+      "value": "auto"
     },
     "dynamicButtonShowFirstIcon": {
       "attribute": "dynamic-button-show-first-icon",

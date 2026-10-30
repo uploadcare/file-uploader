@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
 import { PluginRegistry } from './PluginRegistry';
 
+declare module '../../localeRegistry' {
+  interface CustomLocaleDefinition {
+    'my-key': string;
+    a: string;
+  }
+}
+
 // The notification is batched via `debounce(onChange, 0)`, i.e. a 0ms timer —
 // flush a macrotask to let it fire.
 const flushBatch = () => new Promise((resolve) => setTimeout(resolve, 0));
@@ -60,5 +67,18 @@ describe('PluginRegistry — batched change notification', () => {
     await flushBatch();
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(registry.snapshot().sources).toHaveLength(1);
+  });
+});
+
+describe('PluginRegistry — file hooks', () => {
+  it.each([
+    ['no timeout', {}],
+    ['an explicit undefined timeout', { timeout: undefined }],
+  ])('defaults a hook with %s to 30 seconds', (_, timeout) => {
+    const registry = new PluginRegistry(() => {});
+
+    registry.addFileHook('p', { type: 'onAdd', handler: ({ file }) => ({ file }), ...timeout });
+
+    expect(registry.snapshot().fileHooks[0]?.timeout).toBe(30_000);
   });
 });

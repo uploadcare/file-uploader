@@ -1,8 +1,16 @@
 import { describe, expect, it } from 'vitest';
+import type { PlainText } from '@/abstract/l10n';
 import type { PluginApi } from '@/abstract/managers/plugin/PluginTypes';
 import { defineLocale } from '@/index';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
+
+declare module '@/abstract/localeRegistry' {
+  interface CustomLocaleDefinition {
+    'my-source-label': string;
+    'lazy-source-label': string;
+  }
+}
 
 describe('plugin icons', () => {
   it('makes a registered icon usable by file actions', async () => {
@@ -15,7 +23,7 @@ describe('plugin icons', () => {
         });
         pluginApi.registry.registerFileAction({
           id: 'icon-action',
-          label: 'Icon Action',
+          label: 'Icon Action' as PlainText,
           icon: 'my-custom-icon',
           shouldRender: () => true,
           onClick: () => {},
@@ -92,10 +100,7 @@ describe('plugin l10n', () => {
     await expect.element(within(root).getByText('Erzeugen')).toBeVisible();
   });
 
-  it('keeps plugin l10n overrides after the plugin is unregistered', async () => {
-    // QUIRK(plugins): `LocaleManager._applyPluginLocales` (src/abstract/managers/LocaleManager.ts:69) writes plugin
-    // strings into the ctx `*l10n/<key>` slots and nothing resets them when `registry.purge()` drops the plugin's l10n.
-    // Pinned as current behaviour, not endorsed.
+  it('restores the built-in string once the plugin is unregistered', async () => {
     const plugin = createTestPlugin({
       id: 'l10n-persist',
       setup: ({ pluginApi }) => {
@@ -115,6 +120,48 @@ describe('plugin l10n', () => {
     config.plugins = [];
 
     api.setModalState(true);
-    await expect.element(within(root).getByText('Translated Upload')).toBeVisible();
+    await expect.element(within(root).getByText('Translated Upload')).not.toBeInTheDocument();
+    await expect.element(within(root).getByText('Upload files')).toBeVisible();
+  });
+
+  it("keeps a plugin's translation of a built-in string across locale switches", async () => {
+    defineLocale('de', { 'upload-files': 'Dateien hochladen' } as never);
+    const plugin = createTestPlugin({
+      id: 'l10n-builtin',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerL10n({
+          en: { 'upload-files': 'Plugin upload' },
+          de: { 'upload-files': 'Plugin hochladen' },
+        });
+      },
+    });
+
+    const { config, api, root } = await renderSolution('regular', { plugins: [plugin] });
+    api.setModalState(true);
+    await expect.element(within(root).getByText('Plugin upload')).toBeVisible();
+
+    config.localeName = 'de';
+    await expect.element(within(root).getByText('Plugin hochladen')).toBeVisible();
+
+    config.localeName = 'en';
+    await expect.element(within(root).getByText('Plugin upload')).toBeVisible();
+  });
+
+  it('lets localeDefinitionOverride win over a plugin translation', async () => {
+    const plugin = createTestPlugin({
+      id: 'l10n-overridden',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerL10n({ en: { 'upload-files': 'Plugin upload' } });
+      },
+    });
+
+    const { api, root } = await renderSolution('regular', {
+      plugins: [plugin],
+      localeDefinitionOverride: { en: { 'upload-files': 'My upload' } },
+    });
+    api.setModalState(true);
+
+    await expect.element(within(root).getByText('My upload')).toBeVisible();
+    await expect.element(within(root).getByText('Plugin upload')).not.toBeInTheDocument();
   });
 });

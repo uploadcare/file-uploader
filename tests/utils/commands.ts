@@ -1,4 +1,7 @@
 import { createHash, createHmac } from 'node:crypto';
+import { rmSync } from 'node:fs';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { SIGNED_UPLOADS_PUBLIC_KEY, SIGNED_UPLOADS_SECRET_KEY } from '@uploadcare/api-emulator';
 import type { BrowserCommand } from 'vitest/node';
@@ -93,14 +96,60 @@ const mintExpiredToken = (secretKey: string): string => {
   return `${header}.${payload}.${signature}`;
 };
 
+/**
+ * Drops a real folder onto the element `selector` matches, the way the OS does: through Chromium's drag input, so
+ * the page gets genuine `FileSystemDirectoryEntry` items. A drop built in JS cannot carry those — its
+ * `webkitGetAsEntry()` returns null. The folder is written to a temp directory from `files` (paths relative to it).
+ */
+export const dropFolder: BrowserCommand<[string, Record<string, string>]> = async (ctx, selector, files) => {
+  if (!('frame' in ctx)) {
+    throw new Error('dropFolder needs the playwright provider');
+  }
+  // Kept until the run ends: the browser reads dropped files from disk lazily, while walking them and on upload.
+  const root = await mkdtemp(path.join(tmpdir(), 'uc-drop-'));
+  process.once('exit', () => rmSync(root, { recursive: true, force: true }));
+  const folder = path.join(root, 'dropped');
+  for (const [relativePath, content] of Object.entries(files)) {
+    const filePath = path.join(folder, relativePath);
+    await mkdir(path.dirname(filePath), { recursive: true });
+    await writeFile(filePath, content);
+  }
+  const frame = await ctx.frame();
+  const iframeBox = await ctx.iframe.owner().boundingBox();
+  if (!iframeBox) {
+    throw new Error('dropFolder: the test iframe is not visible');
+  }
+  const data = { items: [], files: [folder], dragOperationsMask: 1 };
+  const cdp = await ctx.page.context().newCDPSession(ctx.page);
+  try {
+    // A drop area may only take up room once a drag is on the page, so start the drag before measuring it.
+    const center = { x: iframeBox.x + iframeBox.width / 2, y: iframeBox.y + iframeBox.height / 2 };
+    await cdp.send('Input.dispatchDragEvent', { type: 'dragEnter', ...center, data });
+    const target = frame.locator(selector);
+    await target.waitFor({ state: 'visible' });
+    const box = await target.boundingBox();
+    if (!box) {
+      throw new Error(`dropFolder: "${selector}" is not visible`);
+    }
+    const point = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
+    for (const type of ['dragOver', 'drop'] as const) {
+      await cdp.send('Input.dispatchDragEvent', { type, ...point, data });
+    }
+  } finally {
+    await cdp.detach();
+  }
+};
+
 export const commands = {
   waitFileChooserAndUpload,
   mintSecureUploadsCredentials,
+  dropFolder,
 };
 
 declare module 'vitest/browser' {
   interface BrowserCommands {
     waitFileChooserAndUpload: (relativePaths: string[]) => Promise<void>;
     mintSecureUploadsCredentials: (kind?: AuthTokenKind) => Promise<SecureUploadsCredentials | null>;
+    dropFolder: (selector: string, files: Record<string, string>) => Promise<void>;
   }
 }

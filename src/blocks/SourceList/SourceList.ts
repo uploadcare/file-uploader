@@ -1,13 +1,19 @@
 import type { PropertyValues } from 'lit';
 import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { SourceListController } from '../../abstract/controllers';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { inject } from '../../abstract/di/inject';
+import { observeSources } from '../../abstract/sources';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../SourceBtn/SourceBtn';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import './source-list.css';
+import { ChildBlock } from '../../lit/ChildBlock';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 
-export class SourceList extends LitUploaderBlock {
+export class SourceList extends ChildBlock {
+  @inject(ConfigController) private readonly _config!: ConfigController;
+
   @state()
   private _sources: SourceButtonConfig[] = [];
 
@@ -17,26 +23,22 @@ export class SourceList extends LitUploaderBlock {
   @property({ type: Boolean, attribute: 'wrap', noAccessor: true })
   public wrap = false;
 
-  public override initCallback(): void {
-    super.initCallback();
-
-    new SourceListController(this, {
-      ctx: this._sharedInstancesBag.ctx,
-      sharedInstancesBag: this._sharedInstancesBag,
-      onSourcesChange: (sources) => {
-        this._sources = sources;
-      },
+  /** @internal */
+  @subscription()
+  protected _wireSources(): Unsubscribe {
+    return observeSources(this.container, (sources) => {
+      this._sources = sources;
     });
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
-    if (this.cfg.sourceListWrap) {
-      this.style.removeProperty('display');
-    } else {
-      this.style.display = 'contents';
-    }
+    // Imperative `updated()` read (host attribute side-effect) — `get()`, not
+    // the tracked `getTracked()`: it is re-evaluated only on re-render (driven
+    // by `_sources`), not as its own reactive trigger. `[nowrap]` maps to `display: contents` in the
+    // stylesheet, so a consumer's inline `display` still wins.
+    this.toggleAttribute('nowrap', !this._config.get('sourceListWrap'));
   }
 
   public override render() {

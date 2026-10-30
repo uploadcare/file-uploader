@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': 'カメラへのアクセスが拒否されました',
   'camera-permissions-prompt': 'カメラへのアクセスを許可してください',
   'camera-permissions-request': 'アクセスをリクエスト',
+  'camera-not-found': 'カメラが見つかりません',
+  'camera-unavailable': 'カメラが使用中か、利用できません',
   'files-count-limit-error-title': 'ファイル数の上限超過',
   'files-count-limit-error-too-few':
     '選択されたファイルは{{total}} {{plural:file(total)}}です。最小{{min}} {{plural:file(min)}}が必要です。',
@@ -104,6 +106,8 @@ export default {
   'file-item-edit-button': '編集',
   'file-item-remove-button': '削除',
   'a11y-activity-header-button-close': '閉じる',
+  'a11y-camera-microphone': 'マイク',
+  'a11y-camera-stop-recording': '録画を停止',
   'a11y-editor-tab-filters': 'フィルター',
   'a11y-editor-tab-tuning': '調整',
   'a11y-editor-tab-crop': '切り抜き',
@@ -130,6 +134,8 @@ export default {
 
   custom: '自由形式',
   'freeform-crop': '自由切り抜き',
+  'network-error': 'ネットワークエラー',
+  retry: '再試行',
 
   'upload-from': '{{source}}からアップロード',
   'get-from': '{{source}}から取得',

@@ -16,4 +16,10 @@ describe('wildcardRegexp', () => {
       ),
     ).toBe(true);
   });
+
+  it('treats regex metacharacters in the pattern literally', () => {
+    expect(wildcardRegexp('image/svg+xml').test('image/svg+xml')).toBe(true);
+    expect(wildcardRegexp('application/vnd.ms-excel').test('application/vndXms-excel')).toBe(false);
+    expect(wildcardRegexp('a(b)[c]{1}^$|?\\').test('a(b)[c]{1}^$|?\\')).toBe(true);
+  });
 });

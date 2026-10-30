@@ -1,12 +1,16 @@
 import { html } from 'lit';
 
-import { LitBlock } from '../../lit/LitBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 import { UID } from '../../utils/UID';
 import './drop-down.css';
-import { state } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 
-export class DropDown extends LitBlock {
+export class DropDown extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-drop-down'];
+
+  /** Accessible name of the trigger, whose visible content is usually an icon only. */
+  @property()
+  public label?: string;
 
   @state()
   private _id = UID.generateFastUid();
@@ -17,7 +21,13 @@ export class DropDown extends LitBlock {
 
   public override render() {
     return html`
-      <button type="button" class="uc-mini-btn uc-dropdown-btn" popovertarget=${this._id as string} popovertargetaction="toggle">
+      <button
+        type="button"
+        class="uc-mini-btn uc-dropdown-btn"
+        popovertarget=${this._id as string}
+        popovertargetaction="toggle"
+        aria-label=${this.label ?? this.l10n('src-type-other')}
+      >
         ${this.yield('dd-header-button')}
       </button>
 

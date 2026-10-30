@@ -1,9 +1,18 @@
-import { html, type PropertyValues } from 'lit';
+import { html } from 'lit';
 import { property, state } from 'lit/decorators.js';
-import { cache } from 'lit/directives/cache.js';
-import { SourceListController } from '../../abstract/controllers';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import type { Uid } from '../../lit/Uid';
+import { COLLECTION_SUMMARY_THROTTLE_MS } from '../../abstract/collectionSummary';
+import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { inject } from '../../abstract/di/inject';
+import { observeSources } from '../../abstract/sources';
+import type { Uid } from '../../abstract/Uid';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { booleanAttribute } from '../../lit/boolean-attribute';
+import { ChildBlock } from '../../lit/ChildBlock';
+import { throttled } from '../../lit/rate-limited-method';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import type { SourceButtonConfig } from '../SourceBtn/SourceBtn';
 
 import '../DropArea/DropArea';
@@ -12,7 +21,6 @@ import './dynamic-btn.css';
 import './dynamic-btn-mode.css';
 
 import type { OutputCollectionState, OutputCollectionStatus } from '../../types/exported';
-import { throttle } from '../../utils/throttle';
 import '../Thumb/Thumb';
 import { classMap } from 'lit/directives/class-map.js';
 
@@ -20,9 +28,11 @@ import './PrimaryAction';
 import '../DropDown/DropDown';
 import '../FileItem/FileActionButton';
 import './NoWrapModeDynamicBtn';
-import { ACTIVITY_TYPES } from '../../lit/activity-constants';
+import { ACTIVITY_TYPES } from '../../abstract/activity-constants';
 
-export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact' | 'plain';
+import type { DynamicButtonMode } from '../../abstract/config/validatorsType';
+
+export type { DynamicButtonMode };
 
 type SourceSplit = {
   main: SourceButtonConfig | null;
@@ -30,7 +40,7 @@ type SourceSplit = {
 };
 
 const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: DynamicButtonMode): SourceSplit => {
-  if (mode === 'compact' || mode === 'plain' || sources.length === 0) {
+  if (mode === 'compact' || mode === 'plain') {
     return {
       main: null,
       remain: sources,
@@ -43,43 +53,54 @@ const adjustSourceBasedOnMode = (sources: SourceButtonConfig[], mode: DynamicBut
   };
 };
 
-const iconsBasedOnMode: Record<Exclude<DynamicButtonMode, 'toolbar' | 'plain'>, string> = {
-  compact: 'paperclip',
-  menu: 'arrow-dropdown',
-  auto: 'arrow-dropdown',
-};
-
 const AUTO_MODE_INLINE_THRESHOLD = 3;
 
-export class DynamicBtn extends LitUploaderBlock {
+export class DynamicBtn extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-dynamic-btn'];
-  public override couldBeCtxOwner = true;
 
-  private _unregisterAfterFileAddHook?: () => void;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(RouterController) private readonly _router!: RouterController;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
+  // Read only while adopted: `_api` from the adopted-guarded `@throttled` tick,
+  // `_uploadCollection` from the rendered buttons' click handlers. (Observer
+  // wiring goes through `whenController`.)
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+  @inject(UploadCollectionController) private readonly _uploadCollection!: UploadCollectionController;
 
-  @property({ attribute: 'dropzone', type: Boolean })
+  @property({ converter: booleanAttribute })
   public dropzone = true;
 
-  @state()
-  private _mode: DynamicButtonMode = 'auto';
+  // Tracked read: `dynamicButtonViewMode` auto-tracks under `SignalWatcher`, so a
+  // config change re-renders.
+  private get _mode(): DynamicButtonMode {
+    return this._config.getTracked('dynamicButtonViewMode');
+  }
 
   @state()
   private _sources: SourceButtonConfig[] = [];
 
-  @state()
-  private _status: 'idle' | 'success' | 'uploading' | 'failed' = 'idle';
-
-  @state()
-  private _mainAndRemainSources!: SourceSplit;
+  // Derived from `_sources` + the tracked `_mode` (both re-render triggers), so a
+  // change in either re-splits.
+  private get _mainAndRemainSources(): SourceSplit {
+    return adjustSourceBasedOnMode(this._sources, this._mode);
+  }
 
   @state()
   private _collection!: OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
 
-  @state()
-  private _progress = 0;
+  private get _status(): OutputCollectionStatus {
+    return this._collection?.status ?? 'idle';
+  }
 
-  @state()
-  private _dropdownIconName = 'arrow-dropdown';
+  // Tracked read: `commonProgress` (owned by `CollectionStateController`) auto-
+  // tracks under `SignalWatcher`.
+  private get _progress(): number {
+    return this._collectionState.getTracked('commonProgress');
+  }
+
+  private get _dropdownIconName(): string {
+    return this._mode === 'compact' ? 'paperclip' : 'arrow-dropdown';
+  }
 
   private get isIdle() {
     return this._status === 'idle';
@@ -101,9 +122,6 @@ export class DynamicBtn extends LitUploaderBlock {
     return this._mode === 'compact';
   }
 
-  /**
-   *
-   */
   private get isPlainMode() {
     return this._mode === 'plain';
   }
@@ -139,119 +157,80 @@ export class DynamicBtn extends LitUploaderBlock {
     return (this._collection?.allEntries?.length ?? 0) > 0;
   }
 
-  private get shouldShowAbortAction(): boolean {
-    return !this.isIdle && this.hasCollectionEntries;
+  // `@throttled` makes this adopted-guarded (a trailing tick after release
+  // no-ops) and cancels the pending timer on release. The `@subscription`
+  // observers hand this stable bound reference to `observeCollection`.
+  /** @internal */
+  @throttled(COLLECTION_SUMMARY_THROTTLE_MS)
+  protected _throttledHandleCollectionUpdate(): void {
+    this._collection = this._api.getOutputCollectionState();
   }
 
-  private _throttledHandleCollectionUpdate = throttle(() => {
-    if (!this.isConnected) {
-      return;
-    }
-    this._updateButtonBasedOnCollectionState();
-  }, 300);
-
-  private _updateButtonBasedOnCollectionState() {
-    const collectionState = this.api?.getOutputCollectionState();
-
-    if (!collectionState) {
-      console.warn('Collection state is undefined');
-      return;
-    }
-
-    this._collection = collectionState;
-    this._status = collectionState.status;
+  /** @internal */
+  @subscription()
+  protected _wireSources(): Unsubscribe {
+    return observeSources(this.container, (sources) => {
+      this._sources = sources;
+    });
   }
 
-  private _updateSourceSplit(): void {
-    this._mainAndRemainSources = adjustSourceBasedOnMode(this._sources, this._mode);
+  // The uploader-scope `UploadCollectionController` resolves only once the scope
+  // attaches (which can race adoption), so go through `whenController`
+  // (now-or-when-available); its callback returns the two observers, which
+  // `whenController`'s unsubscribe disposes (so a re-adoption can't stack them).
+  /** @internal */
+  @subscription()
+  protected _wireCollectionObservers(): Unsubscribe {
+    return this.container.whenController(UploadCollectionController, (collection) => [
+      // The button derives from the collection STATUS (idle/uploading/success/
+      // failed) — declare only the status-affecting keys, so per-entry progress
+      // ticks don't wake this recompute at large file counts.
+      collection.observeProperties(
+        ['fileInfo', 'errors', 'uploadError', 'isUploading'],
+        this._throttledHandleCollectionUpdate,
+      ),
+      collection.observeCollection(this._throttledHandleCollectionUpdate),
+    ]);
   }
 
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.subConfigValue('dynamicButtonViewMode', (value) => {
-      if (this._mode === value) return;
-
-      this._mode = value;
-      this._updateSourceSplit();
-    });
-
-    this.sub('*commonProgress', (progress: number) => {
-      this._progress = progress;
-    });
-
-    new SourceListController(this, {
-      ctx: this._sharedInstancesBag.ctx,
-      sharedInstancesBag: this._sharedInstancesBag,
-      onSourcesChange: (sources) => {
-        this._sources = sources;
-        this._updateSourceSplit();
-      },
-    });
-
-    this.uploadCollection.observeProperties(this._throttledHandleCollectionUpdate);
-    this.uploadCollection.observeCollection(this._throttledHandleCollectionUpdate);
-
-    this._unregisterAfterFileAddHook = this.routerLayer.registerAfterFileAddHook(({ historyLength }) => {
-      if (this.cfg.confirmUpload) {
-        this._sharedInstancesBag.ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
-        this.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
-        return true;
+  /** @internal */
+  @subscription()
+  protected _wireFileAddHook(): Unsubscribe {
+    const router = this._router;
+    return router.hooks.onFileAdd(() => {
+      // With confirmUpload, always land on the upload list.
+      if (this._config.get('confirmUpload')) {
+        return ACTIVITY_TYPES.UPLOAD_LIST;
       }
-
-      if (historyLength > 0) return false;
-      const currentActivity = this._sharedInstancesBag.ctx.read('*currentActivity');
-      if (currentActivity) {
-        this.modalManager?.close(currentActivity);
-      } else {
-        this.modalManager?.closeAll();
+      // If the user navigated somewhere to add the file, fall through to the
+      // default (upload list); otherwise close everything so the dynamic button
+      // just shows inline status.
+      if (router.canGoBack) {
+        return undefined;
       }
-      this._sharedInstancesBag.ctx.pub('*currentActivity', null);
-      return true;
+      return null;
     });
-  }
-
-  public override disconnectedCallback(): void {
-    if (typeof this._throttledHandleCollectionUpdate.cancel === 'function') {
-      this._throttledHandleCollectionUpdate.cancel();
-    }
-    this._unregisterAfterFileAddHook?.();
-    super.disconnectedCallback();
-    this._dropdownIconName = 'arrow-dropdown';
   }
 
   private _renderInline() {
     return html`
       <uc-no-wrap-mode-dynamic-btn>
-        ${this._mainAndRemainSources?.remain?.map(
-          (source) => html`<uc-source-btn .iconOnly=${true} role="menuitem" .source=${source}></uc-source-btn>`,
+        ${this._mainAndRemainSources.remain.map(
+          (source) => html`<uc-source-btn .iconOnly=${true} .source=${source}></uc-source-btn>`,
         )}
       </uc-no-wrap-mode-dynamic-btn>
     `;
   }
 
-  protected override willUpdate(_changedProperties: PropertyValues): void {
-    super.willUpdate(_changedProperties);
-
-    if (_changedProperties.has('_mode')) {
-      this._dropdownIconName =
-        iconsBasedOnMode[this._mode as Exclude<DynamicButtonMode, 'toolbar' | 'plain'>] ?? 'arrow-dropdown';
-    }
-  }
-
   private _clearAllEntries() {
-    this.uploadCollection.clearAll();
+    this._uploadCollection.clearAll();
   }
 
   private _clearAllFailedEntries() {
-    this._collection.failedEntries.forEach((it) => {
-      if (it && this.uploadCollection.hasItem(it.internalId as Uid)) {
-        this.uploadCollection.remove(it.internalId as Uid);
-      }
-    });
+    for (const it of this._collection.failedEntries) this._uploadCollection.remove(it.internalId as Uid);
   }
   private _abortAllEntries() {
-    this.uploadCollection.abortAll();
+    this._uploadCollection.abortAll();
   }
 
   private _handleRemove() {
@@ -271,8 +250,8 @@ export class DynamicBtn extends LitUploaderBlock {
     return html` <uc-drop-down>
       <uc-icon content-for="dd-header-button" name=${this._dropdownIconName}></uc-icon>
       <div content-for="dd-content" role="menu" class="uc-dropdown-menu">
-        ${this._mainAndRemainSources?.remain?.map(
-          (source) => html`<uc-source-btn role="menuitem" .source=${source}></uc-source-btn>`,
+        ${this._mainAndRemainSources.remain.map(
+          (source) => html`<uc-source-btn .buttonRole=${'menuitem'} .source=${source}></uc-source-btn>`,
         )}
       </div>
     </uc-drop-down>`;
@@ -280,7 +259,7 @@ export class DynamicBtn extends LitUploaderBlock {
 
   private _renderCompactSingleSource() {
     const source = this._sources[0];
-    const compactSource = source ? { ...source, icon: iconsBasedOnMode.compact } : source;
+    const compactSource = source ? { ...source, icon: 'paperclip' } : source;
 
     return html`
       <uc-no-wrap-mode-dynamic-btn>
@@ -292,7 +271,7 @@ export class DynamicBtn extends LitUploaderBlock {
   private _renderPrimaryAction() {
     return html`<uc-primary-action
       .entries=${this._collection}
-      .source=${this._mainAndRemainSources?.main}
+      .source=${this._mainAndRemainSources.main}
     ></uc-primary-action>`;
   }
 
@@ -302,7 +281,6 @@ export class DynamicBtn extends LitUploaderBlock {
       .uploading=${this.isUploading}
       .failed=${this.isFailed}
       .success=${this.isSuccess}
-      .idle=${this.isIdle}
       .progress=${this._progress}
     ></uc-file-action-button>`;
   }
@@ -328,12 +306,12 @@ export class DynamicBtn extends LitUploaderBlock {
     return html`
       <uc-drop-area .disabled=${!this.dropzone}>
         <div class=${this._getInnerClassMap()}>
-          ${cache(this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null)}
-          ${cache(!this.isPlainMode && this.shouldShowInline ? this._renderInline() : null)}
-          ${cache(!this.isPlainMode && this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null)}
-          ${cache(!this.isPlainMode && this.shouldShowDropdown ? this._renderDropdown() : null)}
-          ${cache(this.shouldShowAbortAction || this.hasCollectionEntries ? this._renderAbortAction() : null)}
-          ${cache(this._renderVisualDropArea())}
+          ${this.shouldShowPrimaryAction ? this._renderPrimaryAction() : null}
+          ${this.shouldShowInline ? this._renderInline() : null}
+          ${this.shouldShowCompactSingleSource ? this._renderCompactSingleSource() : null}
+          ${!this.isPlainMode && this.shouldShowDropdown ? this._renderDropdown() : null}
+          ${this.hasCollectionEntries ? this._renderAbortAction() : null}
+          ${this._renderVisualDropArea()}
         </div>
       </uc-drop-area>
     `;

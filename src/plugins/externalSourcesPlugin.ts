@@ -1,8 +1,9 @@
+import { ACTIVITY_TYPES } from '../abstract/activity-constants';
 import { defineComponents } from '../abstract/defineComponents';
-import type { UploaderPlugin } from '../abstract/managers/plugin';
+import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import { ExternalSource } from '../blocks/ExternalSource/ExternalSource';
-import { ACTIVITY_TYPES } from '../lit/activity-constants';
-import { ExternalUploadSource } from '../utils/UploadSource';
+import { ExternalUploadSource, isExternalSource, sourceLabelKey } from '../utils/UploadSource';
+import { renderElement } from './renderElement';
 
 export const externalSourcesPlugin: UploaderPlugin = {
   id: 'external-sources',
@@ -11,23 +12,18 @@ export const externalSourcesPlugin: UploaderPlugin = {
 
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.EXTERNAL,
-      render: (host) => {
-        const el = document.createElement('uc-external-source');
-        host.append(el);
-        return () => {
-          host.replaceChildren();
-        };
-      },
+      label: ({ externalSourceType }) =>
+        externalSourceType && isExternalSource(externalSourceType) ? sourceLabelKey(externalSourceType) : undefined,
+      render: renderElement('uc-external-source'),
     });
 
     for (const sourceId of Object.values(ExternalUploadSource)) {
       pluginApi.registry.registerSource({
         id: sourceId,
-        label: `src-type-${sourceId}`,
+        label: sourceLabelKey(sourceId),
         icon: sourceId,
         onSelect: () => {
-          uploaderApi.setCurrentActivity(ACTIVITY_TYPES.EXTERNAL, { externalSourceType: sourceId });
-          uploaderApi.setModalState(true);
+          uploaderApi.navigate(ACTIVITY_TYPES.EXTERNAL, { externalSourceType: sourceId });
         },
       });
     }

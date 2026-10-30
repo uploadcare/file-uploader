@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>uc-uploader — unified component</title>
+    <style>
+    :root {
+      color-scheme: light dark;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px;
+      max-width: 720px;
+      line-height: 1.45;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #121213;
+        color: #eee;
+      }
+    }
+
+    h1 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0 0 0.25rem;
+    }
+
+    .lede {
+      margin: 0 0 1.25rem;
+      opacity: 0.8;
+      font-size: 0.95rem;
+    }
+
+    .lede code {
+      font-size: 0.9em;
+    }
+
+    .panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px 20px;
+      align-items: center;
+      margin-bottom: 1.25rem;
+      padding: 12px 14px;
+      border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+      border-radius: 10px;
+    }
+
+    .panel label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .panel fieldset {
+      border: 0;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 14px;
+    }
+
+    .panel legend {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      opacity: 0.65;
+      margin-bottom: 6px;
+      width: 100%;
+    }
+
+    #host {
+      min-height: 3rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .log-wrap {
+      margin-top: 1rem;
+    }
+
+    .log-wrap h2 {
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin: 0 0 0.5rem;
+      opacity: 0.75;
+    }
+
+    #log {
+      margin: 0;
+      padding: 10px 12px;
+      max-height: 220px;
+      overflow: auto;
+      font-size: 12px;
+      line-height: 1.4;
+      border-radius: 8px;
+      background: color-mix(in srgb, currentColor 6%, transparent);
+      border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    #log:empty::before {
+      content: 'Events from <uc-uploader> will show here…';
+      opacity: 0.5;
+    }
+    </style>
+    <script type="module">
+    // Solution CSS for every mode (mode can change live).
+    import '@/solutions/file-uploader/regular/index.css';
+    import '@/solutions/file-uploader/minimal/index.css';
+    import '@/solutions/file-uploader/inline/index.css';
+    import * as UC from '@/index.js';
+
+    UC.defineComponents(UC);
+
+    const host = document.getElementById('host');
+    const logEl = document.getElementById('log');
+    const modeInputs = document.querySelectorAll('input[name="mode"]');
+    const headlessInput = document.getElementById('headless');
+    const dynamicInput = document.getElementById('dynamic-button');
+
+    /** @type {import('@/index.js').Uploader | null} */
+    let uploader = null;
+
+    const EVENT_TYPES = [
+      'file-added',
+      'file-removed',
+      'file-upload-start',
+      'file-upload-progress',
+      'file-upload-success',
+      'file-upload-failed',
+      'common-upload-start',
+      'common-upload-success',
+      'common-upload-failed',
+      'modal-open',
+      'modal-close',
+      'done-click',
+      'upload-click',
+      'change',
+    ];
+
+    const appendLog = (line) => {
+      const stamp = new Date().toLocaleTimeString();
+      logEl.textContent = `[${stamp}] ${line}\n${logEl.textContent}`.slice(0, 4000);
+    };
+
+    const selectedMode = () =>
+      /** @type {HTMLInputElement | undefined} */ ([...modeInputs].find((el) => el.checked))?.value ??
+      'regular';
+
+    const mount = () => {
+      const mode = selectedMode();
+      const next = document.createElement('uc-uploader');
+      next.setAttribute('mode', mode);
+      next.setAttribute('pubkey', 'demopublickey');
+      next.setAttribute('debug', '');
+      next.setAttribute('quality-insights', 'false');
+      next.setAttribute('test-mode', '');
+      next.classList.add('uc-light');
+
+      if (mode === 'regular') {
+        if (headlessInput.checked) next.setAttribute('headless', '');
+        if (dynamicInput.checked) next.setAttribute('dynamic-button', '');
+      }
+
+      for (const type of EVENT_TYPES) {
+        next.addEventListener(type, (e) => {
+          const detail = /** @type {CustomEvent} */ (e).detail;
+          const summary =
+            detail && typeof detail === 'object'
+              ? Object.keys(detail).slice(0, 6).join(', ')
+              : String(detail ?? '');
+          appendLog(`${type}${summary ? ` { ${summary} }` : ''}`);
+        });
+      }
+
+      host.replaceChildren(next);
+      uploader = /** @type {import('@/index.js').Uploader} */ (next);
+
+      // Documented public API lives on the host (no separate ctx-provider).
+      queueMicrotask(() => {
+        try {
+          const api = uploader?.getAPI();
+          appendLog(`mounted mode=${mode} ctx-name=${uploader?.getAttribute('ctx-name')} api=${!!api}`);
+        } catch (err) {
+          appendLog(`getAPI() not ready yet: ${err}`);
+        }
+      });
+    };
+
+    const syncRegularOnlyControls = () => {
+      const isRegular = selectedMode() === 'regular';
+      headlessInput.disabled = !isRegular;
+      dynamicInput.disabled = !isRegular;
+    };
+
+    for (const input of modeInputs) {
+      input.addEventListener('change', () => {
+        syncRegularOnlyControls();
+        mount();
+      });
+    }
+    headlessInput.addEventListener('change', mount);
+    dynamicInput.addEventListener('change', mount);
+
+    document.getElementById('btn-add-url')?.addEventListener('click', () => {
+      try {
+        uploader?.getAPI().addFileFromUrl('https://ucarecdn.com/a6f8cd89-5800-4f18-b9af-7c612bc90c59/');
+        appendLog('api.addFileFromUrl(…)');
+      } catch (err) {
+        appendLog(`addFileFromUrl failed: ${err}`);
+      }
+    });
+
+    document.getElementById('btn-clear-log')?.addEventListener('click', () => {
+      logEl.textContent = '';
+    });
+
+    syncRegularOnlyControls();
+    mount();
+    </script>
+  </head>
+  <body>
+    <h1><code>uc-uploader</code> — unified component</h1>
+    <p class="lede">
+      One tag replaces <code>uc-config</code> + <code>uc-upload-ctx-provider</code> +
+      <code>uc-file-uploader-*</code>. Config attrs live on the host; <code>getAPI()</code> and events
+      fire on the same element. Switch <code>mode</code> to render regular / minimal / inline.
+    </p>
+
+    <div class="panel">
+      <fieldset>
+        <legend>mode</legend>
+        <label><input type="radio" name="mode" value="regular" checked> regular</label>
+        <label><input type="radio" name="mode" value="minimal"> minimal</label>
+        <label><input type="radio" name="mode" value="inline"> inline</label>
+      </fieldset>
+      <fieldset>
+        <legend>regular only</legend>
+        <label><input type="checkbox" id="headless"> headless</label>
+        <label><input type="checkbox" id="dynamic-button"> dynamic-button</label>
+      </fieldset>
+      <button type="button" id="btn-add-url">API: addFileFromUrl</button>
+      <button type="button" id="btn-clear-log">Clear log</button>
+    </div>
+
+    <div id="host"></div>
+
+    <div class="log-wrap">
+      <h2>Event log (on <code>&lt;uc-uploader&gt;</code>)</h2>
+      <pre id="log"></pre>
+    </div>
+  </body>
+</html>

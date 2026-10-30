@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': '카메라 접근 거부됨',
   'camera-permissions-prompt': '카메라 접근을 허용해주세요',
   'camera-permissions-request': '접근 요청',
+  'camera-not-found': '카메라를 찾을 수 없음',
+  'camera-unavailable': '카메라가 사용 중이거나 사용할 수 없음',
   'files-count-limit-error-title': '파일 수 제한 초과',
   'files-count-limit-error-too-few': '선택된 파일이 {{total}}개입니다. 최소 {{min}}개가 필요합니다.',
   'files-count-limit-error-too-many': '파일이 너무 많습니다. 최대 {{max}}개입니다.',
@@ -103,6 +105,8 @@ export default {
   'file-item-edit-button': '편집',
   'file-item-remove-button': '제거',
   'a11y-activity-header-button-close': '닫기',
+  'a11y-camera-microphone': '마이크',
+  'a11y-camera-stop-recording': '녹화 중지',
   'a11y-editor-tab-filters': '필터',
   'a11y-editor-tab-tuning': '튜닝',
   'a11y-editor-tab-crop': '자르기',
@@ -129,6 +133,8 @@ export default {
 
   custom: '자유형식',
   'freeform-crop': '자유 자르기',
+  'network-error': '네트워크 오류',
+  retry: '다시 시도',
 
   'upload-from': '{{source}}에서 업로드',
   'get-from': '{{source}}에서 가져오기',

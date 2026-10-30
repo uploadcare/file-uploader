@@ -7,7 +7,8 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 /**
  * Compiles a two-line consumer of the published types under the compiler settings integrators actually use. tsd covers
- * one configuration; this covers module resolution and strictness flags tsd does not vary. The consumer lives inside
+ * one configuration; this covers the strictness flags tsd does not vary. Only bundler resolution: the package targets
+ * bundler-based projects, and its CDN URL dependency ships bundler-only declarations. The consumer lives inside
  * the repo so `@uploadcare/file-uploader` resolves through the package's own `exports` (Node self-reference), exactly
  * as it does for an installed copy.
  */
@@ -29,7 +30,6 @@ const STRICT = ['--strict', '--exactOptionalPropertyTypes', '--noUncheckedIndexe
 type Case = { name: string; file: string; flags: string[] };
 const cases: Case[] = [
   { name: 'bundler', file: 'consumer.ts', flags: ['--module', 'esnext', '--moduleResolution', 'bundler'] },
-  { name: 'nodenext (ESM)', file: 'consumer.mts', flags: ['--module', 'nodenext', '--moduleResolution', 'nodenext'] },
 ];
 
 const compile = ({ file, flags }: Case): { ok: boolean; output: string } => {
@@ -72,16 +72,5 @@ describe('published types under consumer compiler settings', { timeout: 60_000 }
     const { ok, output } = compile(cases[0]);
     expect(output).toBe('');
     expect(ok).toBe(true);
-  });
-
-  // QUIRK(types): under nodenext resolution with `skipLibCheck: false`, type-checking fails inside
-  // `dist/index.d.ts`: `TelemetryManager` (src/abstract/managers/TelemetryManager.ts:15) derives its method types
-  // from `TelemetryRequest`, so the import of `@uploadcare/quality-insights` ends up in the public d.ts, and that
-  // package ships extensionless relative imports in an ESM d.ts, which nodenext rejects. Goes away when the
-  // dependency fixes its d.ts or the manager stops leaking the type. Pinned as current behaviour, not endorsed.
-  it('nodenext (ESM), strict, skipLibCheck: false fails inside quality-insights', () => {
-    const { ok, output } = compile(cases[1]);
-    expect(ok).toBe(false);
-    expect(output).toContain('quality-insights');
   });
 });

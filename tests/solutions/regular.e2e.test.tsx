@@ -1,5 +1,6 @@
 import { describe, expect, it, test } from 'vitest';
 import { commands, userEvent } from 'vitest/browser';
+import type { FileUploaderRegular } from '@/index';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import '~/types/jsx';
 import { openModal, renderSolution, within } from '~/tests/utils/render-solution';
@@ -107,6 +108,31 @@ describe('uc-file-uploader-regular', () => {
       await expect.element(uploadList).toBeVisible();
       await expect.element(within(root).getByText(/camera-\d+\.jpeg/)).toBeVisible();
       await expect.element(within(root).getByText('1 file uploaded')).toBeVisible();
+    });
+  });
+
+  describe('upload button', () => {
+    it('is not rendered when headless', async () => {
+      const { root } = await renderSolution('regular');
+      await expect.element(within(root).getByTestId('uc-simple-btn')).toBeVisible();
+
+      root.toggleAttribute('headless', true);
+
+      await expect.element(within(root).getByTestId('uc-simple-btn')).not.toBeInTheDocument();
+      expect(within(root).getByTestId('uc-dynamic-btn').query()).toBeNull();
+    });
+
+    it('becomes the dynamic button when dynamicButton is set', async () => {
+      const { root } = await renderSolution('regular');
+      const uploader = root as FileUploaderRegular;
+      expect(uploader.isDynamicButtonActive).toBe(false);
+      await expect.element(within(root).getByTestId('uc-simple-btn')).toBeVisible();
+
+      uploader.dynamicButton = true;
+
+      await expect.element(within(root).getByTestId('uc-dynamic-btn')).toBeVisible();
+      expect(within(root).getByTestId('uc-simple-btn').query()).toBeNull();
+      expect(uploader.isDynamicButtonActive).toBe(true);
     });
   });
 });

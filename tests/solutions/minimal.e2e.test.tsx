@@ -1,8 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
+import type { DropArea } from '@/index';
+import { delay } from '@/utils/delay';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import '~/types/jsx';
-import { testFile } from '~/tests/fixtures/files';
+import { IMAGE, testFile } from '~/tests/fixtures/files';
 import { renderSolution, within } from '~/tests/utils/render-solution';
 
 describe('uc-file-uploader-minimal', () => {
@@ -61,5 +63,82 @@ describe('uc-file-uploader-minimal', () => {
     await userEvent.click(editButton);
 
     await expect.element(within(root).getByTestId('uc-cloud-image-editor-activity')).toBeVisible();
+  });
+
+  it('shows the upload list in place while it has files, and start-from once it empties', async () => {
+    const { root, api } = await renderSolution('minimal');
+    const uploadList = within(root).getByTestId('uc-upload-list');
+    await expect.element(uploadList).not.toBeVisible();
+
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.initFlow();
+    await expect.element(uploadList).toBeVisible();
+    expect(uploadList.element().closest('dialog')).toBeNull();
+
+    api.removeAllFiles();
+    await expect.element(uploadList).not.toBeVisible();
+  });
+
+  it('says "Choose file" or "Choose files" as multiple toggles', async () => {
+    const { root, config } = await renderSolution('minimal');
+
+    config.multiple = false;
+    await expect.element(within(root).getByText('Choose file', { exact: true })).toBeVisible();
+
+    config.multiple = true;
+    await expect.element(within(root).getByText('Choose files', { exact: true })).toBeVisible();
+  });
+
+  describe('grid view', () => {
+    // The default 414px-wide viewport is below the theme's 430px breakpoint, which already sets one column.
+    beforeEach(async () => {
+      await page.viewport(1024, 768);
+    });
+    afterEach(async () => {
+      await page.viewport(414, 896);
+    });
+
+    const THEME_GRID_COL = '3';
+
+    const renderSingleGrid = async () => {
+      const uploader = await renderSolution('minimal', { filesViewMode: 'grid', multiple: false });
+      const dropArea = within(uploader.root).getByTestId('uc-drop-area').first().element() as DropArea;
+      const gridCol = () => getComputedStyle(uploader.root).getPropertyValue('--uc-grid-col').trim();
+      await expect.poll(gridCol).toBe('1');
+      await expect.poll(() => dropArea.single).toBe(true);
+      return { ...uploader, dropArea, gridCol };
+    };
+
+    it('uses one column and a single-file drop area for a single file, and drops both when multiple', async () => {
+      const { config, dropArea, gridCol } = await renderSingleGrid();
+
+      config.multiple = true;
+
+      await expect.poll(gridCol).toBe(THEME_GRID_COL);
+      await expect.poll(() => dropArea.single).toBe(false);
+    });
+
+    it('drops the single-column layout when leaving grid view', async () => {
+      const { config, dropArea, gridCol } = await renderSingleGrid();
+
+      config.filesViewMode = 'list';
+
+      await expect.poll(gridCol).toBe(THEME_GRID_COL);
+      await expect.poll(() => dropArea.single).toBe(false);
+    });
+
+    it("keeps the consumer's inline --uc-grid-col across updates", async () => {
+      const { root, config, gridCol } = await renderSingleGrid();
+      root.style.setProperty('--uc-grid-col', '4');
+
+      config.multiple = true;
+      await expect.poll(gridCol).toBe('4');
+      config.multiple = false;
+      config.filesViewMode = 'list';
+      await delay(0);
+
+      expect(root.style.getPropertyValue('--uc-grid-col')).toBe('4');
+      expect(gridCol()).toBe('4');
+    });
   });
 });

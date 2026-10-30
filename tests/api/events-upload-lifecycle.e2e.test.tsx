@@ -132,7 +132,7 @@ describe('events: upload lifecycle', () => {
     // own, in the same batch, so once it sees the square's validation result the uploader has seen it too.
     const square = api.getOutputCollectionState().allEntries.find((entry) => entry.name === IMAGE.SQUARE.name);
     let isSquareValidationSeen = false;
-    const unobserve = provider.uploadCollection.observeProperties((changeMap) => {
+    const unobserve = provider.uploadCollection.observeProperties(['errors'], (changeMap) => {
       if (changeMap.errors?.has(square?.internalId ?? '')) isSquareValidationSeen = true;
     });
     onTestFinished(unobserve);
@@ -183,25 +183,27 @@ describe('events: upload lifecycle', () => {
   it('fires the failure events when a file does not pass validation', async () => {
     const { api, config, provider } = await renderSolution();
     const recorder = recordEvents(provider);
-    // Set after render on purpose: the doubled failure pair asserted below only happens when the config changes in the
-    // same tick the file is added. Passed as an attribute at render time the pair fires once.
+    // Set after render on purpose: the config changing in the same tick the file is added re-runs the validators in
+    // the next tick, with the same verdict. That verdict is reported once.
     config.maxLocalFileSizeBytes = 1;
 
-    api.addFileFromObject(IMAGE.PIXEL);
-    await expect.poll(() => recorder.detailsOf('common-upload-failed')).toHaveLength(2);
+    const first = api.addFileFromObject(IMAGE.PIXEL);
+    await expect.poll(() => recorder.detailsOf('common-upload-failed')).toHaveLength(1);
+    // The sentinel: a second file, added once the first has settled, fails in turn. A repeat report for the first
+    // would land before this one.
     await recorder.waitForAfter(CHANGE, 'common-upload-failed');
+    const second = api.addFileFromObject(IMAGE.PIXEL);
+    await expect
+      .poll(() => recorder.detailsOf('file-upload-failed').map((entry) => entry.internalId))
+      .toContain(second.internalId);
 
-    // The failure pair fires twice: once from the `add` validators and once from the `change` validators that run in
-    // the next tick. Pinned as-is — this is current behaviour, not an endorsement of it.
-    expect(recorder.typesExcluding(CHANGE)).toEqual([
-      'file-added',
-      'file-upload-failed',
-      'common-upload-failed',
-      'file-upload-failed',
-      'common-upload-failed',
+    expect(recorder.detailsOf('file-upload-failed').map((entry) => entry.internalId)).toEqual([
+      first.internalId,
+      second.internalId,
     ]);
     expect(recorder.detailsOf('file-upload-failed')[0].errors[0].type).toBe('FILE_SIZE_EXCEEDED');
-    expect(recorder.detailsOf(CHANGE).at(-1)).toMatchObject({ status: 'failed', failedCount: 1 });
+    await recorder.waitForAfter(CHANGE, 'file-upload-failed');
+    expect(recorder.detailsOf(CHANGE).at(-1)).toMatchObject({ status: 'failed', failedCount: 2 });
   });
 
   it('fires group-created after the upload succeeds when groupOutput is enabled', async () => {
@@ -229,5 +231,24 @@ describe('events: upload lifecycle', () => {
       'common-upload-success',
     ]);
     expect(recorder.detailsOf('group-created')[0].group?.cdnUrl).toBeTruthy();
+  });
+
+  it('creates a new group when a file is removed from a grouped collection', async () => {
+    const { api, provider } = await renderSolution('regular', { groupOutput: true, multiple: true });
+    const recorder = recordEvents(provider);
+
+    const kept = api.addFileFromObject(IMAGE.PIXEL);
+    const removed = api.addFileFromObject(IMAGE.SQUARE);
+    api.uploadAll();
+    await expect.poll(() => recorder.detailsOf('group-created')).toHaveLength(1);
+    expect(recorder.detailsOf('group-created')[0].group?.filesCount).toBe(2);
+
+    api.removeFileByInternalId(removed.internalId);
+
+    await expect.poll(() => recorder.detailsOf('group-created')).toHaveLength(2);
+    const [first, second] = recorder.detailsOf('group-created');
+    expect(second.group?.filesCount).toBe(1);
+    expect(second.group?.uuid).not.toBe(first.group?.uuid);
+    expect(second.allEntries.map((entry) => entry.internalId)).toEqual([kept.internalId]);
   });
 });

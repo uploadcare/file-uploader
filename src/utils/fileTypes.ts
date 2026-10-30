@@ -1,5 +1,5 @@
 import { browserInfo } from './browser-info';
-import { stringToArray } from './stringToArray';
+import { deserializeCsv } from './comma-separated';
 
 export const BASIC_IMAGE_WILDCARD = 'image/*' as const;
 export const BASIC_VIDEO_WILDCARD = 'video/*' as const;
@@ -33,10 +33,7 @@ export const calcImageAcceptList = (): string[] => {
 export const IMAGE_ACCEPT_LIST = calcImageAcceptList();
 
 export const mergeFileTypes = (fileTypes?: string[]): string[] => {
-  if (!fileTypes) {
-    return [];
-  }
-  return fileTypes.filter((item): item is string => typeof item === 'string').flatMap((str) => stringToArray(str));
+  return fileTypes?.flatMap(deserializeCsv) ?? [];
 };
 
 export const matchMimeType = (mimeType: string, allowedFileTypes: string[]): boolean => {
@@ -61,16 +58,18 @@ export const matchExtension = (fileName: string, allowedFileTypes: string[]): bo
 };
 
 export const fileIsImage = (file: File | Blob): boolean => {
-  const type = file?.type;
-  if (!type) {
-    return false;
-  }
-  return matchMimeType(type, IMAGE_ACCEPT_LIST);
+  return !!file.type && matchMimeType(file.type, IMAGE_ACCEPT_LIST);
 };
 
-export const isBlob = (data: unknown): data is Blob => {
-  return typeof Blob !== 'undefined' && data instanceof Blob;
-};
+/** The entry fields read off a file. A `Blob` has no name, so it leaves `fileName` out. */
+export const fileDerivedFields = (
+  file: File | Blob,
+): { mimeType: string | null; isImage: boolean; fileSize: number; fileName?: string } => ({
+  mimeType: file.type || null,
+  isImage: fileIsImage(file),
+  fileSize: file.size,
+  ...(file instanceof File && { fileName: file.name }),
+});
 
 export const isFile = (data: unknown): data is File => {
   return typeof File !== 'undefined' && data instanceof File;

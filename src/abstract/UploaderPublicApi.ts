@@ -1,18 +1,7 @@
-// @ts-check
-
-import { calcCameraModes } from '../blocks/CameraSource/calcCameraModes';
-import { CameraSourceTypes, type ModeCameraType } from '../blocks/CameraSource/constants';
-import { type EventKey, type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
-import { ACTIVITY_TYPES } from '../lit/activity-constants';
-import { findBlockInCtx } from '../lit/findBlockInCtx';
-import { waitForBlockInCtx } from '../lit/hasBlockInCtx';
-import type { ActivityParamsMap, ActivityType, LitActivityBlock } from '../lit/LitActivityBlock';
-import { createL10n } from '../lit/l10n';
-import { PubSub } from '../lit/PubSubCompat';
-import { SharedInstance } from '../lit/shared-instances';
-import type { Uid } from '../lit/Uid';
+import { parseFileUrl } from '@uploadcare/cdn-url';
 import type {
   AuthToken,
+  ConfigType,
   OutputCollectionState,
   OutputCollectionStatus,
   OutputFileEntry,
@@ -20,61 +9,121 @@ import type {
   UploadcareFile,
 } from '../types/index';
 import { applyStyles } from '../utils/applyStyles';
-import { serializeCsv } from '../utils/comma-separated';
+import { DEFAULT_CDN_ORIGIN } from '../utils/cdn/origin';
+import { deserializeCsv, serializeCsv } from '../utils/comma-separated';
 import {
   BASIC_IMAGE_WILDCARD,
   BASIC_VIDEO_WILDCARD,
-  fileIsImage,
+  fileDerivedFields,
   IMAGE_ACCEPT_LIST,
   mergeFileTypes,
 } from '../utils/fileTypes';
-import { parseCdnUrl } from '../utils/parseCdnUrl';
-import { stringToArray } from '../utils/stringToArray';
+import { parseCdnUrlForEntry } from '../utils/parseCdnUrlForEntry';
 import { UploadSource } from '../utils/UploadSource';
+import type { ActivityParamsMap, ActivityType } from './activity-constants';
+import { ACTIVITY_TYPES } from './activity-constants';
 import { buildOutputCollectionState } from './buildOutputCollectionState';
+import { CameraSourceTypes, calcCameraModes, type ModeCameraType } from './cameraModes';
+import { controllerLogger } from './controllerLogger';
+import { AppInfo } from './controllers/AppInfo';
+import { ConfigController } from './controllers/ConfigController';
+import { LocaleController } from './controllers/LocaleController';
+import { RouterController } from './controllers/RouterController';
+import { UploadCollectionController } from './controllers/UploadCollectionController';
+import { UploadController } from './controllers/UploadController';
+import { type ControllerContainer, requireContainerOf } from './di/ControllerContainer';
+import { inject } from './di/inject';
+import { EventEmitter, type EventKey, type EventPayload, EventType } from './EventEmitter';
+import { createL10n } from './l10n';
+import { AuthTokenManager } from './managers/AuthTokenManager';
+import { PluginController } from './managers/plugin';
+import { toOutputFileEntry } from './outputFileEntry';
+import type { Uid } from './Uid';
 import { type UploadEntryData, uploadcareFileToEntryData } from './uploadEntrySchema';
+import { waitForActivityBlock } from './waitForActivityBlock';
+
 export type ApiAddFileCommonOptions = {
   silent?: boolean;
   fileName?: string;
   source?: string;
 };
 
-export class UploaderPublicApi extends SharedInstance {
-  private _l10n = createL10n(() => this._ctx);
+/** Options for adding a local file, which can also carry its path inside a dropped folder. */
+type ApiAddFileObjectOptions = ApiAddFileCommonOptions & { fullPath?: string };
 
-  public get _uploadCollection() {
-    return this._sharedInstancesBag.uploadCollection;
+/** `silent` and `source` for a new entry: loud and from the JS API, unless the caller says otherwise. */
+const addOptions = ({ silent, source }: ApiAddFileCommonOptions) => ({
+  silent: silent ?? false,
+  source: source ?? UploadSource.API,
+});
+
+/** Whether `value` is exactly a file uuid — checked by the same parser that backs `addFileFromCdnUrl`'s validation. */
+const isFileUuid = (value: string): boolean => {
+  try {
+    return parseFileUrl(`${DEFAULT_CDN_ORIGIN}/${value}/`).uuid === value;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * The documented public JS API (`element.getAPI()`): one instance per ctx, acting on that ctx's uploader. It holds no
+ * state of its own; every method reads or drives the ctx's controllers. Once the uploader is destroyed, calling a
+ * method throws instead of acting on a stale ctx: get a fresh api from the current `<uc-upload-ctx-provider>`.
+ */
+export class UploaderPublicApi {
+  @inject(AppInfo) private readonly _appInfo!: AppInfo;
+  @inject(AuthTokenManager) private readonly _authToken!: AuthTokenManager;
+
+  // Per-ctx logger: `warn`/`error` always print, prefixed with THIS ctx's name
+  // (resolved lazily at log time via the container that built this instance).
+  private readonly _log = controllerLogger(this, 'public-api');
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(LocaleController) private readonly _locale!: LocaleController;
+  @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
+  // Token thunk: `UploadController` reaches this class back through
+  // `ValidationController` (validators receive the api), so a direct token
+  // reference would form a value-import cycle that leaves one side `undefined` at
+  // decoration time. The thunk defers the lookup to resolution time.
+  @inject(() => UploadController) private readonly _uploadController!: UploadController;
+  @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
+  @inject(RouterController) private readonly _router!: RouterController;
+  // Lazy thunk: resolved at plugin-read time (`_pluginsReady`/`initFlow`), so
+  // there is no construction cycle. `ensurePluginManager` binds the same
+  // per-ctx `PluginController` instance on the container this thunk reads.
+  @inject(() => PluginController) private readonly _pluginManager!: PluginController;
+
+  // `createL10n` reads the injected `LocaleController` live on every lookup, so a
+  // dictionary load / locale switch is reflected without recreating the fn.
+  private _l10n = createL10n(() => this._locale);
+
+  private get _container(): ControllerContainer {
+    return requireContainerOf(this);
   }
 
   /**
-   * The failure of the last group creation, for the validator that reports it.
-   * Underscored like `_uploadCollection`: internal, but a validator has no
-   * other way to reach the context.
+   * Read-only view of the live config (part of the documented api surface —
+   * consumed by the built-in validators). Backed by the injected
+   * `ConfigController`'s live values object.
    */
-  public get _groupError(): Error | null {
-    return this._ctx.read('*groupError');
-  }
-
-  public get cfg() {
-    return this._cfg;
+  public get cfg(): Readonly<ConfigType> {
+    return this._config.values;
   }
 
   public get l10n() {
     return this._l10n;
   }
 
-  /**
-   * TODO: Probably we should not allow user to override `source` property
-   */
+  /** Adds a file to the upload list from a URL. `silent` suppresses its file events. */
+  // TODO: Probably we should not allow user to override `source` property
   public addFileFromUrl = (
     url: string,
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'idle'> => {
-    const internalId = this._uploadCollection.add({
+    const internalId = this._collection.add({
       externalUrl: url,
       fileName: fileName ?? null,
-      silent: silent ?? false,
-      source: source ?? UploadSource.API,
+      ...addOptions({ silent, source }),
     });
     return this.getOutputItem(internalId);
   };
@@ -83,11 +132,13 @@ export class UploaderPublicApi extends SharedInstance {
     uuid: string,
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'idle'> => {
-    const internalId = this._uploadCollection.add({
+    if (!isFileUuid(uuid)) {
+      throw new Error('Invalid UUID');
+    }
+    const internalId = this._collection.add({
       uuid,
       fileName: fileName ?? null,
-      silent: silent ?? false,
-      source: source ?? UploadSource.API,
+      ...addOptions({ silent, source }),
     });
     return this.getOutputItem(internalId);
   };
@@ -96,58 +147,67 @@ export class UploaderPublicApi extends SharedInstance {
     cdnUrl: string,
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'idle'> => {
-    const parsedCdnUrl = parseCdnUrl({
+    const parsedCdnUrl = parseCdnUrlForEntry({
       url: cdnUrl,
       cdnBase: this.cfg.cdnCname,
     });
     if (!parsedCdnUrl) {
       throw new Error('Invalid CDN URL');
     }
-    const internalId = this._uploadCollection.add({
+    const internalId = this._collection.add({
       uuid: parsedCdnUrl.uuid,
       cdnUrl,
       cdnUrlModifiers: parsedCdnUrl.cdnUrlModifiers,
       fileName: fileName ?? parsedCdnUrl.filename ?? null,
-      silent: silent ?? false,
-      source: source ?? UploadSource.API,
+      ...addOptions({ silent, source }),
     });
     return this.getOutputItem(internalId);
   };
 
-  public addFileFromObject = (
+  // Shared entry-init builder for a local File — used by the single-add
+  // `addFileFromObject` and the batch `addFilesFromObjects`.
+  private _objectFileInit(
     file: File,
-    {
-      silent,
-      fileName,
-      source,
-      fullPath,
-    }: ApiAddFileCommonOptions & {
-      fullPath?: string;
-    } = {},
-  ): OutputFileEntry<'idle'> => {
-    const internalId = this._uploadCollection.add({
+    { silent, fileName, source, fullPath }: ApiAddFileObjectOptions = {},
+  ): Partial<UploadEntryData> {
+    return {
       file,
-      isImage: fileIsImage(file),
-      mimeType: file.type || null,
+      ...fileDerivedFields(file),
       fileName: fileName ?? file.name,
-      fileSize: file.size,
-      silent: silent ?? false,
-      source: source ?? UploadSource.API,
+      ...addOptions({ silent, source }),
       fullPath: fullPath ?? null,
-    });
+    };
+  }
+
+  public addFileFromObject = (file: File, options: ApiAddFileObjectOptions = {}): OutputFileEntry<'idle'> => {
+    const internalId = this._collection.add(this._objectFileInit(file, options));
     return this.getOutputItem(internalId);
+  };
+
+  /**
+   * Batch-add local `File`s in one shot. Cheaper than looping `addFileFromObject`
+   * at large counts: the collection arms its membership/property flushes ONCE for
+   * the whole batch, and it skips the per-file `getOutputItem` `OutputFileEntry`
+   * build that the single-add returns (and callers here discard).
+   */
+  public addFilesFromObjects = (entries: ReadonlyArray<{ file: File } & ApiAddFileObjectOptions>): void => {
+    if (entries.length === 0) {
+      return;
+    }
+    // Pass the whole entry as options — `_objectFileInit` picks only named fields
+    // (its extra `file` key is ignored), so we skip a rest-object alloc per entry.
+    this._collection.addMany(entries.map((entry) => this._objectFileInit(entry.file, entry)));
   };
 
   public addFileFromUploadcareFile = (
     file: UploadcareFile,
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'success'> => {
-    const internalId = this._uploadCollection.add({
+    const internalId = this._collection.add({
       ...uploadcareFileToEntryData(file),
       // A caller-supplied name takes precedence over the file's own.
       fileName: fileName ?? file.originalFilename ?? null,
-      silent: silent ?? false,
-      source: source ?? UploadSource.API,
+      ...addOptions({ silent, source }),
     });
     return this.getOutputItem(internalId);
   };
@@ -171,7 +231,7 @@ export class UploaderPublicApi extends SharedInstance {
     { silent, fileName, source }: ApiAddFileCommonOptions = {},
   ): OutputFileEntry<'success'> => {
     const oldId = internalId as Uid;
-    const collection = this._uploadCollection;
+    const collection = this._collection;
     const index = collection.items().indexOf(oldId);
     const oldEntry = collection.read(oldId);
     if (index === -1 || !oldEntry) {
@@ -180,10 +240,10 @@ export class UploaderPublicApi extends SharedInstance {
     // Carry over the original entry's context so the replacement keeps its
     // identity within the session; everything file-specific comes from `file`.
     const preserved = {
-      source: oldEntry.getValue('source'),
-      metadata: oldEntry.getValue('metadata'),
-      fullPath: oldEntry.getValue('fullPath'),
-      silent: oldEntry.getValue('silent'),
+      source: oldEntry.get('source'),
+      metadata: oldEntry.get('metadata'),
+      fullPath: oldEntry.get('fullPath'),
+      silent: oldEntry.get('silent'),
     };
     collection.remove(oldId);
     const newId = collection.add(
@@ -201,27 +261,29 @@ export class UploaderPublicApi extends SharedInstance {
   };
 
   public removeFileByInternalId = (internalId: string): void => {
-    if (!this._uploadCollection.read(internalId as Uid)) {
+    if (!this._collection.read(internalId as Uid)) {
       throw new Error(`File with internalId ${internalId} not found`);
     }
-    this._uploadCollection.remove(internalId as Uid);
+    this._collection.remove(internalId as Uid);
   };
 
   public removeAllFiles(): void {
-    this._uploadCollection.clearAll();
+    this._collection.clearAll();
   }
 
   public uploadAll = (): void => {
-    const itemsToUpload = this._uploadCollection.items().filter((id) => {
-      const entry = this._uploadCollection.read(id);
+    const itemsToUpload = this._collection.items().filter((id) => {
+      const entry = this._collection.read(id);
       if (!entry) return false;
       return (
-        !entry.getValue('isRemoved') &&
-        !entry.getValue('isUploading') &&
-        !entry.getValue('fileInfo') &&
-        entry.getValue('errors').length === 0 &&
-        !entry.getValue('isValidationPending') &&
-        !entry.getValue('isQueuedForValidation')
+        !entry.get('isRemoved') &&
+        !entry.get('isUploading') &&
+        !entry.get('fileInfo') &&
+        // A failed upload is final; its error joins `errors` only on the next validation run.
+        !entry.get('uploadError') &&
+        entry.get('errors').length === 0 &&
+        !entry.get('isValidationPending') &&
+        !entry.get('isQueuedForValidation')
       );
     });
 
@@ -229,8 +291,10 @@ export class UploaderPublicApi extends SharedInstance {
       return;
     }
 
-    this._ctx.pub('*uploadTrigger', new Set(itemsToUpload));
-    this._sharedInstancesBag.eventEmitter.emit(
+    // Uploads through the controller (its `uploadEntry` is precondition-guarded +
+    // idempotent), so uploading doesn't depend on an item being rendered.
+    this._uploadController.uploadEntries(itemsToUpload);
+    this._eventEmitter.emit(
       EventType.COMMON_UPLOAD_START,
       this.getOutputCollectionState() as OutputCollectionState<'uploading'>,
     );
@@ -276,13 +340,9 @@ export class UploaderPublicApi extends SharedInstance {
         if (!fileInput.files) {
           return;
         }
-        [...fileInput.files].forEach((file) => {
-          this.addFileFromObject(file, {
-            source: options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL,
-          });
-        });
-        // To call uploadTrigger UploadList should draw file items first.
-        this._sharedInstancesBag.routerLayer.navigateAfterFileAdd();
+        const source = options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL;
+        this.addFilesFromObjects([...fileInput.files].map((file) => ({ file, source })));
+        this._router.traverse('onFileAdd');
         fileInput.remove();
       },
       {
@@ -303,70 +363,29 @@ export class UploaderPublicApi extends SharedInstance {
   };
 
   public getOutputItem<TStatus extends OutputFileStatus>(entryId: string): OutputFileEntry<TStatus> {
-    const ctx = PubSub.getCtx<UploadEntryData>(entryId);
-    if (!ctx) {
+    // This ctx's collection, not the global entry registry: another uploader's ids must not resolve here.
+    const entry = this._collection.read(entryId as Uid);
+    if (!entry) {
       throw new Error(`UploaderPublicApi#getOutputItem: Entry with ID "${entryId}" not found in the upload collection`);
     }
-    const uploadEntryData = ctx.store;
-    const fileInfo = uploadEntryData.fileInfo as UploadcareFile | null;
-
-    const status: OutputFileEntry['status'] = uploadEntryData.isRemoved
-      ? 'removed'
-      : uploadEntryData.errors.length > 0
-        ? 'failed'
-        : uploadEntryData.fileInfo
-          ? 'success'
-          : uploadEntryData.isUploading
-            ? 'uploading'
-            : 'idle';
-
-    const outputItem = {
-      uuid: fileInfo?.uuid ?? uploadEntryData.uuid ?? null,
-      internalId: entryId,
-      // An explicit entry `fileName` (e.g. a caller-supplied name on add/replace)
-      // wins over the uploaded file's own name; otherwise fall back to it.
-      name: uploadEntryData.fileName ?? fileInfo?.originalFilename ?? null,
-      size: fileInfo?.size ?? uploadEntryData.fileSize,
-      isImage: fileInfo?.isImage ?? uploadEntryData.isImage,
-      mimeType: fileInfo?.mimeType ?? uploadEntryData.mimeType,
-      file: uploadEntryData.file,
-      externalUrl: uploadEntryData.externalUrl,
-      cdnUrlModifiers: uploadEntryData.cdnUrlModifiers,
-      cdnUrl: uploadEntryData.cdnUrl ?? fileInfo?.cdnUrl ?? null,
-      fullPath: uploadEntryData.fullPath,
-      uploadProgress: uploadEntryData.uploadProgress,
-      fileInfo: fileInfo ?? null,
-      metadata: uploadEntryData.metadata ?? fileInfo?.metadata ?? null,
-      tags: uploadEntryData.tags ?? fileInfo?.tags ?? null,
-      isSuccess: status === 'success',
-      isUploading: status === 'uploading',
-      isFailed: status === 'failed',
-      isRemoved: status === 'removed',
-      isValidationPending: uploadEntryData.isValidationPending,
-      errors: uploadEntryData.errors as OutputFileEntry['errors'],
-      status,
-      source: uploadEntryData?.source,
-    };
-
-    return outputItem as OutputFileEntry<TStatus>;
+    return toOutputFileEntry<TStatus>(entry);
   }
 
   public getOutputCollectionState<TStatus extends OutputCollectionStatus>() {
-    return buildOutputCollectionState(this._sharedInstancesBag) as ReturnType<
-      typeof buildOutputCollectionState<TStatus>
-    >;
+    return buildOutputCollectionState(this._container) as ReturnType<typeof buildOutputCollectionState<TStatus>>;
   }
 
   public initFlow = (force = false): void => {
-    if (this._uploadCollection.size > 0 && !force) {
-      this._ctx.pub('*currentActivity', ACTIVITY_TYPES.UPLOAD_LIST);
-      this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.UPLOAD_LIST);
+    const router = this._router;
+    if (this._collection.size > 0 && !force) {
+      router.navigate(ACTIVITY_TYPES.UPLOAD_LIST);
     } else {
-      if (this._sourceList?.length === 1) {
-        const srcKey = this._sourceList[0];
+      const sourceList = deserializeCsv(this.cfg.sourceList);
+      if (sourceList.length === 1) {
+        const srcKey = sourceList[0];
 
         this._whenPluginsReady(() => {
-          const sources = this._sharedInstancesBag.pluginManager.snapshot().sources;
+          const sources = this._pluginManager.snapshot().sources;
           const registeredSource = sources.find((s) => s.id === srcKey);
 
           if (registeredSource) {
@@ -374,50 +393,96 @@ export class UploaderPublicApi extends SharedInstance {
 
             if (expandedIds.length === 1) {
               const target = sources.find((s) => s.id === expandedIds[0]) ?? registeredSource;
-              target.onSelect();
-            } else {
-              this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
-              this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
+              // Returned so the deferred navigation's task awaits the plugin hook and logs its failure.
+              return target.onSelect();
             }
+            router.navigate(ACTIVITY_TYPES.START_FROM);
             return;
           }
 
-          if (this._ctx.read('*currentActivity')) {
-            this._sharedInstancesBag.modalManager?.open(this._ctx.read('*currentActivity'));
+          const current = router.currentActivity;
+          if (current) {
+            router.openModal(current);
           }
         });
       } else {
-        this._ctx.pub('*currentActivity', ACTIVITY_TYPES.START_FROM);
-        this._sharedInstancesBag.modalManager?.open(ACTIVITY_TYPES.START_FROM);
+        router.navigate(ACTIVITY_TYPES.START_FROM);
       }
     }
   };
 
   public doneFlow = (): void => {
-    const activityBlock = findBlockInCtx(this._sharedInstancesBag.blocksRegistry, (b) => 'doneActivity' in b) as
-      | LitActivityBlock
-      | undefined;
-
-    if (!activityBlock) {
-      return;
-    }
-    this._ctx.pub('*currentActivity', activityBlock.doneActivity);
-    this._ctx.pub('*history', activityBlock.doneActivity ? [activityBlock.doneActivity] : []);
-    if (!this._ctx.read('*currentActivity')) {
-      this._sharedInstancesBag.modalManager?.closeAll();
+    // As in v1: land on the preset's configured done activity (set via `router.configure`) with a fresh history, and
+    // close everything only when the preset has none. Not closing first keeps minimal's modal open when its done
+    // activity, the upload list, can't be entered because it is empty.
+    const router = this._router;
+    if (router.doneActivity) {
+      router.restart(router.doneActivity);
+    } else {
+      router.navigate(null);
     }
   };
 
-  /** Runs `fn` once the plugins are ready, unless the API was destroyed while it waited. */
-  private _whenPluginsReady(fn: () => void): void {
-    void this._sharedInstancesBag
-      .wait('pluginManager')
-      .then((pluginManager) => pluginManager.pluginsReady())
-      .then(() => {
-        if (!this._isDestroyed) fn();
-      });
+  /**
+   * Run `then` once plugins are ready, unless the ctx is torn down first — it reads the router and plugin manager,
+   * which are gone by then. A failure is logged rather than left as an unhandled rejection.
+   */
+  private _whenPluginsReady(then: () => unknown): void {
+    const ready = this._pluginManager.pluginsReady();
+    const lifetime = this._container.lifetime;
+    lifetime.run(
+      async () => {
+        await lifetime.guard(ready);
+        await then();
+      },
+      (error) => this._log.error('a deferred navigation failed', error),
+    );
   }
 
+  /**
+   * Never rejects; returned so the wait belongs to the deferred navigation's task. Navigation only warns on a timeout,
+   * so it waits briefly; `setModalState` opens the modal only once the block is there, so it waits longer.
+   */
+  private _waitForActivity(activityType: NonNullable<ActivityType>, timeout = 100): Promise<boolean> {
+    return waitForActivityBlock(this._router, activityType, {
+      onTimeout: () => this._log.warn(`Activity type "${activityType}" not found in the context`),
+      timeout,
+    });
+  }
+
+  /**
+   * Navigate to an activity and show it in the slot appropriate for the current
+   * preset (a modal in `regular`, inline in `inline`, a modal over the trigger
+   * in `minimal`). Pass `null` to close everything.
+   *
+   * This is the v2 routing entry point — the single-call replacement for the
+   * `setCurrentActivity` + `setModalState(true)` pair.
+   */
+  public navigate = <T extends ActivityType>(
+    activityType: T,
+    ...params: T extends keyof ActivityParamsMap
+      ? [ActivityParamsMap[T]] extends [never]
+        ? []
+        : [ActivityParamsMap[T]]
+      : []
+  ) => {
+    this._whenPluginsReady(() => {
+      this._router.reportWhenShown(() => this._router.navigate(activityType, params[0] ?? {}));
+      if (activityType !== null) {
+        return this._waitForActivity(activityType);
+      }
+      return;
+    });
+  };
+
+  /**
+   * @deprecated Use {@link navigate} instead — it sets the activity *and* shows
+   * it in one call. With the modal closed, `setCurrentActivity` only sets the
+   * activity (in the background slot) without opening the modal, so it must be
+   * paired with `setModalState(true)`; with the modal open it switches the modal
+   * to the activity, as in v1.
+   */
+  // NEXT-MAJOR(api): remove `setCurrentActivity` in favour of `navigate()`. Kept for 1.x compat.
   public setCurrentActivity = <T extends ActivityType>(
     activityType: T,
     ...params: T extends keyof ActivityParamsMap
@@ -427,21 +492,25 @@ export class UploaderPublicApi extends SharedInstance {
       : []
   ) => {
     this._whenPluginsReady(() => {
-      this._ctx.pub('*currentActivityParams', params[0] ?? {});
-      this._ctx.pub('*currentActivity', activityType);
-      waitForBlockInCtx(
-        this._sharedInstancesBag.blocksRegistry,
-        (b) => (b as LitActivityBlock).activityType === activityType,
-        {
-          onTimeout: () => console.warn(`Activity type "${activityType}" not found in the context`),
-          timeout: 100,
-        },
-      );
+      // `null` means "no current activity": close every slot.
+      if (activityType === null) {
+        this._router.navigate(null);
+        return;
+      }
+      const activityParams = params[0] ?? {};
+      this._router.reportWhenShown(() => {
+        if (this._router.modal !== null) {
+          this._router.openModal(activityType, activityParams);
+        } else {
+          this._router.setActivity(activityType, activityParams);
+        }
+      });
+      return this._waitForActivity(activityType);
     });
   };
 
   public on = <T extends EventKey>(type: T, handler: (payload: EventPayload[T]) => void): (() => void) => {
-    return this._sharedInstancesBag.eventEmitter.on(type, handler);
+    return this._eventEmitter.on(type, handler);
   };
 
   /**
@@ -460,7 +529,7 @@ export class UploaderPublicApi extends SharedInstance {
    * handler.
    */
   public getAuthToken = (): AuthToken | undefined => {
-    return this._sharedInstancesBag.authTokenManager?.getAuthToken();
+    return this._authToken.getAuthToken();
   };
 
   /**
@@ -474,50 +543,58 @@ export class UploaderPublicApi extends SharedInstance {
    * rely on short-lived tokens.
    */
   public invalidateAuthToken = (): void => {
-    this._sharedInstancesBag.authTokenManager?.invalidate();
+    this._authToken.invalidate();
   };
 
   public getCurrentActivity = (): ActivityType => {
-    return this._ctx.read('*currentActivity');
+    return this._router.currentActivity;
   };
 
   public historyBack = (): void => {
-    const fn = this._ctx.read('*historyBack');
-    fn?.();
+    this._router.back();
   };
 
+  /**
+   * @deprecated Use {@link navigate} to open an activity, or `navigate(null)`
+   * to close. `setModalState` only toggles the modal for the activity that was
+   * already set via `setCurrentActivity`.
+   */
+  // NEXT-MAJOR(api): remove `setModalState` in favour of `navigate()`. Kept for 1.x compat.
   public setModalState = (opened: boolean): void => {
     this._whenPluginsReady(() => {
+      const router = this._router;
       if (!opened) {
-        this._sharedInstancesBag.modalManager?.close(this._ctx.read('*currentActivity'));
-        this._ctx.pub('*currentActivity', null);
+        // A solution without a modal (the inline uploader) has none to close; nulling its activity would only reset it
+        // to the start screen.
+        if (!this._appInfo.hasModal) {
+          this._log.warnOnce(
+            'setModalState(false) does nothing for the inline uploader, which has no modal. Use navigate() to change its activity.',
+          );
+          return;
+        }
+        // Close everything (matches v1: close the modal + null the activity,
+        // which also cleared history).
+        router.navigate(null);
         return;
       }
 
-      const activityType = this._ctx.read('*currentActivity');
+      // An open modal already shows the intended activity: `setCurrentActivity`
+      // switches it. Otherwise open the one `setCurrentActivity` put in the
+      // background slot.
+      const activityType = router.modal ?? router.activity;
       if (!activityType) {
-        console.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
+        this._log.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
         return;
       }
 
-      return waitForBlockInCtx(
-        this._sharedInstancesBag.blocksRegistry,
-        (b) => (b as LitActivityBlock).activityType === activityType,
-        {
-          onTimeout: () => console.warn(`Activity block "${activityType}" not found in the context`),
-        },
-      ).then(() => {
-        if (this._isDestroyed) return;
-        this._sharedInstancesBag.modalManager?.open(activityType);
+      return this._container.lifetime.guard(this._waitForActivity(activityType, 1000)).then((found) => {
+        if (!found) {
+          // Timeout — the activity's block never appeared; keep the modal
+          // closed (same observable behavior as before the promise settled).
+          return;
+        }
+        router.openModal(activityType);
       });
     });
   };
-
-  private get _sourceList(): string[] {
-    let list: string[] = [];
-    if (this.cfg.sourceList) {
-      list = stringToArray(this.cfg.sourceList);
-    }
-    return list;
-  }
 }

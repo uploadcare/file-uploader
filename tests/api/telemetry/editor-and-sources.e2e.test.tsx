@@ -1,6 +1,7 @@
 import { EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
+import { hasCtx } from '~/tests/utils/registry';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
 import { clickSource, inCtx, renderSolution, waitForBlocks, within } from '~/tests/utils/render-solution';
@@ -43,12 +44,86 @@ describe('telemetry: cloud image editor', () => {
     await userEvent.click(page.getByRole('option', { name: /Brightness/i }));
     const action = await waitForType('action-event');
 
-    // `operation` is read from `*operationTooltip`, which still holds the pre-click value — so it reports the stale
-    // tooltip rather than the operation just picked. Pinned as current behaviour, not an endorsement of it.
+    // The operation just picked, at its current value — not the tooltip the slider shows a render later.
     expect(action.payload.metadata).toMatchObject({
       tab_id: 'tuning',
-      operation: { filter: 'filter', value: 0 },
+      operation: { filter: 'brightness', value: 0 },
     });
+  });
+
+  it('reports a negative tuning value when the slider is applied', async () => {
+    await userEvent.click(page.getByRole('tab', { name: /tuning/i }));
+    await waitForType('action-event');
+    clearSent();
+    await userEvent.click(page.getByRole('option', { name: /Brightness/i }));
+    await waitForType('action-event');
+    const range = page.getByRole('slider', { name: /brightness/i }).element() as HTMLInputElement;
+    range.value = '-20';
+    range.dispatchEvent(new Event('input', { bubbles: true }));
+    range.dispatchEvent(new Event('change', { bubbles: true }));
+    clearSent();
+
+    await userEvent.click(page.getByText(/^Apply$/));
+    const action = await waitForType('action-event');
+
+    expect(action.payload.metadata).toMatchObject({
+      action: 'apply-slider',
+      operation: { filter: 'brightness', value: -20 },
+    });
+  });
+
+  it('reports the filter just picked, at its starting value', async () => {
+    await userEvent.click(page.getByRole('tab', { name: /filters/i }));
+    await waitForType('action-event');
+    clearSent();
+
+    await userEvent.click(page.getByRole('option', { name: /^Apply adaris filter$/i }));
+    const action = await waitForType('action-event');
+
+    expect(action.payload.metadata).toMatchObject({ operation: { filter: 'adaris', value: 100 } });
+  });
+
+  it.each(['apply', 'cancel'])('reports an action-event when %s is clicked', async (action) => {
+    await waitForType('init-solution');
+    clearSent();
+
+    await userEvent.click(page.getByRole('button', { name: new RegExp(`^${action}$`, 'i') }));
+    const sent = await waitForType('action-event');
+
+    expect(sent.payload.metadata).toMatchObject({ action, event: 'click', node: 'UC-BTN-UI', tab_id: 'crop' });
+  });
+});
+
+describe('telemetry: cloud image editor moved to a ctx that does not exist yet', () => {
+  it('holds an action back until the new ctx is up, then reports it there', async () => {
+    const ctxName = getCtxName();
+    page.render(
+      <div>
+        <uc-cloud-image-editor uuid={EDITOR_IMAGE_UUID} ctx-name={ctxName}></uc-cloud-image-editor>
+        <uc-config cdn-cname="https://ucarecdn.com/" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+      </div>,
+    );
+    const editor = inCtx('uc-cloud-image-editor', ctxName);
+    const config = inCtx('uc-config', ctxName);
+    await waitForBlocks(editor, config);
+    await waitForType('init-solution');
+    await userEvent.click(page.getByRole('tab', { name: /tuning/i }));
+    await waitForType('action-event');
+
+    // Both leave, and the ctx is torn down with its telemetry manager.
+    const parent = editor.parentElement as HTMLElement;
+    editor.remove();
+    config.remove();
+    await expect.poll(() => hasCtx(ctxName)).toBe(false);
+    clearSent();
+
+    // The editor comes back first: its ctx, and so a telemetry manager, only exists again once the config does.
+    parent.append(editor);
+    await userEvent.click(page.getByRole('tab', { name: /crop/i }));
+    parent.append(config);
+
+    const action = await waitForType('action-event');
+    expect(action.payload.metadata).toMatchObject({ tab_id: 'crop', event: 'click' });
   });
 });
 
@@ -64,8 +139,41 @@ describe('telemetry: sources', () => {
     await clickSource(root, 'Dropbox');
     const action = await waitForType('action-event');
 
-    // SourceBtn puts the id straight on the payload, not inside `metadata`.
+    expect(action.payload.metadata).toMatchObject({ event: 'select-source', source_id: 'dropbox' });
+    // Also at the payload root, where telemetry consumers read it before it moved into `metadata`.
     expect(action.payload.source_id).toBe('dropbox');
+  });
+
+  it('reports the files picked in an external source, without what they are', async () => {
+    // `.invalid` never resolves, so the picker iframe posts nothing of its own over the message below.
+    const { root } = await renderSolution('regular', {
+      qualityInsights: true,
+      socialBaseUrl: 'https://social.invalid',
+    });
+    await clickSource(root, 'Dropbox');
+    const externalSource = within(root).getByTestId('uc-external-source');
+    await expect.element(externalSource).toBeVisible();
+    const file = (name: string) => ({ obj_type: 'selected_file', url: `https://example.com/${name}`, filename: name });
+    window.dispatchEvent(
+      new MessageEvent('message', {
+        source: externalSource.element().querySelector('iframe')?.contentWindow,
+        data: {
+          type: 'selected-files-change',
+          total: 2,
+          selectedCount: 2,
+          isReady: true,
+          isMultipleMode: true,
+          selectedFiles: [file('a.jpg'), file('b.jpg')],
+        },
+      }),
+    );
+    clearSent();
+    await externalSource.getByRole('button', { name: 'Done', exact: true }).click();
+
+    await vi.waitFor(() => expect(actionEvents()).toContain('select-external-files'), WAIT);
+    const [body] = bodiesWithAction('select-external-files');
+    expect(body?.payload.metadata).toMatchObject({ source_id: 'dropbox', files_count: 2 });
+    expect(JSON.stringify(body)).not.toContain('example.com');
   });
 
   it('reports the camera action events in order', { timeout: 60_000 }, async () => {
@@ -88,21 +196,40 @@ describe('telemetry: sources', () => {
     await accept.click();
 
     await vi.waitFor(() => expect(actionEvents()).toContain('accept-camera'), WAIT);
-    // Every shot reports twice: `shot-camera` from the button handler, then `start-camera` from the shared camera
-    // action dispatcher it calls.
+    // A photo shot sends `shot-camera` alone: `start-camera` marks a recording starting.
     expect(actionEvents()).toEqual([
       'camera-tab-switch',
       'camera-tab-switch',
       'shot-camera',
-      'start-camera',
       'retake-camera',
       'shot-camera',
-      'start-camera',
       'accept-camera',
     ]);
     expect(bodiesWithAction('camera-tab-switch')[0].payload.metadata).toMatchObject({
       tab_id: 'video',
       node: 'UC-CAMERA-SOURCE',
     });
+  });
+
+  it('reports a recording as one event to start it and one to stop it', { timeout: 60_000 }, async () => {
+    const { root } = await renderSolution('regular', { qualityInsights: true });
+    await clickSource(root, 'Camera');
+    const camera = within(root).getByTestId('uc-camera-source');
+    await camera.getByRole('button', { name: 'Video', exact: true }).click();
+    const shutter = camera.getByTestId('uc-camera-controls--shot');
+    await expect.element(shutter).toHaveAccessibleName('Record Video');
+    clearSent();
+
+    await shutter.click();
+    await expect.element(shutter).toHaveAccessibleName('Stop recording');
+    await shutter.click();
+
+    await vi.waitFor(() => expect(actionEvents()).toContain('stop-camera'), WAIT);
+    // Tab switches are batched with these and can land after `clearSent()`; the test above orders them.
+    expect(actionEvents().filter((event) => event !== 'camera-tab-switch')).toEqual([
+      'shot-camera',
+      'start-camera',
+      'stop-camera',
+    ]);
   });
 });

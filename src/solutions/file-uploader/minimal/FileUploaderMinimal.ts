@@ -1,11 +1,16 @@
-import { html } from 'lit';
-import { state } from 'lit/decorators.js';
-import type { ModalCb } from '../../../abstract/managers/ModalManager';
-import { ModalEvents } from '../../../abstract/managers/ModalManager';
-import { InternalEventType } from '../../../blocks/UploadCtxProvider/EventEmitter';
-import { LitActivityBlock, type RegisteredActivityType } from '../../../lit/LitActivityBlock';
-import { LitSolutionBlock } from '../../../lit/LitSolutionBlock';
+import { html, type PropertyValues } from 'lit';
+import { ACTIVITY_TYPES } from '../../../abstract/activity-constants';
+import { CollectionStateController } from '../../../abstract/controllers/CollectionStateController';
+import { ConfigController } from '../../../abstract/controllers/ConfigController';
+import { RouterController } from '../../../abstract/controllers/RouterController';
+import type { ControllerContainer } from '../../../abstract/di/ControllerContainer';
+import { inject } from '../../../abstract/di/inject';
+import { InternalEventType } from '../../../abstract/EventEmitter';
+import { TelemetryManager } from '../../../abstract/managers/TelemetryManager';
+import { SolutionChildBlock } from '../../../lit/SolutionChildBlock';
+import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import './index.css';
+import { renderMinimalTrigger, renderModalSourcePicker } from '../layout-fragments.js';
 import { fileUploaderLazyPlugins } from '../lazyPlugins.js';
 
 import '../../../blocks/Modal/Modal';
@@ -16,174 +21,137 @@ import '../../../blocks/UploadList/UploadList';
 import '../../../blocks/SourceList/SourceList';
 import '../../../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
 import '../../../blocks/PluginActivityRenderer/PluginActivityRenderer';
+import type { L10nKey } from '../../../abstract/l10n';
 
-const ACTIVE_CLASS = 'active';
-const EMPTY_CLASS = '';
-
-type BaseInitState = InstanceType<typeof LitSolutionBlock>['init$'];
-type FileUploaderMinimalInitState = BaseInitState;
-
-export class FileUploaderMinimal extends LitSolutionBlock {
+export class FileUploaderMinimal extends SolutionChildBlock {
+  public static override isUploader = true;
   public static override lazyPlugins = fileUploaderLazyPlugins;
 
+  // Type-only: feeds the JSX attribute typing (`ReflectAttributes` in
+  // `types/jsx.d.ts` reads `attributesMeta`). Kept on the ChildBlock port —
+  // the documented attribute surface, same as the merged `Config` port.
   public declare attributesMeta: {
     'ctx-name': string;
   };
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-uploader-minimal'];
 
-  @state()
-  private _singleUpload = false;
+  @inject(RouterController) private readonly _router!: RouterController;
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
 
-  @state()
-  private _isHiddenStartFrom = false;
-
-  @state()
-  private _classUploadList = EMPTY_CLASS;
-
-  @state()
-  private _classStartFrom = EMPTY_CLASS;
-
-  @state()
-  private _buttonTextKey = 'choose-file';
-
-  private _getInitActivity(): RegisteredActivityType {
-    return (
-      (this.getCssData('--cfg-init-activity') as RegisteredActivityType | undefined) ||
-      LitActivityBlock.activities.START_FROM
-    );
+  /**
+   * Grid single-upload flag feeding `?single=` on the inline drop-area — true
+   * only in grid mode without `multiple`. Read in `render()`, so it tracks both
+   * keys.
+   */
+  private get _singleUpload(): boolean {
+    const config = this._config;
+    return config.getTracked('filesViewMode') === 'grid' && !config.getTracked('multiple');
   }
 
-  public constructor() {
-    super();
-
-    this.init$ = {
-      ...this.init$,
-    } as FileUploaderMinimalInitState;
+  /** Trigger label key, derived reactively from `multiple`. */
+  private get _buttonTextKey(): L10nKey {
+    return this._config.getTracked('multiple') ? 'choose-files' : 'choose-file';
   }
 
-  private _handleModalOpen = (data: Parameters<ModalCb>[0]): void => {
-    if (data.id === LitActivityBlock.activities.CLOUD_IMG_EDIT) {
-      this._classUploadList = ACTIVE_CLASS;
-    }
+  protected override controllerReady(container: ControllerContainer): void {
+    super.controllerReady(container);
 
-    if (this.$['*currentActivity'] === LitActivityBlock.activities.UPLOAD_LIST) {
-      this._classUploadList = ACTIVE_CLASS;
-      this._isHiddenStartFrom = true;
-    }
-
-    const uploadList = this.$['*uploadList'] as unknown[] | undefined;
-    if (!uploadList || uploadList.length <= 0) {
-      this._classStartFrom = ACTIVE_CLASS;
-    }
-  };
-
-  private _handleModalClose = (data: Parameters<ModalCb>[0]): void => {
-    if (data.id === this.$['*currentActivity']) {
-      this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
-      this._isHiddenStartFrom = false;
-    }
-
-    if (data.id === LitActivityBlock.activities.CLOUD_IMG_EDIT) {
-      this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
-    }
-  };
-
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.telemetryManager.sendEvent({
+    this._telemetry.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,
     });
 
-    const initActivity = this._getInitActivity();
-
-    this.sub('*currentActivity', (val: string | null) => {
-      if (val === LitActivityBlock.activities.UPLOAD_LIST) {
-        this.modalManager?.closeAll();
-      }
-
-      if (!val) {
-        this.$['*currentActivity'] = initActivity;
-      }
-    });
-
-    this.sub('*uploadList', (list: unknown) => {
-      if (Array.isArray(list) && list.length > 0) {
-        this.$['*currentActivity'] = LitActivityBlock.activities.UPLOAD_LIST;
-        this._classStartFrom = EMPTY_CLASS;
-      } else {
-        this._classUploadList = EMPTY_CLASS;
-        this._isHiddenStartFrom = false;
-        this.$['*currentActivity'] = initActivity;
-      }
-    });
-
-    this.subConfigValue('confirmUpload', (confirmUpload) => {
-      if (confirmUpload !== false) {
-        this.cfg.confirmUpload = false;
-      }
-    });
-
-    this.subConfigValue('filesViewMode', (mode) => {
-      this.setAttribute('mode', mode);
-
-      this.subConfigValue('multiple', (multiple) => {
-        if (mode === 'grid') {
-          if (multiple) {
-            this.style.removeProperty('--uc-grid-col');
-          } else {
-            this.style.setProperty('--uc-grid-col', '1');
-          }
-
-          this._singleUpload = !multiple;
-        } else {
-          this.style.removeProperty('--uc-grid-col');
-          this._singleUpload = false;
-        }
-      });
-    });
-
-    this.subConfigValue('multiple', (val) => {
-      this._buttonTextKey = val ? 'choose-files' : 'choose-file';
-    });
-
-    this.modalManager?.subscribe(ModalEvents.OPEN, this._handleModalOpen);
-    this.modalManager?.subscribe(ModalEvents.CLOSE, this._handleModalClose);
+    // Minimal layers a modal source picker over a persistent inline view: the
+    // upload list is the *background* (it replaces the inline trigger once files
+    // exist, no modal); everything else (the start-from picker, every source
+    // activity) is *foreground* and opens over it. The inline `<uc-start-from>`
+    // and `<uc-upload-list>` light up via the background slot's `[active]`
+    // attribute (no manual class toggling). A completed flow lands on the
+    // upload list.
+    const router = this._router;
+    router.navigationStrategy = (to) => (to === ACTIVITY_TYPES.UPLOAD_LIST ? 'background' : 'foreground');
+    router.configure({ doneActivity: ACTIVITY_TYPES.UPLOAD_LIST });
   }
 
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.modalManager?.unsubscribe(ModalEvents.OPEN, this._handleModalOpen);
-    this.modalManager?.unsubscribe(ModalEvents.CLOSE, this._handleModalClose);
+  // Background slot follows file state: the upload list once files exist,
+  // otherwise the start-from trigger. Side-effecting (drives `setActivity`, not
+  // a render read); the atomic `observe('uploadList')` fires only on a real
+  // `uploadList` change, not every collection-state notify (e.g. a progress tick).
+  /** @internal */
+  @subscription()
+  protected _wireUploadListActivity(): Unsubscribe {
+    return this._collectionState.observe(
+      'uploadList',
+      (list) => {
+        this._router.setActivity(list.length > 0 ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
+      },
+      { immediate: true },
+    );
+  }
+
+  // Activity coordination: close the modal once the background lands on the
+  // upload list; re-seed start-from when everything closes. Atomic
+  // `observeCurrentActivity` (dedup) + eager fire.
+  /** @internal */
+  @subscription()
+  protected _wireActivityCoordination(): Unsubscribe {
+    return this._router.observeCurrentActivity(
+      (activity) => {
+        if (activity === ACTIVITY_TYPES.UPLOAD_LIST) {
+          this._router.closeModal();
+        }
+        if (!activity) {
+          this._router.setActivity(ACTIVITY_TYPES.START_FROM);
+        }
+      },
+      { immediate: true },
+    );
+  }
+
+  // Minimal forces `confirmUpload` off. Atomic `observe('confirmUpload')` + eager.
+  /** @internal */
+  @subscription()
+  protected _wireForceConfirmUploadOff(): Unsubscribe {
+    return this._config.observe(
+      'confirmUpload',
+      (confirmUpload) => {
+        if (confirmUpload !== false) {
+          this._config.set('confirmUpload', false);
+        }
+      },
+      { immediate: true },
+    );
+  }
+
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+
+    // Host `[mode]` + `[single-grid]` attributes: the stylesheet keys the
+    // list/grid layout and the one-column `--uc-grid-col` off them, so a
+    // consumer's inline `--uc-grid-col` still wins. Reading both keys via
+    // `getTracked` auto-tracks them under `SignalWatcher`, so a config change
+    // re-runs this update. Neither is a reactive property, so toggling them
+    // schedules no further update.
+    this.setAttribute('mode', this._config.getTracked('filesViewMode'));
+    this.toggleAttribute('single-grid', this._singleUpload);
   }
 
   public override render() {
     return html`
       ${super.render()}
-      <uc-start-from ?hidden=${this._isHiddenStartFrom} class=${this._classStartFrom}>
-        <uc-drop-area
-          ?single=${this._singleUpload}
-          initflow
-          clickable
-          tabindex="0"
-        ><span>${this.l10n(this._buttonTextKey)}</span></uc-drop-area>
-        <uc-copyright></uc-copyright>
-      </uc-start-from>
-      <uc-upload-list class=${this._classUploadList}></uc-upload-list>
+      ${renderMinimalTrigger({
+        single: this._singleUpload,
+        label: this.l10n(this._buttonTextKey),
+      })}
+      <uc-upload-list chrome="compact"></uc-upload-list>
 
-      <uc-modal id="start-from" strokes block-body-scrolling>
-        <uc-start-from>
-          <uc-drop-area with-icon clickable></uc-drop-area>
-          <uc-source-list role="list" wrap></uc-source-list>
-          <button
-            type="button"
-            class="uc-secondary-btn"
-            @click=${this.$['*historyBack']}
-          >${this.l10n('start-from-cancel')}</button>
-        </uc-start-from>
-      </uc-modal>
+      ${renderModalSourcePicker({
+        onCancel: () => this._router.traverse('onCancel'),
+        cancelLabel: this.l10n('start-from-cancel'),
+      })}
 
-        <uc-plugin-activity-renderer mode="modal"></uc-plugin-activity-renderer>
+      <uc-plugin-activity-renderer mode="modal"></uc-plugin-activity-renderer>
     `;
   }
 }

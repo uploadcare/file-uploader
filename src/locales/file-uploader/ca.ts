@@ -96,6 +96,8 @@ export default {
   'camera-permissions-denied': 'Accés a la càmera denegat',
   'camera-permissions-prompt': "Si us plau, permet l'accés a la càmera",
   'camera-permissions-request': 'Sol·licitar accés',
+  'camera-not-found': "No s'ha trobat cap càmera",
+  'camera-unavailable': 'La càmera està en ús o no està disponible',
   'files-count-limit-error-title': 'Límit de fitxers superat',
   'files-count-limit-error-too-few':
     "Has seleccionat {{total}} {{plural:file(total)}}. S'exigeix un mínim de {{min}} {{plural:file(min)}}.",
@@ -109,6 +111,8 @@ export default {
   'file-item-edit-button': 'Editar',
   'file-item-remove-button': 'Eliminar',
   'a11y-activity-header-button-close': 'Tancar',
+  'a11y-camera-microphone': 'Micròfon',
+  'a11y-camera-stop-recording': 'Atura la gravació',
   'a11y-editor-tab-filters': 'Filtres',
   'a11y-editor-tab-tuning': 'Ajust',
   'a11y-editor-tab-crop': 'Retallar',
@@ -133,6 +137,8 @@ export default {
 
   custom: 'Forma lliure',
   'freeform-crop': 'Retallat lliure',
+  'network-error': 'Error de xarxa',
+  retry: 'Torna-ho a provar',
 
   'upload-from': 'Pujar des de {{source}}',
   'get-from': 'Obtenir de {{source}}',

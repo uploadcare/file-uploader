@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Kameras piekļuve liegta',
   'camera-permissions-prompt': 'Lūdzu, atļaujiet piekļuvi kamerai',
   'camera-permissions-request': 'Pieprasīt piekļuvi',
+  'camera-not-found': 'Kamera netika atrasta',
+  'camera-unavailable': 'Kamera tiek izmantota vai nav pieejama',
   'files-count-limit-error-title': 'Failu skaita limits pārsniegts',
   'files-count-limit-error-too-few':
     'Jūs esat izvēlējies {{total}} {{plural:file(total)}}. Nepieciešami vismaz {{min}} {{plural:file(min)}}.',
@@ -106,6 +108,8 @@ export default {
   'file-item-edit-button': 'Rediģēt',
   'file-item-remove-button': 'Noņemt',
   'a11y-activity-header-button-close': 'Aizvērt',
+  'a11y-camera-microphone': 'Mikrofons',
+  'a11y-camera-stop-recording': 'Apturēt ierakstīšanu',
   'a11y-editor-tab-filters': 'Filtri',
   'a11y-editor-tab-tuning': 'Pielāgošana',
   'a11y-editor-tab-crop': 'Apgriezt',
@@ -132,6 +136,8 @@ export default {
 
   custom: 'Brīvā forma',
   'freeform-crop': 'Brīva apgriešana',
+  'network-error': 'Tīkla kļūda',
+  retry: 'Mēģināt vēlreiz',
 
   'upload-from': 'Augšupielādēt no {{source}}',
   'get-from': 'Iegūt no {{source}}',

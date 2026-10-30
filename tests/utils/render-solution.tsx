@@ -1,7 +1,8 @@
 import { expect } from 'vitest';
 import { page } from 'vitest/browser';
+import { CONTAINER } from '@/abstract/di/ControllerContainer';
 import type { Config, UploadCtxProvider, UploaderPlugin } from '@/index';
-import { LitBlock } from '@/lit/LitBlock';
+import { ChildBlock } from '@/lit/ChildBlock';
 import { toKebabCase } from '@/utils/toKebabCase';
 import { getCtxName } from './test-renderer';
 import '../../types/jsx';
@@ -123,8 +124,9 @@ export async function waitForBlocks(...elements: Element[]): Promise<void> {
     .poll(() =>
       elements
         .flatMap((element) => [element, ...element.querySelectorAll('*')])
-        .filter((element) => element instanceof LitBlock)
-        .filter((block) => !block.blocksRegistry?.has(block) || block.isUpdatePending)
+        .filter((element) => element instanceof ChildBlock)
+        // A block has joined its ctx once it adopted the ctx's container, which tags it with `CONTAINER`.
+        .filter((block) => !(block as { [CONTAINER]?: unknown })[CONTAINER] || block.isUpdatePending)
         .map((block) => block.localName),
     )
     .toEqual([]);

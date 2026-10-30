@@ -55,14 +55,22 @@ describe('uc-img url building', () => {
 
   // QUIRK(uc-img): adaptive-image.mdx gives every setting both a CSS context property and an HTML attribute, but the
   // "number flag" ones cannot be switched off through the attribute. `$$('hi-res-support')` returns the *string*
-  // `"0"` for the attribute form and the *number* `0` for the CSS one, and `_getSrcset` only tests truthiness
-  // (ImgBase.ts:241) — so `hi-res-support="0"` still emits the 2x entry. The same applies to every documented number
-  // flag: dev-mode, lazy, intersection, ultra-res-support, progressive, is-preview-blur.
-  // Pinned as current behaviour, not endorsed.
+  // `"0"` for the attribute form and the *number* `0` for the CSS one, and `ImgBase._densities` only tests
+  // truthiness — so `hi-res-support="0"` still emits the 2x entry. The same applies to every documented number
+  // flag: dev-mode, lazy, intersection, ultra-res-support, progressive, is-preview-blur. Kept for 1.x compat by
+  // NEXT-MAJOR(uc-img) in `ImgConfig.attributeChangedCallback`, which flips this assertion. Pinned as current
+  // behaviour, not endorsed.
   it('ignores the attribute form of the same switch', async () => {
     const { descriptors } = await renderImg('width="500px" hi-res-support="0"');
 
     expect(descriptors).toEqual(['1x', '2x']);
+  });
+
+  it('removes the blurred preview once the image loads, whatever the attribute form of is-preview-blur says', async () => {
+    await renderImg('is-preview-blur="0"');
+    const host = page.getByTestId('img-host').element();
+
+    await expect.poll(() => host.querySelectorAll('img').length, { timeout: 20_000 }).toBe(1);
   });
 
   it('adds a 3x entry with ultra-res support', async () => {

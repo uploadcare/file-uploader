@@ -28,7 +28,10 @@ export function setSvgNodeAttrs(node: SVGElement, attrs: SvgAttributes): void {
   }
 }
 
-export function createSvgNode(name: string, attrs: SvgAttributes = {}): SVGElement {
+export function createSvgNode<K extends keyof SVGElementTagNameMap>(
+  name: K,
+  attrs: SvgAttributes = {},
+): SVGElementTagNameMap[K] {
   const node = document.createElementNS('http://www.w3.org/2000/svg', name);
   setSvgNodeAttrs(node, attrs);
   return node;
@@ -135,152 +138,6 @@ export function constraintRect(rect1: Rectangle, rect2: Rectangle): Rectangle {
   };
 }
 
-function resizeNorth({ rect, delta, aspectRatio, imageBox }: ResizeOptions): Rectangle {
-  const [, dy] = delta;
-  let { y, width, height } = rect;
-
-  y += dy;
-  height -= dy;
-  if (aspectRatio) {
-    width = height * aspectRatio;
-  }
-  let x = rect.x + rect.width / 2 - width / 2;
-  if (y <= imageBox.y) {
-    y = imageBox.y;
-    height = rect.y + rect.height - y;
-    if (aspectRatio) {
-      width = height * aspectRatio;
-      x = rect.x + rect.width / 2 - width / 2;
-    }
-  }
-  if (x <= imageBox.x) {
-    x = imageBox.x;
-    y = rect.y + rect.height - height;
-  }
-  if (x + width >= imageBox.x + imageBox.width) {
-    x = Math.max(imageBox.x, imageBox.x + imageBox.width - width);
-    width = imageBox.x + imageBox.width - x;
-    if (aspectRatio) {
-      height = width / aspectRatio;
-    }
-    y = rect.y + rect.height - height;
-  }
-  if (height < MIN_CROP_SIZE) {
-    height = MIN_CROP_SIZE;
-    if (aspectRatio) {
-      width = height * aspectRatio;
-      x = rect.x + rect.width / 2 - width / 2;
-    }
-    y = rect.y + rect.height - height;
-  }
-  if (width < MIN_CROP_SIZE) {
-    width = MIN_CROP_SIZE;
-    if (aspectRatio) {
-      height = width / aspectRatio;
-      x = rect.x + rect.width / 2 - width / 2;
-    }
-    y = rect.y + rect.height - height;
-  }
-
-  return { x, y, width, height };
-}
-
-function resizeWest({ rect, delta, aspectRatio, imageBox }: ResizeOptions): Rectangle {
-  const [dx] = delta;
-  let { x, width, height } = rect;
-
-  x += dx;
-  width -= dx;
-  if (aspectRatio) {
-    height = width / aspectRatio;
-  }
-  let y = rect.y + rect.height / 2 - height / 2;
-  if (x <= imageBox.x) {
-    x = imageBox.x;
-    width = rect.x + rect.width - x;
-    if (aspectRatio) {
-      height = width / aspectRatio;
-      y = rect.y + rect.height / 2 - height / 2;
-    }
-  }
-  if (y <= imageBox.y) {
-    y = imageBox.y;
-    x = rect.x + rect.width - width;
-  }
-  if (y + height >= imageBox.y + imageBox.height) {
-    y = Math.max(imageBox.y, imageBox.y + imageBox.height - height);
-    height = imageBox.y + imageBox.height - y;
-    if (aspectRatio) {
-      width = height * aspectRatio;
-    }
-    x = rect.x + rect.width - width;
-  }
-  if (height < MIN_CROP_SIZE) {
-    height = MIN_CROP_SIZE;
-    if (aspectRatio) {
-      width = height * aspectRatio;
-    }
-    y = rect.y + rect.height / 2 - height / 2;
-    x = rect.x + rect.width - width;
-  }
-  if (width < MIN_CROP_SIZE) {
-    width = MIN_CROP_SIZE;
-    if (aspectRatio) {
-      height = width / aspectRatio;
-    }
-    y = rect.y + rect.height / 2 - height / 2;
-    x = rect.x + rect.width - width;
-  }
-
-  return { x, y, width, height };
-}
-
-function resizeSouth({ rect, delta, aspectRatio, imageBox }: ResizeOptions): Rectangle {
-  const [, dy] = delta;
-  let { y, width, height } = rect;
-
-  height += dy;
-  if (aspectRatio) {
-    width = height * aspectRatio;
-  }
-  let x = rect.x + rect.width / 2 - width / 2;
-  if (y + height >= imageBox.y + imageBox.height) {
-    height = imageBox.y + imageBox.height - y;
-    if (aspectRatio) {
-      width = height * aspectRatio;
-    }
-    x = rect.x + rect.width / 2 - width / 2;
-  }
-  if (x <= imageBox.x) {
-    x = imageBox.x;
-    y = rect.y;
-  }
-  if (x + width >= imageBox.x + imageBox.width) {
-    x = Math.max(imageBox.x, imageBox.x + imageBox.width - width);
-    width = imageBox.x + imageBox.width - x;
-    if (aspectRatio) {
-      height = width / aspectRatio;
-    }
-    y = rect.y;
-  }
-  if (height < MIN_CROP_SIZE) {
-    height = MIN_CROP_SIZE;
-    if (aspectRatio) {
-      width = height * aspectRatio;
-    }
-    x = rect.x + rect.width / 2 - width / 2;
-  }
-  if (width < MIN_CROP_SIZE) {
-    width = MIN_CROP_SIZE;
-    if (aspectRatio) {
-      height = width / aspectRatio;
-    }
-    x = rect.x + rect.width / 2 - width / 2;
-  }
-
-  return { x, y, width, height };
-}
-
 function resizeEast({ rect, delta, aspectRatio, imageBox }: ResizeOptions): Rectangle {
   const [dx] = delta;
   let { x, width, height } = rect;
@@ -322,163 +179,6 @@ function resizeEast({ rect, delta, aspectRatio, imageBox }: ResizeOptions): Rect
       height = width / aspectRatio;
     }
     y = rect.y + rect.height / 2 - height / 2;
-  }
-
-  return { x, y, width, height };
-}
-
-function resizeNorthWest({ rect, delta, aspectRatio, imageBox }: ResizeOptions): Rectangle {
-  let [dx, dy] = delta;
-  let { x, y, width, height } = rect;
-
-  if (x + dx < imageBox.x) {
-    dx = imageBox.x - x;
-  }
-  if (y + dy < imageBox.y) {
-    dy = imageBox.y - y;
-  }
-  x += dx;
-  width -= dx;
-  y += dy;
-  height -= dy;
-  if (aspectRatio && Math.abs(width / height) > aspectRatio) {
-    dy = width / aspectRatio - height;
-    height += dy;
-    y -= dy;
-    if (y <= imageBox.y) {
-      height = height - (imageBox.y - y);
-      width = height * aspectRatio;
-      x = rect.x + rect.width - width;
-      y = imageBox.y;
-    }
-  } else if (aspectRatio) {
-    dx = height * aspectRatio - width;
-    width = width + dx;
-    x -= dx;
-    if (x <= imageBox.x) {
-      width = width - (imageBox.x - x);
-      height = width / aspectRatio;
-      x = imageBox.x;
-      y = rect.y + rect.height - height;
-    }
-  }
-  if (height < MIN_CROP_SIZE) {
-    height = MIN_CROP_SIZE;
-    if (aspectRatio) {
-      width = height * aspectRatio;
-    }
-    x = rect.x + rect.width - width;
-    y = rect.y + rect.height - height;
-  }
-  if (width < MIN_CROP_SIZE) {
-    width = MIN_CROP_SIZE;
-    if (aspectRatio) {
-      height = width / aspectRatio;
-    }
-    x = rect.x + rect.width - width;
-    y = rect.y + rect.height - height;
-  }
-
-  return { x, y, width, height };
-}
-
-function resizeNorthEast({ rect, delta, aspectRatio, imageBox }: ResizeOptions): Rectangle {
-  let [dx, dy] = delta;
-  let { x, y, width, height } = rect;
-
-  if (x + width + dx > imageBox.x + imageBox.width) {
-    dx = imageBox.x + imageBox.width - x - width;
-  }
-  if (y + dy < imageBox.y) {
-    dy = imageBox.y - y;
-  }
-  width += dx;
-  y += dy;
-  height -= dy;
-  if (aspectRatio && Math.abs(width / height) > aspectRatio) {
-    dy = width / aspectRatio - height;
-    height += dy;
-    y -= dy;
-    if (y <= imageBox.y) {
-      height = height - (imageBox.y - y);
-      width = height * aspectRatio;
-      x = rect.x;
-      y = imageBox.y;
-    }
-  } else if (aspectRatio) {
-    dx = height * aspectRatio - width;
-    width += dx;
-    if (x + width >= imageBox.x + imageBox.width) {
-      width = imageBox.x + imageBox.width - x;
-      height = width / aspectRatio;
-      x = imageBox.x + imageBox.width - width;
-      y = rect.y + rect.height - height;
-    }
-  }
-  if (height < MIN_CROP_SIZE) {
-    height = MIN_CROP_SIZE;
-    if (aspectRatio) {
-      width = height * aspectRatio;
-    }
-    y = rect.y + rect.height - height;
-  }
-  if (width < MIN_CROP_SIZE) {
-    width = MIN_CROP_SIZE;
-    if (aspectRatio) {
-      height = width / aspectRatio;
-    }
-    y = rect.y + rect.height - height;
-  }
-
-  return { x, y, width, height };
-}
-
-function resizeSouthWest({ rect, delta, aspectRatio, imageBox }: ResizeOptions): Rectangle {
-  let [dx, dy] = delta;
-  let { x, y, width, height } = rect;
-
-  if (x + dx < imageBox.x) {
-    dx = imageBox.x - x;
-  }
-  if (y + height + dy > imageBox.y + imageBox.height) {
-    dy = imageBox.y + imageBox.height - y - height;
-  }
-  x += dx;
-  width -= dx;
-  height += dy;
-  if (aspectRatio && Math.abs(width / height) > aspectRatio) {
-    dy = width / aspectRatio - height;
-    height += dy;
-    if (y + height >= imageBox.y + imageBox.height) {
-      height = imageBox.y + imageBox.height - y;
-      width = height * aspectRatio;
-      x = rect.x + rect.width - width;
-      y = imageBox.y + imageBox.height - height;
-    }
-  } else if (aspectRatio) {
-    dx = height * aspectRatio - width;
-    width += dx;
-    x -= dx;
-    if (x <= imageBox.x) {
-      width = width - (imageBox.x - x);
-      height = width / aspectRatio;
-      x = imageBox.x;
-      y = rect.y;
-    }
-  }
-  if (height < MIN_CROP_SIZE) {
-    height = MIN_CROP_SIZE;
-    if (aspectRatio) {
-      width = height * aspectRatio;
-    }
-    x = rect.x + rect.width - width;
-  }
-  if (width < MIN_CROP_SIZE) {
-    width = MIN_CROP_SIZE;
-    if (aspectRatio) {
-      height = width / aspectRatio;
-    }
-    x = rect.x + rect.width - width;
   }
 
   return { x, y, width, height };
@@ -531,27 +231,47 @@ function resizeSouthEast({ rect, delta, aspectRatio, imageBox }: ResizeOptions):
   return { x, y, width, height };
 }
 
+// The other six directions are these two seen in a mirror or across the diagonal: the drag, the box and the aspect
+// ratio go through the same transform, and the result comes back through it.
+type Resize = (options: ResizeOptions) => Rectangle;
+
+/** Reflects across the image box's vertical centre line, so east becomes west. */
+const mirror =
+  (resize: Resize): Resize =>
+  ({ rect, delta: [dx, dy], aspectRatio, imageBox }) => {
+    const flip = (r: Rectangle): Rectangle => ({ ...r, x: 2 * imageBox.x + imageBox.width - r.x - r.width });
+    return flip(resize({ rect: flip(rect), delta: [-dx, dy], aspectRatio, imageBox }));
+  };
+
+/** Swaps the axes, so east becomes south. */
+const transpose =
+  (resize: Resize): Resize =>
+  ({ rect, delta: [dx, dy], aspectRatio, imageBox }) => {
+    const swap = ({ x, y, width, height }: Rectangle): Rectangle => ({ x: y, y: x, width: height, height: width });
+    return swap(
+      resize({
+        rect: swap(rect),
+        delta: [dy, dx],
+        aspectRatio: aspectRatio && 1 / aspectRatio,
+        imageBox: swap(imageBox),
+      }),
+    );
+  };
+
+const RESIZE: Record<Exclude<Direction, ''>, Resize> = {
+  e: resizeEast,
+  w: mirror(resizeEast),
+  s: transpose(resizeEast),
+  n: transpose(mirror(resizeEast)),
+  se: resizeSouthEast,
+  sw: mirror(resizeSouthEast),
+  ne: transpose(mirror(resizeSouthEast)),
+  nw: mirror(transpose(mirror(resizeSouthEast))),
+};
+
 export function resizeRect({ direction, ...rest }: ResizeOptions & { direction: Direction }): Rectangle {
-  switch (direction) {
-    case 'n':
-      return resizeNorth(rest);
-    case 'w':
-      return resizeWest(rest);
-    case 's':
-      return resizeSouth(rest);
-    case 'e':
-      return resizeEast(rest);
-    case 'nw':
-      return resizeNorthWest(rest);
-    case 'ne':
-      return resizeNorthEast(rest);
-    case 'sw':
-      return resizeSouthWest(rest);
-    case 'se':
-      return resizeSouthEast(rest);
-    default:
-      return rest.rect;
-  }
+  const resize = direction ? RESIZE[direction] : undefined;
+  return resize ? resize(rest) : rest.rect;
 }
 
 export function rectContainsPoint(rect: Rectangle, [x, y]: [number, number]): boolean {
@@ -575,32 +295,6 @@ export function isRectMatchesAspectRatio(rect: Rectangle, aspectRatio: number): 
 export function rotateSize({ width, height }: ImageSize, angle: number): ImageSize {
   const swap = (angle / 90) % 2 !== 0;
   return { width: swap ? height : width, height: swap ? width : height };
-}
-
-export function calculateMaxCenteredCropFrame(width: number, height: number, aspectRatio: number): Rectangle {
-  const imageAspectRatio = width / height;
-  let cropWidth: number;
-  let cropHeight: number;
-
-  if (imageAspectRatio > aspectRatio) {
-    cropWidth = Math.round(height * aspectRatio);
-    cropHeight = height;
-  } else {
-    cropWidth = width;
-    cropHeight = Math.round(width / aspectRatio);
-  }
-
-  const cropX = Math.round((width - cropWidth) / 2);
-  const cropY = Math.round((height - cropHeight) / 2);
-
-  if (cropX + cropWidth > width) {
-    cropWidth = width - cropX;
-  }
-  if (cropY + cropHeight > height) {
-    cropHeight = height - cropY;
-  }
-
-  return { x: cropX, y: cropY, width: cropWidth, height: cropHeight };
 }
 
 export function roundRect(rect: Rectangle): Rectangle {

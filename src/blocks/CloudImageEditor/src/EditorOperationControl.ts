@@ -1,79 +1,47 @@
 import { property } from 'lit/decorators.js';
+import type { CloudImageEditorController } from './CloudImageEditorController';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { ColorOperation } from './toolbar-constants';
 import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
-import type { Transformations } from './types';
-import { parseFilterValue } from './utils/parseFilterValue.js';
+
+/** Bubbles up to `EditorToolbar`, which owns the toolbar-local `currentOperation`/`showSlider` state and the slider ref. */
+export class OperationSelectEvent extends Event {
+  public static readonly eventName = 'uc-internal:operation-select';
+  public constructor(
+    public readonly operation: ColorOperation | '',
+    public readonly originalEvent: MouseEvent,
+  ) {
+    super(OperationSelectEvent.eventName, { bubbles: true, composed: true });
+  }
+}
+
+declare global {
+  interface HTMLElementEventMap {
+    [OperationSelectEvent.eventName]: OperationSelectEvent;
+  }
+}
 
 export class EditorOperationControl extends EditorButtonControl {
-  private _operation: ColorOperation | '' = '';
-
   @property({ type: String })
-  public get operation(): ColorOperation | '' {
-    return this._operation;
+  public operation: ColorOperation | '' = '';
+
+  protected override isActive(controller: CloudImageEditorController): boolean {
+    if (!this.operation) return this.active;
+    const { zero } = COLOR_OPERATIONS_CONFIG[this.operation];
+    const value = controller.editorTransformations[this.operation];
+    return typeof value !== 'undefined' ? value !== zero : false;
   }
 
-  public set operation(value: ColorOperation | '') {
-    const normalizedValue = value ?? '';
-    if (this._operation === normalizedValue) {
-      return;
-    }
-    const previousValue = this._operation;
-    this._operation = normalizedValue;
-    this.requestUpdate('operation', previousValue);
-    if (this.isConnected && normalizedValue) {
-      this._updateOperationMetadata(normalizedValue as ColorOperation);
-    }
-  }
-
-  private _updateOperationMetadata(operation: ColorOperation): void {
+  protected override updateLabels(): void {
+    const { operation } = this;
+    if (!operation) return;
     this.icon = operation;
-
-    const resolveTitleProp = () => {
-      const label = this.l10n('a11y-cloud-editor-apply-tuning', {
-        name: this.l10n(operation).toLowerCase(),
-      });
-      this.titleProp = label;
-      return label;
-    };
-
-    const resolveTitle = () => {
-      const titleText = this.l10n(operation);
-      this.title = titleText;
-      return titleText;
-    };
-
-    resolveTitleProp();
-    resolveTitle();
+    this.caption = this.l10nSafe(operation);
+    this.buttonLabel = this.l10nSafe('a11y-cloud-editor-apply-tuning', { name: this.caption.toLowerCase() });
   }
 
-  public override initCallback(): void {
-    super.initCallback();
-
-    if (this._operation) {
-      this._updateOperationMetadata(this._operation as ColorOperation);
-    }
-
-    this.sub('*editorTransformations', (editorTransformations: Transformations) => {
-      if (!this._operation) {
-        return;
-      }
-
-      const { zero } = COLOR_OPERATIONS_CONFIG[this._operation];
-      const value = editorTransformations[this._operation];
-      const isActive = typeof value !== 'undefined' ? value !== zero : false;
-      this.active = isActive;
-    });
-  }
   protected override onClick(e: MouseEvent) {
-    const slider = this.$['*sliderEl'] as { setOperation: (operation: ColorOperation | '') => void } | undefined;
-    slider?.setOperation(this._operation);
-    this.$['*showSlider'] = true;
-    this.$['*currentOperation'] = this._operation;
-
-    this.telemetryManager.sendEventCloudImageEditor(e, this.$['*tabId'], {
-      operation: parseFilterValue(this.$['*operationTooltip']),
-    });
+    this.dispatchEvent(new OperationSelectEvent(this.operation, e));
   }
 }
 

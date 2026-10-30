@@ -1,45 +1,79 @@
 import { html, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, type Ref, ref } from 'lit/directives/ref.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import { stringToArray } from '../../utils/stringToArray';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { RouterController } from '../../abstract/controllers/RouterController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
+import { inject } from '../../abstract/di/inject';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { booleanAttribute } from '../../lit/boolean-attribute';
+import { ChildBlock } from '../../lit/ChildBlock';
+import { effect } from '../../lit/effect';
+import { ensureUploaderScope } from '../../lit/ensureUploaderScope';
+import { deserializeCsv } from '../../utils/comma-separated';
 import { UploadSource } from '../../utils/UploadSource';
-import { addDropzone, DropzoneState, type DropzoneStateValue } from './addDropzone';
+import { addDropzone, type DropzoneState } from './addDropzone';
 import './drop-area.css';
 import type { DropItem } from './getDropItems';
 
 import '../Icon/Icon';
+import type { L10nKey, PlainText } from '../../abstract/l10n';
 
 const dropAreaRegistry = new Set<DropArea>();
+const ACTIVATION_CODES = new Set(['Enter', 'NumpadEnter', 'Space']);
+const FLAG_ATTRIBUTES = new Set(['single', 'ghost', 'disabled', 'clickable', 'with-icon', 'fullscreen', 'initflow']);
 
-export class DropArea extends LitUploaderBlock {
+export class DropArea extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-drop-area'];
+
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(RouterController) private readonly _router!: RouterController;
+  // `UploadCollectionController` and `UploaderPublicApi` are uploader-scope-bound
+  // (this block attaches the scope itself in `controllerReady` via
+  // `ensureUploaderScope`); their reads run after that attach, from click/drop
+  // handlers + the drop guard that only fire while mounted (the dropzone
+  // listeners are torn down on release), so both are `@inject`.
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+  @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
+
+  public declare attributesMeta: {
+    single?: boolean;
+    ghost?: boolean;
+    disabled?: boolean;
+    clickable?: boolean;
+    'with-icon'?: boolean;
+    fullscreen?: boolean;
+    initflow?: boolean;
+    text?: string;
+    'ctx-name': string;
+  };
 
   /**
    * CSS-only attribute
    */
-  @property({ type: Boolean, noAccessor: true })
+  @property({ converter: booleanAttribute, noAccessor: true })
   public single = false;
 
   /**
    * CSS-only attribute
    */
-  @property({ type: Boolean, noAccessor: true })
+  @property({ converter: booleanAttribute, noAccessor: true })
   public ghost = false;
 
-  @property({ type: Boolean, reflect: true })
+  @property({ converter: booleanAttribute, reflect: true })
   public disabled = false;
 
-  @property({ type: Boolean, reflect: true })
+  @property({ converter: booleanAttribute, reflect: true })
   public clickable = false;
 
-  @property({ type: Boolean, attribute: 'with-icon', reflect: true })
+  @property({ converter: booleanAttribute, attribute: 'with-icon', reflect: true })
   public withIcon = false;
 
-  @property({ type: Boolean, reflect: true })
+  @property({ converter: booleanAttribute, reflect: true })
   public fullscreen = false;
 
-  @property({ type: Boolean, reflect: true })
+  @property({ converter: booleanAttribute, reflect: true })
   public initflow = false;
 
   @property({ type: String })
@@ -51,39 +85,55 @@ export class DropArea extends LitUploaderBlock {
   @state()
   private _isVisible = true;
 
-  private _dropTextKey = 'drop-files-here';
-
-  private _isMultiple = false;
-  private _updateDropText(): void {
+  // Derived render read: the drop-text l10n key from the `text` attribute +
+  // config `multiple`. Recomputes on either input through their native
+  // reactivity — Lit for the `text` property, `SignalWatcher` for the tracked
+  // config read — so no backing field or subscription is needed.
+  private get _dropTextKey(): L10nKey | PlainText {
     const customText = this.text;
     if (typeof customText === 'string' && customText.length > 0) {
-      this._dropTextKey = customText;
-      return;
+      // The page author's text: a key or plain text.
+      return customText as PlainText;
     }
-    this._dropTextKey = this._isMultiple ? 'drop-files-here' : 'drop-file-here';
+    return this._config.getTracked('multiple') ? 'drop-files-here' : 'drop-file-here';
   }
 
   private _destroyDropzone: (() => void) | null = null;
   private _destroyContentWrapperDropzone: (() => void) | null = null;
   private _contentWrapperRef: Ref<HTMLDivElement> = createRef();
   private readonly _handleAreaInteraction = (event: Event) => {
+    if (!this.clickable) {
+      return;
+    }
     if (event instanceof KeyboardEvent) {
-      if (event.code !== 'Space' && event.code !== 'Enter') {
+      // `key` covers NumpadEnter; `code` keeps synthetic events that only set it working.
+      const isActivation = event.key === 'Enter' || event.key === ' ' || ACTIVATION_CODES.has(event.code);
+      if (!isActivation) {
         return;
       }
+      // Space would otherwise scroll the page, as it does on any non-native button.
+      event.preventDefault();
     } else if (!(event instanceof MouseEvent)) {
       return;
     }
 
     if (this.initflow) {
-      this.api.initFlow();
+      this._api.initFlow();
       return;
     }
 
-    this.api.openSystemDialog();
+    this._api.openSystemDialog();
   };
   private _sourceListAllowsLocal = true;
-  private _clickableListenersAttached = false;
+
+  // The stylesheet keys off flag presence (`[with-icon]`, `[ghost]`, …), so a flag written as `"false"` is dropped
+  // to keep the styles in line with the property, which already reads it as off.
+  public override attributeChangedCallback(name: string, old: string | null, value: string | null): void {
+    super.attributeChangedCallback(name, old, value);
+    if (value === 'false' && FLAG_ATTRIBUTES.has(name)) {
+      this.removeAttribute(name);
+    }
+  }
 
   public isActive(): boolean {
     if (!this._isEnabled) {
@@ -103,78 +153,138 @@ export class DropArea extends LitUploaderBlock {
     return hasSize && visible && isInViewport;
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  protected override controllerReady(container: ControllerContainer): void {
+    // The built-in solutions attach the uploader scope themselves. A drop area on a page of its own, with no solution
+    // and no `<uc-upload-ctx-provider>`, still makes its ctx an uploader.
+    ensureUploaderScope(container);
+
+    // Re-adoption (release-while-connected followed by re-adopt) would
+    // otherwise stack a new dropzone per adoption without ever removing the
+    // previous one's listeners — tear down any prior instances before
+    // recreating them below (same teardown-before-recreate hazard
+    // `UploadCtxProvider` handles for its `EventBridgeController`). The
+    // `ensureUploaderScope` call above is idempotent and never touches the
+    // dropzones, so its position relative to this teardown is immaterial.
+    this._destroyDropzone?.();
+    this._destroyDropzone = null;
+    this._destroyContentWrapperDropzone?.();
+    this._destroyContentWrapperDropzone = null;
+
+    // Attached per adoption: the handler reads `@inject` fields, which a drop area without a ctx doesn't have.
+    const { adoptionSignal: signal } = this;
+    this.addEventListener('keydown', this._handleAreaInteraction, { signal });
+    this.addEventListener('click', this._handleAreaInteraction, { signal });
 
     dropAreaRegistry.add(this);
     this._updateIsEnabled();
     this._updateVisibility();
-    this._updateClickableListeners();
-    this._updateDragStateAttribute(DropzoneState.INACTIVE);
+    this.setAttribute('drag-state', 'inactive');
 
     this._destroyDropzone = addDropzone({
       element: this,
       shouldIgnore: () => this._shouldIgnore(),
-      onChange: (state: DropzoneStateValue) => {
-        this._updateDragStateAttribute(state);
+      onChange: (state: DropzoneState) => {
+        this.setAttribute('drag-state', state);
       },
       onItems: (items: DropItem[]) => {
         if (!items.length) {
           return;
         }
-        const prevSize = this.uploadCollection.size;
+        const collection = this._collection;
+        const api = this._api;
+        const prevSize = collection.size;
 
-        items.forEach((item) => {
-          if (item.type === 'url') {
-            this.api.addFileFromUrl(item.url, {
+        // Fast path for the common bulk drop (all files, no URLs): one batched add
+        // instead of a per-file loop. Fall back to the ordered per-item loop when
+        // URLs are mixed in (rare) so add order is preserved.
+        const hasUrl = items.some((item) => item.type === 'url');
+        if (!hasUrl) {
+          api.addFilesFromObjects(
+            items.map((item) => ({
+              file: (item as Extract<typeof item, { type: 'file' }>).file,
               source: UploadSource.DROP_AREA,
-            });
-          } else if (item.type === 'file') {
-            this.api.addFileFromObject(item.file, {
-              source: UploadSource.DROP_AREA,
-              fullPath: item.fullPath,
-            });
-          }
-        });
-        if (this.uploadCollection.size > prevSize) {
-          this.routerLayer.navigateAfterFileAdd();
+              fullPath: (item as Extract<typeof item, { type: 'file' }>).fullPath,
+            })),
+          );
+        } else {
+          items.forEach((item) => {
+            if (item.type === 'url') {
+              api.addFileFromUrl(item.url, {
+                source: UploadSource.DROP_AREA,
+              });
+            } else if (item.type === 'file') {
+              api.addFileFromObject(item.file, {
+                source: UploadSource.DROP_AREA,
+                fullPath: item.fullPath,
+              });
+            }
+          });
+        }
+        if (collection.size > prevSize) {
+          this._router.traverse('onFileAdd');
         }
       },
     });
 
-    this.updateComplete.then(() => this._setupContentWrapperDropzone());
-
-    this.subConfigValue('sourceList', (value: string) => {
-      const list = stringToArray(value);
-      this._sourceListAllowsLocal = list.includes(UploadSource.LOCAL);
-      this._updateIsEnabled();
+    this.runTask(async () => {
+      await this.whileAdopted(this.updateComplete);
+      this._setupContentWrapperDropzone();
+      // Visibility depends on whether there is slotted content to hide, which is not rendered yet when
+      // `_syncSourceList` first runs. Recompute once the element has rendered.
       this._updateVisibility();
-    });
-
-    this.subConfigValue('multiple', (val) => {
-      this._isMultiple = Boolean(val);
-      this._updateDropText();
     });
   }
 
-  protected override willUpdate(changedProperties: PropertyValues<this & { localeId: string }>): void {
+  // `sourceList` drives imperative drop-handler/host state read outside
+  // `render()` — `_isEnabled` gates `_shouldIgnore`/`isActive`, and visibility
+  // toggles the host `.hidden` attribute — so it's an effect, not a render read.
+  // `beforeUpdate` fires it eagerly and synchronously on adoption so `_isEnabled`
+  // is correct before the first drop, and again whenever `sourceList` changes.
+  /** @internal */
+  @effect({ beforeUpdate: true })
+  protected _syncSourceList(): void {
+    const list = deserializeCsv(this._config.getTracked('sourceList'));
+    this._sourceListAllowsLocal = list.includes(UploadSource.LOCAL);
+    this._updateIsEnabled();
+    this._updateVisibility();
+  }
+
+  protected override controllerReleased(): void {
+    // Release counterpart of `controllerReady` (disconnect, or ctx release/
+    // re-adoption): drop the registry membership (added in `controllerReady`)
+    // and the dropzone bindings.
+    dropAreaRegistry.delete(this);
+    this._destroyDropzone?.();
+    this._destroyDropzone = null;
+    this._destroyContentWrapperDropzone?.();
+    this._destroyContentWrapperDropzone = null;
+  }
+
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
 
     if (changedProperties.has('disabled')) {
       this._updateIsEnabled();
       this._updateVisibility();
     }
-
-    if (changedProperties.has('text') || changedProperties.has('localeId')) {
-      this._updateDropText();
-    }
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
 
-    if (changedProperties.has('clickable')) {
-      this._updateClickableListeners();
+    if (changedProperties.has('clickable') || changedProperties.has('disabled')) {
+      this._updateButtonSemantics();
+    }
+  }
+
+  /** A clickable, enabled drop area is a button: reachable by Tab and announced as one. */
+  private _updateButtonSemantics(): void {
+    if (this.clickable && !this.disabled) {
+      this.setAttribute('role', 'button');
+      this.setAttribute('tabindex', '0');
+    } else {
+      this.removeAttribute('role');
+      this.removeAttribute('tabindex');
     }
   }
 
@@ -189,19 +299,15 @@ export class DropArea extends LitUploaderBlock {
     if (!this.fullscreen) {
       return false;
     }
-    const registry = dropAreaRegistry;
-    if (registry.size === 0) {
-      return false;
-    }
-    const otherTargets = [...registry].filter((el) => el !== this);
-    const activeTargets = otherTargets.filter((el) => el.isActive());
-    return activeTargets.length > 0;
+    return [...dropAreaRegistry].some((el) => el !== this && el.isActive());
   }
 
   private _couldHandleFiles(): boolean {
-    const isMultiple = this.cfg.multiple;
-    const multipleMax = this.cfg.multipleMax;
-    const currentFilesCount = this.uploadCollection.size;
+    // Imperative reads (drop-handler path, not render) — `get()`, not the tracked
+    // `getTracked()`.
+    const isMultiple = this._config.get('multiple');
+    const multipleMax = this._config.get('multipleMax');
+    const currentFilesCount = this._collection.size;
 
     if (isMultiple && multipleMax && currentFilesCount >= multipleMax) {
       return false;
@@ -225,15 +331,6 @@ export class DropArea extends LitUploaderBlock {
     this.hidden = !shouldBeVisible;
   }
 
-  private _updateDragStateAttribute(state: DropzoneStateValue): void {
-    const stateText = Object.entries(DropzoneState)
-      .find(([, value]) => value === state)?.[0]
-      .toLowerCase();
-    if (stateText) {
-      this.setAttribute('drag-state', stateText);
-    }
-  }
-
   private _setupContentWrapperDropzone(): void {
     if (this._destroyContentWrapperDropzone) {
       return;
@@ -246,41 +343,10 @@ export class DropArea extends LitUploaderBlock {
 
     this._destroyContentWrapperDropzone = addDropzone({
       element: contentWrapperEl,
-      onChange: (state: DropzoneStateValue) => {
-        const stateText = Object.entries(DropzoneState)
-          .find(([, value]) => value === state)?.[0]
-          .toLowerCase();
-        stateText && contentWrapperEl.setAttribute('drag-state', stateText);
-      },
+      onChange: (state: DropzoneState) => contentWrapperEl.setAttribute('drag-state', state),
       onItems: () => {},
       shouldIgnore: () => this._shouldIgnore(),
     });
-  }
-
-  private _updateClickableListeners(): void {
-    if (this.clickable && !this._clickableListenersAttached) {
-      this.addEventListener('keydown', this._handleAreaInteraction);
-      this.addEventListener('click', this._handleAreaInteraction);
-      this._clickableListenersAttached = true;
-    } else if (!this.clickable && this._clickableListenersAttached) {
-      this.removeEventListener('keydown', this._handleAreaInteraction);
-      this.removeEventListener('click', this._handleAreaInteraction);
-      this._clickableListenersAttached = false;
-    }
-  }
-
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    dropAreaRegistry.delete(this);
-
-    this._destroyDropzone?.();
-    this._destroyContentWrapperDropzone?.();
-    if (this._clickableListenersAttached) {
-      this.removeEventListener('keydown', this._handleAreaInteraction);
-      this.removeEventListener('click', this._handleAreaInteraction);
-      this._clickableListenersAttached = false;
-    }
   }
 
   public override render() {

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
 const stickyPackageVersion = (obj: any) => {
@@ -72,5 +74,14 @@ describe('NPM package', () => {
 
   test('locales should be exported', async () => {
     await expect(import('@uploadcare/file-uploader/locales/file-uploader/en.js')).resolves.not.toThrow();
+  });
+
+  test('published types declare no public `_` member, since the build mangles those names', () => {
+    const dts = readFileSync(resolve(import.meta.dirname, '../../dist/index.d.ts'), 'utf8');
+    const publicUnderscored = (dts.match(/^ +(?:readonly |static |get |set )*_\w+/gm) ?? [])
+      .map((line) => line.trim())
+      // `Uid`'s brand is type-only, so nothing at runtime carries the name.
+      .filter((member) => member !== '__uid');
+    expect(publicUnderscored).toEqual([]);
   });
 });

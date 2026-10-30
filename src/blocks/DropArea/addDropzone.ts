@@ -1,19 +1,13 @@
 import { getDropItems } from './getDropItems';
 
-export const DropzoneState = Object.freeze({
-  ACTIVE: 0,
-  INACTIVE: 1,
-  NEAR: 2,
-  OVER: 3,
-} as const);
-
-export type DropzoneStateValue = (typeof DropzoneState)[keyof typeof DropzoneState];
+/** The drag state, written as is to the drop area's `drag-state` attribute. */
+export type DropzoneState = 'active' | 'inactive' | 'near' | 'over';
 
 type DropItems = Awaited<ReturnType<typeof getDropItems>>;
 
 type DropzoneDescriptor = {
   element: HTMLElement;
-  onChange: (state: DropzoneStateValue) => void;
+  onChange: (state: DropzoneState) => void;
   onItems: (items: DropItems) => void;
   shouldIgnore: () => boolean;
 };
@@ -31,50 +25,45 @@ function distance(point: [number, number], rect: DOMRect): number {
 
 export function addDropzone(desc: DropzoneDescriptor): () => void {
   let eventCounter = 0;
+  // Aborted by the returned teardown: removes every listener, and tells a drop still reading its items to drop them.
+  const listeners = new AbortController();
+  const { signal } = listeners;
 
   const body = document.body;
-  const switchHandlers = new Set<(state: DropzoneStateValue) => void>();
-  const handleSwitch = (fn: (state: DropzoneStateValue) => void) => {
-    switchHandlers.add(fn);
-  };
-  let state: DropzoneStateValue = DropzoneState.INACTIVE;
+  let state: DropzoneState = 'inactive';
 
-  const setState = (newState: DropzoneStateValue) => {
-    if (desc.shouldIgnore() && newState !== DropzoneState.INACTIVE) {
+  const setState = (newState: DropzoneState) => {
+    if (desc.shouldIgnore() && newState !== 'inactive') {
       return;
     }
     if (state !== newState) {
-      switchHandlers.forEach((fn) => {
-        fn(newState);
-      });
+      desc.onChange(newState);
     }
     state = newState;
   };
 
   const isDragging = () => eventCounter > 0;
 
-  handleSwitch((newState) => desc.onChange(newState));
-
   const onResetEvent = () => {
     eventCounter = 0;
-    setState(DropzoneState.INACTIVE);
+    setState('inactive');
   };
   const onDragEnter = () => {
     eventCounter += 1;
-    if (state === DropzoneState.INACTIVE) {
-      setState(DropzoneState.ACTIVE);
+    if (state === 'inactive') {
+      setState('active');
     }
   };
   const onDragLeave = () => {
     eventCounter -= 1;
     if (!isDragging()) {
-      setState(DropzoneState.INACTIVE);
+      setState('inactive');
     }
   };
   const onDrop = (event: DragEvent) => {
     event.preventDefault();
     eventCounter = 0;
-    setState(DropzoneState.INACTIVE);
+    setState('inactive');
   };
 
   const onDragOver = (event: DragEvent) => {
@@ -98,11 +87,11 @@ export function addDropzone(desc: DropzoneDescriptor): () => void {
 
     if (isOver && isNearest) {
       event.preventDefault();
-      setState(DropzoneState.OVER);
+      setState('over');
     } else if (isNear && isNearest) {
-      setState(DropzoneState.NEAR);
+      setState('near');
     } else {
-      setState(DropzoneState.ACTIVE);
+      setState('active');
     }
   };
 
@@ -116,28 +105,24 @@ export function addDropzone(desc: DropzoneDescriptor): () => void {
       return;
     }
     const items = await getDropItems(dataTransfer);
+    if (signal.aborted) {
+      return;
+    }
     desc.onItems(items);
-    setState(DropzoneState.INACTIVE);
+    setState('inactive');
   };
 
-  body.addEventListener('drop', onDrop);
-  body.addEventListener('dragleave', onDragLeave);
-  body.addEventListener('dragenter', onDragEnter);
-  body.addEventListener('dragover', onDragOver);
-  desc.element.addEventListener('drop', onElementDrop);
+  body.addEventListener('drop', onDrop, { signal });
+  body.addEventListener('dragleave', onDragLeave, { signal });
+  body.addEventListener('dragenter', onDragEnter, { signal });
+  body.addEventListener('dragover', onDragOver, { signal });
+  desc.element.addEventListener('drop', onElementDrop, { signal });
   RESET_EVENTS.forEach((eventName) => {
-    window.addEventListener(eventName, onResetEvent);
+    window.addEventListener(eventName, onResetEvent, { signal });
   });
 
   return () => {
     nearnessRegistry.delete(desc.element);
-    body.removeEventListener('drop', onDrop);
-    body.removeEventListener('dragleave', onDragLeave);
-    body.removeEventListener('dragenter', onDragEnter);
-    body.removeEventListener('dragover', onDragOver);
-    desc.element.removeEventListener('drop', onElementDrop);
-    RESET_EVENTS.forEach((eventName) => {
-      window.removeEventListener(eventName, onResetEvent);
-    });
+    listeners.abort();
   };
 }

@@ -1,39 +1,35 @@
 import { html } from 'lit';
-import { property, state } from 'lit/decorators.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { property } from 'lit/decorators.js';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { inject } from '../../abstract/di/inject';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import { booleanAttribute } from '../../lit/boolean-attribute';
+import { ChildBlock } from '../../lit/ChildBlock';
 import './simple-btn.css';
 
 import '../DropArea/DropArea';
 import '../Icon/Icon';
 
-export class SimpleBtn extends LitUploaderBlock {
+export class SimpleBtn extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-simple-btn'];
-  public override couldBeCtxOwner = true;
 
-  @property({ attribute: 'dropzone', type: Boolean })
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+
+  @property({ converter: booleanAttribute })
   public dropzone = true;
 
-  @state()
-  private _buttonTextKey = 'upload-file';
-
   private readonly _handleClick = () => {
-    this.api.initFlow();
+    this._api.initFlow();
   };
 
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.subConfigValue('multiple', (val) => {
-      this._buttonTextKey = val ? 'upload-files' : 'upload-file';
-    });
-  }
-
   public override render() {
+    const buttonTextKey = this._config.getTracked('multiple') ? 'upload-files' : 'upload-file';
     return html`
     <uc-drop-area .disabled=${!this.dropzone}>
     <button type="button" @click=${this._handleClick}>
       <uc-icon name="upload"></uc-icon>
-      <span>${this.l10n(this._buttonTextKey)}</span>
+      <span>${this.l10n(buttonTextKey)}</span>
       ${this.yield('')}
       <div class="uc-visual-drop-area" aria-hidden="true">${this.l10n('drop-files-here')}</div>
     </button>

@@ -1,0 +1,58 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`camera view > opens with photo only 1`] = `
+{
+  "actions": false,
+  "activeTab": "photo",
+  "audioSelect": false,
+  "cameraSelect": false,
+  "caption": true,
+  "host": "uc-initialized",
+  "message": false,
+  "mic": false,
+  "requestButton": false,
+  "shot": "uc-shot-btn uc-camera-action icon=camera-full "Shot"",
+  "switcher": true,
+  "tabs": "photo -",
+  "timer": false,
+  "video": true,
+}
+`;
+
+exports[`camera view > opens with video only 1`] = `
+{
+  "actions": false,
+  "activeTab": "video",
+  "audioSelect": "enabled",
+  "cameraSelect": false,
+  "caption": true,
+  "host": "uc-initialized",
+  "message": false,
+  "mic": "microphone",
+  "requestButton": false,
+  "shot": "uc-shot-btn uc-camera-action icon=video-camera-full "Record Video"",
+  "switcher": true,
+  "tabs": "- video",
+  "timer": false,
+  "video": true,
+}
+`;
+
+exports[`camera view > opens with video without audio 1`] = `
+{
+  "actions": false,
+  "activeTab": "video",
+  "audioSelect": false,
+  "cameraSelect": false,
+  "caption": true,
+  "host": "uc-initialized",
+  "message": false,
+  "mic": false,
+  "requestButton": false,
+  "shot": "uc-shot-btn uc-camera-action icon=video-camera-full "Record Video"",
+  "switcher": true,
+  "tabs": "photo video",
+  "timer": false,
+  "video": true,
+}
+`;

@@ -138,7 +138,7 @@ describe('disconnect and reconnect', () => {
     const parent = uploader.parentElement as HTMLElement;
     uploader.remove();
     parent.appendChild(uploader);
-    // A ctx teardown, had one been scheduled, lands in a `setTimeout(0)` (LitBlock.ts:166). Timers of equal delay run
+    // A ctx teardown, had one been scheduled, lands in a `setTimeout(0)` (`ChildBlock.disconnectedCallback`). Timers of equal delay run
     // in the order they were set, so this one ends after it.
     await afterPendingZeroTimers();
 
@@ -162,9 +162,9 @@ describe('disconnect and reconnect', () => {
   });
 
   // QUIRK(lifecycle): the ctx is torn down in a `setTimeout(0)` once the last block disconnects
-  // (LitBlock.ts:166), so whether state survives a remove/re-insert depends on whether a macrotask ran in between.
-  // Moving a node synchronously keeps everything; the same move deferred by a tick silently starts from scratch.
-  // Pinned as current behaviour, not endorsed.
+  // (`ChildBlock._teardownCtxIfUnreferenced`), so whether state survives a remove/re-insert depends on whether a
+  // macrotask ran in between. Moving a node synchronously keeps everything; the same move deferred by a tick starts
+  // from scratch with a new api. Pinned as current behaviour, not endorsed.
   it('drops the collection when a macrotask passes between removal and re-insertion', async () => {
     const { ctxName, api } = await renderSolution();
     api.addFileFromObject(IMAGE.PIXEL);
@@ -184,7 +184,78 @@ describe('disconnect and reconnect', () => {
       parent.appendChild(element);
     }
 
-    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(0);
+    const fresh = (provider as UploadCtxProvider).getAPI();
+    await expect.poll(() => fresh.getOutputCollectionState().totalCount).toBe(0);
+    // The old api belonged to the destroyed uploader: it says so instead of acting on an invisible copy.
+    expect(() => api.getOutputCollectionState()).toThrow(/was destroyed\. Call getAPI\(\)/);
+  });
+});
+
+/** A provider alone on a fresh ctx — the ctx's public api, with no `<uc-config>` of its own yet. */
+const renderProvider = async () => {
+  const ctxName = getCtxName();
+  const provider = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
+  page.render(<div ctx-name={ctxName}></div>);
+  inCtx('div', ctxName).append(provider);
+  await waitForBlocks(provider);
+  return { ctxName, api: provider.getAPI() };
+};
+
+describe('<uc-config> moving between ctxs', () => {
+  it('applies an attribute set before it is connected', async () => {
+    const { ctxName, api } = await renderProvider();
+    const config = createInCtx<Config>('uc-config', ctxName, { pubkey: 'pre-connect-key' });
+    expect(config.pubkey).toBe('pre-connect-key');
+
+    inCtx('div', ctxName).append(config);
+
+    await expect.poll(() => api.cfg.pubkey).toBe('pre-connect-key');
+  });
+
+  it('carries its values to the new ctx when ctx-name changes', async () => {
+    const a = await renderProvider();
+    const b = await renderProvider();
+    const config = createInCtx<Config>('uc-config', a.ctxName, { pubkey: 'moved-key' });
+    inCtx('div', a.ctxName).append(config);
+    await expect.poll(() => a.api.cfg.pubkey).toBe('moved-key');
+
+    config.setAttribute('ctx-name', b.ctxName);
+
+    await expect.poll(() => b.api.cfg.pubkey).toBe('moved-key');
+  });
+
+  it('tolerates a custom attribute arriving before the new ctx exists', async () => {
+    const a = await renderProvider();
+    const config = createInCtx<Config>('uc-config', a.ctxName);
+    inCtx('div', a.ctxName).append(config);
+    await config.updateComplete;
+    const ctxNameB = getCtxName();
+
+    // Adoption of the new ctx runs a microtask later; this is how the custom-attribute observer forwards in that gap.
+    config.setAttribute('ctx-name', ctxNameB);
+    expect(() => config.attributeChangedCallback('a-custom-plugin-config', '', 'mid-switch')).not.toThrow();
+
+    // ...and the switch still completes: the new ctx gets the config's values.
+    config.pubkey = 'after-switch';
+    const providerB = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxNameB);
+    inCtx('div', a.ctxName).append(providerB);
+    await waitForBlocks(providerB);
+    await expect.poll(() => providerB.getAPI().cfg.pubkey).toBe('after-switch');
+  });
+
+  it('keeps a property written while it is detached', async () => {
+    const { ctxName, config, api } = await renderSolution();
+    const parent = inCtx('uc-config', ctxName).parentElement as HTMLElement;
+    const metadata = { source: 'detached' };
+
+    config.remove();
+    config.pubkey = 'detached-key';
+    config.metadata = metadata;
+    parent.append(config);
+
+    await expect.poll(() => api.cfg.pubkey).toBe('detached-key');
+    expect(api.cfg.metadata).toBe(metadata);
+    expect(config.getAttribute('pubkey')).toBe('detached-key');
   });
 });
 
@@ -256,13 +327,13 @@ describe('documented attribute conventions', () => {
     expect((await renderConfig({ imgOnly: 'true' })).imgOnly).toBe(true);
   });
 
-  // QUIRK(config): configuration.mdx says "any other thruthy value means `true`
-  // (e.g. <uc-config this-is-boolean="value">)", but asBoolean throws `Invalid boolean: "value"` for anything that is
-  // not `true`, `false` or an empty string (Config/validatorsType.ts:19). The option keeps its default instead of
-  // becoming true, and the error surfaces on the console. Pinned as current behaviour, not endorsed — the docs and
-  // the code disagree and only a human can say which one is right.
-  it('does not follow the documented "any truthy value" rule', async () => {
-    const config = await renderConfig({ 'img-only': 'value' });
+  // Documented (configuration.mdx): like an HTML boolean attribute, any value other than "false" means true.
+  it('reads any boolean attribute value other than "false" as true', async () => {
+    for (const value of ['value', '1', 'yes', '']) {
+      const config = await renderConfig({ 'img-only': value });
+      expect(config.imgOnly).toBe(true);
+    }
+    const config = await renderConfig({ 'img-only': 'false' });
     expect(config.imgOnly).toBe(false);
   });
 });

@@ -4,7 +4,6 @@ import { expectTypeOf, test } from 'vitest';
 import {
   type ActivityType,
   type EventMap,
-  type ModalId,
   type OutputCollectionErrorType,
   type OutputCollectionStatus,
   type OutputError,
@@ -231,7 +230,7 @@ test("'modal-close' event payload", () => {
   instance.addEventListener('modal-close', (e) => {
     const payload = e.detail;
     expectTypeOf(payload).toEqualTypeOf<{
-      modalId: ModalId;
+      modalId: Exclude<ActivityType, null>;
       hasActiveModals: boolean;
     }>();
   });
@@ -241,7 +240,7 @@ test("'modal-open' event payload", () => {
   instance.addEventListener('modal-open', (e) => {
     const payload = e.detail;
     expectTypeOf(payload).toEqualTypeOf<{
-      modalId: ModalId;
+      modalId: Exclude<ActivityType, null>;
     }>();
   });
 });

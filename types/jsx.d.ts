@@ -3,9 +3,12 @@
 type LitElement = import('lit').LitElement;
 type UploadCtxProvider = import('../dist/index.ts').UploadCtxProvider;
 type Config = import('../dist/index.ts').Config;
+type Copyright = import('../dist/index.ts').Copyright;
+type Thumb = import('../dist/index.ts').Thumb;
 type FileUploaderInline = import('../dist/index.ts').FileUploaderInline;
 type FileUploaderRegular = import('../dist/index.ts').FileUploaderRegular;
 type FileUploaderMinimal = import('../dist/index.ts').FileUploaderMinimal;
+type Uploader = import('../dist/index.ts').Uploader;
 type BtnUi = import('../dist/index.ts').BtnUi;
 type LineLoaderUi = import('../dist/index.ts').LineLoaderUi;
 type PresenceToggle = import('../dist/index.ts').PresenceToggle;
@@ -21,9 +24,11 @@ type EditorImageFader = import('../dist/index.ts').EditorImageFader;
 type EditorScroller = import('../dist/index.ts').EditorScroller;
 type EditorSlider = import('../dist/index.ts').EditorSlider;
 type EditorToolbar = import('../dist/index.ts').EditorToolbar;
+type EditorIcon = import('../dist/index.ts').EditorIcon;
 type Icon = import('../dist/index.ts').Icon;
 type Img = import('../dist/index.ts').Img;
 type SimpleBtn = import('../dist/index.ts').SimpleBtn;
+type Spinner = import('../dist/index.ts').Spinner;
 type StartFrom = import('../dist/index.ts').StartFrom;
 type DropArea = import('../dist/index.ts').DropArea;
 type SourceBtn = import('../dist/index.ts').SourceBtn;
@@ -40,7 +45,6 @@ type CloudImageEditorActivity = import('../dist/index.ts').CloudImageEditorActiv
 type FormInput = import('../dist/index.ts').FormInput;
 type CloudImageEditorBlock = import('../dist/index.ts').CloudImageEditorBlock;
 type ActivityHeader = import('../dist/index.ts').ActivityHeader;
-type Copyright = import('../dist/index.ts').Copyright;
 type DropDown = import('../dist/index.ts').DropDown;
 type DynamicBtn = import('../dist/index.ts').DynamicBtn;
 type FileActionButton = import('../dist/index.ts').FileActionButton;
@@ -49,8 +53,6 @@ type PluginActivityRenderer = import('../dist/index.ts').PluginActivityRenderer;
 type PluginActivityHost = import('../dist/index.ts').PluginActivityHost;
 type PrimaryAction = import('../dist/index.ts').PrimaryAction;
 type Select = import('../dist/index.ts').Select;
-type Spinner = import('../dist/index.ts').Spinner;
-type Thumb = import('../dist/index.ts').Thumb;
 
 type CommonHtmlAttributes<T> = Partial<
   Pick<React.HTMLAttributes<T>, 'id' | 'children' | 'hidden'> & { class: React.HTMLAttributes<T>['className'] }
@@ -81,14 +83,18 @@ declare namespace JSX {
     'uc-line-loader-ui': CustomElement<LineLoaderUi>;
     'uc-presence-toggle': CustomElement<PresenceToggle>;
     'uc-slider-ui': CustomElement<SliderUi>;
+    'uc-editor-icon': CustomElement<EditorIcon>;
     'uc-icon': CustomElement<Icon>;
+    'uc-copyright': CustomElement<Copyright>;
     'uc-img': CustomElement<Img> & React.DetailedHTMLProps<React.ImgHTMLAttributes<HTMLImageElement>, HTMLImageElement>;
     'uc-simple-btn': CustomElement<SimpleBtn>;
+    'uc-spinner': CustomElement<Spinner>;
     'uc-start-from': CustomElement<StartFrom>;
     'uc-drop-area': CustomElement<DropArea>;
     'uc-source-btn': CustomElement<SourceBtn>;
     'uc-source-list': CustomElement<SourceList>;
     'uc-file-item': CustomElement<FileItem>;
+    'uc-thumb': CustomElement<Thumb>;
     'uc-modal': CustomElement<Modal>;
     'uc-upload-list': CustomElement<UploadList>;
     'uc-url-source': CustomElement<UrlSource>;
@@ -100,7 +106,6 @@ declare namespace JSX {
     'uc-cloud-image-editor-block': CustomElement<CloudImageEditorBlock>;
     'uc-cloud-image-editor': CustomElement<CloudImageEditorBlock>;
     'uc-activity-header': CustomElement<ActivityHeader>;
-    'uc-copyright': CustomElement<Copyright>;
     'uc-drop-down': CustomElement<DropDown>;
     'uc-dynamic-btn': CustomElement<DynamicBtn>;
     'uc-file-action-button': CustomElement<FileActionButton>;
@@ -109,12 +114,11 @@ declare namespace JSX {
     'uc-plugin-activity-host': CustomElement<PluginActivityHost>;
     'uc-primary-action': CustomElement<PrimaryAction>;
     'uc-select': CustomElement<Select>;
-    'uc-spinner': CustomElement<Spinner>;
-    'uc-thumb': CustomElement<Thumb>;
     'uc-form-input': CustomElement<FormInput>;
     'uc-file-uploader-regular': CustomElement<FileUploaderRegular>;
     'uc-file-uploader-minimal': CustomElement<FileUploaderMinimal>;
     'uc-file-uploader-inline': CustomElement<FileUploaderInline>;
+    'uc-uploader': CustomElement<Uploader>;
     'uc-upload-ctx-provider': CustomElement<UploadCtxProvider>;
     'uc-config': CustomElement<Config>;
   }

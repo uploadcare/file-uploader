@@ -1,10 +1,10 @@
 import { html, LitElement } from 'lit';
 import { property, state } from 'lit/decorators.js';
 
-import '../blocks/ActivityHeader/ActivityHeader.js';
-import '../blocks/Icon/Icon.js';
+import '../blocks/ActivityHeader/ActivityHeader';
+import '../blocks/Icon/Icon';
 import './unsplash-activity.css';
-import type { PluginUploaderApi, UploaderPlugin } from '../abstract/managers/plugin/index.js';
+import type { PluginRouterApi, PluginUploaderApi, UploaderPlugin } from '../abstract/managers/plugin/index';
 
 const UNSPLASH_ACTIVITY_ID = 'unsplash-gallery';
 
@@ -27,7 +27,10 @@ class UcUnsplashActivity extends LitElement {
   public uploaderApi!: PluginUploaderApi;
 
   @property({ attribute: false })
-  public override accessKey = '';
+  public routerApi!: PluginRouterApi;
+
+  @property({ attribute: false })
+  public unsplashKey = '';
 
   @state()
   private _photos: UnsplashPhoto[] = [];
@@ -41,33 +44,52 @@ class UcUnsplashActivity extends LitElement {
   @state()
   private _query = '';
 
+  /** Aborts the in-flight search, so a slower earlier one cannot overwrite a later one. */
+  private _searchAbort: AbortController | null = null;
+
   public override connectedCallback() {
     super.connectedCallback();
-    void this._load();
+    this._load();
   }
 
-  private async _load() {
-    if (!this.accessKey) {
+  public override disconnectedCallback() {
+    super.disconnectedCallback();
+    this._searchAbort?.abort();
+  }
+
+  private _load(): void {
+    if (!this.unsplashKey) {
       this._error = 'No Unsplash API key configured.\nAdd unsplash-access-key="YOUR_KEY" to <uc-config>.';
       return;
     }
 
     this._loading = true;
     this._error = null;
+    this._searchAbort?.abort();
+    const abort = new AbortController();
+    this._searchAbort = abort;
 
-    try {
-      const params = new URLSearchParams({ count: '24', client_id: this.accessKey });
-      if (this._query) params.set('query', this._query);
+    this._fetchPhotos(abort.signal).then(
+      (photos) => {
+        this._photos = photos;
+        this._loading = false;
+      },
+      (err: unknown) => {
+        if (abort.signal.aborted) return;
+        this._error = err instanceof Error ? err.message : 'Failed to load photos';
+        this._loading = false;
+      },
+    );
+  }
 
-      const res = await fetch(`https://api.unsplash.com/photos/random?${params}`);
-      if (!res.ok) throw new Error(`Unsplash API error: ${res.status} ${res.statusText}`);
+  private async _fetchPhotos(signal: AbortSignal): Promise<UnsplashPhoto[]> {
+    const params = new URLSearchParams({ count: '24', client_id: this.unsplashKey });
+    if (this._query) params.set('query', this._query);
 
-      this._photos = (await res.json()) as UnsplashPhoto[];
-    } catch (err) {
-      this._error = err instanceof Error ? err.message : 'Failed to load photos';
-    } finally {
-      this._loading = false;
-    }
+    const res = await fetch(`https://api.unsplash.com/photos/random?${params}`, { signal });
+    if (!res.ok) throw new Error(`Unsplash API error: ${res.status} ${res.statusText}`);
+
+    return (await res.json()) as UnsplashPhoto[];
   }
 
   private _pick(photo: UnsplashPhoto) {
@@ -75,21 +97,23 @@ class UcUnsplashActivity extends LitElement {
       fileName: `unsplash-${photo.id}.jpg`,
       source: 'unsplash',
     });
-    this.uploaderApi.setCurrentActivity?.('upload-list');
-    this.uploaderApi.setModalState?.(true);
+    // Post-add routing intent, like the built-in sources — lets the preset's
+    // onFileAdd hooks decide (e.g. minimal keeps its modal closed) instead
+    // of forcing the upload list open.
+    this.routerApi.traverse('onFileAdd');
   }
 
   public override render() {
     return html`
       <div class="uc-ui-activity-header">
-        <button type="button" class="uc-ui-icon-btn" title="Back" @click=${() => this.uploaderApi.historyBack()}>
+        <button type="button" class="uc-ui-icon-btn" title="Back" @click=${() => this.routerApi.traverse('onBack')}>
           <uc-icon name="back"></uc-icon>
         </button>
         <div>
           <uc-icon name="unsplash"></uc-icon>
           <span>Unsplash</span>
         </div>
-        <button type="button" class="uc-ui-icon-btn" title="Close" @click=${() => this.uploaderApi.setModalState?.(false)}>
+        <button type="button" class="uc-ui-icon-btn" title="Close" @click=${() => this.routerApi.traverse('onClose')}>
           <uc-icon name="close"></uc-icon>
         </button>
       </div>
@@ -110,11 +134,11 @@ class UcUnsplashActivity extends LitElement {
               this._query = (e.target as HTMLInputElement).value;
             }}
             @keydown=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter') void this._load();
+              if (e.key === 'Enter') this._load();
             }}
           />
         </div>
-        <button type="button" class="uc-ui-primary-btn" ?disabled=${this._loading} @click=${() => void this._load()}>
+        <button type="button" class="uc-ui-primary-btn" ?disabled=${this._loading} @click=${() => this._load()}>
           ${
             this._loading
               ? html`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation: uc-unsplash-spin 0.7s linear infinite">
@@ -138,7 +162,7 @@ class UcUnsplashActivity extends LitElement {
               <div class="grid">
                 ${this._photos.map(
                   (photo) => html`
-                    <div class="photo" title=${photo.alt_description ?? ''} @click=${() => this._pick(photo)}>
+                    <button type="button" class="photo" title=${photo.alt_description ?? ''} @click=${() => this._pick(photo)}>
                       <img src=${photo.urls.small} alt=${photo.alt_description ?? ''} loading="lazy" />
                       <span class="add-icon">
                         <svg
@@ -156,7 +180,7 @@ class UcUnsplashActivity extends LitElement {
                           <line x1="8" y1="12" x2="16" y2="12" />
                         </svg>
                       </span>
-                    </div>
+                    </button>
                   `,
                 )}
               </div>
@@ -165,15 +189,16 @@ class UcUnsplashActivity extends LitElement {
       <div class="uc-ui-toolbar bottom-toolbar">
         <div class="uc-ui-toolbar-spacer"></div>
         <button type="button" class="uc-ui-secondary-btn" @click=${() => {
-          this.uploaderApi.setCurrentActivity?.('upload-list');
-          this.uploaderApi.setModalState?.(true);
+          this.uploaderApi.navigate('upload-list');
         }}>Done</button>
       </div>
     `;
   }
 }
 
-customElements.define('uc-unsplash-activity', UcUnsplashActivity);
+if (!customElements.get('uc-unsplash-activity')) {
+  customElements.define('uc-unsplash-activity', UcUnsplashActivity);
+}
 
 export const unsplashPlugin: UploaderPlugin = {
   id: 'unsplash',
@@ -198,20 +223,21 @@ export const unsplashPlugin: UploaderPlugin = {
       label: 'unsplash.label',
       icon: 'unsplash',
       onSelect() {
-        uploaderApi.setCurrentActivity?.(UNSPLASH_ACTIVITY_ID);
-        uploaderApi.setModalState?.(true);
+        uploaderApi.navigate(UNSPLASH_ACTIVITY_ID);
       },
     });
 
     pluginApi.registry.registerActivity({
       id: UNSPLASH_ACTIVITY_ID,
+      label: 'unsplash.label',
       render(el) {
         const activityEl = document.createElement('uc-unsplash-activity') as UcUnsplashActivity;
         activityEl.uploaderApi = uploaderApi;
-        activityEl.accessKey = pluginApi.config.get('unsplashAccessKey');
+        activityEl.routerApi = pluginApi.router;
+        activityEl.unsplashKey = pluginApi.config.get('unsplashAccessKey');
 
         const unsubscribe = pluginApi.config.subscribe('unsplashAccessKey', (value) => {
-          activityEl.accessKey = value;
+          activityEl.unsplashKey = value;
         });
 
         el.replaceChildren(activityEl);
@@ -231,7 +257,13 @@ declare module '../abstract/customConfigOptions' {
   }
 }
 
-declare module '../lit/LitActivityBlock' {
+declare module '../abstract/localeRegistry' {
+  interface CustomLocaleDefinition {
+    'unsplash.label': string;
+  }
+}
+
+declare module '../types/index' {
   interface CustomActivities {
     [UNSPLASH_ACTIVITY_ID]: { params: never };
   }

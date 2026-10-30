@@ -64,5 +64,13 @@ describe('validation: built-in rules', () => {
       api.initFlow();
       await expect.element(within(root).getByText('At least 2 files required')).toBeVisible();
     });
+
+    it('reports a multipleMin error before any file is added', async () => {
+      const { api } = await renderSolution('regular', { multipleMin: 2 });
+
+      await expect
+        .poll(() => api.getOutputCollectionState().errors)
+        .toContainEqual(expect.objectContaining({ type: 'TOO_FEW_FILES' }));
+    });
   });
 });

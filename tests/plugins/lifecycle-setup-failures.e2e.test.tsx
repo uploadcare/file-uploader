@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { PlainText } from '@/abstract/l10n';
 import type { PluginSetupParams, UploaderPlugin } from '@/index.ts';
 import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
 
@@ -9,7 +10,7 @@ describe('plugin lifecycle: setup failures', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'error-source',
-          label: 'Error Source',
+          label: 'Error Source' as PlainText,
           onSelect: () => {},
         });
         throw new Error('setup failed');
@@ -35,7 +36,7 @@ describe('plugin lifecycle: setup failures', () => {
     const workingSetup = vi.fn<(params: PluginSetupParams) => void>(({ pluginApi }) => {
       pluginApi.registry.registerSource({
         id: 'working-source',
-        label: 'Working Source',
+        label: 'Working Source' as PlainText,
         onSelect: () => {},
       });
     });
@@ -67,8 +68,8 @@ describe('plugin lifecycle: setup failures', () => {
     });
 
     expect(setup2).not.toHaveBeenCalled();
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"dup-id"'));
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('duplicate'));
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), expect.stringContaining('"dup-id"'));
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), expect.stringContaining('duplicate'));
   });
 
   it('logs an error when setup() throws', async () => {
@@ -84,7 +85,11 @@ describe('plugin lifecycle: setup failures', () => {
     await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"setup-throws"'), expect.any(Error));
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[uc]/),
+        expect.stringContaining('"setup-throws"'),
+        expect.any(Error),
+      );
     });
   });
 
@@ -102,7 +107,11 @@ describe('plugin lifecycle: setup failures', () => {
     await renderSolution('regular', { plugins: [plugin] });
 
     await vi.waitFor(() => {
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('"async-setup-rejects"'), expect.any(Error));
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[uc]/),
+        expect.stringContaining('"async-setup-rejects"'),
+        expect.any(Error),
+      );
     });
   });
 
@@ -115,7 +124,7 @@ describe('plugin lifecycle: setup failures', () => {
     await renderSolution('regular', { plugins: [pluginWithoutId] });
 
     await vi.waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"id"'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), expect.stringContaining('"id"'));
     });
 
     expect(setupFn).not.toHaveBeenCalled();

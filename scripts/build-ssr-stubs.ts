@@ -49,6 +49,8 @@ const stubClass = (klass: AnyClass) => {
           valueString = '() => {}';
         } else if (typeof value === 'string') {
           valueString = `\`${value}\``;
+        } else if (typeof value === 'boolean' || typeof value === 'number') {
+          valueString = String(value);
         } else if (Array.isArray(value)) {
           valueString = JSON.stringify(value);
         } else if (typeof value === 'object') {

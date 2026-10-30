@@ -102,6 +102,8 @@ export default {
   'camera-permissions-denied': 'تم رفض الوصول للكاميرا',
   'camera-permissions-prompt': 'الرجاء السماح بالوصول إلى الكاميرا',
   'camera-permissions-request': 'طلب الوصول',
+  'camera-not-found': 'لم يتم العثور على كاميرا',
+  'camera-unavailable': 'الكاميرا قيد الاستخدام أو غير متاحة',
   'files-count-limit-error-title': 'تجاوز حد عدد الملفات',
   'files-count-limit-error-too-few':
     'لقد اخترت {{total}} {{plural:file(total)}}. على الأقل {{min}} {{plural:file(min)}} مطلوب.',
@@ -114,6 +116,8 @@ export default {
   'file-item-edit-button': 'تحرير',
   'file-item-remove-button': 'إزالة',
   'a11y-activity-header-button-close': 'إغلاق',
+  'a11y-camera-microphone': 'الميكروفون',
+  'a11y-camera-stop-recording': 'إيقاف التسجيل',
   'a11y-editor-tab-filters': 'فلاتر',
   'a11y-editor-tab-tuning': 'ضبط',
   'a11y-editor-tab-crop': 'قص',
@@ -135,6 +139,8 @@ export default {
   'crop-to-shape': 'اقتصاص إلى {{value}}',
   custom: 'حر الشكل',
   'freeform-crop': 'قص حر',
+  'network-error': 'خطأ في الشبكة',
+  retry: 'إعادة المحاولة',
 
   'upload-from': 'رفع {{source}}',
   'get-from': 'الحصول من {{source}}',

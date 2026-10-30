@@ -2,6 +2,7 @@ import { DEMO_IMAGE_UUID, mintAuthToken } from '@uploadcare/api-emulator';
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index';
+import { delay } from '@/utils/delay';
 import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE } from '~/tests/fixtures/files';
 import { emulatorSession, isLive } from '~/tests/utils/emulator.browser';
@@ -14,7 +15,6 @@ import '~/types/jsx';
  * the upload does with them. Each is checked where it lands: what the emulator stored for an option the API keeps
  * (`store`), the URL the file was given (`cdnCname`), how many requests a retry limit allowed, and, for the rest, the
  * field or header the request carried, which is where a silently dropped option or a broken name mapping shows.
- * `multipartMaxAttempts` reaches nothing past `uploadFile`; `client-only-options.e2e` has it.
  *
  * Fake-only (`describe.skipIf(isLive)`): every check reads the emulator's session, and a live run has none.
  */
@@ -62,15 +62,13 @@ describe.skipIf(isLive)('options upload-client acts on', () => {
     expect(received('POST', '/base/').map((request) => new URL(request.url).host)).toEqual(['upload.example.com']);
   });
 
-  // QUIRK(config): the `cdnCname` computed property decides whether to override the current value *before* awaiting
-  // `getPrefixedCdnBaseAsync` (Config/computed-properties.ts:74). A resolution already in flight from the pubkey
-  // therefore lands with a guard evaluated against the old, default cname, and overwrites an explicit `cdnCname` set
-  // in the meantime — so a documented option is silently dropped depending on timing. Pinned, not endorsed.
+  // A pubkey resolution already in flight must not overwrite a cname the caller set meanwhile: `computeProperty`
+  // drops an async result once the value it started from has changed.
   //
   // The elements are built by hand rather than through `renderSolution`, which sets primitives as attributes before
   // the element connects and settles a tick before returning. Both of those avoid the race, so reproducing it needs
   // the assignment to land in the same tick as connection.
-  it('loses a custom CDN cname assigned in the same tick as connection', async () => {
+  it('keeps a custom CDN cname assigned in the same tick as connection', async () => {
     const ctxName = getCtxName();
     const uploader = createInCtx('uc-file-uploader-regular', ctxName);
     const provider = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
@@ -84,14 +82,16 @@ describe.skipIf(isLive)('options upload-client acts on', () => {
     inCtx<HTMLElement>('div', ctxName).append(uploader, config, provider);
     config.cdnCname = 'https://cdn.example.com';
 
-    await expect.poll(() => config.cdnCname).toBe('https://1s4oyld5dc.ucarecd.net');
+    // Negative wait: the in-flight pubkey resolution that must not win has no completion signal.
+    await delay(500);
+    expect(config.cdnCname).toBe('https://cdn.example.com');
 
     const api = provider.getAPI();
     api.addFileFromObject(IMAGE.PIXEL);
     api.uploadAll();
 
     expect(await finished(api)).toBe('success');
-    expect(entry(api).cdnUrl).toBe(`https://1s4oyld5dc.ucarecd.net/${entry(api).uuid}/`);
+    expect(entry(api).cdnUrl).toBe(`https://cdn.example.com/${entry(api).uuid}/`);
   });
 
   it('keeps a custom CDN cname set once the pubkey resolution has settled', async () => {

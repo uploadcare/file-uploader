@@ -174,6 +174,25 @@ describe('uc-form-input validity', () => {
     expect(validationInput(ctxName).required).toBe(true);
   });
 
+  it('follows multipleMin changed after mount', async () => {
+    const { ctxName, config } = await renderSolution('regular', {}, { formInput: true });
+    expect(validationInput(ctxName).required).toBe(false);
+
+    config.multipleMin = 1;
+    await expect.poll(() => validationInput(ctxName).required).toBe(true);
+
+    config.multipleMin = 0;
+    await expect.poll(() => validationInput(ctxName).required).toBe(false);
+  });
+
+  it('follows the name attribute changed after mount', async () => {
+    const { ctxName } = await renderSolution('regular', {}, { formInput: true });
+
+    inCtx<FormInput>('uc-form-input', ctxName).setAttribute('name', 'avatar');
+
+    await expect.poll(() => validationInput(ctxName).name).toBe('avatar');
+  });
+
   it('sets a validation message when the collection fails validation', async () => {
     const { ctxName, api } = await renderSolution(
       'regular',

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
-import { renderSolution } from '~/tests/utils/render-solution';
+import { renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
 const CLOUD_IMG_EDIT = 'cloud-image-edit';
@@ -15,6 +15,36 @@ describe('cloud image editor options', () => {
       api.initFlow();
 
       await expect.poll(() => api.getCurrentActivity(), UPLOAD).toBe(CLOUD_IMG_EDIT);
+    });
+
+    it('opens the editor on the uploaded file', async () => {
+      const { api, root } = await renderSolution('regular', {
+        useCloudImageEditor: true,
+        cloudImageEditorAutoOpen: true,
+      });
+      api.addFileFromUrl(TEST_IMAGE_URL);
+      api.initFlow();
+
+      const editor = within(root).getByTestId('uc-cloud-image-editor');
+      await expect.element(editor, UPLOAD).toBeVisible();
+      const { cdnUrl } = api.getOutputCollectionState().allEntries[0];
+      expect(cdnUrl).toBeTruthy();
+      await expect.poll(() => editor.element().getAttribute('cdn-url')).toBe(cdnUrl);
+    });
+
+    it('leaves the editor and keeps the file uploaded when Apply is pressed', async () => {
+      const { api, root } = await renderSolution('regular', {
+        useCloudImageEditor: true,
+        cloudImageEditorAutoOpen: true,
+      });
+      api.addFileFromUrl(TEST_IMAGE_URL);
+      api.initFlow();
+      await expect.element(within(root).getByTestId('uc-cloud-image-editor'), UPLOAD).toBeVisible();
+
+      await within(root).getByRole('button', { name: /apply/i }).click();
+
+      await expect.poll(() => api.getCurrentActivity(), UPLOAD).not.toBe(CLOUD_IMG_EDIT);
+      expect(api.getOutputCollectionState().successEntries).toHaveLength(1);
     });
 
     it('does not open the editor when unset', async () => {

@@ -1,0 +1,33 @@
+/**
+ * The English strings the cloud image editor's own locale shares with the uploader's `en` locale. DOM-free so both
+ * may import it; outside `src/locales/`, which `test:locales` reads as locale groups.
+ */
+export const EDITOR_SHARED_STRINGS = {
+  cancel: 'Cancel',
+  apply: 'Apply',
+  brightness: 'Brightness',
+  exposure: 'Exposure',
+  gamma: 'Gamma',
+  contrast: 'Contrast',
+  saturation: 'Saturation',
+  vibrance: 'Vibrance',
+  warmth: 'Warmth',
+  enhance: 'Enhance',
+  original: 'Original',
+  crop: 'Crop',
+  rotate: 'Rotate',
+  mirror: 'Mirror',
+  flip: 'Flip',
+  'a11y-editor-tab-crop': 'Crop',
+  'a11y-editor-tab-tuning': 'Tuning',
+  'a11y-editor-tab-filters': 'Filters',
+  'a11y-cloud-editor-apply-filter': 'Apply {{name}} filter',
+  'a11y-cloud-editor-apply-crop': 'Apply {{name}} operation',
+  'a11y-cloud-editor-apply-tuning': 'Apply {{name}} tuning',
+  'a11y-cloud-editor-apply-aspect-ratio': 'Apply operation {{name}} {{value}}',
+  'crop-to-shape': 'Crop to {{value}}',
+  custom: 'Freeform',
+  'freeform-crop': 'Freeform crop',
+  'network-error': 'Network error',
+  retry: 'Retry',
+} as const;

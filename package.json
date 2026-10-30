@@ -12,7 +12,6 @@
     "image editing",
     "image size",
     "cloud image editor",
-    "symbiote.js",
     "upload api client",
     "building blocks",
     "blocks",
@@ -80,17 +79,17 @@
     "test:types": "vitest run --project types",
     "test:attw": "attw --pack . --profile esm-only",
     "test:publint": "publint",
+    "test:dts-internals": "tsx ./scripts/check-dts-internals.ts",
     "test:specs": "vitest run --project specs",
-    "test:e2e": "vitest run --project e2e",
-    "test:e2e:dev": "vitest --project e2e --browser.headless=false",
+    "test:e2e": "vitest run --project e2e --project e2e-camera",
+    "test:e2e:dev": "vitest --project e2e --project e2e-camera --browser.headless=false",
     "test:coverage": "vitest run --coverage",
     "test:locales": "tsx ./scripts/test-locales.ts",
     "release": "shipjs prepare",
     "build:lib": "npm run clean:web && npm run clean:dist && tsx ./scripts/build.ts",
     "build:ssr-stubs": "tsx ./scripts/build-ssr-stubs.ts",
-    "build:jsx:types": "tsx ./scripts/build-jsx-types.ts",
     "build:svg-sprites": "tsx ./scripts/build-svg-sprite.ts",
-    "build": "run-s build:svg-sprites build:lib build:ssr-stubs build:jsx:types && npm run test:attw && npm run test:publint && npm run lint:size",
+    "build": "run-s build:svg-sprites build:lib build:ssr-stubs && npm run test:dts-internals && npm run test:attw && npm run test:publint && npm run lint:size",
     "tsc": "run-s tsc:app tsc:test tsc:e2e tsc:node",
     "tsc:app": "tsc --project tsconfig.app.json",
     "tsc:test": "tsc --project tsconfig.test.json",
@@ -163,20 +162,21 @@
   "author": "Uploadcare Inc.",
   "license": "MIT",
   "dependencies": {
+    "@lit-labs/signals": "^0.3.0",
     "@lit/context": "^1.1.6",
+    "@uploadcare/cdn-url": "6.25.0",
     "@uploadcare/cname-prefix": "^6.19.0",
     "@uploadcare/image-shrink": "^6.19.0",
     "@uploadcare/quality-insights": "^6.19.0",
     "@uploadcare/signed-uploads": "^6.23.0",
     "@uploadcare/upload-client": "^6.23.0",
     "keyux": "^0.11.3",
-    "lit": "^3.3.2",
-    "nanostores": "^1.1.1"
+    "lit": "^3.3.2"
   },
   "size-limit": [
     {
       "path": "dist/index.js",
-      "limit": "100 KB"
+      "limit": "99 KB"
     },
     {
       "path": "dist/env.js",
@@ -200,7 +200,7 @@
     },
     {
       "path": "web/uc-cloud-image-editor.min.js",
-      "limit": "50 KB"
+      "limit": "51 KB"
     },
     {
       "path": "web/uc-file-uploader-regular.min.js",

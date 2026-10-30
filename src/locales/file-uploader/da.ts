@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Kameraadgang nægtet',
   'camera-permissions-prompt': 'Tillad venligst adgang til kameraet',
   'camera-permissions-request': 'Anmod om adgang',
+  'camera-not-found': 'Intet kamera fundet',
+  'camera-unavailable': 'Kameraet er i brug eller utilgængeligt',
   'files-count-limit-error-title': 'Filantal grænse overskredet',
   'files-count-limit-error-too-few':
     'Du har valgt {{total}} {{plural:file(total)}}. Mindst {{min}} {{plural:file(min)}} er påkrævet.',
@@ -107,6 +109,8 @@ export default {
   'file-item-edit-button': 'Rediger',
   'file-item-remove-button': 'Fjern',
   'a11y-activity-header-button-close': 'Luk',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Stop optagelse',
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Justering',
   'a11y-editor-tab-crop': 'Beskær',
@@ -131,6 +135,8 @@ export default {
 
   custom: 'Fri form',
   'freeform-crop': 'Fri beskæring',
+  'network-error': 'Netværksfejl',
+  retry: 'Prøv igen',
 
   'upload-from': 'Upload fra {{source}}',
   'get-from': 'Hent fra {{source}}',
