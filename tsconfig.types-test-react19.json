@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.types-test.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    // React 19's types, installed under an alias next to the repo's React 18 ones. A consumer on React 19 has only these.
+    "types": [],
+    "paths": {
+      "react": ["./node_modules/@types/react-19"],
+      "react/*": ["./node_modules/@types/react-19/*"]
+    }
+  },
+  "include": ["types/test-react19", "types/jsx.d.ts"]
+}
