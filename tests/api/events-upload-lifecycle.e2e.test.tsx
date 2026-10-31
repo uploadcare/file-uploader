@@ -1,9 +1,10 @@
 import { DEMO_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
+import type { OutputCollectionState } from '@/types';
 import { withResolvers } from '@/utils/withResolvers';
-import { IMAGE } from '~/tests/fixtures/files';
+import { IMAGE, testFile } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
-import { resetEmulator } from '~/tests/utils/emulator.browser';
+import { emulatorSession, isLive, resetEmulator } from '~/tests/utils/emulator.browser';
 import { recordEvents } from '~/tests/utils/event-recorder';
 import { renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
@@ -204,6 +205,40 @@ describe('events: upload lifecycle', () => {
     expect(recorder.detailsOf('file-upload-failed')[0].errors[0].type).toBe('FILE_SIZE_EXCEEDED');
     await recorder.waitForAfter(CHANGE, 'file-upload-failed');
     expect(recorder.detailsOf(CHANGE).at(-1)).toMatchObject({ status: 'failed', failedCount: 2 });
+  });
+
+  // Fake-only: the emulator rejects one file and holds the other.
+  it.skipIf(isLive)('fires common-upload-failed once, after the last file of the batch settles', async () => {
+    const released = withResolvers();
+    emulatorSession().on('POST /base/', async ({ request, next }) => {
+      const file = (await request.clone().formData()).get('file');
+      if (file instanceof File && file.name === 'rejected.jpg') {
+        // The Upload API answers a JSON error with status 200 and the error in the body.
+        return Response.json({ error: { status_code: 400, content: 'File is not allowed.' } });
+      }
+      await released.promise;
+      return next();
+    });
+    const { api, provider } = await renderSolution();
+    const recorder = recordEvents(provider);
+    // Copied when it fires: the recorder keeps the live state, which a later read would see newer.
+    const failed: OutputCollectionState[] = [];
+    provider.addEventListener('common-upload-failed', (e) => failed.push(e.detail.snapshot()));
+
+    api.addFileFromObject(testFile('rejected.jpg'));
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
+    // The sentinel: `change` is debounced longer than `common-upload-failed`, so a report of the rejection made while
+    // the other file still uploads would land before it.
+    await recorder.waitForAfter(CHANGE, 'file-upload-failed');
+    released.resolve();
+    // The same sentinel after the other file's success: a report that success triggers lands before it too.
+    await recorder.waitForAfter(CHANGE, 'file-upload-success');
+
+    const settled = recorder.typesExcluding(CHANGE, ...PROGRESS);
+    expect(settled.filter((type) => type === 'common-upload-failed')).toHaveLength(1);
+    expect(settled.indexOf('common-upload-failed')).toBeGreaterThan(settled.indexOf('file-upload-success'));
+    expect(failed).toEqual([expect.objectContaining({ status: 'failed', successCount: 1, failedCount: 1 })]);
   });
 
   it('fires group-created after the upload succeeds when groupOutput is enabled', async () => {

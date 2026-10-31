@@ -26,13 +26,17 @@ export class UploadCollectionEventsController {
   @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
-  @inject(UploadController) private readonly _upload!: UploadController;
+  // A thunk: `UploadController` reaches this module back through `ValidationController`.
+  @inject(() => UploadController) private readonly _upload!: UploadController;
 
   /**
    * Whether `COMMON_UPLOAD_SUCCESS` has fired for the collection as it is. Every file is validated again once uploaded,
    * and validations that land in separate batches would each see the whole collection done and report it again.
    */
   private _isUploadSuccessReported = false;
+
+  /** Whether `COMMON_UPLOAD_FAILED` has fired since the collection last became failed with nothing in flight. */
+  private _isUploadFailedReported = false;
 
   /** Membership changed → the current group no longer describes the collection, and its success is not reported yet. */
   public resetGroupIfMembershipChanged(added: Set<Entry>, removed: Set<Entry>): void {
@@ -89,13 +93,38 @@ export class UploadCollectionEventsController {
     );
   }
 
-  /** `COMMON_UPLOAD_FAILED` (debounced) — paired per errored entry by the coordinator. */
-  public emitCommonFailed(): void {
-    this._eventEmitter.emit(
-      UploaderEventType.COMMON_UPLOAD_FAILED,
-      () => this._outputCollectionState() as OutputCollectionState<'failed'>,
-      { debounce: true },
-    );
+  /**
+   * `COMMON_UPLOAD_FAILED` once the collection is failed (a file or collection error) and nothing is left uploading,
+   * queued or validating — once per change into that state. Reporting it as soon as one file failed sent it while the
+   * rest of the batch still uploaded, and again for every later validator run.
+   */
+  public emitCommonFailedIfSettled(): void {
+    let isFailed = this._collectionState.get('collectionErrors').length > 0;
+    let isInFlight = false;
+    for (const uid of this._collection.items()) {
+      const entry = this._collection.read(uid);
+      if (!entry) continue;
+      if (entry.get('errors').length > 0) {
+        isFailed = true;
+      }
+      if (
+        entry.get('isUploading') ||
+        entry.get('isQueuedForUploading') ||
+        entry.get('isValidationPending') ||
+        entry.get('isQueuedForValidation')
+      ) {
+        isInFlight = true;
+      }
+    }
+    const isSettledFailure = isFailed && !isInFlight;
+    if (isSettledFailure && !this._isUploadFailedReported) {
+      this._eventEmitter.emit(
+        UploaderEventType.COMMON_UPLOAD_FAILED,
+        () => this._outputCollectionState() as OutputCollectionState<'failed'>,
+        { debounce: true },
+      );
+    }
+    this._isUploadFailedReported = isSettledFailure;
   }
 
   /**
