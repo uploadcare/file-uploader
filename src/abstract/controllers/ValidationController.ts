@@ -1,7 +1,6 @@
 import { Queue } from '@uploadcare/upload-client';
 import type {
   OutputCollectionErrorType,
-  OutputCollectionState,
   OutputError,
   OutputErrorCollection,
   OutputErrorFile,
@@ -25,7 +24,6 @@ import { controllerLogger } from '../controllerLogger';
 import { lifetimeOf, requireContainerOf } from '../di/ControllerContainer';
 import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
-import { EventEmitter, EventType } from '../EventEmitter';
 import { TelemetryManager } from '../managers/TelemetryManager';
 import type { TypedData } from '../TypedData';
 import type { Uid } from '../Uid';
@@ -40,6 +38,7 @@ import type {
 import { CollectionStateController } from './CollectionStateController';
 import { ConfigController } from './ConfigController';
 import { UploadCollectionController } from './UploadCollectionController';
+import { UploadCollectionEventsController } from './UploadCollectionEventsController';
 
 const LOG_TEXT = {
   FILE_VALIDATION_FAILED: 'File validator execution has failed',
@@ -103,7 +102,8 @@ export class ValidationController {
   // uninitialized when the decorator runs.
   @inject(() => UploaderPublicApi) private readonly _api!: UploaderPublicApi;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
-  @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
+  // A thunk: the collection events controller reaches this one back through `UploadController`.
+  @inject(() => UploadCollectionEventsController) private readonly _collectionEvents!: UploadCollectionEventsController;
 
   private _commonFileValidators: FuncFileValidator[] = [
     validateIsImage,
@@ -215,15 +215,7 @@ export class ValidationController {
 
     this._collectionState.set('collectionErrors', errors);
 
-    if (errors.length > 0) {
-      // Inlined from the removed bridge's `emitCommonUploadFailed`: the debounced
-      // `common-upload-failed` with a thunked failed-collection-state payload.
-      this._eventEmitter.emit(
-        EventType.COMMON_UPLOAD_FAILED,
-        () => buildOutputCollectionState(requireContainerOf(this)) as OutputCollectionState<'failed'>,
-        { debounce: true },
-      );
-    }
+    this._collectionEvents.emitCommonFailedIfSettled();
   }
 
   public cleanupValidationForEntry(entry: TypedData<UploadEntryData>): void {

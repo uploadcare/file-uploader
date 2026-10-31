@@ -298,7 +298,7 @@ describe('UploadEventsController', () => {
       expect(t.deps.applyInitialCrop).toHaveBeenCalled();
     });
 
-    it('emits FILE_UPLOAD_FAILED + debounced COMMON_UPLOAD_FAILED for errored entries', () => {
+    it('emits FILE_UPLOAD_FAILED for errored entries and runs the collection validators', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });
       t.collection.read(id)!.set('errors', [{ type: 'X', message: 'm' }] as never);
@@ -310,33 +310,20 @@ describe('UploadEventsController', () => {
         UploaderEventType.FILE_UPLOAD_FAILED,
         expect.objectContaining({ internalId: id }),
       );
+    });
+
+    it('emits debounced COMMON_UPLOAD_FAILED when the last file in flight finishes after another failed', () => {
+      const t = setup();
+      const failed = t.collection.add({ fileName: 'a.txt' });
+      const uploaded = t.collection.add({ fileName: 'b.txt' });
+      t.collection.read(failed)!.set('errors', [{ type: 'X', message: 'm' }] as never);
+      t.collection.read(uploaded)!.set('fileInfo', { uuid: 'u1' } as never);
+
+      t.fireProperties({ fileInfo: new Set([uploaded]) });
+
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.COMMON_UPLOAD_FAILED, expect.any(Function), {
         debounce: true,
       });
-    });
-
-    it('pairs FILE_UPLOAD_FAILED + COMMON_UPLOAD_FAILED per errored entry, in order (locks the interleave)', () => {
-      const t = setup();
-      const a = t.collection.add({ fileName: 'a.txt' });
-      const b = t.collection.add({ fileName: 'b.txt' });
-      t.collection.read(a)!.set('errors', [{ type: 'X', message: 'm' }] as never);
-      t.collection.read(b)!.set('errors', [{ type: 'Y', message: 'n' }] as never);
-
-      t.fireProperties({ errors: new Set([a, b]) });
-
-      // The documented pairing must stay per-entry (FILE then COMMON), not
-      // "all FILE_* then one COMMON_*" — a future reorder would break consumers.
-      const failedTypes = t.emit.mock.calls
-        .map((c) => c[0])
-        .filter(
-          (type) => type === UploaderEventType.FILE_UPLOAD_FAILED || type === UploaderEventType.COMMON_UPLOAD_FAILED,
-        );
-      expect(failedTypes).toEqual([
-        UploaderEventType.FILE_UPLOAD_FAILED,
-        UploaderEventType.COMMON_UPLOAD_FAILED,
-        UploaderEventType.FILE_UPLOAD_FAILED,
-        UploaderEventType.COMMON_UPLOAD_FAILED,
-      ]);
     });
 
     it('emits COMMON_UPLOAD_SUCCESS when all entries are loaded with no errors', () => {

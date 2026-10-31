@@ -17,6 +17,15 @@ import { ValidationController } from './ValidationController';
 type Unsubscribe = () => void;
 type Entry = TypedData<UploadEntryData>;
 
+/** The keys whose change can leave the collection with nothing in flight. */
+const SETTLE_KEYS: (keyof UploadEntryData)[] = [
+  'fileInfo',
+  'isUploading',
+  'isQueuedForUploading',
+  'isValidationPending',
+  'isQueuedForValidation',
+];
+
 const VALIDATION_TRIGGER_KEYS: (keyof UploadEntryData)[] = [
   'file',
   'uploadError',
@@ -181,15 +190,15 @@ export class UploadEventsController {
       }
     }
     if (changeMap.errors) {
+      // Also reports the collection failed, once nothing is left in flight.
       this._validation.runCollectionValidators();
       for (const entryId of changeMap.errors) {
-        // Pair each per-file failure with a (debounced) common-failed emit, matching
-        // the original per-entry interleave.
-        if (this._fileEvents.failed(entryId)) {
-          this._collectionEvents.emitCommonFailed();
-        }
+        this._fileEvents.failed(entryId);
       }
       this._collectionEvents.emitCommonSuccessIfComplete();
+    } else if (SETTLE_KEYS.some((key) => changeMap[key])) {
+      // A file finishing without an error can be the last one in flight after another failed.
+      this._collectionEvents.emitCommonFailedIfSettled();
     }
     if (changeMap.cdnUrl) {
       this._fileEvents.urlChanged(changeMap.cdnUrl);
