@@ -167,19 +167,19 @@ export class UploaderPublicApi {
   // Shared entry-init builder for a local File — used by the single-add
   // `addFileFromObject` and the batch `addFilesFromObjects`.
   private _objectFileInit(
-    file: File,
+    file: File | Blob,
     { silent, fileName, source, fullPath }: ApiAddFileObjectOptions = {},
   ): Partial<UploadEntryData> {
     return {
       file,
       ...fileDerivedFields(file),
-      fileName: fileName ?? file.name,
+      fileName: fileName ?? (file instanceof File ? file.name : null),
       ...addOptions({ silent, source }),
       fullPath: fullPath ?? null,
     };
   }
 
-  public addFileFromObject = (file: File, options: ApiAddFileObjectOptions = {}): OutputFileEntry<'idle'> => {
+  public addFileFromObject = (file: File | Blob, options: ApiAddFileObjectOptions = {}): OutputFileEntry<'idle'> => {
     const internalId = this._collection.add(this._objectFileInit(file, options));
     return this.getOutputItem(internalId);
   };

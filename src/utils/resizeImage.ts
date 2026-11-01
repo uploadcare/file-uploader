@@ -1,6 +1,6 @@
 import { preloadImage } from './preloadImage';
 
-export async function generateThumb(imgFile: File, size = 40): Promise<string> {
+export async function generateThumb(imgFile: Blob, size = 40): Promise<string> {
   if (imgFile.type === 'image/svg+xml') {
     // TODO: Return destuctor here
     return URL.createObjectURL(imgFile);
