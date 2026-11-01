@@ -65,6 +65,13 @@ describe('NPM package', () => {
     }
   });
 
+  test('exports `EventType` as a value, as the docs import it for `api.on`', async () => {
+    const rootModule = await import('@uploadcare/file-uploader');
+    const webModule = await import(`@uploadcare/file-uploader/web/${'file-uploader.min.js'}`);
+    expect(rootModule.EventType.FILE_UPLOAD_SUCCESS).toBe('file-upload-success');
+    expect(webModule.EventType.FILE_UPLOAD_SUCCESS).toBe('file-upload-success');
+  });
+
   test('jsx types should be exported', async () => {
     await expect(import('@uploadcare/file-uploader/types/jsx')).resolves.not.toThrow();
   });

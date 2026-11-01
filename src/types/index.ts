@@ -4,3 +4,5 @@ export type { CustomLocaleDefinition } from '../abstract/localeRegistry';
 export type * from '../abstract/managers/plugin/PluginTypes';
 export type * from './events';
 export type * from './exported';
+// `export type *` above strips values, and the docs import `EventType` as one for `api.on`.
+export { EventType } from './exported';
