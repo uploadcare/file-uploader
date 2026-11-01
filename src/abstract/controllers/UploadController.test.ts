@@ -362,7 +362,8 @@ describe('UploadController', () => {
       const { controller, collection } = setup({
         cfg: { multiple: true, multipleMax: 0 },
         whenValidated: async (entry) => {
-          if (entry.get('file')?.name === 'bad.txt') {
+          const file = entry.get('file');
+          if (file instanceof File && file.name === 'bad.txt') {
             entry.set('errors', [{ type: 'CUSTOM_ERROR', message: 'nope' }]);
           }
         },

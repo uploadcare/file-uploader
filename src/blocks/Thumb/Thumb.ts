@@ -158,7 +158,7 @@ export class Thumb extends FileItemConfig {
   }
 
   /** Store a thumbnail drawn from the local file, or the placeholder if that fails. */
-  private async _storeLocalThumb(entry: UploadEntryTypedData, file: File, size: number): Promise<void> {
+  private async _storeLocalThumb(entry: UploadEntryTypedData, file: Blob, size: number): Promise<void> {
     try {
       const thumbUrl = await this.whileAdopted(generateThumb(file, size), (url) => entry.set('thumbUrl', url));
       entry.set('thumbUrl', thumbUrl);

@@ -29,3 +29,8 @@ test('setCurrentActivity rejects unknown params', () => {
     invalidParam: 'value',
   });
 });
+
+test('addFileFromObject takes a File or a Blob, as documented', () => {
+  api.addFileFromObject(new File([''], 'a.png'));
+  api.addFileFromObject(new Blob(['']), { fileName: 'a.png' });
+});

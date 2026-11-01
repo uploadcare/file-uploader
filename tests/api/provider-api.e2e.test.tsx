@@ -76,6 +76,22 @@ describe('UploadCtxProvider api', () => {
     expect(uploadStartHandler).not.toHaveBeenCalled();
   }, 30_000);
 
+  it('adds and uploads a Blob, as the docs allow, named only by the fileName option', async () => {
+    const { api } = await renderSolution();
+    const blob = () => new Blob([IMAGE.PIXEL], { type: IMAGE.PIXEL.type });
+
+    const unnamed = api.addFileFromObject(blob());
+    const named = api.addFileFromObject(blob(), { fileName: 'pixel.png' });
+
+    expect(unnamed.name).toBeNull();
+    expect(unnamed.mimeType).toBe(IMAGE.PIXEL.type);
+    expect(named.name).toBe('pixel.png');
+
+    api.uploadAll();
+    await vi.waitFor(() => expect(api.getOutputCollectionState().status).toBe('success'), { timeout: 15_000 });
+    expect(api.getOutputCollectionState().successCount).toBe(2);
+  }, 30_000);
+
   it('replaceFile swaps a file in place: keeps position, new internalId, re-validates, fires natural add/remove events', async () => {
     // An `upload`-time validator runs once per uploaded file and is then skipped
     // on later changes. Seeing it run for the replacement proves the new entry

@@ -3,7 +3,7 @@ import type { OutputErrorFile } from '../types/index';
 import type { TypedData } from './TypedData';
 
 export interface UploadEntryData extends Record<string, unknown> {
-  file: File | null;
+  file: File | Blob | null;
   externalUrl: string | null;
   fileName: string | null;
   fileSize: number | null;
