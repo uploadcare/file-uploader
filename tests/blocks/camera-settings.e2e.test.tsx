@@ -1,11 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Locator } from 'vitest/browser';
 import type { Config } from '@/index';
+import { settingOf } from '~/tests/utils/camera-settings';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
 /**
- * The aspect ratio and quality pickers in the camera header, against chromium's fake camera
+ * The aspect ratio and resolution settings in the camera settings accordion, against chromium's fake camera
  * (`--use-fake-device-for-media-stream`). Located by accessible name, which also checks the labels.
  */
 
@@ -27,13 +28,10 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
     camera,
     getUserMedia,
     settingsButton: camera.getByRole('button', { name: 'Camera settings', exact: true, includeHidden: true }),
-    ratioPicker: camera.getByRole('combobox', { name: 'Aspect ratio', exact: true, includeHidden: true }),
-    resolutionPicker: camera.getByRole('combobox', { name: 'Resolution', exact: true, includeHidden: true }),
+    ratio: settingOf(camera, 'Aspect ratio'),
+    resolution: settingOf(camera, 'Resolution'),
   };
 };
-
-const optionTexts = (picker: Locator) =>
-  [...(picker.element() as HTMLSelectElement).options].map((option) => option.textContent);
 
 /** Takes a photo, accepts it and returns its pixel size. */
 const takePhoto = async ({ api, camera }: Awaited<ReturnType<typeof openCamera>>) => {
@@ -60,7 +58,7 @@ describe('camera settings button', () => {
     await expect.element(settingsButton).not.toBeVisible();
   });
 
-  it('opens both pickers, labelled', async () => {
+  it('opens both settings, labelled and closed', async () => {
     const opened = await openCamera({
       cameraAspectRatio: 'native, 1:1, 4:3',
       cameraResolution: 'auto, 720p',
@@ -68,10 +66,45 @@ describe('camera settings button', () => {
 
     await opened.settingsButton.click();
 
-    await expect.element(opened.ratioPicker).toBeVisible();
-    await expect.element(opened.resolutionPicker).toBeVisible();
-    expect(optionTexts(opened.ratioPicker)).toEqual(['Original', '1:1', '4:3']);
-    expect(optionTexts(opened.resolutionPicker)).toEqual(['Auto', '720P']);
+    await expect.element(opened.ratio.row).toBeVisible();
+    await expect.element(opened.resolution.row).toBeVisible();
+    await expect.element(opened.ratio.options).not.toBeVisible();
+    await expect.element(opened.resolution.options).not.toBeVisible();
+    expect(opened.ratio.texts()).toEqual(['Original', '1:1', '4:3']);
+    expect(opened.resolution.texts()).toEqual(['Auto', '720P']);
+  });
+
+  it('shows the value in effect on each row', async () => {
+    const opened = await openCamera({ cameraAspectRatio: '4:3, native', cameraResolution: 'auto, 720p' });
+
+    await opened.settingsButton.click();
+    await opened.resolution.pick('720P');
+
+    const rowText = (row: Locator) => row.element().closest('summary')?.textContent?.replace(/\s+/g, ' ').trim();
+    expect(rowText(opened.ratio.row)).toBe('Aspect ratio 4:3');
+    expect(rowText(opened.resolution.row)).toBe('Resolution 720P');
+  });
+
+  it('opens one section at a time', async () => {
+    const opened = await openCamera({ cameraAspectRatio: 'native, 1:1', cameraResolution: 'auto, 720p' });
+    await opened.settingsButton.click();
+
+    await opened.ratio.row.click();
+    await expect.element(opened.ratio.option('1:1')).toBeVisible();
+
+    await opened.resolution.row.click();
+    await expect.element(opened.resolution.option('720P')).toBeVisible();
+    expect(opened.ratio.isOpen()).toBe(false);
+  });
+
+  it('shows a lone section as just its options, still labelled', async () => {
+    const opened = await openCamera({ cameraAspectRatio: 'native, 1:1' });
+
+    await opened.settingsButton.click();
+
+    await expect.element(opened.ratio.option('1:1')).toBeVisible();
+    await expect.element(opened.ratio.row).not.toBeVisible();
+    expect(opened.ratio.isOpen()).toBe(true);
   });
 
   it('sits in the bottom bar, next to mute, and opens upward', async () => {
@@ -82,9 +115,9 @@ describe('camera settings button', () => {
 
     await opened.settingsButton.click();
 
-    await expect.element(opened.ratioPicker).toBeVisible();
+    await expect.element(opened.ratio.options).toBeVisible();
     // Chromium supports anchor positioning, so the popup is placed above the button rather than centered.
-    const popup = opened.ratioPicker.element().closest('[popover]');
+    const popup = opened.ratio.options.element().closest('[popover]');
     expect(popup?.getBoundingClientRect().bottom).toBeLessThanOrEqual(button.getBoundingClientRect().top);
 
     await opened.camera.getByRole('button', { name: 'Video', exact: true }).click();
@@ -114,12 +147,32 @@ describe('camera settings button', () => {
   });
 });
 
+describe('camera picker', () => {
+  it('is offered in the settings rather than the header once there are several cameras', async () => {
+    const enumerateDevices = navigator.mediaDevices.enumerateDevices.bind(navigator.mediaDevices);
+    const second = { kind: 'videoinput', deviceId: 'second-camera', label: 'Second camera', groupId: 'second' };
+    vi.spyOn(navigator.mediaDevices, 'enumerateDevices').mockImplementation(async () => [
+      ...(await enumerateDevices()),
+      { ...second, toJSON: () => second } as MediaDeviceInfo,
+    ]);
+    const opened = await openCamera();
+    // The header still says "Camera", so the section is found by its options rather than by that text.
+    const cameras = settingOf(opened.camera, 'Camera');
+
+    await opened.settingsButton.click();
+
+    await expect.element(cameras.option('Second camera')).toBeVisible();
+    expect(cameras.texts()).toHaveLength(2);
+    expect(opened.camera.element().querySelector('uc-activity-header :is(uc-select, [role="radiogroup"])')).toBeNull();
+  });
+});
+
 describe('aspect ratio picker', () => {
   it('crops the photo to the pick without changing the config', async () => {
     const opened = await openCamera({ cameraAspectRatio: 'native, 1:1' });
     await opened.settingsButton.click();
 
-    await opened.ratioPicker.selectOptions('1:1');
+    await opened.ratio.pick('1:1');
     const photo = await takePhoto(opened);
 
     expect(photo.width).toBe(photo.height);
@@ -132,8 +185,8 @@ describe('aspect ratio picker', () => {
 
     await opened.settingsButton.click();
 
-    await expect.element(opened.resolutionPicker).toBeVisible();
-    await expect.element(opened.ratioPicker).toBeVisible();
+    await expect.element(opened.resolution.row).toBeVisible();
+    await expect.element(opened.ratio.row).toBeVisible();
   });
 
   it('starts on the first listed ratio', async () => {
@@ -141,7 +194,7 @@ describe('aspect ratio picker', () => {
 
     await opened.settingsButton.click();
 
-    await expect.element(opened.ratioPicker).toHaveValue('1:1');
+    await expect.element(opened.ratio.option('1:1')).toBeChecked();
     const photo = await takePhoto(opened);
     expect(photo.width).toBe(photo.height);
   });
@@ -149,11 +202,11 @@ describe('aspect ratio picker', () => {
   it('starts over when the config changes', async () => {
     const opened = await openCamera({ cameraAspectRatio: 'native, 1:1, 4:3' });
     await opened.settingsButton.click();
-    await opened.ratioPicker.selectOptions('4:3');
+    await opened.ratio.pick('4:3');
 
     opened.config.cameraAspectRatio = '1:1, native';
 
-    await expect.element(opened.ratioPicker).toHaveValue('1:1');
+    await expect.element(opened.ratio.option('1:1')).toBeChecked();
   });
 });
 
@@ -163,7 +216,7 @@ describe('resolution picker', () => {
     const applyConstraints = vi.spyOn(MediaStreamTrack.prototype, 'applyConstraints');
     await opened.settingsButton.click();
 
-    await opened.resolutionPicker.selectOptions('720p');
+    await opened.resolution.pick('720P');
 
     await vi.waitFor(() =>
       expect(applyConstraints).toHaveBeenCalledWith(
@@ -183,6 +236,6 @@ describe('resolution picker', () => {
 
     await opened.settingsButton.click();
 
-    expect(optionTexts(opened.resolutionPicker)).toEqual(['Auto', '720P']);
+    expect(opened.resolution.texts()).toEqual(['Auto', '720P']);
   });
 });
