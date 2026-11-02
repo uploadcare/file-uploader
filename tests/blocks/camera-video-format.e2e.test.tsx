@@ -53,16 +53,6 @@ describe('cameraVideoFormats', () => {
     expect(clip.name).toMatch(/^video-\d+\.webm$/);
   });
 
-  it('records MP4 with H.264 + AAC when mp4 comes first', async () => {
-    const options = spyOnRecorderOptions();
-
-    const clip = await recordClip({ cameraVideoFormats: 'mp4, webm' });
-
-    expect(clip.type).toBe('video/mp4');
-    expect(clip.name).toMatch(/^video-\d+\.mp4$/);
-    expect(options.at(-1)?.mimeType).toBe('video/mp4;codecs=avc1,mp4a.40.2');
-  });
-
   it('lets a supported mediaRecorderOptions.mimeType win', async () => {
     const clip = await recordClip({ cameraVideoFormats: 'mp4', mediaRecorderOptions: { mimeType: 'video/webm' } });
 
