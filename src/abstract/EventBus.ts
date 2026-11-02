@@ -62,7 +62,8 @@ export type UploaderEventPayload = {
   'done-click': OutputCollectionState;
 
   'common-upload-start': OutputCollectionState<'uploading'>;
-  'common-upload-progress': OutputCollectionState<'uploading'>;
+  // Any status: a rejected file makes the collection `failed` mid-upload, and the last tick lands once it settles.
+  'common-upload-progress': OutputCollectionState;
   'common-upload-success': OutputCollectionState<'success'>;
   'common-upload-failed': OutputCollectionState<'failed'>;
 

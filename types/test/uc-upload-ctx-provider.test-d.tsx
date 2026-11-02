@@ -219,7 +219,8 @@ test("'common-upload-failed' event payload", () => {
 test("'common-upload-progress' event payload", () => {
   instance.addEventListener('common-upload-progress', (e) => {
     const state = e.detail;
-    expectTypeOf(state.status).toEqualTypeOf<'uploading'>();
+    // A rejected file makes the collection `failed` mid-upload, and the last tick lands once it is settled.
+    expectTypeOf(state.status).toEqualTypeOf<OutputCollectionStatus>();
   });
 });
 

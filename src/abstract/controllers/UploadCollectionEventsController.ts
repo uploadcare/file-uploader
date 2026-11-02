@@ -87,10 +87,7 @@ export class UploadCollectionEventsController {
     }
 
     this._collectionState.set('commonProgress', progress);
-    this._eventEmitter.emit(
-      UploaderEventType.COMMON_UPLOAD_PROGRESS,
-      this._outputCollectionState() as OutputCollectionState<'uploading'>,
-    );
+    this._eventEmitter.emit(UploaderEventType.COMMON_UPLOAD_PROGRESS, this._outputCollectionState());
   }
 
   /**
