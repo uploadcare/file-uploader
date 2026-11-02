@@ -104,9 +104,9 @@ test("'file-added' event payload", () => {
     expectTypeOf(state.isUploading).toEqualTypeOf<false>();
     expectTypeOf(state.isRemoved).toEqualTypeOf<false>();
     expectTypeOf(state.errors).toEqualTypeOf<[]>();
-    expectTypeOf(state.cdnUrl).toEqualTypeOf<null>();
-    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<null>();
-    expectTypeOf(state.uuid).toEqualTypeOf<null>();
+    expectTypeOf(state.cdnUrl).toEqualTypeOf<string | null>();
+    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<string | null>();
+    expectTypeOf(state.uuid).toEqualTypeOf<string | null>();
     expectTypeOf(state.fileInfo).toEqualTypeOf<null>();
     expectTypeOf(state.source).toEqualTypeOf<SourceTypes | null>();
   });
@@ -159,9 +159,9 @@ test("'file-upload-start' event payload", () => {
     expectTypeOf(state.isUploading).toEqualTypeOf<true>();
     expectTypeOf(state.isRemoved).toEqualTypeOf<false>();
     expectTypeOf(state.errors).toEqualTypeOf<[]>();
-    expectTypeOf(state.cdnUrl).toEqualTypeOf<null>();
-    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<null>();
-    expectTypeOf(state.uuid).toEqualTypeOf<null>();
+    expectTypeOf(state.cdnUrl).toEqualTypeOf<string | null>();
+    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<string | null>();
+    expectTypeOf(state.uuid).toEqualTypeOf<string | null>();
     expectTypeOf(state.fileInfo).toEqualTypeOf<null>();
   });
 });

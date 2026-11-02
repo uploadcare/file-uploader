@@ -532,9 +532,10 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
   | {
       status: 'uploading';
       fileInfo: null;
-      uuid: null;
-      cdnUrl: null;
-      cdnUrlModifiers: null;
+      // Set before the upload for a file added by uuid or CDN URL.
+      uuid: string | null;
+      cdnUrl: string | null;
+      cdnUrlModifiers: string | null;
       isUploading: true;
       isSuccess: false;
       isFailed: false;
@@ -556,9 +557,10 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
   | {
       status: 'idle';
       fileInfo: null;
-      uuid: null;
-      cdnUrl: null;
-      cdnUrlModifiers: null;
+      // Set before the upload for a file added by uuid or CDN URL.
+      uuid: string | null;
+      cdnUrl: string | null;
+      cdnUrlModifiers: string | null;
       isUploading: false;
       isSuccess: false;
       isFailed: false;
