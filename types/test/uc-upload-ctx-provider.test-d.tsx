@@ -98,17 +98,19 @@ test("'file-added' event payload", () => {
     expectTypeOf(state.isImage).toEqualTypeOf<boolean>();
     expectTypeOf(state.size).toEqualTypeOf<number>();
     expectTypeOf(state.name).toEqualTypeOf<string>();
-    expectTypeOf(state.status).toEqualTypeOf<'idle'>();
-    expectTypeOf(state.isSuccess).toEqualTypeOf<false>();
+    // A file added already uploaded (addFileFromUploadcareFile) arrives as `success`.
+    expectTypeOf(state.status).toEqualTypeOf<'idle' | 'success'>();
     expectTypeOf(state.isFailed).toEqualTypeOf<false>();
     expectTypeOf(state.isUploading).toEqualTypeOf<false>();
     expectTypeOf(state.isRemoved).toEqualTypeOf<false>();
     expectTypeOf(state.errors).toEqualTypeOf<[]>();
-    expectTypeOf(state.cdnUrl).toEqualTypeOf<string | null>();
-    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<string | null>();
-    expectTypeOf(state.uuid).toEqualTypeOf<string | null>();
-    expectTypeOf(state.fileInfo).toEqualTypeOf<null>();
     expectTypeOf(state.source).toEqualTypeOf<SourceTypes | null>();
+    if (state.status === 'idle') {
+      expectTypeOf(state.fileInfo).toEqualTypeOf<null>();
+    } else {
+      expectTypeOf(state.fileInfo).toEqualTypeOf<UploadcareFile>();
+      expectTypeOf(state.uuid).toEqualTypeOf<string>();
+    }
   });
 });
 

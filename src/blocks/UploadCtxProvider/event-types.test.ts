@@ -20,7 +20,7 @@ describe('event type contract', () => {
   });
 
   it('locks the documented payload shapes', () => {
-    expectTypeOf<EventPayload['file-added']>().toEqualTypeOf<OutputFileEntry<'idle'>>();
+    expectTypeOf<EventPayload['file-added']>().toEqualTypeOf<OutputFileEntry<'idle' | 'success'>>();
     expectTypeOf<EventPayload['file-upload-start']>().toEqualTypeOf<OutputFileEntry<'uploading'>>();
     expectTypeOf<EventPayload['file-upload-success']>().toEqualTypeOf<OutputFileEntry<'success'>>();
     expectTypeOf<EventPayload['file-upload-failed']>().toEqualTypeOf<OutputFileEntry<'failed'>>();

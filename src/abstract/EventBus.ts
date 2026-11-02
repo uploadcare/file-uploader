@@ -42,7 +42,8 @@ export type UploaderEventKey = (typeof UploaderEventType)[keyof typeof UploaderE
 export type { OutputFileEntry, OutputCollectionState };
 
 export type UploaderEventPayload = {
-  'file-added': OutputFileEntry<'idle'>;
+  // `success` for a file added already uploaded (addFileFromUploadcareFile).
+  'file-added': OutputFileEntry<'idle' | 'success'>;
   'file-removed': OutputFileEntry<'removed'>;
   'file-upload-start': OutputFileEntry<'uploading'>;
   'file-upload-progress': OutputFileEntry<'uploading'>;
