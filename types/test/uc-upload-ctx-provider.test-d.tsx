@@ -9,6 +9,7 @@ import {
   type OutputError,
   type OutputFileEntry,
   type OutputFileErrorType,
+  type OutputFileStatus,
   type SourceTypes,
   UploadCtxProvider,
   type UploadcareFile,
@@ -196,7 +197,8 @@ test("'file-upload-success' event payload", () => {
 test("'file-url-changed' event payload", () => {
   instance.addEventListener('file-url-changed', (e) => {
     const state = e.detail;
-    expectTypeOf(state.status).toEqualTypeOf<'success'>();
+    // A file added by uuid or CDN URL gets its URL before it uploads, and a later edit changes it in any state.
+    expectTypeOf(state.status).toEqualTypeOf<OutputFileStatus>();
   });
 });
 
