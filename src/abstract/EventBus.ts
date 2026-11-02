@@ -61,7 +61,8 @@ export type UploaderEventPayload = {
   'upload-click': undefined;
   'done-click': OutputCollectionState;
 
-  'common-upload-start': OutputCollectionState<'uploading'>;
+  // `failed` when the list already holds a rejected file: a file error fails the whole collection.
+  'common-upload-start': OutputCollectionState<'uploading' | 'failed'>;
   // Any status: a rejected file makes the collection `failed` mid-upload, and the last tick lands once it settles.
   'common-upload-progress': OutputCollectionState;
   'common-upload-success': OutputCollectionState<'success'>;

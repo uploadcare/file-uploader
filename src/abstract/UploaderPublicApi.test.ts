@@ -309,7 +309,7 @@ describe('UploaderPublicApi', () => {
   });
 
   describe('uploadAll', () => {
-    it('uploads the uploadable entries through the controller and emits COMMON_UPLOAD_START', () => {
+    it('uploads the uploadable entries through the controller and emits COMMON_UPLOAD_START once they start', () => {
       const { api, container } = setup();
       // Stub the real upload so the unit test asserts delegation, not a network call.
       const uploadEntries = vi.spyOn(container.get(UploadController), 'uploadEntries').mockImplementation(() => {});
@@ -324,6 +324,9 @@ describe('UploaderPublicApi', () => {
       expect(uploadEntries).toHaveBeenCalledTimes(1);
       const uploadedUids = uploadEntries.mock.calls[0]?.[0] ?? [];
       expect([...uploadedUids].sort()).toEqual([e1.internalId, e2.internalId].sort());
+      // The controller reports the start once the first file is uploading; the stub never does.
+      expect(startHandler).not.toHaveBeenCalled();
+      uploadEntries.mock.calls[0]?.[1]?.();
       expect(startHandler).toHaveBeenCalledTimes(1);
     });
 

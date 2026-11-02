@@ -101,11 +101,21 @@ export class UploadController {
    * via `uploadEntry` (which is precondition-guarded + idempotent), whether or not
    * any item is rendered.
    */
-  public uploadEntries(uids: Uid[]): void {
+  /**
+   * Uploads `uids` as one batch. `onStart` runs once, when the first of them starts uploading, so what it reads
+   * describes an upload in flight; it never runs when the validators reject every one.
+   */
+  public uploadEntries(uids: Uid[], onStart?: () => void): void {
+    let started = false;
+    const startOnce = () => {
+      if (started) return;
+      started = true;
+      onStart?.();
+    };
     for (const uid of uids) {
       this.#activeBatch.add(uid);
       lifetimeOf(this).run(
-        () => this.uploadEntry(uid),
+        () => this.uploadEntry(uid, startOnce),
         (error) => this._log.error('Upload failed', error),
       );
     }
@@ -180,7 +190,7 @@ export class UploadController {
     return configValue;
   }
 
-  public async uploadEntry(uid: Uid): Promise<void> {
+  public async uploadEntry(uid: Uid, onStart?: () => void): Promise<void> {
     // Bound to the ctx: once it is torn down nothing here may touch a peer, so an entry still waiting for its
     // validators or still queued does not start, and a late result or failure is dropped.
     const lifetime = lifetimeOf(this);
@@ -221,6 +231,7 @@ export class UploadController {
       errors: [],
       isQueuedForUploading: true,
     });
+    onStart?.();
     this._fileEvents.start(entry);
 
     const abortController = new AbortController();

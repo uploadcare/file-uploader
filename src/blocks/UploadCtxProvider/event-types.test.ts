@@ -32,7 +32,7 @@ describe('event type contract', () => {
     expectTypeOf<EventPayload['activity-change']>().toEqualTypeOf<{ activity: ActivityType }>();
     expectTypeOf<EventPayload['upload-click']>().toEqualTypeOf<undefined>();
     expectTypeOf<EventPayload['done-click']>().toEqualTypeOf<OutputCollectionState>();
-    expectTypeOf<EventPayload['common-upload-start']>().toEqualTypeOf<OutputCollectionState<'uploading'>>();
+    expectTypeOf<EventPayload['common-upload-start']>().toEqualTypeOf<OutputCollectionState<'uploading' | 'failed'>>();
     expectTypeOf<EventPayload['change']>().toEqualTypeOf<OutputCollectionState>();
     expectTypeOf<EventPayload['group-created']>().toEqualTypeOf<OutputCollectionState<'success', 'has-group'>>();
   });

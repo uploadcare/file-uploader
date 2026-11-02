@@ -2,7 +2,6 @@ import { parseFileUrl } from '@uploadcare/cdn-url';
 import type {
   AuthToken,
   ConfigType,
-  OutputCollectionState,
   OutputCollectionStatus,
   OutputFileEntry,
   OutputFileStatus,
@@ -293,10 +292,10 @@ export class UploaderPublicApi {
 
     // Uploads through the controller (its `uploadEntry` is precondition-guarded +
     // idempotent), so uploading doesn't depend on an item being rendered.
-    this._uploadController.uploadEntries(itemsToUpload);
-    this._eventEmitter.emit(
-      EventType.COMMON_UPLOAD_START,
-      this.getOutputCollectionState() as OutputCollectionState<'uploading'>,
+    // Reported once the first file is uploading, so the state it carries is: an entry still waits for its
+    // validators until then.
+    this._uploadController.uploadEntries(itemsToUpload, () =>
+      this._eventEmitter.emit(EventType.COMMON_UPLOAD_START, this.getOutputCollectionState<'uploading' | 'failed'>()),
     );
   };
 

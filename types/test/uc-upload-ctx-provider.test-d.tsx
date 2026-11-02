@@ -205,7 +205,8 @@ test("'file-url-changed' event payload", () => {
 test("'common-upload-start' event payload", () => {
   instance.addEventListener('common-upload-start', (e) => {
     const state = e.detail;
-    expectTypeOf(state.status).toEqualTypeOf<'uploading'>();
+    // `failed` when the list already holds a rejected file.
+    expectTypeOf(state.status).toEqualTypeOf<'uploading' | 'failed'>();
   });
 });
 
