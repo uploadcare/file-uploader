@@ -286,7 +286,7 @@ and one of them corrupted any path whose last segment recurred earlier.
   `forbiddenModules` (`scripts/build-items.ts`); the build fails naming the module and
   the import chain that brought it in. Fix the chain (usually a value import that only
   needed a type, or a class named as a token) rather than the list.
-- **The dependency is pinned exactly** (`6.25.0`, no caret), its first stable release.
+- **The dependency is pinned exactly** (`6.25.1`, no caret).
   It is still marked beta, so a minor release may change its API: bump it on purpose
   and rerun the gate. Its declarations resolve under bundler resolution only, which is
   the only resolution file-uploader's published types are tested under.
