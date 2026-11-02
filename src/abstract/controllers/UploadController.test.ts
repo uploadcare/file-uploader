@@ -164,6 +164,44 @@ describe('UploadController', () => {
     });
   });
 
+  describe('the batch start', () => {
+    it('reports once, when the first entry of the batch is uploading and before its file-upload-start', async () => {
+      const { controller, collection, container } = setup({ cfg: { multiple: true } });
+      const emit = vi.spyOn(container.get(EventEmitter), 'emit');
+      const a = collection.add({ file: new File(['x'], 'a.txt') });
+      const b = collection.add({ file: new File(['y'], 'b.txt') });
+      const seen: { uploading: boolean[]; fileStarts: number }[] = [];
+      const onStart = vi.fn(() => {
+        const fileStarts = emit.mock.calls.filter(([type]) => type === UploaderEventType.FILE_UPLOAD_START).length;
+        seen.push({ uploading: [a, b].map((id) => !!collection.read(id)?.get('isUploading')), fileStarts });
+      });
+
+      controller.uploadEntries([a, b], onStart);
+      await vi.waitFor(() => expect(mockUploadFile).toHaveBeenCalledTimes(2));
+
+      expect(onStart).toHaveBeenCalledTimes(1);
+      expect(seen[0]?.uploading).toContain(true);
+      expect(seen[0]?.fileStarts).toBe(0);
+    });
+
+    it('does not report a batch whose every entry its validators rejected', async () => {
+      const { controller, collection } = setup({
+        whenValidated: async (entry) => {
+          entry.set('errors', [{ type: 'CUSTOM_ERROR', message: 'nope' }]);
+        },
+      });
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+      const onStart = vi.fn();
+
+      controller.uploadEntries([id], onStart);
+      await vi.waitFor(() => expect(collection.read(id)?.get('errors')).toHaveLength(1));
+      await Promise.resolve();
+
+      expect(onStart).not.toHaveBeenCalled();
+      expect(mockUploadFile).not.toHaveBeenCalled();
+    });
+  });
+
   describe('waiting for validation', () => {
     it("starts the upload only once the entry's validators have run", async () => {
       let validated = () => {};

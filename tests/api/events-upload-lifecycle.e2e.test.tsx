@@ -48,6 +48,50 @@ describe('events: upload lifecycle', () => {
     expect(changes.at(-1)).toMatchObject({ status: 'success', successCount: 1, failedCount: 0 });
   });
 
+  const commonUploadStart = (provider: EventTarget) =>
+    new Promise<Pick<OutputCollectionState, 'status' | 'isUploading' | 'uploadingCount'>>((resolve) => {
+      provider.addEventListener(
+        'common-upload-start',
+        (e) => {
+          // Read as it fires, as documented: the state is lazy.
+          const { status, isUploading, uploadingCount } = (e as CustomEvent<OutputCollectionState>).detail;
+          resolve({ status, isUploading, uploadingCount });
+        },
+        { once: true },
+      );
+    });
+
+  it('carries an uploading state in common-upload-start', async () => {
+    const { api, provider } = await renderSolution('regular', { multiple: true });
+    const started = commonUploadStart(provider);
+
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.addFileFromObject(IMAGE.SQUARE);
+    api.uploadAll();
+
+    const state = await started;
+    expect(state).toMatchObject({ status: 'uploading', isUploading: true });
+    expect(state.uploadingCount).toBeGreaterThan(0);
+  });
+
+  it('carries a failed state in common-upload-start when the list already holds a rejected file', async () => {
+    const { api, provider } = await renderSolution('regular', {
+      multiple: true,
+      fileValidators: [(entry) => (entry.name === 'bad.png' ? { message: 'rejected' } : undefined)],
+    });
+    const started = commonUploadStart(provider);
+
+    api.addFileFromObject(IMAGE.PIXEL, { fileName: 'bad.png' });
+    api.addFileFromObject(IMAGE.SQUARE);
+    await vi.waitFor(() => expect(api.getOutputCollectionState().failedCount).toBe(1));
+    api.uploadAll();
+
+    const state = await started;
+    // A file error makes the whole collection `failed`, even while the rest upload.
+    expect(state.status).toBe('failed');
+    expect(state.uploadingCount).toBe(1);
+  });
+
   it('fires the full ordered sequence for a file added from a URL', async () => {
     const { api, provider } = await renderSolution();
     const recorder = recordEvents(provider);
