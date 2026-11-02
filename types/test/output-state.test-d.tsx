@@ -61,15 +61,22 @@ test('narrowing a collection error on `type` pins what its payload carries', () 
   }
 });
 
-test('an idle or uploading entry has no result yet', () => {
+test('an idle or uploading entry has no upload result yet', () => {
   if (entry.status === 'uploading') {
     expectTypeOf(entry.isUploading).toEqualTypeOf<true>();
-    expectTypeOf(entry.uuid).toEqualTypeOf<null>();
     expectTypeOf(entry.fileInfo).toEqualTypeOf<null>();
   }
   if (entry.status === 'idle') {
-    expectTypeOf(entry.cdnUrl).toEqualTypeOf<null>();
+    expectTypeOf(entry.fileInfo).toEqualTypeOf<null>();
     expectTypeOf(entry.isRemoved).toEqualTypeOf<false>();
+  }
+});
+
+test('an idle or uploading entry added by uuid or CDN URL already carries them', () => {
+  if (entry.status === 'idle' || entry.status === 'uploading') {
+    expectTypeOf(entry.uuid).toEqualTypeOf<string | null>();
+    expectTypeOf(entry.cdnUrl).toEqualTypeOf<string | null>();
+    expectTypeOf(entry.cdnUrlModifiers).toEqualTypeOf<string | null>();
   }
 });
 
