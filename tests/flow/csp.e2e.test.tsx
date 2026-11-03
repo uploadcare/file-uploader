@@ -1,6 +1,9 @@
+import { EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { page } from 'vitest/browser';
-import { renderSolution, within } from '~/tests/utils/render-solution';
+import { page, userEvent } from 'vitest/browser';
+import type { CameraPreview } from '@/blocks/CameraSource/CameraPreview';
+import { createInCtx, inCtx, renderSolution, waitForBlocks, within } from '~/tests/utils/render-solution';
+import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
 
 /**
@@ -51,5 +54,58 @@ describe('under the documented CSP', () => {
     const zeroDot = slider.querySelector<HTMLElement>('.uc-zero-dot')!;
     expect(zeroDot.style.getPropertyValue('--l-fraction')).toBe('0.5');
     expect(zeroDot.style.opacity).toBe('1');
+  });
+
+  it("sets the file item's progress ring offset", async () => {
+    // Not uploading, so the offset keeps its first-render value and no later CSSOM update hides a dropped attribute.
+    const { api, root } = await renderSolution('regular', { confirmUpload: true });
+    api.addFileFromObject(new File(['x'], 'a.txt', { type: 'text/plain' }));
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+
+    await expect.poll(() => root.querySelector('uc-file-action-button .uc-preloader')).not.toBeNull();
+    const preloader = root.querySelector<HTMLElement>('uc-file-action-button .uc-preloader')!;
+    expect(preloader.style.getPropertyValue('--l-progress-offset')).toBe('100');
+  });
+
+  it('mirrors the camera preview', async () => {
+    const { ctxName, root } = await renderSolution('regular');
+    // Set before connecting, so the mirror lands in the first render. Mounted bare: opening the camera isn't needed.
+    const preview = createInCtx<CameraPreview>('uc-camera-preview', ctxName);
+    preview.mirror = true;
+    root.after(preview);
+    await waitForBlocks(preview);
+
+    expect(preview.querySelector('video')!.style.transform).toBe('scaleX(-1)');
+  });
+
+  it("places the editor's tab toggles and filter thumbnails", async () => {
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-cloud-image-editor uuid={EDITOR_IMAGE_UUID} ctx-name={ctxName}></uc-cloud-image-editor>
+        <uc-config cdn-cname="https://ucarecdn.com/" ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+      </>,
+    );
+    const editorEl = inCtx<HTMLElement>('uc-cloud-image-editor', ctxName);
+    const editor = within(editorEl);
+    const tab = editor.getByRole('tab', { name: /filters/i });
+    await expect.element(tab).toBeVisible();
+
+    // A consistency check only: the toolbar renders again once the editor loads, and styleMap's second render went
+    // through CSSOM too, so this passed before the fix. The filter opacities below are the part that fails without it.
+    const toggles = [...editorEl.querySelectorAll<HTMLElement>('.uc-tab-toggle uc-btn-ui')];
+    expect(toggles.map((toggle) => `${toggle.dataset.id}:${toggle.style.gridColumn}`)).toEqual([
+      'crop:1',
+      'tuning:2',
+      'filters:3',
+    ]);
+
+    await userEvent.click(tab);
+    const original = editor.getByRole('option', { name: 'Apply original filter', exact: true });
+    await expect.element(original).toBeVisible();
+    const control = original.element() as HTMLElement;
+    expect(control.querySelector<HTMLElement>('.uc-preview')!.style.opacity).toBe('0');
+    expect(control.querySelector<HTMLElement>('uc-editor-icon')!.style.opacity).toBe('1');
   });
 });

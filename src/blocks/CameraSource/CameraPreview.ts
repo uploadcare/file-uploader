@@ -1,8 +1,8 @@
 import { html, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { styleMap } from 'lit/directives/style-map.js';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { cssomStyleMap } from '../../lit/cssom-style-map';
 import { CameraActionEvent } from './CameraActionEvent';
 import type { CameraView } from './cameraView';
 import './camera-preview.css';
@@ -42,7 +42,7 @@ export class CameraPreview extends ChildBlock {
           muted
           autoplay
           playsinline
-          style=${styleMap({ transform: this.mirror ? 'scaleX(-1)' : null })}
+          style=${cssomStyleMap({ transform: this.mirror ? 'scaleX(-1)' : null })}
           ?hidden=${view?.videoHidden ?? true}
           @loadeddata=${() => this._emit({ type: 'video-frame', ready: true })}
           @emptied=${() => this._emit({ type: 'video-frame', ready: false })}
