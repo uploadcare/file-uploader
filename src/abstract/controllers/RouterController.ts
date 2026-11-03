@@ -55,7 +55,9 @@ export class RouterController {
   // Signal-backed, so a tracked reader sees new params even when the activity stays the same (one external activity
   // switching sources).
   @signalState() private _params: Record<string, unknown> = {};
-  private _history: ActivityId[] = [];
+  // Each entry keeps the params its activity was shown with, so `back()` re-enters it as it was (an external
+  // activity without its source is an empty screen).
+  private _history: { id: ActivityId; params: Record<string, unknown> }[] = [];
   private _fileAddHooks: FileAddHook[] = [];
   // Set while a `reportWhenShown` navigation runs.
   private _holdUnshown = false;
@@ -99,7 +101,7 @@ export class RouterController {
     return this._params;
   }
   public get history(): readonly ActivityId[] {
-    return this._history;
+    return this._history.map((entry) => entry.id);
   }
   public get canGoBack(): boolean {
     return this._history.length > 0;
@@ -313,6 +315,7 @@ export class RouterController {
       }
     }
 
+    const top = this._history.at(-1);
     if (nextEffective !== prevEffective) {
       this._pushHistory(nextEffective);
       if (this._holdUnshown && nextEffective !== null && !this._mountedActivities.has(nextEffective)) {
@@ -321,6 +324,9 @@ export class RouterController {
         this._unreported = null;
         this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: nextEffective });
       }
+    } else if (top && top.id === nextEffective) {
+      // Params changed in place (one external activity switching sources): `back()` returns to the latest.
+      top.params = this._params;
     }
     this._listeners.notify();
   }
@@ -335,8 +341,8 @@ export class RouterController {
       this._history = [];
       return;
     }
-    if (this._history[this._history.length - 1] === to) return;
-    this._history.push(to);
+    if (this._history.at(-1)?.id === to) return;
+    this._history.push({ id: to, params: this._params });
     if (this._history.length > 10) this._history.shift();
   }
 
@@ -377,7 +383,7 @@ export class RouterController {
     if (this._currentActivity !== prev) return;
     // Already there: the navigation changed nothing, so nothing pushed it.
     if (this._history.length === 0 && prev === to) {
-      this._history.push(to);
+      this._history.push({ id: to, params: this._params });
     }
     this._emit(UploaderEventType.ACTIVITY_CHANGE, { activity: prev });
   }
@@ -438,7 +444,7 @@ export class RouterController {
 
   /**
    * Navigate to the previous history entry (or close everything if there is
-   * none). History stores `[...past, current]`, so the target is the newest
+   * none) with the params it was shown with. History stores `[...past, current]`, so the target is the newest
    * entry below the top, skipping entries that are now guarded-out (e.g. an
    * upload list that emptied while a modal was open over it).
    */
@@ -447,11 +453,11 @@ export class RouterController {
       const prev = this._history[i]!;
       // An earlier entry of the activity already showing is no step back (v1 skipped them too): after "Add more"
       // and an emptied list the history reads start-from, upload-list, start-from.
-      if (prev !== this.currentActivity && this._canActivate(prev)) {
+      if (prev.id !== this.currentActivity && this._canActivate(prev.id)) {
         // Truncate to the target (dropping the current entry and any guarded-out entries above it); `_pushHistory`
         // dedupes the re-push.
         this._history.length = i + 1;
-        this.navigate(prev);
+        this.navigate(prev.id, prev.params);
         return;
       }
     }

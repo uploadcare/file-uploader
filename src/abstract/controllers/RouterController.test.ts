@@ -106,6 +106,25 @@ describe('RouterController (v2)', () => {
   });
 
   describe('history + back', () => {
+    it('back re-enters the previous activity with the params it was entered with', () => {
+      const { router } = setup();
+      router.navigate('start-from');
+      router.navigate('external', { externalSourceType: 'gdrive' });
+      router.navigate('upload-list');
+      router.back();
+      expect(router.currentActivity).toBe('external');
+      expect(router.params).toEqual({ externalSourceType: 'gdrive' });
+    });
+
+    it('back re-enters with the params an activity last switched to while it showed', () => {
+      const { router } = setup();
+      router.navigate('external', { externalSourceType: 'gdrive' });
+      router.navigate('external', { externalSourceType: 'dropbox' });
+      router.navigate('upload-list');
+      router.back();
+      expect(router.params).toEqual({ externalSourceType: 'dropbox' });
+    });
+
     it('pushes activated activities, deduping consecutive repeats', () => {
       const { router } = setup();
       router.navigate('start-from');
