@@ -49,6 +49,6 @@ describe('ExternalSource', () => {
 
     (el.querySelector('.uc-close-btn') as HTMLButtonElement).click();
 
-    expect(spy).toHaveBeenCalledWith('onClose');
+    expect(spy).toHaveBeenCalledWith('onCancel');
   });
 });

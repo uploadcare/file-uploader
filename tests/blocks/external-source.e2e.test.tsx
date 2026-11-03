@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { Config, UploadCtxProvider } from '@/index.ts';
 import { getCtxName } from '../utils/getCtxName';
-import { clickSource, renderSolution, within } from '../utils/render-solution';
+import { clickSource, expectActivity, expectModal, renderSolution, within } from '../utils/render-solution';
 import '../../types/jsx';
 
 // M9g Task 1 — additive parity e2e pinning current v1 behavior of
@@ -16,16 +16,12 @@ import '../../types/jsx';
 //
 // Disclosure: the brief describes this activity as rendering "its l10n'd
 // header for that source" with a back button that "returns to start-from".
-// Neither holds for v1: `ExternalSource.render()` (ExternalSource.ts) puts
-// only a single close button inside `<uc-activity-header>` — no source
-// caption/icon and no back button — and that button fires
-// `router.traverse('onClose')`, which is wired only to the "close everything"
-// edge (see `src/abstract/controllers/RouterController.ts`'s
-// `onBack`/`onCancel` vs `onClose` edge docs), not `onBack`. Empirically,
-// clicking it closes the whole modal (`uc-start-from` is not left active/
-// visible either) rather than returning to start-from. The cases below pin
-// what's actually there instead: the close button + iframe render surface,
-// and the close button's real "closes everything" effect.
+// v1 has no back button or source caption: `ExternalSource.render()`
+// (ExternalSource.ts) puts only a single close button inside
+// `<uc-activity-header>`. As in v1, that button fires
+// `router.traverse('onCancel')`, which goes back to the previous screen (the
+// source list) and keeps the modal open. The cases below pin the close button +
+// iframe render surface; the 'header close' block pins the go-back effect.
 
 const renderRegularHost = () => {
   const ctxName = getCtxName();
@@ -90,17 +86,6 @@ describe('uc-external-source (parity, render surface)', () => {
       .toBe('Dropbox');
   });
 
-  it('clicking close closes the modal entirely (onClose, not onBack)', async () => {
-    renderRegularHost();
-    await navigateToExternalSource();
-
-    (document.querySelector('uc-external-source .uc-close-btn') as HTMLButtonElement).click();
-
-    await expect.element(page.getByTestId('uc-external-source')).not.toBeInTheDocument();
-    // Not a return to start-from: the whole modal closes.
-    await expect.poll(() => document.querySelector('uc-start-from')?.hasAttribute('active')).toBe(false);
-  });
-
   it('reflects data-testid under testMode', async () => {
     renderRegularHost();
     await navigateToExternalSource();
@@ -161,5 +146,19 @@ describe('uc-external-source (preferred types)', () => {
 
   it('keeps the original when no preferred type matches', async () => {
     expect(await pickWithAlternatives('video/*')).toBe(ORIGINAL_URL);
+  });
+});
+
+describe('uc-external-source (header close)', () => {
+  it('goes back to the source list and keeps the modal open', async () => {
+    const { root } = await renderSolution('regular', { socialBaseUrl: 'https://social.invalid' });
+    await clickSource(root, 'Dropbox');
+    const externalSource = within(root).getByTestId('uc-external-source');
+    await expect.element(externalSource).toBeVisible();
+
+    await externalSource.getByRole('button', { name: 'Close', exact: true }).click();
+
+    await expectActivity(root, 'start-from');
+    await expectModal(root, 'start-from', 'open');
   });
 });
