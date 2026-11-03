@@ -1,5 +1,7 @@
 import { Signal } from '@lit-labs/signals';
 import { describe, expect, it, vi } from 'vitest';
+import { InternalEventType } from '../../../abstract/EventEmitter';
+import { redactPayload } from '../../../abstract/telemetry/redacted';
 import { stubEditorServices } from './__tests__/editor-fixtures';
 import { CloudImageEditorController } from './CloudImageEditorController';
 import { TabId } from './toolbar-constants';
@@ -99,7 +101,7 @@ describe('CloudImageEditorController', () => {
     expect(controller.l10n('cancel')).toBe('cancel'); // identity fallback
     // @ts-expect-error `pubkey` is no editor config key, so nothing resolves it.
     expect(controller.getConfig('pubkey')).toBeUndefined();
-    expect(controller.telemetry.sendEvent({})).toBeUndefined(); // no-op, doesn't throw
+    expect(controller.telemetry.sendEvent({ eventType: InternalEventType.ACTION_EVENT })).toBeUndefined(); // no-op, doesn't throw
     expect(controller.telemetry.sendEventError(new Error('x'))).toBeUndefined();
     return expect(controller.proxyUrl('https://example.com/a.png')).resolves.toBe('https://example.com/a.png');
   });
@@ -120,8 +122,9 @@ describe('CloudImageEditorController', () => {
     expect(controller.l10n('cancel', { n: 1 })).toBe('cancel:{"n":1}');
     // @ts-expect-error `pubkey` is no editor config key; the injected accessor still answers it.
     expect(controller.getConfig('pubkey')).toBe('demopublickey');
-    controller.telemetry.sendEvent({ type: 'x' });
-    expect(sendEvent).toHaveBeenCalledWith({ type: 'x' });
+    const event = { eventType: InternalEventType.ACTION_EVENT, payload: redactPayload({ a: 1 }) };
+    controller.telemetry.sendEvent(event);
+    expect(sendEvent).toHaveBeenCalledWith(event);
     controller.telemetry.sendEventError('boom', 'ctx');
     expect(sendEventError).toHaveBeenCalledWith('boom', 'ctx');
     await expect(controller.proxyUrl('https://example.com/a.png')).resolves.toBe(

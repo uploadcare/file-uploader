@@ -1,6 +1,7 @@
 import { Signal, signal } from '@lit-labs/signals';
 import type { CdnOperation } from '@uploadcare/cdn-url';
 import { type ObserveOptions, SignalMap } from '../../../abstract/di/SignalMap';
+import type { TelemetryEvent } from '../../../abstract/managers/TelemetryManager';
 import type { ConfigType } from '../../../types/index';
 import { DEFAULT_CDN_ORIGIN } from '../../../utils/cdn/origin';
 import type { EditorL10nKey } from './editor-locale';
@@ -88,7 +89,7 @@ export interface EditorServices {
   l10n: (key: string, variables?: Record<string, string | number>) => string;
   getConfig: <K extends keyof EditorConfig>(key: K) => EditorConfig[K];
   telemetry: {
-    sendEvent: (e: unknown) => void;
+    sendEvent: (e: TelemetryEvent) => void;
     sendEventError: (err: unknown, ctx?: unknown) => void;
     /** Same contract as `TelemetryManager.sendActionEvent`. */
     sendActionEvent: (event: string, node: string | undefined, extra?: Record<string, unknown>) => void;
