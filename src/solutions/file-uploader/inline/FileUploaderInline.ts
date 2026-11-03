@@ -91,10 +91,11 @@ export class FileUploaderInline extends SolutionChildBlock {
     });
 
     // Inline renders every activity in place (no modal), so all navigation
-    // targets the background slot; a completed flow returns to start-from.
+    // targets the background slot; a completed flow, or an activity its guard refuses (an empty upload list), returns
+    // to start-from.
     const router = this._router;
     router.navigationStrategy = () => 'background';
-    router.configure({ doneActivity: ACTIVITY_TYPES.START_FROM });
+    router.configure({ doneActivity: ACTIVITY_TYPES.START_FROM, initActivity: ACTIVITY_TYPES.START_FROM });
   }
 
   // Re-seed start-from when everything closes. Atomic `observeCurrentActivity`

@@ -1,5 +1,6 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
+import { ACTIVITY_TYPES } from '../../../abstract/activity-constants';
 import { RouterController } from '../../../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../../../abstract/di/ControllerContainer';
 import { inject } from '../../../abstract/di/inject';
@@ -50,8 +51,9 @@ export class FileUploaderRegular extends SolutionChildBlock {
     super.controllerReady(container);
 
     // Regular renders every activity inside a `<uc-modal>`, so all navigation
-    // targets the foreground (modal) slot.
+    // targets the foreground (modal) slot; an activity its guard refuses (an empty upload list) opens start-from.
     this._router.navigationStrategy = () => 'foreground';
+    this._router.configure({ initActivity: ACTIVITY_TYPES.START_FROM });
 
     this._telemetry.sendEvent({
       eventType: InternalEventType.INIT_SOLUTION,

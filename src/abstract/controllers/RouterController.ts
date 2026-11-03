@@ -16,6 +16,8 @@ export type NavigationEdge = 'onBack' | 'onCancel' | 'onClose' | 'onDone' | 'onF
 export interface RouteTable {
   /** Activity to land on after a completed flow (preset-specific). */
   doneActivity?: ActivityId | null;
+  /** Activity to show instead of one its guard refuses (v1's init activity: an empty upload list opened the start screen). */
+  initActivity?: ActivityId;
 }
 
 /** An `onFileAdd` interceptor: a target (or `null` to close everything) overrides the default; `undefined` defers. */
@@ -166,6 +168,12 @@ export class RouterController {
     }
   }
 
+  /** The configured init activity to show instead of a refused `to`, unless `to` is the init activity itself. */
+  private _fallbackFor(to: EdgeTarget): ActivityId | null {
+    const init = this._table.initActivity;
+    return init && init !== to ? init : null;
+  }
+
   /**
    * Re-evaluate the current activity against its guard; if it no longer holds,
    * navigate back. Call after external state changes a guard depends on (the
@@ -244,6 +252,8 @@ export class RouterController {
     // so readers never observe params for an activity we didn't actually enter.
     if (!this._canActivate(to)) {
       this._log.debug(lazy(() => [`navigate to "${to}" refused (guard)`]));
+      const fallback = this._fallbackFor(to);
+      if (fallback) this.navigate(fallback);
       return;
     }
     this._params = params;
@@ -267,6 +277,8 @@ export class RouterController {
   public setActivity(to: EdgeTarget, params?: Record<string, unknown>): void {
     this._log.debug(lazy(() => [`set activity (direct): ${to ?? 'null'}`]));
     if (!this._canActivate(to)) {
+      const fallback = this._fallbackFor(to);
+      if (fallback) this.setActivity(fallback);
       return;
     }
     if (params !== undefined) {
@@ -363,6 +375,8 @@ export class RouterController {
   /** Open a modal for `id` without touching the background activity. */
   public openModal(id: ActivityId, params?: Record<string, unknown>): void {
     if (!this._canActivate(id)) {
+      const fallback = this._fallbackFor(id);
+      if (fallback) this.openModal(fallback);
       return;
     }
     if (params !== undefined) {
