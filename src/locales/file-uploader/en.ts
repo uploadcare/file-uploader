@@ -1,6 +1,6 @@
 import { EDITOR_SHARED_STRINGS } from '../../abstract/editor-shared-strings';
 
-export default {
+const templates = {
   ...EDITOR_SHARED_STRINGS,
   'locale-id': 'en',
   'social-source-lang': 'en',
@@ -119,3 +119,11 @@ export default {
   retake: 'Retake',
   accept: 'Accept',
 } as const;
+
+/** The templates as written: the blocks' `l10n` reads the interpolation variables from their literal types. */
+export type EnglishTemplates = typeof templates;
+
+/** Published as plain strings, as in 1.35, so a translation can be typed `typeof en`. */
+const en: { -readonly [K in keyof EnglishTemplates]: string } = templates;
+
+export default en;
