@@ -2,6 +2,7 @@ import { html, LitElement, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { createRef, ref } from 'lit/directives/ref.js';
+import { cssomStyleMap } from '../../../../../lit/cssom-style-map';
 import { LightDomMixin } from '../../../../../lit/LightDomMixin';
 import { RegisterableElementMixin } from '../../../../../lit/RegisterableElementMixin';
 
@@ -155,7 +156,12 @@ export class SliderUi extends SliderUiBase {
     return Array.from({ length: this._stepsCount }, () => html`<div class="uc-minor-step"></div>`);
   }
 
+  // Positions go through `cssomStyleMap` (CSSOM): a CSP without `'unsafe-inline'` drops a `style` attribute.
   public override render() {
+    const zeroDotStyle = {
+      '--l-fraction': this._fraction(this.zero),
+      opacity: this._currentValue === this.zero ? 0 : 1,
+    };
     return html`
       <div class="uc-steps" ${ref(this._stepsRef)}>
         <div class="uc-border-step"></div>
@@ -165,10 +171,10 @@ export class SliderUi extends SliderUiBase {
         <div class="uc-border-step"></div>
         <div
           class="uc-zero-dot"
-          style="--l-fraction: ${this._fraction(this.zero)}; opacity: ${this._currentValue === this.zero ? 0 : 1}"
+          style=${cssomStyleMap(zeroDotStyle)}
         ></div>
       </div>
-      <div class="uc-thumb" style="--l-fraction: ${this._fraction(this._currentValue)}"></div>
+      <div class="uc-thumb" style=${cssomStyleMap({ '--l-fraction': this._fraction(this._currentValue) })}></div>
       <input
         class="uc-input"
         type="range"
