@@ -125,21 +125,16 @@ describe('inline: no modal is ever used', () => {
     expect(api.getCurrentActivity()).toBe('upload-list');
   });
 
-  // Documented (api.mdx, setModalState): inline has no modal, so `setModalState(false)` does nothing but warn — it
-  // used to null the activity, which inline turns into a reset to the start screen.
-  it('leaves the inline uploader where it is and warns', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+  // As in v1: `setModalState(false)` nulls the activity, which inline turns into its start screen.
+  it('resets the inline uploader to start-from', async () => {
     const { root, api } = await renderSolution('inline');
     api.addFileFromObject(IMAGE.PIXEL);
     await expectActivity(root, 'upload-list');
 
     api.setModalState(false);
 
-    // The warning is the last thing setModalState(false) does, so the activity is final once it fires.
-    await vi.waitFor(() =>
-      expect(warn).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), expect.stringContaining('navigate()')),
-    );
-    expect(api.getCurrentActivity()).toBe('upload-list');
+    await expectActivity(root, 'start-from');
+    expect(api.getCurrentActivity()).toBe('start-from');
   });
 });
 
