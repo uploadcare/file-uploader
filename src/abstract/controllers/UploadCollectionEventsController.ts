@@ -68,7 +68,7 @@ export class UploadCollectionEventsController {
    * Returns the freshly built state (for the group-output decision).
    */
   public flushOutput(): OutputCollectionState {
-    const collectionState = this._outputCollectionState();
+    const collectionState = buildOutputCollectionState(requireContainerOf(this), { warnOnLateRead: false });
     this._collectionState.set('collectionState', collectionState);
     this._eventEmitter.emit(UploaderEventType.CHANGE, () => this._outputCollectionState(), { debounce: true });
     return collectionState;
