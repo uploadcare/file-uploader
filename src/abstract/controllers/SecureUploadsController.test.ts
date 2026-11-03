@@ -415,17 +415,14 @@ describe('SecureUploadsController', () => {
 
         await controller.getSecureToken();
 
-        // The signing credential is redacted from the debug output.
         expect(debug).toHaveBeenCalledWith(
           '%c uc %c secure-uploads %c',
           expect.any(String),
           expect.any(String),
           '',
           'Secure signature resolved:',
-          { secureSignature: '<redacted>', secureExpire: mockToken.secureExpire },
+          mockToken,
         );
-        // …and the real signature never reaches the console.
-        expect(JSON.stringify(debug.mock.calls)).not.toContain('resolved-signature');
       });
     });
 

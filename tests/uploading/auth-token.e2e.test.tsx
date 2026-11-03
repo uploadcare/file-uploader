@@ -55,27 +55,6 @@ describe('authToken is not exposed', () => {
 
     expect(config.getAttribute('auth-token')).toBeNull();
   });
-
-  it.skipIf(!hasCredentials)('stays out of the debug log', async () => {
-    const credentials = await signedProject();
-
-    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    const { ctxName, api } = await renderSolution(
-      'regular',
-      { debug: true, store: false },
-      { pubkey: credentials.publicKey },
-    );
-    inCtx<Config>('uc-config', ctxName).authToken = credentials.authToken;
-    api.addFileFromObject(IMAGE.PIXEL);
-    api.uploadAll();
-    await expect.poll(() => entry(api)?.status, { timeout: 20_000 }).toBe('success');
-
-    // Debug mode prints the config assignment and the upload options; both
-    // used to carry the token verbatim.
-    const printed = log.mock.calls.map((args) => JSON.stringify(args)).join('\n');
-    expect(printed).toContain('authToken');
-    expect(printed).not.toContain(credentials.authToken);
-  });
 });
 
 describe.skipIf(!hasCredentials)('authToken against Upload API', () => {

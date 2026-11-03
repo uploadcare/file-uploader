@@ -9,7 +9,6 @@ import {
 } from '@uploadcare/upload-client';
 import type { OutputFileEntry } from '../../types/exported';
 import { fileDerivedFields } from '../../utils/fileTypes';
-import { redact } from '../../utils/redaction';
 import { customUserAgent } from '../../utils/userAgent';
 import { controllerLogger } from '../controllerLogger';
 import { containerOf, lifetimeOf } from '../di/ControllerContainer';
@@ -295,10 +294,7 @@ export class UploadController {
           metadata: await lifetime.guard(this.getMetadataFor(uid)),
           tags: await lifetime.guard(this.getTagsFor(uid)),
         };
-        // Redact the signing credential from debug output — never print
-        // `secureSignature` to the console. Lazy so the redacted copy is only
-        // built when this ctx is verbose.
-        this._log.debug(lazy(() => ['upload options', redact(uploadClientOptions, 'log')]));
+        this._log.debug(lazy(() => ['upload options', uploadClientOptions]));
         return uploadFile(fileInput, uploadClientOptions);
       };
 

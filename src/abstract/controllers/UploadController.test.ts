@@ -1,7 +1,6 @@
 import { CancelError, UploadcareError, type UploadcareFile, uploadFile } from '@uploadcare/upload-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ConfigType } from '../../types';
-import { REDACTED } from '../../utils/redaction';
 import { ControllerContainer, containerOf } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
 import { EventEmitter } from '../EventEmitter';
@@ -815,7 +814,7 @@ describe('UploadController', () => {
       );
     });
 
-    it('redacts secureSignature from the "upload options" debug log', async () => {
+    it('prints secureSignature in the "upload options" debug log, as v1 did', async () => {
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const { controller, collection } = setup({
         cfg: {
@@ -829,9 +828,8 @@ describe('UploadController', () => {
 
       const optionsCall = logSpy.mock.calls.find((c) => c.includes('upload options'));
       expect(optionsCall).toBeDefined();
-      expect((optionsCall?.at(-1) as { secureSignature?: string }).secureSignature).toBe(REDACTED);
-      // The real credential must never reach the console.
-      expect(JSON.stringify(logSpy.mock.calls)).not.toContain('SECRET-SIG');
+      // Runtime values the page already holds; only telemetry redacts them (it leaves the page).
+      expect((optionsCall?.at(-1) as { secureSignature?: string }).secureSignature).toBe('SECRET-SIG');
     });
 
     it('stays silent when this ctx has debug off', async () => {

@@ -11,8 +11,8 @@ declare const redactedBrand: unique symbol;
  */
 export type Redacted = Readonly<Record<string, unknown>> & { readonly [redactedBrand]: true };
 
-// Where a value becomes `Redacted`: only after `redact` has copied it with the `send` rules (and in `redactPayload`).
-const toRedacted = (value: object): Redacted => redact(value, 'send') as unknown as Redacted;
+// Where a value becomes `Redacted`: only after `redact` has copied it (and in `redactPayload`).
+const toRedacted = (value: object): Redacted => redact(value) as unknown as Redacted;
 
 /** A file entry, without its name, uuid, URLs, `File` or metadata. */
 export const redactFileEntry = (entry: OutputFileEntry): Redacted => toRedacted(entry);
@@ -28,8 +28,8 @@ export const redactConfig = (config: ConfigType): Redacted => toRedacted(config)
  * for the event's detail, not the integrator's metadata, so it is redacted inside rather than hidden whole.
  */
 export const redactPayload = ({ metadata, ...rest }: Record<string, unknown>): Redacted => {
-  const payload = redact(rest, 'send');
-  return (metadata === undefined ? payload : { ...payload, metadata: redact(metadata, 'send') }) as unknown as Redacted;
+  const payload = redact(rest);
+  return (metadata === undefined ? payload : { ...payload, metadata: redact(metadata) }) as unknown as Redacted;
 };
 
 /** A UI action: `event` names it, `node` is the tag of the element that reported it. */
