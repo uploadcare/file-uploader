@@ -1,7 +1,6 @@
 import { html, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import type { ApiHostEventListenerMap } from '../../lit/api-host-types';
-import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { ConfigHostAttributesMeta } from '../../lit/config-host-types';
 import { WithApi } from '../../lit/WithApi';
@@ -48,11 +47,11 @@ export class Uploader extends WithConfig(WithApi(ChildBlock)) {
   public mode: UploaderMode = 'regular';
 
   /** Regular-only: hide the open button (modal-only composition). */
-  @property({ converter: booleanAttribute })
+  @property({ type: Boolean })
   public headless = false;
 
   /** Regular-only: use `<uc-dynamic-btn>` instead of `<uc-simple-btn>`. */
-  @property({ attribute: 'dynamic-button', converter: booleanAttribute })
+  @property({ attribute: 'dynamic-button', type: Boolean })
   public dynamicButton = false;
 
   private _mintedCtxName: string | undefined = undefined;

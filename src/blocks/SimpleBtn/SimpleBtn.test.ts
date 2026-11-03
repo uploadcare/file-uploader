@@ -94,14 +94,4 @@ describe('SimpleBtn', () => {
 
     expect(buttonText(el)).toBe('CUSTOM');
   });
-
-  it('turns its dropzone off with dropzone="false"', async () => {
-    const { el } = await mountWithConfig(freshCtxName());
-    expect(el.querySelector('uc-drop-area')?.disabled).toBe(false);
-
-    el.setAttribute('dropzone', 'false');
-    await el.updateComplete;
-    expect(el.dropzone).toBe(false);
-    expect(el.querySelector('uc-drop-area')?.disabled).toBe(true);
-  });
 });

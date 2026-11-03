@@ -3,7 +3,6 @@ import { property } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { inject } from '../../abstract/di/inject';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
-import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
 import './simple-btn.css';
 
@@ -16,7 +15,7 @@ export class SimpleBtn extends ChildBlock {
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
-  @property({ converter: booleanAttribute })
+  @property({ type: Boolean })
   public dropzone = true;
 
   private readonly _handleClick = () => {
