@@ -1,13 +1,11 @@
-import { default as en } from '../locales/file-uploader/en';
+import { type EnglishTemplates, default as en } from '../locales/file-uploader/en';
 import { logger } from './logger';
 
 const log = logger.scope('locale-registry');
 
-/** The keys of the English dictionary, each a translated string. `en` itself keeps its templates' literal types. */
-export type LocaleDefinition = { -readonly [K in keyof typeof en]: string };
-
-/** The English templates as written, which the blocks' `l10n` reads the interpolation variables from. */
-export type EnglishTemplates = typeof en;
+/** The keys of the English dictionary, each a translated string. */
+export type LocaleDefinition = typeof en;
+export type { EnglishTemplates };
 export type LocaleDefinitionResolver = () => Promise<LocaleDefinition>;
 
 /**
@@ -35,7 +33,7 @@ const defineLocaleSync = (localeName: string, definition: LocaleDefinition): Loc
     log.warn(`Locale ${localeName} is already defined. Overwriting...`);
   }
 
-  const locale: LocaleDefinition = { ...(en as unknown as LocaleDefinition), ...definition };
+  const locale: LocaleDefinition = { ...en, ...definition };
   localeRegistry.set(localeName, locale);
 
   return locale;
