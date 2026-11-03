@@ -88,6 +88,18 @@ async function reservedMangleCache(buildItem: BuildItem): Promise<Record<string,
   );
 }
 
+/**
+ * Native property names, which esbuild must not hand out as mangled names. It avoids every name the bundle's own
+ * source uses as a property, but knows nothing of the ones only native objects carry: Lit's `_$litType$` became `at`
+ * once, and Lit took every array a template rendered (`Array.prototype.at`) for a template result and threw.
+ */
+const nativePropertyNames = (): Record<string, false> =>
+  Object.fromEntries(
+    [Object, Array, Function, String, Number, Boolean, Symbol, Promise, Map, Set, WeakMap, WeakSet, RegExp, Date, Error]
+      .flatMap((type) => [...Object.getOwnPropertyNames(type), ...Object.getOwnPropertyNames(type.prototype)])
+      .map((name) => [name, false]),
+  );
+
 /** Fails the build if esbuild mangled a name the probe missed, i.e. gave it a short name of its own. */
 const requireReservedMangle: EsbuildPlugin = {
   name: 'require-reserved-mangle',
@@ -138,7 +150,8 @@ async function build(buildItem: BuildItem) {
       options.logOverride = { 'ignored-bare-import': 'silent' };
       if (buildItem.mangleProps) {
         options.mangleProps = /^_/;
-        options.mangleCache = mangleCache;
+        // The reserved names all share a prefix no native property has.
+        options.mangleCache = mangleCache ?? nativePropertyNames();
       }
       if (buildItem.forbiddenModules) {
         options.metafile = true;
