@@ -50,7 +50,8 @@ export type PluginRenderDispose = () => void;
 export type PluginRender = (
   el: HTMLElement,
   activityParams: Record<string, unknown>,
-) => PluginRenderDispose | undefined;
+  // biome-ignore lint/suspicious/noConfusingVoidType: That's a function return type; a render may return nothing
+) => PluginRenderDispose | void;
 
 /**
  * The params an activity's label sees: its declared params (built-in, or from `CustomActivities`) with each one
