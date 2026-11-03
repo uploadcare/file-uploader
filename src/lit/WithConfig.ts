@@ -15,7 +15,7 @@ import {
 } from '../blocks/Config/computed-properties';
 import { allConfigKeys, builtinAttrKeyMapping, plainConfigKeys } from '../blocks/Config/config-keys';
 import type { ConfigType } from '../types';
-import { isSecretKey, REDACTED } from '../utils/redactSecrets';
+import { redactValue } from '../utils/redaction';
 import { toKebabCase } from '../utils/toKebabCase';
 import type { ChildBlock } from './ChildBlock';
 import type { Constructor } from './Constructor';
@@ -270,7 +270,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
         ) {
           this._log.warn(
             `Option "${key}" was set to an equal value with a new reference; keep the reference to avoid recomputation`,
-            isSecretKey(key) ? REDACTED : nextValue,
+            redactValue(key, nextValue),
           );
         }
       }
@@ -371,7 +371,7 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
               // empty string is visible as `""`.
               this._log.debug(
                 lazy(() => [
-                  `${key}: ${formatConfigLogValue(isSecretKey(key) ? REDACTED : prev)} → ${formatConfigLogValue(isSecretKey(key) ? REDACTED : curr)}`,
+                  `${key}: ${formatConfigLogValue(redactValue(key, prev))} → ${formatConfigLogValue(redactValue(key, curr))}`,
                 ]),
               );
             }

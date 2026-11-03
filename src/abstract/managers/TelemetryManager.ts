@@ -3,7 +3,7 @@ import { TelemetryAPIService } from '@uploadcare/quality-insights';
 import { Queue } from '@uploadcare/upload-client';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import type { ConfigType } from '../../types/index';
-import { PRIVATE_DATA_KEYS, redactDeep, redactSecrets } from '../../utils/redactSecrets';
+import { redact } from '../../utils/redaction';
 import { UID } from '../../utils/UID';
 import { initialConfig } from '../config/initialConfig';
 import { controllerLogger } from '../controllerLogger';
@@ -28,26 +28,6 @@ type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config' | 'c
   eventType: CommonEventType;
 };
 
-/**
- * Config keys whose *values* must never leave the page via telemetry: the
- * `secure*` options and integrator-supplied `metadata`. They are not dropped
- * from the snapshot — a non-default value is replaced with
- * {@link REDACTED_VALUE}, so the data still shows the option is in use while
- * the value itself stays private. The full snapshot is still tracked
- * internally for change detection.
- */
-const SENSITIVE_CONFIG_KEYS: ReadonlySet<keyof ConfigType> = new Set([
-  'authToken',
-  'secureSignature',
-  'secureExpire',
-  'secureDeliveryProxy',
-  'secureUploadsSignatureResolver',
-  'secureDeliveryProxyUrlResolver',
-  'metadata',
-] as const);
-
-const REDACTED_VALUE = '[redacted]';
-
 /** Uploader events that are too frequent, or too per-file, to report to telemetry. */
 const EXCLUDED_EVENTS: ReadonlySet<CommonEventType> = new Set([
   EventType.CHANGE,
@@ -58,19 +38,6 @@ const EXCLUDED_EVENTS: ReadonlySet<CommonEventType> = new Set([
   EventType.FILE_UPLOAD_PROGRESS,
   EventType.FILE_UPLOAD_SUCCESS,
   EventType.FILE_UPLOAD_FAILED,
-]);
-
-/**
- * Uploader events whose payload carries files: an entry, or a collection with its entries and group. Quality insights
- * collects non-personal data, so their {@link PRIVATE_DATA_KEYS} values are redacted; the rest is sent as is.
- */
-const FILE_PAYLOAD_EVENTS: ReadonlySet<CommonEventType> = new Set([
-  EventType.FILE_URL_CHANGED,
-  EventType.DONE_CLICK,
-  EventType.COMMON_UPLOAD_START,
-  EventType.COMMON_UPLOAD_SUCCESS,
-  EventType.COMMON_UPLOAD_FAILED,
-  EventType.GROUP_CREATED,
 ]);
 
 /**
@@ -126,12 +93,15 @@ export class TelemetryManager {
     // is isolate-and-warn (see `EventBus.emit`), so a throw here can't break the
     // fan-out — no extra try/catch needed around this observer.
     this.#disposables.add(
-      this._bus.onAny((type, payload) =>
+      this._bus.onAny((type, payload) => {
+        // Skipped before the copy below: the excluded events are the frequent ones (progress, change).
+        if (EXCLUDED_EVENTS.has(type as CommonEventType)) return;
+        // Event payloads are the integrator's data: copied now (they can be getters over live state) and redacted.
         this.sendEvent({
           eventType: type as CommonEventType,
-          payload: (payload ?? undefined) as Record<string, unknown> | undefined,
-        }),
-      ),
+          payload: (payload ? redact(payload, 'send') : undefined) as Record<string, unknown> | undefined,
+        });
+      }),
     );
   }
 
@@ -191,13 +161,7 @@ export class TelemetryManager {
   }
 
   private _sanitizedConfig(): TelemetryState['config'] {
-    const sanitized: Record<string, unknown> = redactSecrets(this._config);
-    for (const key of SENSITIVE_CONFIG_KEYS) {
-      if (this._config[key] !== initialConfig[key]) {
-        sanitized[key] = REDACTED_VALUE;
-      }
-    }
-    return sanitized as TelemetryState['config'];
+    return redact(this._config, 'send') as TelemetryState['config'];
   }
 
   private _formattingPayload(
@@ -253,13 +217,7 @@ export class TelemetryManager {
     if (EXCLUDED_EVENTS.has(body.eventType)) {
       return;
     }
-    // Copied now, while the config waits for the send: event payloads such as `OutputCollectionState` are getters over
-    // live state, and read after the yield below they would describe a later moment than the event.
-    const eventPayload = body.payload
-      ? FILE_PAYLOAD_EVENTS.has(body.eventType)
-        ? (redactDeep(body.payload, PRIVATE_DATA_KEYS) as Record<string, unknown>)
-        : { ...body.payload }
-      : undefined;
+    const eventPayload = body.payload ? { ...body.payload } : undefined;
 
     lifetime.run(
       () =>
