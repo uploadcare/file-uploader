@@ -3,8 +3,8 @@ import { html, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import type { Ref } from 'lit/directives/ref.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { styleMap } from 'lit/directives/style-map.js';
 import { when } from 'lit/directives/when.js';
+import { cssomStyleMap } from '../../../lit/cssom-style-map';
 import { debounced } from '../../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { debounce } from '../../../utils/debounce';
@@ -511,7 +511,7 @@ export class EditorToolbar extends EditorBlock {
     const isVisible = this.tabList.includes(id);
     const isActive = this.activeTab === id;
     const columnIndex = this.tabList.indexOf(id);
-    const style = columnIndex >= 0 ? styleMap({ gridColumn: `${columnIndex + 1}` }) : nothing;
+    const style = cssomStyleMap({ gridColumn: columnIndex >= 0 ? `${columnIndex + 1}` : null });
 
     return html`
       <uc-presence-toggle class="uc-tab-toggle" .visible=${isVisible} .styles=${this._tabToggleStyles}>

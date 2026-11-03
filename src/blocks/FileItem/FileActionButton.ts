@@ -1,7 +1,7 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
-import { styleMap } from 'lit/directives/style-map.js';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { cssomStyleMap } from '../../lit/cssom-style-map';
 
 import '../Icon/Icon';
 
@@ -76,7 +76,7 @@ export class FileActionButton extends ChildBlock {
           <uc-icon
             name="preloader"
             class="uc-preloader"
-            style=${styleMap({
+            style=${cssomStyleMap({
               '--l-progress-offset': String(progressOffset),
             })}
           ></uc-icon>

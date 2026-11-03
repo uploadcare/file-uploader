@@ -4,8 +4,8 @@ import { html, type PropertyValues, type TemplateResult } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import { styleMap } from 'lit/directives/style-map.js';
 import { isAbortError } from '../../../abstract/di/Lifetime';
+import { cssomStyleMap } from '../../../lit/cssom-style-map';
 import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { operationsFromModifiers } from '../../../utils/cdn/operations';
 import { preloadImage } from '../../../utils/preloadImage.js';
@@ -326,12 +326,12 @@ export class EditorFilterControl extends EditorButtonControl {
         class="uc-preview"
         data-testid=${ifDefined(previewTestId)}
         ?data-loaded=${this._previewLoaded}
-        style=${styleMap(previewStyles)}
+        style=${cssomStyleMap(previewStyles)}
       ></div>
       <uc-editor-icon
         class=${classMap({ 'uc-original-icon': this.isOriginal })}
         name=${this.icon}
-        style=${styleMap(iconStyles)}
+        style=${cssomStyleMap(iconStyles)}
       ></uc-editor-icon>
     `;
   }
