@@ -422,7 +422,7 @@ describe('SecureUploadsController', () => {
           expect.any(String),
           '',
           'Secure signature resolved:',
-          { secureSignature: '[redacted]', secureExpire: mockToken.secureExpire },
+          { secureSignature: '<redacted>', secureExpire: mockToken.secureExpire },
         );
         // …and the real signature never reaches the console.
         expect(JSON.stringify(debug.mock.calls)).not.toContain('resolved-signature');

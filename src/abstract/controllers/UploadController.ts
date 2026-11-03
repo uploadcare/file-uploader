@@ -9,7 +9,7 @@ import {
 } from '@uploadcare/upload-client';
 import type { OutputFileEntry } from '../../types/exported';
 import { fileDerivedFields } from '../../utils/fileTypes';
-import { redactSecrets } from '../../utils/redactSecrets';
+import { redact } from '../../utils/redaction';
 import { customUserAgent } from '../../utils/userAgent';
 import { controllerLogger } from '../controllerLogger';
 import { containerOf, lifetimeOf } from '../di/ControllerContainer';
@@ -298,7 +298,7 @@ export class UploadController {
         // Redact the signing credential from debug output — never print
         // `secureSignature` to the console. Lazy so the redacted copy is only
         // built when this ctx is verbose.
-        this._log.debug(lazy(() => ['upload options', redactSecrets(uploadClientOptions)]));
+        this._log.debug(lazy(() => ['upload options', redact(uploadClientOptions, 'log')]));
         return uploadFile(fileInput, uploadClientOptions);
       };
 

@@ -128,8 +128,8 @@ describe('TelemetryManager', () => {
 
     const payload = sendEventMock.mock.calls[0]?.[0] as { config: Record<string, unknown> };
     // Customized sensitive options stay visible as "used", value hidden.
-    expect(payload.config.secureSignature).toBe('[redacted]');
-    expect(payload.config.metadata).toBe('[redacted]');
+    expect(payload.config.secureSignature).toBe('<redacted>');
+    expect(payload.config.metadata).toBe('<redacted>');
     // Untouched sensitive options pass through as their (default) values.
     expect(payload.config.secureExpire).toBe('');
     expect(payload.config.secureDeliveryProxy).toBe('');

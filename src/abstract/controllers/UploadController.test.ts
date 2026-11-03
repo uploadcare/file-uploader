@@ -1,7 +1,7 @@
 import { CancelError, UploadcareError, type UploadcareFile, uploadFile } from '@uploadcare/upload-client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ConfigType } from '../../types';
-import { REDACTED } from '../../utils/redactSecrets';
+import { REDACTED } from '../../utils/redaction';
 import { ControllerContainer, containerOf } from '../di/ControllerContainer';
 import { UploaderEventType } from '../EventBus';
 import { EventEmitter } from '../EventEmitter';
