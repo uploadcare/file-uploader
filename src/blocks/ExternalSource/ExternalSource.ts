@@ -276,7 +276,7 @@ export class ExternalSource extends ChildBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${() => this._router.traverse('onClose')}
+          @click=${() => this._router.traverse('onCancel')}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >
