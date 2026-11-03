@@ -50,6 +50,15 @@ export type ApiAddFileCommonOptions = {
 /** Options for adding a local file, which can also carry its path inside a dropped folder. */
 type ApiAddFileObjectOptions = ApiAddFileCommonOptions & { fullPath?: string };
 
+/** An activity's params argument: none without declared params, optional when every declared param is. */
+type ActivityParamsArgs<T> = T extends keyof ActivityParamsMap
+  ? [ActivityParamsMap[T]] extends [never]
+    ? []
+    : Partial<ActivityParamsMap[T]> extends ActivityParamsMap[T]
+      ? [params?: ActivityParamsMap[T]]
+      : [params: ActivityParamsMap[T]]
+  : [];
+
 /** `silent` and `source` for a new entry: loud and from the JS API, unless the caller says otherwise. */
 const addOptions = ({ silent, source }: ApiAddFileCommonOptions) => ({
   silent: silent ?? false,
@@ -477,14 +486,7 @@ export class UploaderPublicApi {
    * This is the v2 routing entry point — the single-call replacement for the
    * `setCurrentActivity` + `setModalState(true)` pair.
    */
-  public navigate = <T extends ActivityType>(
-    activityType: T,
-    ...params: T extends keyof ActivityParamsMap
-      ? [ActivityParamsMap[T]] extends [never]
-        ? []
-        : [ActivityParamsMap[T]]
-      : []
-  ) => {
+  public navigate = <T extends ActivityType>(activityType: T, ...params: ActivityParamsArgs<T>) => {
     this._whenPluginsReady(() => {
       this._router.reportWhenShown(() => this._router.navigate(activityType, params[0] ?? {}));
       if (activityType !== null) {
@@ -502,14 +504,7 @@ export class UploaderPublicApi {
    * to the activity, as in v1.
    */
   // NEXT-MAJOR(api): remove `setCurrentActivity` in favour of `navigate()`. Kept for 1.x compat.
-  public setCurrentActivity = <T extends ActivityType>(
-    activityType: T,
-    ...params: T extends keyof ActivityParamsMap
-      ? [ActivityParamsMap[T]] extends [never]
-        ? []
-        : [ActivityParamsMap[T]]
-      : []
-  ) => {
+  public setCurrentActivity = <T extends ActivityType>(activityType: T, ...params: ActivityParamsArgs<T>) => {
     this._whenPluginsReady(() => {
       // `null` means "no current activity": close every slot.
       if (activityType === null) {
