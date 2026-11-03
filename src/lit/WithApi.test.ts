@@ -46,6 +46,20 @@ describe('WithApi (block-agnostic API / events host)', () => {
     expect(el.uploadCollection).toBeTruthy();
   });
 
+  it('keeps getAPI() / .api / .uploadCollection working while detached and the ctx is still alive', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount(ctxName);
+    const api = el.getAPI();
+    const collection = el.uploadCollection;
+
+    // Same task as the removal: a hand-written DOM move or an unmount hook.
+    el.remove();
+
+    expect(el.getAPI()).toBe(api);
+    expect(el.api).toBe(api);
+    expect(el.uploadCollection).toBe(collection);
+  });
+
   it('bridges EventBus events as CustomEvents on a non-ctx-provider host', async () => {
     const ctxName = freshCtxName();
     const el = await mount(ctxName);
