@@ -15,6 +15,7 @@ export class ImgConfig extends RegisterableElementMixin(LitElement) {
   private _state: CssPropRecord = {};
   private _subscribers: Map<string, Set<(val: CssPropValue) => void>> = new Map();
   private _isnObserver: IntersectionObserver | null = null;
+  private _pendingAttrs: Map<string, string | null> = new Map();
 
   public override createRenderRoot(): HTMLElement | ShadowRoot {
     return this;
@@ -122,12 +123,18 @@ export class ImgConfig extends RegisterableElementMixin(LitElement) {
   }
 
   public override attributeChangedCallback(name: string, _oldVal: string | null, newVal: string | null): void {
-    window.setTimeout(() => {
-      const fullKey = CSS_PREF + name;
-      // NEXT-MAJOR(uc-img): read the number flags' attribute values as numbers, so `is-preview-blur="0"` switches the
-      // flag off, and clear a blurred preview already on screen when it does. Strings kept for 1.x compat.
-      this._state[fullKey] = newVal;
-      this._notify(fullKey, newVal);
-    });
+    // One flush for every attribute written in this task, all stored before any is notified: a `uuid` set before
+    // `intersection` must not init() while `intersection` is still unset.
+    if (this._pendingAttrs.size === 0) window.setTimeout(() => this._flushAttrs());
+    // NEXT-MAJOR(uc-img): read the number flags' attribute values as numbers, so `is-preview-blur="0"` switches the
+    // flag off, and clear a blurred preview already on screen when it does. Strings kept for 1.x compat.
+    this._pendingAttrs.set(CSS_PREF + name, newVal);
+  }
+
+  private _flushAttrs(): void {
+    const pending = [...this._pendingAttrs];
+    this._pendingAttrs.clear();
+    for (const [fullKey, val] of pending) this._state[fullKey] = val;
+    for (const [fullKey, val] of pending) this._notify(fullKey, val);
   }
 }
