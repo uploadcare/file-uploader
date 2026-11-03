@@ -370,6 +370,30 @@ describe('UploadEventsController', () => {
       expect(successes()).toBe(2);
     });
 
+    it('emits COMMON_UPLOAD_SUCCESS again once per edit of an uploaded file, and not for unrelated updates', () => {
+      const t = setup();
+      const id = t.collection.add({ fileName: 'a.png' });
+      t.collection.read(id)!.set('fileInfo', { uuid: 'u1' } as never);
+      t.collection.read(id)!.set('cdnUrl', 'https://cdn/u1/');
+      const successes = () =>
+        t.emit.mock.calls.filter(([type]) => type === UploaderEventType.COMMON_UPLOAD_SUCCESS).length;
+
+      t.fireProperties({ errors: new Set([id]) });
+      expect(successes()).toBe(1);
+
+      // An editor apply: the new URL is validated again, and each validation result sees the collection done.
+      t.collection.read(id)!.set('cdnUrl', 'https://cdn/u1/-/crop/10x10/0,0/');
+      t.fireProperties({ cdnUrl: new Set([id]), cdnUrlModifiers: new Set([id]) });
+      t.fireProperties({ errors: new Set([id]) });
+      t.fireProperties({ errors: new Set([id]) });
+      expect(successes()).toBe(2);
+
+      // Validating the same URLs again (a config change) is not an edit.
+      t.fireProperties({ cdnUrl: new Set([id]) });
+      t.fireProperties({ errors: new Set([id]) });
+      expect(successes()).toBe(2);
+    });
+
     it('emits FILE_URL_CHANGED for entries that now have a cdnUrl and clears groupInfo', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt' });
