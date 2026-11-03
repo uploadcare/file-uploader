@@ -1,12 +1,12 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
-import { unsafeSVG } from 'lit/directives/unsafe-svg.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { inject } from '../../abstract/di/inject';
 import { PluginController } from '../../abstract/managers/plugin';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { renderIconSvg } from './renderIconSvg';
+import { renderResolvedIcon } from './renderResolvedIcon';
 import './icon.css';
 
 export class Icon extends ChildBlock {
@@ -48,16 +48,11 @@ export class Icon extends ChildBlock {
       return html` ${this.yield('', renderIconSvg(''))} `;
     }
 
-    const pluginIcon = this._pluginManager?.snapshot().icons.find((icon) => icon.name === this.name);
-    if (pluginIcon) {
-      return html`${this.yield('', html`${unsafeSVG(pluginIcon.svg)}`)}`;
-    }
-
     // Tracked read: reading `iconHrefResolver` here auto-tracks it under
     // `SignalWatcher`, so a later config `set()` re-renders.
     const iconHrefResolver = this._config.getTracked('iconHrefResolver');
-    const href = iconHrefResolver?.(this.name) ?? `#uc-icon-${this.name}`;
-    return html` ${this.yield('', renderIconSvg(href))} `;
+    const icon = renderResolvedIcon(this.name, this._pluginManager?.snapshot().icons, iconHrefResolver);
+    return html` ${this.yield('', icon)} `;
   }
 }
 
