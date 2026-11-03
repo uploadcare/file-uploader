@@ -18,6 +18,7 @@ import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
+import { cssomStyleMap } from '../../lit/cssom-style-map';
 import { throttled } from '../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
 import './upload-list.css';
@@ -383,6 +384,7 @@ export class UploadList extends ActivityChildBlock {
     // between it and the adjacent row — shrink the spacer by that gap so the
     // rendered window lands where the scroll position expects (grid mode; `_rowGap`
     // is 0 in list mode, where the gap is folded into each row's own box).
+    // The heights go through `cssomStyleMap` (CSSOM): a CSP without `'unsafe-inline'` drops a `style` attribute.
     const topSpacer = view.topPad > 0 ? Math.max(0, view.topPad - this._rowGap) : 0;
     const bottomSpacer = view.bottomPad > 0 ? Math.max(0, view.bottomPad - this._rowGap) : 0;
     return html`
@@ -412,13 +414,13 @@ export class UploadList extends ActivityChildBlock {
 
   <div class="uc-files">
     <div class="uc-files-wrapper">
-    ${topSpacer > 0 ? html`<div class="uc-list-spacer" style="height:${topSpacer}px"></div>` : ''}
+    ${topSpacer > 0 ? html`<div class="uc-list-spacer" style=${cssomStyleMap({ height: `${topSpacer}px` })}></div>` : ''}
     ${repeat(
       windowItems,
       (uid) => uid,
       (uid) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
     )}
-    ${bottomSpacer > 0 ? html`<div class="uc-list-spacer" style="height:${bottomSpacer}px"></div>` : ''}
+    ${bottomSpacer > 0 ? html`<div class="uc-list-spacer" style=${cssomStyleMap({ height: `${bottomSpacer}px` })}></div>` : ''}
     </div>
     <button
       type="button"
