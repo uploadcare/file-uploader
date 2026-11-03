@@ -566,6 +566,42 @@ describe('uc-cloud-image-editor', () => {
     await expect.poll(() => applied?.transformations.rotate).toBe(180);
   });
 
+  describe('when cdn-url switches to another image', () => {
+    /** Opens image A with a crop, switches to `cdnUrlB` once A's cropper is up, and applies once B's is. */
+    const switchAndApply = async (cdnUrlB: string) => {
+      // Distinct sizes, so B's cropper is known to be up once it holds B's.
+      emulatorSession().on('GET /:uuid/-/json/', ({ params }) =>
+        Response.json(params.uuid === DEMO_IMAGE_UUID ? { width: 1460, height: 1160 } : { width: 1920, height: 1080 }),
+      );
+      const { element, editor } = renderEditor({ 'cdn-url': `https://ucarecdn.com/${UUID}/-/crop/400x300/10,20/` });
+      const cropper = editor.getByTestId('uc-editor-image-cropper');
+      await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+      await expect.poll(() => cropperSize(element)?.width).toBe(1920);
+
+      element.setAttribute('cdn-url', cdnUrlB);
+      await expect.poll(() => cropperSize(element)?.width).toBe(1460);
+      await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+      const applied = withResolvers<ApplyResult>();
+      element.addEventListener('apply', (event) => applied.resolve((event as CustomEvent<ApplyResult>).detail));
+      await userEvent.click(editor.getByRole('button', { name: /apply/i }));
+      return applied.promise;
+    };
+
+    // Fake-only: the image sizes come from the emulator.
+    it.skipIf(isLive)("does not apply the previous image's crop to one without operations", async () => {
+      const { cdnUrl } = await switchAndApply(`https://ucarecdn.com/${DEMO_IMAGE_UUID}/`);
+
+      expect(cdnUrl).toBe(`https://ucarecdn.com/${DEMO_IMAGE_UUID}/-/preview/`);
+    });
+
+    // Fake-only: the image sizes come from the emulator.
+    it.skipIf(isLive)('keeps the new image its own crop', async () => {
+      const { cdnUrl } = await switchAndApply(`https://ucarecdn.com/${DEMO_IMAGE_UUID}/-/crop/200x100/30,40/`);
+
+      expect(cdnUrl).toBe(`https://ucarecdn.com/${DEMO_IMAGE_UUID}/-/crop/200x100/30,40/-/preview/`);
+    });
+  });
+
   it('activates the color preview on the tuning tab and keeps it live while a slider moves', async () => {
     const { element, editor } = renderEditor();
     // The fader renders before testMode reaches it, so it has no test id.
