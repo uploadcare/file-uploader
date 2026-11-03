@@ -14,8 +14,9 @@ import { ValidationController } from './ValidationController';
  * Output-group creation — split out of {@link UploadEventsController}. Given a
  * fully-successful collection state it builds the CDN group, publishes
  * `groupInfo`, and emits `GROUP_CREATED` + a follow-up `CHANGE`. Async and
- * lifecycle-aware: `isActive` is re-checked after the network round-trip (and the
- * collection state must not have moved on) before committing the result.
+ * lifecycle-aware: `isActive` (the stack is live and the collection's generation is
+ * unchanged: any change of its files or their URLs bumps it) is re-checked after the
+ * network round-trip before committing the result.
  */
 export class UploadGroupController {
   @inject(ValidationController) private readonly _validation!: ValidationController;
@@ -29,26 +30,27 @@ export class UploadGroupController {
     // so it is never another collection's. A later flush that finds the collection successful again (a slow
     // post-upload validator) must not create a second one.
     if (this._collectionState.get('groupInfo')) return;
+    // Taken now: the group describes the files as they were when it was asked for.
+    const uuidList = collectionState.allEntries.map(
+      (entry) => entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : ''),
+    );
     // Callers invoke this fire-and-forget. Report a current request's failure
     // through collection validation instead of leaking an unhandled rejection.
     try {
       const uploadClientOptions = await this._upload.buildUploadOptions();
       // Building options awaits (secure signature etc.); bail before the network
-      // call if the stack was torn down or the collection state moved on meanwhile,
+      // call if the stack was torn down or the collection's generation changed meanwhile,
       // so a dead scope never fires a stale group-create request.
-      if (!isActive() || this._collectionState.get('collectionState') !== collectionState) {
+      if (!isActive()) {
         return;
       }
-      const uuidList = collectionState.allEntries.map((entry) => {
-        return entry.uuid + (entry.cdnUrlModifiers ? `/${entry.cdnUrlModifiers}` : '');
-      });
       // Cancelled if the ctx is torn down mid-flight; the result would be discarded below anyway.
       const resp = await uploadFileGroup(uuidList, {
         ...uploadClientOptions,
         signal: lifetimeOf(this).signal,
       });
-      // Bail if the stack was unobserved mid-flight or the collection state moved on.
-      if (!isActive() || this._collectionState.get('collectionState') !== collectionState) {
+      // Bail if the stack was unobserved mid-flight or the collection's generation changed.
+      if (!isActive()) {
         return;
       }
       this._collectionState.set('groupInfo', resp);
@@ -63,7 +65,7 @@ export class UploadGroupController {
       });
       this._collectionState.set('collectionState', collectionStateWithGroup);
     } catch (err) {
-      if (!isActive() || this._collectionState.get('collectionState') !== collectionState) return;
+      if (!isActive()) return;
       this._collectionState.set(
         'groupError',
         err instanceof Error ? err : new Error('Failed to create a group', { cause: err }),

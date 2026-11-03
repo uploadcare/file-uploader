@@ -91,6 +91,9 @@ export class UploadEventsController {
 
   // Bumped when the collection's files or their URLs change: a group created before then is stale.
   private _groupGeneration = 0;
+  // The generation a group was last requested for: one request per generation, so a later flush that finds the
+  // collection successful again while that request is on the network does not send a second one.
+  private _groupRequestGeneration = -1;
   private _unobserveCollection?: Unsubscribe;
   private _unobserveProperties?: Unsubscribe;
 
@@ -233,6 +236,8 @@ export class UploadEventsController {
     const collectionState = this._collectionEvents.flushOutput();
     if (this._config.get('groupOutput') && collectionState.totalCount > 0 && collectionState.status === 'success') {
       const generation = this._groupGeneration;
+      if (generation === this._groupRequestGeneration) return;
+      this._groupRequestGeneration = generation;
       lifetimeOf(this).run(
         () => this._group.create(collectionState, () => !this._ended && generation === this._groupGeneration),
         (error) => this._log.error('Failed to create the output file group', error),
