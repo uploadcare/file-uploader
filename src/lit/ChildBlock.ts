@@ -281,13 +281,10 @@ export abstract class ChildBlock extends ChildBlockBase {
     // This block was one of possibly several consumers keeping the ctx alive.
     // Defer the unreferenced-ctx check a macrotask so a same-tick disconnect ->
     // reconnect (e.g. a DOM move) doesn't tear down a ctx this block is about
-    // to re-watch.
-    setTimeout(() => {
-      if (this.isConnected) {
-        return;
-      }
-      this._teardownCtxIfUnreferenced(ctxName);
-    }, 0);
+    // to re-watch. No `isConnected` guard: a block reconnected under another
+    // `ctx-name` no longer holds this one, and one back on it is a consumer
+    // again, which the refcount re-check sees.
+    setTimeout(() => this._teardownCtxIfUnreferenced(ctxName), 0);
   }
 
   /**
