@@ -1,6 +1,5 @@
 import { isAuthTokenResolver } from '@uploadcare/upload-client';
 import type { AuthToken, Metadata, MetadataCallback, Tags, TagsCallback } from '../../types/index';
-import { parseBooleanAttribute } from '../../utils/boolean-attribute';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { CameraSourceTypes, type ModeCameraType } from '../cameraModes';
 
@@ -19,10 +18,21 @@ const asNumber = (value: unknown): number => {
   return number;
 };
 
+// NEXT-MAJOR(config): read a boolean like an HTML boolean attribute, as the docs describe: only absent or "false" is
+// false and any other string ("0", "no", "FALSE") is true, with block flags (`headless`, `dynamic-button`, `dropzone`,
+// the `<uc-drop-area>` flags, `textonly`/`icononly`, now Lit `type: Boolean` presence) on the same rule. It waits for
+// a major because `store="0"` would start storing files and `headless="false"` would show the button.
+// Kept for 1.x compat.
 const asBoolean = (value: unknown): boolean => {
-  // Attribute values are strings: the shared boolean-attribute rule (documented).
-  if (typeof value === 'string') return parseBooleanAttribute(value);
-  return Boolean(value);
+  if (typeof value === 'undefined' || value === null) return false;
+  if (typeof value === 'boolean') return value;
+  // for attr like multiple="true" (react will pass it as string)
+  if (value === 'true') return true;
+  // for attr flags like multiple="" (some other libs will pass it as empty string)
+  if (value === '') return true;
+  // for attr like multiple="false" (react will pass it as string)
+  if (value === 'false') return false;
+  throw new Error(`Invalid boolean: "${value}"`);
 };
 
 const asStore = (value: unknown): boolean | 'auto' => (value === 'auto' ? value : asBoolean(value));

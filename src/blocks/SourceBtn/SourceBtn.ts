@@ -4,7 +4,6 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { inject } from '../../abstract/di/inject';
 import { InternalEventType } from '../../abstract/EventEmitter';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
-import { booleanAttribute } from '../../lit/boolean-attribute';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { AriaRole } from '../../types/dom';
 import './source-btn.css';
@@ -24,10 +23,10 @@ export class SourceBtn extends ChildBlock {
   @property({ attribute: false })
   public buttonRole?: AriaRole;
 
-  @property({ converter: booleanAttribute })
+  @property({ type: Boolean })
   public textOnly = false;
 
-  @property({ converter: booleanAttribute })
+  @property({ type: Boolean })
   public iconOnly = false;
 
   public activate(): void {
