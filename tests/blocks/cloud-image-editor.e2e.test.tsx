@@ -600,6 +600,44 @@ describe('uc-cloud-image-editor', () => {
 
       expect(cdnUrl).toBe(`https://ucarecdn.com/${DEMO_IMAGE_UUID}/-/crop/200x100/30,40/-/preview/`);
     });
+
+    it("fires the first change for the new image with its own preserved operations, not the previous image's", async () => {
+      const { element, editor } = renderEditor({
+        'cdn-url': `https://ucarecdn.com/${UUID}/-/crop/400x300/10,20/-/blur/20/`,
+      });
+      await expect
+        .poll(() => activeClass(editor.getByTestId('uc-editor-image-cropper').element()))
+        .toMatch(/uc-active_from_/);
+      const changes: ApplyResult[] = [];
+      element.addEventListener('change', (event) => changes.push((event as CustomEvent<ApplyResult>).detail));
+
+      element.setAttribute('cdn-url', `https://ucarecdn.com/${DEMO_IMAGE_UUID}/-/crop/200x100/30,40/-/blur/50/`);
+
+      await expect
+        .poll(() => changes.find(({ originalUrl }) => originalUrl.includes(DEMO_IMAGE_UUID))?.cdnUrlModifiers)
+        .toBe('-/crop/200x100/30,40/-/blur/50/-/preview/');
+    });
+
+    it("fires the first change for a new uuid without the previous cdn-url's operations", async () => {
+      const { element, editor } = renderEditor({
+        'cdn-url': `https://ucarecdn.com/${UUID}/-/crop/400x300/10,20/-/blur/20/`,
+      });
+      await expect
+        .poll(() => activeClass(editor.getByTestId('uc-editor-image-cropper').element()))
+        .toMatch(/uc-active_from_/);
+      const changes: ApplyResult[] = [];
+      element.addEventListener('change', (event) => changes.push((event as CustomEvent<ApplyResult>).detail));
+
+      element.removeAttribute('cdn-url');
+      element.setAttribute('uuid', DEMO_IMAGE_UUID);
+
+      await expect
+        .poll(() => changes.find(({ originalUrl }) => originalUrl.includes(DEMO_IMAGE_UUID))?.cdnUrlModifiers)
+        .toBeDefined();
+      const first = changes.find(({ originalUrl }) => originalUrl.includes(DEMO_IMAGE_UUID));
+      expect(first?.cdnUrlModifiers).not.toContain('/blur/20/');
+      expect(first?.cdnUrlModifiers).not.toContain('/crop/400x300/10,20/');
+    });
   });
 
   it('activates the color preview on the tuning tab and keeps it live while a slider moves', async () => {

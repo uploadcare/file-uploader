@@ -699,8 +699,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         return;
       }
       editorController.originalUrl = originalUrl;
-      editorController.editorTransformations = operationsToTransformations(parsed.operations);
+      // Before the transformations: their write fires `change`, which reads `sourceOperations` right away.
       editorController.sourceOperations = parsed.operations;
+      editorController.editorTransformations = operationsToTransformations(parsed.operations);
     } else if (this.uuid) {
       const cdnCname = editorController.getConfig('cdnCname');
       const originalUrl = serializeFileUrl({ cdnBase: new URL(cdnCname).origin, uuid: this.uuid as string });
@@ -708,6 +709,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         return;
       }
       editorController.originalUrl = originalUrl;
+      // Either order works here: an empty `editorTransformations` fires no `change`.
       if (Object.keys(editorController.editorTransformations).length > 0) {
         editorController.editorTransformations = {};
       }
