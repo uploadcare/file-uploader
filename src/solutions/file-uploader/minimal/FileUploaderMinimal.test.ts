@@ -99,6 +99,22 @@ describe('FileUploaderMinimal', () => {
     setActivity.mockRestore();
   });
 
+  it('closes the start-from modal when files arrive without a navigation (addFileFrom* while the picker is open)', async () => {
+    const ctxName = freshCtxName();
+    const { el, router } = await mount(ctxName);
+    const collectionState = UploaderRegistry.get(ctxName)?.get(CollectionStateController);
+    if (!collectionState) throw new Error('collection state not resolved');
+
+    router.navigate(ACTIVITY_TYPES.START_FROM);
+    await settle(el);
+    expect(router.modal).toBe(ACTIVITY_TYPES.START_FROM);
+
+    collectionState.set('uploadList', ['a' as Uid]);
+    await settle(el);
+    expect(router.activity).toBe(ACTIVITY_TYPES.UPLOAD_LIST);
+    expect(router.modal).toBeNull();
+  });
+
   it('routes upload-list to the background and everything else to the foreground', async () => {
     const ctxName = freshCtxName();
     const { router } = await mount(ctxName);

@@ -84,7 +84,11 @@ export class FileUploaderMinimal extends SolutionChildBlock {
     return this._collectionState.observe(
       'uploadList',
       (list) => {
-        this._router.setActivity(list.length > 0 ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
+        const hasFiles = list.length > 0;
+        this._router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
+        // `setActivity` keeps the modal slot, so files added without a navigation (`addFileFrom*` from app code)
+        // would leave the source picker open over the list.
+        if (hasFiles && this._router.modal === ACTIVITY_TYPES.START_FROM) this._router.closeModal();
       },
       { immediate: true },
     );
