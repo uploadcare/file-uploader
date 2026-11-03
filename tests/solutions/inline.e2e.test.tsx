@@ -58,22 +58,17 @@ describe('uc-file-uploader-inline', () => {
     expect(within(root).getByTestId('uc-modal').query()).toBeNull();
   });
 
-  it('keeps its activity and warns on setModalState(false), since it has no modal to close', async () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    onTestFinished(() => warn.mockRestore());
+  // As in v1, where setModalState(false) nulled the activity and inline turns that into its start screen.
+  it('resets to start-from on setModalState(false)', async () => {
     const { api, root } = await renderSolution('inline');
     await within(root).getByRole('button', { name: 'From link', exact: true }).click();
     await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
 
     api.setModalState(false);
 
-    await vi.waitFor(() =>
-      expect(warn).toHaveBeenCalledWith(
-        expect.stringContaining('[uc]'),
-        expect.stringContaining('setModalState(false)'),
-      ),
-    );
-    await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-url-source')).not.toBeInTheDocument();
+    expect(api.getCurrentActivity()).toBe('start-from');
   });
 
   it('switches the visible activity on setCurrentActivity after setModalState(true), since it has no modal to open', async () => {
