@@ -29,6 +29,19 @@ describe('EventBus', () => {
     expect(handler).not.toHaveBeenCalled();
   });
 
+  it('keeps a later listener when an old unsubscribe is called twice', () => {
+    const bus = new ControllerContainer().get(EventBus);
+    const off = bus.on(UploaderEventType.UPLOAD_CLICK, () => {});
+    off();
+    const later = vi.fn();
+    bus.on(UploaderEventType.UPLOAD_CLICK, later);
+
+    off();
+    bus.emit(UploaderEventType.UPLOAD_CLICK, undefined);
+
+    expect(later).toHaveBeenCalledTimes(1);
+  });
+
   it('isolates a throwing listener so others still run', () => {
     const bus = new ControllerContainer().get(EventBus);
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});

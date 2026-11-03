@@ -25,6 +25,21 @@ describe('UploaderRegistry', () => {
     UploaderRegistry.dispose(name);
   });
 
+  it('keeps a later consumer when an old whenAvailable unsubscribe is called twice', () => {
+    const name = uniqueName();
+    const off = UploaderRegistry.whenAvailable(name, () => {});
+    off();
+    const later = vi.fn();
+    const offLater = UploaderRegistry.whenAvailable(name, later);
+
+    off();
+    const container = UploaderRegistry.ensure(name);
+
+    expect(later).toHaveBeenCalledWith(container);
+    offLater();
+    UploaderRegistry.dispose(name);
+  });
+
   it('whenAvailable fires when a container registers later', () => {
     const name = uniqueName();
     const cb = vi.fn();
