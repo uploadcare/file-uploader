@@ -92,4 +92,19 @@ describe('uc-file-uploader-inline', () => {
     expect(api.getCurrentActivity()).toBe('start-from');
     expect(modalOpen).not.toHaveBeenCalled();
   });
+
+  it('keeps switching the visible activity after initFlow with a single unregistered source, since it has no modal to open', async () => {
+    const { api, config, root } = await renderSolution('inline', { sourceList: 'not-a-source' });
+    const modalOpen = vi.fn();
+    onTestFinished(api.on('modal-open', modalOpen));
+
+    api.initFlow();
+    // Enable the url source afterwards, so there is an activity to switch to.
+    config.sourceList = 'local, url';
+    api.setCurrentActivity('url');
+
+    await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
+    expect(api.getCurrentActivity()).toBe('url');
+    expect(modalOpen).not.toHaveBeenCalled();
+  });
 });

@@ -399,8 +399,10 @@ export class UploaderPublicApi {
             return;
           }
 
+          // As in v1 (`modalManager?.open`): a solution without a modal shows the activity in place, and opening the
+          // never-rendered modal slot would hide every later `setCurrentActivity` behind it.
           const current = router.currentActivity;
-          if (current) {
+          if (current && this._appInfo.hasModal) {
             router.openModal(current);
           }
         });
