@@ -4,7 +4,6 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { inject } from '../../abstract/di/inject';
 import { InternalEventType } from '../../abstract/EventEmitter';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
-import { redactPayload } from '../../abstract/telemetry/redacted';
 import { ChildBlock } from '../../lit/ChildBlock';
 import type { AriaRole } from '../../types/dom';
 import './source-btn.css';
@@ -35,13 +34,13 @@ export class SourceBtn extends ChildBlock {
 
     this._telemetry.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
-      payload: redactPayload({
+      payload: {
         metadata: { event: 'select-source', node: this.tagName, sourceId: this.source.id },
         // Backward compatibility: telemetry consumers read `source_id` at the payload root, where it was sent before
         // it moved into `metadata` like every other action event's detail.
         // NEXT-MAJOR(telemetry): drop the root `sourceId`. Kept for 1.x compat.
         sourceId: this.source.id,
-      }),
+      },
     });
 
     const { source } = this;

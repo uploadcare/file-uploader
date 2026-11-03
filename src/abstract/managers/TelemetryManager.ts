@@ -3,6 +3,7 @@ import { TelemetryAPIService } from '@uploadcare/quality-insights';
 import { Queue } from '@uploadcare/upload-client';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import type { ConfigType } from '../../types/index';
+import { redactSecrets } from '../../utils/redactSecrets';
 import { UID } from '../../utils/UID';
 import { initialConfig } from '../config/initialConfig';
 import { controllerLogger } from '../controllerLogger';
@@ -14,15 +15,7 @@ import { Disposables } from '../di/Disposables';
 import { inject } from '../di/inject';
 import { EventBus } from '../EventBus';
 import type { EventKey, InternalEventKey } from '../EventEmitter';
-import { InternalEventType } from '../EventEmitter';
-import {
-  forwardRedactedEvents,
-  type Redacted,
-  redactAction,
-  redactConfig,
-  redactError,
-  SKIPPED_EVENTS,
-} from '../telemetry/redacted';
+import { EventType, InternalEventType } from '../EventEmitter';
 
 type CommonEventType = InternalEventKey | EventKey;
 
@@ -30,13 +23,22 @@ type TelemetryState = TelemetryRequest & {
   eventTimestamp: number;
   location: string;
 };
-/** What callers report. The payload must come from a `telemetry/redacted` helper: the manager sends it as is. */
-export type TelemetryEvent = {
-  eventType: CommonEventType;
-  payload?: Redacted;
-  component?: string;
+type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config' | 'component'>> & {
   modalId?: string;
+  eventType: CommonEventType;
 };
+
+/** Uploader events that are too frequent, or too per-file, to report to telemetry. */
+const EXCLUDED_EVENTS: ReadonlySet<CommonEventType> = new Set([
+  EventType.CHANGE,
+  EventType.COMMON_UPLOAD_PROGRESS,
+  EventType.FILE_ADDED,
+  EventType.FILE_REMOVED,
+  EventType.FILE_UPLOAD_START,
+  EventType.FILE_UPLOAD_PROGRESS,
+  EventType.FILE_UPLOAD_SUCCESS,
+  EventType.FILE_UPLOAD_FAILED,
+]);
 
 /**
  * Quality-insights telemetry: an EventBus OBSERVER. Enablement and config
@@ -91,7 +93,12 @@ export class TelemetryManager {
     // is isolate-and-warn (see `EventBus.emit`), so a throw here can't break the
     // fan-out — no extra try/catch needed around this observer.
     this.#disposables.add(
-      forwardRedactedEvents(this._bus, (eventType, payload) => this.sendEvent({ eventType, payload })),
+      this._bus.onAny((type, payload) =>
+        this.sendEvent({
+          eventType: type as CommonEventType,
+          payload: (payload ?? undefined) as Record<string, unknown> | undefined,
+        }),
+      ),
     );
   }
 
@@ -151,7 +158,8 @@ export class TelemetryManager {
   }
 
   private _sanitizedConfig(): TelemetryState['config'] {
-    return redactConfig(this._config) as unknown as TelemetryState['config'];
+    // As in v1: the payload leaves the browser, and a configured `authToken` or `secureSignature` would leave with it.
+    return redactSecrets(this._config) as TelemetryState['config'];
   }
 
   private _formattingPayload(
@@ -190,7 +198,7 @@ export class TelemetryManager {
     } as TelemetryState;
   }
 
-  public sendEvent(body: TelemetryEvent): void {
+  public sendEvent(body: TelemetryEventBody): void {
     // Nothing leaves the uploader once its ctx is destroyed — not even an event a late caller reports.
     const lifetime = lifetimeOf(this);
     if (lifetime.signal.aborted || !this._isEnabled) {
@@ -204,9 +212,11 @@ export class TelemetryManager {
       }
     }
 
-    if (SKIPPED_EVENTS.has(body.eventType)) {
+    if (EXCLUDED_EVENTS.has(body.eventType)) {
       return;
     }
+    // Copied now, while the config waits for the send: event payloads such as `OutputCollectionState` are getters over
+    // live state, and read after the yield below they would describe a later moment than the event.
     const eventPayload = body.payload ? { ...body.payload } : undefined;
 
     lifetime.run(
@@ -234,6 +244,7 @@ export class TelemetryManager {
           const payload = this._formattingPayload({
             eventType: body.eventType,
             payload: eventPayload,
+            config: body.config,
             component: body.component,
           });
           // The repeat-event dedup moved down here with it — it has to compare what
@@ -260,7 +271,18 @@ export class TelemetryManager {
    */
   public sendEventError(error: unknown, context = 'unknown'): void {
     try {
-      this.sendEvent({ eventType: InternalEventType.ERROR_EVENT, payload: redactError(error, context) });
+      this.sendEvent({
+        eventType: InternalEventType.ERROR_EVENT,
+        payload: {
+          metadata: {
+            event: 'error',
+            text: `Error in ${context}`,
+            // Non-`Error` throwables (strings, DOMException, …) have no `.message`;
+            // stringify them rather than reporting `undefined`.
+            error: error instanceof Error ? error.message : String(error),
+          },
+        },
+      });
     } catch (err) {
       this._log.debug('failed to report an error event to telemetry', err);
     }
@@ -268,7 +290,10 @@ export class TelemetryManager {
 
   /** Report a UI action: `event` names it, `node` is the tag of the element that reported it. */
   public sendActionEvent(event: string, node: string | undefined, extra: Record<string, unknown> = {}): void {
-    this.sendEvent({ eventType: InternalEventType.ACTION_EVENT, payload: redactAction(event, node, extra) });
+    this.sendEvent({
+      eventType: InternalEventType.ACTION_EVENT,
+      payload: { metadata: { event, node, ...extra } },
+    });
   }
 
   /**

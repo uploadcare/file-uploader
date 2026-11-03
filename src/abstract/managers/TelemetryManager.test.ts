@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ConfigType } from '../../types/index';
+import { REDACTED } from '../../utils/redactSecrets';
 import type { ActivityId } from '../activity-constants';
 import { AppInfo } from '../controllers/AppInfo';
 import { ConfigController, type KnownConfig } from '../controllers/ConfigController';
 import { RouterController } from '../controllers/RouterController';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { EventEmitter, EventType, InternalEventType } from '../EventEmitter';
-import { redactPayload } from '../telemetry/redacted';
 import { TelemetryManager } from './TelemetryManager';
 
 const sendEventMock = vi.hoisted(() => vi.fn(async (_payload: Record<string, unknown>) => {}));
@@ -119,27 +119,20 @@ describe('TelemetryManager', () => {
     expect(typeof payload.sessionId).toBe('string');
   });
 
-  it('replaces customized sensitive config values with a redaction marker', async () => {
+  it('redacts only the credentials in the config snapshot, as v1 did', async () => {
     const { manager, setConfig } = setup();
     setConfig('secureSignature', 'sig-secret');
-    setConfig('metadata', { userId: 'private-data' });
+    setConfig('metadata', { userId: 'integrator-data' });
 
     manager.sendEvent({ eventType: InternalEventType.INIT_SOLUTION });
     await flush();
 
     const payload = sendEventMock.mock.calls[0]?.[0] as { config: Record<string, unknown> };
-    // Customized sensitive options stay visible as "used", value hidden.
-    expect(payload.config.secureSignature).toBe('<redacted>');
-    expect(payload.config.metadata).toBe('<redacted>');
-    // Untouched sensitive options pass through as their (default) values.
-    expect(payload.config.secureExpire).toBe('');
-    expect(payload.config.secureDeliveryProxy).toBe('');
-    // Non-sensitive keys are untouched.
+    expect(payload.config.secureSignature).toBe(REDACTED);
+    expect(JSON.stringify(payload.config)).not.toContain('sig-secret');
+    // Everything else is sent as configured.
+    expect(payload.config.metadata).toEqual({ userId: 'integrator-data' });
     expect(payload.config.multiple).toBe(true);
-    // The raw values never appear anywhere in the payload.
-    const serialized = JSON.stringify(payload.config);
-    expect(serialized).not.toContain('sig-secret');
-    expect(serialized).not.toContain('private-data');
   });
 
   it('reports a null component when no solution is registered', async () => {
@@ -172,7 +165,7 @@ describe('TelemetryManager', () => {
 
     manager.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
-      payload: redactPayload({ activity: 'spoofed', metadata: { a: 1 } }),
+      payload: { activity: 'spoofed', metadata: { a: 1 } },
     });
     await flush();
 
@@ -288,7 +281,7 @@ describe('TelemetryManager', () => {
       },
     };
 
-    manager.sendEvent({ eventType: EventType.COMMON_UPLOAD_SUCCESS, payload: redactPayload(payload) });
+    manager.sendEvent({ eventType: EventType.COMMON_UPLOAD_SUCCESS, payload });
     totalCount = 2;
     await flush();
 
@@ -470,9 +463,9 @@ describe('TelemetryManager', () => {
 
     // Same timestamp + same structure, differing only in a nested leaf — forces
     // `_checkObj` past the top-level JSON compare into the recursive key walk.
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { a: 1 } }) });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1 } } });
     await flush();
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { a: 2 } }) });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 2 } } });
     await flush();
 
     expect(sendEventMock).toHaveBeenCalledTimes(2);
@@ -482,9 +475,9 @@ describe('TelemetryManager', () => {
     const { manager, enable } = setup();
     enable();
 
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { a: 1, b: 2 } }) });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1, b: 2 } } });
     await flush();
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { a: 1 } }) });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1 } } });
     await flush();
 
     expect(sendEventMock).toHaveBeenCalledTimes(2);
@@ -494,9 +487,9 @@ describe('TelemetryManager', () => {
     const { manager, enable } = setup();
     enable();
 
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { a: 1 } }) });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1 } } });
     await flush();
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { b: 1 } }) });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { b: 1 } } });
     await flush();
 
     expect(sendEventMock).toHaveBeenCalledTimes(2);
@@ -568,9 +561,9 @@ describe('TelemetryManager', () => {
     const { manager, enable } = setup();
     enable();
 
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { a: 1, b: 2 } }) });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1, b: 2 } } });
     await flush();
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { b: 2, a: 1 } }) });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { b: 2, a: 1 } } });
     await flush();
 
     expect(sendEventMock).toHaveBeenCalledTimes(1);
@@ -650,103 +643,5 @@ describe('TelemetryManager', () => {
     const payload = sendEventMock.mock.calls[0]?.[0] as { eventType: string; payload: { metadata: unknown } };
     expect(payload.eventType).toBe(InternalEventType.ACTION_EVENT);
     expect(payload.payload.metadata).toEqual({ tabId: 'crop', node: 'BUTTON', event: 'click', extra: 1 });
-  });
-
-  describe('event payloads leave with private values redacted', () => {
-    // Quality insights collects non-personal usage data: a file's name, CDN URL, uuid or metadata must never ship.
-    const PRIVATE_VALUES = ['private-name.png', 'ucarecd.net', 'f0e1d2c3-uuid', 'META-SECRET', 'group-uuid~1'];
-    const entry = {
-      status: 'success',
-      internalId: 'uid-1',
-      name: 'private-name.png',
-      size: 70,
-      isImage: true,
-      mimeType: 'image/png',
-      metadata: { userId: 'META-SECRET' },
-      tags: null,
-      file: null,
-      externalUrl: null,
-      uploadProgress: 100,
-      fullPath: null,
-      source: 'local',
-      isValidationPending: false,
-      fileInfo: { uuid: 'f0e1d2c3-uuid', originalFilename: 'private-name.png' },
-      uuid: 'f0e1d2c3-uuid',
-      cdnUrl: 'https://abc.ucarecd.net/f0e1d2c3-uuid/',
-      cdnUrlModifiers: '',
-      isUploading: false,
-      isSuccess: true,
-      isFailed: false,
-      isRemoved: false,
-      errors: [],
-    };
-    const collection = {
-      status: 'success',
-      totalCount: 1,
-      successCount: 1,
-      failedCount: 0,
-      uploadingCount: 0,
-      progress: 100,
-      isFailed: false,
-      isUploading: false,
-      isSuccess: true,
-      errors: [],
-      group: { uuid: 'group-uuid~1', cdnUrl: 'https://abc.ucarecd.net/group-uuid~1/' },
-      allEntries: [entry],
-      successEntries: [entry],
-      failedEntries: [],
-      uploadingEntries: [],
-      idleEntries: [],
-    };
-    const expectNoPrivateValues = (sent: unknown) => {
-      const serialized = JSON.stringify(sent);
-      for (const value of PRIVATE_VALUES) {
-        expect(serialized).not.toContain(value);
-      }
-    };
-
-    it.each([
-      EventType.COMMON_UPLOAD_START,
-      EventType.COMMON_UPLOAD_SUCCESS,
-      EventType.COMMON_UPLOAD_FAILED,
-      EventType.DONE_CLICK,
-      EventType.GROUP_CREATED,
-    ])('%s sends the collection with its private values redacted', async (type) => {
-      const { emitOnBus } = setup();
-
-      emitOnBus(type, collection as never);
-      await flush();
-
-      expect(sendEventMock).toHaveBeenCalledTimes(1);
-      const sent = sendEventMock.mock.calls[0]?.[0] as { payload: Record<string, unknown> };
-      expect(sent.payload).toMatchObject({
-        status: 'success',
-        totalCount: 1,
-        progress: 100,
-        group: { uuid: '<redacted>', cdnUrl: '<redacted>' },
-        allEntries: [{ status: 'success', name: '<redacted>', size: 70, uuid: '<redacted>', metadata: '<redacted>' }],
-        successEntries: [{ status: 'success', name: '<redacted>' }],
-      });
-      expectNoPrivateValues(sent);
-    });
-
-    it('file-url-changed sends the file with its private values redacted', async () => {
-      const { emitOnBus } = setup();
-
-      emitOnBus(EventType.FILE_URL_CHANGED, entry as never);
-      await flush();
-
-      expect(sendEventMock).toHaveBeenCalledTimes(1);
-      const sent = sendEventMock.mock.calls[0]?.[0] as { payload: Record<string, unknown> };
-      expect(sent.payload).toMatchObject({
-        status: 'success',
-        size: 70,
-        mimeType: 'image/png',
-        name: '<redacted>',
-        cdnUrl: '<redacted>',
-        fileInfo: { uuid: '<redacted>', originalFilename: '<redacted>' },
-      });
-      expectNoPrivateValues(sent);
-    });
   });
 });
