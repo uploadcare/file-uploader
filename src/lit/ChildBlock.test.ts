@@ -308,3 +308,19 @@ describe('ChildBlock @effect across a synchronous DOM move', () => {
     expect(el.runs - before).toBe(1);
   });
 });
+
+describe('ChildBlock moved and renamed in one task', () => {
+  it('tears down the ctx it left', async () => {
+    const oldName = freshCtxName();
+    const newName = freshCtxName();
+    const el = await mount<UseBlock>('uc-test-use-block', oldName);
+
+    el.remove();
+    el.setAttribute('ctx-name', newName);
+    document.body.append(el);
+    await flushTeardown();
+
+    expect(UploaderRegistry.get(oldName)).toBeUndefined();
+    expect(UploaderRegistry.get(newName)?.isUnreferenced()).toBe(false);
+  });
+});
