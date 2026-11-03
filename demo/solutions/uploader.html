@@ -118,8 +118,10 @@
     import '@/solutions/file-uploader/minimal/index.css';
     import '@/solutions/file-uploader/inline/index.css';
     import * as UC from '@/index.js';
+    import { Uploader } from '@/solutions/file-uploader/Uploader';
 
     UC.defineComponents(UC);
+    Uploader.reg('uc-uploader');
 
     const host = document.getElementById('host');
     const logEl = document.getElementById('log');
@@ -127,7 +129,7 @@
     const headlessInput = document.getElementById('headless');
     const dynamicInput = document.getElementById('dynamic-button');
 
-    /** @type {import('@/index.js').Uploader | null} */
+    /** @type {import('@/solutions/file-uploader/Uploader').Uploader | null} */
     let uploader = null;
 
     const EVENT_TYPES = [
@@ -183,7 +185,7 @@
       }
 
       host.replaceChildren(next);
-      uploader = /** @type {import('@/index.js').Uploader} */ (next);
+      uploader = /** @type {import('@/solutions/file-uploader/Uploader').Uploader} */ (next);
 
       // Documented public API lives on the host (no separate ctx-provider).
       queueMicrotask(() => {

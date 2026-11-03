@@ -8,7 +8,6 @@ type Thumb = import('../dist/index.ts').Thumb;
 type FileUploaderInline = import('../dist/index.ts').FileUploaderInline;
 type FileUploaderRegular = import('../dist/index.ts').FileUploaderRegular;
 type FileUploaderMinimal = import('../dist/index.ts').FileUploaderMinimal;
-type Uploader = import('../dist/index.ts').Uploader;
 type BtnUi = import('../dist/index.ts').BtnUi;
 type LineLoaderUi = import('../dist/index.ts').LineLoaderUi;
 type PresenceToggle = import('../dist/index.ts').PresenceToggle;
@@ -117,7 +116,6 @@ interface UcIntrinsicElements {
   'uc-file-uploader-regular': CustomElement<FileUploaderRegular>;
   'uc-file-uploader-minimal': CustomElement<FileUploaderMinimal>;
   'uc-file-uploader-inline': CustomElement<FileUploaderInline>;
-  'uc-uploader': CustomElement<Uploader>;
   'uc-upload-ctx-provider': CustomElement<UploadCtxProvider>;
   'uc-config': CustomElement<Config>;
 }

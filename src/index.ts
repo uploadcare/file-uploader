@@ -53,7 +53,9 @@ export { FileUploaderRegular } from './solutions/file-uploader/regular/FileUploa
 export { CloudImageEditor } from './solutions/cloud-image-editor/CloudImageEditor';
 export { FileUploaderInline } from './solutions/file-uploader/inline/FileUploaderInline';
 export { FileUploaderMinimal } from './solutions/file-uploader/minimal/FileUploaderMinimal';
-export { Uploader, type UploaderMode } from './solutions/file-uploader/Uploader';
+// NEXT-MAJOR(uploader-tag): export `Uploader` (`<uc-uploader>`, the v2 single-tag host) here once it is documented;
+// defineComponents registers every export, and an unannounced `uc-uploader` would collide with an app's own tag.
+// Kept for 1.x compat.
 
 // Types
 export * from './types/index';
