@@ -1,12 +1,13 @@
 import { DEMO_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import type { OutputCollectionState } from '@/types';
 import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE, testFile } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { emulatorSession, isLive, resetEmulator } from '~/tests/utils/emulator.browser';
 import { type EventRecorder, recordEvents } from '~/tests/utils/event-recorder';
-import { type RenderedUploader, renderSolution } from '~/tests/utils/render-solution';
+import { type RenderedUploader, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
 /**
@@ -143,6 +144,40 @@ describe('events: upload lifecycle', () => {
     const successPayload = recorder.detailsOf('file-upload-success')[0];
     expect(successPayload.externalUrl).toBe(TEST_IMAGE_URL);
     expect(successPayload.cdnUrl).toBeTruthy();
+  });
+
+  it('fires common-upload-success again, with the edited cdnUrl, once per edit in the editor', async () => {
+    // v1 (fu-v1) after Apply: `file-url-changed, change, common-upload-success, change`
+    // (fu-qa/audit-r3/qa-ui/out/ED1-edit.json).
+    const rendered = await renderSolution();
+    const { api, provider, root } = rendered;
+    const recorder = recordEvents(provider);
+    const entry = api.addFileFromUrl(TEST_IMAGE_URL);
+    const uploadValidated = watchPostUploadValidation(rendered, recorder, entry.internalId);
+    api.uploadAll();
+    await uploadValidated();
+    expect(recorder.detailsOf('common-upload-success')).toHaveLength(1);
+    recorder.clear();
+    const successUrls: (string | null)[] = [];
+    provider.addEventListener('common-upload-success', (e) =>
+      // Read as it fires: the state is lazy.
+      successUrls.push((e as CustomEvent<OutputCollectionState>).detail.allEntries[0].cdnUrl),
+    );
+
+    api.setCurrentActivity('cloud-image-edit', { internalId: entry.internalId });
+    api.setModalState(true);
+    // Rotate is the first crop button.
+    await userEvent.click(within(root).getByTestId('uc-editor-crop-button-control').nth(0));
+    await userEvent.click(within(root).getByRole('button', { name: /apply/i }));
+
+    await recorder.waitForAfter(CHANGE, 'common-upload-success');
+    const editedUrl = recorder.detailsOf('file-url-changed').at(-1)?.cdnUrl;
+    expect(editedUrl).toContain('/-/rotate/');
+    expect(successUrls).toEqual([editedUrl]);
+    expect(recorder.typesExcluding(CHANGE, 'activity-change', 'modal-open', 'modal-close')).toEqual([
+      'file-url-changed',
+      'common-upload-success',
+    ]);
   });
 
   it('fires per-file events for every file when uploading several at once', async () => {
