@@ -115,6 +115,17 @@ describe('Lifetime', () => {
       await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(error));
     });
 
+    it('reports an AbortError it did not raise while still live', async () => {
+      const error = new DOMException('the task aborted its own fetch', 'AbortError');
+      const onError = vi.fn();
+
+      new Lifetime().run(async () => {
+        throw error;
+      }, onError);
+
+      await vi.waitFor(() => expect(onError).toHaveBeenCalledWith(error));
+    });
+
     it('reports a synchronous throw', async () => {
       const error = new Error('sync');
       const onError = vi.fn();

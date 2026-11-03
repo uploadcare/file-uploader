@@ -3,7 +3,6 @@ import { isSecureTokenExpired } from '../../utils/isSecureTokenExpired';
 import { controllerLogger } from '../controllerLogger';
 import { lifetimeOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';
-import { isAbortError } from '../di/Lifetime';
 import { TelemetryManager } from '../managers/TelemetryManager';
 import { ConfigController } from './ConfigController';
 
@@ -62,7 +61,8 @@ export class SecureUploadsController {
             this._secureToken = result;
           }
         } catch (err) {
-          if (isAbortError(err)) throw err;
+          // Asks the lifetime, not the error: a resolver rejecting with its own AbortError still falls back.
+          if (lifetimeOf(this).signal.aborted) throw err;
           this._log.error('Secure signature resolving failed. Falling back to the previous one.', err);
           this._telemetry.sendEventError(
             err,

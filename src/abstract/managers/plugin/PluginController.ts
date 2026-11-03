@@ -3,7 +3,6 @@ import { controllerLogger } from '../../controllerLogger';
 import { ConfigController } from '../../controllers/ConfigController';
 import { containerOf, lifetimeOf } from '../../di/ControllerContainer';
 import { Disposables } from '../../di/Disposables';
-import { isAbortError } from '../../di/Lifetime';
 import type { Logger } from '../../logger';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
@@ -75,7 +74,7 @@ export class PluginController {
           // chain so later emissions never run. (`_pluginsUpdate` always resolves.)
           .catch((error) => {
             // The ctx was torn down mid-sync: nothing left to report to.
-            if (!isAbortError(error)) {
+            if (!lifetimeOf(this).signal.aborted) {
               this._log.error('Failed to sync plugins', error);
             }
           });
@@ -114,7 +113,8 @@ export class PluginController {
         try {
           await this._registerPlugin(plugin);
         } catch (error) {
-          if (isAbortError(error)) throw error;
+          // Asks the lifetime, not the error: a setup() rejecting with its own AbortError is a plugin failure.
+          if (lifetimeOf(this).signal.aborted) throw error;
           this._purgePlugin(plugin.id);
           this._notifySubscribers();
           this._log.error(`Plugin "${plugin.id}" setup() threw an error`, error);
