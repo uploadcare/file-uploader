@@ -1036,6 +1036,20 @@ describe('UploaderPublicApi', () => {
       expect(input.accept).toContain(BASIC_VIDEO_WILDCARD);
     });
 
+    it('removes the input and ignores a late pick once the uploader is destroyed', () => {
+      const { api, ctxName } = setup();
+      const addFiles = vi.spyOn(api, 'addFilesFromObjects');
+      api.openSystemDialog();
+      const input = document.querySelector<HTMLInputElement>('[uploadcare-file-input]')!;
+
+      destroyCtx(ctxName);
+      Object.defineProperty(input, 'files', { value: [new File(['x'], 'x.txt')], configurable: true });
+      input.dispatchEvent(new Event('change'));
+
+      expect(input.isConnected).toBe(false);
+      expect(addFiles).not.toHaveBeenCalled();
+    });
+
     it('is a no-op change handler when the input has no files', () => {
       const { api, ctrl } = setup();
       api.openSystemDialog();
