@@ -63,7 +63,10 @@ export class UploadGroupController {
       this._eventEmitter.emit(UploaderEventType.CHANGE, () => buildOutputCollectionState(requireContainerOf(this)), {
         debounce: true,
       });
-      this._collectionState.set('collectionState', collectionStateWithGroup);
+      this._collectionState.set(
+        'collectionState',
+        buildOutputCollectionState(requireContainerOf(this), { warnOnLateRead: false }),
+      );
     } catch (err) {
       if (!isActive()) return;
       this._collectionState.set(

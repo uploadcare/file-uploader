@@ -115,7 +115,12 @@ const changedFields = (before: Fields<BuildTimeField>, now: Fields<BuildTimeFiel
 export function buildOutputCollectionState<
   TCollectionStatus extends OutputCollectionStatus,
   TGroupFlag extends GroupFlag = 'maybe-has-group',
->(container: ControllerContainer): OutputCollectionState<TCollectionStatus, TGroupFlag> {
+>(
+  container: ControllerContainer,
+  // Off for the state published to `CollectionStateController`: blocks read that one whenever they render (a
+  // `<uc-form-input>` mounted after the last change), so a late read there is not the integrator's.
+  { warnOnLateRead = true }: { warnOnLateRead?: boolean } = {},
+): OutputCollectionState<TCollectionStatus, TGroupFlag> {
   // Two moments, never one per field. The cheap fields are read now. The entry-derived ones are built together on
   // the first read of any of them, so a payload whose handler reads only `progress` builds no `OutputFileEntry`.
   // Read synchronously, as documented, both moments are the same one. When they are not, a reader that combines a
@@ -181,7 +186,7 @@ export function buildOutputCollectionState<
       get: () => {
         if (!entries) {
           if (container.disposed) throw new Error(`[uc] ${READ_AFTER_DESTROY_ERROR}`);
-          if (taskNow() !== builtInTask) log.warnOnce(LATE_READ_WARNING);
+          if (warnOnLateRead && taskNow() !== builtInTask) log.warnOnce(LATE_READ_WARNING);
           entries = takeEntries();
           changedBeforeEntries = changedFields(atBuild, readBuildTimeFields(container));
           warnIfMixed([...changedBeforeEntries].filter((field) => readBuildTime.has(field)));

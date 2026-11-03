@@ -1,6 +1,8 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { UploadCollectionEventsController } from '../../abstract/controllers/UploadCollectionEventsController';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import type { OutputCollectionState } from '../../types/index';
@@ -155,5 +157,24 @@ describe('FormInput', () => {
       allEntries: [{ cdnUrl: 'https://cdn/a' }],
     });
     expect(validationInput(el)?.value).toBe('https://cdn/group');
+  });
+
+  it('reads a collection state published in an earlier task without the late-read warning (late mount)', async () => {
+    const ctxName = freshCtxName();
+    ensureUploaderCtx(ctxName);
+    const container = UploaderRegistry.get(ctxName)!;
+    container.get(ConfigController).set('multiple', false);
+    container.get(UploadCollectionController).add({ fileInfo: { uuid: 'srv' } as never, cdnUrl: 'https://cdn/late' });
+    container.get(UploadCollectionEventsController).flushOutput();
+    await delay(0);
+
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    try {
+      const { el } = await mount(ctxName);
+      expect(validationInput(el)?.value).toBe('https://cdn/late');
+      expect(warn.mock.calls.map((args) => args.join(' ')).join('\n')).not.toContain('after the task that created it');
+    } finally {
+      warn.mockRestore();
+    }
   });
 });
