@@ -303,6 +303,35 @@ describe('Config (<uc-config>) — additive coverage: plain/complex keys, reflec
 
     expect(config.get('multiple')).toBe(false);
   });
+
+  it('keeps a DOM-property value when removeAttribute targets an attribute the element never had', async () => {
+    const ctxName = freshCtxName();
+    const config = controllerFor(ctxName);
+    const el = await mount(ctxName);
+    const authToken = async () => 'token';
+
+    el.authToken = authToken;
+    el.removeAttribute('auth-token');
+    await delay(0);
+
+    expect(config.get('authToken')).toBe(authToken);
+    expect(el.authToken).toBe(authToken);
+  });
+
+  it('keeps a pre-connect DOM-property value when removeAttribute targets an absent attribute', async () => {
+    const ctxName = freshCtxName();
+    const config = controllerFor(ctxName);
+    const el = document.createElement('uc-config') as Config;
+    el.setAttribute('ctx-name', ctxName);
+    el.pubkey = 'demopublickey';
+    el.removeAttribute('pubkey');
+    document.body.append(el);
+    track(el);
+    await el.updateComplete;
+    await delay(0);
+
+    expect(config.get('pubkey')).toBe('demopublickey');
+  });
 });
 
 /**
