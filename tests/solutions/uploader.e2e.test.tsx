@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { UploaderRegistry } from '@/abstract/UploaderRegistry';
-import { Uploader } from '@/index';
+import { Uploader } from '@/solutions/file-uploader/Uploader';
 import { delay } from '@/utils/delay';
 import { getCtxName } from '~/tests/utils/test-renderer';
 
