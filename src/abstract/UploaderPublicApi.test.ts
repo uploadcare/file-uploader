@@ -113,6 +113,24 @@ describe('UploaderPublicApi', () => {
       expect(api.cfg.cdnCname).toBe('https://cdn.example.com');
     });
 
+    it('throws on a cfg write and leaves config untouched, as v1 did', () => {
+      const { api, ctrl } = setup();
+      const listener = vi.fn();
+      ctrl.config.observe('sourceList', listener);
+      const cfg = api.cfg as { sourceList: string };
+
+      expect(() => {
+        cfg.sourceList = 'camera';
+      }).toThrow(/read-only/);
+      expect(() => delete (cfg as { sourceList?: string }).sourceList).toThrow(/read-only/);
+      expect(api.cfg.sourceList).toBe('local, url, camera, dropbox, gdrive');
+
+      // A later real change to the same value still applies and notifies.
+      ctrl.config.set('sourceList', 'camera');
+      expect(api.cfg.sourceList).toBe('camera');
+      expect(listener).toHaveBeenCalledWith('camera');
+    });
+
     it('exposes an l10n function reading the LocaleController dictionary', () => {
       const { api, ctrl } = setup();
       ctrl.locale.set('greeting', 'Hello {{name}}');

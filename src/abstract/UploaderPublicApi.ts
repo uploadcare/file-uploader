@@ -65,6 +65,11 @@ const isFileUuid = (value: string): boolean => {
   }
 };
 
+/** Write trap of `api.cfg`: config changes go through `<uc-config>`, as in v1. */
+const rejectCfgWrite = (): never => {
+  throw new Error('api.cfg is read-only; set options on <uc-config> instead');
+};
+
 /**
  * The documented public JS API (`element.getAPI()`): one instance per ctx, acting on that ctx's uploader. It holds no
  * state of its own; every method reads or drives the ctx's controllers. Once the uploader is destroyed, calling a
@@ -95,6 +100,8 @@ export class UploaderPublicApi {
   // `createL10n` reads the injected `LocaleController` live on every lookup, so a
   // dictionary load / locale switch is reflected without recreating the fn.
   private _l10n = createL10n(() => this._locale);
+  // A write to the live bag would skip normalization and signals, so `cfg` is a view that rejects writes.
+  private _cfgView: Readonly<ConfigType> | null = null;
 
   private get _container(): ControllerContainer {
     return requireContainerOf(this);
@@ -106,7 +113,14 @@ export class UploaderPublicApi {
    * `ConfigController`'s live values object.
    */
   public get cfg(): Readonly<ConfigType> {
-    return this._config.values;
+    // Read through `_config` every time, so a read after teardown still throws.
+    const values = this._config.values;
+    this._cfgView ??= new Proxy(values, {
+      set: rejectCfgWrite,
+      defineProperty: rejectCfgWrite,
+      deleteProperty: rejectCfgWrite,
+    });
+    return this._cfgView;
   }
 
   public get l10n() {
