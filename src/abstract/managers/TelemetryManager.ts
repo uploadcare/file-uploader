@@ -3,7 +3,7 @@ import { TelemetryAPIService } from '@uploadcare/quality-insights';
 import { Queue } from '@uploadcare/upload-client';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import type { ConfigType } from '../../types/index';
-import { redactSecrets } from '../../utils/redactSecrets';
+import { PRIVATE_DATA_KEYS, redactDeep, redactSecrets } from '../../utils/redactSecrets';
 import { UID } from '../../utils/UID';
 import { initialConfig } from '../config/initialConfig';
 import { controllerLogger } from '../controllerLogger';
@@ -58,6 +58,19 @@ const EXCLUDED_EVENTS: ReadonlySet<CommonEventType> = new Set([
   EventType.FILE_UPLOAD_PROGRESS,
   EventType.FILE_UPLOAD_SUCCESS,
   EventType.FILE_UPLOAD_FAILED,
+]);
+
+/**
+ * Uploader events whose payload carries files: an entry, or a collection with its entries and group. Quality insights
+ * collects non-personal data, so their {@link PRIVATE_DATA_KEYS} values are redacted; the rest is sent as is.
+ */
+const FILE_PAYLOAD_EVENTS: ReadonlySet<CommonEventType> = new Set([
+  EventType.FILE_URL_CHANGED,
+  EventType.DONE_CLICK,
+  EventType.COMMON_UPLOAD_START,
+  EventType.COMMON_UPLOAD_SUCCESS,
+  EventType.COMMON_UPLOAD_FAILED,
+  EventType.GROUP_CREATED,
 ]);
 
 /**
@@ -242,7 +255,11 @@ export class TelemetryManager {
     }
     // Copied now, while the config waits for the send: event payloads such as `OutputCollectionState` are getters over
     // live state, and read after the yield below they would describe a later moment than the event.
-    const eventPayload = body.payload ? { ...body.payload } : undefined;
+    const eventPayload = body.payload
+      ? FILE_PAYLOAD_EVENTS.has(body.eventType)
+        ? (redactDeep(body.payload, PRIVATE_DATA_KEYS) as Record<string, unknown>)
+        : { ...body.payload }
+      : undefined;
 
     lifetime.run(
       () =>
