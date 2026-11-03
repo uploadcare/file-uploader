@@ -1,14 +1,18 @@
-import { html, nothing } from 'lit';
+import { ContextProvider } from '@lit/context';
+import { html, nothing, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
+import { PluginController } from '../../abstract/managers/plugin';
 import type { TypedData } from '../../abstract/TypedData';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
+import { editorIconContext } from '../CloudImageEditor/src/EditorIcon';
 import type { ApplyResult, ChangeResult } from '../CloudImageEditor/src/types';
+import { renderResolvedIcon } from '../Icon/renderResolvedIcon';
 import './cloud-image-editor-activity.css';
 import type { Uid } from '../../abstract/Uid';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
@@ -29,6 +33,16 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
 
   private _entry?: TypedData<UploadEntryData>;
 
+  // NEXT-MAJOR(editor-icons): the editor should own its icon set (sprite only, themed through its own props/CSS) and
+  // not read the uploader's `iconHrefResolver` or plugin icons. Kept for 1.x compat: v1's editor rendered `uc-icon`,
+  // so this hands `uc-editor-icon` the same resolution `uc-icon` does (plugin icon, then resolver, then sprite).
+  // Only inside the uploader: the standalone editor keeps the sprite even next to a `<uc-config iconHrefResolver>`,
+  // where v1 followed the resolver.
+  private readonly _editorIcons = new ContextProvider(this, { context: editorIconContext });
+
+  // Resolved through `whenController` as in `uc-icon`: the plugin manager is bound only once an uploader scope attaches.
+  private _pluginManager: PluginController | null = null;
+
   // Mount marker: the resolved cdn url of the entry being edited, set once the
   // uploadCollection entry is available and cleared on unmount. Its presence
   // gates whether the `<uc-cloud-image-editor>` renders; `cropPreset` / `tabs`
@@ -43,7 +57,26 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
   // path missed.
   protected override controllerReleased(container: ControllerContainer): void {
     super.controllerReleased(container);
+    this._pluginManager = null;
     this._unmountEditor();
+  }
+
+  /** @internal */
+  @subscription()
+  protected _wirePluginIcons(): Unsubscribe {
+    return this.container.whenController(PluginController, (pluginManager) => {
+      this._pluginManager = pluginManager;
+      this.requestUpdate();
+      return pluginManager.onPluginsChange(() => this.requestUpdate());
+    });
+  }
+
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+    // Tracked read: a later `iconHrefResolver` change re-runs this and hands the editor icons a new renderer.
+    const iconHrefResolver = this._config.getTracked('iconHrefResolver');
+    const pluginIcons = this._pluginManager?.snapshot().icons;
+    this._editorIcons.setValue((name) => renderResolvedIcon(name, pluginIcons, iconHrefResolver));
   }
 
   private _handleApply(e: CustomEvent<ApplyResult>): void {
