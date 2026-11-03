@@ -601,6 +601,31 @@ describe('UploadEventsController', () => {
       expect(t.emit.mock.calls.filter(([type]) => type === UploaderEventType.GROUP_CREATED)).toHaveLength(1);
     });
 
+    it('keeps the group in flight when a post-upload validator republishes the collection state meanwhile', async () => {
+      const state = makeState({ totalCount: 1, status: 'success', allEntries: [{ uuid: 'u1' }] as never });
+      const t = setup({ collectionState: state });
+      // Every flush publishes a fresh state object, as the real builder does.
+      vi.mocked(buildOutputCollectionState).mockImplementation(() => ({ ...state }) as never);
+      t.config.set('groupOutput', true);
+      let answer: (group: UploadcareGroup) => void = () => {};
+      mockUploadFileGroup.mockImplementationOnce(() => new Promise((resolve) => (answer = resolve)));
+      mockUploadFileGroup.mockResolvedValueOnce({ uuid: 'group~2' } as UploadcareGroup);
+      const id = t.collection.add({ fileName: 'a.txt' });
+      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
+      await vi.advanceTimersByTimeAsync(300);
+      expect(mockUploadFileGroup).toHaveBeenCalledTimes(1);
+
+      // The validator's write lands while the group request is still on the network.
+      t.fireProperties({ errors: new Set([id]) });
+      await vi.advanceTimersByTimeAsync(300);
+      answer({ uuid: 'group~1' } as UploadcareGroup);
+      await vi.advanceTimersByTimeAsync(300);
+
+      expect(mockUploadFileGroup).toHaveBeenCalledTimes(1);
+      expect(t.container.get(CollectionStateController).get('groupInfo')).toEqual({ uuid: 'group~1' });
+      expect(t.emit.mock.calls.filter(([type]) => type === UploaderEventType.GROUP_CREATED)).toHaveLength(1);
+    });
+
     describe('a new group for a changed collection', () => {
       const withGroup = async () => {
         const state = makeState({ totalCount: 1, status: 'success', allEntries: [{ uuid: 'u1' }] as never });
@@ -765,7 +790,9 @@ describe('UploadEventsController', () => {
       const t = setup({ collectionState: state });
       t.config.set('groupOutput', true);
       mockUploadFileGroup.mockImplementation(async () => {
-        t.setCollectionStateValue(makeState({ totalCount: 2, status: 'success' })); // race: state replaced
+        // race: a file joins the collection while the group request is on the network
+        const late = t.collection.add({ fileName: 'b.txt' });
+        t.fireCollection([late], entriesByUid(t.collection, [late]), new Set());
         return { uuid: 'group~1' } as UploadcareGroup;
       });
       const id = t.collection.add({ fileName: 'a.txt' });
