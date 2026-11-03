@@ -577,6 +577,10 @@ export class UploaderPublicApi {
         return;
       }
 
+      // Without a modal, `setCurrentActivity` already shows the activity in place. Opening the router's modal slot
+      // would hide every later `setCurrentActivity` behind a modal that is never rendered.
+      if (!this._appInfo.hasModal) return;
+
       // An open modal already shows the intended activity: `setCurrentActivity`
       // switches it. Otherwise open the one `setCurrentActivity` put in the
       // background slot.

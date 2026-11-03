@@ -75,4 +75,21 @@ describe('uc-file-uploader-inline', () => {
     );
     await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
   });
+
+  it('switches the visible activity on setCurrentActivity after setModalState(true), since it has no modal to open', async () => {
+    const { api, root } = await renderSolution('inline');
+    const modalOpen = vi.fn();
+    onTestFinished(api.on('modal-open', modalOpen));
+
+    api.setCurrentActivity('url');
+    api.setModalState(true);
+    await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
+
+    api.setCurrentActivity('start-from');
+
+    await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-url-source')).not.toBeInTheDocument();
+    expect(api.getCurrentActivity()).toBe('start-from');
+    expect(modalOpen).not.toHaveBeenCalled();
+  });
 });
