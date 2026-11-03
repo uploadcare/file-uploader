@@ -317,6 +317,7 @@ export class UploaderPublicApi {
     const accept = serializeCsv(
       mergeFileTypes([this.cfg.accept ?? '', ...(this.cfg.imgOnly ? IMAGE_ACCEPT_LIST : [])]),
     );
+    const { signal } = this._container.lifetime;
     const INPUT_ATTR_NAME = 'uploadcare-file-input';
     const fileInput = document.createElement('input');
     fileInput.setAttribute(INPUT_ATTR_NAME, '');
@@ -347,6 +348,7 @@ export class UploaderPublicApi {
     } else {
       fileInput.accept = accept;
     }
+    const removeInput = () => fileInput.remove();
     fileInput.addEventListener(
       'change',
       () => {
@@ -357,11 +359,13 @@ export class UploaderPublicApi {
         this.addFilesFromObjects([...fileInput.files].map((file) => ({ file, source })));
         this._router.traverse('onFileAdd');
         fileInput.remove();
+        signal.removeEventListener('abort', removeInput);
       },
-      {
-        once: true,
-      },
+      // Bound to the ctx: a file picked after the uploader is destroyed is dropped, and the input goes with it.
+      { once: true, signal },
     );
+    // ponytail: an input replaced by the next call before a pick keeps this listener until the ctx ends.
+    signal.addEventListener('abort', removeInput, { once: true });
 
     document.querySelectorAll(`[${INPUT_ATTR_NAME}]`).forEach((el) => {
       el.remove();
