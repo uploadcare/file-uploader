@@ -5,8 +5,8 @@ import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE, testFile } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { emulatorSession, isLive, resetEmulator } from '~/tests/utils/emulator.browser';
-import { recordEvents } from '~/tests/utils/event-recorder';
-import { renderSolution } from '~/tests/utils/render-solution';
+import { type EventRecorder, recordEvents } from '~/tests/utils/event-recorder';
+import { type RenderedUploader, renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
 /**
@@ -20,6 +20,33 @@ import '~/types/jsx';
 
 const CHANGE = 'change' as const;
 const PROGRESS = ['file-upload-progress', 'common-upload-progress'] as const;
+
+/**
+ * The sentinel for "everything after an upload has landed": every uploaded file is validated again behind the
+ * validation queue's debounce, and anything that revalidation reports goes out before the `change` it sets off. Call it
+ * before the upload succeeds; the returned wait ends on that `change`.
+ */
+const watchPostUploadValidation = (
+  { api, provider }: RenderedUploader,
+  recorder: EventRecorder,
+  internalId: string,
+): (() => Promise<void>) => {
+  let recordedBefore = -1;
+  // Added after the uploader's own observer, so it sees the revalidation result in the same batch, after the uploader.
+  const unobserve = provider.uploadCollection.observeProperties(['errors'], (changeMap) => {
+    const isUploaded = api.getOutputItem(internalId).isSuccess;
+    if (recordedBefore < 0 && isUploaded && changeMap.errors?.has(internalId)) recordedBefore = recorder.events.length;
+  });
+  onTestFinished(unobserve);
+  return () =>
+    vi.waitFor(
+      () => {
+        expect(recordedBefore).toBeGreaterThanOrEqual(0);
+        expect(recorder.events.slice(recordedBefore).map((event) => event.type)).toContain(CHANGE);
+      },
+      { timeout: 20_000 },
+    );
+};
 
 describe('events: upload lifecycle', () => {
   it('fires the full ordered sequence for a single local file', async () => {
@@ -283,6 +310,49 @@ describe('events: upload lifecycle', () => {
     expect(settled.filter((type) => type === 'common-upload-failed')).toHaveLength(1);
     expect(settled.indexOf('common-upload-failed')).toBeGreaterThan(settled.indexOf('file-upload-success'));
     expect(failed).toEqual([expect.objectContaining({ status: 'failed', successCount: 1, failedCount: 1 })]);
+  });
+
+  // Fake-only: the emulator rejects one file and holds the other until the rejection is reported.
+  it.skipIf(isLive)('fires common-upload-failed once when a file is rejected next to one that uploads', async () => {
+    const released = withResolvers();
+    emulatorSession().on('POST /base/', async ({ request, next }) => {
+      const file = (await request.clone().formData()).get('file');
+      if (file instanceof File && file.name === 'rejected.jpg') {
+        return Response.json({ error: { status_code: 400, content: 'File is not allowed.' } });
+      }
+      await released.promise;
+      return next();
+    });
+    const uploader = await renderSolution();
+    const { api, provider } = uploader;
+    const recorder = recordEvents(provider);
+    // Copied when it fires: the recorder keeps the live state, which a later read would see newer.
+    const failed: OutputCollectionState[] = [];
+    provider.addEventListener('common-upload-failed', (e) => failed.push(e.detail.snapshot()));
+    api.addFileFromObject(testFile('rejected.jpg'));
+    const uploaded = api.addFileFromObject(IMAGE.PIXEL);
+    const isRevalidated = watchPostUploadValidation(uploader, recorder, uploaded.internalId);
+
+    await recorder.waitFor('file-upload-failed');
+    released.resolve();
+    await isRevalidated();
+
+    expect(failed).toEqual([expect.objectContaining({ status: 'failed', successCount: 1, failedCount: 1 })]);
+  });
+
+  it('fires common-upload-failed once, after the batch settles, when a file is rejected by validation', async () => {
+    const uploader = await renderSolution('regular', { imgOnly: true });
+    const { api, provider } = uploader;
+    const recorder = recordEvents(provider);
+    api.addFileFromObject(testFile('rejected.txt', 'text/plain'));
+    const uploaded = api.addFileFromObject(IMAGE.PIXEL);
+    const isRevalidated = watchPostUploadValidation(uploader, recorder, uploaded.internalId);
+
+    await isRevalidated();
+
+    const settled = recorder.typesExcluding(CHANGE, ...PROGRESS);
+    expect(settled.filter((type) => type === 'common-upload-failed')).toHaveLength(1);
+    expect(settled.indexOf('common-upload-failed')).toBeGreaterThan(settled.indexOf('file-upload-success'));
   });
 
   it('fires group-created after the upload succeeds when groupOutput is enabled', async () => {

@@ -8,6 +8,7 @@ import type { TypedData } from '../TypedData';
 import type { Uid } from '../Uid';
 import type { UploadEntryData } from '../uploadEntrySchema';
 import { CollectionStateController } from './CollectionStateController';
+import { ConfigController } from './ConfigController';
 import { UploadCollectionController } from './UploadCollectionController';
 import { UploadController } from './UploadController';
 
@@ -24,6 +25,7 @@ type Entry = TypedData<UploadEntryData>;
  */
 export class UploadCollectionEventsController {
   @inject(EventEmitter) private readonly _eventEmitter!: EventEmitter;
+  @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
   // A thunk: `UploadController` reaches this module back through `ValidationController`.
@@ -35,8 +37,8 @@ export class UploadCollectionEventsController {
    */
   private _isUploadSuccessReported = false;
 
-  /** Whether `COMMON_UPLOAD_FAILED` has fired since the collection last became failed with nothing in flight. */
-  private _isUploadFailedReported = false;
+  /** What `COMMON_UPLOAD_FAILED` last reported as failing: the failed files' uids and the collection error types. */
+  private _reportedFailures = new Set<string>();
 
   /** Membership changed → the current group no longer describes the collection, and its success is not reported yet. */
   public resetGroupIfMembershipChanged(added: Set<Entry>, removed: Set<Entry>): void {
@@ -91,37 +93,55 @@ export class UploadCollectionEventsController {
   }
 
   /**
-   * `COMMON_UPLOAD_FAILED` once the collection is failed (a file or collection error) and nothing is left uploading,
-   * queued or validating — once per change into that state. Reporting it as soon as one file failed sent it while the
-   * rest of the batch still uploaded, and again for every later validator run.
+   * `COMMON_UPLOAD_FAILED` once the collection is failed (a file or collection error) and every file not yet uploaded
+   * or failed is settled too: none is uploading, validating, or about to start uploading on its own. Once per failure:
+   * it reports again only when something fails that the last report did not include. Validating an uploaded or failed
+   * file again (after its upload, or on a config change) does not reopen the batch.
    */
   public emitCommonFailedIfSettled(): void {
-    let isFailed = this._collectionState.get('collectionErrors').length > 0;
+    const { confirmUpload, multiple, multipleMax } = this._config.values;
+    const max = multiple ? multipleMax : 1;
+    // Mirrors the checks before an upload starts: without `confirmUpload` a ready file starts on the upload list's next
+    // throttled tick, after its validation has landed, so until then it is still in flight.
+    const isStartPending = !confirmUpload && !(max && this._collection.size > max);
+    const failures = new Set<string>(
+      this._collectionState.get('collectionErrors').map((error) => error.type ?? 'CUSTOM_ERROR'),
+    );
     let isInFlight = false;
     for (const uid of this._collection.items()) {
       const entry = this._collection.read(uid);
       if (!entry) continue;
-      if (entry.get('errors').length > 0) {
-        isFailed = true;
+      const isFailed = entry.get('errors').length > 0;
+      if (isFailed) {
+        failures.add(uid);
       }
-      if (
-        entry.get('isUploading') ||
-        entry.get('isQueuedForUploading') ||
-        entry.get('isValidationPending') ||
-        entry.get('isQueuedForValidation')
+      if (entry.get('isUploading') || entry.get('isQueuedForUploading')) {
+        isInFlight = true;
+      } else if (
+        !isFailed &&
+        !entry.get('fileInfo') &&
+        (isStartPending ||
+          !!entry.get('uploadError') ||
+          entry.get('isValidationPending') ||
+          entry.get('isQueuedForValidation'))
       ) {
         isInFlight = true;
       }
     }
-    const isSettledFailure = isFailed && !isInFlight;
-    if (isSettledFailure && !this._isUploadFailedReported) {
+    if (isInFlight) {
+      // Forget what stopped failing (a file uploaded again), so it is reported if it fails again.
+      this._reportedFailures = new Set([...this._reportedFailures].filter((key) => failures.has(key)));
+      return;
+    }
+    const hasNewFailure = [...failures].some((key) => !this._reportedFailures.has(key));
+    this._reportedFailures = failures;
+    if (hasNewFailure) {
       this._eventEmitter.emit(
         UploaderEventType.COMMON_UPLOAD_FAILED,
         () => this._outputCollectionState() as OutputCollectionState<'failed'>,
         { debounce: true },
       );
     }
-    this._isUploadFailedReported = isSettledFailure;
   }
 
   /**
