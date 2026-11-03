@@ -83,7 +83,21 @@ export const createRecordingSource = ({
     ctx.scale(-1, 1);
   }
 
-  const draw = () => ctx.drawImage(video, crop.x, crop.y, crop.width, crop.height, 0, 0, crop.width, crop.height);
+  // The canvas, and so the recording, keeps its size; when the frame size changes mid-recording (a phone turned), the
+  // crop is taken again from the new frame, in the canvas's shape.
+  let frame = { width, height };
+  let source = crop;
+  const draw = () => {
+    if (
+      video.videoWidth &&
+      video.videoHeight &&
+      (video.videoWidth !== frame.width || video.videoHeight !== frame.height)
+    ) {
+      frame = { width: video.videoWidth, height: video.videoHeight };
+      source = centerCrop(frame.width, frame.height, crop.width / crop.height);
+    }
+    ctx.drawImage(video, source.x, source.y, source.width, source.height, 0, 0, crop.width, crop.height);
+  };
   // The first frame goes in before the recorder starts, so the clip doesn't open on a blank frame.
   draw();
 

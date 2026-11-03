@@ -150,3 +150,16 @@ export const buildConstraints = ({
   }
   return { video, audio };
 };
+
+/**
+ * Whether `constraints` asks for the same thing as the `requested` ones (serialized), apart from the device: asking for
+ * the device already open by its id is not a change.
+ */
+export const sameExceptDevice = (requested: string | null, constraints: MediaTrackConstraints): boolean => {
+  if (requested === null) {
+    return false;
+  }
+  const { deviceId: _requestedDevice, ...requestedRest } = JSON.parse(requested) as MediaTrackConstraints;
+  const { deviceId: _device, ...rest } = constraints;
+  return JSON.stringify(requestedRest) === JSON.stringify(rest);
+};

@@ -371,9 +371,9 @@ export type ConfigType = {
    * microphone picked in the camera screen always win over `deviceId`. If the camera cannot satisfy these
    * constraints, it opens without them and a warning is logged.
    *
-   * Video constraints are re-applied to the open camera when this option changes or, for the function form, when
-   * the user switches between photo and video; changes made during a recording apply once it stops. Audio
-   * constraints only take effect the next time the camera opens.
+   * The constraints are re-applied when this option changes or, for the function form, when the user switches between
+   * photo and video: video constraints to the open camera, audio constraints by reopening the microphone (the camera
+   * keeps running). Changes made during a recording apply once it stops.
    * @default null
    */
   cameraConstraints: CameraConstraints | CameraConstraintsResolver | null;

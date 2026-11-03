@@ -113,11 +113,20 @@ const asAuthToken = (value: unknown): AuthToken => {
   throw new Error('Invalid authToken value. Must be a string, a function, or a `{ getToken }` object.');
 };
 
+const isPlainObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
 const asCameraConstraints = (value: unknown): CameraConstraints | CameraConstraintsResolver => {
   if (typeof value === 'function') {
     return value as CameraConstraintsResolver;
   }
-  if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+  if (isPlainObject(value)) {
+    // `audio: false` or `video: true` are valid for getUserMedia but not here, and would be ignored without a word.
+    for (const kind of ['video', 'audio'] as const) {
+      if (value[kind] !== undefined && !isPlainObject(value[kind])) {
+        throw new Error(`Invalid cameraConstraints.${kind} value. Must be an object of track constraints.`);
+      }
+    }
     return value as CameraConstraints;
   }
 
@@ -164,6 +173,10 @@ const asCameraAspectRatio = (value: unknown): string => {
 };
 
 const asCameraPhotoQuality = (value: unknown): number => {
+  // `Number('')` is 0, which would encode the photo at the lowest quality.
+  if (typeof value === 'string' && value.trim() === '') {
+    throw new Error('Must be a number between 0 and 1, got an empty value');
+  }
   const number = asNumber(value);
   if (number < 0 || number > 1) {
     throw new Error(`Must be between 0 and 1, got ${number}`);

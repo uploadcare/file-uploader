@@ -13,7 +13,7 @@ import './camera-source.css';
 import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { styleMap } from 'lit/directives/style-map.js';
-import { audioBitsPerSecond, type BuildConstraintsInput, buildConstraints } from './buildConstraints';
+import { audioBitsPerSecond, type BuildConstraintsInput, buildConstraints, sameExceptDevice } from './buildConstraints';
 import {
   AUDIO_MODES,
   AUDIO_QUALITIES,
@@ -426,6 +426,8 @@ export class CameraSource extends LitUploaderBlock {
         this._setCameraState(CameraSourceEvents.PLAY);
       }
     } catch (error) {
+      // The canvas would otherwise keep drawing until the camera closes.
+      this._stopRecordingSource();
       console.error('Failed to start recording', error);
       this.telemetryManager.sendEventError(error, 'camera recording. Failed to start recording');
     }
@@ -1106,11 +1108,17 @@ export class CameraSource extends LitUploaderBlock {
       audioMode: this._audioMode,
       aspectRatio: this._aspectRatio,
       resolution: this._resolution,
-      custom: this.cfg.cameraConstraints,
+      custom: this._customConstraintsDropped ? null : this.cfg.cameraConstraints,
       cameraId: this._selectedCameraId,
       audioId: this._selectedAudioId,
     };
   }
+
+  /**
+   * Set when the camera opened without `cameraConstraints` because it couldn't satisfy them. Later changes are applied
+   * without them too, until the option changes or the camera opens again.
+   */
+  private _customConstraintsDropped = false;
 
   /**
    * Opens the stream. If `cameraConstraints` asks for something the camera can't do, opens it once more without them
@@ -1121,6 +1129,7 @@ export class CameraSource extends LitUploaderBlock {
     requested: MediaTrackConstraints;
     requestedAudio: MediaStreamConstraints['audio'];
   }> {
+    this._customConstraintsDropped = false;
     const input = this._constraintsInput;
     const constraints = buildConstraints(input);
     const requested = { requested: constraints.video, requestedAudio: constraints.audio };
@@ -1133,9 +1142,13 @@ export class CameraSource extends LitUploaderBlock {
       console.warn('The camera cannot satisfy cameraConstraints, opening it without them', error);
       this.telemetryManager.sendEventError(error, 'camera capturing. cameraConstraints could not be satisfied');
 
+      this._customConstraintsDropped = true;
       const fallback = buildConstraints({ ...input, custom: null });
-      // Reported as the original request, so the apply methods don't retry the same rejected constraints.
-      return { stream: await navigator.mediaDevices.getUserMedia(fallback), ...requested };
+      return {
+        stream: await navigator.mediaDevices.getUserMedia(fallback),
+        requested: fallback.video,
+        requestedAudio: fallback.audio,
+      };
     }
   }
 
@@ -1174,8 +1187,11 @@ export class CameraSource extends LitUploaderBlock {
       this._maxShortSide = maxShortSideOf(stream.getVideoTracks()[0]);
       if (this._pickedResolution !== null && !this._resolutionOptions.includes(this._pickedResolution)) {
         this._pickedResolution = null;
-        void this._applyVideoConstraints();
       }
+      // The camera opened with what was in effect when it was asked for. Apply what is in effect now: a preset the
+      // camera turned out not to do was left out of the picker, and a pick made while it opened was not applied.
+      void this._applyVideoConstraints();
+      void this._applyAudioConstraints();
     } catch (error) {
       if (captureId !== this._captureId) {
         return;
@@ -1194,7 +1210,7 @@ export class CameraSource extends LitUploaderBlock {
 
   /**
    * Applies changed video constraints to the open camera without reopening it, so there is no new permission prompt
-   * and no black frame. Audio constraints need a new stream and wait for the next capture.
+   * and no black frame. Audio constraints are applied by {@link _applyAudioConstraints}, which reopens the microphone.
    */
   private _applyVideoConstraints = async (): Promise<void> => {
     const track = this._stream?.getVideoTracks()[0];
@@ -1217,8 +1233,12 @@ export class CameraSource extends LitUploaderBlock {
     try {
       await track.applyConstraints(video);
     } catch (error) {
-      console.warn('The camera cannot satisfy cameraConstraints, keeping the current settings', error);
-      this.telemetryManager.sendEventError(error, 'camera capturing. cameraConstraints could not be applied');
+      // Only blame `cameraConstraints` when they took part in the request.
+      const subject = this._constraintsInput.custom
+        ? 'the camera settings or cameraConstraints'
+        : 'the camera settings';
+      console.warn(`The camera cannot apply ${subject}, keeping the current ones`, error);
+      this.telemetryManager.sendEventError(error, `camera capturing. ${subject} could not be applied`);
     }
   };
 
@@ -1230,7 +1250,8 @@ export class CameraSource extends LitUploaderBlock {
 
   /**
    * Once the device list names the devices already in use, asking for them by id is the same request, not a change.
-   * Without this, the first unrelated change would reopen the microphone for nothing.
+   * Without this, the first unrelated change would reopen the microphone for nothing. Anything else that differs is
+   * still a change to apply.
    */
   private _syncRequestedConstraints(): void {
     const stream = this._stream;
@@ -1238,16 +1259,26 @@ export class CameraSource extends LitUploaderBlock {
       return;
     }
     const { video, audio } = buildConstraints(this._constraintsInput);
-    if (this._selectedCameraId && this._selectedCameraId === stream.getVideoTracks()[0]?.getSettings().deviceId) {
+    if (
+      this._selectedCameraId &&
+      this._selectedCameraId === stream.getVideoTracks()[0]?.getSettings().deviceId &&
+      sameExceptDevice(this._requestedVideoConstraints, video)
+    ) {
       this._requestedVideoConstraints = JSON.stringify(video);
     }
     if (
-      audio &&
+      typeof audio === 'object' &&
       this._selectedAudioId &&
-      this._selectedAudioId === stream.getAudioTracks()[0]?.getSettings().deviceId
+      this._selectedAudioId === stream.getAudioTracks()[0]?.getSettings().deviceId &&
+      sameExceptDevice(this._requestedAudioConstraints, audio)
     ) {
       this._requestedAudioConstraints = JSON.stringify(audio);
     }
+  }
+
+  /** A method rather than an inline check, so TypeScript doesn't narrow the state across an `await`. */
+  private _isRecording(): boolean {
+    return this._mediaRecorder?.state === 'recording';
   }
 
   /** Incremented on every microphone swap, so a slower, older one can tell it was superseded. */
@@ -1274,6 +1305,7 @@ export class CameraSource extends LitUploaderBlock {
     if (!audio || serialized === this._requestedAudioConstraints) {
       return;
     }
+    const previousRequested = this._requestedAudioConstraints;
     this._requestedAudioConstraints = serialized;
     const swapId = ++this._audioSwapId;
 
@@ -1291,6 +1323,15 @@ export class CameraSource extends LitUploaderBlock {
       for (const stale of next.getTracks()) {
         stale.stop();
       }
+      return;
+    }
+    // A recording started while the microphone reopened: swapping the track now would break it, so wait for the stop.
+    if (this._isRecording()) {
+      for (const stale of next.getTracks()) {
+        stale.stop();
+      }
+      this._requestedAudioConstraints = previousRequested;
+      this._audioConstraintsPending = true;
       return;
     }
 
@@ -1446,6 +1487,7 @@ export class CameraSource extends LitUploaderBlock {
     });
 
     this.subConfigValue('cameraConstraints', () => {
+      this._customConstraintsDropped = false;
       void this._applyVideoConstraints();
       void this._applyAudioConstraints();
     });
