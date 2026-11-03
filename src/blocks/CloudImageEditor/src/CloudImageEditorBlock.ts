@@ -805,18 +805,30 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     const editorController = this._editorController;
 
+    // One edit writes `editorTransformations` more than once: a crop button writes its operation with the old crop,
+    // the cropper at once writes the crop it re-aligns to it, and its debounced commit writes that again. So `change`
+    // fires once the writes of a task settle, and only for a result that differs from the last one it reported.
+    let queued = false;
+    let lastCdnUrl: string | undefined;
+    const emitChange = () => {
+      queued = false;
+      const transformations = editorController.editorTransformations;
+      if (this._lifetime.signal.aborted || Object.keys(transformations).length === 0) {
+        return;
+      }
+      const detail = this._result(editorController.originalUrl as string, transformations);
+      if (detail.cdnUrl === lastCdnUrl) {
+        return;
+      }
+      lastCdnUrl = detail.cdnUrl;
+      this.dispatchEvent(new CustomEvent<ApplyResult>('change', { detail, bubbles: true, composed: true }));
+    };
     this._lifetime.onEnd(
-      editorController.observe('editorTransformations', (transformations) => {
-        if (Object.keys(transformations).length === 0) {
-          return;
+      editorController.observe('editorTransformations', () => {
+        if (!queued) {
+          queued = true;
+          queueMicrotask(emitChange);
         }
-        this.dispatchEvent(
-          new CustomEvent<ApplyResult>('change', {
-            detail: this._result(editorController.originalUrl as string, transformations),
-            bubbles: true,
-            composed: true,
-          }),
-        );
       }),
     );
   }
