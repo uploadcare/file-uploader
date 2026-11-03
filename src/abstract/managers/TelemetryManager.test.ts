@@ -6,6 +6,7 @@ import { ConfigController, type KnownConfig } from '../controllers/ConfigControl
 import { RouterController } from '../controllers/RouterController';
 import { ControllerContainer } from '../di/ControllerContainer';
 import { EventEmitter, EventType, InternalEventType } from '../EventEmitter';
+import { redactPayload } from '../telemetry/redacted';
 import { TelemetryManager } from './TelemetryManager';
 
 const sendEventMock = vi.hoisted(() => vi.fn(async (_payload: Record<string, unknown>) => {}));
@@ -171,7 +172,7 @@ describe('TelemetryManager', () => {
 
     manager.sendEvent({
       eventType: InternalEventType.ACTION_EVENT,
-      payload: { activity: 'spoofed', metadata: { a: 1 } },
+      payload: redactPayload({ activity: 'spoofed', metadata: { a: 1 } }),
     });
     await flush();
 
@@ -287,7 +288,7 @@ describe('TelemetryManager', () => {
       },
     };
 
-    manager.sendEvent({ eventType: EventType.COMMON_UPLOAD_SUCCESS, payload });
+    manager.sendEvent({ eventType: EventType.COMMON_UPLOAD_SUCCESS, payload: redactPayload(payload) });
     totalCount = 2;
     await flush();
 
@@ -469,9 +470,9 @@ describe('TelemetryManager', () => {
 
     // Same timestamp + same structure, differing only in a nested leaf — forces
     // `_checkObj` past the top-level JSON compare into the recursive key walk.
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1 } } });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { a: 1 } }) });
     await flush();
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 2 } } });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { a: 2 } }) });
     await flush();
 
     expect(sendEventMock).toHaveBeenCalledTimes(2);
@@ -481,9 +482,9 @@ describe('TelemetryManager', () => {
     const { manager, enable } = setup();
     enable();
 
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1, b: 2 } } });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { a: 1, b: 2 } }) });
     await flush();
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1 } } });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { a: 1 } }) });
     await flush();
 
     expect(sendEventMock).toHaveBeenCalledTimes(2);
@@ -493,9 +494,9 @@ describe('TelemetryManager', () => {
     const { manager, enable } = setup();
     enable();
 
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1 } } });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { a: 1 } }) });
     await flush();
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { b: 1 } } });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { b: 1 } }) });
     await flush();
 
     expect(sendEventMock).toHaveBeenCalledTimes(2);
@@ -567,9 +568,9 @@ describe('TelemetryManager', () => {
     const { manager, enable } = setup();
     enable();
 
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { a: 1, b: 2 } } });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { a: 1, b: 2 } }) });
     await flush();
-    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: { metadata: { b: 2, a: 1 } } });
+    manager.sendEvent({ eventType: EventType.MODAL_OPEN, payload: redactPayload({ metadata: { b: 2, a: 1 } }) });
     await flush();
 
     expect(sendEventMock).toHaveBeenCalledTimes(1);

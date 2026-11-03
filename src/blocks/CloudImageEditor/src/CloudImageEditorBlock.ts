@@ -365,8 +365,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         return own[key] ?? this._uploaderConfigCompat[key] ?? DEFAULT_EDITOR_CONFIG[key];
       },
       telemetry: {
-        sendEvent: (event) =>
-          this._emitTelemetry((tm) => tm.sendEvent(event as Parameters<TelemetryManager['sendEvent']>[0])),
+        sendEvent: (event) => this._emitTelemetry((tm) => tm.sendEvent(event)),
         sendEventError: (err, context) =>
           this._emitTelemetry((tm) => tm.sendEventError(err, context as string | undefined)),
         sendActionEvent: (event, node, extra) => this._emitTelemetry((tm) => tm.sendActionEvent(event, node, extra)),
