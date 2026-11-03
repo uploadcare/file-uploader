@@ -7,8 +7,9 @@ import { afterAll, describe, expect, it } from 'vitest';
 
 /**
  * Compiles a two-line consumer of the published types under the compiler settings integrators actually use. tsd covers
- * one configuration; this covers the strictness flags tsd does not vary. Only bundler resolution: the package targets
- * bundler-based projects, and its CDN URL dependency ships bundler-only declarations. The consumer lives inside
+ * one configuration; this covers the strictness flags tsd does not vary. Bundler resolution is the supported one and is
+ * fully checked: the package targets bundler-based projects, and its CDN URL dependency ships bundler-only declarations.
+ * nodenext is a skipLibCheck smoke case only (`CdnOperation`/`FilterName` are `any` there). The consumer lives inside
  * the repo so `@uploadcare/file-uploader` resolves through the package's own `exports` (Node self-reference), exactly
  * as it does for an installed copy.
  */
@@ -27,15 +28,27 @@ export declare const plugin: UploaderPlugin;
 
 const STRICT = ['--strict', '--exactOptionalPropertyTypes', '--noUncheckedIndexedAccess', '--skipLibCheck', 'false'];
 
-type Case = { name: string; file: string; flags: string[] };
+// The package's own types must stay typed under nodenext even where the CDN URL ones collapse to `any`.
+const NODENEXT_CONSUMER = `${CONSUMER}
+// @ts-expect-error size is a number
+export const size: string = entry.size;
+`;
+
+type Case = { name: string; file: string; flags: string[]; source?: string };
 const cases: Case[] = [
   { name: 'bundler', file: 'consumer.ts', flags: ['--module', 'esnext', '--moduleResolution', 'bundler'] },
+  {
+    name: 'nodenext (ESM)',
+    file: 'consumer.mts',
+    flags: ['--module', 'nodenext', '--moduleResolution', 'nodenext', '--skipLibCheck', 'true'],
+    source: NODENEXT_CONSUMER,
+  },
 ];
 
-const compile = ({ file, flags }: Case): { ok: boolean; output: string } => {
+const compile = ({ file, flags, source = CONSUMER }: Case): { ok: boolean; output: string } => {
   mkdirSync(consumerDir, { recursive: true });
   const path = join(consumerDir, file);
-  writeFileSync(path, CONSUMER);
+  writeFileSync(path, source);
   try {
     execFileSync(
       process.execPath,
@@ -70,6 +83,14 @@ afterAll(() => {
 describe('published types under consumer compiler settings', { timeout: 60_000 }, () => {
   it('bundler, strict, skipLibCheck: false', () => {
     const { ok, output } = compile(cases[0]);
+    expect(output).toBe('');
+    expect(ok).toBe(true);
+  });
+
+  // A smoke check only: a nodenext consumer still compiles, as it did with 1.x. Under it, the CDN URL dependency's
+  // bundler-only declarations don't resolve, so `CdnOperation` and `FilterName` are `any` there; skipLibCheck hides that.
+  it('nodenext (ESM), strict, skipLibCheck: true', () => {
+    const { ok, output } = compile(cases[1]);
     expect(output).toBe('');
     expect(ok).toBe(true);
   });
