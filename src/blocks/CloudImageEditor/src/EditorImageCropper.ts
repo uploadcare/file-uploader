@@ -61,6 +61,11 @@ export class EditorImageCropper extends EditorBlock {
   // of any key it watches, so it diffs to tell which one changed.
   private _lastAspectRatio: CropAspectRatio | null = null;
   private _lastOriginalUrl: string | null = null;
+  // The `imageSize` prop as it was when `originalUrl` last changed: the previous
+  // image's size, which the root replaces only on its next render. The controller
+  // notifies before that, so activation skips this size rather than open the new
+  // image with the old geometry, which the next deactivate would commit onto it.
+  private _previousImageSize: ImageSize | null = null;
   // Guards `_reactToState` against re-entering itself: it writes state
   // (`_commit`, `deactivate`→`_commit`) and a controller write notifies
   // observers synchronously, so without this a commit would re-fire the reaction
@@ -133,15 +138,14 @@ export class EditorImageCropper extends EditorBlock {
       }
 
       // A new image (originalUrl change) invalidates the current crop.
-      // Reset the ops to a clean slate and stay INACTIVE until the root
-      // supplies the new image's `imageSize` prop — reactivation then
-      // happens in `updated`. Reactivating here would use the previous
-      // image's still-stale `imageSize` (the root clears it to null before
-      // the size fetch). `deactivate` also aborts the current activation, so an
-      // in-flight activation of the old image stops.
+      // Reset the ops to a clean slate; `_syncActivation` ignores
+      // `_previousImageSize`, so the cropper stays inactive until the new
+      // image's size arrives. `deactivate` also aborts the current activation,
+      // so an in-flight activation of the old image stops.
       const originalUrl = this.editorController.originalUrl;
       if (originalUrl !== this._lastOriginalUrl) {
         this._lastOriginalUrl = originalUrl;
+        this._previousImageSize = this.imageSize;
         this._operations = { ...DEFAULT_OPERATIONS };
         if (this._isActive) {
           this.deactivate({ reset: true });
@@ -432,11 +436,11 @@ export class EditorImageCropper extends EditorBlock {
     if (!controller) {
       return;
     }
+    const imageSize = this.imageSize === this._previousImageSize ? null : this.imageSize;
     const shouldBeActive =
-      controller.tabId === TabId.CROP && !!this.imageSize && !!controller.originalUrl && !controller.networkProblems;
+      controller.tabId === TabId.CROP && !!imageSize && !!controller.originalUrl && !controller.networkProblems;
 
     if (shouldBeActive && !this._isActive) {
-      const imageSize = this.imageSize as ImageSize;
       this.runTask(() => this.activate(imageSize));
     } else if (!shouldBeActive && this._isActive) {
       this.deactivate();
