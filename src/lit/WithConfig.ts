@@ -464,6 +464,8 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
     }
 
     public override removeAttribute(qualifiedName: string): void {
+      // Removing an absent attribute changes nothing, so it must not reset a value set as a DOM property.
+      if (!this.hasAttribute(qualifiedName)) return;
       super.removeAttribute(qualifiedName);
       this._syncConfigAttributeFromDom(qualifiedName.toLowerCase());
     }
