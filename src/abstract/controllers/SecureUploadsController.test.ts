@@ -342,6 +342,29 @@ describe('SecureUploadsController', () => {
         expect(sendEventError).toHaveBeenCalled();
       });
 
+      it('falls back to the previous token when the resolver rejects with its own AbortError', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const nowUnix = Math.floor(Date.now() / 1000);
+        const validToken: SecureUploadsSignatureAndExpire = {
+          secureSignature: 'valid-signature',
+          secureExpire: String(nowUnix + 5),
+        };
+        const resolverError = new DOMException('signature request aborted', 'AbortError');
+        const resolver = vi.fn().mockResolvedValueOnce(validToken).mockRejectedValueOnce(resolverError);
+        createController({ secureUploadsSignatureResolver: resolver, secureUploadsExpireThreshold: 10000 });
+
+        await controller.getSecureToken();
+        vi.advanceTimersByTime(6000);
+
+        await expect(controller.getSecureToken()).resolves.toEqual(validToken);
+        expect(consoleErrorSpy).toHaveBeenCalledWith(
+          '[uc][secure-uploads]',
+          'Secure signature resolving failed. Falling back to the previous one.',
+          resolverError,
+        );
+        expect(sendEventError).toHaveBeenCalled();
+      });
+
       it('should debug print when token is not set yet', async () => {
         const mockToken: SecureUploadsSignatureAndExpire = {
           secureSignature: 'resolved-signature',

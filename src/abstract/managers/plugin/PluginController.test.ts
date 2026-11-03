@@ -164,6 +164,26 @@ describe('PluginController', () => {
       expect(t.configUnsubs[0]).toHaveBeenCalled(); // its config sub was cleaned up
     });
 
+    it('isolates a plugin whose setup rejects with its own AbortError and keeps setting up the rest', async () => {
+      const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const t = setup();
+      const aborted = new DOMException('remote config timed out', 'AbortError');
+
+      await t.sync([
+        sourcePlugin('aborts', async () => {
+          throw aborted;
+        }),
+        sourcePlugin('ok'),
+      ]);
+
+      expect(error).toHaveBeenCalledWith(
+        '[uc][plugin-manager]',
+        expect.stringContaining('"aborts" setup() threw'),
+        aborted,
+      );
+      expect(t.controller.snapshot().sources.map((s) => s.id)).toEqual(['ok']);
+    });
+
     it('unregisters a plugin dropped from a later sync: purges + disposes', async () => {
       const t = setup();
       const dispose = vi.fn();

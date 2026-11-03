@@ -485,7 +485,9 @@ export class EditorImageCropper extends EditorBlock {
       this._handleResizeThrottled();
       this._animateIn();
     } catch (err) {
-      if (isAbortError(err)) throw err;
+      if (this.adoptionSignal.aborted) throw err;
+      // Deactivated mid-load (a tab switch, a new image): our own cancel, not a failure.
+      if (activation.signal.aborted) return;
       this._log.error('Failed to activate cropper', { error: err });
       this.editorController.telemetry.sendEventError(err, 'cloud editor image. Failed to activate cropper');
     }

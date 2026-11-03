@@ -50,7 +50,8 @@ export class Lifetime {
   /**
    * Start fire-and-forget async work, synchronously up to its first await. The abort raised by a {@link guard}ed
    * await once the lifetime ends is expected and swallowed; any other error goes to `onError`, so a failure is still
-   * reported rather than lost.
+   * reported rather than lost. That includes an `AbortError` while the lifetime is live: it came from the task's own
+   * work (a user callback, a fetch it aborted), not from the lifetime.
    */
   public run(task: (signal: AbortSignal) => unknown, onError: (error: unknown) => void): void {
     let result: unknown;
@@ -60,7 +61,7 @@ export class Lifetime {
       result = Promise.reject(error);
     }
     Promise.resolve(result).then(undefined, (error: unknown) => {
-      if (!isAbortError(error)) {
+      if (!(this.signal.aborted && isAbortError(error))) {
         onError(error);
       }
     });

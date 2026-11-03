@@ -247,7 +247,9 @@ export class EditorFilterControl extends EditorButtonControl {
       this._clearPreviewVisibilityChecks();
       (observer ?? this._observer)?.unobserve(this);
     } catch (err) {
-      if (isAbortError(err)) throw err;
+      if (this.adoptionSignal.aborted) throw err;
+      // Our own cancel: scrolled out of view, or superseded by a newer preview. Not a failure.
+      if (isAbortError(err)) return;
       this.editorController.networkProblems = true;
       this._log.error('Failed to load image', { error: err });
       this._schedulePreviewVisibilityCheck();
