@@ -2,6 +2,7 @@ import { DEMO_IMAGE_UUID, EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import { activeClass, networkSplashVisible } from '@/blocks/CloudImageEditor/src/__tests__/editor-fixtures';
+import type { CloudImageEditorController } from '@/blocks/CloudImageEditor/src/CloudImageEditorController';
 import { EditorImageFader } from '@/blocks/CloudImageEditor/src/EditorImageFader';
 import { SliderUi } from '@/blocks/CloudImageEditor/src/elements/slider/SliderUi';
 import type { ApplyResult } from '@/blocks/CloudImageEditor/src/types';
@@ -564,6 +565,33 @@ describe('uc-cloud-image-editor', () => {
     await userEvent.click(editor.getByRole('button', { name: /apply/i }));
 
     await expect.poll(() => applied?.transformations.rotate).toBe(180);
+  });
+
+  // Fake-only: the image size comes from the emulator.
+  it.skipIf(isLive)('fires change once per rotation, with the final crop', async () => {
+    emulatorSession().on('GET /:uuid/-/json/', () => Response.json({ width: 1920, height: 1080 }));
+    const { element, editor } = renderEditor({ 'cdn-url': `https://ucarecdn.com/${UUID}/-/crop/1600x900/100,100/` });
+    const cropper = editor.getByTestId('uc-editor-image-cropper');
+    await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+    const controller = (element as unknown as { _editorController: CloudImageEditorController })._editorController;
+    // The cropper commits twice per rotation: at once, and again from its debounced crop-box commit. This observer
+    // is notified after the cropper's, so it sees the first of those, not the button's write the cropper supersedes.
+    let commits = 0;
+    onTestFinished(controller.observe('editorTransformations', () => commits++));
+    const changes: string[] = [];
+    element.addEventListener('change', (event) =>
+      changes.push((event as CustomEvent<ApplyResult>).detail.cdnUrlModifiers),
+    );
+    const applied = withResolvers<ApplyResult>();
+    element.addEventListener('apply', (event) => applied.resolve((event as CustomEvent<ApplyResult>).detail));
+
+    await userEvent.click(editor.getByTestId('uc-editor-crop-button-control').nth(0));
+    await expect.poll(() => commits).toBe(2);
+    await userEvent.click(editor.getByRole('button', { name: /apply/i }));
+    const { cdnUrlModifiers } = await applied.promise;
+
+    expect(cdnUrlModifiers).toContain('-/rotate/90/');
+    expect(changes).toEqual([cdnUrlModifiers]);
   });
 
   describe('when cdn-url switches to another image', () => {
