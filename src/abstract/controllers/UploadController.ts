@@ -64,11 +64,12 @@ export class UploadController {
   private _queue = new Queue(1);
   readonly #disposables = new Disposables();
 
-  // Uids in the current upload batch — the set most recently handed to
-  // `uploadEntries` (i.e. a `uploadAll`), minus entries that have since been
-  // removed. It is the denominator for common-progress; kept here (the upload
-  // owner) rather than as a replaceable-`Set` state key.
+  // Uids in the current upload batch — every uid handed to `uploadEntries` (i.e. a `uploadAll`) since the previous
+  // batch settled, minus entries that have since been removed. It is the denominator for common-progress; kept here
+  // (the upload owner) rather than as a replaceable-`Set` state key.
   readonly #activeBatch = new Set<Uid>();
+  // Uids of the batch whose `uploadEntry` has not finished: once none is left, the next `uploadEntries` starts a new batch.
+  readonly #inFlight = new Set<Uid>();
 
   /**
    * Container lifecycle hook — runs after the container has tagged + cached this
@@ -96,13 +97,10 @@ export class UploadController {
   }
 
   /**
-   * Upload the given entries. Each uid is added to the active batch and uploaded
-   * via `uploadEntry` (which is precondition-guarded + idempotent), whether or not
-   * any item is rendered.
-   */
-  /**
-   * Uploads `uids` as one batch. `onStart` runs once, when the first of them starts uploading, so what it reads
-   * describes an upload in flight; it never runs when the validators reject every one.
+   * Uploads `uids` via `uploadEntry`, whether or not any item is rendered. Each uid joins the active batch, which is
+   * cleared first once nothing from it is still in flight; a uid whose upload is still in flight is not started again.
+   * `onStart` runs once, when the first of them starts uploading, so what it reads describes an upload in flight; it
+   * never runs when the validators reject every one.
    */
   public uploadEntries(uids: Uid[], onStart?: () => void): void {
     let started = false;
@@ -111,10 +109,16 @@ export class UploadController {
       started = true;
       onStart?.();
     };
+    if (this.#inFlight.size === 0) {
+      this.#activeBatch.clear();
+    }
     for (const uid of uids) {
       this.#activeBatch.add(uid);
+      // Its upload from an earlier call is still running, and it is the one that uploads it.
+      if (this.#inFlight.has(uid)) continue;
+      this.#inFlight.add(uid);
       lifetimeOf(this).run(
-        () => this.uploadEntry(uid, startOnce),
+        () => this.uploadEntry(uid, startOnce).finally(() => this.#inFlight.delete(uid)),
         (error) => this._log.error('Upload failed', error),
       );
     }

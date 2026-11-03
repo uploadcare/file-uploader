@@ -425,6 +425,36 @@ describe('UploadController', () => {
       collection.remove(a);
       expect(controller.uploadBatch).toEqual([b]);
     });
+
+    it('starts a new batch once the previous one has settled, so its progress counts only the new files', async () => {
+      vi.useFakeTimers();
+      const { controller, collection } = setup({ cfg: { multiple: true, multipleMax: 0 } });
+      const a = collection.add({ file: new File(['a'], 'a.txt') });
+      const b = collection.add({ file: new File(['b'], 'b.txt') });
+      controller.uploadEntries([a, b]);
+      await vi.runAllTimersAsync();
+      expect(collection.read(a)?.get('fileInfo')).toBeTruthy();
+
+      const c = collection.add({ file: new File(['c'], 'c.txt') });
+      controller.uploadEntries([c]);
+
+      expect(controller.uploadBatch).toEqual([c]);
+    });
+
+    it('adds to the batch still in flight', async () => {
+      vi.useFakeTimers();
+      const { controller, collection } = setup({ cfg: { multiple: true, multipleMax: 0 } });
+      mockUploadFile.mockReturnValue(new Promise(() => {}));
+      const a = collection.add({ file: new File(['a'], 'a.txt') });
+      controller.uploadEntries([a]);
+      await vi.runAllTimersAsync();
+      expect(collection.read(a)?.get('isUploading')).toBe(true);
+
+      const b = collection.add({ file: new File(['b'], 'b.txt') });
+      controller.uploadEntries([b]);
+
+      expect([...controller.uploadBatch].sort()).toEqual([a, b].sort());
+    });
   });
 
   describe('progress', () => {
