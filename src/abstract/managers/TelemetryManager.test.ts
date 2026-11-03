@@ -650,4 +650,102 @@ describe('TelemetryManager', () => {
     expect(payload.eventType).toBe(InternalEventType.ACTION_EVENT);
     expect(payload.payload.metadata).toEqual({ tabId: 'crop', node: 'BUTTON', event: 'click', extra: 1 });
   });
+
+  describe('event payloads leave with private values redacted', () => {
+    // Quality insights collects non-personal usage data: a file's name, CDN URL, uuid or metadata must never ship.
+    const PRIVATE_VALUES = ['private-name.png', 'ucarecd.net', 'f0e1d2c3-uuid', 'META-SECRET', 'group-uuid~1'];
+    const entry = {
+      status: 'success',
+      internalId: 'uid-1',
+      name: 'private-name.png',
+      size: 70,
+      isImage: true,
+      mimeType: 'image/png',
+      metadata: { userId: 'META-SECRET' },
+      tags: null,
+      file: null,
+      externalUrl: null,
+      uploadProgress: 100,
+      fullPath: null,
+      source: 'local',
+      isValidationPending: false,
+      fileInfo: { uuid: 'f0e1d2c3-uuid', originalFilename: 'private-name.png' },
+      uuid: 'f0e1d2c3-uuid',
+      cdnUrl: 'https://abc.ucarecd.net/f0e1d2c3-uuid/',
+      cdnUrlModifiers: '',
+      isUploading: false,
+      isSuccess: true,
+      isFailed: false,
+      isRemoved: false,
+      errors: [],
+    };
+    const collection = {
+      status: 'success',
+      totalCount: 1,
+      successCount: 1,
+      failedCount: 0,
+      uploadingCount: 0,
+      progress: 100,
+      isFailed: false,
+      isUploading: false,
+      isSuccess: true,
+      errors: [],
+      group: { uuid: 'group-uuid~1', cdnUrl: 'https://abc.ucarecd.net/group-uuid~1/' },
+      allEntries: [entry],
+      successEntries: [entry],
+      failedEntries: [],
+      uploadingEntries: [],
+      idleEntries: [],
+    };
+    const expectNoPrivateValues = (sent: unknown) => {
+      const serialized = JSON.stringify(sent);
+      for (const value of PRIVATE_VALUES) {
+        expect(serialized).not.toContain(value);
+      }
+    };
+
+    it.each([
+      EventType.COMMON_UPLOAD_START,
+      EventType.COMMON_UPLOAD_SUCCESS,
+      EventType.COMMON_UPLOAD_FAILED,
+      EventType.DONE_CLICK,
+      EventType.GROUP_CREATED,
+    ])('%s sends the collection with its private values redacted', async (type) => {
+      const { emitOnBus } = setup();
+
+      emitOnBus(type, collection as never);
+      await flush();
+
+      expect(sendEventMock).toHaveBeenCalledTimes(1);
+      const sent = sendEventMock.mock.calls[0]?.[0] as { payload: Record<string, unknown> };
+      expect(sent.payload).toMatchObject({
+        status: 'success',
+        totalCount: 1,
+        progress: 100,
+        group: { uuid: '<redacted>', cdnUrl: '<redacted>' },
+        allEntries: [{ status: 'success', name: '<redacted>', size: 70, uuid: '<redacted>', metadata: '<redacted>' }],
+        successEntries: [{ status: 'success', name: '<redacted>' }],
+      });
+      expectNoPrivateValues(sent);
+    });
+
+    it('file-url-changed sends the file with its private values redacted', async () => {
+      const { emitOnBus } = setup();
+
+      emitOnBus(EventType.FILE_URL_CHANGED, entry as never);
+      await flush();
+
+      expect(sendEventMock).toHaveBeenCalledTimes(1);
+      const sent = sendEventMock.mock.calls[0]?.[0] as { payload: Record<string, unknown> };
+      expect(sent.payload).toMatchObject({
+        status: 'success',
+        size: 70,
+        mimeType: 'image/png',
+        name: '<redacted>',
+        cdnUrl: '<redacted>',
+        fileInfo: { uuid: '<redacted>', originalFilename: '<redacted>' },
+      });
+      expectNoPrivateValues(sent);
+    });
+  });
 });
