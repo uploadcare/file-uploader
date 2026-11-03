@@ -601,7 +601,7 @@ describe('uc-cloud-image-editor', () => {
       expect(cdnUrl).toBe(`https://ucarecdn.com/${DEMO_IMAGE_UUID}/-/crop/200x100/30,40/-/preview/`);
     });
 
-    it("fires the first change for the new image with its own preserved operations, not the previous image's", async () => {
+    it("fires the first change for the new image with its own operations, not the previous image's", async () => {
       const { element, editor } = renderEditor({
         'cdn-url': `https://ucarecdn.com/${UUID}/-/crop/400x300/10,20/-/blur/20/`,
       });
@@ -615,7 +615,7 @@ describe('uc-cloud-image-editor', () => {
 
       await expect
         .poll(() => changes.find(({ originalUrl }) => originalUrl.includes(DEMO_IMAGE_UUID))?.cdnUrlModifiers)
-        .toBe('-/crop/200x100/30,40/-/blur/50/-/preview/');
+        .toBe('-/crop/200x100/30,40/-/preview/');
     });
 
     it("fires the first change for a new uuid without the previous cdn-url's operations", async () => {
@@ -640,6 +640,56 @@ describe('uc-cloud-image-editor', () => {
     });
   });
 
+  describe('operations it cannot edit (1.x compat)', () => {
+    const applyOnce = async (element: HTMLElement, editor: ReturnType<typeof within>) => {
+      await expect
+        .poll(() => activeClass(editor.getByTestId('uc-editor-image-cropper').element()))
+        .toMatch(/uc-active_from_/);
+      const applied = withResolvers<ApplyResult>();
+      element.addEventListener('apply', (event) => applied.resolve((event as CustomEvent<ApplyResult>).detail));
+      await userEvent.click(editor.getByRole('button', { name: /apply/i }));
+      return applied.promise;
+    };
+
+    // Expected values are v1's (1.35.1) `createCdnUrlModifiers(transformationsToOperations(
+    // operationsToTransformations(extractOperations(url))), 'preview')`: it cuts what it does not model.
+    it.each([
+      ['-/resize/200x/', '-/preview/'],
+      ['-/crop/100x50/10,20/-/resize/200x/', '-/crop/100x50/10,20/-/preview/'],
+      ['-/crop/400x300/10,20/-/blur/20/', '-/crop/400x300/10,20/-/preview/'],
+      ['-/overlay/a3c7b1a6-6a73-4d36-a2dd-6c1c1b4d9a7e/50px50p/center/-/brightness/10/', '-/brightness/10/-/preview/'],
+      ['-/grayscale/-/format/webp/-/rotate/90/', '-/rotate/90/-/preview/'],
+      ['-/stretch/off/-/resize/300x/-/enhance/50/-/flip/', '-/enhance/50/-/flip/-/preview/'],
+      ['-/brightness/10/-/enhance/5/', '-/enhance/5/-/brightness/10/-/preview/'],
+      ['-/preview/-/blur/20/-/preview/', '-/preview/'],
+    ])('applies %s as %s, like v1', async (input, expected) => {
+      const { element, editor } = renderEditor({ 'cdn-url': `https://ucarecdn.com/${UUID}/${input}` });
+
+      const { cdnUrlModifiers, cdnUrl } = await applyOnce(element, editor);
+
+      expect(cdnUrlModifiers).toBe(expected);
+      expect(cdnUrl).toBe(`https://ucarecdn.com/${UUID}/${expected}`);
+    });
+
+    // Fake-only: the image size comes from the emulator.
+    it.skipIf(isLive)('crops a resized source in the original image space, like v1', async () => {
+      const info: string[] = [];
+      emulatorSession().on('GET /:uuid/*', ({ request }) => {
+        if (!new URL(request.url).pathname.endsWith('/-/json/')) return undefined;
+        info.push(new URL(request.url).pathname);
+        return Response.json({ width: 1920, height: 1080 });
+      });
+      const { element, editor } = renderEditor({
+        'cdn-url': `https://ucarecdn.com/${UUID}/-/resize/200x/-/crop/100x50/10,20/`,
+      });
+
+      const { cdnUrlModifiers } = await applyOnce(element, editor);
+
+      expect(info).toEqual([`/${UUID}/-/json/`]);
+      expect(cdnUrlModifiers).toBe('-/crop/100x50/10,20/-/preview/');
+    });
+  });
+
   it('activates the color preview on the tuning tab and keeps it live while a slider moves', async () => {
     const { element, editor } = renderEditor();
     // The fader renders before testMode reaches it, so it has no test id.
@@ -657,7 +707,7 @@ describe('uc-cloud-image-editor', () => {
     await expect.poll(fader, { timeout: 5000 }).toMatch(/uc-active_from_/);
   });
 
-  it('shows an operation it cannot edit in the viewer and in the filter thumbnails', async () => {
+  it('does not show an operation it cannot edit in the viewer or the filter thumbnails, like v1', async () => {
     const { element, editor } = renderEditor({ 'cdn-url': `https://ucarecdn.com/${UUID}/-/blur/20/` });
     await expect.element(element).toBeVisible();
 
@@ -667,13 +717,15 @@ describe('uc-cloud-image-editor', () => {
       .toMatch(/uc-active_from_/);
 
     const viewerSrc = () => element.querySelector('uc-editor-image-fader img')?.getAttribute('src') ?? '';
-    await expect.poll(viewerSrc, { timeout: 5000 }).toContain('blur/20');
+    await expect.poll(viewerSrc, { timeout: 5000 }).not.toBe('');
+    expect(viewerSrc()).not.toContain('blur/20');
 
     // The first filter control is "Original", which has no preview.
     const thumbnail = editor.getByTestId('uc-editor-filter-control').nth(1);
     await expect.element(thumbnail).toBeVisible();
     const thumbnailStyle = () => thumbnail.element().querySelector('.uc-preview')?.getAttribute('style') ?? '';
-    await expect.poll(thumbnailStyle, { timeout: 5000 }).toContain('blur/20');
+    await expect.poll(thumbnailStyle, { timeout: 5000 }).not.toBe('');
+    expect(thumbnailStyle()).not.toContain('blur/20');
   });
 });
 

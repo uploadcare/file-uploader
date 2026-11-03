@@ -168,7 +168,6 @@ describe('editor state reactions', () => {
     });
     await cropperActive(element);
     expect(controllerOf(element).editorTransformations.rotate).toBe(90);
-    expect(controllerOf(element).sourceOperations.length).toBeGreaterThan(0);
     const applied = onApply(element);
 
     element.removeAttribute('cdn-url');

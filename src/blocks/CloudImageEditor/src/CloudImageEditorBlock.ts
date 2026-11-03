@@ -699,8 +699,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         return;
       }
       editorController.originalUrl = originalUrl;
-      // Before the transformations: their write fires `change`, which reads `sourceOperations` right away.
-      editorController.sourceOperations = parsed.operations;
+      // NEXT-MAJOR(cloud-image-editor): record `parsed.operations` as `sourceOperations` (before the transformations:
+      // their write fires `change`, which reads it right away). Cutting what the editor does not model silently loses
+      // the user's resize/overlay/blur/format; the merge in `transformationUtils` keeps them in place and crops in the
+      // space the operations before the geometry leave. v1 cut them, as the docs say. Kept for 1.x compat.
       editorController.editorTransformations = operationsToTransformations(parsed.operations);
     } else if (this.uuid) {
       const cdnCname = editorController.getConfig('cdnCname');
