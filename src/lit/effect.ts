@@ -50,9 +50,12 @@ export const effect = makeMethodDecorator<EffectOptions>(EFFECT);
  * The returned disposers are connected-guarded: `updateEffect` auto-disposes on
  * disconnect and its manual disposer nils the mixin's shared watcher once the
  * host is disconnected — so draining >1 of them during `disconnectedCallback`
- * would throw on the second. We therefore only dispose manually while the host
- * is still connected (a ctx re-adoption without a disconnect); on a real
- * disconnect the mixin's own auto-unwatch tears the effects down.
+ * would throw on the second. While connected (a ctx re-adoption without a
+ * disconnect) they dispose at once. While disconnected they defer to a
+ * microtask and dispose only if the host is connected again by then: the
+ * mixin's auto-unwatch skips a host reconnected in the same task (a DOM move),
+ * which would otherwise keep the old effects live beside the re-adoption's. A
+ * host still disconnected is left to that auto-unwatch.
  *
  * Isolate-and-warn: a throwing effect body (most reachably a `beforeUpdate`
  * effect, which runs synchronously at registration) is contained — logged via
@@ -73,6 +76,7 @@ export function registerHostEffects(host: EffectHost, hostLog: Pick<Logger, 'war
     }, options);
     disposers.push(() => {
       if (host.isConnected) dispose();
+      else queueMicrotask(() => host.isConnected && dispose());
     });
   }
   return disposers;

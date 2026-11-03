@@ -1,9 +1,11 @@
+import { signal } from '@lit-labs/signals';
 import { html } from 'lit';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../abstract/controllers/ConfigController';
 import type { Token } from '../abstract/di/ControllerContainer';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { ChildBlock } from './ChildBlock';
+import { effect } from './effect';
 
 // ─── Test-only ChildBlock subclasses ──────────────────────────────────────────
 class UseBlock extends ChildBlock {
@@ -41,6 +43,20 @@ class TestIdBlock extends ChildBlock {
   }
 }
 TestIdBlock.reg('uc-test-testid-block');
+
+const effectSource = signal(0);
+class EffectBlock extends ChildBlock {
+  public runs = 0;
+  @effect({ beforeUpdate: true })
+  protected _count(): void {
+    effectSource.get();
+    this.runs++;
+  }
+  public override render() {
+    return html``;
+  }
+}
+EffectBlock.reg('uc-test-effect-block');
 
 // ─── Harness ──────────────────────────────────────────────────────────────────
 let seq = 0;
@@ -268,5 +284,27 @@ describe('static template', () => {
     expect(error.mock.calls.map((call) => call.join(' ')).join('\n')).toContain(
       "Caution: static 'template' property is deprecated and has no effect.",
     );
+  });
+});
+
+describe('ChildBlock @effect across a synchronous DOM move', () => {
+  it('runs an effect once per signal change after repeated same-task moves', async () => {
+    const ctxName = freshCtxName();
+    const el = await mount<EffectBlock>('uc-test-effect-block', ctxName);
+    const holder = document.createElement('div');
+    document.body.append(holder);
+    mounted.push(holder);
+
+    for (let i = 0; i < 3; i++) {
+      holder.append(el); // disconnect + connect in one task
+      document.body.append(el);
+    }
+    await flushTeardown();
+
+    const before = el.runs;
+    effectSource.set(effectSource.get() + 1);
+    await flushTeardown();
+
+    expect(el.runs - before).toBe(1);
   });
 });
