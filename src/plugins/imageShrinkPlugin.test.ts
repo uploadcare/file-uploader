@@ -65,3 +65,42 @@ describe('imageShrinkPlugin', () => {
     expect(warn).toHaveBeenCalledWith('Image shrink failed, uploading the original', expect.any(Error));
   });
 });
+
+describe('imageShrinkPlugin quiet skips', () => {
+  const runHookOn = async (file: File) => {
+    let handler: Hook | undefined;
+    const warn = vi.fn();
+    const pluginApi = {
+      config: { get: () => '800x600' },
+      logger: { warn },
+      registry: { registerFileHook: (hook: { handler: Hook }) => (handler = hook.handler) },
+    } as unknown as PluginApi;
+    await imageShrinkPlugin.setup({ pluginApi } as Parameters<typeof imageShrinkPlugin.setup>[0]);
+    const result = await handler?.({ file });
+    return { result, warn };
+  };
+
+  it('uploads a non-image as is, without trying to shrink it or warning', async () => {
+    vi.mocked(shrinkFile).mockClear();
+    const file = new File(['%PDF'], 'a.pdf', { type: 'application/pdf' });
+
+    const { result, warn } = await runHookOn(file);
+
+    expect(result?.file).toBe(file);
+    expect(shrinkFile).not.toHaveBeenCalled();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('uploads the original without a warning when image-shrink skips the image (a CMYK JPEG)', async () => {
+    // image-shrink's skip for an image it won't re-encode, rethrown wrapped like every inner failure.
+    vi.mocked(shrinkFile).mockRejectedValueOnce(
+      new Error('Failed to shrink image. Message: "Should skipped".', { cause: new Error('Should skipped') }),
+    );
+    const file = new File(['x'], 'cmyk.jpg', { type: 'image/jpeg' });
+
+    const { result, warn } = await runHookOn(file);
+
+    expect(result?.file).toBe(file);
+    expect(warn).not.toHaveBeenCalled();
+  });
+});
