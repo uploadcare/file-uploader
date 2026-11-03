@@ -141,8 +141,9 @@ class UploaderRegistryImpl {
     return () => {
       set.delete(sub);
       // Drop the empty consumer Set so unused ctx-names don't accumulate in
-      // this module-level singleton over the app's lifetime.
-      if (set.size === 0) this._consumers.delete(ctxName);
+      // this module-level singleton over the app's lifetime. Only the Set still
+      // registered: a repeat call after it was recreated must not drop the new one.
+      if (set.size === 0 && this._consumers.get(ctxName) === set) this._consumers.delete(ctxName);
     };
   }
 }
