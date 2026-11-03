@@ -6,6 +6,7 @@ import { inject } from '../abstract/di/inject';
 import { EventBus, UploaderEventType } from '../abstract/EventBus';
 import { EventType } from '../abstract/EventEmitter';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
+import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import type { ApiHost } from './api-host-types';
 import type { ChildBlock } from './ChildBlock';
 import type { Constructor } from './Constructor';
@@ -73,19 +74,30 @@ export function WithApi<T extends abstract new (...args: any[]) => ChildBlock>(B
       ];
     }
 
+    /**
+     * The ctx's container while this host is detached but the ctx lives on (a same-task DOM move, an unmount hook
+     * reading the API after removal): the accessors below keep returning the live objects there, as in v1. Only a ctx
+     * whose uploader scope is attached counts, so a read never builds a partial scope.
+     */
+    private get _detachedCtx(): ControllerContainer | undefined {
+      const ctxName = this.effectiveCtxName;
+      const container = this.containerOrNull || !ctxName ? undefined : UploaderRegistry.get(ctxName);
+      return container?.has(UploaderPublicApi) ? container : undefined;
+    }
+
     /** This ctx's public API. */
     public getAPI(): UploaderPublicApi {
-      return this._api;
+      return this._detachedCtx?.get(UploaderPublicApi) ?? this._api;
     }
 
     /** This ctx's public API, as a property. */
     public get api(): UploaderPublicApi {
-      return this._api;
+      return this.getAPI();
     }
 
     /** This ctx's upload collection. */
     public get uploadCollection(): UploadCollectionController {
-      return this._uploadCollection;
+      return this._detachedCtx?.get(UploadCollectionController) ?? this._uploadCollection;
     }
   }
 
