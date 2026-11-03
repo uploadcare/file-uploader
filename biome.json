@@ -42,7 +42,8 @@
               "@uploadcare/cdn-url": {
                 "importNames": ["parseCdnUrl", "serializeCdnUrl"],
                 "message": "Use the per-kind parseFileUrl/parseProxyUrl + serializeFileUrl/serializeProxyUrl instead. Every bundle measured smaller once the last consumer moved off the kind-dispatching pair. Lift this only alongside a call site that genuinely handles more than one URL kind."
-              }
+              },
+              "lit/directives/style-map.js": "Use cssomStyleMap (src/lit/cssom-style-map.ts): styleMap writes its first render as a style attribute, which the documented CSP (style-src without unsafe-inline) drops."
             }
           }
         }
@@ -88,6 +89,7 @@
                     "importNames": ["parseCdnUrl", "serializeCdnUrl"],
                     "message": "Use the per-kind parseFileUrl/parseProxyUrl + serializeFileUrl/serializeProxyUrl instead. Every bundle measured smaller once the last consumer moved off the kind-dispatching pair. Lift this only alongside a call site that genuinely handles more than one URL kind."
                   },
+                  "lit/directives/style-map.js": "Use cssomStyleMap (src/lit/cssom-style-map.ts): styleMap writes its first render as a style attribute, which the documented CSP (style-src without unsafe-inline) drops.",
                   "lit": "src/abstract, src/types and src/utils are the shared layer below the blocks: no lit. Put the Lit side in src/lit."
                 },
                 "patterns": [
