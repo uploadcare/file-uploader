@@ -3,7 +3,7 @@ import { commands, userEvent } from 'vitest/browser';
 import type { FileUploaderRegular } from '@/index';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import '~/types/jsx';
-import { openModal, renderSolution, within } from '~/tests/utils/render-solution';
+import { expectModal, openModal, renderSolution, within } from '~/tests/utils/render-solution';
 
 describe('uc-file-uploader-regular', () => {
   describe('upload button', () => {
@@ -108,6 +108,39 @@ describe('uc-file-uploader-regular', () => {
       await expect.element(uploadList).toBeVisible();
       await expect.element(within(root).getByText(/camera-\d+\.jpeg/)).toBeVisible();
       await expect.element(within(root).getByText('1 file uploaded')).toBeVisible();
+    });
+  });
+
+  describe('empty upload list', () => {
+    // As in v1, where the upload list reset an activity it couldn't open to the init activity.
+    it('opens the start screen on setCurrentActivity("upload-list") + setModalState(true)', async () => {
+      const { root, api } = await renderSolution('regular');
+
+      api.setCurrentActivity('upload-list');
+      api.setModalState(true);
+
+      await expectModal(root, 'start-from', 'open');
+      expect(api.getCurrentActivity()).toBe('start-from');
+    });
+
+    it('opens the start screen on navigate("upload-list")', async () => {
+      const { root, api } = await renderSolution('regular');
+
+      api.navigate('upload-list');
+
+      await expectModal(root, 'start-from', 'open');
+    });
+
+    it('switches the open modal to the start screen on setCurrentActivity("upload-list")', async () => {
+      const { root, api } = await renderSolution('regular');
+      api.setCurrentActivity('url');
+      api.setModalState(true);
+      await expectModal(root, 'url', 'open');
+
+      api.setCurrentActivity('upload-list');
+
+      await expectModal(root, 'start-from', 'open');
+      await expectModal(root, 'url', 'closed');
     });
   });
 

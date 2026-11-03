@@ -93,6 +93,18 @@ describe('uc-file-uploader-inline', () => {
     expect(modalOpen).not.toHaveBeenCalled();
   });
 
+  // As in v1, where the upload list reset an activity it couldn't open to the init activity.
+  it('returns to start-from on setCurrentActivity("upload-list") with an empty list', async () => {
+    const { api, root } = await renderSolution('inline');
+    api.setCurrentActivity('url');
+    await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
+
+    api.setCurrentActivity('upload-list');
+
+    await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
+    expect(api.getCurrentActivity()).toBe('start-from');
+  });
+
   it('keeps switching the visible activity after initFlow with a single unregistered source, since it has no modal to open', async () => {
     const { api, config, root } = await renderSolution('inline', { sourceList: 'not-a-source' });
     const modalOpen = vi.fn();

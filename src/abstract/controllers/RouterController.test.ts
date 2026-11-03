@@ -613,6 +613,53 @@ describe('RouterController (v2)', () => {
     });
   });
 
+  describe('guard-refused target with an init activity configured', () => {
+    it('navigate goes to the init activity instead', () => {
+      const { router } = setup();
+      router.configure({ initActivity: 'start-from' });
+      router.navigationStrategy = () => 'foreground';
+      router.guard('upload-list', () => false);
+
+      router.navigate('upload-list');
+
+      expect(router.modal).toBe('start-from');
+    });
+
+    it('setActivity goes to the init activity instead', () => {
+      const { router } = setup();
+      router.configure({ initActivity: 'start-from' });
+      router.guard('upload-list', () => false);
+
+      router.setActivity('upload-list');
+
+      expect(router.activity).toBe('start-from');
+      expect(router.modal).toBeNull();
+    });
+
+    it('openModal opens the init activity instead', () => {
+      const { router } = setup();
+      router.configure({ initActivity: 'start-from' });
+      router.guard('upload-list', () => false);
+      router.openModal('url');
+
+      router.openModal('upload-list');
+
+      expect(router.modal).toBe('start-from');
+    });
+
+    it('stays put when the init activity is refused too', () => {
+      const { router } = setup();
+      router.configure({ initActivity: 'start-from' });
+      router.guard('upload-list', () => false);
+      router.guard('start-from', () => false);
+      router.navigate('url');
+
+      router.navigate('upload-list');
+
+      expect(router.currentActivity).toBe('url');
+    });
+  });
+
   describe('edge cases (coverage)', () => {
     it('revalidate() with nothing active is a no-op (null is always activatable)', () => {
       const { router } = setup();
