@@ -1,6 +1,7 @@
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '~/types/jsx';
+import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { renderSolution, within } from '~/tests/utils/render-solution';
 
 describe('uc-file-uploader-inline', () => {
@@ -97,6 +98,21 @@ describe('uc-file-uploader-inline', () => {
     api.setCurrentActivity('upload-list');
 
     await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
+    expect(api.getCurrentActivity()).toBe('start-from');
+  });
+
+  // As in v1, whose history held only start-from and upload-list, so emptying the list went back to start-from.
+  it('returns to start-from, not the source that added the file, once the last file is removed', async () => {
+    const { api, root } = await renderSolution('inline');
+    await within(root).getByRole('button', { name: 'From link', exact: true }).click();
+    await userEvent.fill(within(root).getByTestId('uc-url-source').getByPlaceholder('https://'), TEST_IMAGE_URL);
+    await userEvent.keyboard('{Enter}');
+    await expect.element(within(root).getByTestId('uc-upload-list')).toBeVisible();
+
+    api.removeAllFiles();
+
+    await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-url-source')).not.toBeInTheDocument();
     expect(api.getCurrentActivity()).toBe('start-from');
   });
 
