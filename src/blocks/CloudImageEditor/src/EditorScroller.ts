@@ -14,7 +14,7 @@ export class EditorScroller extends EditorScrollerBase {
   /**
    * CSS-only attribute
    */
-  @property({ type: Boolean, noAccessor: true, attribute: 'hidden-scrollbar' })
+  @property({ type: Boolean, reflect: true, attribute: 'hidden-scrollbar' })
   public hiddenScrollbar = false;
 
   private readonly _handleWheel = (event: WheelEvent): void => {

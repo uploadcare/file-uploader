@@ -50,13 +50,13 @@ export class DropArea extends ChildBlock {
   /**
    * CSS-only attribute
    */
-  @property({ type: Boolean, noAccessor: true })
+  @property({ type: Boolean, reflect: true })
   public single = false;
 
   /**
    * CSS-only attribute
    */
-  @property({ type: Boolean, noAccessor: true })
+  @property({ type: Boolean, reflect: true })
   public ghost = false;
 
   @property({ type: Boolean, reflect: true })

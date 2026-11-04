@@ -20,7 +20,7 @@ export class SourceList extends ChildBlock {
   /**
    * CSS-only attribute
    */
-  @property({ type: Boolean, attribute: 'wrap', noAccessor: true })
+  @property({ type: Boolean, attribute: 'wrap', reflect: true })
   public wrap = false;
 
   /** @internal */

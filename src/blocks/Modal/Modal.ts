@@ -36,13 +36,13 @@ export class Modal extends ChildBlock {
   /**
    * CSS-only attribute
    */
-  @property({ type: Boolean, noAccessor: true })
+  @property({ type: Boolean, reflect: true })
   public strokes = false;
 
   /**
    * CSS-only attribute
    */
-  @property({ type: Boolean, attribute: 'block-body-scrolling', noAccessor: true })
+  @property({ type: Boolean, attribute: 'block-body-scrolling', reflect: true })
   public blockBodyScrolling = false;
 
   /** WARNING: Do not rename/change this, it's used in dashboard */
