@@ -353,3 +353,65 @@ describe('VirtualListController in a container that does not scroll', () => {
     expect(controller.window(listOf(100)).items).toHaveLength(100);
   });
 });
+
+describe('VirtualListController row height estimate', () => {
+  type FakeRow = { offsetHeight: number; nextElementSibling: FakeRow | null };
+  const rowsOf = (...heights: number[]): FakeRow[] => {
+    const rows: FakeRow[] = heights.map((offsetHeight) => ({ offsetHeight, nextElementSibling: null }));
+    rows.forEach((row, i) => {
+      row.nextElementSibling = rows[i + 1] ?? null;
+    });
+    return rows;
+  };
+  const resizeRows = (rows: readonly FakeRow[], heights: readonly number[]): void => {
+    const entries = rows.map((target, i) => ({ target, borderBoxSize: [{ blockSize: heights[i] }] }));
+    roCallback?.(entries as unknown as ResizeObserverEntry[], {} as ResizeObserver);
+  };
+  const setup = (rows: readonly FakeRow[], gap = 0) => {
+    const host = new FakeHost();
+    const scrollEl = {
+      clientHeight: 200,
+      scrollTop: 0,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      querySelector: () => rows[0],
+    } as unknown as HTMLElement;
+    const controller = new VirtualListController(host, {
+      scrollContainer: () => scrollEl,
+      itemSelector: 'x',
+      rowMetrics: (_el, item) => ({ columns: 1, rowHeight: item.offsetHeight + gap }),
+      overscanRows: 0,
+    });
+    controller.hostUpdated(); // latches the first row's height
+    controller.window(listOf(100));
+    controller.hostUpdated(); // observes the rendered rows
+    return { host, controller };
+  };
+
+  it('averages the rendered rows once they report their size, instead of trusting the first one', () => {
+    const rows = rowsOf(13, 13, 13, 13);
+    const { host, controller } = setup(rows);
+    expect(controller.window(listOf(100)).bottomPad).toBe(84 * 13);
+
+    const before = host.updateCount;
+    resizeRows(rows, [80, 40, 60, 60]);
+    expect(host.updateCount).toBeGreaterThan(before);
+    const slice = controller.window(listOf(100));
+    expect(slice.items).toHaveLength(4); // ceil(200 / 60)
+    expect(slice.bottomPad).toBe(96 * 60);
+  });
+
+  it('ignores a row measured with no layout', () => {
+    const rows = rowsOf(40, 40);
+    const { controller } = setup(rows);
+    resizeRows(rows, [0, 0]);
+    expect(controller.window(listOf(100)).bottomPad).toBe(95 * 40);
+  });
+
+  it('keeps the inter-row gap rowMetrics adds to an item', () => {
+    const rows = rowsOf(100, 100);
+    const { controller } = setup(rows, 20);
+    resizeRows(rows, [80, 80]);
+    expect(controller.window(listOf(100)).bottomPad).toBe(98 * 100); // 80 + 20 gap
+  });
+});

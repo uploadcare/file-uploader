@@ -29,9 +29,10 @@ export type WindowSlice = {
  * the `[start, end)` slice of items to render plus the top/bottom spacer heights
  * that keep the scrollbar sized as if the whole list were laid out.
  *
- * Fixed-row-height model — both view modes render uniform rows in practice (list
- * rows are pinned to `min-height: --uc-file-item-height`; grid cells are a fixed
- * `--uc-grid-preview-image-height`). `columns` folds the flex-wrap grid onto the
+ * Fixed-row-height model — rows are close to uniform (list rows are pinned to
+ * `min-height: --uc-file-item-height`; grid cells are a fixed
+ * `--uc-grid-preview-image-height`), and {@link VirtualListController} passes the
+ * rendered rows' average height. `columns` folds the flex-wrap grid onto the
  * same row math.
  *
  * Degrades safely: when the geometry can't be measured yet (`rowHeight`/
