@@ -492,7 +492,10 @@ export class UploaderPublicApi {
    */
   public navigate = <T extends ActivityType>(activityType: T, ...params: ActivityParamsArgs<T>) => {
     this._whenPluginsReady(() => {
-      this._router.reportWhenShown(() => this._router.navigate(activityType, params[0] ?? {}));
+      this._router.reportWhenShown(() => {
+        this._router.navigate(activityType, params[0] ?? {});
+        this._closeModalIfRefused(activityType);
+      });
       if (activityType !== null) {
         return this._waitForActivity(activityType);
       }
@@ -522,10 +525,22 @@ export class UploaderPublicApi {
         } else {
           this._router.setActivity(activityType, activityParams);
         }
+        this._closeModalIfRefused(activityType);
       });
       return this._waitForActivity(activityType);
     });
   };
+
+  /**
+   * A refused background target left under an open modal (minimal's empty upload list, which has no init activity to
+   * show instead) still closes the modal, as entering it would. Closing everything, as the modal's Close button does,
+   * lets the preset put its start screen back, as in v1 and the docs.
+   */
+  private _closeModalIfRefused(activityType: ActivityType): void {
+    const router = this._router;
+    if (activityType === null || router.currentActivity === activityType || router.modal === null) return;
+    if (router.navigationStrategy(activityType) === 'background') router.close();
+  }
 
   public on = <T extends EventKey>(type: T, handler: (payload: EventPayload[T]) => void): (() => void) => {
     return this._eventEmitter.on(type, handler);
