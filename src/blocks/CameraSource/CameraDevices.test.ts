@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Lifetime } from '../../abstract/di/Lifetime';
 import { CameraDevices, type CameraDevicesHost } from './CameraDevices';
 
 const host = (overrides: Partial<CameraDevicesHost> = {}) => {
@@ -140,5 +141,38 @@ describe('CameraDevices.watchPermissions', () => {
     const { devices } = host();
 
     await expect(devices.watchPermissions()).rejects.toMatchObject({ name: 'AbortError' });
+  });
+});
+
+describe('CameraDevices moved while the permissions are queried', () => {
+  it("keeps the next adoption's watch when the released query settles", async () => {
+    let adoption = new Lifetime();
+    const { fns, devices } = host({
+      lifetime: {
+        whileAdopted: (work, dispose) => adoption.guard(work, dispose),
+        runTask: (task) => adoption.run(task, () => {}),
+        adoptionSignal: () => adoption.signal,
+      },
+    });
+    const first = Promise.withResolvers<PermissionStatus>();
+    const statuses: EventTarget[] = [];
+    const query = vi.fn(async () => {
+      const status = new EventTarget();
+      statuses.push(status);
+      return status as PermissionStatus;
+    });
+    query.mockReturnValueOnce(first.promise);
+    vi.stubGlobal('navigator', { ...navigator, permissions: { query } });
+
+    const released = devices.watchPermissions();
+    // A same-task DOM move: the block is released and re-adopted, and the next adoption watches again.
+    adoption.end();
+    adoption = new Lifetime();
+    await expect(devices.watchPermissions()).resolves.toBe(true);
+    first.resolve(new EventTarget() as PermissionStatus);
+    await expect(released).rejects.toThrow(/owner of this work is gone/);
+
+    for (const status of statuses) status.dispatchEvent(new Event('change'));
+    expect(fns.onPermissionChange).toHaveBeenCalledTimes(2);
   });
 });
