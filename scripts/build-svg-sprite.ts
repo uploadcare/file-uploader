@@ -19,6 +19,11 @@ const DATA: SpriteItem[] = [
 ];
 
 const config: any = {
+  // Classes in an icon are the stylesheet's hooks (`uc-preloader-progress`), so neither svg-sprite nor `prefixIds`
+  // below may rename them.
+  svg: {
+    namespaceClassnames: false,
+  },
   mode: {
     symbol: {
       inline: true,
@@ -58,6 +63,7 @@ const config: any = {
               name: 'prefixIds',
               params: {
                 prefix: 'uc-icon-id',
+                prefixClassNames: false,
               },
             },
           ],
@@ -128,7 +134,15 @@ DATA.forEach((item: SpriteItem) => {
         throw error;
       }
 
-      const spriteContents = dedupeGradients(result.symbol.sprite.contents.toString());
+      // svg-sprite positions the inline sprite with a `style` attribute, which a CSP without `'unsafe-inline'` reports
+      // on every render; a class lets the stylesheet do it instead.
+      const spriteContents = dedupeGradients(result.symbol.sprite.contents.toString()).replace(
+        'style="position:absolute"',
+        'class="uc-svg-sprite"',
+      );
+      if (spriteContents.includes('style=')) {
+        throw new Error(`${item.output}: the sprite still carries an inline style, which the documented CSP reports`);
+      }
       const jsTemplate = `export default "${spriteContents.replace(/"/g, "'")}";`.trim().concat('\n');
 
       fs.writeFileSync(item.output, jsTemplate);
