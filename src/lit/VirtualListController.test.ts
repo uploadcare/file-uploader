@@ -307,3 +307,49 @@ describe('VirtualListController', () => {
     expect(disconnectSpy).toHaveBeenCalled();
   });
 });
+
+describe('VirtualListController in a container that does not scroll', () => {
+  const growingScrollEl = (height: number) =>
+    ({
+      clientHeight: height,
+      scrollHeight: height,
+      scrollTop: 0,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      // Taller than the average row, as the first row of a real list can be: 4000px of content / 50 = 80 rows.
+      querySelector: () => ({ offsetHeight: 50 }) as HTMLElement,
+    }) as unknown as { clientHeight: number; scrollHeight: number } & HTMLElement;
+
+  it('renders the full list when the container grows with its content (the page scrolls instead)', () => {
+    const host = new FakeHost();
+    const scrollEl = growingScrollEl(4000);
+    const controller = new VirtualListController(host, {
+      scrollContainer: () => scrollEl,
+      itemSelector: 'x',
+      rowMetrics: (_el, item) => ({ columns: 1, rowHeight: item.offsetHeight }),
+      overscanRows: 0,
+    });
+    controller.hostUpdated();
+    const items = listOf(100);
+    expect(controller.window(items)).toEqual({ items, topPad: 0, bottomPad: 0 });
+  });
+
+  it('stops windowing once a resize leaves the container unbounded', () => {
+    const host = new FakeHost();
+    const scrollEl = growingScrollEl(200);
+    scrollEl.scrollHeight = 4000;
+    const controller = new VirtualListController(host, {
+      scrollContainer: () => scrollEl,
+      itemSelector: 'x',
+      rowMetrics: (_el, item) => ({ columns: 1, rowHeight: item.offsetHeight }),
+      overscanRows: 0,
+    });
+    controller.hostUpdated();
+    expect(controller.window(listOf(100)).items).toHaveLength(4);
+
+    scrollEl.clientHeight = 4000;
+    fireResize(4000);
+    controller.hostUpdated();
+    expect(controller.window(listOf(100)).items).toHaveLength(100);
+  });
+});

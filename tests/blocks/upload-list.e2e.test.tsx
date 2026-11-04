@@ -3,6 +3,7 @@ import { page } from 'vitest/browser';
 import type { UploadCtxProvider } from '@/index.js';
 import { TEST_IMAGE_URL } from '../utils/constants';
 import { getCtxName } from '../utils/getCtxName';
+import { type RenderedUploader, renderSolution, within } from '../utils/render-solution';
 import '../../types/jsx';
 
 beforeAll(async () => {
@@ -64,5 +65,51 @@ describe('uc-upload-list common error rendering', () => {
     config.multipleMax = 2;
 
     await expect.poll(() => commonError()?.hasAttribute('hidden')).toBe(true);
+  });
+});
+
+describe('uc-upload-list virtualization', () => {
+  const addFiles = (api: RenderedUploader['api'], count: number) => {
+    for (let i = 0; i < count; i++) {
+      api.addFileFromObject(new File(['x'], `f${i}.txt`, { type: 'text/plain' }));
+    }
+  };
+
+  it('renders every file of a page-scrolled inline list, so the page scrolls to the last one', async () => {
+    // Nothing bounds the inline uploader's height, so `.uc-files` never scrolls: the page does.
+    const { api, root } = await renderSolution('inline', { confirmUpload: true, multipleMax: 1000 });
+    addFiles(api, 300);
+    api.setCurrentActivity('upload-list');
+    await expect.poll(() => root.querySelectorAll('uc-file-item').length).toBeGreaterThan(0);
+    const files = root.querySelector<HTMLElement>('.uc-files')!;
+    expect(files.scrollHeight).toBe(files.clientHeight);
+
+    // A wrongly engaged virtualizer leaves a blank spacer at the bottom, so the last file never renders.
+    const scrollPageToLastItem = () => {
+      const scroller = document.scrollingElement!;
+      scroller.scrollTop = scroller.scrollHeight;
+      return root.querySelector('uc-file-item:last-of-type')?.textContent;
+    };
+    await expect.poll(scrollPageToLastItem).toContain('f299.txt');
+
+    expect(root.querySelectorAll('uc-file-item')).toHaveLength(300);
+    expect(root.querySelector('.uc-list-spacer')).toBeNull();
+    const last = root.querySelector<HTMLElement>('uc-file-item:last-of-type')!;
+    expect(last.getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
+  });
+
+  it('still virtualizes the list the modal bounds', async () => {
+    const { api, root } = await renderSolution('regular', { confirmUpload: true, multipleMax: 1000 });
+    addFiles(api, 300);
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+    await expect.element(within(root).getByTestId('uc-upload-list')).toBeVisible();
+
+    await expect.poll(() => root.querySelector('.uc-list-spacer')).not.toBeNull();
+    expect(root.querySelectorAll('uc-file-item').length).toBeLessThan(300);
+
+    const files = root.querySelector<HTMLElement>('.uc-files')!;
+    files.scrollTop = files.scrollHeight;
+    await expect.poll(() => root.querySelector('uc-file-item:last-of-type')?.textContent).toContain('f299.txt');
   });
 });
