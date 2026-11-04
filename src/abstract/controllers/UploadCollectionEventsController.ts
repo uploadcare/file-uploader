@@ -14,6 +14,9 @@ import { UploadController } from './UploadController';
 
 type Entry = TypedData<UploadEntryData>;
 
+/** Prefixes a collection error type among the failure keys, which are otherwise file uids. */
+const COLLECTION_ERROR_KEY = 'collection:';
+
 /**
  * COLLECTION-level derived state + events — the collection-scoped half of the
  * derivation split out of {@link UploadEventsController}: it maintains the
@@ -39,14 +42,24 @@ export class UploadCollectionEventsController {
    */
   private _reportedSuccessUrls: string | null = null;
 
-  /** What `COMMON_UPLOAD_FAILED` last reported as failing: the failed files' uids and the collection error types. */
+  /**
+   * What `COMMON_UPLOAD_FAILED` last reported as failing: the failed files' uids and the collection error types, the
+   * latter prefixed with {@link COLLECTION_ERROR_KEY}.
+   */
   private _reportedFailures = new Set<string>();
 
-  /** Membership changed → the current group no longer describes the collection, and its success is not reported yet. */
+  /**
+   * Membership changed → the current group no longer describes the collection, and its success is not reported yet.
+   * Nor are its collection errors: they judge the files as a whole, so one reported for the old files (the empty list
+   * at mount) is a new verdict for the new ones.
+   */
   public resetGroupIfMembershipChanged(added: Set<Entry>, removed: Set<Entry>): void {
     if (added.size || removed.size) {
       this.resetGroup();
       this._reportedSuccessUrls = null;
+      this._reportedFailures = new Set(
+        [...this._reportedFailures].filter((key) => !key.startsWith(COLLECTION_ERROR_KEY)),
+      );
     }
   }
 
@@ -107,7 +120,9 @@ export class UploadCollectionEventsController {
     // throttled tick, after its validation has landed, so until then it is still in flight.
     const isStartPending = !confirmUpload && !(max && this._collection.size > max);
     const failures = new Set<string>(
-      this._collectionState.get('collectionErrors').map((error) => error.type ?? 'CUSTOM_ERROR'),
+      this._collectionState
+        .get('collectionErrors')
+        .map((error) => COLLECTION_ERROR_KEY + (error.type ?? 'CUSTOM_ERROR')),
     );
     let isInFlight = false;
     for (const uid of this._collection.items()) {
