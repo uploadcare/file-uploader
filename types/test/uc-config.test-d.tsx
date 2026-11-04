@@ -161,6 +161,27 @@ test('metadata takes an object, a function or an async function of the entry', (
   };
 });
 
+test('cameraConstraints takes an object, a function of the mode or null', () => {
+  () => {
+    const ref = useRef<Config | null>(null);
+    if (ref.current) {
+      const config = ref.current;
+      config.cameraConstraints = { video: { frameRate: { ideal: 60 } }, audio: { echoCancellation: false } };
+      config.cameraConstraints = ({ mode }) => {
+        expectTypeOf(mode).toEqualTypeOf<'photo' | 'video'>();
+        return { video: { facingMode: mode === 'photo' ? 'user' : 'environment' } };
+      };
+      config.cameraConstraints = null;
+    }
+  };
+});
+
+test('cameraConstraints has no attribute form', () => {
+  // Checked by its camelCase name: TypeScript does not type-check undeclared hyphenated JSX attributes.
+  // @ts-expect-error property only
+  () => <uc-config ctx-name="1" cameraConstraints="{}"></uc-config>;
+});
+
 test('tags takes an array or a function', () => {
   () => {
     const ref = useRef<Config | null>(null);

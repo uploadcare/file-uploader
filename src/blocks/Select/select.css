@@ -1,6 +1,21 @@
 @layer uc.shared {
   uc-select {
+    position: relative;
     display: inline-flex;
+  }
+
+  /* The native arrow sits against the border whatever the padding, so the select draws its own, inset like the text. */
+  uc-select::after {
+    position: absolute;
+    inset-inline-end: 10px;
+    top: 50%;
+    width: 16px;
+    height: 16px;
+    content: "";
+    background-color: var(--uc-secondary-foreground);
+    mask: url("../themes/uc-basic/icons/arrow-dropdown.svg") center / contain no-repeat;
+    transform: translateY(-50%);
+    pointer-events: none;
   }
 
   uc-select select {
@@ -10,6 +25,10 @@
     justify-content: center;
     height: var(--uc-button-size);
     padding: 0 14px;
+    padding-inline-end: 34px;
+    appearance: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
     font-size: 1em;
     font-family: inherit;
     white-space: nowrap;

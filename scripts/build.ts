@@ -45,6 +45,7 @@ async function build(buildItem: BuildItem) {
     },
     format: buildItem.format,
     skipNodeModulesBundle: true,
+    loader: { '.svg': 'dataurl' },
     esbuildOptions(options) {
       options.conditions = ['browser'];
       options.mainFields = ['exports'];

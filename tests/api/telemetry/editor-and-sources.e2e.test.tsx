@@ -105,4 +105,34 @@ describe('telemetry: sources', () => {
       node: 'UC-CAMERA-SOURCE',
     });
   });
+
+  it('reports the capture settings on a shot, never the custom constraints themselves', async () => {
+    const { root } = await renderSolution('regular', {
+      qualityInsights: true,
+      cameraAspectRatio: '1:1',
+      cameraResolution: '720p',
+      cameraAudioQuality: 'high',
+      cameraAudioMode: 'music',
+      cameraConstraints: { video: { deviceId: 'secret-camera-id' } },
+    });
+    await clickSource(root, 'Camera');
+    const shot = within(root).getByRole('button', { name: 'Shot', exact: true });
+    await expect.element(shot).toBeVisible();
+    clearSent();
+
+    await shot.click();
+
+    await vi.waitFor(() => expect(actionEvents()).toContain('start-camera'), WAIT);
+    for (const event of ['shot-camera', 'start-camera']) {
+      const [body] = bodiesWithAction(event);
+      expect(body.payload.metadata).toMatchObject({
+        aspect_ratio: '1:1',
+        resolution: '720p',
+        audio_quality: 'high',
+        audio_mode: 'music',
+        has_custom_constraints: true,
+      });
+      expect(JSON.stringify(body)).not.toContain('secret-camera-id');
+    }
+  });
 });

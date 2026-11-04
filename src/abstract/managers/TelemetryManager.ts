@@ -7,7 +7,7 @@ import { EventType, InternalEventType } from '../../blocks/UploadCtxProvider/Eve
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import { SharedInstance, type SharedInstancesBag } from '../../lit/shared-instances';
 import type { ConfigType } from '../../types/index';
-import { redactSecrets } from '../../utils/redactSecrets';
+import { REDACTED, redactSecrets } from '../../utils/redactSecrets';
 import { UID } from '../../utils/UID';
 import { sharedConfigKey } from '../sharedConfigKey';
 
@@ -89,7 +89,12 @@ export class TelemetryManager extends SharedInstance {
     if (body.eventType === InternalEventType.INIT_SOLUTION || body.eventType === InternalEventType.CHANGE_CONFIG) {
       // Redacted: the payload leaves the browser, and a configured
       // `authToken` or `secureSignature` would leave with it.
-      result.config = redactSecrets(this._config) as TelemetryState['config'];
+      const config: Record<string, unknown> = redactSecrets(this._config);
+      // Not a credential, but integrator constraints can carry device IDs, which identify the user's hardware.
+      if (config.cameraConstraints) {
+        config.cameraConstraints = REDACTED;
+      }
+      result.config = config as TelemetryState['config'];
     }
 
     return {

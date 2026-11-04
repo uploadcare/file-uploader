@@ -21,7 +21,12 @@ export class Select extends LitBlock {
   public override render() {
     return html`
       <select @change=${this._handleChange} .value=${this.value} ?disabled=${this.disabled}>
-        ${this.options.map((option) => html`<option value=${option.value}>${option.text}</option>`)}
+        ${this.options.map(
+          // `.value` on <select> is applied before the options exist, so a value that arrives together with the options
+          // would be lost without marking the option itself.
+          (option) =>
+            html`<option value=${option.value} ?selected=${option.value === this.value}>${option.text}</option>`,
+        )}
       </select>
     `;
   }

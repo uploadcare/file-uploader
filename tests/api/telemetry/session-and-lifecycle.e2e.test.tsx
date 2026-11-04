@@ -63,6 +63,20 @@ describe('telemetry: session', () => {
     expect(bodiesOf('change-config')[0].config).toMatchObject({ multiple: false });
   });
 
+  it('reports cameraConstraints as set, without its contents', async () => {
+    const { config } = await renderWithTelemetry();
+    await waitForType('init-solution');
+    clearSent();
+
+    // Device IDs identify the user's hardware, so they must not leave with the config snapshot.
+    config.cameraConstraints = { video: { deviceId: 'secret-camera-id' } };
+    await waitForType('change-config');
+
+    const [body] = bodiesOf('change-config');
+    expect(body.config?.camera_constraints).toBe('<redacted>');
+    expect(JSON.stringify(body)).not.toContain('secret-camera-id');
+  });
+
   it('sends nothing once qualityInsights is disabled', async () => {
     const { api, config, provider } = await renderWithTelemetry();
     const settled = uploadSettled(provider);

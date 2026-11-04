@@ -2,29 +2,11 @@ import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
+import { renderAspectRatioIcon } from '../../Icon/aspectRatioIcon';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropAspectRatio } from './types';
 
 import '../../Icon/Icon';
-
-const SIZE_RECT_FIXED = 12;
-const SIZE_SVG_WRAPPER = 16;
-
-const getAdjustResolutions = (value: CropAspectRatio) => {
-  let width = 12;
-  let height = 12;
-  const adjustResolutions = value.width / value.height;
-
-  if (adjustResolutions >= 1) {
-    width = SIZE_RECT_FIXED;
-    height = Math.round((SIZE_RECT_FIXED * value.height) / value.width);
-  } else {
-    height = SIZE_RECT_FIXED;
-    width = Math.round((SIZE_RECT_FIXED * value.width) / value.height);
-  }
-
-  return { width, height };
-};
 
 export class EditorFreeformButtonControl extends EditorButtonControl {
   public override initCallback(): void {
@@ -154,31 +136,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
       return html`<uc-icon name=${this.icon}></uc-icon>`;
     }
 
-    const { width, height } = getAdjustResolutions(ratio);
-    const x = (SIZE_SVG_WRAPPER - width) / 2;
-    const y = (SIZE_SVG_WRAPPER - height) / 2;
-
-    return html`
-      <uc-icon>
-      <svg
-        viewBox="0 0 ${SIZE_SVG_WRAPPER} ${SIZE_SVG_WRAPPER}"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <rect
-          x=${x}
-          y=${y}
-          width=${width}
-          height=${height}
-          rx="2"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.2"
-          stroke-linejoin="round"
-        ></rect>
-      </svg>
-      </uc-icon>
-    `;
+    return renderAspectRatioIcon(ratio.width, ratio.height);
   }
 
   public override render() {
