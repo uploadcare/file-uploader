@@ -1,11 +1,11 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import type { DropArea } from '@/index';
 import { delay } from '@/utils/delay';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import '~/types/jsx';
 import { IMAGE, testFile } from '~/tests/fixtures/files';
-import { renderSolution, within } from '~/tests/utils/render-solution';
+import { expectModal, renderSolution, within } from '~/tests/utils/render-solution';
 
 describe('uc-file-uploader-minimal', () => {
   it('renders the choose-files button', async () => {
@@ -77,6 +77,21 @@ describe('uc-file-uploader-minimal', () => {
 
     api.removeAllFiles();
     await expect.element(uploadList).not.toBeVisible();
+  });
+
+  // As in v1, where a non-empty upload list made it the current activity and that closed every modal.
+  it('closes an open source modal when files are added through the API', async () => {
+    const { root, api } = await renderSolution('minimal');
+    api.navigate('url');
+    await expectModal(root, 'url', 'open');
+    const modalClose = vi.fn();
+    onTestFinished(api.on('modal-close', modalClose));
+
+    api.addFileFromObject(IMAGE.PIXEL);
+
+    await expectModal(root, 'url', 'closed');
+    expect(api.getCurrentActivity()).toBe('upload-list');
+    expect(modalClose).toHaveBeenCalledWith({ modalId: 'url', hasActiveModals: false });
   });
 
   it('says "Choose file" or "Choose files" as multiple toggles', async () => {
