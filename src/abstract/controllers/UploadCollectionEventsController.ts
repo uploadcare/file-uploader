@@ -57,10 +57,22 @@ export class UploadCollectionEventsController {
     if (added.size || removed.size) {
       this.resetGroup();
       this._reportedSuccessUrls = null;
-      this._reportedFailures = new Set(
-        [...this._reportedFailures].filter((key) => !key.startsWith(COLLECTION_ERROR_KEY)),
-      );
+      this._forgetReportedCollectionErrors();
     }
+  }
+
+  /**
+   * An upload batch started (`uploadAll()`): a collection error still standing once it settles is a verdict on that
+   * batch, so it is reported again, as in v1. Reported file failures stay reported.
+   */
+  public startBatch(): void {
+    this._forgetReportedCollectionErrors();
+  }
+
+  private _forgetReportedCollectionErrors(): void {
+    this._reportedFailures = new Set(
+      [...this._reportedFailures].filter((key) => !key.startsWith(COLLECTION_ERROR_KEY)),
+    );
   }
 
   public resetGroup(): void {
@@ -110,8 +122,9 @@ export class UploadCollectionEventsController {
   /**
    * `COMMON_UPLOAD_FAILED` once the collection is failed (a file or collection error) and every file not yet uploaded
    * or failed is settled too: none is uploading, validating, or about to start uploading on its own. Once per failure:
-   * it reports again only when something fails that the last report did not include. Validating an uploaded or failed
-   * file again (after its upload, or on a config change) does not reopen the batch.
+   * it reports again only when something fails that the last report did not include, or a collection error still
+   * stands once a new upload batch ({@link startBatch}) settles. Validating an uploaded or failed file again (after its
+   * upload, or on a config change) does not reopen the batch.
    */
   public emitCommonFailedIfSettled(): void {
     const { confirmUpload, multiple, multipleMax } = this._config.values;

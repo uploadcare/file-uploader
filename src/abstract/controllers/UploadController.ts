@@ -24,6 +24,7 @@ import type { Uid } from '../Uid';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
+import { UploadCollectionEventsController } from './UploadCollectionEventsController';
 import { UploadFileEventsController } from './UploadFileEventsController';
 import { ValidationController } from './ValidationController';
 
@@ -54,6 +55,8 @@ export class UploadController {
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
   // Thunk: `ValidationController` reaches this class back through `UploaderPublicApi`, which validators receive.
   @inject(() => ValidationController) private readonly _validation!: ValidationController;
+  // Thunk: it reads the upload batch back from this class.
+  @inject(() => UploadCollectionEventsController) private readonly _collectionEvents!: UploadCollectionEventsController;
 
   // Per-ctx gated logger: the verbose tier prints only when THIS ctx's `debug`
   // config is on; ctx-name + gate resolve lazily at log time via the container
@@ -107,6 +110,7 @@ export class UploadController {
     const startOnce = () => {
       if (started) return;
       started = true;
+      this._collectionEvents.startBatch();
       onStart?.();
     };
     if (this.#inFlight.size === 0) {

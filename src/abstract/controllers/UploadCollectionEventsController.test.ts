@@ -257,4 +257,40 @@ describe('UploadCollectionEventsController.emitCommonFailedIfSettled, once per f
 
     expect(t.failedEmits()).toHaveLength(2);
   });
+
+  it('reports a standing collection error again once a new upload batch settles', () => {
+    const t = setupWithConfig();
+    t.config.set('multiple', true);
+    t.config.set('multipleMin', 2);
+    t.config.set('confirmUpload', true);
+    const file = t.collection.add({ fileName: 'a.png' });
+    t.collectionState.set('collectionErrors', [{ type: 'TOO_FEW_FILES', message: 'm' }] as never);
+    t.events.emitCommonFailedIfSettled();
+
+    t.events.startBatch();
+    t.collection.read(file)!.set('isUploading', true);
+    t.events.emitCommonFailedIfSettled();
+    t.collection.read(file)!.setMany({ isUploading: false, fileInfo: { uuid: 'u1' } as never });
+    t.events.emitCommonFailedIfSettled();
+    t.events.emitCommonFailedIfSettled();
+
+    expect(t.failedEmits()).toHaveLength(2);
+  });
+
+  it('keeps a reported file failure reported across a new upload batch', () => {
+    const t = setupWithConfig();
+    t.config.set('multiple', true);
+    t.config.set('confirmUpload', true);
+    t.fail(t.collection.add({ fileName: 'a.txt' }));
+    const file = t.collection.add({ fileName: 'b.png' });
+    t.events.emitCommonFailedIfSettled();
+
+    t.events.startBatch();
+    t.collection.read(file)!.set('isUploading', true);
+    t.events.emitCommonFailedIfSettled();
+    t.collection.read(file)!.setMany({ isUploading: false, fileInfo: { uuid: 'u1' } as never });
+    t.events.emitCommonFailedIfSettled();
+
+    expect(t.failedEmits()).toHaveLength(1);
+  });
 });

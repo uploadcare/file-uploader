@@ -408,6 +408,32 @@ describe('events: upload lifecycle', () => {
     ]);
   });
 
+  it('fires common-upload-failed again once an uploadAll() batch settles with too few files', async () => {
+    const uploader = await renderSolution('regular', { confirmUpload: true });
+    const { api, config, provider } = uploader;
+    const recorder = recordEvents(provider);
+    // The empty list is already too short; wait for that report itself so only what the added file sets off counts.
+    config.multipleMin = 2;
+    await expect.poll(() => recorder.detailsOf('common-upload-failed')).toHaveLength(1);
+    recorder.clear();
+
+    const uploaded = api.addFileFromObject(IMAGE.PIXEL);
+    await expect
+      .poll(() => recorder.detailsOf('common-upload-failed'))
+      .toEqual([expect.objectContaining({ status: 'failed', totalCount: 1, successCount: 0 })]);
+    recorder.clear();
+    const isRevalidated = watchPostUploadValidation(uploader, recorder, uploaded.internalId);
+    // `uploadAll()` skips a file its validators have not passed yet.
+    await expect.poll(() => api.getOutputItem(uploaded.internalId).isValidationPending).toBe(false);
+    api.uploadAll();
+
+    await isRevalidated();
+
+    expect(recorder.detailsOf('common-upload-failed')).toEqual([
+      expect.objectContaining({ status: 'failed', totalCount: 1, successCount: 1 }),
+    ]);
+  });
+
   it('fires group-created after the upload succeeds when groupOutput is enabled', async () => {
     const { api, provider } = await renderSolution('regular', { groupOutput: true });
     const recorder = recordEvents(provider);

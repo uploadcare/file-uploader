@@ -13,6 +13,7 @@ import type { UploadEntryData } from '../uploadEntrySchema';
 import { ConfigController } from './ConfigController';
 import { SecureUploadsController } from './SecureUploadsController';
 import { UploadCollectionController } from './UploadCollectionController';
+import { UploadCollectionEventsController } from './UploadCollectionEventsController';
 import { UploadController } from './UploadController';
 import { ValidationController } from './ValidationController';
 
@@ -181,6 +182,20 @@ describe('UploadController', () => {
       expect(onStart).toHaveBeenCalledTimes(1);
       expect(seen[0]?.uploading).toContain(true);
       expect(seen[0]?.fileStarts).toBe(0);
+    });
+
+    it('starts a new batch of collection-error reports when the batch starts uploading', async () => {
+      const { controller, collection, container } = setup({ cfg: { multiple: true } });
+      const startBatch = vi.spyOn(container.get(UploadCollectionEventsController), 'startBatch');
+      const a = collection.add({ file: new File(['x'], 'a.txt') });
+      const b = collection.add({ file: new File(['y'], 'b.txt') });
+      const uploadingAtStart: boolean[] = [];
+      startBatch.mockImplementation(() => uploadingAtStart.push(!!collection.read(a)?.get('isUploading')));
+
+      controller.uploadEntries([a, b]);
+      await vi.waitFor(() => expect(mockUploadFile).toHaveBeenCalledTimes(2));
+
+      expect(uploadingAtStart).toEqual([true]);
     });
 
     it('does not report a batch whose every entry its validators rejected', async () => {
