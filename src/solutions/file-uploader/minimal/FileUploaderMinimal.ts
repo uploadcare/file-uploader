@@ -87,8 +87,9 @@ export class FileUploaderMinimal extends SolutionChildBlock {
         const hasFiles = list.length > 0;
         this._router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
         // `setActivity` keeps the modal slot, so files added without a navigation (`addFileFrom*` from app code)
-        // would leave the source picker open over the list.
-        if (hasFiles && this._router.modal === ACTIVITY_TYPES.START_FROM) this._router.closeModal();
+        // would leave the source picker or a source open over the list. The editor edits one of those files.
+        const modal = this._router.modal;
+        if (hasFiles && modal && modal !== ACTIVITY_TYPES.CLOUD_IMG_EDIT) this._router.closeModal();
       },
       { immediate: true },
     );
