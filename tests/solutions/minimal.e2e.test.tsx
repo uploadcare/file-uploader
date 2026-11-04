@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
+import type { UploaderPublicApi } from '@/abstract/UploaderPublicApi';
 import type { DropArea } from '@/index';
 import { delay } from '@/utils/delay';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
@@ -92,6 +93,26 @@ describe('uc-file-uploader-minimal', () => {
     await expectModal(root, 'url', 'closed');
     expect(api.getCurrentActivity()).toBe('upload-list');
     expect(modalClose).toHaveBeenCalledWith({ modalId: 'url', hasActiveModals: false });
+  });
+
+  // As in v1 and api.mdx: an empty upload list leaves the uploader on its start screen, the in-place trigger.
+  it.each([
+    ['setCurrentActivity', (api: UploaderPublicApi) => api.setCurrentActivity('upload-list')],
+    ['navigate', (api: UploaderPublicApi) => api.navigate('upload-list')],
+  ])('closes the open modal on %s("upload-list") with an empty list', async (_, toUploadList) => {
+    const { root, api } = await renderSolution('minimal');
+    api.setCurrentActivity('url');
+    api.setModalState(true);
+    await expectModal(root, 'url', 'open');
+    const modalClose = vi.fn();
+    onTestFinished(api.on('modal-close', modalClose));
+
+    toUploadList(api);
+
+    await expectModal(root, 'url', 'closed');
+    expect(api.getCurrentActivity()).toBe('start-from');
+    expect(modalClose).toHaveBeenCalledWith({ modalId: 'url', hasActiveModals: false });
+    await expectModal(root, 'start-from', 'closed');
   });
 
   it('says "Choose file" or "Choose files" as multiple toggles', async () => {
