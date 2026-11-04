@@ -142,7 +142,10 @@ export class VirtualListController implements ReactiveController {
   // Measure geometry after each render and lazily wire the scroll listener + a
   // ResizeObserver. Viewport height is seeded with ONE layout read on attach and
   // then owned by the ResizeObserver — steady-state renders do NOT read
-  // `clientHeight`, so a scroll/re-render doesn't force a layout. Row metrics are
+  // `clientHeight`, so a scroll/re-render doesn't force a layout — except while
+  // unlatched, when each render reads `scrollHeight`/`clientHeight` to tell a
+  // container that grows with its rows (never virtualized) from one that
+  // overflows. Row metrics are
   // measured ONCE and latched (`_measured`) — measuring them every render is
   // circular (see the field note) and hangs; a resize clears the latch so they
   // re-measure. The measurement-driven re-render is scheduled OUTSIDE the update
@@ -178,6 +181,16 @@ export class VirtualListController implements ReactiveController {
     }
 
     if (!this._measured) {
+      // A container that grows with its content (an unsized inline uploader, where the page scrolls) never scrolls,
+      // so its clientHeight is the whole list, not a viewport: render every row. Checked until the list overflows.
+      // 1px tolerance: sub-pixel row heights can round scrollHeight one past clientHeight.
+      if (scrollEl.scrollHeight - scrollEl.clientHeight <= 1) {
+        if (this._rowHeight > 0) {
+          this._rowHeight = 0;
+          this._scheduleMeasureUpdate();
+        }
+        return;
+      }
       const firstItem = scrollEl.querySelector<HTMLElement>(this._itemSelector);
       if (firstItem) {
         const { columns, rowHeight } = this._rowMetrics(scrollEl, firstItem);
