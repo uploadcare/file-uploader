@@ -83,3 +83,37 @@ describe('EditorImageCropper commit without a laid-out image box', () => {
     expect(error).not.toHaveBeenCalled();
   });
 });
+
+describe('EditorImageCropper moved while its image source resolves', () => {
+  it('logs nothing, reports nothing and observes no resize', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const activate = vi.spyOn(EditorImageCropper.prototype, 'activate');
+    const observe = vi.spyOn(ResizeObserver.prototype, 'observe');
+    const root = document.createElement('uc-test-activation-root') as ActivationRoot;
+    document.body.append(root);
+    mounted.push(root);
+    const controller = root.provider.value;
+    const sendEventError = vi.spyOn(controller.telemetry, 'sendEventError');
+    controller.originalUrl = 'https://ucarecdn.com/9a3c8d5e-0b1f-4c2a-8e7d-6f5b4a3c2d1e/';
+    controller.tabId = TabId.CROP;
+    const first = Promise.withResolvers<string>();
+    vi.spyOn(controller, 'proxyUrl')
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValue(new Promise<string>(() => {}));
+
+    const cropper = document.createElement('uc-test-activation-cropper') as EditorImageCropper;
+    root.append(cropper);
+    cropper.imageSize = { width: 100, height: 100 };
+    await vi.waitFor(() => expect(controller.proxyUrl).toHaveBeenCalledTimes(1));
+
+    // A same-task move: released and re-adopted before the first activation's image source resolves.
+    root.append(document.createElement('div'));
+    root.append(cropper);
+    first.resolve('https://ucarecdn.com/9a3c8d5e-0b1f-4c2a-8e7d-6f5b4a3c2d1e/');
+    await activate.mock.results[0]?.value.catch(() => {});
+
+    expect(error).not.toHaveBeenCalled();
+    expect(sendEventError).not.toHaveBeenCalled();
+    expect(observe).not.toHaveBeenCalled();
+  });
+});

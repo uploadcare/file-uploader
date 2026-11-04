@@ -208,7 +208,8 @@ export class EditorFilterControl extends EditorButtonControl {
   private async _loadPreview(observer?: IntersectionObserver): Promise<void> {
     // An observer entry queued before disconnect can still be delivered after it; `disconnectedCallback` has already
     // disconnected the observer and cancelled the preload.
-    if (this.adoptionSignal.aborted) {
+    const signal = this.adoptionSignal;
+    if (signal.aborted) {
       return;
     }
 
@@ -247,7 +248,8 @@ export class EditorFilterControl extends EditorButtonControl {
       this._clearPreviewVisibilityChecks();
       (observer ?? this._observer)?.unobserve(this);
     } catch (err) {
-      if (this.adoptionSignal.aborted) throw err;
+      // This load's own adoption: after a move, `this.adoptionSignal` is the next one's, still live.
+      if (signal.aborted) throw err;
       // Our own cancel: scrolled out of view, or superseded by a newer preview. Not a failure.
       if (isAbortError(err)) return;
       this.editorController.networkProblems = true;

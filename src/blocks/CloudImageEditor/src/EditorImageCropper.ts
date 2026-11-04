@@ -485,7 +485,8 @@ export class EditorImageCropper extends EditorBlock {
       this._handleResizeThrottled();
       this._animateIn();
     } catch (err) {
-      if (this.adoptionSignal.aborted) throw err;
+      // This activation's own adoption: after a move, `this.adoptionSignal` is the next one's, still live.
+      if (signal.aborted) throw err;
       // Deactivated mid-load (a tab switch, a new image): our own cancel, not a failure.
       if (activation.signal.aborted) return;
       this._log.error('Failed to activate cropper', { error: err });
