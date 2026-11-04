@@ -1,5 +1,6 @@
 import { type CameraMode, CameraSourceTypes } from '../../abstract/cameraModes';
 import type { NavigationEdge } from '../../abstract/controllers/RouterController';
+import { isAbortError } from '../../abstract/di/Lifetime';
 import { signalState } from '../../abstract/di/signalState';
 import { debounce } from '../../utils/debounce';
 import type { CameraAction } from './CameraActionEvent';
@@ -276,8 +277,17 @@ export class CameraSession {
     if (!video.paused && !video.ended && video.readyState > 2) {
       video.pause();
     } else if (video.paused) {
-      this._host.lifetime.runTask(() => video.play());
+      this._play(video);
     }
+  }
+
+  private _play(video: HTMLVideoElement): void {
+    this._host.lifetime.runTask(() =>
+      video.play().catch((error: unknown) => {
+        // A pause or a new source interrupts a pending play(): superseded, not a failure.
+        if (!isAbortError(error)) throw error;
+      }),
+    );
   }
 
   private _retake(): void {
@@ -289,7 +299,7 @@ export class CameraSession {
     }
     const video = this._host.video();
     if (video) {
-      this._host.lifetime.runTask(() => video.play());
+      this._play(video);
     }
   }
 

@@ -96,3 +96,18 @@ describe('CameraSession moved while the camera is asked for', () => {
     expect(session.permission).not.toBe('denied');
   });
 });
+
+describe('CameraSession preview playback', () => {
+  it('takes a play() interrupted by a pause or a new source as superseded, not as a failure', async () => {
+    const { session, host, taskFailed } = setup();
+    const interrupted = new DOMException('The play() request was interrupted by a new load request.', 'AbortError');
+    const play = vi.fn(() => Promise.reject(interrupted));
+    host.video = () => ({ play }) as unknown as HTMLVideoElement;
+
+    session.handle({ type: 'retake' });
+    await delay(0);
+
+    expect(play).toHaveBeenCalledOnce();
+    expect(taskFailed).not.toHaveBeenCalled();
+  });
+});
