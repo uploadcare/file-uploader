@@ -242,4 +242,19 @@ describe('UploadCollectionEventsController.emitCommonFailedIfSettled, once per f
 
     expect(t.failedEmits()).toHaveLength(1);
   });
+
+  it('reports a collection error again once the files change, after it was reported for the empty list', () => {
+    const t = setupWithConfig();
+    t.config.set('multiple', true);
+    t.config.set('multipleMin', 2);
+    t.config.set('confirmUpload', true);
+    t.collectionState.set('collectionErrors', [{ type: 'TOO_FEW_FILES', message: 'm' }] as never);
+    t.events.emitCommonFailedIfSettled();
+
+    const added = t.collection.read(t.collection.add({ fileName: 'a.png' }))!;
+    t.events.resetGroupIfMembershipChanged(new Set([added]), new Set());
+    t.events.emitCommonFailedIfSettled();
+
+    expect(t.failedEmits()).toHaveLength(2);
+  });
 });

@@ -390,6 +390,24 @@ describe('events: upload lifecycle', () => {
     expect(settled.indexOf('common-upload-failed')).toBeGreaterThan(settled.indexOf('file-upload-success'));
   });
 
+  it('fires common-upload-failed once when fewer files than multipleMin are uploaded', async () => {
+    const uploader = await renderSolution();
+    const { api, config, provider } = uploader;
+    const recorder = recordEvents(provider);
+    // The empty list is already too short; wait for that report itself so only what the added file sets off counts.
+    config.multipleMin = 2;
+    await expect.poll(() => recorder.detailsOf('common-upload-failed')).toHaveLength(1);
+    recorder.clear();
+    const uploaded = api.addFileFromObject(IMAGE.PIXEL);
+    const isRevalidated = watchPostUploadValidation(uploader, recorder, uploaded.internalId);
+
+    await isRevalidated();
+
+    expect(recorder.detailsOf('common-upload-failed')).toEqual([
+      expect.objectContaining({ status: 'failed', totalCount: 1, successCount: 1 }),
+    ]);
+  });
+
   it('fires group-created after the upload succeeds when groupOutput is enabled', async () => {
     const { api, provider } = await renderSolution('regular', { groupOutput: true });
     const recorder = recordEvents(provider);
