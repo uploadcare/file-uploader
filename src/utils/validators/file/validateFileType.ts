@@ -1,4 +1,4 @@
-import type { FuncFileValidator } from '../../../abstract/managers/ValidationManager';
+import type { FuncFileValidator } from '../../../abstract/validatorTypes';
 import { IMAGE_ACCEPT_LIST, matchExtension, matchMimeType, mergeFileTypes } from '../../fileTypes';
 
 export const validateFileType: FuncFileValidator = (outputEntry, api) => {

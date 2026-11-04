@@ -96,6 +96,8 @@ export default {
   'camera-permissions-denied': 'Доступ до камери заборонено',
   'camera-permissions-prompt': 'Будь ласка, дозвольте доступ до камери',
   'camera-permissions-request': 'Запитати доступ',
+  'camera-not-found': 'Камеру не знайдено',
+  'camera-unavailable': 'Камера зайнята або недоступна',
   'files-count-limit-error-title': 'Перевищено ліміт кількості файлів',
   'files-count-limit-error-too-few':
     'Ви вибрали {{total}} {{plural:file(total)}}. Мінімум потрібно {{min}} {{plural:file(min)}}.',
@@ -108,6 +110,8 @@ export default {
   'file-item-edit-button': 'Редагувати',
   'file-item-remove-button': 'Видалити',
   'a11y-activity-header-button-close': 'Закрити',
+  'a11y-camera-microphone': 'Мікрофон',
+  'a11y-camera-stop-recording': 'Зупинити запис',
   'a11y-editor-tab-filters': 'Фільтри',
   'a11y-editor-tab-tuning': 'Налаштування',
   'a11y-editor-tab-crop': 'Обрізати',
@@ -134,6 +138,8 @@ export default {
 
   custom: 'Вільна форма',
   'freeform-crop': 'Вільна обрізка',
+  'network-error': 'Помилка мережі',
+  retry: 'Повторити',
 
   'upload-from': 'Завантажити з {{source}}',
   'get-from': 'Отримати з {{source}}',

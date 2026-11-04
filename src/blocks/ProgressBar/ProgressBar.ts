@@ -3,12 +3,9 @@ import type { PropertyValues } from 'lit';
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../lit/LitBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
 
-export class ProgressBar extends LitBlock {
-  @property({ type: Boolean, noAccessor: true })
-  public hasFileName = false;
-
+export class ProgressBar extends ChildBlock {
   @property({ type: Number })
   public value = 0;
 
@@ -35,12 +32,26 @@ export class ProgressBar extends LitBlock {
     }
   };
 
+  protected override controllerReady(): void {
+    // Pre-adoption property writes never reach `updated` (gated cycles clear
+    // changed-properties) — re-derive the visibility class and progress state
+    // from current values on adoption, mirroring `firstUpdated` (which only
+    // fires once ever, so re-adoptions must re-sync here).
+    this.classList.toggle('uc-progress-bar--hidden', !this.visible);
+    this._progressValue = this._normalizeProgressValue(this.value);
+    if (this.visible) {
+      this._updateProgressValueStyle();
+    }
+    this._syncFakeProgressAria();
+  }
+
   protected override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
 
     this._progressValue = this._normalizeProgressValue(this.value);
     this._updateProgressValueStyle();
     this._fakeProgressLineRef.value?.addEventListener('animationiteration', this._handleFakeProgressAnimation);
+    this._syncFakeProgressAria();
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
@@ -68,6 +79,11 @@ export class ProgressBar extends LitBlock {
         this._progressValue = this._normalizeProgressValue(this.value);
       }
     }
+
+    // Update ARIA only when progress value changes
+    if (changedProperties.has('value') || changedProperties.has('visible')) {
+      this._syncFakeProgressAria();
+    }
   }
 
   public override disconnectedCallback(): void {
@@ -77,7 +93,8 @@ export class ProgressBar extends LitBlock {
 
   private _normalizeProgressValue(value: number): number {
     if (!Number.isFinite(value)) {
-      return 0;
+      // Positive infinity → clamp to 100, negative/NaN → 0
+      return value > 0 ? 100 : 0;
     }
     return Math.min(100, Math.max(0, value));
   }
@@ -89,9 +106,20 @@ export class ProgressBar extends LitBlock {
     this.style.setProperty('--l-progress-value', this._progressValue.toString());
   }
 
+  /** `role`/`aria-valuemin`/`aria-valuemax` are static (see `render`); only the current value moves. */
+  private _syncFakeProgressAria(): void {
+    this._fakeProgressLineRef.value?.setAttribute('aria-valuenow', this._progressValue.toString());
+  }
+
   public override render() {
     return html`
-      <div ${ref(this._fakeProgressLineRef)} class="uc-fake-progress"></div>
+      <div
+        ${ref(this._fakeProgressLineRef)}
+        class="uc-fake-progress"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="100"
+      ></div>
       <div class="uc-progress"></div>
     `;
   }

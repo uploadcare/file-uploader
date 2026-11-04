@@ -76,3 +76,9 @@ type DocumentedMethod =
 test('the api exposes every documented method', () => {
   expectTypeOf<DocumentedMethod>().toExtend<keyof ReturnType<UploadCtxProvider['getAPI']>>();
 });
+
+// `export type *` in `src/types` drops the `type` modifier in the bundled d.ts, so a value defined in a re-exported
+// types module is published as an export the runtime bundle lacks.
+test('the plugin label helper is not published', () => {
+  expectTypeOf<Extract<keyof Exports, 'pluginLabelKey'>>().toBeNever();
+});

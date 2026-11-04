@@ -1,20 +1,22 @@
-import { createCdnUrl, createCdnUrlModifiers, createOriginalUrl } from '../../utils/cdn-utils.js';
-import { stringToArray } from '../../utils/stringToArray';
+import { isProxyUrl, parseFileUrl, parseProxyUrl, serializeFileUrl, serializeProxyUrl } from '@uploadcare/cdn-url';
+import { logger } from '../../abstract/logger';
+import { operationsFromModifiers } from '../../utils/cdn/operations';
+import { deliveryProxyOrigin } from '../../utils/cdn/origin';
+import { deserializeCsv } from '../../utils/comma-separated';
 import { applyTemplateData } from '../../utils/template-utils';
 import { uniqueArray } from '../../utils/uniqueArray';
 import {
   DEV_MODE,
   HI_RES_K,
-  ImgTypeEnum,
   MAX_WIDTH,
   MAX_WIDTH_JPG,
   ULTRA_RES_K,
   UNRESOLVED_ATTR,
 } from './configurations';
-import { ImgConfig } from './ImgConfig';
-import { type ParseableParams, parseObjectToString } from './utils/parseObjectToString';
+import { type CssPropValue, ImgConfig } from './ImgConfig';
+import type { ImgPropKey } from './props-map';
 
-type ImgType = (typeof ImgTypeEnum)[keyof typeof ImgTypeEnum];
+const log = logger.scope('img');
 
 type LoaderParams = {
   src?: string;
@@ -32,14 +34,15 @@ type AppendUrlParams = {
   srcset?: string;
 };
 
-type CurrentImg = {
-  type: ImgType;
-  img: HTMLImageElement;
-};
-
 export class ImgBase extends ImgConfig {
   private _img: HTMLImageElement = new Image();
   private _imgPreview: HTMLImageElement = new Image();
+
+  /** A config value as a string; unset (`null`/`undefined`) reads as `''`. */
+  private _str(key: ImgPropKey): string {
+    const value = this.$$(key);
+    return value === null || value === undefined ? '' : String(value);
+  }
 
   private _fmtAbs(src: string): string {
     const isRel = !src.includes('//');
@@ -53,9 +56,8 @@ export class ImgBase extends ImgConfig {
     if (!size) {
       return undefined;
     }
-    const ensuredSize = size;
-    const numericPart = ensuredSize.match(/\d+/)?.[0];
-    const alphabeticPart = ensuredSize.match(/[a-zA-Z]+/)?.[0];
+    const numericPart = size.match(/\d+/)?.[0];
+    const alphabeticPart = size.match(/[a-zA-Z]+/)?.[0];
 
     if (!numericPart || !alphabeticPart) {
       return undefined;
@@ -63,41 +65,30 @@ export class ImgBase extends ImgConfig {
 
     const bp = parseInt(numericPart, 10);
 
-    if (Number(bp) > MAX_WIDTH_JPG && this._hasFormatJPG) {
-      return MAX_WIDTH_JPG + alphabeticPart;
-    } else if (Number(bp) > MAX_WIDTH && !this._hasFormatJPG) {
-      return MAX_WIDTH + alphabeticPart;
-    }
-
-    return size;
+    const max = this._hasFormatJPG ? MAX_WIDTH_JPG : MAX_WIDTH;
+    return bp > max ? max + alphabeticPart : size;
   }
 
-  private _getCdnModifiers(size?: string | null, blur?: string | null): string {
-    const params: ParseableParams = {
-      format: this._getTypedCssValue('format'),
-      quality: this._getTypedCssValue('quality'),
+  private _getCdnOperationFragments(size?: string | null, blur?: string | null): CssPropValue[] {
+    const params: Record<string, CssPropValue> = {
+      format: this.$$('format'),
+      quality: this.$$('quality'),
       resize: this._validateSize(size),
       blur,
-      'cdn-operations': this._getTypedCssValue('cdn-operations') ?? undefined,
-      analytics: this.analyticsParams(),
     };
-
-    return createCdnUrlModifiers(...parseObjectToString(params));
-  }
-
-  private _getTypedCssValue(key: string): string | number | boolean | null | undefined {
-    const value = this.$$(key);
-    if (value === null || value === undefined) {
-      return value as null | undefined;
-    }
-    if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-      return value;
-    }
-    return undefined;
+    // `null` is not filtered out, so a null value still emits `<key>/null`.
+    // `operationsFromModifiers` drops the non-string and empty fragments.
+    return [
+      ...Object.entries(params)
+        .filter(([, value]) => value !== undefined && value !== '')
+        .map(([key, value]) => `${key}/${value}`),
+      this.$$('cdn-operations'),
+      this.analyticsParams(),
+    ];
   }
 
   private _getUrlBase(size: string | null = '', blur: string | null = ''): string | undefined {
-    const src = this.$$('src') as string;
+    const src = this._str('src');
     if (src.startsWith('data:') || src.startsWith('blob:')) {
       return src;
     }
@@ -106,39 +97,69 @@ export class ImgBase extends ImgConfig {
       return this._proxyUrl(src);
     }
 
-    const cdnModifiers = this._getCdnModifiers(size, blur);
-    const cdnCnameRaw = this.$$('cdn-cname') as string | undefined;
-    const cdnCname = cdnCnameRaw;
+    try {
+      return this._buildCdnUrl(size, blur, src);
+    } catch (err) {
+      // `@uploadcare/cdn-url` rejects anything that is not a real CDN URL — a
+      // malformed `uuid`, a blanked `cdn-cname`, an unparseable `cdn-operations`
+      // attribute. This is user-supplied config reaching a render path, so it
+      // degrades to "no image" with a warning rather than throwing out of
+      // rendering (the previous string-concatenating implementation would have
+      // produced a broken URL instead, which failed just as silently).
+      log.warn('Failed to build a CDN URL from the configured attributes', err);
+      return undefined;
+    }
+  }
 
-    if (src.startsWith(String(cdnCnameRaw))) {
-      return createCdnUrl(src, cdnModifiers);
+  private _buildCdnUrl(size: string | null, blur: string | null, src: string): string | undefined {
+    const operations = operationsFromModifiers(...this._getCdnOperationFragments(size, blur));
+    const cdnCname = this._str('cdn-cname');
+
+    // A src already on the configured cname is a CDN URL in its own right: parse
+    // it and append, so operations it already carries survive.
+    //
+    // `<uc-img>` renders a single stored file or a proxied remote source. Parsing
+    // only those two kinds keeps the group parsers out of the bundle entirely —
+    // this element has the tightest size budget in the repo.
+    if (cdnCname && src.startsWith(cdnCname)) {
+      if (isProxyUrl(src)) {
+        const parsed = parseProxyUrl(src);
+        return serializeProxyUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
+      }
+      const parsed = parseFileUrl(src);
+      return serializeFileUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
     }
 
-    const uuid = this.$$('uuid') as string | undefined;
-
-    if (cdnCname && uuid) {
-      return this._proxyUrl(createCdnUrl(createOriginalUrl(cdnCname, uuid), cdnModifiers));
-    }
-
+    const uuid = this._str('uuid');
     if (uuid) {
-      return this._proxyUrl(createCdnUrl(createOriginalUrl(cdnCname as string, uuid), cdnModifiers));
+      // `cdn-cname` carries a default, so a blank one means it was blanked on
+      // purpose — `new URL('')` throws and the caller degrades, which is what the
+      // previous implementation did by accident.
+      const url = serializeFileUrl({ cdnBase: new URL(cdnCname).origin, uuid, operations });
+      // `serializeFileUrl` builds without validating — it is `parseFileUrl` that
+      // knows the UUID grammar. Parsing the result back keeps a garbage `uuid`
+      // attribute degrading to "no image" instead of emitting a URL that 404s.
+      parseFileUrl(url);
+      return this._proxyUrl(url);
     }
 
-    const proxyCname = this.$$('proxy-cname') as string | undefined;
+    const proxyCname = this._str('proxy-cname');
     if (proxyCname) {
-      return this._proxyUrl(createCdnUrl(proxyCname, cdnModifiers, this._fmtAbs(src)));
+      return this._proxyUrl(serializeProxyUrl({ cdnBase: proxyCname, sourceUrl: this._fmtAbs(src), operations }));
     }
 
-    const pubkey = this.$$('pubkey') as string | undefined;
+    const pubkey = this._str('pubkey');
     if (pubkey) {
-      return this._proxyUrl(createCdnUrl(`https://${pubkey}.ucr.io/`, cdnModifiers, this._fmtAbs(src)));
+      return this._proxyUrl(
+        serializeProxyUrl({ cdnBase: deliveryProxyOrigin(pubkey), sourceUrl: this._fmtAbs(src), operations }),
+      );
     }
 
     return undefined;
   }
 
   private _proxyUrl(url: string): string {
-    const previewProxy = this.$$('secure-delivery-proxy') as string | undefined;
+    const previewProxy = this._str('secure-delivery-proxy');
     if (!previewProxy) {
       return url;
     }
@@ -149,16 +170,10 @@ export class ImgBase extends ImgConfig {
     );
   }
 
-  protected _getElSize(el: HTMLElement, k = 1, wOnly = true): string | null {
-    const rect = el.getBoundingClientRect();
-    const w = k * Math.round(rect.width);
-    const h = wOnly ? '' : k * Math.round(rect.height);
-
-    if (w || h) {
-      return `${w ? w : ''}x${h ? h : ''}`;
-    } else {
-      return null;
-    }
+  /** @internal */
+  protected _getElSize(el: HTMLElement, k = 1): string | null {
+    const w = k * Math.round(el.getBoundingClientRect().width);
+    return w ? `${w}x` : null;
   }
 
   private _setupEventProxy(img: HTMLImageElement): void {
@@ -181,30 +196,22 @@ export class ImgBase extends ImgConfig {
     return this._img;
   }
 
-  private get _currentImg(): CurrentImg {
-    return this._hasPreviewImage
-      ? {
-          type: ImgTypeEnum.PREVIEW as ImgType,
-          img: this._imgPreview,
-        }
-      : {
-          type: ImgTypeEnum.MAIN as ImgType,
-          img: this.img,
-        };
+  private get _currentImg(): HTMLImageElement {
+    return this._hasPreviewImage ? this._imgPreview : this.img;
   }
 
-  private get _hasPreviewImage(): string | number | boolean | undefined {
-    return this.$$('is-preview-blur') as string | number | boolean | undefined;
+  private get _hasPreviewImage(): CssPropValue {
+    return this.$$('is-preview-blur');
   }
 
-  private get _bgSelector(): string | undefined {
-    return this.$$('is-background-for') as string | undefined;
+  private get _bgSelector(): string {
+    return this._str('is-background-for');
   }
 
   private get _breakpoints(): number[] | null {
-    const breakpointsValue = this.$$('breakpoints') as string | undefined;
+    const breakpointsValue = this._str('breakpoints');
     if (breakpointsValue) {
-      const list = stringToArray(breakpointsValue);
+      const list = deserializeCsv(breakpointsValue);
       return uniqueArray(list.map((bp) => parseInt(bp, 10)));
     } else {
       return null;
@@ -212,21 +219,28 @@ export class ImgBase extends ImgConfig {
   }
 
   private get _hasFormatJPG(): boolean {
-    return (this.$$('format') as string).toLowerCase() === 'jpeg';
+    return this._str('format').toLowerCase() === 'jpeg';
+  }
+
+  /** Pixel-density multipliers: 1x, plus 2x/3x when hi-/ultra-res support is on. */
+  private get _densities(): number[] {
+    const k = [1];
+    if (this.$$('hi-res-support')) k.push(HI_RES_K);
+    if (this.$$('ultra-res-support')) k.push(ULTRA_RES_K);
+    return k;
   }
 
   private _renderBg(el: HTMLElement): void {
     const imgSet = new Set<string>();
-
-    imgSet.add(`url("${this._getUrlBase(this._getElSize(el)) as string}") 1x`);
-    if (this.$$('hi-res-support')) {
-      imgSet.add(`url("${this._getUrlBase(this._getElSize(el, HI_RES_K)) as string}") ${HI_RES_K}x`);
+    for (const k of this._densities) {
+      const url = this._getUrlBase(this._getElSize(el, k));
+      if (url) imgSet.add(`url("${url}") ${k}x`);
     }
 
-    if (this.$$('ultra-res-support')) {
-      imgSet.add(`url("${this._getUrlBase(this._getElSize(el, ULTRA_RES_K)) as string}") ${ULTRA_RES_K}x`);
+    if (!imgSet.size) {
+      el.style.removeProperty('background-image');
+      return;
     }
-
     const iSet = `image-set(${[...imgSet].join(', ')})`;
     el.style.setProperty('background-image', iSet);
     el.style.setProperty('background-image', `-webkit-${iSet}`);
@@ -234,26 +248,17 @@ export class ImgBase extends ImgConfig {
 
   private _getSrcset(): string {
     const srcset = new Set<string>();
-    if (this._breakpoints) {
-      this._breakpoints.forEach((bp) => {
-        srcset.add(`${this._getUrlBase(`${bp}x`) as string} ${this._validateSize(`${bp}w`)}`);
-        if (this.$$('hi-res-support')) {
-          srcset.add(`${this._getUrlBase(`${bp * HI_RES_K}x`) as string} ${this._validateSize(`${bp * HI_RES_K}w`)}`);
-        }
-        if (this.$$('ultra-res-support')) {
-          srcset.add(
-            `${this._getUrlBase(`${bp * ULTRA_RES_K}x`) as string} ${this._validateSize(`${bp * ULTRA_RES_K}w`)}`,
-          );
-        }
-      });
+    const add = (url: string | undefined, descriptor: string | null | undefined): void => {
+      if (url) srcset.add(`${url} ${descriptor}`);
+    };
+    const densities = this._densities;
+    const breakpoints = this._breakpoints;
+    if (breakpoints) {
+      for (const bp of breakpoints) {
+        for (const k of densities) add(this._getUrlBase(`${bp * k}x`), this._validateSize(`${bp * k}w`));
+      }
     } else {
-      srcset.add(`${this._getUrlBase(this._getElSize(this._currentImg.img)) as string} 1x`);
-      if (this.$$('hi-res-support')) {
-        srcset.add(`${this._getUrlBase(this._getElSize(this._currentImg.img, 2)) as string} 2x`);
-      }
-      if (this.$$('ultra-res-support')) {
-        srcset.add(`${this._getUrlBase(this._getElSize(this._currentImg.img, 3)) as string} 3x`);
-      }
+      for (const k of densities) add(this._getUrlBase(this._getElSize(this._currentImg, k)), `${k}x`);
     }
     return [...srcset].join();
   }
@@ -267,8 +272,7 @@ export class ImgBase extends ImgConfig {
   }
 
   private _renderBackground(): void {
-    const selector = this._bgSelector as string;
-    [...document.querySelectorAll(selector)].forEach((el) => {
+    [...document.querySelectorAll(this._bgSelector)].forEach((el) => {
       if (this.$$('intersection')) {
         this.initIntersection(el as HTMLElement, () => {
           this._renderBg(el as HTMLElement);
@@ -280,12 +284,17 @@ export class ImgBase extends ImgConfig {
   }
 
   private _appendURL({ elNode, src, srcset }: AppendUrlParams): void {
+    // No URL clears the attribute: a stale image must not survive a config that no longer resolves.
     if (src) {
       elNode.src = src;
+    } else {
+      elNode.removeAttribute('src');
     }
 
     if (srcset) {
       elNode.srcset = srcset;
+    } else {
+      elNode.removeAttribute('srcset');
     }
   }
 
@@ -318,74 +327,53 @@ export class ImgBase extends ImgConfig {
   }
 
   private async _renderImage(): Promise<void> {
+    // Load the final image, then swap it in for the preview whether or not it loaded.
+    const load = async (): Promise<void> => {
+      try {
+        await this._loaderImage({ src: this._getSrc(), srcset: this._getSrcset(), elNode: this._img });
+      } catch {}
+      if (this._hasPreviewImage) {
+        this._imgPreview.remove();
+      }
+      this.appendChild(this._img);
+    };
+
     if (this.$$('intersection')) {
       if (this._hasPreviewImage) {
         this._setupConfigForImage({ elNode: this._imgPreview });
         this.appendChild(this._imgPreview);
       }
 
-      this.initIntersection(this._currentImg.img, async () => {
-        if (this._hasPreviewImage) {
-          this._imgPreview.src = this._srcUrlPreview as string;
+      this.initIntersection(this._currentImg, () => {
+        const previewUrl = this._srcUrlPreview;
+        if (this._hasPreviewImage && previewUrl) {
+          this._imgPreview.src = previewUrl;
         }
-
-        try {
-          await this._loaderImage({
-            src: this._getSrc(),
-            srcset: this._getSrcset(),
-            elNode: this._img,
-          });
-
-          if (this._hasPreviewImage) {
-            await this._imgPreview.remove();
-          }
-
-          this.appendChild(this._img);
-        } catch {
-          if (this._hasPreviewImage) {
-            await this._imgPreview?.remove();
-          }
-          this.appendChild(this._img);
-        }
+        return load();
       });
-
       return;
     }
 
-    try {
-      if (this._hasPreviewImage) {
-        await this._loaderImage({
-          src: this._srcUrlPreview,
-          elNode: this._imgPreview,
-        });
-
+    if (this._hasPreviewImage) {
+      try {
+        await this._loaderImage({ src: this._srcUrlPreview, elNode: this._imgPreview });
         this.appendChild(this._imgPreview);
+      } catch {
+        // A failed preview skips loading the final image and shows it as is.
+        this._imgPreview.remove();
+        this.appendChild(this._img);
+        return;
       }
-
-      await this._loaderImage({
-        src: this._getSrc(),
-        srcset: this._getSrcset(),
-        elNode: this._img,
-      });
-
-      if (this._hasPreviewImage) {
-        await this._imgPreview?.remove();
-      }
-
-      this.appendChild(this._img);
-    } catch {
-      if (this._hasPreviewImage) {
-        await this._imgPreview?.remove();
-      }
-      this.appendChild(this._img);
     }
+    await load();
   }
 
   protected init(): void {
     if (this._bgSelector) {
       this._renderBackground();
     } else {
-      this._renderImage();
+      // `<uc-img>` has no lifetime of its own; a detached element appending its image is harmless, a failure is not.
+      this._renderImage().catch((error: unknown) => log.error('Failed to render the image', error));
     }
   }
 }

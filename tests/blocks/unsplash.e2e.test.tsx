@@ -1,5 +1,5 @@
 import { DEMO_IMAGE_UUID } from '@uploadcare/api-emulator';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import { unsplashPlugin } from '@/plugins/unsplashPlugin';
 import { emulatorSession, isLive } from '~/tests/utils/emulator.browser';
@@ -119,5 +119,72 @@ describe.skipIf(isLive)('unsplash plugin, against a routed API', () => {
     const [entry] = api.getOutputCollectionState().allEntries;
     expect(entry.name).toBe(`unsplash-${PHOTO.id}.jpg`);
     expect(entry.externalUrl).toBe(PHOTO.urls.full);
+  });
+
+  it('keeps the native accessKey of the activity element working', async () => {
+    routePhotos();
+    const { activity } = await openUnsplash('my-key');
+
+    activity.setAttribute('accesskey', 'u');
+
+    // The API key used to live on HTMLElement's own `accessKey`, which shadowed the `accesskey` attribute.
+    expect(activity.accessKey).toBe('u');
+    await expect.poll(() => photoQueries()).toHaveLength(1);
+    expect(photoQueries()[0].get('client_id')).toBe('my-key');
+  });
+
+  it('shows the latest search when an earlier one answers last', async () => {
+    // The first load answers at once; each search after it waits until the test answers it.
+    const pending = new Map<string, (photos: unknown[]) => void>();
+    routePhotos();
+    emulatorSession().on(PHOTOS_ENDPOINT, ({ request }) => {
+      const query = new URL(request.url).searchParams.get('query');
+      if (!query) return undefined;
+      return new Promise((resolve) => pending.set(query, (photos) => resolve(Response.json(photos))));
+    });
+    const { activity } = await openUnsplash();
+    await expect.poll(() => activity.querySelectorAll('img').length).toBeGreaterThan(0);
+
+    // Every photo the grid shows from here on.
+    const shown: string[] = [];
+    const observer = new MutationObserver(() => {
+      for (const img of activity.querySelectorAll('img')) shown.push(img.alt);
+    });
+    observer.observe(activity, { childList: true, subtree: true, attributes: true, attributeFilter: ['alt'] });
+    onTestFinished(() => observer.disconnect());
+
+    // The element itself: a locator scoped to the activity is resolved by its text, which each search changes.
+    const input = activity.querySelector('input.search-input') as HTMLInputElement;
+    const search = async (query: string) => {
+      await userEvent.fill(input, query);
+      await userEvent.keyboard('{Enter}');
+      await expect.poll(() => [...pending.keys()]).toContain(query);
+    };
+    await search('cats');
+    await search('dogs');
+
+    pending.get('dogs')?.([{ ...PHOTO, id: 'dog', alt_description: 'a dog' }]);
+    await expect.poll(() => activity.querySelector('img')?.alt).toBe('a dog');
+    pending.get('cats')?.([{ ...PHOTO, id: 'cat', alt_description: 'a cat' }]);
+
+    // The sentinel: a later search lands through the same path, after the stale answer had its chance.
+    await search('birds');
+    pending.get('birds')?.([{ ...PHOTO, id: 'bird', alt_description: 'a bird' }]);
+    await expect.poll(() => activity.querySelector('img')?.alt).toBe('a bird');
+
+    expect(shown).not.toContain('a cat');
+    expect(activity.querySelector('.status.error')).toBeNull();
+  });
+
+  it('picks a photo from the keyboard', async () => {
+    routePhotos();
+    const { activity, api } = await openUnsplash();
+
+    const tile = within(activity).getByRole('button', { name: PHOTO.alt_description });
+    await expect.element(tile).toBeVisible();
+    (tile.element() as HTMLButtonElement).focus();
+    await userEvent.keyboard('{Enter}');
+
+    await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
   });
 });

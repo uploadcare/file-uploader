@@ -1,5 +1,6 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import type { Icon } from '@/index';
+import { delay } from '@/utils/delay';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -21,7 +22,8 @@ const openCamera = async (configProps: Parameters<typeof renderSolution>[1] = {}
   return {
     ...rendered,
     camera,
-    shot: () => camera.getByRole('button', { name: 'Shot', exact: true }).click(),
+    // By test id: the shutter is named after what it does next, which changes with the mode.
+    shot: () => camera.getByTestId('uc-camera-controls--shot').click(),
     accept: () => camera.getByRole('button', { name: 'Accept', exact: true }).click(),
     openVideoTab: () => camera.getByRole('button', { name: 'Video', exact: true }).click(),
   };
@@ -60,6 +62,59 @@ describe('photo capture', () => {
   });
 });
 
+describe('photo encoding failure', () => {
+  it('reports a photo the browser could not encode instead of dropping it silently', async () => {
+    const { api, shot, accept } = await openCamera();
+    const toBlob = vi
+      .spyOn(HTMLCanvasElement.prototype, 'toBlob')
+      .mockImplementation((callback: BlobCallback) => callback(null));
+    const error = vi.spyOn(console, 'error');
+    onTestFinished(() => {
+      toBlob.mockRestore();
+      error.mockRestore();
+    });
+    await shot();
+    await accept();
+
+    await expect
+      .poll(() => error.mock.calls.some((call) => String(call).includes('Failed to encode the photo')))
+      .toBe(true);
+    expect(api.getOutputCollectionState().totalCount).toBe(0);
+  });
+});
+
+describe('accessible names', () => {
+  // Every control below renders only a `uc-icon`, which is `aria-hidden`, so the name has to come from `aria-label`.
+  it('names the mode tabs and the photo shutter', async () => {
+    const { camera } = await openCamera();
+
+    await expect.element(camera.getByTestId('uc-camera-controls--tab-photo')).toHaveAccessibleName('Photo');
+    await expect.element(camera.getByTestId('uc-camera-controls--tab-video')).toHaveAccessibleName('Video');
+    await expect.element(camera.getByTestId('uc-camera-controls--shot')).toHaveAccessibleName('Shot');
+  });
+
+  it('names the video shutter by what it does next', async () => {
+    const { camera, shot, openVideoTab } = await openCamera();
+    await openVideoTab();
+    const shutter = camera.getByTestId('uc-camera-controls--shot');
+
+    await expect.element(shutter).toHaveAccessibleName('Record Video');
+    await shot();
+    await expect.element(shutter).toHaveAccessibleName('Stop recording');
+  });
+
+  it('names the microphone toggle and exposes whether it is on', async () => {
+    const { camera, openVideoTab } = await openCamera();
+    await openVideoTab();
+    const toggle = camera.getByTestId('uc-camera-controls--toggle-microphone');
+
+    await expect.element(toggle).toHaveAccessibleName('Microphone');
+    await expect.element(toggle).toHaveAttribute('aria-pressed', 'true');
+    await toggle.click();
+    await expect.element(toggle).toHaveAttribute('aria-pressed', 'false');
+  });
+});
+
 describe('video recording', () => {
   it('records, stops and adds the clip', async () => {
     const { api, camera, shot, accept, openVideoTab } = await openCamera();
@@ -67,7 +122,7 @@ describe('video recording', () => {
 
     await shot();
     // The timer replaces the tab strip while recording.
-    const timer = camera.getByTestId('uc-camera-source--recording-timer');
+    const timer = camera.getByTestId('uc-camera-controls--recording-timer');
     await expect.element(timer).toBeVisible();
     // Stop only once at least a second was captured, so the recorder has data to emit for the clip.
     await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
@@ -81,12 +136,53 @@ describe('video recording', () => {
     expect(entry.mimeType).toMatch(/^video\//);
   });
 
+  it('releases the preview of a recording that is retaken', async () => {
+    const { camera, shot, openVideoTab } = await openCamera();
+    await openVideoTab();
+    const create = vi.spyOn(URL, 'createObjectURL');
+    const revoke = vi.spyOn(URL, 'revokeObjectURL');
+    onTestFinished(() => {
+      vi.restoreAllMocks();
+    });
+
+    await shot();
+    const timer = camera.getByTestId('uc-camera-controls--recording-timer');
+    await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
+    await shot();
+    await expect.element(camera.getByText('Retake', { exact: true })).toBeVisible();
+    const previewUrl = create.mock.results[0]?.value;
+    expect(previewUrl).toMatch(/^blob:/);
+
+    await camera.getByText('Retake', { exact: true }).click();
+
+    expect(revoke).toHaveBeenCalledWith(previewUrl);
+  });
+
+  it('runs no clock in the live view after a retake', async () => {
+    // The clip's play listener outlived the retake, so playing the live stream again started the timeline loop,
+    // which kept writing the stream's own time into the timer.
+    const { camera, shot, openVideoTab } = await openCamera();
+    await openVideoTab();
+    const timer = camera.getByTestId('uc-camera-controls--recording-timer');
+    await shot();
+    await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
+    await shot();
+    await camera.getByText('Retake', { exact: true }).click();
+    await expect.element(camera.getByRole('button', { name: 'Record Video', exact: true })).toBeVisible();
+
+    const atRetake = timer.element().textContent?.trim();
+    // Long enough for the live stream's time to tick past a whole second.
+    await delay(1500);
+
+    expect(timer.element().textContent?.trim()).toBe(atRetake);
+  });
+
   it('counts the elapsed time while recording', async () => {
     const { camera, shot, openVideoTab } = await openCamera();
     await openVideoTab();
 
     await shot();
-    const timer = camera.getByTestId('uc-camera-source--recording-timer');
+    const timer = camera.getByTestId('uc-camera-controls--recording-timer');
     await expect.element(timer).toBeVisible();
 
     await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
@@ -100,7 +196,7 @@ describe('video recording', () => {
     await openVideoTab();
 
     await shot();
-    await expect.element(camera.getByTestId('uc-camera-source--recording-timer')).toBeVisible();
+    await expect.element(camera.getByTestId('uc-camera-controls--recording-timer')).toBeVisible();
 
     // No second shutter click: the recording has to end by itself.
     await expect
@@ -117,7 +213,7 @@ describe('microphone toggle', () => {
     const { camera, openVideoTab } = await openCamera({ enableAudioRecording: true });
     await openVideoTab();
 
-    const toggle = camera.getByTestId('uc-camera-source--toggle-microphone');
+    const toggle = camera.getByTestId('uc-camera-controls--toggle-microphone');
     await expect.element(toggle).toBeVisible();
 
     const iconName = () => (toggle.getByTestId('uc-icon').query() as Icon | null)?.name;

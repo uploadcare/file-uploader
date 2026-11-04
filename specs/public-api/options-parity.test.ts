@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { initialConfig } from '@/blocks/Config/initialConfig';
+import { initialConfig } from '@/abstract/config/initialConfig';
 import { toKebabCase } from '@/utils/toKebabCase';
 import surface from './public-surface.json' with { type: 'json' };
 
@@ -48,10 +48,11 @@ describe('documented config options', () => {
     expect(initialConfig[name as OptionName]).toBe(expectedDefault(name, o.value));
   });
 
-  // QUIRK(config): four documented defaults do not match the shipped ones — `multipleMax` (docs `0`, code
+  // QUIRK(config): five documented defaults do not match the shipped ones — `multipleMax` (docs `0`, code
   // Number.MAX_SAFE_INTEGER), `retryThrottledRequestMaxTimes` (docs `10`, code `3`), `enableVideoRecording`
-  // (docs `true`, code `null`) and `cdnCname` (docs give the resolved CNAME, code the pre-resolution literal — the
-  // only one of the four that is not a defect). See `knownMismatch` in public-surface.json for each. Pinned as
+  // (docs `true`, code `null`), `dynamicButtonViewMode` (docs `auto`, code `plain`, kept for 1.x compat by
+  // NEXT-MAJOR(dynamic-btn)) and `cdnCname` (docs give the resolved CNAME, code the pre-resolution literal — not a
+  // defect). See `knownMismatch` in public-surface.json for each. Pinned as
   // current behaviour, not endorsed: fixing them means changing either the docs or a shipped default.
   it('has no undeclared default mismatches', () => {
     const drifted = options

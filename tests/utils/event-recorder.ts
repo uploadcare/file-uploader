@@ -1,6 +1,6 @@
 import { vi } from 'vitest';
-import type { EventKey, EventPayload } from '@/blocks/UploadCtxProvider/EventEmitter';
-import { EventType } from '@/blocks/UploadCtxProvider/EventEmitter';
+import type { EventKey, EventPayload } from '@/abstract/EventEmitter';
+import { EventType } from '@/abstract/EventEmitter';
 
 /** Real uploads run against the network, so waiting for a terminal event needs more than vitest's 1s default. */
 const WAIT_TIMEOUT = { timeout: 20_000, interval: 50 };

@@ -8,6 +8,9 @@ export const ExternalUploadSource = Object.freeze({
   ONEDRIVE: 'onedrive',
 } as const);
 
+/** A source that was removed; its id still turns up in `sourceList`, where it gets an explanation. */
+export const INSTAGRAM_SOURCE = 'instagram';
+
 export const UploadSourceMobile = Object.freeze({
   MOBILE_VIDEO_CAMERA: 'mobile-video-camera',
   MOBILE_PHOTO_CAMERA: 'mobile-photo-camera',
@@ -27,9 +30,17 @@ export const UploadSource = Object.freeze({
 
 export type SourceTypes = (typeof UploadSource)[keyof typeof UploadSource];
 
-const SOURCE_L10N_KEY_MAP: Partial<Record<SourceTypes, SourceTypes>> = {
-  [ExternalUploadSource.DROPBOX_CHOOSER]: ExternalUploadSource.DROPBOX,
-};
+export type ExternalSourceType = (typeof ExternalUploadSource)[keyof typeof ExternalUploadSource];
 
-/** Returns the canonical name for a source, mapping aliases to their shared display name, icon, and translation key. */
-export const canonicalSourceName = (source: string): string => SOURCE_L10N_KEY_MAP[source as SourceTypes] ?? source;
+export const isExternalSource = (source: string): source is ExternalSourceType =>
+  (Object.values(ExternalUploadSource) as string[]).includes(source);
+
+/** An alias shares the display name, icon and translation key of the source it stands for. */
+const canonicalExternalSource = (source: ExternalSourceType) =>
+  source === ExternalUploadSource.DROPBOX_CHOOSER ? ExternalUploadSource.DROPBOX : source;
+
+/** The translation key of an external source's name. */
+export type ExternalSourceLabelKey = `src-type-${ReturnType<typeof canonicalExternalSource>}`;
+
+export const sourceLabelKey = (source: ExternalSourceType): ExternalSourceLabelKey =>
+  `src-type-${canonicalExternalSource(source)}`;

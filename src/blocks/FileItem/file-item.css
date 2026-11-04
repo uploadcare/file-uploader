@@ -8,9 +8,9 @@
     min-height: var(--uc-file-item-height);
   }
 
-  uc-file-item:last-of-type {
-    --uc-file-item-gap: 0;
-  }
+  /* Every row keeps the same gap so the virtualizer's fixed rowHeight holds: the
+     last MOUNTED row is not the true last one under windowing, so a
+     `:last-of-type { gap: 0 }` would shrink a mid-list row and nudge alignment. */
 
   uc-file-item > .uc-inner {
     position: relative;
@@ -25,10 +25,6 @@
     background-color: var(--uc-muted);
     border-radius: var(--uc-radius);
     transition: background-color var(--uc-transition);
-  }
-
-  uc-file-item > .uc-inner[data-focused] {
-    background-color: transparent;
   }
 
   uc-file-item > .uc-inner[data-uploading] .uc-edit-btn {

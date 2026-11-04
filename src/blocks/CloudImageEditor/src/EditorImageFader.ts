@@ -1,14 +1,19 @@
-import type { TemplateResult } from 'lit';
+import { Signal } from '@lit-labs/signals';
+import type { FilterName } from '@uploadcare/cdn-url/ops';
+import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
+import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../../lit/LitBlock';
-import { debounce } from '../../../utils/debounce.js';
+import { debounced } from '../../../lit/rate-limited-method';
+import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { batchPreloadImages } from '../../../utils/preloadImage.js';
-import { classNames } from './lib/classNames.js';
+import type { CloudImageEditorController } from './CloudImageEditorController';
+import { EditorBlock } from './editor-context';
+import { applyClassNames } from './lib/classNames.js';
 import { linspace } from './lib/linspace.js';
-import { COLOR_OPERATIONS_CONFIG } from './toolbar-constants.js';
-import type { LoadingOperations, Transformations } from './types';
-import { viewerImageSrc } from './util.js';
+import { COLOR_OPERATIONS_CONFIG, type ColorPreview, TabId } from './toolbar-constants.js';
+import type { ImageSize, Transformations } from './types';
+import { trackImageLoading, viewerImageSrc } from './util.js';
 
 type OperationKey = keyof typeof COLOR_OPERATIONS_CONFIG;
 
@@ -22,17 +27,16 @@ type Keypoint = {
 
 type ImageSrcOptions = {
   url?: string;
-  filter?: string;
+  filter?: FilterName;
   operation?: OperationKey;
   value?: number;
 };
 
-type DebouncedKeypointHandler = ((
-  operation: OperationKey,
-  filter: string | undefined,
-  value: number,
-) => Promise<void>) & {
-  cancel: () => void;
+type FaderActivation = {
+  url: string;
+  operation?: OperationKey;
+  value?: number;
+  filter?: FilterName;
 };
 
 function isOperationKey(value: unknown): value is OperationKey {
@@ -84,103 +88,221 @@ function keypointsRange(operation: OperationKey, value: number): number[] {
   );
 }
 
-export class EditorImageFader extends LitBlock {
+export class EditorImageFader extends EditorBlock {
   private _isActive = false;
   private _hidden = true;
   private _operation: OperationKey | 'initial' = 'initial';
-  private _filter: string | undefined;
+  private _filter: FilterName | undefined;
   private _value?: number;
   private _transformations: Transformations = {};
   private _keypoints: Keypoint[] = [];
   private _previewImage?: HTMLImageElement;
   private _cancelLastImages?: () => void;
-  private _cancelBatchPreload?: () => void;
   private _url?: string;
-  private _fromViewer?: boolean;
   private _raf = 0;
-  private _addKeypointDebounced!: DebouncedKeypointHandler;
   private readonly _previewHostRef = createRef<HTMLDivElement>();
   private readonly _layersHostRef = createRef<HTMLDivElement>();
 
-  public constructor() {
-    super();
+  /**
+   * Loaded image size, passed from the root as a plain Lit prop (DOM-derived,
+   * not controller state) — the fader shows only once it and `originalUrl` are
+   * ready on a non-crop tab (see `_syncFromState`). Root clears it to null on a
+   * new image, which reliably re-triggers the reaction.
+   */
+  @property({ attribute: false })
+  public imageSize: ImageSize | null = null;
 
-    this.classList.add('uc-inactive_to_cropper');
-    this._addKeypointDebounced = debounce(async (operation, filter, value) => {
-      const shouldSkip = () =>
-        !this._isSame(operation, filter) || this._value !== value || !!this._keypoints.find((kp) => kp.value === value);
+  // Last-seen controller values: `_syncFromState` runs for a change of any key
+  // it watches, so it diffs to tell which one changed.
+  private _lastOriginalUrl: string | null = null;
+  private _lastColorPreview: ColorPreview = null;
+  private _lastTransformations?: Transformations;
+  private _shown = false;
+  // Guards the reaction against re-entering itself: the fader's own methods
+  // write state (`loadingImages`, `networkProblems`) and a controller write
+  // notifies observers synchronously (same lesson as EditorImageCropper).
+  private _reacting = false;
 
-      if (shouldSkip()) {
-        return;
-      }
-      const keypoint = await this._constructKeypoint(operation, value);
-      const image = new Image();
-      image.src = keypoint.src;
-      const stop = this._handleImageLoading(keypoint.src);
-      image.addEventListener('load', stop, { once: true });
-      image.addEventListener('error', stop, { once: true });
-      keypoint.image = image;
-      image.classList.add('uc-fader-image');
-
-      image.addEventListener(
-        'load',
-        () => {
-          if (shouldSkip()) {
-            return;
-          }
-          const keypoints = this._keypoints;
-          let insertIndex = keypoints.findIndex((kp) => kp.value > value);
-          if (insertIndex === -1) {
-            insertIndex = keypoints.length;
-          }
-          const nextKeypoint = keypoints[insertIndex];
-          const insertBeforeNode = nextKeypoint?.image;
-          const container = this._layersHostRef.value;
-          if (!container || (insertBeforeNode && !container.contains(insertBeforeNode))) {
-            return;
-          }
-          keypoints.splice(insertIndex, 0, keypoint);
-          if (insertBeforeNode) {
-            container.insertBefore(image, insertBeforeNode);
-          } else {
-            container.appendChild(image);
-          }
-          this._update(operation, value);
-        },
-        { once: true },
-      );
-
-      image.addEventListener(
-        'error',
-        () => {
-          this.$['*networkProblems'] = true;
-        },
-        { once: true },
-      );
-    }, 600);
+  /**
+   * Controller-dependent setup (mirrors EditorImageCropper): the fader drives
+   * itself from state instead of the toolbar/root/slider calling its methods.
+   * It reacts to `tabId`/`originalUrl`/`editorTransformations`/`colorPreview`
+   * (+ the `imageSize` prop, and `sourceOperations`, which the images it loads
+   * are built from) and calls its own activate/set/deactivate/setTransformations.
+   * @internal
+   */
+  @subscription()
+  protected _watchState(): Unsubscribe[] {
+    const controller = this.editorController;
+    this._lastOriginalUrl = controller.originalUrl;
+    this._lastColorPreview = controller.colorPreview;
+    const sync = () => this._syncFromState();
+    const unsubscribers = (
+      ['tabId', 'originalUrl', 'editorTransformations', 'colorPreview', 'sourceOperations'] as const
+    ).map((key) => controller.observe(key, sync));
+    // A (re)attach can find the fader ready to show already — e.g. after an activation aborted by a reconnect.
+    this._syncFromState();
+    return unsubscribers;
   }
 
-  private _handleImageLoading(src: string): () => void {
-    const operation = this._operation;
+  public override connectedCallback(): void {
+    super.connectedCallback();
+    // The initial state class. Not in the constructor: an element created by `document.createElement` must not have
+    // attributes yet.
+    if (!this.hasUpdated) this.classList.add('uc-inactive_to_cropper');
+  }
 
-    const loadingOperations = this.$['*loadingOperations'] as LoadingOperations;
-    if (!loadingOperations.has(operation)) {
-      loadingOperations.set(operation, new Map());
+  @debounced(600)
+  private _addKeypointDebounced(operation: OperationKey, filter: FilterName | undefined, value: number): void {
+    this.runTask(() => this._addKeypoint(operation, filter, value));
+  }
+
+  private async _addKeypoint(operation: OperationKey, filter: FilterName | undefined, value: number): Promise<void> {
+    const controller = this.editorController;
+    const shouldSkip = () =>
+      !this._isSame(operation, filter) || this._value !== value || !!this._keypoints.find((kp) => kp.value === value);
+
+    if (shouldSkip()) {
+      return;
     }
+    const keypoint = await this.whileAdopted(this._constructKeypoint(controller, operation, value));
+    const image = new Image();
+    image.src = keypoint.src;
+    // Not bound to the adoption: the loading flag lives on the controller and must clear even if the load lands late.
+    const stop = trackImageLoading(controller);
+    image.addEventListener('load', stop, { once: true });
+    image.addEventListener('error', stop, { once: true });
+    keypoint.image = image;
+    image.classList.add('uc-fader-image');
 
-    const operationMap = loadingOperations.get(operation);
-    if (operationMap && !operationMap.get(src)) {
-      operationMap.set(src, true);
-      this.$['*loadingOperations'] = loadingOperations;
+    image.addEventListener(
+      'load',
+      () => {
+        if (shouldSkip()) {
+          return;
+        }
+        const keypoints = this._keypoints;
+        let insertIndex = keypoints.findIndex((kp) => kp.value > value);
+        if (insertIndex === -1) {
+          insertIndex = keypoints.length;
+        }
+        const nextKeypoint = keypoints[insertIndex];
+        const insertBeforeNode = nextKeypoint?.image;
+        const container = this._layersHostRef.value;
+        if (!container || (insertBeforeNode && !container.contains(insertBeforeNode))) {
+          return;
+        }
+        keypoints.splice(insertIndex, 0, keypoint);
+        if (insertBeforeNode) {
+          container.insertBefore(image, insertBeforeNode);
+        } else {
+          container.appendChild(image);
+        }
+        this._update(operation, value);
+      },
+      { once: true, signal: this.adoptionSignal },
+    );
+
+    image.addEventListener(
+      'error',
+      () => {
+        controller.networkProblems = true;
+      },
+      { once: true, signal: this.adoptionSignal },
+    );
+  }
+
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+    // `imageSize` is a prop, not controller state, so no controller observer
+    // fires for it — re-evaluate visibility when the root updates it. Untracked:
+    // its controller reads are no state the fader renders.
+    if (changedProperties.has('imageSize')) {
+      Signal.subtle.untrack(() => this._syncFromState());
     }
+  }
 
-    return () => {
-      const currentOperationMap = loadingOperations.get(operation);
-      if (currentOperationMap?.has(src)) {
-        currentOperationMap.delete(src);
-        this.$['*loadingOperations'] = loadingOperations;
+  /** Reconcile the fader with controller state and the `imageSize` prop. */
+  private _syncFromState(): void {
+    if (this._reacting) {
+      return;
+    }
+    this._reacting = true;
+    try {
+      const controller = this.editorControllerOrNull;
+      if (!controller) {
+        return;
       }
-    };
+      const tabId = controller.tabId;
+      const originalUrl = controller.originalUrl;
+      const colorPreview = controller.colorPreview;
+      const transformations = controller.editorTransformations;
+      const shouldShow = tabId !== TabId.CROP && !!originalUrl && !!this.imageSize;
+
+      // New image: hide and stay hidden until the root supplies the new image's
+      // `imageSize` prop (reactivation then happens via `updated`). Returning
+      // here avoids re-activating with the previous image's still-stale
+      // `imageSize` (root clears it to null asynchronously) or reapplying its
+      // live preview — the root also clears `colorPreview` on image change.
+      if (originalUrl !== this._lastOriginalUrl) {
+        this._lastOriginalUrl = originalUrl;
+        this._lastColorPreview = null;
+        if (this._shown) {
+          this.deactivate();
+          this._shown = false;
+        }
+        return;
+      }
+
+      if (shouldShow && !this._shown) {
+        // Enter viewer mode: seed `_transformations` so `activate` (original)
+        // renders the committed result.
+        this._shown = true;
+        this._lastTransformations = transformations;
+        this._transformations = transformations;
+        this.runTask(() => this.activate({ url: originalUrl as string }));
+      } else if (!shouldShow && this._shown) {
+        this._shown = false;
+        this.deactivate();
+      }
+
+      if (!this._shown) {
+        return;
+      }
+
+      // Committed transformations → refresh the viewer image.
+      if (transformations !== this._lastTransformations) {
+        this._lastTransformations = transformations;
+        this.runTask(() => this.setTransformations(transformations));
+      }
+
+      // Live slider preview: op/filter change → rebuild keypoints (`activate`);
+      // same op, new value → `set`; cleared → back to the committed viewer.
+      if (colorPreview !== this._lastColorPreview) {
+        const previous = this._lastColorPreview;
+        this._lastColorPreview = colorPreview;
+        if (colorPreview) {
+          const opChanged =
+            !previous || previous.operation !== colorPreview.operation || previous.filter !== colorPreview.filter;
+          if (opChanged) {
+            this.runTask(() =>
+              this.activate({
+                url: originalUrl as string,
+                operation: colorPreview.operation,
+                value: colorPreview.value,
+                filter: colorPreview.filter,
+              }),
+            );
+          } else if (typeof colorPreview.value === 'number') {
+            this.set(colorPreview.value);
+          }
+        } else if (previous) {
+          this.deactivate({ hide: false });
+        }
+      }
+    } finally {
+      this._reacting = false;
+    }
   }
 
   private _flush(): void {
@@ -196,12 +318,10 @@ export class EditorImageFader extends LitBlock {
     });
   }
 
-  private _imageSrc({
-    url = this._url,
-    filter = this._filter ?? undefined,
-    operation,
-    value,
-  }: ImageSrcOptions = {}): Promise<string> {
+  private _imageSrc(
+    controller: CloudImageEditorController,
+    { url = this._url, filter = this._filter ?? undefined, operation, value }: ImageSrcOptions = {},
+  ): Promise<string> {
     if (!url) {
       throw new Error('URL is not defined');
     }
@@ -219,11 +339,15 @@ export class EditorImageFader extends LitBlock {
 
     // do not use getBoundingClientRect because scale transform affects it
     const width = this.offsetWidth;
-    return this.proxyUrl(viewerImageSrc(url, width, transformations));
+    return controller.proxyUrl(viewerImageSrc(url, width, transformations, controller.sourceOperations));
   }
 
-  private async _constructKeypoint(operation: OperationKey, value: number): Promise<Keypoint> {
-    const src = await this._imageSrc({ operation, value });
+  private async _constructKeypoint(
+    controller: CloudImageEditorController,
+    operation: OperationKey,
+    value: number,
+  ): Promise<Keypoint> {
+    const src = await this._imageSrc(controller, { operation, value });
     return {
       src,
       image: undefined,
@@ -236,17 +360,16 @@ export class EditorImageFader extends LitBlock {
   /**
    * Check if current operation and filter equals passed ones
    */
-  private _isSame(operation: string | undefined, filter: string | undefined): boolean {
+  private _isSame(operation: string | undefined, filter: FilterName | undefined): boolean {
     return this._operation === operation && this._filter === filter;
   }
 
-  public set(value: string | number): void {
-    const numericValue = typeof value === 'string' ? parseInt(value, 10) : value;
-    if (!isOperationKey(this._operation) || !Number.isFinite(numericValue)) {
+  public set(value: number): void {
+    if (!isOperationKey(this._operation) || !Number.isFinite(value)) {
       return;
     }
-    this._update(this._operation, numericValue);
-    this._addKeypointDebounced(this._operation, this._filter, numericValue);
+    this._update(this._operation, value);
+    this._addKeypointDebounced(this._operation, this._filter, value);
   }
 
   private _update(operation: OperationKey, value: number): void {
@@ -281,6 +404,8 @@ export class EditorImageFader extends LitBlock {
   }
 
   private async _initNodes(): Promise<void> {
+    const controller = this.editorController;
+
     this._previewImage = this._previewImage || this._createPreviewImage();
     const previewImage = this._previewImage;
     if (previewImage) {
@@ -291,7 +416,7 @@ export class EditorImageFader extends LitBlock {
 
     const { images, promise, cancel } = batchPreloadImages(srcList);
     images.forEach((node) => {
-      const stop = this._handleImageLoading(node.src);
+      const stop = trackImageLoading(controller);
       node.addEventListener('load', stop);
       node.addEventListener('error', stop);
     });
@@ -301,7 +426,7 @@ export class EditorImageFader extends LitBlock {
     };
     const operation = this._operation;
     const filter = this._filter;
-    await promise;
+    await this.whileAdopted(promise);
     if (this._isActive && this._isSame(operation, filter)) {
       const host = this._layersHostRef.value;
       if (!host) {
@@ -324,8 +449,10 @@ export class EditorImageFader extends LitBlock {
   public async setTransformations(transformations: Transformations): Promise<void> {
     this._transformations = transformations;
     if (this._previewImage) {
-      const src = await this._imageSrc();
-      const stop = this._handleImageLoading(src);
+      const controller = this.editorController;
+      const src = await this.whileAdopted(this._imageSrc(controller));
+      // Not bound to the adoption, like the other loading flags.
+      const stop = trackImageLoading(controller);
       this._previewImage.src = src;
       this._previewImage.addEventListener('load', stop, { once: true });
       this._previewImage.addEventListener('error', stop, { once: true });
@@ -334,37 +461,14 @@ export class EditorImageFader extends LitBlock {
       this._previewImage.addEventListener(
         'error',
         () => {
-          this.$['*networkProblems'] = true;
+          controller.networkProblems = true;
         },
-        { once: true },
+        { once: true, signal: this.adoptionSignal },
       );
     }
   }
 
-  public async preload({
-    url,
-    filter,
-    operation,
-    value,
-  }: {
-    url: string;
-    filter?: string;
-    operation?: OperationKey;
-    value?: number;
-  }): Promise<void> {
-    if (!operation || typeof value !== 'number') {
-      return;
-    }
-    this._cancelBatchPreload?.();
-
-    const keypoints = keypointsRange(operation, value);
-    const srcList = await Promise.all(keypoints.map((kp) => this._imageSrc({ url, filter, operation, value: kp })));
-    const { cancel } = batchPreloadImages(srcList);
-
-    this._cancelBatchPreload = cancel;
-  }
-
-  private _setOriginalSrc(src: string): void {
+  private _setOriginalSrc(controller: CloudImageEditorController, src: string): void {
     const image = this._previewImage || this._createPreviewImage();
     this._ensurePreviewAttached(image);
     this._previewImage = image;
@@ -373,88 +477,94 @@ export class EditorImageFader extends LitBlock {
       image.style.opacity = '1';
       image.style.transform = 'scale(1)';
 
-      this.className = classNames({
-        'uc-active_from_viewer': this._fromViewer,
-        'uc-active_from_cropper': !this._fromViewer,
+      applyClassNames(this, {
+        'uc-active_from_cropper': true,
         'uc-inactive_to_cropper': false,
       });
       return;
     }
     image.style.opacity = '0';
-    const stop = this._handleImageLoading(src);
+    const stop = trackImageLoading(controller);
     image.addEventListener('error', stop, { once: true });
+    image.addEventListener('load', stop, { once: true });
     image.src = src;
     image.addEventListener(
       'load',
       () => {
-        stop();
         if (image) {
           image.style.opacity = '1';
           image.style.transform = 'scale(1)';
 
-          this.className = classNames({
-            'uc-active_from_viewer': this._fromViewer,
-            'uc-active_from_cropper': !this._fromViewer,
+          applyClassNames(this, {
+            'uc-active_from_cropper': true,
             'uc-inactive_to_cropper': false,
           });
         }
       },
-      { once: true },
+      { once: true, signal: this.adoptionSignal },
     );
     image.addEventListener(
       'error',
       () => {
-        this.$['*networkProblems'] = true;
+        controller.networkProblems = true;
       },
-      { once: true },
+      { once: true, signal: this.adoptionSignal },
     );
   }
 
-  public async activate({
-    url,
-    operation,
-    value,
-    filter,
-    fromViewer,
-  }: {
-    url: string;
-    operation?: OperationKey;
-    value?: number;
-    filter?: string;
-    fromViewer?: boolean;
-  }): Promise<void> {
+  public async activate(activation: FaderActivation): Promise<void> {
+    if (this.adoptionSignal.aborted) {
+      return;
+    }
     this._isActive = true;
     this._hidden = false;
-    await this.updateComplete;
+    // Released before this activation finished (disconnect, controller swap): roll back right away, so the next
+    // attach's `_syncFromState` shows the fader again instead of treating it as shown.
+    const signal = this.adoptionSignal;
+    const rollback = () => {
+      this._isActive = false;
+      this._shown = false;
+    };
+    signal.addEventListener('abort', rollback, { once: true });
+    try {
+      await this._activate(activation);
+    } finally {
+      signal.removeEventListener('abort', rollback);
+    }
+  }
+
+  private async _activate({ url, operation, value, filter }: FaderActivation): Promise<void> {
+    await this.whileAdopted(this.updateComplete);
+    const controller = this.editorController;
     this._url = url;
     this._operation = operation ?? 'initial';
     this._value = value;
     this._filter = filter;
-    this._fromViewer = fromViewer;
 
     const isOriginal = typeof value !== 'number' && !filter;
     if (isOriginal) {
-      const src = await this._imageSrc({ operation, value });
-      this._setOriginalSrc(src);
+      const src = await this.whileAdopted(this._imageSrc(controller, { operation, value }));
+      this._setOriginalSrc(controller, src);
       this._clearLayersHost();
       return;
     }
     if (!operation || typeof value !== 'number') {
       return;
     }
-    this._keypoints = await Promise.all(
-      keypointsRange(operation, value).map((keyValue) => this._constructKeypoint(operation, keyValue)),
+    this._keypoints = await this.whileAdopted(
+      Promise.all(
+        keypointsRange(operation, value).map((keyValue) => this._constructKeypoint(controller, operation, keyValue)),
+      ),
     );
 
     this._update(operation, value);
-    this._initNodes();
+    this.runTask(() => this._initNodes());
   }
 
   public deactivate({ hide = true }: { hide?: boolean } = {}): void {
     this._isActive = false;
 
     this._cancelLastImages?.();
-    this._cancelBatchPreload?.();
 
     if (hide && !this._hidden) {
       this._hidden = true;
@@ -462,8 +572,7 @@ export class EditorImageFader extends LitBlock {
         this._previewImage.style.transform = 'scale(1)';
       }
 
-      this.className = classNames({
-        'uc-active_from_viewer': false,
+      applyClassNames(this, {
         'uc-active_from_cropper': false,
         'uc-inactive_to_cropper': true,
       });

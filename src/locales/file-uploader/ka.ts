@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': 'კამერის წვდომა აკრძალულია',
   'camera-permissions-prompt': 'გთხოვთ, დართეთ წვდომა კამერაზე',
   'camera-permissions-request': 'წვდომის მოთხოვნა',
+  'camera-not-found': 'კამერა ვერ მოიძებნა',
+  'camera-unavailable': 'კამერა დაკავებულია ან მიუწვდომელია',
   'files-count-limit-error-title': 'ფაილების რაოდენობის ზღვარის დამრღვევი',
   'files-count-limit-error-too-few':
     'თქვენ აირჩიეთ {{total}} {{plural:file(total)}}. მინიმუმ {{min}} {{plural:file(min)}} საჭიროა.',
@@ -104,6 +106,8 @@ export default {
   'file-item-edit-button': 'რედაქტირება',
   'file-item-remove-button': 'ამოღება',
   'a11y-activity-header-button-close': 'დახურვა',
+  'a11y-camera-microphone': 'მიკროფონი',
+  'a11y-camera-stop-recording': 'ჩაწერის შეწყვეტა',
   'a11y-editor-tab-filters': 'ფილტრები',
   'a11y-editor-tab-tuning': 'რეგულირება',
   'a11y-editor-tab-crop': 'მოჭრა',
@@ -130,6 +134,8 @@ export default {
 
   custom: 'თავისუფალი ფორმა',
   'freeform-crop': 'თავისუფალი კვეთა',
+  'network-error': 'ქსელის შეცდომა',
+  retry: 'ხელახლა ცდა',
 
   'upload-from': 'ატვირთვა {{source}}-დან',
   'get-from': 'მიღება {{source}}-დან',

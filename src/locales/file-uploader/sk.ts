@@ -96,6 +96,8 @@ export default {
   'camera-permissions-denied': 'Prístup ku kamere bol zamietnutý',
   'camera-permissions-prompt': 'Prosím, povolte prístup ku kamere',
   'camera-permissions-request': 'Požiadať o prístup',
+  'camera-not-found': 'Nenašla sa žiadna kamera',
+  'camera-unavailable': 'Kamera sa používa alebo nie je dostupná',
   'files-count-limit-error-title': 'Prekročený limit počtu súborov',
   'files-count-limit-error-too-few':
     'Vybrali ste {{total}} {{plural:file(total)}}. Je potrebných aspoň {{min}} {{plural:file(min)}}.',
@@ -108,6 +110,8 @@ export default {
   'file-item-edit-button': 'Upraviť',
   'file-item-remove-button': 'Odstrániť',
   'a11y-activity-header-button-close': 'Zavrieť',
+  'a11y-camera-microphone': 'Mikrofón',
+  'a11y-camera-stop-recording': 'Zastaviť nahrávanie',
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Ladenie',
   'a11y-editor-tab-crop': 'Orezanie',
@@ -134,6 +138,8 @@ export default {
 
   custom: 'Voľná forma',
   'freeform-crop': 'Voľné orezávanie',
+  'network-error': 'Chyba siete',
+  retry: 'Skúsiť znova',
 
   'upload-from': 'Nahrať z {{source}}',
   'get-from': 'Získať z {{source}}',

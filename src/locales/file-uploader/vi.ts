@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': 'Truy cập máy ảnh bị từ chối',
   'camera-permissions-prompt': 'Vui lòng cho phép truy cập vào máy ảnh',
   'camera-permissions-request': 'Yêu cầu truy cập',
+  'camera-not-found': 'Không tìm thấy máy ảnh',
+  'camera-unavailable': 'Máy ảnh đang được sử dụng hoặc không khả dụng',
   'files-count-limit-error-title': 'Quá giới hạn số lượng tệp',
   'files-count-limit-error-too-few':
     'Bạn đã chọn {{total}} {{plural:file(total)}}. Tối thiểu {{min}} {{plural:file(min)}} là cần thiết.',
@@ -104,6 +106,8 @@ export default {
   'file-item-edit-button': 'Chỉnh sửa',
   'file-item-remove-button': 'Gỡ bỏ',
   'a11y-activity-header-button-close': 'Đóng',
+  'a11y-camera-microphone': 'Micrô',
+  'a11y-camera-stop-recording': 'Dừng ghi',
   'a11y-editor-tab-filters': 'Bộ lọc',
   'a11y-editor-tab-tuning': 'Tuning',
   'a11y-editor-tab-crop': 'Cắt',
@@ -130,6 +134,8 @@ export default {
 
   custom: 'Dạng tự do',
   'freeform-crop': 'Cắt tự do',
+  'network-error': 'Lỗi mạng',
+  retry: 'Thử lại',
 
   'upload-from': 'Tải lên từ {{source}}',
   'get-from': 'Lấy từ {{source}}',

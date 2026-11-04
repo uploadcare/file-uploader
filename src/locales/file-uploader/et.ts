@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Kaamera ligipääs keelatud',
   'camera-permissions-prompt': 'Palun luba kaamera ligipääs',
   'camera-permissions-request': 'Küsi ligipääsu',
+  'camera-not-found': 'Kaamerat ei leitud',
+  'camera-unavailable': 'Kaamera on kasutusel või pole saadaval',
   'files-count-limit-error-title': 'Failide arvu piir ületatud',
   'files-count-limit-error-too-few':
     'Valisid {{total}} {{plural:file(total)}}. Vähemalt {{min}} {{plural:file(min)}} on nõutud.',
@@ -106,6 +108,8 @@ export default {
   'file-item-edit-button': 'Redigeeri',
   'file-item-remove-button': 'Eemalda',
   'a11y-activity-header-button-close': 'Sulge',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Peata salvestamine',
   'a11y-editor-tab-filters': 'Filtrid',
   'a11y-editor-tab-tuning': 'Häälestus',
   'a11y-editor-tab-crop': 'Kärbi',
@@ -130,6 +134,8 @@ export default {
 
   custom: 'Vaba vorm',
   'freeform-crop': 'Vaba lõikamine',
+  'network-error': 'Võrguviga',
+  retry: 'Proovi uuesti',
 
   'upload-from': 'Lae üles {{source}}',
   'get-from': 'Hangi {{source}}',

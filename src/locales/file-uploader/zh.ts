@@ -92,6 +92,8 @@ export default {
   'camera-permissions-denied': '相机访问被拒绝',
   'camera-permissions-prompt': '请允许访问相机',
   'camera-permissions-request': '请求访问',
+  'camera-not-found': '未找到相机',
+  'camera-unavailable': '相机正在使用中或不可用',
   'files-count-limit-error-title': '文件数量限制超出',
   'files-count-limit-error-too-few':
     '您选择了 {{total}} {{plural:file(total)}}。至少需要 {{min}} {{plural:file(min)}}。',
@@ -104,6 +106,8 @@ export default {
   'file-item-edit-button': '编辑',
   'file-item-remove-button': '移除',
   'a11y-activity-header-button-close': '关闭',
+  'a11y-camera-microphone': '麦克风',
+  'a11y-camera-stop-recording': '停止录制',
   'a11y-editor-tab-filters': '过滤器',
   'a11y-editor-tab-tuning': '调整',
   'a11y-editor-tab-crop': '裁剪',
@@ -128,6 +132,8 @@ export default {
   'crop-to-shape': '裁剪为 {{value}}',
   custom: '自由形式',
   'freeform-crop': '自由裁剪',
+  'network-error': '网络错误',
+  retry: '重试',
 
   'upload-from': '从 {{source}} 上传',
   'get-from': '从 {{source}} 获取',

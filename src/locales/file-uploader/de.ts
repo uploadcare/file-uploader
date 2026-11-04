@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Kamerazugriff verweigert',
   'camera-permissions-prompt': 'Bitte Zugriff auf die Kamera erlauben',
   'camera-permissions-request': 'Zugriff anfordern',
+  'camera-not-found': 'Keine Kamera gefunden',
+  'camera-unavailable': 'Die Kamera wird bereits verwendet oder ist nicht verfügbar',
   'files-count-limit-error-title': 'Dateianzahlbegrenzung überschritten',
   'files-count-limit-error-too-few':
     'Sie haben {{total}} {{plural:file(total)}} ausgewählt. Mindestens {{min}} {{plural:file(min)}} erforderlich.',
@@ -108,6 +110,8 @@ export default {
   'file-item-edit-button': 'Bearbeiten',
   'file-item-remove-button': 'Entfernen',
   'a11y-activity-header-button-close': 'Schließen',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Aufnahme beenden',
   'a11y-editor-tab-filters': 'Filter',
   'a11y-editor-tab-tuning': 'Feinabstimmung',
   'a11y-editor-tab-crop': 'Zuschneiden',
@@ -132,6 +136,8 @@ export default {
 
   custom: 'Freiform',
   'freeform-crop': 'Freier Zuschnitt',
+  'network-error': 'Netzwerkfehler',
+  retry: 'Erneut versuchen',
 
   'upload-from': 'Hochladen von {{source}}',
   'get-from': 'Abrufen von {{source}}',

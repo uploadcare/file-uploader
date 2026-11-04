@@ -1,7 +1,8 @@
 import { debounce } from '../../../utils/debounce';
-import { type CustomConfigDefinition, CustomConfigRegistry } from '../../customConfigOptions';
+import { logger } from '../../logger';
 import type {
   Owned,
+  PluginActivityLabelParams,
   PluginActivityRegistration,
   PluginFileActionRegistration,
   PluginFileHookRegistration,
@@ -11,6 +12,8 @@ import type {
   PluginSourceRegistration,
 } from './PluginTypes';
 
+const log = logger.scope('plugin-registry');
+
 export class PluginRegistry {
   private _sources: Owned<PluginSourceRegistration>[] = [];
   private _activities: Owned<PluginActivityRegistration>[] = [];
@@ -18,10 +21,9 @@ export class PluginRegistry {
   private _fileHooks: Owned<PluginFileHookRegistration>[] = [];
   private _icons: Owned<PluginIconRegistration>[] = [];
   private _l10n: Owned<PluginL10nRegistration>[] = [];
-  public readonly config = new CustomConfigRegistry();
 
   /**
-   * Notify consumers (LocaleManager, SourceListController, …) that the registry
+   * Notify consumers (LocaleManager, observeSources, …) that the registry
    * changed so they re-apply the new state. Coalesces a synchronous burst of
    * registrations — a plugin's setup() typically registers an icon, a source,
    * several l10n maps, … in one tick — into a single, deferred notification.
@@ -46,8 +48,8 @@ export class PluginRegistry {
   public addSource(pluginId: string, item: PluginSourceRegistration): void {
     const existing = this._sources.find((s) => s.id === item.id);
     if (existing) {
-      console.warn(
-        `[Plugin "${pluginId}"] Source with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
+      log.warn(
+        `Plugin "${pluginId}" Source with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
       );
       return;
     }
@@ -55,11 +57,18 @@ export class PluginRegistry {
     this._scheduleNotify();
   }
 
-  public addActivity(pluginId: string, item: PluginActivityRegistration): void {
+  public addActivity<TId extends string>(pluginId: string, activity: PluginActivityRegistration<TId>): void {
+    // Stored without its id-specific types: the params come from the router, untyped, and the activity's declared
+    // shape is the plugin's promise, as with `setCurrentActivity`.
+    const { label } = activity;
+    const item: PluginActivityRegistration = {
+      ...activity,
+      label: typeof label === 'function' ? (params) => label(params as PluginActivityLabelParams<TId>) : label,
+    };
     const existing = this._activities.find((a) => a.id === item.id);
     if (existing) {
-      console.warn(
-        `[Plugin "${pluginId}"] Activity with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
+      log.warn(
+        `Plugin "${pluginId}" Activity with id "${item.id}" is already registered by plugin "${existing.pluginId}". Skipping.`,
       );
       return;
     }
@@ -73,7 +82,7 @@ export class PluginRegistry {
   }
 
   public addFileHook(pluginId: string, item: PluginFileHookRegistration): void {
-    this._fileHooks.push(this._own(pluginId, { timeout: 30_000, ...item }));
+    this._fileHooks.push(this._own(pluginId, { ...item, timeout: item.timeout ?? 30_000 }));
     this._scheduleNotify();
   }
 
@@ -87,11 +96,6 @@ export class PluginRegistry {
     this._scheduleNotify();
   }
 
-  public addConfig<T>(pluginId: string, definition: CustomConfigDefinition<T>): void {
-    this.config.register(pluginId, definition);
-    this._scheduleNotify();
-  }
-
   public purge(pluginId: string): void {
     this._sources = this._sources.filter((item) => item.pluginId !== pluginId);
     this._activities = this._activities.filter((item) => item.pluginId !== pluginId);
@@ -99,7 +103,6 @@ export class PluginRegistry {
     this._fileHooks = this._fileHooks.filter((item) => item.pluginId !== pluginId);
     this._icons = this._icons.filter((item) => item.pluginId !== pluginId);
     this._l10n = this._l10n.filter((item) => item.pluginId !== pluginId);
-    this.config.unregisterByPlugin(pluginId);
   }
 
   public snapshot(): PluginRegistrySnapshot {

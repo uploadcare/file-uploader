@@ -17,6 +17,13 @@ declare const fileError: OutputError<OutputFileErrorType>;
 declare const collectionError: OutputError<OutputCollectionErrorType>;
 declare const state: OutputCollectionState;
 
+test('snapshot() returns the same shape, and a spread copy still has it', () => {
+  expectTypeOf(state.snapshot()).toEqualTypeOf<OutputCollectionState>();
+  expectTypeOf({ ...state }.snapshot()).toEqualTypeOf<OutputCollectionState>();
+  const success = state as OutputCollectionState<'success'>;
+  expectTypeOf(success.snapshot().status).toEqualTypeOf<'success'>();
+});
+
 test('a success entry has its upload result and no errors', () => {
   if (entry.status === 'success') {
     expectTypeOf(entry.fileInfo).toEqualTypeOf<UploadcareFile>();
@@ -54,15 +61,22 @@ test('narrowing a collection error on `type` pins what its payload carries', () 
   }
 });
 
-test('an idle or uploading entry has no result yet', () => {
+test('an idle or uploading entry has no upload result yet', () => {
   if (entry.status === 'uploading') {
     expectTypeOf(entry.isUploading).toEqualTypeOf<true>();
-    expectTypeOf(entry.uuid).toEqualTypeOf<null>();
     expectTypeOf(entry.fileInfo).toEqualTypeOf<null>();
   }
   if (entry.status === 'idle') {
-    expectTypeOf(entry.cdnUrl).toEqualTypeOf<null>();
+    expectTypeOf(entry.fileInfo).toEqualTypeOf<null>();
     expectTypeOf(entry.isRemoved).toEqualTypeOf<false>();
+  }
+});
+
+test('an idle or uploading entry added by uuid or CDN URL already carries them', () => {
+  if (entry.status === 'idle' || entry.status === 'uploading') {
+    expectTypeOf(entry.uuid).toEqualTypeOf<string | null>();
+    expectTypeOf(entry.cdnUrl).toEqualTypeOf<string | null>();
+    expectTypeOf(entry.cdnUrlModifiers).toEqualTypeOf<string | null>();
   }
 });
 

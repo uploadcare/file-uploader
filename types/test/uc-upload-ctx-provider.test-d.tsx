@@ -4,12 +4,12 @@ import { expectTypeOf, test } from 'vitest';
 import {
   type ActivityType,
   type EventMap,
-  type ModalId,
   type OutputCollectionErrorType,
   type OutputCollectionStatus,
   type OutputError,
   type OutputFileEntry,
   type OutputFileErrorType,
+  type OutputFileStatus,
   type SourceTypes,
   UploadCtxProvider,
   type UploadcareFile,
@@ -99,17 +99,19 @@ test("'file-added' event payload", () => {
     expectTypeOf(state.isImage).toEqualTypeOf<boolean>();
     expectTypeOf(state.size).toEqualTypeOf<number>();
     expectTypeOf(state.name).toEqualTypeOf<string>();
-    expectTypeOf(state.status).toEqualTypeOf<'idle'>();
-    expectTypeOf(state.isSuccess).toEqualTypeOf<false>();
+    // A file added already uploaded (addFileFromUploadcareFile) arrives as `success`.
+    expectTypeOf(state.status).toEqualTypeOf<'idle' | 'success'>();
     expectTypeOf(state.isFailed).toEqualTypeOf<false>();
     expectTypeOf(state.isUploading).toEqualTypeOf<false>();
     expectTypeOf(state.isRemoved).toEqualTypeOf<false>();
     expectTypeOf(state.errors).toEqualTypeOf<[]>();
-    expectTypeOf(state.cdnUrl).toEqualTypeOf<null>();
-    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<null>();
-    expectTypeOf(state.uuid).toEqualTypeOf<null>();
-    expectTypeOf(state.fileInfo).toEqualTypeOf<null>();
     expectTypeOf(state.source).toEqualTypeOf<SourceTypes | null>();
+    if (state.status === 'idle') {
+      expectTypeOf(state.fileInfo).toEqualTypeOf<null>();
+    } else {
+      expectTypeOf(state.fileInfo).toEqualTypeOf<UploadcareFile>();
+      expectTypeOf(state.uuid).toEqualTypeOf<string>();
+    }
   });
 });
 
@@ -160,9 +162,9 @@ test("'file-upload-start' event payload", () => {
     expectTypeOf(state.isUploading).toEqualTypeOf<true>();
     expectTypeOf(state.isRemoved).toEqualTypeOf<false>();
     expectTypeOf(state.errors).toEqualTypeOf<[]>();
-    expectTypeOf(state.cdnUrl).toEqualTypeOf<null>();
-    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<null>();
-    expectTypeOf(state.uuid).toEqualTypeOf<null>();
+    expectTypeOf(state.cdnUrl).toEqualTypeOf<string | null>();
+    expectTypeOf(state.cdnUrlModifiers).toEqualTypeOf<string | null>();
+    expectTypeOf(state.uuid).toEqualTypeOf<string | null>();
     expectTypeOf(state.fileInfo).toEqualTypeOf<null>();
   });
 });
@@ -195,14 +197,16 @@ test("'file-upload-success' event payload", () => {
 test("'file-url-changed' event payload", () => {
   instance.addEventListener('file-url-changed', (e) => {
     const state = e.detail;
-    expectTypeOf(state.status).toEqualTypeOf<'success'>();
+    // A file added by uuid or CDN URL gets its URL before it uploads, and a later edit changes it in any state.
+    expectTypeOf(state.status).toEqualTypeOf<OutputFileStatus>();
   });
 });
 
 test("'common-upload-start' event payload", () => {
   instance.addEventListener('common-upload-start', (e) => {
     const state = e.detail;
-    expectTypeOf(state.status).toEqualTypeOf<'uploading'>();
+    // `failed` when the list already holds a rejected file.
+    expectTypeOf(state.status).toEqualTypeOf<'uploading' | 'failed'>();
   });
 });
 
@@ -216,7 +220,8 @@ test("'common-upload-failed' event payload", () => {
 test("'common-upload-progress' event payload", () => {
   instance.addEventListener('common-upload-progress', (e) => {
     const state = e.detail;
-    expectTypeOf(state.status).toEqualTypeOf<'uploading'>();
+    // A rejected file makes the collection `failed` mid-upload, and the last tick lands once it is settled.
+    expectTypeOf(state.status).toEqualTypeOf<OutputCollectionStatus>();
   });
 });
 
@@ -231,7 +236,7 @@ test("'modal-close' event payload", () => {
   instance.addEventListener('modal-close', (e) => {
     const payload = e.detail;
     expectTypeOf(payload).toEqualTypeOf<{
-      modalId: ModalId;
+      modalId: Exclude<ActivityType, null>;
       hasActiveModals: boolean;
     }>();
   });
@@ -241,7 +246,7 @@ test("'modal-open' event payload", () => {
   instance.addEventListener('modal-open', (e) => {
     const payload = e.detail;
     expectTypeOf(payload).toEqualTypeOf<{
-      modalId: ModalId;
+      modalId: Exclude<ActivityType, null>;
     }>();
   });
 });

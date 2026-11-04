@@ -1,6 +1,9 @@
+import { initialConfig } from '../../abstract/config/builtin-registry';
+import { logger } from '../../abstract/logger';
 import type { ConfigType } from '../../types/index';
 import { debounce } from '../../utils/debounce';
-import { warnOnce } from '../../utils/warnOnce';
+
+const log = logger.scope('config-assertions');
 
 type Assertion = {
   test: (cfg: ConfigType) => boolean;
@@ -29,6 +32,13 @@ const ASSERTIONS: Assertion[] = [
       'Please use the `cameraModes` parameter instead.',
   },
   {
+    // upload-client 5.0.0 dropped the option, so a value set away from the default does nothing.
+    test: (cfg) => cfg.multipartMaxAttempts !== initialConfig.multipartMaxAttempts,
+    message:
+      'The `multipartMaxAttempts` parameter is deprecated, has no effect and will be removed in the next major release.\n' +
+      'Failed multipart chunks are retried per `retryThrottledRequestMaxTimes` and `retryNetworkErrorMaxTimes`.',
+  },
+  {
     test: (cfg) => cfg.defaultCameraMode !== null,
     message:
       'The `defaultCameraMode` parameter is deprecated and will be removed in the next major release.\n' +
@@ -40,7 +50,7 @@ const ASSERTIONS: Assertion[] = [
 export const runAssertions = debounce((cfg: ConfigType) => {
   for (const { test, message } of ASSERTIONS) {
     if (test(cfg)) {
-      warnOnce(message);
+      log.warnOnce(message);
     }
   }
 }, 0);

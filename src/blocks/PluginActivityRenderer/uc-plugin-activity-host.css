@@ -1,5 +1,6 @@
 @layer uc.components {
-  uc-plugin-activity-host {
+  uc-plugin-activity-host,
+  uc-plugin-activity-host > .uc-plugin-activity-root {
     display: contents;
   }
 }

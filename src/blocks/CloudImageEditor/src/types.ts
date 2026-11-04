@@ -1,8 +1,4 @@
-/**
- * Mapping of loading resources per operation
- */
-export type LoadingOperations = Map<string, Map<string, boolean>>;
-
+import type { FilterName } from '@uploadcare/cdn-url/ops';
 /**
  * Image size
  */
@@ -30,7 +26,7 @@ export interface Transformations {
   rotate?: number;
   mirror?: boolean;
   flip?: boolean;
-  filter?: { name: string; amount: number };
+  filter?: { name: FilterName; amount: number };
   crop?: { dimensions: [number, number]; coords: [number, number] };
 }
 
@@ -43,15 +39,7 @@ export interface ApplyResult {
 
 export type ChangeResult = ApplyResult;
 
-export interface CropAspectRatio {
-  type: 'aspect-ratio';
-  width: number;
-  height: number;
-  id: string;
-  hasFreeform?: boolean;
-}
-
-export type CropPresetList = CropAspectRatio[];
+export type { CropAspectRatio, CropPresetList } from '../../../utils/crop/cropPreset';
 
 export type Direction = '' | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 

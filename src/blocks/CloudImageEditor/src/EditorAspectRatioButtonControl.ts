@@ -1,157 +1,100 @@
-import { html } from 'lit';
+import { html, type TemplateResult } from 'lit';
 import { property } from 'lit/decorators.js';
-import { classMap } from 'lit/directives/class-map.js';
-import { ifDefined } from 'lit/directives/if-defined.js';
+import type { CloudImageEditorController } from './CloudImageEditorController';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropAspectRatio } from './types';
 
-import '../../Icon/Icon';
+import './EditorIcon';
 
 const SIZE_RECT_FIXED = 12;
 const SIZE_SVG_WRAPPER = 16;
 
-const getAdjustResolutions = (value: CropAspectRatio) => {
-  let width = 12;
-  let height = 12;
-  const adjustResolutions = value.width / value.height;
+const getAdjustResolutions = (value: CropAspectRatio) =>
+  value.width >= value.height
+    ? { width: SIZE_RECT_FIXED, height: Math.round((SIZE_RECT_FIXED * value.height) / value.width) }
+    : { width: Math.round((SIZE_RECT_FIXED * value.width) / value.height), height: SIZE_RECT_FIXED };
 
-  if (adjustResolutions >= 1) {
-    width = SIZE_RECT_FIXED;
-    height = Math.round((SIZE_RECT_FIXED * value.height) / value.width);
-  } else {
-    height = SIZE_RECT_FIXED;
-    width = Math.round((SIZE_RECT_FIXED * value.width) / value.height);
-  }
-
-  return { width, height };
-};
-
-export class EditorFreeformButtonControl extends EditorButtonControl {
-  public override initCallback(): void {
-    super.initCallback();
-
-    this.icon = 'arrow-dropdown';
-
-    this.sub('*currentAspectRatio', (opt: CropAspectRatio | null) => {
-      const title = this._computeTitle(opt);
-      this.title = title;
-      this.titleProp = title;
-    });
-  }
-
-  public override onClick(): void {
-    this.$['*showListAspectRatio'] = true;
-  }
-
-  private _computeTitle(aspectRatio: CropAspectRatio | null): string {
-    if (!aspectRatio) {
-      return '';
-    }
-    return aspectRatio.hasFreeform
-      ? this.l10n('freeform-crop')
-      : this.l10n('crop-to-shape', { value: `${aspectRatio.width}:${aspectRatio.height}` });
-  }
-
-  public override render() {
-    const clickHandler = this.onClick;
-    const title = this.title;
-    return html`
-      <button
-        role="option"
-        aria-selected=${this.active ? 'true' : 'false'}
-        type="button"
-        class=${classMap(this.buttonClasses)}
-        aria-label=${ifDefined(this.titleProp)}
-        title=${ifDefined(this.titleProp)}
-        @click=${clickHandler}
-      >
-        <div class="uc-title" ?hidden=${!title}>${title}</div>
-        <uc-icon name=${this.icon}></uc-icon>
-      </button>
-    `;
+/** Bubbles up to `EditorToolbar`, which owns the toolbar-local `showListAspectRatio` state. */
+export class ShowAspectRatioListEvent extends Event {
+  public static readonly eventName = 'uc-internal:show-aspect-ratio-list';
+  public constructor() {
+    super(ShowAspectRatioListEvent.eventName, { bubbles: true, composed: true });
   }
 }
+
+declare global {
+  interface HTMLElementEventMap {
+    [ShowAspectRatioListEvent.eventName]: ShowAspectRatioListEvent;
+  }
+}
+
+export class EditorFreeformButtonControl extends EditorButtonControl {
+  public override onClick(): void {
+    this.dispatchEvent(new ShowAspectRatioListEvent());
+  }
+
+  // Named after the current preset, which `EditorBlock` re-renders on.
+  protected override updateLabels(): void {
+    this.icon = 'arrow-dropdown';
+    const aspectRatio = this.editorControllerOrNull?.currentAspectRatio ?? null;
+    this.caption = !aspectRatio
+      ? ''
+      : aspectRatio.hasFreeform
+        ? this.l10nSafe('freeform-crop')
+        : this.l10nSafe('crop-to-shape', { value: `${aspectRatio.width}:${aspectRatio.height}` });
+    this.buttonLabel = this.caption;
+  }
+
+  /** The caption comes before the dropdown arrow. */
+  protected override renderContent(): TemplateResult {
+    return html`${this.renderCaption()}<uc-editor-icon name=${this.icon}></uc-editor-icon>`;
+  }
+}
+
 export class EditorAspectRatioButtonControl extends EditorButtonControl {
-  private _aspectRatio: CropAspectRatio | null = null;
-
   @property({ attribute: false })
-  public get aspectRatio(): CropAspectRatio | null {
-    return this._aspectRatio;
-  }
+  public aspectRatio: CropAspectRatio | null = null;
 
-  public set aspectRatio(value: CropAspectRatio | null) {
-    if (this._aspectRatio === value) {
-      return;
-    }
-    const previous = this._aspectRatio;
-    this._aspectRatio = value;
-    this.requestUpdate('aspectRatio', previous);
-    if (value) {
-      this._updateAspectRatioPresentation(value);
-    } else {
-      this.removeAttribute('uc-aspect-ratio-freeform');
-      this.title = '';
-      this.titleProp = '';
-    }
-  }
-
-  public override initCallback(): void {
-    super.initCallback();
-
-    if (this._aspectRatio) {
-      this._updateAspectRatioPresentation(this._aspectRatio);
-    }
-
-    this.sub('*currentAspectRatio', (opt: CropAspectRatio | null) => {
-      this.active =
-        (opt && opt.id === this._aspectRatio?.id) ||
-        (opt?.width === this._aspectRatio?.width && opt?.height === this._aspectRatio?.height);
-    });
+  protected override isActive(controller: CloudImageEditorController): boolean {
+    const opt = controller.currentAspectRatio;
+    return (
+      (opt && opt.id === this.aspectRatio?.id) ||
+      (opt?.width === this.aspectRatio?.width && opt?.height === this.aspectRatio?.height)
+    );
   }
 
   protected override onClick(): void {
-    const currentAspectRatio = this.$['*currentAspectRatio'] as CropAspectRatio | undefined;
-    if (currentAspectRatio?.id === this._aspectRatio?.id) {
+    const currentAspectRatio = this.editorController.currentAspectRatio;
+    if (currentAspectRatio?.id === this.aspectRatio?.id) {
       return;
     }
 
-    this.$['*currentAspectRatio'] = this._aspectRatio;
+    this.editorController.currentAspectRatio = this.aspectRatio;
   }
 
-  private _updateAspectRatioPresentation(value: CropAspectRatio): void {
-    if (!this.isConnected) return;
-    const isFreeform = !!value.hasFreeform;
-    this.toggleAttribute('uc-aspect-ratio-freeform', isFreeform);
-
-    const resolveTitle = () => {
-      const titleText = isFreeform ? this.l10n('custom') : `${value.width}:${value.height}`;
-      this.title = titleText;
-      return titleText;
-    };
-
-    const resolveTitleProp = () => {
-      const label = this.l10n('a11y-cloud-editor-apply-aspect-ratio', {
-        name: isFreeform
-          ? this.l10n('custom').toLowerCase()
-          : this.l10n('crop-to-shape', { value: `${value.width}:${value.height}` }).toLowerCase(),
-        value: '',
-      });
-      this.titleProp = label;
-      return label;
-    };
-
-    resolveTitle();
-    resolveTitleProp();
-
-    if (!isFreeform) {
-      this.requestUpdate();
+  protected override updateLabels(): void {
+    const value = this.aspectRatio;
+    this.toggleAttribute('uc-aspect-ratio-freeform', !!value?.hasFreeform);
+    if (!value) {
+      this.caption = '';
+      this.buttonLabel = '';
+      return;
     }
+    const shape = `${value.width}:${value.height}`;
+    this.caption = value.hasFreeform ? this.l10nSafe('custom') : shape;
+    this.buttonLabel = this.l10nSafe('a11y-cloud-editor-apply-aspect-ratio', {
+      name: (value.hasFreeform
+        ? this.l10nSafe('custom')
+        : this.l10nSafe('crop-to-shape', { value: shape })
+      ).toLowerCase(),
+      value: '',
+    });
   }
 
   private _renderIcon() {
-    const ratio = this._aspectRatio;
+    const ratio = this.aspectRatio;
     if (!ratio || ratio.hasFreeform) {
-      return html`<uc-icon name=${this.icon}></uc-icon>`;
+      return html`<uc-editor-icon name=${this.icon}></uc-editor-icon>`;
     }
 
     const { width, height } = getAdjustResolutions(ratio);
@@ -159,7 +102,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
     const y = (SIZE_SVG_WRAPPER - height) / 2;
 
     return html`
-      <uc-icon>
+      <uc-editor-icon>
       <svg
         viewBox="0 0 ${SIZE_SVG_WRAPPER} ${SIZE_SVG_WRAPPER}"
         aria-hidden="true"
@@ -177,27 +120,12 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
           stroke-linejoin="round"
         ></rect>
       </svg>
-      </uc-icon>
+      </uc-editor-icon>
     `;
   }
 
-  public override render() {
-    const clickHandler = this.onClick;
-    const title = this.title;
-    return html`
-      <button
-        role="option"
-        aria-selected=${this.active ? 'true' : 'false'}
-        type="button"
-        class=${classMap(this.buttonClasses)}
-        aria-label=${ifDefined(this.titleProp)}
-        title=${ifDefined(this.titleProp)}
-        @click=${clickHandler}
-      >
-        ${this._renderIcon()}
-        <div class="uc-title" ?hidden=${!title}>${title}</div>
-      </button>
-    `;
+  protected override renderContent(): TemplateResult {
+    return html`${this._renderIcon()}${this.renderCaption()}`;
   }
 }
 

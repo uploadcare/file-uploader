@@ -1,0 +1,123 @@
+@layer uc.components {
+  uc-camera-controls .uc-shot-btn {
+    width: 58px;
+    height: 58px;
+    color: var(--uc-background);
+    background-color: var(--uc-primary-light);
+    border-radius: 50%;
+    opacity: 0.85;
+    transition:
+      bottom var(--uc-transition),
+      opacity var(--uc-transition),
+      transform var(--uc-transition);
+  }
+
+  uc-camera-controls .uc-shot-btn:hover {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+
+  uc-camera-controls .uc-shot-btn:active {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  uc-camera-controls .uc-shot-btn[disabled] {
+    bottom: -80px;
+  }
+
+  uc-camera-controls .uc-shot-btn uc-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  uc-camera-controls .uc-controls {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 0 var(--uc-padding) var(--uc-padding);
+    min-height: 74px;
+  }
+
+  uc-camera-source:not(.uc-initialized) .uc-controls {
+    display: none;
+  }
+
+  uc-camera-controls .uc-switcher {
+    display: flex;
+    gap: calc(var(--uc-padding) / 2);
+  }
+
+  uc-camera-controls .uc-switch.uc-active {
+    background-color: var(--uc-secondary);
+  }
+
+  uc-camera-controls .uc-camera-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+  }
+
+  uc-camera-controls .uc-stop-record {
+    background-color: var(--uc-destructive-foreground-light);
+    opacity: 1;
+  }
+
+  :where(uc-camera-source:is(.uc-recording)) .uc-recording-timer uc-icon {
+    display: none;
+  }
+
+  :where(uc-camera-source:is(.uc-recording)) .uc-recording-timer {
+    pointer-events: none;
+  }
+
+  uc-camera-controls .uc-recording-timer {
+    z-index: 1;
+    position: relative;
+    overflow: hidden;
+  }
+
+  :where(uc-camera-controls) .uc-recording-timer uc-icon {
+    width: 10px;
+    height: 10px;
+    margin-right: 10px;
+  }
+
+  uc-camera-controls .uc-recording-timer .uc-line {
+    position: absolute;
+    content: "";
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--uc-foreground-light);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--uc-transition);
+  }
+
+  uc-camera-controls .uc-btn-microphone {
+    z-index: 1;
+  }
+
+  uc-camera-controls .uc-select {
+    display: flex;
+  }
+
+  uc-camera-controls .uc-audio-select {
+    width: 98px;
+  }
+
+  uc-camera-controls .uc-audio-select select {
+    width: 100%;
+  }
+
+  uc-camera-controls .uc-camera-action {
+    position: absolute;
+    inset: 0 var(--uc-padding) var(--uc-padding);
+    margin: 0 auto;
+  }
+}

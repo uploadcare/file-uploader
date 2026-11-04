@@ -1,6 +1,23 @@
 @layer uc.shared {
   uc-select {
+    position: relative;
     display: inline-flex;
+    align-items: center;
+  }
+
+  /* The theme's arrow stands in for the browser's, which sits against the edge. */
+  uc-select uc-icon {
+    position: absolute;
+    inset-inline-end: 14px;
+    width: auto;
+    height: auto;
+    pointer-events: none;
+    color: var(--uc-secondary-foreground);
+  }
+
+  uc-select uc-icon svg {
+    width: 16px;
+    height: 16px;
   }
 
   uc-select select {
@@ -9,10 +26,18 @@
     align-items: center;
     justify-content: center;
     height: var(--uc-button-size);
-    padding: 0 14px;
+    padding-block: 0;
+    padding-inline: 14px 38px;
+    appearance: none;
     font-size: 1em;
     font-family: inherit;
     white-space: nowrap;
+
+    /* A name too long for the select ends with an ellipsis; the title holds it in full. */
+    min-width: 0;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     border: none;
     border-radius: var(--uc-radius);
     cursor: pointer;

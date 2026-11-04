@@ -94,6 +94,8 @@ export default {
   'camera-permissions-denied': 'Kamera girişi qadağandır',
   'camera-permissions-prompt': 'Lütfən, kameraya girişə icazə verin',
   'camera-permissions-request': 'Girişə icazə istə',
+  'camera-not-found': 'Kamera tapılmadı',
+  'camera-unavailable': 'Kamera istifadədədir və ya əlçatan deyil',
   'files-count-limit-error-title': 'Faylların say limiti aşıldı',
   'files-count-limit-error-too-few':
     '{{total}} {{plural:file(total)}} seçdiniz. Ən az {{min}} {{plural:file(min)}} tələb olunur.',
@@ -106,6 +108,8 @@ export default {
   'file-item-edit-button': 'Dəyişdir',
   'file-item-remove-button': 'Sil',
   'a11y-activity-header-button-close': 'Bağla',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Yazmanı dayandır',
   'a11y-editor-tab-filters': 'Filtrlər',
   'a11y-editor-tab-tuning': 'Tənzimləmə',
   'a11y-editor-tab-crop': 'Kəsmə',
@@ -129,6 +133,8 @@ export default {
 
   custom: 'Sərbəst forma',
   'freeform-crop': 'Sərbəst kəsmə',
+  'network-error': 'Şəbəkə xətası',
+  retry: 'Yenidən cəhd et',
 
   'upload-from': '{{source}} yüklə',
   'get-from': '{{source}}-dən al',

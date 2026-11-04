@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, test } from 'vitest';
 
 const stickyPackageVersion = (obj: any) => {
@@ -63,14 +65,27 @@ describe('NPM package', () => {
     }
   });
 
+  test('exports `EventType` as a value, as the docs import it for `api.on`', async () => {
+    const rootModule = await import('@uploadcare/file-uploader');
+    const webModule = await import(`@uploadcare/file-uploader/web/${'file-uploader.min.js'}`);
+    expect(rootModule.EventType.FILE_UPLOAD_SUCCESS).toBe('file-upload-success');
+    expect(webModule.EventType.FILE_UPLOAD_SUCCESS).toBe('file-upload-success');
+  });
+
   test('jsx types should be exported', async () => {
-    await expect(
-      // @ts-expect-error
-      import('@uploadcare/file-uploader/types/jsx'),
-    ).resolves.not.toThrow();
+    await expect(import('@uploadcare/file-uploader/types/jsx')).resolves.not.toThrow();
   });
 
   test('locales should be exported', async () => {
     await expect(import('@uploadcare/file-uploader/locales/file-uploader/en.js')).resolves.not.toThrow();
+  });
+
+  test('published types declare no public `_` member, since the build mangles those names', () => {
+    const dts = readFileSync(resolve(import.meta.dirname, '../../dist/index.d.ts'), 'utf8');
+    const publicUnderscored = (dts.match(/^ +(?:readonly |static |get |set )*_\w+/gm) ?? [])
+      .map((line) => line.trim())
+      // `Uid`'s brand is type-only, so nothing at runtime carries the name.
+      .filter((member) => member !== '__uid');
+    expect(publicUnderscored).toEqual([]);
   });
 });
