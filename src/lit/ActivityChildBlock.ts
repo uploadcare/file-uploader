@@ -89,7 +89,8 @@ export class ActivityChildBlock extends ChildBlock {
       return false;
     }
     const router = this._router;
-    const isInModal = this.closest('uc-modal') !== null;
+    // Also the host attribute every `Modal` carries (`styleAttrs`): a subclass may register under another tag.
+    const isInModal = this.closest('uc-modal, [uc-modal]') !== null;
     // Both `router.modal` and `router.activity` are tracked signals (read here
     // under `SignalWatcher` when `updated()` calls in), so a transition in
     // either slot auto-re-runs this update.

@@ -152,3 +152,29 @@ describe('ActivityChildBlock', () => {
     expect(router.hasMountedActivity('camera')).toBe(true);
   });
 });
+
+describe('ActivityChildBlock in a Modal subclass', () => {
+  it('tracks the foreground modal slot inside a Modal registered under another tag', async () => {
+    const { Modal } = await import('@/index.js');
+    if (!customElements.get('test-subclass-modal'))
+      customElements.define('test-subclass-modal', class extends Modal {});
+    const ctxName = getCtxName();
+    page.render(<uc-config ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>);
+    const modal = document.createElement('test-subclass-modal');
+    modal.setAttribute('ctx-name', ctxName);
+    document.body.append(modal);
+    appended.push(modal);
+    const child = document.createElement('test-activity-block');
+    child.setAttribute('ctx-name', ctxName);
+    modal.append(child);
+
+    await expect.poll(() => child.getAttribute('activity')).toBe('start-from');
+    const router = routerOf(child);
+
+    router.openModal('start-from');
+    await expect.poll(() => child.hasAttribute('active')).toBe(true);
+
+    router.closeModal();
+    await expect.poll(() => child.hasAttribute('active')).toBe(false);
+  });
+});
