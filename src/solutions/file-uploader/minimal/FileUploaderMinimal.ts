@@ -99,6 +99,20 @@ export class FileUploaderMinimal extends SolutionChildBlock {
     );
   }
 
+  // Under an open modal the background is the trigger or the list, as `navigate()` leaves it. The deprecated
+  // `setCurrentActivity()` puts a source in the background slot while the modal is closed, for `setModalState(true)`
+  // to open; once it is open, the trigger takes the background back, as in v1.
+  /** @internal */
+  @subscription()
+  protected _wireBackgroundUnderModal(): Unsubscribe {
+    return this._router.subscribe(() => {
+      const { activity, modal } = this._router;
+      if (modal === null || activity === ACTIVITY_TYPES.START_FROM || activity === ACTIVITY_TYPES.UPLOAD_LIST) return;
+      const hasFiles = this._collectionState.get('uploadList').length > 0;
+      this._router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
+    });
+  }
+
   // Activity coordination: close the modal once the background lands on the
   // upload list; re-seed start-from when everything closes. Atomic
   // `observeCurrentActivity` (dedup) + eager fire.

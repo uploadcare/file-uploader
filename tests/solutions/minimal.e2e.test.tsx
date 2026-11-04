@@ -6,7 +6,7 @@ import { delay } from '@/utils/delay';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import '~/types/jsx';
 import { IMAGE, testFile } from '~/tests/fixtures/files';
-import { expectModal, renderSolution, within } from '~/tests/utils/render-solution';
+import { expectActivity, expectModal, renderSolution, within } from '~/tests/utils/render-solution';
 
 describe('uc-file-uploader-minimal', () => {
   it('renders the choose-files button', async () => {
@@ -113,6 +113,29 @@ describe('uc-file-uploader-minimal', () => {
     expect(api.getCurrentActivity()).toBe('start-from');
     expect(modalClose).toHaveBeenCalledWith({ modalId: 'url', hasActiveModals: false });
     await expectModal(root, 'start-from', 'closed');
+  });
+
+  // As in v1: the in-place trigger stays behind a source modal, however the source was opened.
+  it.each([
+    [
+      'setCurrentActivity + setModalState',
+      (api: UploaderPublicApi) => {
+        api.setCurrentActivity('url');
+        api.setModalState(true);
+      },
+    ],
+    ['navigate', (api: UploaderPublicApi) => api.navigate('url')],
+  ])('keeps the choose-files trigger in place behind a source opened with %s', async (_, openUrl) => {
+    const { root, api } = await renderSolution('minimal');
+    const trigger = within(root).getByText('Choose files', { exact: true });
+    await expect.element(trigger).toBeVisible();
+
+    openUrl(api);
+
+    await expectModal(root, 'url', 'open');
+    await expectActivity(root, 'start-from');
+    await expect.element(trigger).toBeVisible();
+    expect(api.getCurrentActivity()).toBe('url');
   });
 
   it('says "Choose file" or "Choose files" as multiple toggles', async () => {
