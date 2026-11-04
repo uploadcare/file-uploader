@@ -54,7 +54,7 @@ export type EditorState = {
   loadingImages: number;
   networkProblems: boolean;
   editorTransformations: Transformations;
-  /** The full operation list from the incoming URL, unfiltered — edited in place on Apply. */
+  /** The incoming URL's operations, edited in place on Apply. Always empty in 1.x; kept for the next major. */
   sourceOperations: readonly CdnOperation[];
   currentAspectRatio: CropAspectRatio | null;
   tabId: TabIdValue;
