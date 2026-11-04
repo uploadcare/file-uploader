@@ -209,19 +209,15 @@ export class UploaderPublicApi {
   };
 
   /**
-   * Batch-add local `File`s in one shot. Cheaper than looping `addFileFromObject`
-   * at large counts: the collection arms its membership/property flushes ONCE for
-   * the whole batch, and it skips the per-file `getOutputItem` `OutputFileEntry`
-   * build that the single-add returns (and callers here discard).
+   * Batch-add local `File`s in one shot and return their internal IDs, in input order. Cheaper than looping
+   * `addFileFromObject` at large counts: the collection arms its membership/property flushes ONCE for the whole
+   * batch, and it skips the per-file `OutputFileEntry` build the single-add returns; `getOutputItem(id)` builds one
+   * on demand.
    */
-  public addFilesFromObjects = (entries: ReadonlyArray<{ file: File } & ApiAddFileObjectOptions>): void => {
-    if (entries.length === 0) {
-      return;
-    }
+  public addFilesFromObjects = (entries: ReadonlyArray<{ file: File } & ApiAddFileObjectOptions>): string[] =>
     // Pass the whole entry as options — `_objectFileInit` picks only named fields
     // (its extra `file` key is ignored), so we skip a rest-object alloc per entry.
     this._collection.addMany(entries.map((entry) => this._objectFileInit(entry.file, entry)));
-  };
 
   public addFileFromUploadcareFile = (
     file: UploadcareFile,

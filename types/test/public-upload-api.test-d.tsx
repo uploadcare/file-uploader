@@ -1,4 +1,4 @@
-import { test } from 'vitest';
+import { expectTypeOf, test } from 'vitest';
 import '../jsx';
 import { UploadCtxProvider } from '../../dist/index.js';
 
@@ -33,4 +33,8 @@ test('setCurrentActivity rejects unknown params', () => {
 test('addFileFromObject takes a File or a Blob, as documented', () => {
   api.addFileFromObject(new File([''], 'a.png'));
   api.addFileFromObject(new Blob(['']), { fileName: 'a.png' });
+});
+
+test('addFilesFromObjects returns the internal IDs of the added files', () => {
+  expectTypeOf(api.addFilesFromObjects([{ file: new File([''], 'a.png') }])).toEqualTypeOf<string[]>();
 });

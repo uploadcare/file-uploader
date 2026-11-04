@@ -254,6 +254,21 @@ describe('UploaderPublicApi', () => {
       expect(ctrl.collection.read(ids[0]!)?.get('source')).toBe('drop-area');
     });
 
+    it('addFilesFromObjects returns the internal ID of each added file, in input order', () => {
+      const { api } = setup();
+      const ids = api.addFilesFromObjects([
+        { file: new File(['a'], 'a.txt') },
+        { file: new File(['b'], 'b.txt'), fileName: 'renamed.txt' },
+      ]);
+      expect(ids).toHaveLength(2);
+      expect(ids.map((id) => api.getOutputItem(id).name)).toEqual(['a.txt', 'renamed.txt']);
+    });
+
+    it('addFilesFromObjects([]) returns no IDs', () => {
+      const { api } = setup();
+      expect(api.addFilesFromObjects([])).toEqual([]);
+    });
+
     it('addFilesFromObjects([]) adds nothing', () => {
       const { api, ctrl } = setup();
       api.addFilesFromObjects([]);
