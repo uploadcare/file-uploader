@@ -24,13 +24,18 @@ export type VirtualListOptions = {
    * `this.querySelector('.scroller')`.
    */
   scrollContainer: () => HTMLElement | null;
-  /** Selector for a rendered row inside the scroll container, used to measure row height. */
+  /**
+   * Selector for a rendered row inside the scroll container, used to measure row height. The rendered rows must be
+   * consecutive element siblings, in `window()` order.
+   */
   itemSelector: string;
   /**
    * Derive the row metrics from the live container + its first rendered item.
    * App-specific (list vs grid, CSS-variable-driven columns/gap), so the host
    * supplies it. Return `rowHeight: 0` when it can't be measured — the controller
    * then renders the full list (no virtualization), which is the safe default.
+   * The rendered rows' measured heights then replace the item's `offsetHeight`
+   * in that estimate; what `rowHeight` adds on top of it (a grid's row gap) is kept.
    */
   rowMetrics: (scrollContainer: HTMLElement, firstItem: HTMLElement) => VirtualListRowMetrics;
   /** Extra rows rendered above and below the viewport to hide scroll-in latency (default 4). */
@@ -69,11 +74,20 @@ export class VirtualListController implements ReactiveController {
   private _viewportHeight = 0;
   private _rowHeight = 0;
   private _columns = 1;
-  // Row metrics are measured ONCE and latched. Re-measuring the current first row
+  // Row metrics are seeded ONCE from the first row and latched. Re-measuring the current first row
   // every render is circular — the window decides which row is first, and rows are
   // not perfectly uniform — so it oscillates and never settles (a scroll hang).
   // `invalidate()` / a resize clears the latch to re-measure once.
   private _measured = false;
+  // What rowMetrics adds to an item's own height (a grid's row gap).
+  private _rowExtra = 0;
+  // The latched row height is only a seed: a row measured early can be collapsed (the modal's opening layout), and
+  // rows differ (a row not yet scrolled into view is a shorter shell). The ResizeObserver reports each rendered row,
+  // and the estimate follows their average height (0 = not reported yet).
+  private _rows = new Map<Element, number>();
+  // A row the window just dropped can still be in this frame's resize entries: it must not read as the container.
+  private _everObservedRows = new WeakSet<Element>();
+  private _windowedCount = 0;
 
   public constructor(host: ReactiveControllerHost, options: VirtualListOptions) {
     this._host = host;
@@ -99,7 +113,7 @@ export class VirtualListController implements ReactiveController {
    * view-mode switch) — a resize is handled automatically.
    */
   public invalidate(): void {
-    this._measured = false;
+    this._unlatch();
     this._rowHeight = 0;
     this._columns = 1;
     this._host.requestUpdate();
@@ -120,6 +134,7 @@ export class VirtualListController implements ReactiveController {
       overscanRows: this._overscanRows,
     });
     const windowed = slice.start === 0 && slice.end === items.length ? items : items.slice(slice.start, slice.end);
+    this._windowedCount = windowed.length;
     return { items: windowed, topPad: slice.topPad, bottomPad: slice.bottomPad };
   }
 
@@ -146,9 +161,10 @@ export class VirtualListController implements ReactiveController {
   // unlatched, when each render reads `scrollHeight`/`clientHeight` to tell a
   // container that grows with its rows (never virtualized) from one that
   // overflows. Row metrics are
-  // measured ONCE and latched (`_measured`) — measuring them every render is
+  // seeded ONCE and latched (`_measured`) — measuring them every render is
   // circular (see the field note) and hangs; a resize clears the latch so they
-  // re-measure. The measurement-driven re-render is scheduled OUTSIDE the update
+  // re-measure. Once latched, the rendered rows are observed and their average
+  // height replaces the seed (`_onRowsResize`). The measurement-driven re-render is scheduled OUTSIDE the update
   // lifecycle (rAF) so it never trips Lit's change-in-update warning.
   private _measure(): void {
     const scrollEl = this._scrollContainer();
@@ -158,7 +174,7 @@ export class VirtualListController implements ReactiveController {
     if (this._scrollEl !== scrollEl) {
       this._detach();
       this._scrollEl = scrollEl;
-      this._measured = false;
+      this._unlatch();
       scrollEl.addEventListener('scroll', this._onScroll, { passive: true });
       // Seed viewport + scroll offset once (a reconnect/restore can attach to an
       // already-scrolled container; without this `_scrollTop` stays 0 until the
@@ -167,13 +183,19 @@ export class VirtualListController implements ReactiveController {
       this._viewportHeight = scrollEl.clientHeight;
       this._scrollTop = scrollEl.scrollTop;
       this._resizeObserver = new ResizeObserver((entries) => {
-        const height = entries[0]?.contentRect.height ?? scrollEl.clientHeight;
+        // One observer watches the container and the rendered rows.
+        this._onRowsResize(entries);
+        const container = entries.find((entry) => !this._everObservedRows.has(entry.target));
+        if (!container) {
+          return;
+        }
+        const height = container.contentRect.height;
         // A resize can change viewport AND row metrics (grid cell height scales
         // with width via aspect-ratio), so re-latch. This callback runs outside
         // the update lifecycle → direct requestUpdate is safe.
         if (height !== this._viewportHeight || this._measured) {
           this._viewportHeight = height;
-          this._measured = false;
+          this._unlatch();
           this._host.requestUpdate();
         }
       });
@@ -197,11 +219,61 @@ export class VirtualListController implements ReactiveController {
         if (rowHeight > 0) {
           this._columns = columns >= 1 ? columns : 1;
           this._rowHeight = rowHeight;
+          this._rowExtra = rowHeight - firstItem.offsetHeight;
           this._measured = true;
           this._scheduleMeasureUpdate();
         }
       }
+      // The rows are observed from the windowed render the latch schedules, not this unwindowed one.
+      return;
     }
+    this._observeRows(scrollEl.querySelector(this._itemSelector));
+  }
+
+  // Observe the rendered rows (cheap: no layout read) and stop observing the ones the window dropped.
+  private _observeRows(firstRow: Element | null): void {
+    const rows = new Map<Element, number>();
+    let row = firstRow;
+    for (let i = 0; row && i < this._windowedCount; i++, row = row.nextElementSibling) {
+      const height = this._rows.get(row);
+      rows.set(row, height ?? 0);
+      if (height === undefined) {
+        this._resizeObserver?.observe(row);
+        this._everObservedRows.add(row);
+      }
+    }
+    for (const old of this._rows.keys()) {
+      if (!rows.has(old)) {
+        this._resizeObserver?.unobserve(old);
+      }
+    }
+    this._rows = rows;
+  }
+
+  private _onRowsResize(entries: readonly ResizeObserverEntry[]): void {
+    for (const entry of entries) {
+      // A row with no layout (a hidden panel) says nothing about its height.
+      const height = this._rows.has(entry.target) ? (entry.borderBoxSize[0]?.blockSize ?? 0) : 0;
+      if (height > 0) {
+        this._rows.set(entry.target, height);
+      }
+    }
+    const measured = [...this._rows.values()].filter((height) => height > 0);
+    if (!this._measured || !measured.length) {
+      return;
+    }
+    const rowHeight = measured.reduce((sum, height) => sum + height, 0) / measured.length + this._rowExtra;
+    // The average moves with the window, and the window with the average: ignore a sub-pixel change so the two settle.
+    if (Math.abs(rowHeight - this._rowHeight) >= 0.5) {
+      this._rowHeight = rowHeight;
+      this._host.requestUpdate();
+    }
+  }
+
+  // Drop the latched metrics and stop observing rows: once re-latched, the rows are re-observed and report their sizes.
+  private _unlatch(): void {
+    this._measured = false;
+    this._observeRows(null);
   }
 
   // Re-render after a measurement change, but deferred to the next frame so the
@@ -229,5 +301,6 @@ export class VirtualListController implements ReactiveController {
     this._scrollEl = null;
     this._resizeObserver?.disconnect();
     this._resizeObserver = undefined;
+    this._rows.clear();
   }
 }

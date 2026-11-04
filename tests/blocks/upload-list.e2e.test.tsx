@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it, onTestFinished } from 'vitest';
 import { page } from 'vitest/browser';
 import type { UploadCtxProvider } from '@/index.js';
 import { TEST_IMAGE_URL } from '../utils/constants';
@@ -111,5 +111,73 @@ describe('uc-upload-list virtualization', () => {
     const files = root.querySelector<HTMLElement>('.uc-files')!;
     files.scrollTop = files.scrollHeight;
     await expect.poll(() => root.querySelector('uc-file-item:last-of-type')?.textContent).toContain('f299.txt');
+  });
+
+  const height = (el: Element) => el.getBoundingClientRect().height;
+  const sum = (els: Iterable<Element>) => [...els].reduce((total, el) => total + height(el), 0);
+  const rowIndex = (row: Element | undefined) => Number(/f(\d+)\.txt/.exec(row?.textContent ?? '')?.[1] ?? Number.NaN);
+
+  // Rows differ: one not yet scrolled into view renders an empty shell (FileItem's render gate), shorter than a
+  // rendered one. Whatever height the spacers assume per row must lie between the shortest and tallest rendered row
+  // (give or take the half pixel the estimate may lag by), or the scroll offset stops pointing at the rows it shows.
+  // Checked at the top, mid-list and at the bottom.
+  const expectSpacersToMatchRows = async (root: HTMLElement) => {
+    const files = root.querySelector<HTMLElement>('.uc-files')!;
+    const rows = () => [...root.querySelectorAll('uc-file-item')];
+    const heights = () => rows().map(height);
+    const laidOut = () => sum(root.querySelectorAll('.uc-list-spacer')) + sum(rows());
+    const withinRows = () => {
+      const [min, max] = [Math.min(...heights()), Math.max(...heights())];
+      return laidOut() >= 300 * (min - 0.5) && laidOut() <= 300 * (max + 0.5);
+    };
+    await expect.poll(withinRows).toBe(true);
+
+    // Mid-list, the row at the viewport's top is the one the scroll offset points at.
+    files.scrollTop = 8400;
+    const rowAtTop = () => {
+      const top = files.getBoundingClientRect().top;
+      return rows().find((row) => row.getBoundingClientRect().bottom > top);
+    };
+    const pointsAtItsRow = () => {
+      const index = rowIndex(rowAtTop());
+      return (
+        index >= Math.floor(8400 / (Math.max(...heights()) + 0.5)) &&
+        index <= Math.ceil(8400 / (Math.min(...heights()) - 0.5))
+      );
+    };
+    await expect.poll(pointsAtItsRow).toBe(true);
+    expect(withinRows()).toBe(true);
+
+    // At the bottom the last file renders with no spacer after it.
+    files.scrollTop = files.scrollHeight;
+    await expect.poll(() => rowIndex(rows().at(-1))).toBe(299);
+    expect(rows().at(-1)!.nextElementSibling?.classList.contains('uc-list-spacer') ?? false).toBe(false);
+    expect(withinRows()).toBe(true);
+  };
+
+  it('sizes the spacers from the rows it renders, not the first one', async () => {
+    const { api, root } = await renderSolution('regular', { confirmUpload: true, multipleMax: 1000 });
+    addFiles(api, 300);
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+    await expect.poll(() => root.querySelector('.uc-list-spacer')).not.toBeNull();
+
+    await expectSpacersToMatchRows(root);
+  });
+
+  it('corrects a row height measured before the rows were laid out', async () => {
+    // Rows collapsed when first measured, as they can be during the modal's opening layout.
+    const collapse = document.createElement('style');
+    collapse.textContent = 'uc-file-item { min-height: 0; height: 13px; }';
+    document.head.append(collapse);
+    onTestFinished(() => collapse.remove());
+    const { api, root } = await renderSolution('regular', { confirmUpload: true, multipleMax: 1000 });
+    addFiles(api, 300);
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+    await expect.poll(() => root.querySelector('.uc-list-spacer')).not.toBeNull();
+    collapse.remove();
+
+    await expectSpacersToMatchRows(root);
   });
 });
