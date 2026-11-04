@@ -108,4 +108,32 @@ describe('under the documented CSP', () => {
     expect(control.querySelector<HTMLElement>('.uc-preview')!.style.opacity).toBe('0');
     expect(control.querySelector<HTMLElement>('uc-editor-icon')!.style.opacity).toBe('1');
   });
+
+  // Last in the file: the policy it adds narrows the file's one to exactly the documented `style-src 'self'`, and
+  // stays enforced for every test after it.
+  it("renders every file of a page-scrolled inline list under style-src 'self'", async () => {
+    const meta = document.createElement('meta');
+    meta.httpEquiv = 'Content-Security-Policy';
+    meta.content = "style-src 'self'";
+    document.head.append(meta);
+
+    // Nothing bounds the inline uploader's height, so the page scrolls rather than `.uc-files`.
+    const { api, root } = await renderSolution('inline', { confirmUpload: true, multipleMax: 1000 });
+    for (let i = 0; i < 300; i++) {
+      api.addFileFromObject(new File(['x'], `f${i}.txt`, { type: 'text/plain' }));
+    }
+    api.setCurrentActivity('upload-list');
+    await expect.element(within(root).getByTestId('uc-upload-list')).toBeVisible();
+
+    // A file item renders its name once it scrolls into view, and rows grow as their thumbnails load: scroll again
+    // on every poll until the page bottom holds the last file.
+    const scroller = document.scrollingElement!;
+    const lastName = () => {
+      scroller.scrollTop = scroller.scrollHeight;
+      return root.querySelector('uc-file-item:last-of-type')?.textContent;
+    };
+    await expect.poll(lastName).toContain('f299.txt');
+    const last = root.querySelector<HTMLElement>('uc-file-item:last-of-type')!;
+    expect(last.getBoundingClientRect().bottom).toBeLessThanOrEqual(window.innerHeight);
+  });
 });
