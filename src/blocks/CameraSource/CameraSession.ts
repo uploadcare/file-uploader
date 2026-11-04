@@ -118,12 +118,13 @@ export class CameraSession {
 
   /** Watches the permissions, lists the devices and opens the camera on the first configured tab. */
   public async activate(cameraModes: CameraMode[]): Promise<void> {
+    const adoption = this._host.lifetime.adoptionSignal();
     // Without the Permissions API, ask for the camera straight away.
     if (!(await this._devices.watchPermissions())) {
       this._host.lifetime.runTask(() => this._capture());
     }
-    await this._devices.requestAccess();
-    await this._capture();
+    await this._devices.requestAccess(adoption);
+    await this._capture(adoption);
     this.selectDefaultTab(cameraModes);
   }
 
@@ -321,7 +322,8 @@ export class CameraSession {
     }
   }
 
-  private async _capture(): Promise<void> {
+  /** `adoption` is the signal of the lifetime the calling task started in. */
+  private async _capture(adoption = this._host.lifetime.adoptionSignal()): Promise<void> {
     // Release the current stream first. The prompt state below used to do it, but it is debounced and a quick
     // 'granted' supersedes it, which left the previous camera running after a device switch.
     this._stopCapture();
@@ -345,8 +347,9 @@ export class CameraSession {
       // Access is granted now, so the labels are readable: list the devices if the first access check failed.
       if (!this.cameras.length) this._host.lifetime.runTask(() => this._devices.list());
     } catch (error) {
-      // Asks the lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
-      if (this._host.lifetime.adoptionSignal().aborted) throw error;
+      // Asks the task's lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
+      // Not the current adoption either: after a move it is the next one's, still live.
+      if (adoption.aborted) throw error;
       this._setPermission('denied', cameraFailureOf(error));
       this._host.report('warn', 'Failed to capture camera', error, 'camera capturing. Failed to capture camera');
     }

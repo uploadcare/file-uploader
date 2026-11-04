@@ -66,11 +66,12 @@ export class CameraDevices {
 
   /**
    * Follows changes to the devices, then asks for access once, so the device labels are readable, and lists them.
-   * When that check fails, the session lists them after its first successful capture.
+   * When that check fails, the session lists them after its first successful capture. `adoption` is the signal of
+   * the lifetime the calling task started in.
    */
-  public async requestAccess(): Promise<void> {
+  public async requestAccess(adoption = this._host.lifetime.adoptionSignal()): Promise<void> {
     navigator.mediaDevices.addEventListener('devicechange', () => this._host.lifetime.runTask(() => this.list()), {
-      signal: this._host.lifetime.adoptionSignal(),
+      signal: adoption,
     });
     try {
       // Only probes for permission; the block opens the real stream.
@@ -81,8 +82,9 @@ export class CameraDevices {
       stopTracks(probe);
       await this.list();
     } catch (error) {
-      // Asks the lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
-      if (this._host.lifetime.adoptionSignal().aborted) throw error;
+      // Asks the task's lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
+      // Not the current adoption either: after a move it is the next one's, still live.
+      if (adoption.aborted) throw error;
       this._host.report('Failed to get user media', error, 'camera devices. Failed to get user media');
     }
   }
