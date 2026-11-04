@@ -36,10 +36,10 @@ export class CameraDevices {
    * Permissions API can't be used, in which case the block asks for access directly.
    */
   public async watchPermissions(): Promise<boolean> {
+    this.stopWatchingPermissions();
+    const watch = new AbortController();
+    this._permissionWatch = watch;
     try {
-      this.stopWatchingPermissions();
-      const watch = new AbortController();
-      this._permissionWatch = watch;
       for (const name of WATCHED_PERMISSIONS) {
         const status = await this._host.lifetime.whileAdopted(
           navigator.permissions.query({ name: name as PermissionName }),
@@ -48,7 +48,8 @@ export class CameraDevices {
       }
       return true;
     } catch (error) {
-      this.stopWatchingPermissions();
+      // Only its own watch: after a move the next adoption has already started another.
+      if (this._permissionWatch === watch) this.stopWatchingPermissions();
       if (isAbortError(error)) throw error;
       this._host.report(
         'Failed to use permissions API. Fallback to manual request mode.',
