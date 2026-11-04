@@ -1050,6 +1050,23 @@ describe('UploaderPublicApi', () => {
       expect(addFiles).not.toHaveBeenCalled();
     });
 
+    it('lets go of an input replaced before a pick, not only once the uploader is destroyed', () => {
+      const { api, ctxName } = setup();
+      const addFiles = vi.spyOn(api, 'addFilesFromObjects');
+      api.openSystemDialog();
+      const replaced = document.querySelector<HTMLInputElement>('[uploadcare-file-input]')!;
+      api.openSystemDialog();
+
+      Object.defineProperty(replaced, 'files', { value: [new File(['x'], 'x.txt')], configurable: true });
+      replaced.dispatchEvent(new Event('change'));
+      expect(addFiles).not.toHaveBeenCalled();
+
+      // Its ctx-abort listener is gone too: the ctx's end no longer reaches it.
+      const removeInput = vi.spyOn(replaced, 'remove');
+      destroyCtx(ctxName);
+      expect(removeInput).not.toHaveBeenCalled();
+    });
+
     it('is a no-op change handler when the input has no files', () => {
       const { api, ctrl } = setup();
       api.openSystemDialog();

@@ -111,6 +111,8 @@ export class UploaderPublicApi {
   private _l10n = createL10n(() => this._locale);
   // A write to the live bag would skip normalization and signals, so `cfg` is a view that rejects writes.
   private _cfgView: Readonly<ConfigType> | null = null;
+  /** Aborted when the `openSystemDialog` input goes: picked, replaced by the next one, or the ctx ending. */
+  private _systemDialog: AbortController | null = null;
 
   private get _container(): ControllerContainer {
     return requireContainerOf(this);
@@ -357,7 +359,13 @@ export class UploaderPublicApi {
     } else {
       fileInput.accept = accept;
     }
-    const removeInput = () => fileInput.remove();
+    // The previous input is removed below, or was by another uploader's call: its listeners go with it.
+    this._systemDialog?.abort();
+    const dialog = new AbortController();
+    this._systemDialog = dialog;
+    // Bound to the ctx: a file picked after the uploader is destroyed is dropped, and the input goes with it.
+    signal.addEventListener('abort', () => dialog.abort(), { once: true, signal: dialog.signal });
+    dialog.signal.addEventListener('abort', () => fileInput.remove(), { once: true });
     fileInput.addEventListener(
       'change',
       () => {
@@ -367,14 +375,10 @@ export class UploaderPublicApi {
         const source = options.captureCamera ? UploadSource.CAMERA : UploadSource.LOCAL;
         this.addFilesFromObjects([...fileInput.files].map((file) => ({ file, source })));
         this._router.traverse('onFileAdd');
-        fileInput.remove();
-        signal.removeEventListener('abort', removeInput);
+        dialog.abort();
       },
-      // Bound to the ctx: a file picked after the uploader is destroyed is dropped, and the input goes with it.
-      { once: true, signal },
+      { once: true, signal: dialog.signal },
     );
-    // ponytail: an input replaced by the next call before a pick keeps this listener until the ctx ends.
-    signal.addEventListener('abort', removeInput, { once: true });
 
     document.querySelectorAll(`[${INPUT_ATTR_NAME}]`).forEach((el) => {
       el.remove();
