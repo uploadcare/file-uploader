@@ -408,10 +408,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   /** The `apply`/`change` event detail for `transformations`. */
   private _result(originalUrl: string, transformations: Transformations): ApplyResult {
     const sourceOperations = this._editorController.sourceOperations;
-    // Edited in place rather than rebuilt: an operation the editor cannot model
-    // keeps its original position, which matters to the CDN for a few pairs
-    // (`stretch` applies to a following resize) — enforced by `editorAppliedUrl`
-    // composing the operation list once for both `cdnUrl` and `cdnUrlModifiers`.
+    // Always empty in 1.x (the editor cuts what it does not model, as v1 did), so
+    // the result carries only the modelled transformations. The pipeline stays on
+    // purpose for the next major, which edits the source's operations in place.
     const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, sourceOperations });
     return { originalUrl, cdnUrlModifiers, cdnUrl, transformations };
   }
@@ -699,10 +698,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         return;
       }
       editorController.originalUrl = originalUrl;
-      // NEXT-MAJOR(cloud-image-editor): record `parsed.operations` as `sourceOperations` (before the transformations:
-      // their write fires `change`, which reads it right away). Cutting what the editor does not model silently loses
-      // the user's resize/overlay/blur/format; the merge in `transformationUtils` keeps them in place and crops in the
-      // space the operations before the geometry leave. v1 cut them, as the docs say. Kept for 1.x compat.
+      // NEXT-MAJOR(cloud-image-editor): record `parsed.operations` as `sourceOperations`. Cutting what the editor does
+      // not model silently loses the user's resize/overlay/blur/format; the merge in `transformationUtils` keeps them in
+      // place and crops in the space the operations before the geometry leave. Either write order works, since `change`
+      // fires once the task's writes settle. v1 cut them, as the docs say. Kept for 1.x compat.
       editorController.editorTransformations = operationsToTransformations(parsed.operations);
     } else if (this.uuid) {
       const cdnCname = editorController.getConfig('cdnCname');

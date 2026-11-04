@@ -82,12 +82,14 @@ export function editorPreviewUrl({
 /**
  * The URL the editor commits on Apply, and emits on the live change event.
  *
- * `sourceOperations` is the full operation list the source URL carried,
- * unfiltered. Rather than rebuilding the list from the modelled transformations
- * and appending whatever the editor cannot model, `mergeTransformationsIntoOperations`
- * edits that list in place — an operation the editor does not model keeps its
- * original position, which matters to the CDN for a few pairs (e.g. `stretch`
- * applies to a following resize).
+ * `sourceOperations` is meant to be the full operation list the source URL
+ * carried, unfiltered, which `mergeTransformationsIntoOperations` edits in place
+ * so an operation the editor does not model keeps its original position (which
+ * matters to the CDN for a few pairs, e.g. `stretch` applies to a following
+ * resize). In 1.x it is always empty: the editor cuts what it does not model, as
+ * v1 did (see the NEXT-MAJOR note in `CloudImageEditorBlock`), so the merge only
+ * ever sees the modelled transformations. Kept on purpose for the next major,
+ * which records the source operations again.
  *
  * Returns `cdnUrlModifiers` alongside `cdnUrl` — both are public fields on the
  * documented `apply`/`change` events (`ApplyResult`), so the operation list is
