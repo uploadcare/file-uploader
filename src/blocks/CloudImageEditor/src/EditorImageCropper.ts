@@ -138,7 +138,8 @@ export class EditorImageCropper extends EditorBlock {
       }
 
       // A new image (originalUrl change) invalidates the current crop.
-      // Reset the ops to a clean slate; `_syncActivation` ignores
+      // Reset the ops and the crop box to a clean slate, so `_alignCrop`
+      // lays out the new image's own crop; `_syncActivation` ignores
       // `_previousImageSize`, so the cropper stays inactive until the new
       // image's size arrives. `deactivate` also aborts the current activation,
       // so an in-flight activation of the old image stops.
@@ -150,6 +151,8 @@ export class EditorImageCropper extends EditorBlock {
         if (this._isActive) {
           this.deactivate({ reset: true });
         }
+        // After `deactivate`: its exit transition zooms to the outgoing box.
+        this._cropBox = { x: 0, y: 0, width: 0, height: 0 };
         return;
       }
 
