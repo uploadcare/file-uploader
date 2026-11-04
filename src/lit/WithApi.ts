@@ -58,9 +58,10 @@ export function WithApi<T extends abstract new (...args: any[]) => ChildBlock>(B
     protected _bridgeBusToDom(): Unsubscribe[] {
       // Catch up on an activity set before this host joined the ctx: inline and minimal seed their start screen as
       // soon as they mount, which can be before the provider does, and v1 reported it to the provider's listeners. A
-      // same-tick DOM move re-adopts with nothing missed, so it reports nothing again.
+      // same-tick DOM move re-adopts with nothing missed, so it reports nothing again. An activity whose report waits
+      // for its block to mount is reported through the bus when it does.
       const current = this._router.currentActivity;
-      if (current !== this._reportedActivity) {
+      if (current !== this._reportedActivity && current !== this._router.unreportedActivity) {
         this._reportedActivity = current;
         this.dispatchEvent(new CustomEvent(UploaderEventType.ACTIVITY_CHANGE, { detail: { activity: current } }));
       }

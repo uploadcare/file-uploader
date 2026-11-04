@@ -99,6 +99,10 @@ export class RouterController {
   public get currentActivity(): ActivityId | null {
     return this._currentActivity;
   }
+  /** The current activity while its `ACTIVITY_CHANGE` waits for its block to mount (see `reportWhenShown`). */
+  public get unreportedActivity(): ActivityId | null {
+    return this._unreported;
+  }
   public get params(): Readonly<Record<string, unknown>> {
     return this._params;
   }

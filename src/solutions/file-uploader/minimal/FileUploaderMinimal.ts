@@ -85,7 +85,11 @@ export class FileUploaderMinimal extends SolutionChildBlock {
       'uploadList',
       (list) => {
         const hasFiles = list.length > 0;
-        this._router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM);
+        // Reported once its block mounts, as in v1, which reported it from the rendered block: at first mount that is
+        // after the mounting task, so its listeners hear it.
+        this._router.reportWhenShown(() =>
+          this._router.setActivity(hasFiles ? ACTIVITY_TYPES.UPLOAD_LIST : ACTIVITY_TYPES.START_FROM),
+        );
         // `setActivity` keeps the modal slot, so files added without a navigation (`addFileFrom*` from app code)
         // would leave the source picker or a source open over the list. The editor edits one of those files.
         const modal = this._router.modal;

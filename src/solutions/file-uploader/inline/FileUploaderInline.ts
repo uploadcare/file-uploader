@@ -106,7 +106,9 @@ export class FileUploaderInline extends SolutionChildBlock {
     return this._router.observeCurrentActivity(
       (activity) => {
         if (!activity) {
-          this._router.setActivity(ACTIVITY_TYPES.START_FROM);
+          // Reported once `<uc-start-from>` mounts, as in v1, which reported it from the rendered block: at first
+          // mount that is after the mounting task, so its listeners hear it.
+          this._router.reportWhenShown(() => this._router.setActivity(ACTIVITY_TYPES.START_FROM));
         }
       },
       { immediate: true },

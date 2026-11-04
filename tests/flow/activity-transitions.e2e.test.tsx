@@ -197,3 +197,32 @@ describe.each<Solution>(['inline', 'minimal'])('%s: activity-change for the star
     expect(api.getCurrentActivity()).toBe('start-from');
   });
 });
+
+/**
+ * v1 reported the start screen when its block rendered, a microtask after the tags mounted, so a listener added right
+ * after mounting (or after `defineComponents()`), in the same task, still heard it. The provider's place in the DOM
+ * doesn't matter.
+ */
+describe.each<[Solution, 'provider first' | 'provider last']>([
+  ['inline', 'provider first'],
+  ['inline', 'provider last'],
+  ['minimal', 'provider first'],
+  ['minimal', 'provider last'],
+])('%s, %s: activity-change for the start screen to a listener added in the mounting task', (solution, order) => {
+  it('fires it once the start screen renders', async () => {
+    const ctxName = getCtxName();
+    const root = createInCtx<HTMLElement>(`uc-file-uploader-${solution}`, ctxName);
+    const config = createInCtx('uc-config', ctxName, { pubkey: 'demopublickey', 'quality-insights': 'false' });
+    const provider = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
+    page.render(<div ctx-name={ctxName}></div>);
+    const host = document.querySelector(`div[ctx-name="${ctxName}"]`)!;
+    if (order === 'provider first') host.append(config, provider, root);
+    else host.append(config, root, provider);
+    const recorder = recordEvents(provider);
+
+    await waitForBlocks(root, provider);
+    await expectActivity(root, 'start-from');
+
+    expect(recorder.detailsOf('activity-change')).toEqual([{ activity: 'start-from' }]);
+  });
+});
