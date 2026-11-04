@@ -638,6 +638,10 @@
     padding-left: var(--l-controls-padding);
   }
 
+  uc-editor-toolbar > .uc-toolbar-container > .uc-sub-toolbar > .uc-controls-row > .uc-cancel-btn {
+    order: -1;
+  }
+
   uc-editor-toolbar > .uc-toolbar-container > .uc-sub-toolbar > .uc-controls-row > .uc-tab-toggles {
     position: relative;
     display: grid;

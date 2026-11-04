@@ -588,7 +588,7 @@ export class EditorToolbar extends EditorBlock {
               ${ALL_TABS.map((tabId) => this._renderTabToggle(tabId))}
             </uc-presence-toggle>
             <uc-btn-ui
-              style="order: -1"
+              class="uc-cancel-btn"
               theme="secondary-icon"
               icon="closeMax"
               title-prop="cancel"

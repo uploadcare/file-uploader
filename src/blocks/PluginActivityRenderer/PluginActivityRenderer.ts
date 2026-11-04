@@ -78,7 +78,7 @@ export class PluginActivityHost extends ActivityChildBlock {
   }
 
   public override render() {
-    return html`<div style="display: contents;" ${ref(this._containerRef)}></div>`;
+    return html`<div class="uc-plugin-activity-root" ${ref(this._containerRef)}></div>`;
   }
 }
 

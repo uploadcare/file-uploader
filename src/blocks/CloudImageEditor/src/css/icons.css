@@ -1,4 +1,8 @@
 @layer uc.solutions {
+  :where([uc-cloud-image-editor]) .uc-svg-sprite {
+    position: absolute;
+  }
+
   :where([uc-cloud-image-editor]) uc-editor-icon {
     display: flex;
     align-items: center;

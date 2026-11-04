@@ -137,6 +137,10 @@
     opacity: 1;
   }
 
+  uc-unsplash-activity .spinner {
+    animation: uc-unsplash-spin 0.7s linear infinite;
+  }
+
   @keyframes uc-unsplash-spin {
     to {
       transform: rotate(360deg);
