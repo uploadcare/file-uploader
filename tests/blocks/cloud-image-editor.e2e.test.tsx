@@ -629,6 +629,41 @@ describe('uc-cloud-image-editor', () => {
       expect(cdnUrl).toBe(`https://ucarecdn.com/${DEMO_IMAGE_UUID}/-/crop/200x100/30,40/-/preview/`);
     });
 
+    // Fake-only: the image sizes come from the emulator.
+    it.skipIf(isLive)("does not apply a crop box shaped by the previous image's rotation", async () => {
+      // Wide enough that both images are height-bound, so rotated A's tall box fits inside B's.
+      await page.viewport(1280, 900);
+      onTestFinished(() => page.viewport(414, 896));
+      // The previews carry the sizes too: the crop box is laid out on the preview, not on the info.
+      emulatorSession().on('GET /:uuid/*', ({ params, request }) => {
+        const [width, height] = params.uuid === DEMO_IMAGE_UUID ? [1460, 1160] : [1920, 1080];
+        if (new URL(request.url).pathname.endsWith('/-/json/')) return Response.json({ width, height });
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}"/>`;
+        return new Response(svg, { headers: { 'Content-Type': 'image/svg+xml' } });
+      });
+      // Free crop: a preset would reshape the stale box to B anyway.
+      const { element, editor } = renderEditor({ 'cdn-url': `https://ucarecdn.com/${UUID}/`, 'crop-preset': '' });
+      element.style.height = '800px';
+      const cropper = editor.getByTestId('uc-editor-image-cropper');
+      await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+      await expect.poll(() => cropperSize(element)?.width).toBe(1920);
+      const changes: ApplyResult[] = [];
+      element.addEventListener('change', (event) => changes.push((event as CustomEvent<ApplyResult>).detail));
+      await userEvent.click(editor.getByTestId('uc-editor-crop-button-control').nth(0));
+      await expect.poll(() => changes.at(-1)?.transformations.rotate).toBe(90);
+
+      element.setAttribute('cdn-url', `https://ucarecdn.com/${DEMO_IMAGE_UUID}/`);
+      await expect.poll(() => cropperSize(element)?.width).toBe(1460);
+      await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+      // The cropper commits B's crop once B is laid out.
+      await expect.poll(() => changes.some(({ originalUrl }) => originalUrl.includes(DEMO_IMAGE_UUID))).toBe(true);
+      const applied = withResolvers<ApplyResult>();
+      element.addEventListener('apply', (event) => applied.resolve((event as CustomEvent<ApplyResult>).detail));
+      await userEvent.click(editor.getByRole('button', { name: /apply/i }));
+
+      expect((await applied.promise).cdnUrl).toBe(`https://ucarecdn.com/${DEMO_IMAGE_UUID}/-/preview/`);
+    });
+
     it("fires the first change for the new image with its own operations, not the previous image's", async () => {
       const { element, editor } = renderEditor({
         'cdn-url': `https://ucarecdn.com/${UUID}/-/crop/400x300/10,20/-/blur/20/`,
