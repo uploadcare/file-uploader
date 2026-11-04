@@ -176,11 +176,16 @@ export class RouterController {
 
   /**
    * Re-evaluate the current activity against its guard; if it no longer holds,
-   * navigate back. Call after external state changes a guard depends on (the
-   * upload list calls this when its collection changes).
+   * restart at the init activity (v1: an emptied upload list went back to its start screen), or navigate back
+   * without one. Call after external state changes a guard depends on (the upload list calls this when its
+   * collection changes).
    */
   public revalidate(): void {
-    if (!this._canActivate(this.currentActivity)) {
+    if (this._canActivate(this.currentActivity)) return;
+    const fallback = this._fallbackFor(this.currentActivity);
+    if (fallback && this._canActivate(fallback)) {
+      this.restart(fallback);
+    } else {
       this.back();
     }
   }

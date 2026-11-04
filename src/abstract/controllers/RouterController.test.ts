@@ -647,6 +647,24 @@ describe('RouterController (v2)', () => {
       expect(router.modal).toBe('start-from');
     });
 
+    it('revalidate restarts at the init activity, so back() from there closes', () => {
+      const { router } = setup();
+      router.configure({ initActivity: 'start-from' });
+      let listAllowed = true;
+      router.guard('upload-list', () => listAllowed);
+      router.navigate('start-from');
+      router.navigate('url');
+      router.navigate('upload-list');
+
+      listAllowed = false;
+      router.revalidate();
+
+      expect(router.currentActivity).toBe('start-from');
+      expect(router.history).toEqual(['start-from']);
+      router.back();
+      expect(router.currentActivity).toBeNull();
+    });
+
     it('stays put when the init activity is refused too', () => {
       const { router } = setup();
       router.configure({ initActivity: 'start-from' });

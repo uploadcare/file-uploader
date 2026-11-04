@@ -142,6 +142,22 @@ describe('uc-file-uploader-regular', () => {
       await expectModal(root, 'start-from', 'open');
       await expectModal(root, 'url', 'closed');
     });
+
+    // As in v1, whose history held only start-from and upload-list, so emptying the list went back to start-from.
+    it('opens the start screen, not the source that added the file, once the last file is removed', async () => {
+      const { root, api } = await renderSolution('regular');
+      await openModal(root);
+      await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'From link', exact: true }).click();
+      await userEvent.fill(within(root).getByTestId('uc-url-source').getByPlaceholder('https://'), TEST_IMAGE_URL);
+      await userEvent.keyboard('{Enter}');
+      await expectModal(root, 'upload-list', 'open');
+
+      api.removeAllFiles();
+
+      await expectModal(root, 'start-from', 'open');
+      await expectModal(root, 'url', 'closed');
+      expect(api.getCurrentActivity()).toBe('start-from');
+    });
   });
 
   describe('upload button', () => {
