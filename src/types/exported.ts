@@ -1,6 +1,11 @@
 import type { CameraMode } from '../abstract/cameraModes';
 import type { ComplexConfigKey as PropertyOnlyConfigKey } from '../abstract/config/builtin-registry';
-import type { DynamicButtonMode, FilesViewMode, PasteScope } from '../abstract/config/validatorsType';
+import type {
+  DynamicButtonMode,
+  FilesViewMode,
+  ModalPresentation,
+  PasteScope,
+} from '../abstract/config/validatorsType';
 import type { CustomLocaleDefinition, LocaleDefinition } from '../abstract/localeRegistry';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
 import type {
@@ -156,6 +161,15 @@ export type ConfigType = {
    * Show strokes on modal backdrop.
    */
   modalBackdropStrokes: boolean;
+  /**
+   * How `<uc-modal>` opens its dialog: `'modal'` in the top layer with a backdrop, or `'inline'` in the page flow
+   * (`open` attribute, no backdrop or scroll lock; an outside click or Escape closes it).
+   *
+   * Internal: used by the Uploadcare dashboard's previews; not documented, may change. (Not tagged `@internal`: the
+   * build's `stripInternal` would drop it from the published types the dashboard sets it through.)
+   * @default 'modal'
+   */
+  modalPresentation: ModalPresentation;
   /**
    * Wrap the source list.
    */

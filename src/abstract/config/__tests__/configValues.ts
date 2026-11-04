@@ -48,6 +48,7 @@ export const CONFIG_VALUES: { [K in keyof ConfigType]: ConfigType[K][] } = {
   imageShrink: ['', '1024x1024 90%'],
   modalScrollLock: [true, false],
   modalBackdropStrokes: [true, false],
+  modalPresentation: ['modal', 'inline'],
   sourceListWrap: [true, false],
   remoteTabSessionKey: ['', 'session-key'],
   // The default is deliberately absent: holding it is the signal that asks

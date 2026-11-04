@@ -7,6 +7,7 @@ import { CameraSourceTypes, type ModeCameraType } from '../cameraModes';
 export type PasteScope = 'local' | 'global' | false;
 export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact' | 'plain';
 export type FilesViewMode = 'grid' | 'list';
+export type ModalPresentation = 'modal' | 'inline';
 
 const asString = (value: unknown): string => String(value);
 
@@ -71,6 +72,14 @@ const asPasteScope = (value: unknown): PasteScope => {
     return false;
   }
 
+  throw new Error(`Invalid value: "${strValue}"`);
+};
+
+const asModalPresentation = (value: unknown): ModalPresentation => {
+  const strValue = asString(value);
+  if (strValue === 'modal' || strValue === 'inline') {
+    return strValue;
+  }
   throw new Error(`Invalid value: "${strValue}"`);
 };
 
@@ -160,6 +169,7 @@ export {
   asFilesViewMode,
   asFunction,
   asMetadata,
+  asModalPresentation,
   asNumber,
   asObject,
   asStore,

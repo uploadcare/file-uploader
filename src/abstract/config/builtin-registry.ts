@@ -26,6 +26,7 @@ import {
   asFilesViewMode,
   asFunction,
   asMetadata,
+  asModalPresentation,
   asNumber,
   asObject,
   asPasteScope,
@@ -87,6 +88,7 @@ export const BUILTIN_REGISTRY = {
 
   modalScrollLock: { default: true, coerce: asBoolean },
   modalBackdropStrokes: { default: false, coerce: asBoolean },
+  modalPresentation: { default: 'modal', coerce: asModalPresentation },
 
   sourceListWrap: { default: true, coerce: asBoolean },
 

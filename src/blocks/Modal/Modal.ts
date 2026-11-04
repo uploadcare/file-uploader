@@ -8,6 +8,7 @@ import { property } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import type { RegisteredActivityType } from '../../abstract/activity-constants';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { PluginLabel } from '../../abstract/managers/plugin/PluginTypes';
 import { acquireScrollLock } from '../../utils/scroll-lock';
 
@@ -18,6 +19,9 @@ export class Modal extends ChildBlock {
   @injectOrNull(RouterController) private readonly _router!: RouterController | null;
 
   private _mouseDownTarget: EventTarget | null | undefined;
+
+  /** When the inline dialog last opened: the click that opened it is still bubbling and must not close it. */
+  private _inlineOpenedAt = 0;
 
   /** Idempotent release for our acquisition of the shared body scroll lock. */
   private _releaseScrollLock: (() => void) | null = null;
@@ -76,6 +80,35 @@ export class Modal extends ChildBlock {
     }
   };
 
+  private _isInlineOpen(): boolean {
+    return this._config.get('modalPresentation') === 'inline' && !!this.dialogEl.value?.open;
+  }
+
+  // `modalPresentation: 'inline'` leaves the page interactive, so nothing native closes the dialog: an outside click
+  // or Escape anywhere on the page goes through `closeDialog`, as the backdrop click and native Escape do for 'modal'.
+  private _handleDocumentClick = (e: MouseEvent): void => {
+    if (
+      this._isInlineOpen() &&
+      e.timeStamp >= this._inlineOpenedAt &&
+      !e.composedPath().includes(this.dialogEl.value as HTMLDialogElement)
+    ) {
+      this.closeDialog();
+    }
+  };
+
+  private _handleDocumentKeyDown = (e: KeyboardEvent): void => {
+    if (e.key === 'Escape' && this._isInlineOpen()) {
+      this.closeDialog();
+    }
+  };
+
+  protected override controllerReady(container: ControllerContainer): void {
+    super.controllerReady(container);
+    const signal = this.adoptionSignal;
+    document.addEventListener('click', this._handleDocumentClick, { signal });
+    document.addEventListener('keydown', this._handleDocumentKeyDown, { signal });
+  }
+
   protected async show(): Promise<void> {
     await this.whileAdopted(this.updateComplete);
     const dialog = this.dialogEl.value as HTMLDialogElement & {
@@ -86,6 +119,14 @@ export class Modal extends ChildBlock {
     // throws on an already-open dialog, and the ref may be cleared by a teardown
     // racing this async method.
     if (!dialog) return;
+    if (this._config.get('modalPresentation') === 'inline') {
+      // In the page, not the top layer: no backdrop, nothing made inert. `hide()`'s `close()` removes `open` again.
+      if (!dialog.open) {
+        dialog.setAttribute('open', '');
+        this._inlineOpenedAt = performance.now();
+      }
+      return;
+    }
     if (dialog.open) {
       // Moving an open dialog in the DOM takes it out of the top layer but keeps `open`, leaving it in-flow with no
       // backdrop or Escape. Re-enter the top layer; dropping the attribute (unlike `close()`) fires no `close`.
@@ -136,7 +177,9 @@ export class Modal extends ChildBlock {
     // other uploader instances on the same page. `modalScrollLock` is read
     // untracked: the router-slot signal is what re-runs this.
     const isForeground = this._router?.modal === (this.id as RegisteredActivityType);
-    if (isForeground && this._config.get('modalScrollLock')) {
+    // Tracked so a runtime change re-runs this and reaches the next `show()`; an inline dialog takes no scroll lock.
+    const isInline = this._config.getTracked('modalPresentation') === 'inline';
+    if (isForeground && !isInline && this._config.get('modalScrollLock')) {
       this._releaseScrollLock ??= acquireScrollLock();
     } else {
       this._releaseScrollLock?.();

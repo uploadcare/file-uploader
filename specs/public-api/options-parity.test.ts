@@ -74,6 +74,8 @@ describe('documented config options', () => {
       'externalSourcesEmbedCss',
       'mediaRecorderOptions',
       'modalBackdropStrokes',
+      // Internal: the dashboard's inline previews; deliberately undocumented.
+      'modalPresentation',
       'modalScrollLock',
       'sourceListWrap',
       'testMode',
