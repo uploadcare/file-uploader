@@ -190,11 +190,7 @@ export class UploadList extends ActivityChildBlock {
   // as in `getOutputItem`. `anyValidationPending` covers every entry; `validatingBeforeUploading` only idle ones.
   private _computeSummary(): CollectionSummary & { anyValidationPending: boolean } {
     const collection = this._uploadCollection;
-    const fields: UploadEntryData[] = [];
-    for (const id of collection.items()) {
-      const entry = collection.read(id);
-      if (entry) fields.push(entry.values);
-    }
+    const fields: UploadEntryData[] = collection.entries().map((entry) => entry.values);
     const { success, uploading, failed, idle } = partitionByStatus(fields, deriveEntryStatus);
 
     return {

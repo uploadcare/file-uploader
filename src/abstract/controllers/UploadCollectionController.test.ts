@@ -215,13 +215,13 @@ describe('UploadCollectionController', () => {
     collection.destroy();
   });
 
-  it('findItems filters and clearAll empties the collection', () => {
+  it('entries lists every entry in order and clearAll empties the collection', () => {
     const collection = new UploadCollectionController();
-    collection.add({ uploadProgress: 10 });
+    const a = collection.add({ uploadProgress: 10 });
     const b = collection.add({ uploadProgress: 90 });
     vi.runOnlyPendingTimers();
 
-    expect(collection.findItems((e) => (e.get('uploadProgress') as number) > 50)).toEqual([b]);
+    expect(collection.entries().map((e) => e.uid)).toEqual([a, b]);
 
     collection.clearAll();
     expect(collection.size).toBe(0);

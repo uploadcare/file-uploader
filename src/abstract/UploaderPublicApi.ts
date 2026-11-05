@@ -292,20 +292,20 @@ export class UploaderPublicApi {
   }
 
   public uploadAll = (): void => {
-    const itemsToUpload = this._collection.items().filter((id) => {
-      const entry = this._collection.read(id);
-      if (!entry) return false;
-      return (
-        !entry.get('isRemoved') &&
-        !entry.get('isUploading') &&
-        !entry.get('fileInfo') &&
-        // A failed upload is final; its error joins `errors` only on the next validation run.
-        !entry.get('uploadError') &&
-        entry.get('errors').length === 0 &&
-        !entry.get('isValidationPending') &&
-        !entry.get('isQueuedForValidation')
-      );
-    });
+    const itemsToUpload = this._collection
+      .entries()
+      .filter(
+        (entry) =>
+          !entry.get('isRemoved') &&
+          !entry.get('isUploading') &&
+          !entry.get('fileInfo') &&
+          // A failed upload is final; its error joins `errors` only on the next validation run.
+          !entry.get('uploadError') &&
+          entry.get('errors').length === 0 &&
+          !entry.get('isValidationPending') &&
+          !entry.get('isQueuedForValidation'),
+      )
+      .map((entry) => entry.uid);
 
     if (itemsToUpload.length === 0) {
       return;

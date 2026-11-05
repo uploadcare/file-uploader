@@ -9,16 +9,9 @@ import type { OutputErrorFile, OutputFileEntry } from '../../../types/index';
  */
 export const validateUploadError = (
   outputEntry: OutputFileEntry,
-  collection: Pick<UploadCollectionController, 'hasItem' | 'read'>,
+  collection: Pick<UploadCollectionController, 'read'>,
 ): OutputErrorFile | undefined => {
-  const { internalId } = outputEntry;
-
-  if (!collection.hasItem(internalId as Uid)) {
-    return;
-  }
-  const internalEntry = collection.read(internalId as Uid);
-
-  const cause: unknown = internalEntry?.get('uploadError');
+  const cause: unknown = collection.read(outputEntry.internalId as Uid)?.get('uploadError');
   if (!cause) {
     return;
   }

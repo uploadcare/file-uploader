@@ -132,11 +132,11 @@ describe('buildOutputCollectionState', () => {
 
   it('builds no output entries for a read of the build-time fields', () => {
     addSuccess();
-    const read = vi.spyOn(collection, 'read');
+    const entries = vi.spyOn(collection, 'entries');
     const state = buildOutputCollectionState(container);
 
     void [state.progress, state.errors, state.group, state.totalCount];
-    expect(read).not.toHaveBeenCalled();
+    expect(entries).not.toHaveBeenCalled();
   });
 
   it('spreads into a plain object carrying every documented field', () => {
@@ -177,13 +177,13 @@ describe('buildOutputCollectionState', () => {
 
   it('computes nothing until a field is read', () => {
     addSuccess();
-    const read = vi.spyOn(collection, 'read');
+    const entries = vi.spyOn(collection, 'entries');
 
     const state = buildOutputCollectionState(container);
-    expect(read).not.toHaveBeenCalled();
+    expect(entries).not.toHaveBeenCalled();
 
     void state.allEntries;
-    expect(read).toHaveBeenCalledTimes(1);
+    expect(entries).toHaveBeenCalledTimes(1);
   });
 
   it('names the late read, not the container, when its entries are read after the uploader is destroyed', () => {

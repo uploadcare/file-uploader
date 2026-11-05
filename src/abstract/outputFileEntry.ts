@@ -49,8 +49,5 @@ export const toOutputFileEntry = <TStatus extends OutputFileStatus>(
 /** Every entry of the ctx's collection as an `OutputFileEntry`, in collection order. */
 export const outputEntries = (container: ControllerContainer): OutputFileEntry[] => {
   const collection = container.get(UploadCollectionController);
-  return collection.items().flatMap((id) => {
-    const entry = collection.read(id);
-    return entry ? [toOutputFileEntry(entry)] : [];
-  });
+  return collection.entries().map(toOutputFileEntry);
 };

@@ -24,11 +24,10 @@ export function applyInitialCrop(collection: UploadCollectionController, cropPre
 
   const [aspectRatioPreset] = parsed;
   const entries = collection
-    .findItems(
+    .entries()
+    .filter(
       (entry) => !!entry.get('fileInfo') && entry.get('isImage') && !entry.get('cdnUrlModifiers')?.includes('/crop/'),
-    )
-    .map((id) => collection.read(id))
-    .filter(Boolean);
+    );
 
   for (const entry of entries) {
     const fileInfo = entry.get('fileInfo');

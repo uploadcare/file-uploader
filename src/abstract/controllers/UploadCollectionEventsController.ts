@@ -138,12 +138,10 @@ export class UploadCollectionEventsController {
         .map((error) => COLLECTION_ERROR_KEY + (error.type ?? 'CUSTOM_ERROR')),
     );
     let isInFlight = false;
-    for (const uid of this._collection.items()) {
-      const entry = this._collection.read(uid);
-      if (!entry) continue;
+    for (const entry of this._collection.entries()) {
       const isFailed = entry.get('errors').length > 0;
       if (isFailed) {
-        failures.add(uid);
+        failures.add(entry.uid);
       }
       if (entry.get('isUploading') || entry.get('isQueuedForUploading')) {
         isInFlight = true;
@@ -184,9 +182,7 @@ export class UploadCollectionEventsController {
     let loadedCount = 0;
     let hasErrored = false;
     let urls = '';
-    for (const uid of collection.items()) {
-      const entry = collection.read(uid);
-      if (!entry) continue;
+    for (const entry of collection.entries()) {
       if (entry.get('errors').length > 0) {
         hasErrored = true;
       }

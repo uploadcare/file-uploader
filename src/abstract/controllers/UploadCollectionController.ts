@@ -333,15 +333,9 @@ export class UploadCollectionController {
     }
   }
 
-  public findItems(checkFn: (item: TypedData<UploadEntryData>) => boolean): Uid[] {
-    const result: Uid[] = [];
-    for (const id of this._items) {
-      const item = this.read(id);
-      if (item && checkFn(item)) {
-        result.push(id);
-      }
-    }
-    return result;
+  /** Every entry, in collection order. `_items` and `_data` are written together, so every id resolves. */
+  public entries(): TypedData<UploadEntryData>[] {
+    return [...this._items].flatMap((id) => this._data.get(id) ?? []);
   }
 
   public items(): Uid[] {
