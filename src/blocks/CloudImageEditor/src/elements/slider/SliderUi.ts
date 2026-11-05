@@ -19,9 +19,6 @@ export class SliderUi extends SliderUiBase {
   private readonly _inputRef = createRef<HTMLInputElement>();
   private readonly _stepsRef = createRef<HTMLDivElement>();
 
-  @property({ type: Boolean, reflect: true })
-  public disabled = false;
-
   @property({ type: Number })
   public min = 0;
 
@@ -183,7 +180,6 @@ export class SliderUi extends SliderUiBase {
         .min=${String(this.min)}
         .max=${String(this.max)}
         .value=${String(this._currentValue)}
-        ?disabled=${this.disabled}
         @input=${this._handleSliderInput}
         @change=${this._handleSliderChange}
         @focus=${this._handleInputFocus}
