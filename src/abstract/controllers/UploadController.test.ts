@@ -903,6 +903,25 @@ describe('UploadController', () => {
       });
     });
 
+    it('hands upload-client the prefixed CDN base, so a key-derived staging cname keeps its zone', async () => {
+      // Without it upload-client re-derives `<hash>.staging0.ucarecd.net` under its default `ucarecd.net`, and every
+      // file URL points at production.
+      const { controller } = setup({
+        cfg: {
+          pubkey: 'demopublickey',
+          cdnCname: 'https://1s4oyld5dc.staging0.ucarecd.net',
+          cdnCnamePrefixed: 'https://staging0.ucarecd.net/',
+        },
+      });
+
+      const opts = await controller.buildUploadOptions();
+
+      expect(opts).toMatchObject({
+        baseCDN: 'https://1s4oyld5dc.staging0.ucarecd.net',
+        prefixedBaseCDN: 'https://staging0.ucarecd.net/',
+      });
+    });
+
     it('injects the secure token from the SecureUploadsController', async () => {
       const { controller } = setup({ cfg: { secureSignature: 'sig', secureExpire: '4102444800' } });
 

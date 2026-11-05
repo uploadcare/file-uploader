@@ -156,6 +156,9 @@ export class UploadController {
       store: cfg.store,
       publicKey: cfg.pubkey,
       baseCDN: cfg.cdnCname,
+      // upload-client re-derives a `baseCDN` inside the prefixed zone; without this it uses its own `ucarecd.net`, so a
+      // staging `<hash>.staging0.ucarecd.net` became production `<hash>.ucarecd.net`.
+      prefixedBaseCDN: cfg.cdnCnamePrefixed,
       baseURL: cfg.baseUrl,
       userAgent: customUserAgent,
       integration: cfg.userAgentIntegration,
