@@ -50,8 +50,4 @@ export class Disposables {
     }
     this.#fns.clear();
   }
-
-  public get size(): number {
-    return this.#fns.size;
-  }
 }

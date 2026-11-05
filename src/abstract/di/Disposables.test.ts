@@ -62,8 +62,6 @@ describe('Disposables', () => {
     disposables.add(fn);
 
     disposables.run();
-    expect(disposables.size).toBe(0);
-
     disposables.run();
     expect(fn).toHaveBeenCalledTimes(1);
   });
@@ -71,24 +69,15 @@ describe('Disposables', () => {
   it('run() on an empty registry is a no-op', () => {
     const disposables = new Disposables();
     expect(() => disposables.run()).not.toThrow();
-    expect(disposables.size).toBe(0);
-  });
-
-  it('size reflects registered and cancelled fns', () => {
-    const disposables = new Disposables();
-    expect(disposables.size).toBe(0);
-    disposables.add(() => {});
-    const cancel = disposables.add(() => {});
-    expect(disposables.size).toBe(2);
-    cancel();
-    expect(disposables.size).toBe(1);
   });
 
   it('cancelling twice is safe', () => {
     const disposables = new Disposables();
-    const cancel = disposables.add(() => {});
+    const fn = vi.fn();
+    const cancel = disposables.add(fn);
     cancel();
     expect(() => cancel()).not.toThrow();
-    expect(disposables.size).toBe(0);
+    disposables.run();
+    expect(fn).not.toHaveBeenCalled();
   });
 });
