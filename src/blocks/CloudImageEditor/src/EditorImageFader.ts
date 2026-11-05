@@ -118,10 +118,6 @@ export class EditorImageFader extends EditorBlock {
   private _lastColorPreview: ColorPreview = null;
   private _lastTransformations?: Transformations;
   private _shown = false;
-  // Guards the reaction against re-entering itself: the fader's own methods
-  // write state (`loadingImages`, `networkProblems`) and a controller write
-  // notifies observers synchronously (same lesson as EditorImageCropper).
-  private _reacting = false;
 
   /**
    * Controller-dependent setup (mirrors EditorImageCropper): the fader drives
@@ -224,84 +220,76 @@ export class EditorImageFader extends EditorBlock {
 
   /** Reconcile the fader with controller state and the `imageSize` prop. */
   private _syncFromState(): void {
-    if (this._reacting) {
+    const controller = this.editorControllerOrNull;
+    if (!controller) {
       return;
     }
-    this._reacting = true;
-    try {
-      const controller = this.editorControllerOrNull;
-      if (!controller) {
-        return;
-      }
-      const tabId = controller.tabId;
-      const originalUrl = controller.originalUrl;
-      const colorPreview = controller.colorPreview;
-      const transformations = controller.editorTransformations;
-      const shouldShow = tabId !== TabId.CROP && !!originalUrl && !!this.imageSize;
+    const tabId = controller.tabId;
+    const originalUrl = controller.originalUrl;
+    const colorPreview = controller.colorPreview;
+    const transformations = controller.editorTransformations;
+    const shouldShow = tabId !== TabId.CROP && !!originalUrl && !!this.imageSize;
 
-      // New image: hide and stay hidden until the root supplies the new image's
-      // `imageSize` prop (reactivation then happens via `updated`). Returning
-      // here avoids re-activating with the previous image's still-stale
-      // `imageSize` (root clears it to null asynchronously) or reapplying its
-      // live preview — the root also clears `colorPreview` on image change.
-      if (originalUrl !== this._lastOriginalUrl) {
-        this._lastOriginalUrl = originalUrl;
-        this._lastColorPreview = null;
-        if (this._shown) {
-          this.deactivate();
-          this._shown = false;
-        }
-        return;
-      }
-
-      if (shouldShow && !this._shown) {
-        // Enter viewer mode: seed `_transformations` so `activate` (original)
-        // renders the committed result.
-        this._shown = true;
-        this._lastTransformations = transformations;
-        this._transformations = transformations;
-        this.runTask(() => this.activate({ url: originalUrl as string }));
-      } else if (!shouldShow && this._shown) {
-        this._shown = false;
+    // New image: hide and stay hidden until the root supplies the new image's
+    // `imageSize` prop (reactivation then happens via `updated`). Returning
+    // here avoids re-activating with the previous image's still-stale
+    // `imageSize` (root clears it to null asynchronously) or reapplying its
+    // live preview — the root also clears `colorPreview` on image change.
+    if (originalUrl !== this._lastOriginalUrl) {
+      this._lastOriginalUrl = originalUrl;
+      this._lastColorPreview = null;
+      if (this._shown) {
         this.deactivate();
+        this._shown = false;
       }
+      return;
+    }
 
-      if (!this._shown) {
-        return;
-      }
+    if (shouldShow && !this._shown) {
+      // Enter viewer mode: seed `_transformations` so `activate` (original)
+      // renders the committed result.
+      this._shown = true;
+      this._lastTransformations = transformations;
+      this._transformations = transformations;
+      this.runTask(() => this.activate({ url: originalUrl as string }));
+    } else if (!shouldShow && this._shown) {
+      this._shown = false;
+      this.deactivate();
+    }
 
-      // Committed transformations → refresh the viewer image.
-      if (transformations !== this._lastTransformations) {
-        this._lastTransformations = transformations;
-        this.runTask(() => this.setTransformations(transformations));
-      }
+    if (!this._shown) {
+      return;
+    }
 
-      // Live slider preview: op/filter change → rebuild keypoints (`activate`);
-      // same op, new value → `set`; cleared → back to the committed viewer.
-      if (colorPreview !== this._lastColorPreview) {
-        const previous = this._lastColorPreview;
-        this._lastColorPreview = colorPreview;
-        if (colorPreview) {
-          const opChanged =
-            !previous || previous.operation !== colorPreview.operation || previous.filter !== colorPreview.filter;
-          if (opChanged) {
-            this.runTask(() =>
-              this.activate({
-                url: originalUrl as string,
-                operation: colorPreview.operation,
-                value: colorPreview.value,
-                filter: colorPreview.filter,
-              }),
-            );
-          } else if (typeof colorPreview.value === 'number') {
-            this.set(colorPreview.value);
-          }
-        } else if (previous) {
-          this.deactivate({ hide: false });
+    // Committed transformations → refresh the viewer image.
+    if (transformations !== this._lastTransformations) {
+      this._lastTransformations = transformations;
+      this.runTask(() => this.setTransformations(transformations));
+    }
+
+    // Live slider preview: op/filter change → rebuild keypoints (`activate`);
+    // same op, new value → `set`; cleared → back to the committed viewer.
+    if (colorPreview !== this._lastColorPreview) {
+      const previous = this._lastColorPreview;
+      this._lastColorPreview = colorPreview;
+      if (colorPreview) {
+        const opChanged =
+          !previous || previous.operation !== colorPreview.operation || previous.filter !== colorPreview.filter;
+        if (opChanged) {
+          this.runTask(() =>
+            this.activate({
+              url: originalUrl as string,
+              operation: colorPreview.operation,
+              value: colorPreview.value,
+              filter: colorPreview.filter,
+            }),
+          );
+        } else if (typeof colorPreview.value === 'number') {
+          this.set(colorPreview.value);
         }
+      } else if (previous) {
+        this.deactivate({ hide: false });
       }
-    } finally {
-      this._reacting = false;
     }
   }
 
