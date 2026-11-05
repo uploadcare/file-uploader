@@ -422,18 +422,13 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       this._log.warn('Original URL is null, cannot apply transformations');
       return;
     }
-    try {
-      this.dispatchEvent(
-        new CustomEvent<ApplyResult>('apply', {
-          detail: this._result(originalUrl, transformations),
-          bubbles: true,
-          composed: true,
-        }),
-      );
-    } catch (err) {
-      this._log.error('Failed to apply editor transformations', err);
-      return;
-    }
+    this.dispatchEvent(
+      new CustomEvent<ApplyResult>('apply', {
+        detail: this._result(originalUrl, transformations),
+        bubbles: true,
+        composed: true,
+      }),
+    );
     this.remove();
   };
 
