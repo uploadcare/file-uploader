@@ -1,8 +1,6 @@
-import { RouterController } from '../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { EventEmitter } from '../abstract/EventEmitter';
 import { LocaleManager } from '../abstract/managers/LocaleManager';
-import { TelemetryManager } from '../abstract/managers/TelemetryManager';
 import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { A11y } from './a11y';
 
@@ -41,12 +39,9 @@ export function ensureUploaderCtx(ctxName: string): ControllerContainer {
   const container = UploaderRegistry.ensure(ctxName);
 
   container.get(EventEmitter);
-  container.get(LocaleManager);
+  const localeManager = container.get(LocaleManager);
   container.get(A11y);
-  container.get(RouterController);
-  container.get(TelemetryManager);
-
-  container.get(LocaleManager).activate();
+  localeManager.activate();
 
   return container;
 }
