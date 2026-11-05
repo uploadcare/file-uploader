@@ -354,14 +354,6 @@ export class EditorToolbar extends EditorBlock {
     ];
   }
 
-  public constructor() {
-    super();
-
-    this.onEditorAttach(() => {
-      this._updateInfoTooltip();
-    });
-  }
-
   public override connectedCallback(): void {
     super.connectedCallback();
     window.addEventListener('resize', this._handleWindowResize);
