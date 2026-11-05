@@ -8,9 +8,13 @@
     min-height: var(--uc-file-item-height);
   }
 
-  /* Every row keeps the same gap so the virtualizer's fixed rowHeight holds: the
-     last MOUNTED row is not the true last one under windowing, so a
-     `:last-of-type { gap: 0 }` would shrink a mid-list row and nudge alignment. */
+  /* No gap below the last file, as in 1.35. Under windowing a spacer follows the
+     last rendered row until the end of the list is in view, so `:last-child`
+     matches only the true last row and mid-list rows keep the virtualizer's
+     row height (`:last-of-type` would match the last rendered row). */
+  uc-file-item:last-child {
+    --uc-file-item-gap: 0;
+  }
 
   uc-file-item > .uc-inner {
     position: relative;

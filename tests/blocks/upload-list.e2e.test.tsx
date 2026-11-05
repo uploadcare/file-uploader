@@ -113,6 +113,26 @@ describe('uc-upload-list virtualization', () => {
     await expect.poll(() => root.querySelector('uc-file-item:last-of-type')?.textContent).toContain('f299.txt');
   });
 
+  it('drops the gap below the last file only, as in 1.35, not below the last rendered row', async () => {
+    const { api, root } = await renderSolution('regular', { confirmUpload: true, multipleMax: 1000 });
+    addFiles(api, 300);
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+    await expect.poll(() => root.querySelector('.uc-list-spacer')).not.toBeNull();
+    // A row not yet in view renders an empty shell, so read the gap its height and margin come from.
+    const gapBelow = (row: Element | undefined) =>
+      row ? getComputedStyle(row).getPropertyValue('--uc-file-item-gap').trim() : null;
+    const lastRendered = () => [...root.querySelectorAll('uc-file-item')].at(-1);
+
+    // Mid-list the last rendered row has a spacer after it and keeps its gap.
+    expect(gapBelow(lastRendered())).toBe('4px');
+
+    const files = root.querySelector<HTMLElement>('.uc-files')!;
+    files.scrollTop = files.scrollHeight;
+    await expect.poll(() => lastRendered()?.textContent).toContain('f299.txt');
+    await expect.poll(() => gapBelow(lastRendered())).toBe('0');
+  });
+
   const height = (el: Element) => el.getBoundingClientRect().height;
   const sum = (els: Iterable<Element>) => [...els].reduce((total, el) => total + height(el), 0);
   const rowIndex = (row: Element | undefined) => Number(/f(\d+)\.txt/.exec(row?.textContent ?? '')?.[1] ?? Number.NaN);
