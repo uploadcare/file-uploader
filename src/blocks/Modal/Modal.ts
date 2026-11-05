@@ -131,22 +131,13 @@ export class Modal extends ChildBlock {
 
   protected async show(): Promise<void> {
     await this.whileAdopted(this.updateComplete);
-    const dialog = this.dialogEl.value as HTMLDialogElement & {
-      show?: () => void;
-      showModal?: () => void;
-    };
-    // Idempotent + null-safe (matching `hide()`): `willUpdate` calls this on
-    // every update while the modal is in the foreground, but `showModal()`
-    // throws on an already-open dialog, and the ref may be cleared by a teardown
-    // racing this async method.
-    if (!dialog) return;
+    // Rendered by now: the ref is cleared only on disconnect, which ends the adoption the await above is bound to.
+    const dialog = this.dialogEl.value as HTMLDialogElement;
+    // Idempotent: `willUpdate` calls this on every update while the modal is in the foreground, but `showModal()`
+    // throws on an already-open dialog.
     if (this._config.get('modalPresentation') === 'inline') {
       // In the page, not the top layer: no backdrop, nothing made inert. `show()` moves focus in, as `showModal()`
       // does, and `hide()` returns it to the opener.
-      if (typeof dialog.show !== 'function') {
-        dialog.setAttribute('open', '');
-        return;
-      }
       if (dialog.open && !dialog.matches(':modal')) return;
       if (dialog.open) {
         // The option changed while the modal dialog was open: only `close()` takes it out of the top layer.
@@ -164,15 +155,11 @@ export class Modal extends ChildBlock {
     if (dialog.open) {
       // Moving an open dialog in the DOM takes it out of the top layer but keeps `open`, leaving it in-flow with no
       // backdrop or Escape. Re-enter the top layer; dropping the attribute (unlike `close()`) fires no `close`.
-      if (typeof dialog.showModal !== 'function' || dialog.matches(':modal')) return;
+      if (dialog.matches(':modal')) return;
       dialog.removeAttribute('open');
     }
-    if (typeof dialog.showModal === 'function') {
-      dialog.showModal();
-      await this._settleInitialFocus(dialog);
-    } else {
-      dialog.setAttribute('open', '');
-    }
+    dialog.showModal();
+    await this._settleInitialFocus(dialog);
   }
 
   /**
@@ -203,17 +190,12 @@ export class Modal extends ChildBlock {
   }
 
   protected hide(): void {
-    const dialog = this.dialogEl.value as HTMLDialogElement & {
-      close?: () => void;
-    };
+    // No ref before the first render: the first `willUpdate` runs ahead of it.
+    const dialog = this.dialogEl.value;
     if (!dialog || !dialog.open) return;
-    const wasInline = !dialog.matches?.(':modal');
-    if (typeof dialog.close === 'function') {
-      this._ownClosesPending++;
-      dialog.close();
-    } else {
-      dialog.removeAttribute('open');
-    }
+    const wasInline = !dialog.matches(':modal');
+    this._ownClosesPending++;
+    dialog.close();
     const opener = this._inlineOpener;
     this._inlineOpener = null;
     if (wasInline && opener) {
@@ -221,7 +203,7 @@ export class Modal extends ChildBlock {
       this.runTask(async () => {
         await this.whileAdopted(delay(0));
         const active = document.activeElement;
-        if (opener.isConnected && (!active || active === document.body || dialog.contains(active))) opener.focus();
+        if (opener.isConnected && (active === document.body || dialog.contains(active))) opener.focus();
       });
     }
   }
