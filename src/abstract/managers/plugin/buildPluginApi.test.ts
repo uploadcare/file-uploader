@@ -3,6 +3,7 @@ import { ConfigController } from '../../controllers/ConfigController';
 import { RouterController } from '../../controllers/RouterController';
 import { UploadCollectionController } from '../../controllers/UploadCollectionController';
 import { ControllerContainer } from '../../di/ControllerContainer';
+import { Disposables } from '../../di/Disposables';
 import { logger } from '../../logger';
 import { buildPluginApi } from './buildPluginApi';
 import { PluginRegistry } from './PluginRegistry';
@@ -20,7 +21,7 @@ const setup = () => {
   // M-god step 7: the plugin API reads config directly off a `ConfigController`
   // (was the `*cfg/*` PubSub facade).
   const config = new ConfigController();
-  const configSubscriptions: (() => void)[] = [];
+  const configSubscriptions = new Disposables();
   // One scoped logger per plugin (mirrors PluginController's controllerLogger).
   const log = logger.scope('plugin:test-plugin');
   const api = buildPluginApi(registry, config, container, 'test-plugin', configSubscriptions, log);
@@ -123,8 +124,9 @@ describe('buildPluginApi', () => {
       const { api, config, configSubscriptions } = setup();
       config.set('sourceList', 'a');
       const cb = vi.fn();
+      const add = vi.spyOn(configSubscriptions, 'add');
       const unsub = api.config.subscribe('sourceList', cb);
-      expect(configSubscriptions).toHaveLength(1);
+      expect(add).toHaveBeenCalledExactlyOnceWith(unsub);
       cb.mockClear();
 
       unsub();
@@ -185,9 +187,10 @@ describe('buildPluginApi', () => {
     it('subscribeToParams fires immediately then on param changes, and registers its teardown', () => {
       const { api, router, configSubscriptions } = setup();
       const cb = vi.fn();
+      const add = vi.spyOn(configSubscriptions, 'add');
       const unsub = api.activity.subscribeToParams(cb);
       expect(cb).toHaveBeenCalledTimes(1);
-      expect(configSubscriptions).toHaveLength(1);
+      expect(add).toHaveBeenCalledExactlyOnceWith(unsub);
 
       router.navigate('start-from');
       expect(cb.mock.calls.length).toBeGreaterThanOrEqual(2);

@@ -4,6 +4,7 @@ import { RouterController } from '../../controllers/RouterController';
 import { UploadCollectionController } from '../../controllers/UploadCollectionController';
 import type { CustomConfig } from '../../customConfigOptions';
 import type { ControllerContainer } from '../../di/ControllerContainer';
+import type { Disposables } from '../../di/Disposables';
 import type { Logger } from '../../logger';
 import type { Uid } from '../../Uid';
 import type { PluginRegistry } from './PluginRegistry';
@@ -22,7 +23,7 @@ export function buildPluginApi(
   config: ConfigController,
   container: ControllerContainer,
   pluginId: string,
-  configSubscriptions: (() => void)[],
+  configSubscriptions: Disposables,
   /** Per-plugin scoped logger — also exposed as `pluginApi.logger`. */
   log: Logger,
 ): PluginApi {
@@ -66,7 +67,7 @@ export function buildPluginApi(
       // Immediate fire + per-key `Object.is` dedup via the atomic `observe`
       // — the same semantics the `ctx.sub('*cfg/<name>', …)` facade gave.
       const unsub = config.observe(configName, callback, { immediate: true });
-      configSubscriptions.push(unsub);
+      configSubscriptions.add(unsub);
       return unsub;
     },
   };
@@ -86,7 +87,7 @@ export function buildPluginApi(
           callback(router.params as Record<string, unknown>);
         }
       });
-      configSubscriptions.push(unsub);
+      configSubscriptions.add(unsub);
       return unsub;
     },
   };

@@ -15,7 +15,7 @@ const build = (deps: PluginControllerDeps) => {
 };
 
 // A `buildApi` that wires the registry register* methods onto the real registry,
-// so registrations show up in `snapshot()` / get purged on unregister. Pushes a
+// so registrations show up in `snapshot()` / get purged on unregister. Adds a
 // tracked unsub into `configSubscriptions` to exercise the error-cleanup path.
 const setup = () => {
   let onCompute: ((p: Promise<UploaderPlugin[] | undefined>) => void) | undefined;
@@ -26,7 +26,7 @@ const setup = () => {
   const buildApi: PluginControllerDeps['buildApi'] = (registry: PluginRegistry, pluginId, configSubscriptions, log) => {
     const sub = vi.fn();
     configUnsubs.push(sub);
-    configSubscriptions.push(sub);
+    configSubscriptions.add(sub);
     const registryApi: PluginApi['registry'] = {
       registerSource: (s) => registry.addSource(pluginId, s),
       registerActivity: (a) => registry.addActivity(pluginId, a),
@@ -311,7 +311,7 @@ describe('PluginController', () => {
 
     await t.sync([sourcePlugin('a')]);
 
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('[plugin-manager]'), expect.any(String), error);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('[host-subscription]'), expect.any(String), error);
   });
 
   describe('runOnAddHooks', () => {
@@ -523,7 +523,7 @@ describe('PluginController', () => {
       let onCompute: ((p: Promise<UploaderPlugin[] | undefined>) => void) | undefined;
       const { controller } = build({
         buildApi: (_registry, _pluginId, subs) => {
-          subs.push(() => {
+          subs.add(() => {
             throw new Error('unsub boom');
           });
           return {} as PluginApi;
@@ -547,11 +547,7 @@ describe('PluginController', () => {
       );
       await controller.pluginsReady();
 
-      expect(warn).toHaveBeenCalledWith(
-        '[uc][plugin-manager]',
-        'Failed to unsubscribe config listener',
-        expect.any(Error),
-      );
+      expect(warn).toHaveBeenCalledWith('[uc][plugin-manager]', 'Disposables: a teardown threw', expect.any(Error));
     });
 
     it('contains a config-subscription that throws during unregister', async () => {
@@ -559,7 +555,7 @@ describe('PluginController', () => {
       let onCompute: ((p: Promise<UploaderPlugin[] | undefined>) => void) | undefined;
       const { controller } = build({
         buildApi: (_registry, _pluginId, subs) => {
-          subs.push(() => {
+          subs.add(() => {
             throw new Error('unsub boom');
           });
           return {} as PluginApi;

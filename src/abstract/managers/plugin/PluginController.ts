@@ -3,6 +3,7 @@ import { controllerLogger } from '../../controllerLogger';
 import { ConfigController } from '../../controllers/ConfigController';
 import { containerOf, lifetimeOf } from '../../di/ControllerContainer';
 import { Disposables } from '../../di/Disposables';
+import { Listeners } from '../../host-subscription';
 import type { Logger } from '../../logger';
 import type { UploadEntryTypedData } from '../../uploadEntrySchema';
 import { PluginRegistry } from './PluginRegistry';
@@ -13,7 +14,7 @@ type Unsubscribe = () => void;
 
 export type PluginControllerDeps = {
   /** Build the per-plugin public `PluginApi` (config/activity/files bridged to the host). */
-  buildApi: (registry: PluginRegistry, pluginId: string, configSubscriptions: Unsubscribe[], log: Logger) => PluginApi;
+  buildApi: (registry: PluginRegistry, pluginId: string, configSubscriptions: Disposables, log: Logger) => PluginApi;
   /** The public uploader API passed to each plugin's `setup`. */
   getUploaderApi: () => PluginUploaderApi;
   /**
@@ -26,7 +27,7 @@ export type PluginControllerDeps = {
 type RegisteredPlugin = {
   plugin: UploaderPlugin;
   dispose?: Unsubscribe;
-  configSubscriptions: Unsubscribe[];
+  configSubscriptions: Disposables;
 };
 
 /**
@@ -44,10 +45,10 @@ export class PluginController {
   private readonly _log = controllerLogger(this, 'plugin-manager');
   private _deps: PluginControllerDeps;
   private _plugins: Map<string, RegisteredPlugin> = new Map();
-  private _subscribers: Set<Unsubscribe> = new Set();
+  readonly #changes = new Listeners();
   private _pluginsUpdate: Promise<void> = Promise.resolve();
   readonly #disposables = new Disposables();
-  public readonly registry = new PluginRegistry(() => this._notifySubscribers());
+  public readonly registry = new PluginRegistry(() => this.#changes.notify());
 
   // Purge a plugin's registrations AND drop the config descriptors it registered
   // on the ctx's `ConfigController` (the single source of truth for config now —
@@ -87,10 +88,7 @@ export class PluginController {
   }
 
   public onPluginsChange(callback: Unsubscribe): Unsubscribe {
-    this._subscribers.add(callback);
-    return () => {
-      this._subscribers.delete(callback);
-    };
+    return this.#changes.subscribe(callback);
   }
 
   private async _syncPlugins(plugins: UploaderPlugin[]): Promise<void> {
@@ -116,7 +114,7 @@ export class PluginController {
           // Asks the lifetime, not the error: a setup() rejecting with its own AbortError is a plugin failure.
           if (lifetimeOf(this).signal.aborted) throw error;
           this._purgePlugin(plugin.id);
-          this._notifySubscribers();
+          this.#changes.notify();
           this._log.error(`Plugin "${plugin.id}" setup() threw an error`, error);
         }
       }
@@ -129,7 +127,7 @@ export class PluginController {
   }
 
   private async _registerPlugin(plugin: UploaderPlugin): Promise<void> {
-    const configSubscriptions: Unsubscribe[] = [];
+    const configSubscriptions = new Disposables(() => this._log);
     // A logger scoped to this plugin — `[uc][<ctx-name>][plugin:<id>]`, verbose
     // tier gated by the uploader's `debug` config. Exposed as `pluginApi.logger`
     // so plugins and host paths (e.g. registerConfig override warn) share it.
@@ -145,12 +143,12 @@ export class PluginController {
           this._disposePlugin(lateDispose ?? undefined),
         )) ?? undefined;
     } catch (error) {
-      this._unsubscribeAll(configSubscriptions);
+      configSubscriptions.run();
       throw error;
     }
 
     this._plugins.set(plugin.id, { plugin, dispose: pluginDispose, configSubscriptions });
-    this._notifySubscribers();
+    this.#changes.notify();
   }
 
   private _unregisterPlugin(pluginId: string): void {
@@ -159,21 +157,11 @@ export class PluginController {
 
     this._purgePlugin(pluginId);
 
-    this._unsubscribeAll(registered.configSubscriptions);
+    registered.configSubscriptions.run();
 
     this._disposePlugin(registered.dispose);
     this._plugins.delete(pluginId);
-    this._notifySubscribers();
-  }
-
-  private _unsubscribeAll(subscriptions: Unsubscribe[]): void {
-    for (const unsub of subscriptions) {
-      try {
-        unsub();
-      } catch (error) {
-        this._log.warn('Failed to unsubscribe config listener', error);
-      }
-    }
+    this.#changes.notify();
   }
 
   private _disposePlugin(dispose: Unsubscribe | undefined): void {
@@ -223,16 +211,5 @@ export class PluginController {
       this._unregisterPlugin(pluginId);
     }
     this.registry.destroy();
-  }
-
-  private _notifySubscribers(): void {
-    for (const callback of this._subscribers) {
-      try {
-        callback();
-      } catch (error) {
-        // Isolate-and-warn: one throwing subscriber must not stop the rest.
-        this._log.warn('A plugins-change subscriber threw', error);
-      }
-    }
   }
 }
