@@ -59,13 +59,6 @@ export class FileUploaderRegular extends SolutionChildBlock {
     });
   }
 
-  /**
-   * Exposes whether the dynamic button is active for non-Lit classes that can't use context
-   */
-  public get isDynamicButtonActive(): boolean {
-    return this.dynamicButton;
-  }
-
   private _renderDynamicButton() {
     return html`
       <uc-dynamic-btn></uc-dynamic-btn>

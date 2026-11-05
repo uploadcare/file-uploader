@@ -59,7 +59,7 @@ describe('FileUploaderRegular', () => {
 
     const dynCtx = freshCtxName();
     const { el: dynEl } = await mount(dynCtx, { 'dynamic-button': '' });
-    expect(dynEl.isDynamicButtonActive).toBe(true);
+    expect(dynEl.dynamicButton).toBe(true);
     expect(dynEl.querySelector('uc-dynamic-btn')).not.toBeNull();
     expect(dynEl.querySelector('uc-simple-btn')).toBeNull();
   });

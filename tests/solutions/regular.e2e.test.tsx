@@ -174,14 +174,14 @@ describe('uc-file-uploader-regular', () => {
     it('becomes the dynamic button when dynamicButton is set', async () => {
       const { root } = await renderSolution('regular');
       const uploader = root as FileUploaderRegular;
-      expect(uploader.isDynamicButtonActive).toBe(false);
+      expect(uploader.dynamicButton).toBe(false);
       await expect.element(within(root).getByTestId('uc-simple-btn')).toBeVisible();
 
       uploader.dynamicButton = true;
 
       await expect.element(within(root).getByTestId('uc-dynamic-btn')).toBeVisible();
       expect(within(root).getByTestId('uc-simple-btn').query()).toBeNull();
-      expect(uploader.isDynamicButtonActive).toBe(true);
+      expect(uploader.dynamicButton).toBe(true);
     });
   });
 });
