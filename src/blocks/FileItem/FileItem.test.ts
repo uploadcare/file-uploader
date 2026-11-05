@@ -65,10 +65,7 @@ const thumb = (el: FileItem): HTMLElement & { badgeIcon: string } =>
 type ActionButton = HTMLElement & {
   uploading: boolean;
   queued: boolean;
-  hideRemove: boolean;
   progress: number;
-  failed: boolean;
-  success: boolean;
 };
 const actionButton = (el: FileItem): ActionButton => el.querySelector('uc-file-action-button') as ActionButton;
 const fileNameText = (el: FileItem): string => el.querySelector('.uc-file-name')?.textContent ?? '';
@@ -193,9 +190,6 @@ describe('FileItem entry-state rendering', () => {
 
     const btn = actionButton(el);
     expect(btn.uploading).toBe(false);
-    expect(btn.hideRemove).toBe(false);
-    expect(btn.failed).toBe(false);
-    expect(btn.success).toBe(false);
     expect(btn.progress).toBe(0);
   });
 
@@ -206,7 +200,6 @@ describe('FileItem entry-state rendering', () => {
 
     expect(inner(el).hasAttribute('data-finished')).toBe(true);
     expect(thumb(el).badgeIcon).toBe('badge-success');
-    expect(actionButton(el).success).toBe(true);
   });
 
   it('FAILED entry (errors set): failed flag, error badge, error text shown', async () => {
@@ -219,7 +212,6 @@ describe('FileItem entry-state rendering', () => {
 
     expect(inner(el).hasAttribute('data-failed')).toBe(true);
     expect(thumb(el).badgeIcon).toBe('badge-error');
-    expect(actionButton(el).failed).toBe(true);
     expect(errorSpan(el).hasAttribute('hidden')).toBe(false);
     expect(errorSpan(el).textContent).toBe('It broke');
     expect(hintSpan(el).hasAttribute('hidden')).toBe(true);
@@ -238,7 +230,6 @@ describe('FileItem entry-state rendering', () => {
     expect(thumb(el).badgeIcon).toBe('');
     const btn = actionButton(el);
     expect(btn.uploading).toBe(true);
-    expect(btn.hideRemove).toBe(true);
     expect(btn.progress).toBe(0.42);
   });
 
@@ -280,7 +271,6 @@ describe('FileItem entry-state rendering', () => {
     });
 
     const btn = actionButton(el);
-    expect(btn.hideRemove).toBe(true);
     expect(btn.uploading).toBe(false);
     expect(btn.queued).toBe(true); // surfaced as the indeterminate queued indicator
     expect(btn.progress).toBe(0.3);

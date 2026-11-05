@@ -105,10 +105,6 @@ export class DynamicBtn extends ChildBlock {
     return this._status === 'idle';
   }
 
-  private get isSuccess() {
-    return this._status === 'success';
-  }
-
   private get isFailed() {
     return this._status === 'failed';
   }
@@ -278,8 +274,6 @@ export class DynamicBtn extends ChildBlock {
     return html`<uc-file-action-button
       @uc:remove=${this._handleRemove}
       .uploading=${this.isUploading}
-      .failed=${this.isFailed}
-      .success=${this.isSuccess}
       .progress=${this._progress}
     ></uc-file-action-button>`;
   }
@@ -288,8 +282,6 @@ export class DynamicBtn extends ChildBlock {
     return classMap({
       'uc-dynamic-btn-inner': true,
       'uc-failed': this.isFailed,
-      'uc-uploading': this.isUploading,
-      'uc-success': this.isSuccess,
     });
   }
 

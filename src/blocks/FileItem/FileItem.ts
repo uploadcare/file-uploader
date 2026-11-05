@@ -306,11 +306,6 @@ export class FileItem extends FileItemConfig {
     return this._state === FileItemState.QUEUED_UPLOADING;
   }
 
-  private get _hideRemoveAction(): boolean {
-    const state = this._state;
-    return state === FileItemState.QUEUED_UPLOADING || state === FileItemState.UPLOADING;
-  }
-
   private get _badgeIcon(): string {
     const state = this._state;
     return state === FileItemState.FAILED ? 'badge-error' : state === FileItemState.FINISHED ? 'badge-success' : '';
@@ -397,10 +392,7 @@ export class FileItem extends FileItemConfig {
             @uc:remove=${this._handleRemove}
             .uploading=${this._isUploading}
             .queued=${this._isQueued}
-            .hideRemove=${this._hideRemoveAction}
             .progress=${this._progressValue}
-            .failed=${this._isFailed}
-            .success=${this._isFinished}
           ></uc-file-action-button>
         </div>
       </div>

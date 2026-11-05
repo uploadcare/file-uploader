@@ -106,10 +106,14 @@ describe('DynamicBtn remove/abort action', () => {
     await expect.element(abortBtn).toBeVisible();
     // `_handleRemove`'s branch is keyed off DynamicBtn's own throttled
     // `_status` (not the raw collection state polled above), so wait for the
-    // button's `uc-failed` class — its render is driven by that same
+    // inner's `uc-failed` class — its render is driven by that same
     // `_status` — before clicking, or a race could still catch the button in
     // an earlier ('uploading'/'idle') branch and abort/clear everything.
-    await expect.poll(() => abortBtn.element().classList.contains('uc-failed'), { timeout: 10_000 }).toBe(true);
+    await expect
+      .poll(() => dynamicBtn.element().querySelector('.uc-dynamic-btn-inner')?.classList.contains('uc-failed'), {
+        timeout: 10_000,
+      })
+      .toBe(true);
     await abortBtn.click();
 
     await expect.poll(() => api.getOutputCollectionState().failedCount, { timeout: 10_000 }).toBe(0);

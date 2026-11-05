@@ -21,15 +21,6 @@ export class FileActionButton extends ChildBlock {
   @property({ type: Boolean })
   public queued = false;
 
-  @property({ type: Boolean })
-  public failed = false;
-
-  @property({ type: Boolean })
-  public success = false;
-
-  @property({ type: Boolean })
-  public hideRemove = false;
-
   @property({ type: Number })
   public progress = 0;
 
@@ -52,9 +43,6 @@ export class FileActionButton extends ChildBlock {
       'uc-mini-btn': true,
       'uc-uploading': this.uploading,
       'uc-queued': this.queued,
-      'uc-hide-remove': this.hideRemove,
-      'uc-failed': this.failed,
-      'uc-success': this.success,
     });
     // Queued → a fixed partial arc that the CSS spins (indeterminate); otherwise
     // the determinate upload progress.
