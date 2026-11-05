@@ -129,11 +129,6 @@ describe('CloudImageEditorController', () => {
     );
   });
 
-  it('constructor accepts services up front, equivalent to setServices', () => {
-    const controller = new CloudImageEditorController(stubEditorServices({ l10n: (key) => `pre:${key}` }));
-    expect(controller.l10n('cancel')).toBe('pre:cancel');
-  });
-
   it('servicesChanged() re-runs a computation over l10n/getConfig with no state change (e.g. a locale load)', () => {
     const controller = new CloudImageEditorController();
     let runs = 0;

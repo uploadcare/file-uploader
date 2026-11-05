@@ -22,16 +22,21 @@ const TestEditorRootBase = RegisterableElementMixin(LightDomMixin(LitElement));
 class TestEditorRoot extends TestEditorRootBase {
   public readonly telemetrySendEvent = vi.fn();
   public readonly telemetrySendEventError = vi.fn();
-  public readonly controller = new CloudImageEditorController(
-    stubEditorServices({
-      l10n: (key) => (key === 'cancel' ? 'Cancel' : key),
-      telemetry: {
-        sendEvent: this.telemetrySendEvent,
-        sendEventError: this.telemetrySendEventError,
-        sendActionEvent: vi.fn(),
-      },
-    }),
-  );
+  public readonly controller = new CloudImageEditorController();
+
+  public constructor() {
+    super();
+    this.controller.setServices(
+      stubEditorServices({
+        l10n: (key) => (key === 'cancel' ? 'Cancel' : key),
+        telemetry: {
+          sendEvent: this.telemetrySendEvent,
+          sendEventError: this.telemetrySendEventError,
+          sendActionEvent: vi.fn(),
+        },
+      }),
+    );
+  }
 
   // biome-ignore lint/correctness/noUnusedPrivateClassMembers: `ContextProvider` provides by side effect — the field keeps it alive for the host's lifetime.
   private readonly _provider = new ContextProvider(this, {

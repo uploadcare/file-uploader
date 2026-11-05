@@ -133,9 +133,9 @@ export class CloudImageEditorController {
   #revision = 0;
   #services: EditorServices;
 
-  public constructor(services?: EditorServices) {
+  public constructor() {
     this.#state = new SignalMap<EditorState>(createDefaultState());
-    this.#services = services ?? createDefaultServices();
+    this.#services = createDefaultServices();
   }
 
   /**

@@ -249,7 +249,8 @@ describe('EditorBlock attach callbacks', () => {
   it('prints the verbose log tier only when the debug config is on', () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => {});
     const config = { ...DEFAULT_EDITOR_CONFIG };
-    const controller = new CloudImageEditorController(stubEditorServices({ getConfig: (key) => config[key] }));
+    const controller = new CloudImageEditorController();
+    controller.setServices(stubEditorServices({ getConfig: (key) => config[key] }));
     const { child } = mountAttach(controller);
 
     child.log.debug('quiet');
