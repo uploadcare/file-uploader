@@ -491,11 +491,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       };
 
       const resizeObserver = new ResizeObserver((entries) => {
-        const [element] = entries;
-        if (!element) {
-          return;
-        }
-        if (element.contentRect.width > 0 && element.contentRect.height > 0) {
+        if (entries.some(({ contentRect }) => contentRect.width > 0 && contentRect.height > 0)) {
           resolveWait();
         }
       });

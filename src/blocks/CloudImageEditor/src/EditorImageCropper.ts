@@ -410,7 +410,7 @@ export class EditorImageCropper extends EditorBlock {
   private _commit(): void {
     // A box that was never laid out (0×0 — e.g. while the editor is detached mid-move) has no crop to read: the
     // preview/source ratio is 0 and the coordinates come out NaN, which would replace the current crop with none.
-    if (!this._imageSize || !this._imageBox.width || !this._imageBox.height) {
+    if (!this._imageBox.width || !this._imageBox.height) {
       return;
     }
     const operations = this._operations;
@@ -497,11 +497,7 @@ export class EditorImageCropper extends EditorBlock {
     }
 
     this._observer = new ResizeObserver((entries) => {
-      const [entry] = entries;
-      if (!entry) {
-        return;
-      }
-      const nonZeroSize = entry.contentRect.width > 0 && entry.contentRect.height > 0;
+      const nonZeroSize = entries.some(({ contentRect }) => contentRect.width > 0 && contentRect.height > 0);
       if (nonZeroSize && this._isActive && this._image) {
         this._handleResizeThrottled();
       }
