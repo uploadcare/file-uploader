@@ -33,19 +33,13 @@ type LocaleCompatCallback = (
 const noop = (): void => {};
 
 /**
- * Snapshot the editor-relevant config keys off the ctx's `ConfigController`.
- *
- * The controller is seeded with every built-in default at construction, so each
- * of these keys is always present — the `undefined` guard only ever elides a key
- * whose default is genuinely `undefined` (none of the six are).
+ * Snapshot the editor-relevant config keys off the ctx's `ConfigController`. The controller is seeded with every
+ * built-in default at construction, so each key is always present.
  */
 function readConfigPatch(config: ConfigController): Partial<EditorConfig> {
   const patch: Partial<EditorConfig> = {};
   for (const key of EDITOR_CONFIG_KEYS) {
-    const value = config.get(key);
-    if (value !== undefined) {
-      Object.assign(patch, { [key]: value });
-    }
+    Object.assign(patch, { [key]: config.get(key) });
   }
   return patch;
 }
@@ -53,28 +47,25 @@ function readConfigPatch(config: ConfigController): Partial<EditorConfig> {
 function attach(
   container: ControllerContainer,
   onConfig: (patch: Partial<EditorConfig>) => void,
-  onLocale?: LocaleCompatCallback,
-  onTelemetry?: (telemetryManager: TelemetryManager) => void,
+  onLocale: LocaleCompatCallback,
+  onTelemetry: (telemetryManager: TelemetryManager) => void,
 ): () => void {
   const config = container.get(ConfigController);
 
-  const initialPatch = readConfigPatch(config);
-  if (Object.keys(initialPatch).length > 0) {
-    onConfig(initialPatch);
-  }
+  onConfig(readConfigPatch(config));
 
   // Hand over an l10n bound to this ctx's locale, interpolating. `createL10n`
   // reads the `LocaleController` live, so later locale population is reflected.
-  onLocale?.(createL10n(() => container.get(LocaleController)));
+  onLocale(createL10n(() => container.get(LocaleController)));
 
   // The `TelemetryManager` is eagerly constructed with the container
   // (`UploaderRegistry.ensure`), so it is always present here — no need to wait
   // for it.
-  onTelemetry?.(container.get(TelemetryManager));
+  onTelemetry(container.get(TelemetryManager));
 
   // Per-key change forwarding via the atomic `observe` (it dedups with
   // `Object.is`). No `{ immediate }`:
-  // the initial values already went out via `initialPatch`.
+  // the initial values already went out via `readConfigPatch`.
   const unsubscribers = EDITOR_CONFIG_KEYS.map((key) =>
     config.observe(key, (next) => {
       onConfig({ [key]: next } as Partial<EditorConfig>);
@@ -91,8 +82,8 @@ function attach(
 export function subscribeUploaderConfigCompat(
   ctxName: string,
   onConfig: (patch: Partial<EditorConfig>) => void,
-  onLocale?: LocaleCompatCallback,
-  onTelemetry?: (telemetryManager: TelemetryManager) => void,
+  onLocale: LocaleCompatCallback,
+  onTelemetry: (telemetryManager: TelemetryManager) => void,
 ): () => void {
   // Bind now if the sibling ctx's container already exists, or WHEN it registers
   // — a `<uc-config>` sibling connects AFTER the editor in the documented
@@ -107,7 +98,7 @@ export function subscribeUploaderConfigCompat(
     if (container) {
       detach = attach(container, onConfig, onLocale, onTelemetry);
     } else {
-      onLocale?.(undefined);
+      onLocale(undefined);
     }
   });
   return () => {

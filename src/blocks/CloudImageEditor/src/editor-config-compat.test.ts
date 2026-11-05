@@ -46,7 +46,7 @@ describe('subscribeUploaderConfigCompat', () => {
     config.set('cdnCname', 'https://cdn.example.com/');
     const onConfig = vi.fn();
 
-    const unsubscribe = subscribeUploaderConfigCompat(ctxName, onConfig, vi.fn());
+    const unsubscribe = subscribeUploaderConfigCompat(ctxName, onConfig, vi.fn(), vi.fn());
 
     // Step-9 behavior: the initial patch always includes every editor key (the
     // `ConfigController` is seeded with all defaults), with the sibling's value
@@ -70,7 +70,7 @@ describe('subscribeUploaderConfigCompat', () => {
   it('forwards later per-key config changes (deduped)', () => {
     const { ctxName, config } = ensureCtx();
     const onConfig = vi.fn();
-    const unsubscribe = subscribeUploaderConfigCompat(ctxName, onConfig, vi.fn());
+    const unsubscribe = subscribeUploaderConfigCompat(ctxName, onConfig, vi.fn(), vi.fn());
     onConfig.mockClear();
 
     config.set('testMode', true);
@@ -87,7 +87,7 @@ describe('subscribeUploaderConfigCompat', () => {
   it('stops forwarding after unsubscribe', () => {
     const { ctxName, config } = ensureCtx();
     const onConfig = vi.fn();
-    const unsubscribe = subscribeUploaderConfigCompat(ctxName, onConfig, vi.fn());
+    const unsubscribe = subscribeUploaderConfigCompat(ctxName, onConfig, vi.fn(), vi.fn());
     unsubscribe();
     onConfig.mockClear();
 
@@ -101,7 +101,7 @@ describe('subscribeUploaderConfigCompat', () => {
     container?.get(LocaleController).set('greeting', 'Hello {{name}}');
     const onLocale = vi.fn();
 
-    const unsubscribe = subscribeUploaderConfigCompat(ctxName, vi.fn(), onLocale);
+    const unsubscribe = subscribeUploaderConfigCompat(ctxName, vi.fn(), onLocale, vi.fn());
 
     expect(onLocale).toHaveBeenCalledTimes(1);
     const l10n = onLocale.mock.calls[0]?.[0] as (key: string, vars?: Record<string, string>) => string;
