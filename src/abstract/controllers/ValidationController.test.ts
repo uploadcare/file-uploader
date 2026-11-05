@@ -127,7 +127,11 @@ describe('ValidationController', () => {
 
     const errors: OutputErrorCollection[] = collectionState.get('collectionErrors');
     expect(errors.some((e) => e.type === 'TOO_FEW_FILES')).toBe(true);
-    expect(emit).toHaveBeenCalledWith(EventType.COMMON_UPLOAD_FAILED, expect.any(Function), { debounce: true });
+    // A collection error alone stays out of telemetry, as in v1.
+    expect(emit).toHaveBeenCalledWith(EventType.COMMON_UPLOAD_FAILED, expect.any(Function), {
+      debounce: true,
+      telemetry: false,
+    });
   });
 
   it('runCollectionValidators isolates a throwing custom collection validator and warns', () => {

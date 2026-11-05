@@ -28,9 +28,15 @@ type TelemetryEventBody = Partial<Pick<TelemetryState, 'payload' | 'config' | 'c
   eventType: CommonEventType;
 };
 
-/** Uploader events that are too frequent, or too per-file, to report to telemetry. */
+/**
+ * Uploader events not reported to telemetry: too frequent or too per-file, or (`COMMON_UPLOAD_START`) never reported by
+ * v1, whose `uploadAll` emitted it past telemetry.
+ */
+// NEXT-MAJOR(telemetry): report common-upload-start, and common-upload-failed for collection errors (EventEmitter's
+// `telemetry: false`). Kept out for 1.x compat with 1.35's telemetry.
 const EXCLUDED_EVENTS: ReadonlySet<CommonEventType> = new Set([
   EventType.CHANGE,
+  EventType.COMMON_UPLOAD_START,
   EventType.COMMON_UPLOAD_PROGRESS,
   EventType.FILE_ADDED,
   EventType.FILE_REMOVED,
@@ -93,12 +99,13 @@ export class TelemetryManager {
     // is isolate-and-warn (see `EventBus.emit`), so a throw here can't break the
     // fan-out — no extra try/catch needed around this observer.
     this.#disposables.add(
-      this._bus.onAny((type, payload) =>
+      this._bus.onAny((type, payload, meta) => {
+        if (meta.telemetry === false) return;
         this.sendEvent({
           eventType: type as CommonEventType,
           payload: (payload ?? undefined) as Record<string, unknown> | undefined,
-        }),
-      ),
+        });
+      }),
     );
   }
 

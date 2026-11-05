@@ -44,6 +44,18 @@ describe('UploadCollectionEventsController.emitCommonFailedIfSettled', () => {
     expect(t.failedEmits()).toHaveLength(1);
   });
 
+  it('keeps a report with only collection errors out of telemetry, as v1 did', () => {
+    const t = setup();
+    t.collection.add({ fileName: 'a.txt' });
+    t.collectionState.set('collectionErrors', [{ type: 'TOO_FEW_FILES', message: 'm' }] as never);
+
+    t.events.emitCommonFailedIfSettled();
+
+    expect(t.failedEmits()).toEqual([
+      [UploaderEventType.COMMON_UPLOAD_FAILED, expect.any(Function), { debounce: true, telemetry: false }],
+    ]);
+  });
+
   it('waits while another file still uploads, queues or validates', () => {
     for (const flag of [
       'isUploading',

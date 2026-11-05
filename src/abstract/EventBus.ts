@@ -72,6 +72,12 @@ export type UploaderEventPayload = {
   'group-created': OutputCollectionState<'success', 'has-group'>;
 };
 
+/** How an emit reaches the bus's catch-all observers. */
+export type EmitMeta = {
+  /** `false` keeps the event out of telemetry; its listeners still get it. */
+  telemetry?: boolean;
+};
+
 /**
  * Pure pub/sub. No DOM, no CustomEvent — `<uc-upload-ctx-provider>` bridges
  * this to DOM events.
@@ -81,7 +87,9 @@ export class EventBus {
   // is gated by THIS ctx's `debug` config. ctx-name + gate resolve lazily at log
   // time via the container that built this instance.
   private readonly _log = controllerLogger(this, 'event-bus');
-  private _listeners = new Map<string, Set<(payload: unknown) => void>>();
+  private _listeners = new Map<string, Set<(payload: unknown, meta: EmitMeta) => void>>();
+  /** `onAny` wrappers: the only listeners given the emit's meta, so `on` handlers see just the payload. */
+  private readonly _anyWrappers = new WeakSet<(payload: unknown, meta: EmitMeta) => void>();
   private _debounceTimers = new Map<string, number>();
 
   public on<K extends UploaderEventKey>(type: K, handler: (payload: UploaderEventPayload[K]) => void): () => void {
@@ -110,7 +118,7 @@ export class EventBus {
    * the uploader through here, so this is where an event raised once the ctx is
    * torn down (by a controller's teardown or late async work) is dropped.
    */
-  public emit<K extends UploaderEventKey>(type: K, payload: UploaderEventPayload[K]): void {
+  public emit<K extends UploaderEventKey>(type: K, payload: UploaderEventPayload[K], meta: EmitMeta = {}): void {
     if (lifetimeOf(this).signal.aborted) return;
     // Central event logging (verbose/debug-gated) — one readable line per event,
     // moved here from the DOM event bridge so every emit is logged at the source.
@@ -121,7 +129,8 @@ export class EventBus {
     if (!set) return;
     for (const handler of set) {
       try {
-        handler(payload);
+        if (this._anyWrappers.has(handler)) handler(payload, meta);
+        else (handler as (payload: unknown) => void)(payload);
       } catch (err) {
         this._log.warn(`listener for "${type}" threw`, err);
       }
@@ -132,13 +141,17 @@ export class EventBus {
    * Debounced emit ({@link EMIT_DEBOUNCE_MS} window). `payload` is a thunk so a heavy
    * `buildOutputCollectionState` is only built once per debounce window.
    */
-  public emitDebounced<K extends UploaderEventKey>(type: K, payload: () => UploaderEventPayload[K]): void {
+  public emitDebounced<K extends UploaderEventKey>(
+    type: K,
+    payload: () => UploaderEventPayload[K],
+    meta: EmitMeta = {},
+  ): void {
     const existing = this._debounceTimers.get(type);
     if (existing) window.clearTimeout(existing);
     const timeoutId = window.setTimeout(() => {
       this._debounceTimers.delete(type);
       try {
-        this.emit(type, payload());
+        this.emit(type, payload(), meta);
       } catch (err) {
         this._log.warn(`payload thunk for "${type}" threw`, err);
       }
@@ -147,8 +160,12 @@ export class EventBus {
   }
 
   /** Catch-all subscription — receives every emitted event with its type. */
-  public onAny(handler: (type: string, payload: unknown) => void): () => void {
-    const wrap = (type: string) => (payload: unknown) => handler(type, payload);
+  public onAny(handler: (type: string, payload: unknown, meta: EmitMeta) => void): () => void {
+    const wrap = (type: string) => {
+      const wrapper = (payload: unknown, meta: EmitMeta) => handler(type, payload, meta);
+      this._anyWrappers.add(wrapper);
+      return wrapper;
+    };
     const unsubs: Array<() => void> = [];
     for (const type of Object.values(UploaderEventType)) {
       unsubs.push(this.on(type as UploaderEventKey, wrap(type) as never));

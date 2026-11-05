@@ -377,19 +377,26 @@ describe('TelemetryManager', () => {
       expect(sendEventMock).not.toHaveBeenCalled();
     });
 
-    it('newly telemeters common-upload-start observed off the bus (documented parity change: uploadAll)', async () => {
-      // uploadAll (and emitCommonUploadFailed) emit directly on the EventEmitter,
-      // bypassing the old per-emit mirror — telemetry never saw them before.
-      // As a bus observer it now does, an intended consistency improvement.
+    it('keeps common-upload-start out of telemetry, as v1 did', async () => {
       const { emitOnBus } = setup({ solution: 'uc-file-uploader-regular' });
 
       emitOnBus(EventType.COMMON_UPLOAD_START, {} as never);
       await flush();
 
+      expect(sendEventMock).not.toHaveBeenCalled();
+    });
+
+    it('drops an event emitted with telemetry off, and still sends the same event emitted normally', async () => {
+      const { container } = setup({ solution: 'uc-file-uploader-regular' });
+      const emitter = container.get(EventEmitter);
+
+      emitter.emit(EventType.COMMON_UPLOAD_FAILED, {} as never, { telemetry: false });
+      await flush();
+      expect(sendEventMock).not.toHaveBeenCalled();
+
+      emitter.emit(EventType.COMMON_UPLOAD_FAILED, {} as never);
+      await flush();
       expect(sendEventMock).toHaveBeenCalledTimes(1);
-      expect((sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>).eventType).toBe(
-        EventType.COMMON_UPLOAD_START,
-      );
     });
 
     it('sends nothing observed off the bus while disabled', async () => {
