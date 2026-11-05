@@ -6,13 +6,7 @@ import { TelemetryManager } from './managers/TelemetryManager';
 
 const log = logger.scope('uploader-registry');
 
-/** A single `whenAvailable` subscription. Wrapped in its own object (rather
- * than storing the callback directly) so two subscriptions passing the SAME
- * callback reference still occupy two distinct entries — deduping by
- * identity would let one unsubscribe silently evict the other. */
-interface ConsumerSubscription {
-  cb: (c: ControllerContainer | null) => void;
-}
+type Consumer = (c: ControllerContainer | null) => void;
 
 /**
  * Global registry of uploader scopes keyed by `ctx-name`, and the single
@@ -34,7 +28,7 @@ interface ConsumerSubscription {
  */
 class UploaderRegistryImpl {
   private _map = new Map<string, ControllerContainer>();
-  private _consumers = new Map<string, Set<ConsumerSubscription>>();
+  private _consumers = new Map<string, Set<Consumer>>();
 
   /**
    * Fan out a registration change to every `whenAvailable` consumer for
@@ -48,9 +42,9 @@ class UploaderRegistryImpl {
     if (!set) {
       return;
     }
-    for (const sub of [...set]) {
+    for (const cb of [...set]) {
       try {
-        sub.cb(container);
+        cb(container);
       } catch (err) {
         log.warn(`a whenAvailable consumer for ctx-name="${ctxName}" threw`, err);
       }
@@ -112,25 +106,20 @@ class UploaderRegistryImpl {
    * unregistered (its ctx is gone — consumers must release, not just wait for
    * a replacement that may never come). Returns an unsubscribe.
    */
-  public whenAvailable(ctxName: string, cb: (c: ControllerContainer | null) => void): () => void {
+  public whenAvailable(ctxName: string, cb: Consumer): () => void {
     let set = this._consumers.get(ctxName);
     if (!set) {
       set = new Set();
       this._consumers.set(ctxName, set);
     }
-    // A fresh wrapper per call — even if `cb` is the same function reference
-    // as an existing subscription, this is a distinct slot in the Set so the
-    // two subscriptions' lifecycles stay independent (see `ConsumerSubscription`).
-    const sub: ConsumerSubscription = { cb };
-    set.add(sub);
+    set.add(cb);
     const existing = this._map.get(ctxName);
     if (existing) cb(existing);
     return () => {
-      set.delete(sub);
+      set.delete(cb);
       // Drop the empty consumer Set so unused ctx-names don't accumulate in
-      // this module-level singleton over the app's lifetime. Only the Set still
-      // registered: a repeat call after it was recreated must not drop the new one.
-      if (set.size === 0 && this._consumers.get(ctxName) === set) this._consumers.delete(ctxName);
+      // this module-level singleton over the app's lifetime.
+      if (set.size === 0) this._consumers.delete(ctxName);
     };
   }
 }

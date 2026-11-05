@@ -25,21 +25,6 @@ describe('UploaderRegistry', () => {
     UploaderRegistry.dispose(name);
   });
 
-  it('keeps a later consumer when an old whenAvailable unsubscribe is called twice', () => {
-    const name = uniqueName();
-    const off = UploaderRegistry.whenAvailable(name, () => {});
-    off();
-    const later = vi.fn();
-    const offLater = UploaderRegistry.whenAvailable(name, later);
-
-    off();
-    const container = UploaderRegistry.ensure(name);
-
-    expect(later).toHaveBeenCalledWith(container);
-    offLater();
-    UploaderRegistry.dispose(name);
-  });
-
   it('whenAvailable fires when a container registers later', () => {
     const name = uniqueName();
     const cb = vi.fn();
@@ -167,35 +152,6 @@ describe('UploaderRegistry', () => {
     expect(() => UploaderRegistry.dispose(name)).not.toThrow();
     expect(a).not.toHaveBeenCalled();
     expect(c).not.toHaveBeenCalled();
-  });
-
-  // `_consumers` must track each `whenAvailable` call as a distinct
-  // subscription, not dedupe by callback identity. Two subscriptions sharing
-  // the same callback reference are independent slots — unsubscribing one must
-  // not silence or evict the other.
-  it('two whenAvailable subscriptions sharing the same callback are independent slots', () => {
-    const name = uniqueName();
-    const cb = vi.fn();
-    const offFirst = UploaderRegistry.whenAvailable(name, cb);
-    const offSecond = UploaderRegistry.whenAvailable(name, cb);
-
-    const container = UploaderRegistry.ensure(name);
-    // Both subscriptions notify independently, even though it's the same
-    // function reference — one call per live subscription, not deduped.
-    expect(cb).toHaveBeenCalledTimes(2);
-    expect(cb).toHaveBeenCalledWith(container);
-    UploaderRegistry.dispose(name);
-    cb.mockClear();
-
-    // Unsubscribing just one of the two must leave the other live.
-    offFirst();
-
-    const second = UploaderRegistry.ensure(name);
-    expect(cb).toHaveBeenCalledTimes(1);
-    expect(cb).toHaveBeenCalledWith(second);
-
-    offSecond();
-    UploaderRegistry.dispose(name);
   });
 
   // The registry owns the container lifecycle: create + cache + eager

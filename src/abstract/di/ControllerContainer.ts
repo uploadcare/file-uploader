@@ -240,16 +240,9 @@ export class ControllerContainer {
         teardown?.();
         return;
       }
-      // Still pending: cancel the waiter. Stale-unsubscribe guard — only mutate
-      // the set STILL registered for this token. Once flushed/cleared,
-      // `#controllerWaiters` may hold a fresh set for the same token; a
-      // captured-set `delete` (and especially the empty cleanup below) must not
-      // touch it.
-      if (this.#controllerWaiters.get(Ctrl) !== set) {
-        return;
-      }
+      // Still pending: cancel the waiter. An emptied set stays until the token
+      // resolves or the container is disposed.
       set.delete(waiter);
-      if (set.size === 0) this.#controllerWaiters.delete(Ctrl);
     };
   }
 
