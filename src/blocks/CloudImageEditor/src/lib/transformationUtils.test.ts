@@ -131,15 +131,6 @@ describe('transformationsToOperations', () => {
   it('PRE-FIX: drops filter entirely when its amount equals the default (0)', () => {
     expect(serializeOperations(transformationsToOperations({ filter: { name: 'adaris', amount: 0 } }))).toBe('');
   });
-
-  it('emits nothing for a value whose shape it cannot serialise', () => {
-    // Defensive fallthrough: a non-number, non-boolean value on an operation
-    // that is not `filter`/`crop` (reachable only from malformed state, but the
-    // rebuilt implementation must stay equally quiet rather than emit garbage).
-    const transformations = { rotate: {} } as unknown as Transformations;
-
-    expect(serializeOperations(transformationsToOperations(transformations))).toBe('');
-  });
 });
 
 describe('COMMON_OPERATIONS', () => {

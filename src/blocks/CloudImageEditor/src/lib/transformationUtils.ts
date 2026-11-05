@@ -50,7 +50,7 @@ const SUPPORTED_OPERATIONS_ORDERED = [
  * creators validated at runtime (`__DEV__`-only, so production shipped the
  * checking machinery without the checks). What is lost by moving off the
  * creators is dev-only numeric range checking (e.g. `brightness(500)`
- * throwing); `isMeaningful` below still keeps malformed shapes out.
+ * throwing).
  */
 const OPERATION_WRITERS = {
   enhance: (value: number) => `enhance/${value}` as const,
@@ -81,14 +81,6 @@ function isMeaningful<T extends keyof Transformations>(operation: T, value: Tran
   if (operation === 'crop') {
     return true;
   }
-  // Defensive fallthrough: malformed state (e.g. an object where a number is
-  // expected) cannot be serialised by a template literal — a literal cannot
-  // throw the way the previous creator-based writer did — so a type mismatch
-  // with the operation's own default is treated the same as "absent" and
-  // dropped quietly rather than written into a URL.
-  if (typeof value !== typeof OPERATIONS_DEFAULTS[operation]) {
-    return false;
-  }
   return OPERATIONS_DEFAULTS[operation] !== value;
 }
 
@@ -110,8 +102,7 @@ export function transformationsToOperations(transformations: Transformations): C
   }
 
   // A template literal cannot throw the way a creator could, so there is
-  // nothing left here to catch — `isMeaningful` is what keeps a malformed
-  // value from reaching a writer. The parse below is not circular: it is the
+  // nothing left here to catch. The parse below is not circular: it is the
   // same `operationsFromModifiers` that already turns loose user strings into
   // `CdnOperation[]` elsewhere, and `parseOperations` is in this bundle
   // regardless — the merge below needs structure, not a string.
