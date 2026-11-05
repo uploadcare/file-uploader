@@ -80,22 +80,10 @@ export class LazyPluginLoader {
       }
     }
 
-    // `ConfigController.subscribe` is coarse (fires on any config change), so
-    // snapshot the dep values and recompute only when one of them actually
-    // changes — preserving the per-key subscription granularity the previous
-    // `ctx.sub(dep, recompute, false)` facade subscriptions gave.
-    const depKeys = [...deps];
-    let lastValues = depKeys.map((key) => this._config.get(key));
-    this._subs.add(
-      this._config.subscribe(() => {
-        const nextValues = depKeys.map((key) => this._config.get(key));
-        const changed = nextValues.some((value, i) => !Object.is(value, lastValues[i]));
-        if (changed) {
-          lastValues = nextValues;
-          this._compute(entries);
-        }
-      }),
-    );
+    // Per-key `Object.is` observe: recompute only when one of the deps actually changes.
+    for (const dep of deps) {
+      this._subs.add(this._config.observe(dep, () => this._compute(entries)));
+    }
 
     this._compute(entries);
   }
