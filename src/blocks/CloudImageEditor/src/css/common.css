@@ -861,11 +861,6 @@
     margin-left: 0px;
   }
 
-  uc-btn-ui .uc-icon_right {
-    margin-right: 0px;
-    margin-left: var(--cldtr-gap-mid-1);
-  }
-
   uc-btn-ui .uc-icon_single {
     margin-right: 0px;
     margin-left: 0px;

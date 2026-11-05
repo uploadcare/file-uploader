@@ -17,9 +17,6 @@ export class BtnUi extends EditorBlock {
   @property({ type: String })
   public icon = '';
 
-  @property({ type: Boolean, reflect: true })
-  public reverse = false;
-
   @property({ type: String, reflect: true })
   public theme: Theme = 'default';
 
@@ -38,24 +35,15 @@ export class BtnUi extends EditorBlock {
 
   protected override firstUpdated(changed: PropertyValues<this>): void {
     super.firstUpdated(changed);
-    this._applyReverse();
     this._applyThemeClass();
   }
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
 
-    if (changed.has('reverse')) {
-      this._applyReverse();
-    }
-
     if (changed.has('theme')) {
       this._applyThemeClass(changed.get('theme'));
     }
-  }
-
-  private _applyReverse(): void {
-    this.style.flexDirection = this.reverse ? 'row-reverse' : '';
   }
 
   private _applyThemeClass(previous?: Theme): void {
@@ -71,8 +59,7 @@ export class BtnUi extends EditorBlock {
     const iconHidden = this._computedIconHidden;
     return {
       'uc-icon': true,
-      'uc-icon_left': !this.reverse,
-      'uc-icon_right': this.reverse,
+      'uc-icon_left': true,
       'uc-icon_hidden': iconHidden,
       'uc-icon_single': this._computedIconSingle,
     };
