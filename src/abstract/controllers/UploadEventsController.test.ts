@@ -40,7 +40,7 @@ type Entry = TypedData<UploadEntryData>;
 const makeState = (overrides: Partial<OutputCollectionState> = {}): OutputCollectionState =>
   ({ totalCount: 0, status: 'idle', allEntries: [], ...overrides }) as OutputCollectionState;
 
-const setup = (opts: { collectionState?: OutputCollectionState; deferPlugin?: boolean } = {}) => {
+const setup = (opts: { collectionState?: OutputCollectionState } = {}) => {
   const container = new ControllerContainer();
   const collection = container.get(UploadCollectionController);
   const config = container.get(ConfigController);
@@ -77,12 +77,8 @@ const setup = (opts: { collectionState?: OutputCollectionState; deferPlugin?: bo
   // `ensurePluginManager`).
   const runOnAddHooks = vi.fn();
   container.bind(PluginController, () => ({ runOnAddHooks }) as unknown as PluginController);
-  // Force it into existence so `whenController` fires synchronously — UNLESS a
-  // test wants the deferred-waiter path (plugin resolved later), where it must
-  // stay unconstructed so `whenController` registers a waiter instead.
-  if (!opts.deferPlugin) {
-    container.get(PluginController);
-  }
+  // Force it into existence so `whenController` fires synchronously.
+  container.get(PluginController);
 
   // The six derived collection keys are now written to `CollectionStateController`
   // via `set(key, value)`. Fan the writes out to per-key spies so the original
@@ -174,24 +170,6 @@ describe('UploadEventsController', () => {
       expect(t.deps.setUploadList).toHaveBeenCalledWith([id]);
     });
 
-    it('does not run onAdd hooks against a released scope when PluginController resolves after teardown began', () => {
-      // Deferred path: PluginController is unconstructed at add-time, so
-      // `whenController` registers a waiter instead of firing synchronously.
-      const t = setup({ deferPlugin: true });
-      const id = t.collection.add({ fileName: 'a.txt' });
-
-      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
-      expect(t.deps.runOnAddHooks).not.toHaveBeenCalled(); // waiter pending, not fired
-
-      // Start the teardown (the first thing `dispose()` does), THEN resolve the plugin
-      // manager — the waiter now fires, but the ended lifetime must stop it running
-      // hooks against the released scope.
-      t.container.lifetime.end();
-      t.container.get(PluginController);
-
-      expect(t.deps.runOnAddHooks).not.toHaveBeenCalled();
-    });
-
     it('suppresses FILE_ADDED for a silent entry (but still runs onAdd hooks)', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt', silent: true });
@@ -218,16 +196,6 @@ describe('UploadEventsController', () => {
       expect(entry.get('isRemoved')).toBe(true);
       expect(revokeSpy).toHaveBeenCalledWith('blob:xyz');
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.FILE_REMOVED, expect.objectContaining({ internalId: id }));
-    });
-
-    it('does nothing once the ctx is torn down', () => {
-      const t = setup();
-      const id = t.collection.add({ fileName: 'a.txt' });
-      t.container.dispose();
-
-      t.fireCollection([id], entriesByUid(t.collection, [id]), new Set());
-
-      expect(t.emit).not.toHaveBeenCalled();
     });
 
     it('does not reset groupInfo when the update has no adds or removes', () => {
@@ -497,16 +465,6 @@ describe('UploadEventsController', () => {
     it('tolerates an undefined changeMap value for a watched key', () => {
       const t = setup();
       expect(() => t.fireProperties({ file: undefined } as never)).not.toThrow();
-    });
-
-    it('does nothing once the ctx is torn down', () => {
-      const t = setup();
-      const id = t.collection.add({ isUploading: true });
-      t.container.dispose();
-
-      t.fireProperties({ isUploading: new Set([id]) });
-
-      expect(t.emit).not.toHaveBeenCalled();
     });
   });
 

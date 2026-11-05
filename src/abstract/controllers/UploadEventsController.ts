@@ -102,11 +102,6 @@ export class UploadEventsController {
     applyInitialCrop(this._collection, this._config.get('cropPreset'));
   }
 
-  /** Whether the ctx is being torn down; work that fires after that must not run. */
-  private get _ended(): boolean {
-    return lifetimeOf(this).signal.aborted;
-  }
-
   /** Start observing the collection. Idempotent. */
   public observe(): void {
     this._detach();
@@ -131,13 +126,9 @@ export class UploadEventsController {
 
   // Plugin `onAdd` hooks live on the conditionally-bound `PluginController` (bound
   // by `ensurePluginManager`); fire now-or-when-available via the container. It is
-  // bound at scope-attach (before any file is added), so this normally fires
-  // synchronously; the `_ended` re-check guards the rare deferred case where the
-  // manager resolves only after teardown began, so a stale waiter can't run hooks
-  // against a released scope.
+  // bound at scope-attach (before any file is added), so this fires synchronously.
   private _runPluginOnAdd(entry: Entry): void {
     containerOf(this)?.whenController(PluginController, (pluginManager) => {
-      if (this._ended) return;
       lifetimeOf(this).run(
         () => pluginManager.runOnAddHooks(entry),
         (error) => this._log.error('Plugin onAdd hooks failed', error),
@@ -146,8 +137,6 @@ export class UploadEventsController {
   }
 
   private _handleCollectionUpdate: CollectionObserver = (entries, added, removed) => {
-    if (this._ended) return;
-
     if (added.size || removed.size) this._groupGeneration += 1;
     this._collectionEvents.resetGroupIfMembershipChanged(added, removed);
 
@@ -177,8 +166,6 @@ export class UploadEventsController {
   };
 
   private _handleCollectionPropertiesUpdate = (changeMap: UploadCollectionChangeMap): void => {
-    if (this._ended) return;
-
     this._flushOutputItems();
     this._runValidation(changeMap);
 
@@ -239,7 +226,11 @@ export class UploadEventsController {
       if (generation === this._groupRequestGeneration) return;
       this._groupRequestGeneration = generation;
       lifetimeOf(this).run(
-        () => this._group.create(collectionState, () => !this._ended && generation === this._groupGeneration),
+        () =>
+          this._group.create(
+            collectionState,
+            () => !lifetimeOf(this).signal.aborted && generation === this._groupGeneration,
+          ),
         (error) => this._log.error('Failed to create the output file group', error),
       );
     }
