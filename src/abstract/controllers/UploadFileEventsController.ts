@@ -88,18 +88,27 @@ export class UploadFileEventsController {
     return true;
   }
 
-  /** `FILE_URL_CHANGED` for each id whose `cdnUrl` is now set. */
+  /** The `cdnUrl` each entry's last `FILE_URL_CHANGED` reported. */
+  private readonly _reportedUrls = new WeakMap<Entry, string>();
+
+  /**
+   * `FILE_URL_CHANGED` for each id whose `cdnUrl` is set and differs from the one last reported. A URL set inside a
+   * flush (`cropPreset`'s initial crop) reaches the observers again on the next one, where v1 reported it once.
+   */
   public urlChanged(ids: Iterable<Uid>): void {
-    this._emitEach(ids, UploaderEventType.FILE_URL_CHANGED, ({ cdnUrl }) => !!cdnUrl);
+    for (const id of ids) {
+      const entry = TypedData.getByUid<UploadEntryData>(id);
+      const cdnUrl = entry?.get('cdnUrl');
+      if (!entry || !cdnUrl || this._reportedUrls.get(entry) === cdnUrl) continue;
+      this._reportedUrls.set(entry, cdnUrl);
+      this._eventEmitter.emit(UploaderEventType.FILE_URL_CHANGED, toOutputFileEntry(entry));
+    }
   }
 
   /** Emits `type` with each entry that still exists and passes `shouldEmit`. */
   private _emitEach(
     ids: Iterable<Uid>,
-    type:
-      | typeof UploaderEventType.FILE_UPLOAD_PROGRESS
-      | typeof UploaderEventType.FILE_UPLOAD_SUCCESS
-      | typeof UploaderEventType.FILE_URL_CHANGED,
+    type: typeof UploaderEventType.FILE_UPLOAD_PROGRESS | typeof UploaderEventType.FILE_UPLOAD_SUCCESS,
     shouldEmit: (values: Readonly<UploadEntryData>) => boolean,
   ): void {
     for (const id of ids) {
