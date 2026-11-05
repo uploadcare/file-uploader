@@ -308,7 +308,7 @@ export class EditorImageFader extends EditorBlock {
 
   private _imageSrc(
     controller: CloudImageEditorController,
-    { url = this._url, filter = this._filter ?? undefined, operation, value }: ImageSrcOptions = {},
+    { url = this._url, filter = this._filter, operation, value }: ImageSrcOptions = {},
   ): Promise<string> {
     if (!url) {
       throw new Error('URL is not defined');
@@ -394,11 +394,8 @@ export class EditorImageFader extends EditorBlock {
   private async _initNodes(): Promise<void> {
     const controller = this.editorController;
 
-    this._previewImage = this._previewImage || this._createPreviewImage();
-    const previewImage = this._previewImage;
-    if (previewImage) {
-      this._ensurePreviewAttached(previewImage);
-    }
+    this._previewImage ??= this._createPreviewImage();
+    this._ensurePreviewAttached(this._previewImage);
 
     const srcList = this._keypoints.map((kp) => kp.src);
 
@@ -479,15 +476,13 @@ export class EditorImageFader extends EditorBlock {
     image.addEventListener(
       'load',
       () => {
-        if (image) {
-          image.style.opacity = '1';
-          image.style.transform = 'scale(1)';
+        image.style.opacity = '1';
+        image.style.transform = 'scale(1)';
 
-          applyClassNames(this, {
-            'uc-active_from_cropper': true,
-            'uc-inactive_to_cropper': false,
-          });
-        }
+        applyClassNames(this, {
+          'uc-active_from_cropper': true,
+          'uc-inactive_to_cropper': false,
+        });
       },
       { once: true, signal: this.adoptionSignal },
     );
