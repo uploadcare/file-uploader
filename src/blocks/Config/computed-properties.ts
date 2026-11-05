@@ -9,45 +9,31 @@ const log = logger.scope('computed-properties');
 
 type ConfigKey = keyof ConfigType;
 type ConfigValue<TKey extends ConfigKey> = ConfigType[TKey];
-type DepKeys<TKey extends ConfigKey> = ReadonlyArray<Exclude<ConfigKey, TKey>>;
 
-type ComputedPropertyArgs<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = {
-  [K in TKey]: () => ConfigValue<K>;
-} & {
-  [K in TDeps[number]]: () => ConfigValue<K>;
-};
+export type ConfigSetter = <TSetValue extends ConfigKey>(key: TSetValue, value: ConfigValue<TSetValue>) => void;
+export type ConfigGetter = <TGetValue extends ConfigKey>(key: TGetValue) => ConfigValue<TGetValue>;
 
-type ComputedPropertyOptions = {
-  signal: AbortSignal;
-};
+/** One computed per key: `fn` derives `key` from its current value and `deps`, read through `get`. */
+type ComputedProperty = {
+  [TKey in ConfigKey]: {
+    key: TKey;
+    deps: ReadonlyArray<Exclude<ConfigKey, TKey>>;
+    fn: (get: ConfigGetter) => ConfigValue<TKey> | Promise<ConfigValue<TKey>>;
+  };
+}[ConfigKey];
 
-type ComputedPropertyFn<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = (
-  args: ComputedPropertyArgs<TKey, TDeps>,
-  options: ComputedPropertyOptions,
-) => ConfigValue<TKey> | Promise<ConfigValue<TKey>>;
+export type ComputedPropertyControllers = Map<ComputedProperty['fn'], AbortController>;
 
-type ComputedPropertyDeclaration<TKey extends ConfigKey, TDeps extends DepKeys<TKey>> = {
-  key: TKey;
-  deps: TDeps;
-  fn: ComputedPropertyFn<TKey, TDeps>;
-};
-
-export type ComputedPropertyControllers = Map<ComputedPropertyFn<any, any>, AbortController>;
-
-const defineComputedProperty = <TKey extends ConfigKey, TDeps extends DepKeys<TKey>>(
-  declaration: ComputedPropertyDeclaration<TKey, TDeps>,
-): ComputedPropertyDeclaration<TKey, TDeps> => declaration;
-
-const COMPUTED_PROPERTIES = [
-  defineComputedProperty({
+const COMPUTED_PROPERTIES: ComputedProperty[] = [
+  {
     key: 'cameraModes',
-    deps: ['enableVideoRecording'] as const,
-    fn: ({ cameraModes, enableVideoRecording }) => {
-      const evr = enableVideoRecording();
+    deps: ['enableVideoRecording'],
+    fn: (get) => {
+      const evr = get('enableVideoRecording');
       if (evr === null) {
-        return cameraModes();
+        return get('cameraModes');
       }
-      let cameraModesCsv = deserializeCsv(cameraModes());
+      let cameraModesCsv = deserializeCsv(get('cameraModes'));
       if (evr && !cameraModesCsv.includes('video')) {
         cameraModesCsv = cameraModesCsv.concat('video');
       } else if (!evr) {
@@ -55,16 +41,16 @@ const COMPUTED_PROPERTIES = [
       }
       return serializeCsv(cameraModesCsv);
     },
-  }),
-  defineComputedProperty({
+  },
+  {
     key: 'cameraModes',
-    deps: ['defaultCameraMode'] as const,
-    fn: ({ cameraModes, defaultCameraMode }) => {
-      const dcm = defaultCameraMode();
+    deps: ['defaultCameraMode'],
+    fn: (get) => {
+      const dcm = get('defaultCameraMode');
       if (dcm === null) {
-        return cameraModes();
+        return get('cameraModes');
       }
-      let cameraModesCsv = deserializeCsv(cameraModes());
+      let cameraModesCsv = deserializeCsv(get('cameraModes'));
       cameraModesCsv = cameraModesCsv.sort((a, b) => {
         if (a === dcm) return -1;
         if (b === dcm) return 1;
@@ -72,21 +58,21 @@ const COMPUTED_PROPERTIES = [
       });
       return serializeCsv(cameraModesCsv);
     },
-  }),
-  defineComputedProperty({
+  },
+  {
     key: 'cdnCname',
-    deps: ['pubkey', 'cdnCnamePrefixed'] as const,
-    fn: ({ pubkey, cdnCname, cdnCnamePrefixed }) => {
-      const pk = pubkey();
-      const cname = cdnCname();
-      const prefixed = cdnCnamePrefixed();
+    deps: ['pubkey', 'cdnCnamePrefixed'],
+    fn: (get) => {
+      const pk = get('pubkey');
+      const cname = get('cdnCname');
+      const prefixed = get('cdnCnamePrefixed');
       if (pk && (cname === DEFAULT_CDN_CNAME || isPrefixedCdnBase(cname, prefixed))) {
         return getPrefixedCdnBaseAsync(pk, prefixed);
       }
 
       return cname;
     },
-  }),
+  },
 ];
 
 /**
@@ -100,9 +86,6 @@ const COMPUTED_PROPERTIES = [
 export const computedPropertyDependencyKeys: ReadonlySet<ConfigKey> = new Set(
   COMPUTED_PROPERTIES.flatMap((computed) => computed.deps),
 );
-
-export type ConfigSetter = <TSetValue extends ConfigKey>(key: TSetValue, value: ConfigValue<TSetValue>) => void;
-export type ConfigGetter = <TGetValue extends ConfigKey>(key: TGetValue) => ConfigValue<TGetValue>;
 
 type ComputePropertyOptions<TKey extends ConfigKey> = {
   key: TKey;
@@ -120,13 +103,6 @@ export const computeProperty = <TKey extends ConfigKey>({
   for (const computed of COMPUTED_PROPERTIES) {
     if (!computed.deps.includes(key)) continue;
 
-    const args: Partial<Record<ConfigKey, () => ConfigType[ConfigKey]>> = {
-      [computed.key]: () => getValue(computed.key),
-    };
-
-    for (const dep of computed.deps) {
-      args[dep] = () => getValue(dep);
-    }
     const abortController = new AbortController();
     // Captured before the computation runs, so an async result can tell whether the value it was derived from is
     // still current. Otherwise a resolution in flight overwrites a value the caller set meanwhile.
@@ -135,11 +111,9 @@ export const computeProperty = <TKey extends ConfigKey>({
     computationControllers.get(computed.fn)?.abort();
     computationControllers.set(computed.fn, abortController);
 
-    let result: ConfigValue<typeof computed.key> | Promise<ConfigValue<typeof computed.key>>;
+    let result: ConfigValue<ConfigKey> | Promise<ConfigValue<ConfigKey>>;
     try {
-      result = computed.fn(args as ComputedPropertyArgs<typeof computed.key, typeof computed.deps>, {
-        signal: abortController.signal,
-      });
+      result = computed.fn(getValue);
     } catch (error) {
       if (computationControllers.get(computed.fn) === abortController) {
         computationControllers.delete(computed.fn);
