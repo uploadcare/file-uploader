@@ -181,6 +181,12 @@ export class ValidationController {
     for (const id of ids) {
       const entry = this._collection.read(id);
       if (entry) {
+        // Pending from the moment the run is asked for, not from when it starts after the queue: an upload's result
+        // and its re-validation then land together, so nothing reads the file as validated in between (the done
+        // button flickered on in that gap). The run clears it when it settles.
+        if (this._getValidatorDescriptorsForEntry(entry, runOn).length > 0) {
+          entry.setMany({ isQueuedForValidation: true, isValidationPending: true });
+        }
         lifetime.run(
           () => this._runFileValidatorsForEntry(entry, runOn),
           (error) => this._log.error('File validation failed', error),
@@ -251,11 +257,17 @@ export class ValidationController {
     const state = this._getEntryValidationState(entry);
 
     const previousPromise = state.promise ?? Promise.resolve();
+    // A run requested after this one already marked the entry pending: it keeps the flag on until it settles.
+    const isLatest = (): boolean => state.promise === runPromise;
     const runPromise = (async () => {
       await previousPromise;
       if (lifetime.signal.aborted) return;
       const entryDescriptors = this._getValidatorDescriptorsForEntry(entry, runOn);
       if (entryDescriptors.length === 0 || !this._collection.hasItem(entry.uid)) {
+        // A validator retired while this run waited: settle the pending flag set when it was requested.
+        if (this._collection.hasItem(entry.uid) && isLatest()) {
+          entry.setMany({ isQueuedForValidation: false, isValidationPending: false });
+        }
         return;
       }
       entry.setMany({
@@ -346,15 +358,15 @@ export class ValidationController {
 
       if (abortController.signal.aborted) {
         entry.setMany({
-          isQueuedForValidation: false,
-          isValidationPending: false,
+          isQueuedForValidation: !isLatest(),
+          isValidationPending: !isLatest(),
         });
         return;
       }
 
       entry.setMany({
-        isValidationPending: false,
-        isQueuedForValidation: false,
+        isValidationPending: !isLatest(),
+        isQueuedForValidation: !isLatest(),
         errors,
       });
     })();

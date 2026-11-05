@@ -258,6 +258,35 @@ describe('ValidationController', () => {
     expect(collection.read(id)?.get('isValidationPending')).toBe(false);
   });
 
+  describe('pending flag', () => {
+    it('marks the entry pending in the same task the run is requested, so no reader sees it validated before it is', async () => {
+      const { controller, collection } = setup();
+      await flush(20);
+      const id = collection.add({ fileName: 'a.txt', mimeType: 'text/plain' });
+      await flush();
+      expect(collection.read(id)!.get('isValidationPending')).toBe(false);
+
+      // An upload's result arrives: its re-validation is requested and the entry reads as pending right away.
+      controller.runFileValidators('change', [id]);
+      expect(collection.read(id)!.get('isValidationPending')).toBe(true);
+
+      await flush();
+      expect(collection.read(id)!.get('isValidationPending')).toBe(false);
+    });
+
+    it('leaves the entry alone when no validator runs for that trigger', async () => {
+      const { controller, collection } = setup();
+      await flush(20);
+      const id = collection.add({ fileName: 'a.txt', mimeType: 'text/plain' });
+      await flush();
+
+      controller.runFileValidators('upload', [id]);
+      expect(collection.read(id)!.get('isValidationPending')).toBe(false);
+      await flush();
+      expect(collection.read(id)!.get('isValidationPending')).toBe(false);
+    });
+  });
+
   describe('which validators run again for the same entry', () => {
     const runTwice = async (runOn: 'add' | 'upload' | 'change', validator: () => unknown) => {
       vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -461,7 +490,9 @@ describe('ValidationController', () => {
     container.dispose(); // before the microtask resumes → post-await guard returns
     await flush();
 
-    expect(setMany).not.toHaveBeenCalledWith(expect.objectContaining({ isValidationPending: true }));
+    // Only the request-time pending mark: the run itself never starts, so it writes nothing (no errors).
+    expect(setMany).toHaveBeenCalledTimes(1);
+    expect(setMany).not.toHaveBeenCalledWith(expect.objectContaining({ errors: expect.anything() }));
     expect(validator).not.toHaveBeenCalled();
   });
 
