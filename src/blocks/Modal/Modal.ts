@@ -150,9 +150,15 @@ export class Modal extends ChildBlock {
         dialog.setAttribute('open', '');
         return;
       }
-      if (dialog.open) return;
-      const active = document.activeElement;
-      this._inlineOpener = active instanceof HTMLElement && !dialog.contains(active) ? active : null;
+      if (dialog.open && !dialog.matches(':modal')) return;
+      if (dialog.open) {
+        // The option changed while the modal dialog was open: only `close()` takes it out of the top layer.
+        this._ownClosesPending++;
+        dialog.close();
+      } else {
+        const active = document.activeElement;
+        this._inlineOpener = active instanceof HTMLElement && !dialog.contains(active) ? active : null;
+      }
       dialog.show();
       this._inlineOpenedAt = performance.now();
       return;

@@ -76,6 +76,18 @@ describe('modalPresentation="inline"', () => {
     await expect.poll(() => document.activeElement).toBe(opener);
   });
 
+  it('turns an open modal dialog inline when the option changes to inline', async () => {
+    const { root, config } = await renderSolution('regular');
+
+    await openModal(root);
+    const dialog = modalDialog(root, 'start-from')!;
+    expect(dialog.matches(':modal')).toBe(true);
+
+    config.modalPresentation = 'inline';
+    await expect.poll(() => dialog.matches(':modal')).toBe(false);
+    expect(dialog.open).toBe(true);
+  });
+
   it('applies a runtime change on the next show', async () => {
     const { root, config, api } = await renderSolution('regular');
 
