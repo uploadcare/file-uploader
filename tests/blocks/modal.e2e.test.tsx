@@ -5,7 +5,7 @@ import { getCtxName } from '../utils/getCtxName';
 import { hasCtx } from '../utils/registry';
 import { cleanup } from '../utils/test-renderer';
 import '../../types/jsx';
-import { modalDialog, renderSolution } from '../utils/render-solution';
+import { modalDialog, openModal, renderSolution } from '../utils/render-solution';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
@@ -96,5 +96,18 @@ describe('uc-modal dialog names', () => {
     const { root } = await renderSolution('regular');
 
     await vi.waitFor(() => expect(modalDialog(root, id)?.getAttribute('aria-label')).toBe(name));
+  });
+});
+
+describe('modalBackdropStrokes', () => {
+  it.each([
+    [true, /^url\(/],
+    [false, /^none$/],
+  ])('with %s, draws the backdrop strokes: %s', async (strokes, image) => {
+    const { root } = await renderSolution('regular', { modalBackdropStrokes: strokes });
+
+    await openModal(root);
+    const dialog = modalDialog(root, 'start-from')!;
+    expect(getComputedStyle(dialog, '::backdrop').backgroundImage).toMatch(image);
   });
 });
