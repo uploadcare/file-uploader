@@ -5,6 +5,7 @@ import type {
   ConfigAttributesType,
   ConfigComplexType,
   ConfigPlainType,
+  ConfigType,
   FileValidatorDescriptor,
   FuncCollectionValidator,
   FuncFileValidator,
@@ -197,6 +198,19 @@ test('the auth-token attribute carries only the plain token', () => {
   // this is asserted on the type rather than through <uc-config>.)
   expectTypeOf<ConfigAttributesType['auth-token']>().toEqualTypeOf<string | null>();
   expectTypeOf<ConfigAttributesType['authtoken']>().toEqualTypeOf<string | null>();
+});
+
+test('the internal modalPresentation option reaches the published types', () => {
+  // Undocumented, but the dashboard's previews set it through these types, so the build must not strip it.
+  expectTypeOf<ConfigType['modalPresentation']>().toEqualTypeOf<'modal' | 'inline'>();
+  expectTypeOf<ConfigAttributesType['modal-presentation']>().toEqualTypeOf<'modal' | 'inline'>();
+  () => <uc-config ctx-name="1" modalPresentation="inline" />;
+  () => {
+    const ref = useRef<Config | null>(null);
+    if (ref.current) {
+      ref.current.modalPresentation = 'inline';
+    }
+  };
 });
 
 test('validators take sync, async and descriptor forms', () => {
