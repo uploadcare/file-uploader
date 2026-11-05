@@ -22,19 +22,9 @@ export class EditorButtonControl extends EditorBlock {
   @state()
   protected icon = '';
 
-  protected get buttonClasses(): Record<string, boolean> {
-    const isActive = this.active;
-    return {
-      'uc-active': isActive,
-      'uc-not_active': !isActive,
-    };
-  }
-
   private _updateHostStateClasses(): void {
-    const classes = this.buttonClasses;
-    for (const [className, enabled] of Object.entries(classes)) {
-      this.classList.toggle(className, enabled);
-    }
+    this.classList.toggle('uc-active', this.active);
+    this.classList.toggle('uc-not_active', !this.active);
   }
 
   protected onClick(_event: MouseEvent): void {}

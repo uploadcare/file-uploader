@@ -223,15 +223,14 @@ export class EditorToolbar extends EditorBlock {
   }
 
   private _syncTabIndicator(): void {
-    const toggleRef = this.tabToggleRefs[this.activeTab];
-    const toggleEl = toggleRef?.value;
+    const toggleEl = this.tabToggleRefs[this.activeTab].value;
     const indicatorEl = this._tabIndicatorRef.value;
     if (!toggleEl || !indicatorEl) {
       return;
     }
     const offset = toggleEl.offsetLeft;
 
-    const width = toggleEl.offsetWidth || Number(getComputedStyle(toggleEl).width.replace('px', ''));
+    const width = toggleEl.offsetWidth;
     if (this._tabIndicatorOffset !== offset || this._tabIndicatorWidth !== width) {
       this._tabIndicatorOffset = offset;
       this._tabIndicatorWidth = width;
@@ -443,11 +442,7 @@ export class EditorToolbar extends EditorBlock {
   };
 
   private readonly _handleTabClick = (e: MouseEvent): void => {
-    const target = e.currentTarget as HTMLElement | null;
-    const id = target?.getAttribute('data-id') as TabIdValue | null;
-    if (!id) {
-      return;
-    }
+    const id = (e.currentTarget as HTMLElement).getAttribute('data-id') as TabIdValue;
     this.sendClickEvent(e, { tabId: id });
     this._activateTab(id);
   };
@@ -534,7 +529,7 @@ export class EditorToolbar extends EditorBlock {
         <uc-editor-scroller hidden-scrollbar>
           <div class="uc-controls-list_align">
             <div role="listbox" aria-orientation="horizontal" class="uc-controls-list_inner">
-              ${controls.length ? controls : nothing}
+              ${controls}
             </div>
           </div>
         </uc-editor-scroller>
