@@ -112,6 +112,33 @@ describe('Modal', () => {
     expect(el.hasAttribute('strokes')).toBe(false);
   });
 
+  it('a user close of the activity setCurrentActivity staged also clears it from the background, as v1 did', async () => {
+    const ctxName = freshCtxName();
+    const { el, router } = await mount(ctxName, 'camera');
+    // setCurrentActivity('camera') with the modal closed stages it in the background; setModalState(true) opens it.
+    router.setActivity('camera');
+    router.openModal('camera');
+    await el.updateComplete;
+
+    (el as unknown as { closeDialog: () => void }).closeDialog(); // Escape or a backdrop click
+
+    expect(router.modal).toBeNull();
+    expect(router.currentActivity).toBeNull();
+  });
+
+  it('a user close keeps a different background activity (minimal: the list under a source modal)', async () => {
+    const ctxName = freshCtxName();
+    const { el, router } = await mount(ctxName, 'camera');
+    router.setActivity('upload-list');
+    router.openModal('camera');
+    await el.updateComplete;
+
+    (el as unknown as { closeDialog: () => void }).closeDialog();
+
+    expect(router.modal).toBeNull();
+    expect(router.activity).toBe('upload-list');
+  });
+
   it('closeDialog is a no-op after disconnect — null-tolerant useOrNull(RouterController) read', async () => {
     const ctxName = freshCtxName();
     const { el } = await mount(ctxName, 'camera');

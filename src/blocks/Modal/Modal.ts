@@ -71,8 +71,13 @@ export class Modal extends ChildBlock {
       return;
     }
     // Close the foreground modal slot; the router owns the close transition
-    // (and the `modal-close` event).
-    router.closeModal();
+    // (and the `modal-close` event). The deprecated `setCurrentActivity()` + `setModalState(true)` leave the activity
+    // staged in the background too; closing it there as well reports `activity-change(null)`, as v1 did.
+    if (router.activity === router.modal) {
+      router.close();
+    } else {
+      router.closeModal();
+    }
   };
 
   private _handleDialogClose = (): void => {
