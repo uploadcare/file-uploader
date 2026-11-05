@@ -36,7 +36,7 @@ export const isExternalSource = (source: string): source is ExternalSourceType =
   (Object.values(ExternalUploadSource) as string[]).includes(source);
 
 /** An alias shares the display name, icon and translation key of the source it stands for. */
-const canonicalExternalSource = (source: ExternalSourceType) =>
+export const canonicalExternalSource = (source: ExternalSourceType) =>
   source === ExternalUploadSource.DROPBOX_CHOOSER ? ExternalUploadSource.DROPBOX : source;
 
 /** The translation key of an external source's name. */

@@ -2,7 +2,7 @@ import { ACTIVITY_TYPES } from '../abstract/activity-constants';
 import { defineComponents } from '../abstract/defineComponents';
 import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import { ExternalSource } from '../blocks/ExternalSource/ExternalSource';
-import { ExternalUploadSource, isExternalSource, sourceLabelKey } from '../utils/UploadSource';
+import { canonicalExternalSource, ExternalUploadSource, isExternalSource, sourceLabelKey } from '../utils/UploadSource';
 import { renderElement } from './renderElement';
 
 export const externalSourcesPlugin: UploaderPlugin = {
@@ -21,7 +21,7 @@ export const externalSourcesPlugin: UploaderPlugin = {
       pluginApi.registry.registerSource({
         id: sourceId,
         label: sourceLabelKey(sourceId),
-        icon: sourceId,
+        icon: canonicalExternalSource(sourceId),
         onSelect: () => {
           uploaderApi.navigate(ACTIVITY_TYPES.EXTERNAL, { externalSourceType: sourceId });
         },
