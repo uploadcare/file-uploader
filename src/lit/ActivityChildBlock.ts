@@ -1,6 +1,6 @@
 import type { PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
-import { ACTIVITY_TYPES, type ActivityParamsMap, type ActivityType } from '../abstract/activity-constants';
+import { ACTIVITY_TYPES, type ActivityType } from '../abstract/activity-constants';
 import { RouterController } from '../abstract/controllers/RouterController';
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { inject } from '../abstract/di/inject';
@@ -103,9 +103,5 @@ export class ActivityChildBlock extends ChildBlock {
     if (this.activityType) {
       this.toggleAttribute(ACTIVE_ATTR, this.isActivityActive);
     }
-  }
-
-  public get activityParams(): ActivityParamsMap[keyof ActivityParamsMap] {
-    return this._router.params as ActivityParamsMap[keyof ActivityParamsMap];
   }
 }

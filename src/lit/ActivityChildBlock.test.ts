@@ -40,9 +40,6 @@ class NullActivityBlock extends ActivityChildBlock {
   public get isActive(): boolean {
     return this.isActivityActive;
   }
-  public get params(): unknown {
-    return this.activityParams;
-  }
 }
 NullActivityBlock.reg('uc-test-null-activity');
 
@@ -171,19 +168,6 @@ describe('ActivityChildBlock [active] host attribute', () => {
 
     expect(el.getAttribute('activity')).toBe('preset-value');
   });
-
-  it('exposes the router params via activityParams', async () => {
-    const ctxName = freshCtxName();
-    const el = document.createElement('uc-test-bg-activity') as BgActivityBlock & { updateComplete: Promise<unknown> };
-    el.setAttribute('ctx-name', ctxName);
-    document.body.append(el);
-    mounted.push(el);
-    await el.updateComplete;
-
-    router(ctxName).setActivity(ACTIVITY_TYPES.UPLOAD_LIST, { some: 'value' });
-    await flush(el);
-    expect(el.activityParams).toEqual({ some: 'value' });
-  });
 });
 
 describe('ActivityChildBlock with a null activityType', () => {
@@ -206,7 +190,6 @@ describe('ActivityChildBlock with a null activityType', () => {
     // `reportActivityMounted()` is a no-op (after releasing any prior report)
     // while `activityType` is null.
     el.callReport();
-    expect(el.params).toEqual({});
 
     // A router transition never toggles `[active]`.
     router(ctxName).setActivity(ACTIVITY_TYPES.UPLOAD_LIST);
