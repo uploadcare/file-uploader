@@ -1,6 +1,6 @@
 import type { PropertyValues } from 'lit';
 import { html } from 'lit';
-import { property, state } from 'lit/decorators.js';
+import { state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { inject } from '../../abstract/di/inject';
 import { observeSources } from '../../abstract/sources';
@@ -16,12 +16,6 @@ export class SourceList extends ChildBlock {
 
   @state()
   private _sources: SourceButtonConfig[] = [];
-
-  /**
-   * CSS-only attribute
-   */
-  @property({ type: Boolean, attribute: 'wrap', reflect: true })
-  public wrap = false;
 
   /** @internal */
   @subscription()

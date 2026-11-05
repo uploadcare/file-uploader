@@ -13,7 +13,6 @@ describe('layout-fragments', () => {
     expect(text).toContain('uc-modal');
     expect(text).toContain('id="start-from"');
     expect(text).toContain('strokes');
-    expect(text).toContain('block-body-scrolling');
     expect(text).toContain('uc-start-from');
     expect(text).toContain('uc-drop-area');
     expect(text).toContain('with-icon');

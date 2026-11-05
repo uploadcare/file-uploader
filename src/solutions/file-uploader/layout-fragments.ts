@@ -13,10 +13,10 @@ export function renderModalSourcePicker(opts: {
   copyright?: boolean;
 }): TemplateResult {
   return html`
-    <uc-modal id="start-from" dialog-label="select-file-source" strokes block-body-scrolling>
+    <uc-modal id="start-from" dialog-label="select-file-source" strokes>
       <uc-start-from>
         <uc-drop-area with-icon clickable></uc-drop-area>
-        <uc-source-list role="list" wrap></uc-source-list>
+        <uc-source-list role="list"></uc-source-list>
         <button type="button" class="uc-secondary-btn" @click=${opts.onCancel}>
           ${opts.cancelLabel}
         </button>
@@ -50,7 +50,7 @@ export function renderInlineStartFrom(opts: {
   return html`
     <uc-start-from>
       <uc-drop-area with-icon clickable></uc-drop-area>
-      <uc-source-list role="list" wrap></uc-source-list>
+      <uc-source-list role="list"></uc-source-list>
       <button
         type="button"
         class="uc-cancel-btn uc-secondary-btn"

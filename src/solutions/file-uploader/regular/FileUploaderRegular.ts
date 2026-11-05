@@ -89,7 +89,7 @@ export class FileUploaderRegular extends SolutionChildBlock {
     copyright: true,
   })}
 
-  <uc-modal id="upload-list" dialog-label="upload-files" strokes block-body-scrolling>
+  <uc-modal id="upload-list" dialog-label="upload-files" strokes>
     <uc-upload-list></uc-upload-list>
   </uc-modal>
 

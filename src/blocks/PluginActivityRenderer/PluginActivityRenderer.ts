@@ -146,7 +146,7 @@ export class PluginActivityRenderer extends ChildBlock {
       this._activities,
       (activity) => activity.id,
       (activity) => html`
-        <uc-modal id=${activity.id} dialog-label=${ifDefined(this._dialogLabel(activity))} strokes block-body-scrolling>
+        <uc-modal id=${activity.id} dialog-label=${ifDefined(this._dialogLabel(activity))} strokes>
           <uc-plugin-activity-host .registration=${activity}></uc-plugin-activity-host>
         </uc-modal>
       `,

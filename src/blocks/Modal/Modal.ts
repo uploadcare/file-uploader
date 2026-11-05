@@ -52,12 +52,6 @@ export class Modal extends ChildBlock {
   @property({ type: Boolean, reflect: true })
   public strokes = false;
 
-  /**
-   * CSS-only attribute
-   */
-  @property({ type: Boolean, attribute: 'block-body-scrolling', reflect: true })
-  public blockBodyScrolling = false;
-
   /** WARNING: Do not rename/change this, it's used in dashboard */
   protected closeDialog = (): void => {
     // The native <dialog> "close" event is dispatched from a queued task and

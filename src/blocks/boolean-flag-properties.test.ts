@@ -4,13 +4,9 @@ import { UploaderRegistry } from '../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../lit/ensureUploaderCtx';
 import { EditorScroller } from './CloudImageEditor/src/EditorScroller';
 import { DropArea } from './DropArea/DropArea';
-import { Modal } from './Modal/Modal';
-import { SourceList } from './SourceList/SourceList';
 
 // Idempotent (same path as defineComponents(UC)).
 DropArea.reg('uc-drop-area');
-Modal.reg('uc-modal');
-SourceList.reg('uc-source-list');
 EditorScroller.reg('uc-editor-scroller');
 
 // Flags CSS reads off the host attribute. React 19 sets a property whenever the element has one, so
@@ -18,8 +14,6 @@ EditorScroller.reg('uc-editor-scroller');
 const FLAGS = [
   ['uc-drop-area', 'single', 'single'],
   ['uc-drop-area', 'ghost', 'ghost'],
-  ['uc-modal', 'block-body-scrolling', 'blockBodyScrolling'],
-  ['uc-source-list', 'wrap', 'wrap'],
   ['uc-editor-scroller', 'hidden-scrollbar', 'hiddenScrollbar'],
 ] as const;
 
