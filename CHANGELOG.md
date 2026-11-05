@@ -1,3 +1,15 @@
+# [1.36.0](https://github.com/uploadcare/file-uploader/compare/v1.35.1...v1.36.0) (2026-11-04)
+
+
+### Bug Fixes
+
+* emit file-upload-start before file-upload-progress, and run e2e against an emulator ([#1081](https://github.com/uploadcare/file-uploader/issues/1081)) ([401f6fe](https://github.com/uploadcare/file-uploader/commit/401f6fe6aeff94b8709e92b40ddf2dddca724959))
+
+
+### Features
+
+* **camera:** capture settings for aspect ratio, resolution, audio, video format and constraints ([#1109](https://github.com/uploadcare/file-uploader/issues/1109)) ([43b701c](https://github.com/uploadcare/file-uploader/commit/43b701cf0b8fceec4756a97317b078970a8db79b))
+* **readme.md:** updated logo ([#1098](https://github.com/uploadcare/file-uploader/issues/1098)) ([0b9d4c6](https://github.com/uploadcare/file-uploader/commit/0b9d4c6bad185572235a6433b7f00a094376cbc6))
 ## [1.35.1](https://github.com/uploadcare/file-uploader/compare/v1.35.0...v1.35.1) (2026-10-06)
 
 

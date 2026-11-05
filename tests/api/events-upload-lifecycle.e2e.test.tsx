@@ -3,7 +3,7 @@ import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE } from '~/tests/fixtures/files';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
-import { resetEmulator } from '~/tests/utils/emulator.browser';
+import { isLive, resetEmulator } from '~/tests/utils/emulator.browser';
 import { recordEvents } from '~/tests/utils/event-recorder';
 import { renderSolution } from '~/tests/utils/render-solution';
 import '~/types/jsx';
@@ -142,11 +142,12 @@ describe('events: upload lifecycle', () => {
     expect(recorder.detailsOf('common-upload-success')).toHaveLength(1);
   });
 
-  it('fires file-upload-start for an upload that finishes before its start is flushed', async () => {
+  it.skipIf(isLive)('fires file-upload-start for an upload that finishes before its start is flushed', async () => {
     // The collection reports its changes in batches, on a 0ms timer. A busy or background tab runs that timer late
     // while the network keeps answering, so an upload can start and finish inside one batch. Answering in the task
     // that asked gets there on purpose: an upload by uuid is one body-less `GET /info/`, which `hold: false` answers
-    // before the timer runs. Live, the real API is slower than the timer, so the race is not reproduced there.
+    // before the timer runs. Fake-only: live, the real API is slower than the timer, so the race is not reproduced, and
+    // the upload of the emulator's `DEMO_IMAGE_UUID` fails there (`file-upload-failed`).
     (await resetEmulator())?.on({}, ({ next }) => next(), { hold: false });
     const { api, provider } = await renderSolution('regular', { confirmUpload: true });
     const recorder = recordEvents(provider);

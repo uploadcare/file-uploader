@@ -13,6 +13,92 @@ const alias = {
   '~': __dirname,
 };
 
+// Chromium's fake capture device is shared by every page in the browser, and a file recording from it while another
+// opens the camera leaves the second without video frames. These files open the camera, so they run one at a time in
+// their own project, after the rest. A new e2e file that opens the camera goes here.
+const CAMERA_E2E = [
+  './tests/blocks/camera-aspect-ratio.e2e.test.tsx',
+  './tests/blocks/camera-audio.e2e.test.tsx',
+  './tests/blocks/camera-options.e2e.test.tsx',
+  './tests/blocks/camera-photo-capture.e2e.test.tsx',
+  './tests/blocks/camera-quality.e2e.test.tsx',
+  './tests/blocks/camera-recording.e2e.test.tsx',
+  './tests/blocks/camera-review-bugs.e2e.test.tsx',
+  './tests/blocks/camera-settings.e2e.test.tsx',
+  './tests/blocks/camera-stream.e2e.test.tsx',
+  './tests/blocks/camera-video-format.e2e.test.tsx',
+  './tests/flow/activity-transitions.e2e.test.tsx',
+  './tests/api/telemetry/editor-and-sources.e2e.test.tsx',
+  './tests/api/events-ui-and-sources.e2e.test.tsx',
+  './tests/solutions/regular.e2e.test.tsx',
+  './tests/solutions/inline.e2e.test.tsx',
+];
+
+const e2eProject = ({
+  name,
+  include,
+  exclude,
+  fileParallelism,
+  groupOrder,
+}: {
+  name: string;
+  include: string[];
+  exclude: string[];
+  fileParallelism: boolean;
+  groupOrder: number;
+}) => ({
+  extends: true,
+  // Serves `/mockServiceWorker.js` from the installed msw for `tests/utils/emulator.browser.ts`. The emulator
+  // builds its own network, so only the worker script is needed here.
+  plugins: [msw({ mode: 'worker-only' })],
+  test: {
+    name,
+    // Groups run in order, so the camera files start only once the rest of the suite is done.
+    sequence: { groupOrder },
+    fileParallelism,
+    setupFiles: ['./tests/setup.e2e.ts'],
+    // Reaches the page as `import.meta.env.E2E_NET`: vitest defines `env` into the browser bundle.
+    env: { E2E_NET: mode },
+    include,
+    // Fake-only: these read back what the emulator received or steer it with scenarios, and a live run has no
+    // emulator. They never measured the real API either: before the emulator they ran on a stubbed `fetch` or
+    // `uploadFile`, live or not.
+    exclude: [...exclude, ...(isLive ? ['./tests/api/telemetry/**'] : [])],
+    // Nothing to retry when the network is the emulator (`@uploadcare/api-emulator`, run in the page by
+    // `tests/utils/emulator.browser.ts`): it answers the same way every time, so a second attempt would only
+    // hide a real flake. A live run still races the real API, and still gets one.
+    retry: isLive ? 1 : 0,
+    // Above the poll timeout below. Browser mode's default (15s) is under it, so a failing `expect.poll` used to
+    // end as "Test timed out" and never printed the value it last saw.
+    testTimeout: 30_000,
+    expect: {
+      poll: {
+        timeout: 20_000,
+      },
+    },
+    browser: {
+      enabled: true,
+      // Vitest's default is headless only under CI, so a local run opens a real window with the Vitest UI, and
+      // whatever the desktop does to it (a click, a focus change, a drag on the UI's splitter) lands in the
+      // tests. `test:e2e:dev` turns it back on to watch a run.
+      headless: true,
+      provider: playwright({
+        launchOptions: {
+          args: ['--disable-web-security', '--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream'],
+        },
+      }),
+      instances: [
+        {
+          browser: 'chromium',
+        },
+      ],
+      commands: {
+        ...commands,
+      },
+    },
+  },
+});
+
 export default defineConfig({
   resolve: {
     alias,
@@ -80,59 +166,14 @@ export default defineConfig({
           },
         },
       },
-      {
-        extends: true,
-        // Serves `/mockServiceWorker.js` from the installed msw for `tests/utils/emulator.browser.ts`. The emulator
-        // builds its own network, so only the worker script is needed here.
-        plugins: [msw({ mode: 'worker-only' })],
-        test: {
-          name: 'e2e',
-          setupFiles: ['./tests/setup.e2e.ts'],
-          // Reaches the page as `import.meta.env.E2E_NET`: vitest defines `env` into the browser bundle.
-          env: { E2E_NET: mode },
-          include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
-          // Fake-only: these read back what the emulator received or steer it with scenarios, and a live run has no
-          // emulator. They never measured the real API either: before the emulator they ran on a stubbed `fetch` or
-          // `uploadFile`, live or not.
-          exclude: isLive ? ['./tests/api/telemetry/**'] : [],
-          // Nothing to retry when the network is the emulator (`@uploadcare/api-emulator`, run in the page by
-          // `tests/utils/emulator.browser.ts`): it answers the same way every time, so a second attempt would only
-          // hide a real flake. A live run still races the real API, and still gets one.
-          retry: isLive ? 1 : 0,
-          // Above the poll timeout below. Browser mode's default (15s) is under it, so a failing `expect.poll` used to
-          // end as "Test timed out" and never printed the value it last saw.
-          testTimeout: 30_000,
-          expect: {
-            poll: {
-              timeout: 20_000,
-            },
-          },
-          browser: {
-            enabled: true,
-            // Vitest's default is headless only under CI, so a local run opens a real window with the Vitest UI, and
-            // whatever the desktop does to it (a click, a focus change, a drag on the UI's splitter) lands in the
-            // tests. `test:e2e:dev` turns it back on to watch a run.
-            headless: true,
-            provider: playwright({
-              launchOptions: {
-                args: [
-                  '--disable-web-security',
-                  '--use-fake-ui-for-media-stream',
-                  '--use-fake-device-for-media-stream',
-                ],
-              },
-            }),
-            instances: [
-              {
-                browser: 'chromium',
-              },
-            ],
-            commands: {
-              ...commands,
-            },
-          },
-        },
-      },
+      e2eProject({
+        name: 'e2e',
+        include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
+        exclude: CAMERA_E2E,
+        fileParallelism: true,
+        groupOrder: 0,
+      }),
+      e2eProject({ name: 'e2e-camera', include: CAMERA_E2E, exclude: [], fileParallelism: false, groupOrder: 1 }),
     ],
   },
 });
