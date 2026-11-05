@@ -510,16 +510,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     return this._pendingSizeWait;
   }
 
-  public override firstUpdated(changedProperties: PropertyValues<this>): void {
-    super.firstUpdated(changedProperties);
-
-    const hasInitialSource = Boolean(this.uuid || this.cdnUrl);
-    const alreadyRequested = changedProperties.has('uuid') || changedProperties.has('cdnUrl');
-    if (hasInitialSource && !alreadyRequested) {
-      this._lifetime.run(() => this.updateImage());
-    }
-  }
-
   public override disconnectedCallback(): void {
     this._lifetime.end();
     this._configChangeUnsub?.();
