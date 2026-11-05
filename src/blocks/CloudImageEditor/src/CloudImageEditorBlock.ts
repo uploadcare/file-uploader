@@ -612,12 +612,11 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   }
 
   private _syncTabListFromProp(): void {
-    const tabsValue = this.tabs || DEFAULT_TABS;
-    this._tabList = parseTabs(tabsValue);
+    this._tabList = parseTabs(this.tabs ?? undefined);
   }
 
   private _syncCropPresetState(): void {
-    const list = parseCropPreset(this.cropPreset ?? '') as CropPresetList;
+    const list = parseCropPreset(this.cropPreset ?? '');
     let closest: CropPresetList[number] | null = null;
 
     if (this.cdnUrl) {
@@ -627,7 +626,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         const parsed = parseFileUrl(this.cdnUrl);
         const transformations = operationsToTransformations(parsed.operations);
 
-        if (Array.isArray(transformations.crop?.dimensions)) {
+        if (transformations.crop) {
           const [w, h] = transformations.crop.dimensions;
           closest = getClosestAspectRatio(w, h, list, 0.1);
         }
@@ -637,7 +636,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     }
 
     this._cropPresetList = list;
-    this._editorController.currentAspectRatio = closest ?? list?.[0] ?? null;
+    this._editorController.currentAspectRatio = closest ?? list[0] ?? null;
   }
 
   public async updateImage(): Promise<void> {
