@@ -238,7 +238,7 @@ export class UploaderPublicApi {
    * added in its place, so the replacement goes through the full add pipeline
    * (validators, events) like any newly added file.
    *
-   * The original entry's `source`, `metadata`, `fullPath` and `silent` are
+   * The original entry's `source`, `fullPath` and `silent` are
    * preserved by default; `silent`, `fileName` and `source` can be overridden
    * via `options`.
    *
@@ -261,7 +261,6 @@ export class UploaderPublicApi {
     // identity within the session; everything file-specific comes from `file`.
     const preserved = {
       source: oldEntry.get('source'),
-      metadata: oldEntry.get('metadata'),
       fullPath: oldEntry.get('fullPath'),
       silent: oldEntry.get('silent'),
     };
@@ -272,7 +271,6 @@ export class UploaderPublicApi {
         fileName: fileName ?? file.originalFilename ?? null,
         silent: silent ?? preserved.silent,
         source: source ?? preserved.source ?? UploadSource.API,
-        metadata: preserved.metadata,
         fullPath: preserved.fullPath,
       },
       { index },
