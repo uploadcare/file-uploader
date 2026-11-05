@@ -38,7 +38,6 @@ export function registerHostSubscriptions(host: object, hostLog: Pick<Logger, 'w
   const teardowns: Array<Unsubscribe> = [];
   for (const { key } of collectDecoratedMethods<void>(host, SUBSCRIPTION)) {
     const fn = boundMethod(host, key);
-    if (!fn) continue;
     let result: SubscriptionTeardown;
     try {
       result = fn() as SubscriptionTeardown;

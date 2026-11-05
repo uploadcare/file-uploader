@@ -66,7 +66,6 @@ export function registerHostEffects(host: EffectHost, hostLog: Pick<Logger, 'war
   const disposers: Array<() => void> = [];
   for (const { key, options } of collectDecoratedMethods<EffectOptions>(host, EFFECT)) {
     const fn = boundMethod(host, key);
-    if (!fn) continue;
     const dispose = host.updateEffect(() => {
       try {
         fn();

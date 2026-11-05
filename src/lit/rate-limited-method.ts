@@ -31,9 +31,9 @@ interface RateLimitedHost {
 const makeDecorator =
   (factory: RateLimiterFactory) =>
   (wait: number) =>
-  (proto: object, key: string, descriptor?: PropertyDescriptor): PropertyDescriptor => {
-    // The original handler: `descriptor.value` under experimental decorators, falling back to the prototype property.
-    const original = (descriptor?.value ?? (proto as Record<string, unknown>)[key]) as (...args: never[]) => void;
+  (_proto: object, key: string, descriptor: PropertyDescriptor): PropertyDescriptor => {
+    // The original handler: experimental method decorators always receive the method's descriptor.
+    const original = descriptor.value as (...args: never[]) => void;
 
     // RETURN the replacement descriptor (a getter) — the TS legacy-decorator emit re-applies whatever we return via
     // `Object.defineProperty`, so mutating the prototype in-body would be clobbered by the original method descriptor.

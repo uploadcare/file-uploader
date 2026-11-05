@@ -1,5 +1,5 @@
 import { noChange } from 'lit';
-import { type AttributePart, Directive, directive, type PartInfo, PartType } from 'lit/directive.js';
+import { type AttributePart, Directive, directive } from 'lit/directive.js';
 import { setStyle } from '../utils/applyStyles';
 
 type StyleInfo = Readonly<Record<string, string | number | null | undefined>>;
@@ -11,13 +11,6 @@ type StyleInfo = Readonly<Record<string, string | number | null | undefined>>;
  */
 class CssomStyleMapDirective extends Directive {
   private _previous = new Set<string>();
-
-  public constructor(partInfo: PartInfo) {
-    super(partInfo);
-    if (partInfo.type !== PartType.ATTRIBUTE || partInfo.name !== 'style') {
-      throw new Error('`cssomStyleMap` must be used as the whole `style` attribute.');
-    }
-  }
 
   public render(_styles: StyleInfo): typeof noChange {
     return noChange;

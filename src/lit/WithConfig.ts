@@ -45,18 +45,10 @@ const toComparableJson = (value: unknown): string | undefined => {
 };
 
 // The attribute names (kebab-case + lowercase, deduped) a config key maps to.
-// Cached module-wide: the names are a pure function of the key string, shared
-// across all config hosts, and read on every attribute flush — so this replaces
-// a `new Set([...])` allocation per call with a single computed tuple per key.
-const attributeNamesCache = new Map<string, readonly string[]>();
 const getConfigAttributeNames = (key: string): readonly string[] => {
-  const cached = attributeNamesCache.get(key);
-  if (cached) return cached;
   const kebab = toKebabCase(key);
   const lower = key.toLowerCase();
-  const names = kebab === lower ? [kebab] : [kebab, lower];
-  attributeNamesCache.set(key, names);
-  return names;
+  return kebab === lower ? [kebab] : [kebab, lower];
 };
 
 /**
@@ -481,7 +473,8 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
       // `observedAttributes` so Lit subclass `@property` mapping stays free.
       this._mutationObserver = new MutationObserver((mutations) => {
         for (const mutation of mutations) {
-          if (mutation.type !== 'attributes' || !mutation.attributeName) continue;
+          // Only `attributes` records arrive: the observer watches nothing else.
+          if (!mutation.attributeName) continue;
           const attrName = mutation.attributeName;
           // Cheap no-op when the attr didn't actually change (set to same value).
           if (mutation.oldValue === this.getAttribute(attrName)) continue;

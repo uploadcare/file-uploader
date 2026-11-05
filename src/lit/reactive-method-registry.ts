@@ -57,8 +57,7 @@ export function collectDecoratedMethods<TOptions>(host: object, brand: symbol): 
   return [...byKey.values()];
 }
 
-/** Resolve a collected method to a bound callable, or `undefined` if it isn't a function. */
-export function boundMethod(host: object, key: string): (() => unknown) | undefined {
-  const method = (host as Record<string, unknown>)[key];
-  return typeof method === 'function' ? (method as () => unknown).bind(host) : undefined;
+/** Resolve a collected method (a decorated method, so always a function) to a bound callable. */
+export function boundMethod(host: object, key: string): () => unknown {
+  return ((host as Record<string, unknown>)[key] as () => unknown).bind(host);
 }
