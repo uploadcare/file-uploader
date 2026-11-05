@@ -145,9 +145,7 @@ export class TelemetryManager {
       async () => {
         await Promise.resolve();
         this.#configChangePending = false;
-        if (lifetime.signal.aborted || !this._isEnabled) {
-          return;
-        }
+        // `sendEvent` drops it once the ctx is gone or telemetry is off.
         if (this._reportedConfig && this._checkObj(this._reportedConfig, this._sanitizedConfig())) {
           return;
         }
@@ -163,14 +161,14 @@ export class TelemetryManager {
   }
 
   private _formattingPayload(
-    body: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config' | 'component'>>,
+    body: Pick<TelemetryState, 'eventType'> & Partial<Pick<TelemetryState, 'payload' | 'config' | 'component'>>,
   ): TelemetryState {
     const payload = (body.payload ? { ...body.payload } : {}) as Record<string, unknown>;
     if (payload.activity) {
       payload.activity = undefined;
     }
 
-    const result: Partial<Pick<TelemetryState, 'eventType' | 'payload' | 'config'>> = { ...body };
+    const result: Pick<TelemetryState, 'eventType'> & Partial<Pick<TelemetryState, 'payload' | 'config'>> = { ...body };
     if (body.eventType === InternalEventType.INIT_SOLUTION || body.eventType === InternalEventType.CHANGE_CONFIG) {
       result.config = this._sanitizedConfig();
     }
@@ -188,7 +186,7 @@ export class TelemetryManager {
       activity: this._router.currentActivity,
       projectPubkey: this._config.pubkey,
       userAgent: navigator.userAgent,
-      eventType: result.eventType ?? '',
+      eventType: result.eventType,
       eventTimestamp: Date.now(),
 
       payload: {
@@ -263,29 +261,20 @@ export class TelemetryManager {
     );
   }
 
-  /**
-   * Report an error to telemetry. This is a terminal error SINK — it must never
-   * throw, or the original failure it reports (a rejected upload/validator/
-   * resolver handler, often on an async path) would surface as an unhandled
-   * rejection. A failed send is logged on the verbose tier only.
-   */
+  /** Report an error to telemetry. A failed send is logged on the verbose tier only (see `sendEvent`). */
   public sendEventError(error: unknown, context = 'unknown'): void {
-    try {
-      this.sendEvent({
-        eventType: InternalEventType.ERROR_EVENT,
-        payload: {
-          metadata: {
-            event: 'error',
-            text: `Error in ${context}`,
-            // Non-`Error` throwables (strings, DOMException, …) have no `.message`;
-            // stringify them rather than reporting `undefined`.
-            error: error instanceof Error ? error.message : String(error),
-          },
+    this.sendEvent({
+      eventType: InternalEventType.ERROR_EVENT,
+      payload: {
+        metadata: {
+          event: 'error',
+          text: `Error in ${context}`,
+          // Non-`Error` throwables (strings, DOMException, …) have no `.message`;
+          // stringify them rather than reporting `undefined`.
+          error: error instanceof Error ? error.message : String(error),
         },
-      });
-    } catch (err) {
-      this._log.debug('failed to report an error event to telemetry', err);
-    }
+      },
+    });
   }
 
   /** Report a UI action: `event` names it, `node` is the tag of the element that reported it. */

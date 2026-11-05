@@ -445,18 +445,6 @@ describe('TelemetryManager', () => {
     });
   });
 
-  it("defaults a missing eventType to '' in the payload", async () => {
-    const { manager, enable } = setup();
-    enable();
-
-    // @ts-expect-error `eventType` is required; an untyped caller still gets ''.
-    manager.sendEvent({});
-    await flush();
-
-    const payload = sendEventMock.mock.calls[0]?.[0] as Record<string, unknown>;
-    expect(payload.eventType).toBe('');
-  });
-
   it('re-sends when only a deeply-nested payload value differs (deep _checkObj recursion miss)', async () => {
     const { manager, enable } = setup();
     enable();
@@ -590,36 +578,6 @@ describe('TelemetryManager', () => {
 
     const payload = sendEventMock.mock.calls[0]?.[0] as { payload: { metadata: { text: string } } };
     expect(payload.payload.metadata.text).toBe('Error in unknown');
-  });
-
-  // `sendEventError` is a terminal error SINK (it reports failures from async
-  // upload/validator/resolver handlers), so it must never throw back into the
-  // caller. When the underlying send throws, it swallows and logs via
-  // the per-ctx gated debug tier rather than rethrowing.
-  it('sendEventError never rethrows when the underlying send throws, logging via the gated debug', () => {
-    const { manager, config } = setup();
-    config.set('debug', true); // open this ctx's gated verbose tier
-    const debug = vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(manager, 'sendEvent').mockImplementation(() => {
-      throw new Error('telemetry sink is down');
-    });
-    // The file's afterEach doesn't restore spies, so isolate to THIS action's calls.
-    debug.mockClear();
-
-    expect(() => manager.sendEventError(new Error('boom'), 'upload')).not.toThrow();
-    expect(debug.mock.calls.some((call) => call.includes('failed to report an error event to telemetry'))).toBe(true);
-  });
-
-  it('sendEventError stays silent (no throw) when the send throws and verbose is off', () => {
-    const { manager } = setup(); // debug config off by default → gated debug suppressed
-    const debug = vi.spyOn(console, 'log').mockImplementation(() => {});
-    vi.spyOn(manager, 'sendEvent').mockImplementation(() => {
-      throw new Error('telemetry sink is down');
-    });
-    debug.mockClear();
-
-    expect(() => manager.sendEventError(new Error('boom'))).not.toThrow();
-    expect(debug.mock.calls.some((call) => call.includes('failed to report an error event to telemetry'))).toBe(false);
   });
 
   it('sendEventError stringifies a non-Error throwable instead of reporting undefined', async () => {
