@@ -5,12 +5,11 @@ import { RegisterableElementMixin } from '../../../../../lit/RegisterableElement
 import { applyClassNames } from '../../lib/classNames';
 
 type PresenceToggleStyle = {
-  transition?: string;
   visible?: string;
   hidden?: string;
 };
 
-const DEFAULT_STYLE: Required<PresenceToggleStyle> = {
+const DEFAULT_STYLE = {
   transition: 'uc-transition',
   visible: 'uc-visible',
   hidden: 'uc-hidden',
