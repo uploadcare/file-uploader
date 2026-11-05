@@ -3,6 +3,7 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject, injectOrNull } from '../../abstract/di/inject';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { delay } from '../../utils/delay';
 import './modal.css';
 import { property } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
@@ -22,6 +23,9 @@ export class Modal extends ChildBlock {
 
   /** When the inline dialog last opened: the click that opened it is still bubbling and must not close it. */
   private _inlineOpenedAt = 0;
+  // What had focus when an inline dialog opened. The browser returns focus only while it is still inside the dialog,
+  // and a screen change inside it can drop focus to the body first.
+  private _inlineOpener: HTMLElement | null = null;
 
   /**
    * `close` events still queued from our own `hide()`. `dialog.close()` dispatches its `close` from a task, so a modal
@@ -131,6 +135,7 @@ export class Modal extends ChildBlock {
   protected async show(): Promise<void> {
     await this.whileAdopted(this.updateComplete);
     const dialog = this.dialogEl.value as HTMLDialogElement & {
+      show?: () => void;
       showModal?: () => void;
     };
     // Idempotent + null-safe (matching `hide()`): `willUpdate` calls this on
@@ -139,11 +144,17 @@ export class Modal extends ChildBlock {
     // racing this async method.
     if (!dialog) return;
     if (this._config.get('modalPresentation') === 'inline') {
-      // In the page, not the top layer: no backdrop, nothing made inert. `hide()`'s `close()` removes `open` again.
-      if (!dialog.open) {
+      // In the page, not the top layer: no backdrop, nothing made inert. `show()` moves focus in, as `showModal()`
+      // does, and `hide()` returns it to the opener.
+      if (typeof dialog.show !== 'function') {
         dialog.setAttribute('open', '');
-        this._inlineOpenedAt = performance.now();
+        return;
       }
+      if (dialog.open) return;
+      const active = document.activeElement;
+      this._inlineOpener = active instanceof HTMLElement && !dialog.contains(active) ? active : null;
+      dialog.show();
+      this._inlineOpenedAt = performance.now();
       return;
     }
     if (dialog.open) {
@@ -164,11 +175,22 @@ export class Modal extends ChildBlock {
       close?: () => void;
     };
     if (!dialog || !dialog.open) return;
+    const wasInline = !dialog.matches?.(':modal');
     if (typeof dialog.close === 'function') {
       this._ownClosesPending++;
       dialog.close();
     } else {
       dialog.removeAttribute('open');
+    }
+    const opener = this._inlineOpener;
+    this._inlineOpener = null;
+    if (wasInline && opener) {
+      // A task later: the Escape that closed an inline dialog still reaches keyux's window listener, which blurs.
+      this.runTask(async () => {
+        await this.whileAdopted(delay(0));
+        const active = document.activeElement;
+        if (opener.isConnected && (!active || active === document.body || dialog.contains(active))) opener.focus();
+      });
     }
   }
 

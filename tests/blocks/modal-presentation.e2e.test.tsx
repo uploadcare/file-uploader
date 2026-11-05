@@ -63,6 +63,19 @@ describe('modalPresentation="inline"', () => {
     await expect.poll(() => dialog.open).toBe(false);
   });
 
+  it('moves focus into the dialog on open and back to the opener on close, as the modal dialog does', async () => {
+    const { root } = await renderSolution('regular', { modalPresentation: 'inline' });
+
+    await openModal(root);
+    const dialog = modalDialog(root, 'start-from')!;
+    await expect.poll(() => dialog.contains(document.activeElement)).toBe(true);
+
+    await userEvent.keyboard('{Escape}');
+    await expect.poll(() => dialog.open).toBe(false);
+    const opener = within(root).getByRole('button', { name: 'Upload files', exact: true }).element();
+    await expect.poll(() => document.activeElement).toBe(opener);
+  });
+
   it('applies a runtime change on the next show', async () => {
     const { root, config, api } = await renderSolution('regular');
 
