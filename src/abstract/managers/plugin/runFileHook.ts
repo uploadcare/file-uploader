@@ -11,13 +11,11 @@ export async function runFileHook(
   file: File | Blob,
   parentSignal: AbortSignal,
 ): Promise<PluginFileHookResult> {
+  // A file removed while queued must not reach the plugin: a hook that returns synchronously would win the race below.
+  parentSignal.throwIfAborted();
   const controller = new AbortController();
   const abortWithParent = () => controller.abort(parentSignal.reason);
-  if (parentSignal.aborted) {
-    abortWithParent();
-  } else {
-    parentSignal.addEventListener('abort', abortWithParent, { once: true });
-  }
+  parentSignal.addEventListener('abort', abortWithParent, { once: true });
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
   // Settles on the first abort — a timeout or the parent's — so a hook that ignores its signal is not waited on.
   const stopped = new Promise<never>((_, reject) => {
