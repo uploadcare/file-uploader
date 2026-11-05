@@ -751,11 +751,9 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       }
       editorController.telemetry.sendEventError(err, 'cloud editor image. Failed to load image info');
       this._log.error('Failed to load image info', err);
-      // `fetch` rejects with a TypeError only when the request never got an answer; offer a retry for that. An
-      // error status (a missing file, say) won't go away on retry.
-      if (err instanceof TypeError) {
-        editorController.networkProblems = true;
-      }
+      // Without the image size nothing else loads, so the editor would stay blank: show the error screen for any
+      // failure, an error status (a missing file) included, though Retry can't bring a missing file back.
+      editorController.networkProblems = true;
     }
 
     this._scheduleInitialization();

@@ -375,6 +375,14 @@ describe('uc-cloud-image-editor', () => {
       await expect.poll(() => cropperSize(element)?.width).toBe(640);
     });
 
+    it('shows the network problems screen when the image info request gets an error status', async () => {
+      vi.spyOn(console, 'error').mockImplementation(() => {});
+      emulatorSession().on('GET /:uuid/-/json/', () => new Response('Not Found', { status: 404 }));
+      const { element } = renderEditor();
+
+      await expect.poll(() => networkSplashVisible(element)).toBe(true);
+    });
+
     it('shows the network problems screen when the image itself fails to load, and Retry loads it', async () => {
       vi.spyOn(console, 'error').mockImplementation(() => {});
       let offline = true;
