@@ -92,12 +92,6 @@
     --modal-toolbar-height: calc(var(--size-panel-heading) * 2);
   }
 
-  [uc-cloud-image-editor].uc-editor_OFF {
-    --modal-header-opacity: 1;
-    --modal-header-height: var(--size-panel-heading);
-    --modal-toolbar-height: var(--size-panel-heading);
-  }
-
   [uc-cloud-image-editor] > .uc-wrapper {
     --l-min-img-height: var(--modal-toolbar-height);
     --l-max-img-height: 100%;
@@ -152,15 +146,6 @@
     height: var(--modal-toolbar-height);
     min-height: var(--size-panel-heading);
     background-color: var(--color-fill-contrast);
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-toolbar > .uc-toolbar_content.uc-toolbar_content__viewer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: var(--size-panel-heading);
-    padding-right: var(--l-toolbar-horizontal-padding);
-    padding-left: var(--l-toolbar-horizontal-padding);
   }
 
   [uc-cloud-image-editor] > .uc-wrapper > .uc-toolbar > .uc-toolbar_content.uc-toolbar_content__editor {
@@ -977,32 +962,6 @@
 
     padding: 0;
     width: var(--uc-button-size);
-  }
-
-  uc-btn-ui.uc-default > button {
-    --idle-color-rgb: var(--uc-secondary-foreground);
-    --idle-brightness: 1;
-    --idle-opacity: 1;
-    --idle-background: var(--uc-secondary);
-    --hover-color-rgb: var(--uc-secondary-foreground);
-    --hover-brightness: 1;
-    --hover-opacity: 1;
-    --hover-background: var(--uc-secondary-hover);
-    --down-color-rgb: var(--uc-secondary-foreground);
-    --down-brightness: 0.75;
-    --down-opacity: 1;
-    --down-background: var(--uc-secondary);
-    --active-color-rgb: var(--uc-primary);
-    --active-brightness: 1;
-    --active-opacity: 1;
-    --active-background: var(--uc-primary-transparent);
-  }
-
-  :where(.uc-contrast) uc-btn-ui.uc-default > button {
-    --idle-background: transparent;
-    --hover-background: var(--uc-secondary);
-    --active-background: var(--uc-foreground);
-    --active-color-rgb: var(--uc-background);
   }
 
   uc-line-loader-ui {
