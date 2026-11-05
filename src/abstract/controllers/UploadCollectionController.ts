@@ -198,12 +198,9 @@ export class UploadCollectionController {
       this._items.add(item.uid);
     } else {
       // Insert at a specific position by rebuilding the insertion-ordered set.
-      // Used by `replaceFile` to keep a replaced file in place. Clamp to a valid
-      // range so a stray (negative / non-finite / out-of-bounds) index can't
-      // trigger splice's count-from-the-end behaviour or misorder items.
+      // Used by `replaceFile` to keep a replaced file in place, at an index it took from `items()`.
       const ids = [...this._items];
-      const at = Math.min(Math.max(Math.trunc(index) || 0, 0), ids.length);
-      ids.splice(at, 0, item.uid);
+      ids.splice(index, 0, item.uid);
       this._items = new Set(ids);
     }
     this._added.add(item);
@@ -314,16 +311,11 @@ export class UploadCollectionController {
     }
   }
 
-  public abort(id: Uid): void {
-    const item = this.read(id);
-    if (item?.get('isUploading')) {
-      this.remove(id);
-    }
-  }
-
   public abortAll(): void {
-    for (const id of this._items) {
-      this.abort(id);
+    for (const item of this.entries()) {
+      if (item.get('isUploading')) {
+        this.remove(item.uid);
+      }
     }
   }
 
@@ -365,9 +357,7 @@ export class UploadCollectionController {
     this._propertyObservers.clear();
     this._observedKeys.clear();
     this._collectionObservers.clear();
-    for (const off of this._entrySubs.values()) {
-      off();
-    }
+    // The live entries' key subscriptions died with `item.destroy()` above; removed ones were dropped in `remove()`.
     this._entrySubs.clear();
     this._items.clear();
     this._added.clear();

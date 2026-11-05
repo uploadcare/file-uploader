@@ -236,22 +236,6 @@ describe('UploadCollectionController', () => {
     collection.destroy();
   });
 
-  it('abort removes an uploading entry and leaves a non-uploading one', () => {
-    const collection = new UploadCollectionController();
-    const uploading = collection.add({ isUploading: true });
-    const idle = collection.add({ isUploading: false });
-    vi.runOnlyPendingTimers();
-
-    collection.abort(uploading);
-    collection.abort(idle);
-
-    expect(collection.hasItem(uploading)).toBe(false); // uploading → removed
-    expect(collection.hasItem(idle)).toBe(true); // not uploading → untouched
-
-    vi.advanceTimersByTime(10_000);
-    collection.destroy();
-  });
-
   it('addMany inserts all entries with a single membership flush + one immediate-on-add property flush', () => {
     const collection = new UploadCollectionController();
     const collObserver = vi.fn();
