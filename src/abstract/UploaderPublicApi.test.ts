@@ -860,6 +860,7 @@ describe('UploaderPublicApi', () => {
 
     it('setModalState(true) opens the modal for the intended activity', async () => {
       const { api, ctrl } = setup();
+      ctrl.router.navigationStrategy = () => 'foreground'; // regular: every activity shows in the modal
       ctrl.router.setActivity('upload-list');
       ctrl.router.activityBlockMounted('upload-list');
       const openModal = vi.spyOn(ctrl.router, 'openModal');
@@ -868,6 +869,20 @@ describe('UploaderPublicApi', () => {
       await flush();
 
       expect(openModal).toHaveBeenCalledWith('upload-list');
+    });
+
+    it('setModalState(true) opens nothing for an activity the solution shows in place (minimal upload list)', async () => {
+      const { api, ctrl } = setup();
+      ctrl.router.navigationStrategy = (to) => (to === 'upload-list' ? 'background' : 'foreground');
+      ctrl.router.setActivity('upload-list');
+      ctrl.router.activityBlockMounted('upload-list');
+      const openModal = vi.spyOn(ctrl.router, 'openModal');
+
+      api.setModalState(true);
+      await flush();
+
+      expect(openModal).not.toHaveBeenCalled();
+      expect(ctrl.router.modal).toBeNull();
     });
 
     it('setModalState(true) warns when there is no current activity', async () => {

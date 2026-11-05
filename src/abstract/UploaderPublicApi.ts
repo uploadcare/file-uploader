@@ -613,6 +613,9 @@ export class UploaderPublicApi {
         this._log.warn(`Can't open modal without current activity. Please use "setCurrentActivity" method first.`);
         return;
       }
+      // An activity the solution shows in place (minimal's upload list) is already showing: no modal opens, and no
+      // modal events fire, as in v1.
+      if (router.modal === null && router.navigationStrategy(activityType) === 'background') return;
 
       return this._container.lifetime.guard(this._waitForActivity(activityType, 1000)).then((found) => {
         if (!found) {
