@@ -13,29 +13,6 @@ export type DropItem =
       url: string;
     };
 
-function checkIsDirectory(file: File): Promise<boolean> {
-  return new Promise((resolve) => {
-    try {
-      const reader = new FileReader();
-      reader.onerror = () => {
-        resolve(true);
-      };
-      const onLoad = (event: ProgressEvent<FileReader>) => {
-        if (event.type !== 'loadend') {
-          reader.abort();
-        }
-        resolve(false);
-      };
-      reader.onloadend = onLoad;
-      reader.onprogress = onLoad;
-
-      reader.readAsDataURL(file);
-    } catch {
-      resolve(false);
-    }
-  });
-}
-
 const readFile = (entry: FileSystemFileEntry): Promise<File | null> =>
   new Promise((resolve) => entry.file(resolve, () => resolve(null)));
 
@@ -43,11 +20,7 @@ const readFile = (entry: FileSystemFileEntry): Promise<File | null> =>
 const readBatch = (reader: FileSystemDirectoryReader): Promise<FileSystemEntry[]> =>
   new Promise((resolve) => reader.readEntries(resolve, () => resolve([])));
 
-async function readEntryContent(entry: FileSystemEntry | null, dataTransferItemType: string): Promise<DropItem[]> {
-  if (!entry) {
-    log.warn('Unexpectedly received empty content entry', { scope: 'drag-and-drop' });
-    return [];
-  }
+async function readEntryContent(entry: FileSystemEntry, dataTransferItemType: string): Promise<DropItem[]> {
   if (entry.isFile) {
     const file = await readFile(entry as FileSystemFileEntry);
     if (!file) {
@@ -83,34 +56,11 @@ export function getDropItems(dataTransfer: DataTransfer): Promise<DropItem[]> {
       continue;
     }
     if (item.kind === 'file') {
-      const itemType = item.type;
-      const withEntry = item as DataTransferItem & {
-        webkitGetAsEntry?: () => FileSystemEntry;
-        getAsEntry?: () => FileSystemEntry;
-      };
-      if (typeof withEntry.webkitGetAsEntry === 'function' || typeof withEntry.getAsEntry === 'function') {
-        const entry =
-          typeof withEntry.webkitGetAsEntry === 'function' ? withEntry.webkitGetAsEntry() : withEntry.getAsEntry?.();
-        if (entry) {
-          promises.push(
-            readEntryContent(entry, itemType).then((items) => {
-              dropItems.push(...items);
-            }),
-          );
-        }
-        continue;
-      }
-
-      const file = item.getAsFile();
-      if (file) {
+      const entry = item.webkitGetAsEntry();
+      if (entry) {
         promises.push(
-          checkIsDirectory(file).then((isDirectory) => {
-            if (!isDirectory) {
-              dropItems.push({
-                type: 'file',
-                file,
-              });
-            }
+          readEntryContent(entry, item.type).then((items) => {
+            dropItems.push(...items);
           }),
         );
       }

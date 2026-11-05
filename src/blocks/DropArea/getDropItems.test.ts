@@ -13,16 +13,9 @@ import { getDropItems } from './getDropItems';
 /** `webkitGetAsEntry` is omitted from the base so the stub can return partial entries rather than full FileSystemEntry. */
 type StubItem = Omit<Partial<DataTransferItem>, 'webkitGetAsEntry'> & {
   webkitGetAsEntry?: () => unknown;
-  getAsEntry?: () => unknown;
 };
 
 const drop = (items: StubItem[]) => getDropItems({ items } as unknown as DataTransfer);
-
-const fileItem = (file: File, type = file.type): StubItem => ({
-  kind: 'file',
-  type,
-  getAsFile: () => file,
-});
 
 const fileEntry = (file: File, fullPath: string) => ({
   isFile: true,
@@ -56,33 +49,6 @@ describe('getDropItems', () => {
 
   it('skips holes in the item list', async () => {
     expect(await drop([undefined as unknown as StubItem])).toEqual([]);
-  });
-
-  describe('plain files', () => {
-    it('passes a dropped file through', async () => {
-      const file = png();
-
-      expect(await drop([fileItem(file)])).toEqual([{ type: 'file', file }]);
-    });
-
-    it('ignores an item whose file cannot be read', async () => {
-      expect(await drop([{ kind: 'file', type: 'image/png', getAsFile: () => null }])).toEqual([]);
-    });
-
-    it('drops an item that reads as a directory', async () => {
-      // A directory dragged into a browser without the entry API surfaces as a File that fails to read.
-      class FailingFileReader {
-        public onerror: (() => void) | null = null;
-        public onloadend: (() => void) | null = null;
-        public onprogress: (() => void) | null = null;
-        public abort() {}
-        public readAsDataURL() {
-          this.onerror?.();
-        }
-      }
-      vi.stubGlobal('FileReader', FailingFileReader);
-      expect(await drop([fileItem(png())])).toEqual([]);
-    });
   });
 
   describe('entries', () => {
@@ -155,26 +121,11 @@ describe('getDropItems', () => {
       expect(await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => tree }])).toHaveLength(1);
     });
 
-    it('uses getAsEntry when webkitGetAsEntry is absent', async () => {
-      const items = await drop([{ kind: 'file', type: 'image/png', getAsEntry: () => fileEntry(png(), '/a.png') }]);
-
-      expect(items).toHaveLength(1);
-    });
-
     it('warns and yields nothing for an empty entry', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       expect(await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => null }])).toEqual([]);
       // A null entry short-circuits before `readEntryContentAsync`, so nothing is logged for it.
       expect(warn).not.toHaveBeenCalled();
-    });
-
-    it('warns when a directory reader yields an empty entry', async () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      const tree = directoryEntry([null]);
-      expect(await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => tree }])).toEqual([]);
-      expect(warn).toHaveBeenCalledWith('[uc][drop-items]', 'Unexpectedly received empty content entry', {
-        scope: 'drag-and-drop',
-      });
     });
   });
 
@@ -202,7 +153,7 @@ describe('getDropItems', () => {
 
   it('collects files and links dropped together', async () => {
     const items = await drop([
-      fileItem(png()),
+      { kind: 'file', type: 'image/png', webkitGetAsEntry: () => fileEntry(png(), '/a.png') },
       {
         kind: 'string',
         type: 'text/uri-list',
