@@ -189,9 +189,7 @@ export class Thumb extends FileItemConfig {
     this._cancelPendingThumbUpdate();
 
     if (!nextThumbUrl) {
-      if (this._thumbUrl) {
-        this._thumbUrl = '';
-      }
+      this._thumbUrl = '';
       return;
     }
 
@@ -216,10 +214,9 @@ export class Thumb extends FileItemConfig {
         if (abortController.signal.aborted) {
           return;
         }
+        // `cancel` cancels this frame, so it never runs after an abort.
         pending.rafId = window.requestAnimationFrame(() => {
-          if (!abortController.signal.aborted) {
-            this._thumbUrl = nextThumbUrl;
-          }
+          this._thumbUrl = nextThumbUrl;
         });
       })
       .catch((error) => {
@@ -279,13 +276,11 @@ export class Thumb extends FileItemConfig {
     super.reset();
     cancelPending(this._debouncedGenerateThumb);
     this._cancelPendingThumbUpdate();
-    if (this._thumbUrl) {
-      this._thumbUrl = '';
-    }
+    this._thumbUrl = '';
   }
 
   private _bindToEntry(): void {
-    const id = this.uid?.trim() as Uid;
+    const id = this.uid;
     const entry = id ? this._collection.read(id) : null;
     if (!entry) {
       // The uid no longer resolves (entry removed, scope lost, or uid swapped

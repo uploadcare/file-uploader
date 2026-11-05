@@ -18,7 +18,10 @@ const makeEntries = (
   partial: Partial<Pick<Entries, 'status' | 'totalCount' | 'isSuccess'>> & {
     allEntries?: Array<Partial<Entries['allEntries'][number]>>;
   },
-): Entries => partial as Entries;
+): Entries => {
+  const idleEntries: Entries['idleEntries'] = [];
+  return { idleEntries, ...partial } as Entries;
+};
 
 let seq = 0;
 const mounted: HTMLElement[] = [];

@@ -9,7 +9,6 @@ import {
 } from '../../abstract/collectionSummary';
 import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
-import { RouterController } from '../../abstract/controllers/RouterController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { deriveEntryStatus } from '../../abstract/deriveEntryStatus';
 import { inject } from '../../abstract/di/inject';
@@ -130,7 +129,8 @@ export class UploadList extends ActivityChildBlock {
     if (!this._latestSummary) {
       return '';
     }
-    return this._getHeaderText(this._latestSummary);
+    const { key, count } = collectionHeader(this._latestSummary);
+    return this.l10n(key, { count });
   }
 
   /**
@@ -178,7 +178,7 @@ export class UploadList extends ActivityChildBlock {
 
     // The router guard (registered via `_guardNonEmpty`) decides whether the
     // empty list may stay open; ask it to re-check now that the collection changed.
-    this.container.get(RouterController).revalidate();
+    this._router.revalidate();
 
     if (!this._config.get('confirmUpload')) {
       this._api.uploadAll();
@@ -262,11 +262,6 @@ export class UploadList extends ActivityChildBlock {
     ) {
       this._latestSummary = summary;
     }
-  }
-
-  private _getHeaderText(summary: CollectionSummary): string {
-    const { key, count } = collectionHeader(summary);
-    return this.l10n(key, { count });
   }
 
   // Guard: the upload list may only be open while it has files (or
@@ -381,8 +376,8 @@ export class UploadList extends ActivityChildBlock {
     // rendered window lands where the scroll position expects (grid mode; `_rowGap`
     // is 0 in list mode, where the gap is folded into each row's own box).
     // The heights go through `cssomStyleMap` (CSSOM): a CSP without `'unsafe-inline'` drops a `style` attribute.
-    const topSpacer = view.topPad > 0 ? Math.max(0, view.topPad - this._rowGap) : 0;
-    const bottomSpacer = view.bottomPad > 0 ? Math.max(0, view.bottomPad - this._rowGap) : 0;
+    const topSpacer = Math.max(0, view.topPad - this._rowGap);
+    const bottomSpacer = Math.max(0, view.bottomPad - this._rowGap);
     return html`
   ${
     compact

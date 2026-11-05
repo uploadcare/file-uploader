@@ -20,7 +20,7 @@ export class UrlSource extends ChildBlock {
   private _url = '';
 
   private _handleInput = (event: Event) => {
-    this._url = (event.target as HTMLInputElement | null)?.value ?? '';
+    this._url = (event.target as HTMLInputElement).value;
   };
 
   private _handleUpload = (event: Event) => {

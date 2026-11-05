@@ -103,7 +103,7 @@ export class FormInput extends ChildBlock {
       return;
     }
 
-    const group = collectionState.group ? collectionState.group : null;
+    const { group } = collectionState;
     if (group) {
       this._validationInputElement.value = group.cdnUrl ?? '';
       this._validationInputElement.setCustomValidity('');

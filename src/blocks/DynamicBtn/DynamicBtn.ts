@@ -149,7 +149,7 @@ export class DynamicBtn extends ChildBlock {
   }
 
   private get hasCollectionEntries(): boolean {
-    return (this._collection?.allEntries?.length ?? 0) > 0;
+    return (this._collection?.allEntries.length ?? 0) > 0;
   }
 
   // `@throttled` makes this adopted-guarded (a trailing tick after release
@@ -217,15 +217,8 @@ export class DynamicBtn extends ChildBlock {
     `;
   }
 
-  private _clearAllEntries() {
-    this._uploadCollection.clearAll();
-  }
-
   private _clearAllFailedEntries() {
     for (const it of this._collection.failedEntries) this._uploadCollection.remove(it.internalId as Uid);
-  }
-  private _abortAllEntries() {
-    this._uploadCollection.abortAll();
   }
 
   private _handleRemove() {
@@ -234,10 +227,10 @@ export class DynamicBtn extends ChildBlock {
         this._clearAllFailedEntries();
         break;
       case 'uploading':
-        this._abortAllEntries();
+        this._uploadCollection.abortAll();
         break;
       default:
-        this._clearAllEntries();
+        this._uploadCollection.clearAll();
     }
   }
 

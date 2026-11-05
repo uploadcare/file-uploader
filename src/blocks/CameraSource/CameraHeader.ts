@@ -22,8 +22,7 @@ export class CameraHeader extends ChildBlock {
   private readonly _emit = (action: CameraActionEvent['action']) => this.dispatchEvent(new CameraActionEvent(action));
 
   private readonly _handleCameraChange = (event: Event): void => {
-    const target = event.target as HTMLSelectElement | null;
-    if (target) this._emit({ type: 'select-camera', deviceId: target.value });
+    this._emit({ type: 'select-camera', deviceId: (event.target as HTMLSelectElement).value });
   };
 
   public override render() {

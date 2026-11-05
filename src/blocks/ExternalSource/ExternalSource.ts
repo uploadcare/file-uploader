@@ -139,7 +139,7 @@ export class ExternalSource extends ChildBlock {
     this._toolbarVisible = message.isVisible;
   }
 
-  private async _handleSelectedFilesChange(message: InputMessageMap['selected-files-change']) {
+  private _handleSelectedFilesChange(message: InputMessageMap['selected-files-change']) {
     if (this._config.get('multiple') !== message.isMultipleMode) {
       this._log.error('Multiple mode mismatch');
       return;
@@ -171,7 +171,7 @@ export class ExternalSource extends ChildBlock {
       throw new Error(`Param "externalSourceType" is required for external source activity`);
     }
     const sourceName = SOCIAL_SOURCE_MAPPING[externalSourceType] ?? externalSourceType;
-    const lang = this.l10n('social-source-lang')?.split('-')?.[0] || 'en';
+    const lang = this.l10n('social-source-lang').split('-')[0] || 'en';
     const params = {
       lang,
       public_key: pubkey,
@@ -246,8 +246,6 @@ export class ExternalSource extends ChildBlock {
     this._messageBridge = new MessageBridge(iframe.contentWindow, () => this._config.get('socialBaseUrl'));
     this._messageBridge.on('selected-files-change', this._handleSelectedFilesChange.bind(this));
     this._messageBridge.on('toolbar-state-change', this._handleToolbarStateChange.bind(this));
-
-    this._selection = null;
   }
 
   private _unmountIframe(): void {
@@ -276,7 +274,7 @@ export class ExternalSource extends ChildBlock {
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"
-          @click=${() => this._router.traverse('onCancel')}
+          @click=${this._handleCancel}
           title=${this.l10n('a11y-activity-header-button-close')}
           aria-label=${this.l10n('a11y-activity-header-button-close')}
         >

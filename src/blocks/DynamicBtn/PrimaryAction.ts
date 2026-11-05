@@ -52,12 +52,12 @@ export class PrimaryAction extends ChildBlock {
   }
 
   private get hasEntries(): boolean {
-    return (this.entries?.allEntries?.length ?? 0) > 0;
+    return (this.entries?.allEntries.length ?? 0) > 0;
   }
 
   private get hasSingleSuccessImage(): boolean {
     return (
-      this.entries?.allEntries?.length === 1 && this.entries.isSuccess && (this.entries.allEntries[0]?.isImage ?? false)
+      this.entries?.allEntries.length === 1 && this.entries.isSuccess && (this.entries.allEntries[0]?.isImage ?? false)
     );
   }
 
@@ -71,7 +71,7 @@ export class PrimaryAction extends ChildBlock {
       return this.l10n(this._isMultiple ? 'upload-files' : 'upload-file');
     }
 
-    return this._getSourceLabelText();
+    return this._getSourceLabelText(this.source);
   }
 
   private _headerTextDependentOnEntries(): string | undefined {
@@ -82,14 +82,13 @@ export class PrimaryAction extends ChildBlock {
       success: entries.successCount,
       uploading: entries.uploadingCount,
       failed: entries.failedCount,
-      validatingBeforeUploading: entries.idleEntries?.filter((entry) => entry.isValidationPending).length ?? 0,
+      validatingBeforeUploading: entries.idleEntries.filter((entry) => entry.isValidationPending).length,
     });
     return this.l10n(key, { count });
   }
 
-  private _getSourceLabelText(): string {
-    const { source } = this;
-    if (!source?.id) {
+  private _getSourceLabelText(source: SourceButtonConfig): string {
+    if (!source.id) {
       return '';
     }
     const action = PrimaryAction.SOURCE_ACTION[source.id];
@@ -127,7 +126,7 @@ export class PrimaryAction extends ChildBlock {
       return html`<uc-icon .name=${PrimaryAction.DEFAULT_ICON}></uc-icon>`;
     }
 
-    const iconName = this.source?.icon;
+    const iconName = this.source.icon;
     return this.showIcon && iconName ? html`<uc-icon .name=${iconName}></uc-icon>` : null;
   }
 

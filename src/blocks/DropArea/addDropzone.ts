@@ -12,7 +12,6 @@ type DropzoneDescriptor = {
   shouldIgnore: () => boolean;
 };
 
-const RESET_EVENTS: Array<keyof WindowEventMap> = ['focus'];
 const NEAR_OFFSET = 100;
 const nearnessRegistry = new Map<HTMLElement, number>();
 
@@ -117,9 +116,7 @@ export function addDropzone(desc: DropzoneDescriptor): () => void {
   body.addEventListener('dragenter', onDragEnter, { signal });
   body.addEventListener('dragover', onDragOver, { signal });
   desc.element.addEventListener('drop', onElementDrop, { signal });
-  RESET_EVENTS.forEach((eventName) => {
-    window.addEventListener(eventName, onResetEvent, { signal });
-  });
+  window.addEventListener('focus', onResetEvent, { signal });
 
   return () => {
     nearnessRegistry.delete(desc.element);

@@ -111,8 +111,6 @@ export class DropArea extends ChildBlock {
       }
       // Space would otherwise scroll the page, as it does on any non-native button.
       event.preventDefault();
-    } else if (!(event instanceof MouseEvent)) {
-      return;
     }
 
     if (this.initflow) {

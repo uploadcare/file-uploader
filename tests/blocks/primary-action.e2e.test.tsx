@@ -13,8 +13,8 @@ beforeAll(async () => {
   UC.defineComponents(UC);
 });
 
-// `PrimaryAction.entries` only reads `status`, `allEntries`, the per-status
-// counts, `isSuccess`, and `totalCount` (see src/blocks/DynamicBtn/PrimaryAction.ts).
+// `PrimaryAction.entries` only reads `status`, `allEntries`, `idleEntries`, the
+// per-status counts, `isSuccess`, and `totalCount` (see src/blocks/DynamicBtn/PrimaryAction.ts).
 // Fixtures below are plain objects shaped to satisfy just those fields; the
 // cast is narrowed to the public `OutputCollectionState` shape (not `any`).
 type Entries = OutputCollectionState<OutputCollectionStatus, 'maybe-has-group'>;
@@ -29,7 +29,10 @@ const makeEntries = (
   partial: Partial<
     Pick<Entries, 'status' | 'totalCount' | 'uploadingCount' | 'failedCount' | 'successCount' | 'isSuccess'>
   > & { allEntries?: Array<Partial<Entries['allEntries'][number]>> },
-): Entries => partial as Entries;
+): Entries => {
+  const idleEntries: Entries['idleEntries'] = [];
+  return { idleEntries, ...partial } as Entries;
+};
 
 // Booleans are driven as JS properties on `config` after render (same pattern
 // as tests/blocks/simple-btn.e2e.test.tsx's `config.multiple = false`), not as

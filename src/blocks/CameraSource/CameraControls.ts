@@ -49,8 +49,7 @@ export class CameraControls extends ChildBlock {
   private readonly _emit = (action: CameraActionEvent['action']) => this.dispatchEvent(new CameraActionEvent(action));
 
   private readonly _handleMicrophoneChange = (event: Event): void => {
-    const target = event.target as HTMLSelectElement | null;
-    if (target) this._emit({ type: 'select-microphone', deviceId: target.value });
+    this._emit({ type: 'select-microphone', deviceId: (event.target as HTMLSelectElement).value });
   };
 
   /** Names the shutter after its icon, which is what tells sighted users what a press does next. */
