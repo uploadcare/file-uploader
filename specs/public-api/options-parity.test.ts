@@ -74,7 +74,8 @@ describe('documented config options', () => {
       'externalSourcesEmbedCss',
       'mediaRecorderOptions',
       'modalBackdropStrokes',
-      // Internal: the dashboard's inline previews; deliberately undocumented.
+      // Documented on the fern-docs side (file-uploader/options.mdx, "modalPresentation") for 1.36; remove this entry
+      // once that page ships and the fixture is regenerated, as for `authToken`.
       'modalPresentation',
       'modalScrollLock',
       'sourceListWrap',

@@ -164,10 +164,6 @@ export type ConfigType = {
   /**
    * How `<uc-modal>` opens its dialog: `'modal'` in the top layer with a backdrop, or `'inline'` in the page flow
    * (`open` attribute, no backdrop or scroll lock; an outside click or Escape closes it).
-   *
-   * Internal: used by the Uploadcare dashboard's previews; not documented, may change. Deliberately left without the
-   * internal JSDoc tag: the build's `stripInternal` drops any member whose comment contains it, even in prose, and the
-   * dashboard sets this option through the published types.
    * @default 'modal'
    */
   modalPresentation: ModalPresentation;
