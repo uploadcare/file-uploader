@@ -32,7 +32,7 @@ export class PluginRegistry {
    */
   private readonly _scheduleNotify: ReturnType<typeof debounce>;
 
-  public constructor(onChange: () => void = () => {}) {
+  public constructor(onChange: () => void) {
     this._scheduleNotify = debounce(onChange, 0);
   }
 
