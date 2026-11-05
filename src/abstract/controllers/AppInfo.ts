@@ -1,19 +1,15 @@
-import { signalState } from '../di/signalState';
-
 /**
  * Boot-time identity of an uploader scope. Container-owned.
  *
  * `solutionName` is the solution (preset) tag that owns this scope — a
- * boot-time fact set once by the solution element and read lazily by telemetry
- * (`TelemetryManager`'s `getSolution` closure). It is backed by a
- * `@signalState` field so a future `SignalWatcher` consumer can track it, but
- * it is not reactive DOM state today; behavior matches v1's `pub('*solution',
- * …)` last-writer semantics.
+ * boot-time fact set by the solution element and read imperatively by
+ * `TelemetryManager`. Plain fields: nothing tracks them reactively. Behavior
+ * matches v1's `pub('*solution', …)` last-writer semantics.
  */
 export class AppInfo {
   // Stored lowercased, payload-ready — set once (last-writer-wins) by the
   // solution element, read lazily by telemetry.
-  @signalState() private _solutionName: string | null = null;
+  private _solutionName: string | null = null;
 
   public get solutionName(): string | null {
     return this._solutionName;
@@ -30,7 +26,7 @@ export class AppInfo {
   }
 
   // Whether the solution owning this scope shows activities in a modal, declared by it (`SolutionChildBlock.hasModal`).
-  @signalState() private _hasModal = true;
+  private _hasModal = true;
 
   public get hasModal(): boolean {
     return this._hasModal;
