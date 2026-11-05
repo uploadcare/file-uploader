@@ -1,7 +1,7 @@
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import type { EventPayload } from '@/index.js';
-import { modalDialog, openModal, renderSolution } from '../utils/render-solution';
+import { modalDialog, openModal, renderSolution, within } from '../utils/render-solution';
 
 beforeAll(async () => {
   const UC = await import('@/index.js');
@@ -76,6 +76,57 @@ describe('modalPresentation="inline"', () => {
     const dialog = modalDialog(root, 'start-from')!;
     expect(dialog.open).toBe(true);
     expect(dialog.matches(':modal')).toBe(false);
+  });
+});
+
+describe.each(['modal', 'inline'] as const)('modalPresentation="%s" close then reopen', (modalPresentation) => {
+  it("keeps the reopened modal open when the close's queued native close event lands after it", async () => {
+    const { root, provider, api } = await renderSolution('regular', { modalPresentation });
+    await openModal(root);
+    const dialog = modalDialog(root, 'start-from')!;
+    const modal = dialog.closest('uc-modal')!;
+    const events: string[] = [];
+    provider.addEventListener('modal-close', () => events.push('modal-close'));
+    provider.addEventListener('modal-open', () => events.push('modal-open'));
+    const staleClose = new Promise((resolve) => dialog.addEventListener('close', resolve, { once: true }));
+
+    // Reopen right after the modal runs `dialog.close()`, before the `close` event it queued as a task is dispatched.
+    dialog.close = () => {
+      delete (dialog as { close?: unknown }).close;
+      dialog.close();
+      queueMicrotask(() => api.navigate('start-from'));
+    };
+    api.setModalState(false);
+
+    // The stale native close event has been dispatched, and anything it set off has rendered.
+    await staleClose;
+    await modal.updateComplete;
+    expect(dialog.open).toBe(true);
+
+    // modal-open/close are debounced: a stale close would re-arm modal-close and land it after modal-open. The closing
+    // `setModalState(false)` is the sentinel that ends the wait for one.
+    await expect.poll(() => events).toEqual(['modal-close', 'modal-open']);
+    api.setModalState(false);
+    await expect.poll(() => events).toEqual(['modal-close', 'modal-open', 'modal-close']);
+  });
+
+  it('still closes on Escape and the close button', async () => {
+    const { root, provider, api } = await renderSolution('regular', { modalPresentation });
+    const onModalClose = vi.fn();
+    provider.addEventListener('modal-close', onModalClose);
+
+    await openModal(root);
+    const dialog = modalDialog(root, 'start-from')!;
+    await userEvent.keyboard('{Escape}');
+    await expect.poll(() => onModalClose.mock.calls.length).toBe(1);
+    await expect.poll(() => dialog.open).toBe(false);
+
+    api.navigate('url');
+    const urlDialog = modalDialog(root, 'url')!;
+    await expect.poll(() => urlDialog.open).toBe(true);
+    await within(root).getByTestId('uc-url-source').getByRole('button', { name: 'Close' }).click();
+    await expect.poll(() => onModalClose.mock.calls.length).toBe(2);
+    await expect.poll(() => urlDialog.open).toBe(false);
   });
 });
 

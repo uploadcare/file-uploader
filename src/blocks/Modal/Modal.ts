@@ -23,6 +23,12 @@ export class Modal extends ChildBlock {
   /** When the inline dialog last opened: the click that opened it is still bubbling and must not close it. */
   private _inlineOpenedAt = 0;
 
+  /**
+   * `close` events still queued from our own `hide()`. `dialog.close()` dispatches its `close` from a task, so a modal
+   * reopened before then would see that stale event; the router already knows about a close we made, so we skip it.
+   */
+  private _ownClosesPending = 0;
+
   /** Idempotent release for our acquisition of the shared body scroll lock. */
   private _releaseScrollLock: (() => void) | null = null;
 
@@ -67,6 +73,14 @@ export class Modal extends ChildBlock {
     // Close the foreground modal slot; the router owns the close transition
     // (and the `modal-close` event).
     router.closeModal();
+  };
+
+  private _handleDialogClose = (): void => {
+    if (this._ownClosesPending > 0) {
+      this._ownClosesPending--;
+      return;
+    }
+    this.closeDialog();
   };
 
   private _handleDialogMouseDown = (e: MouseEvent): void => {
@@ -146,6 +160,7 @@ export class Modal extends ChildBlock {
     };
     if (!dialog || !dialog.open) return;
     if (typeof dialog.close === 'function') {
+      this._ownClosesPending++;
       dialog.close();
     } else {
       dialog.removeAttribute('open');
@@ -203,7 +218,7 @@ export class Modal extends ChildBlock {
 
   public override render() {
     return html`
-  <dialog data-testid="dialog" aria-label=${ifDefined(this.pluginLabel(this.dialogLabel) || undefined)} ${ref(this.dialogEl)} @close=${() => this.closeDialog()} @mousedown=${this._handleDialogMouseDown} @mouseup=${this._handleDialogMouseUp}>
+  <dialog data-testid="dialog" aria-label=${ifDefined(this.pluginLabel(this.dialogLabel) || undefined)} ${ref(this.dialogEl)} @close=${this._handleDialogClose} @mousedown=${this._handleDialogMouseDown} @mouseup=${this._handleDialogMouseUp}>
     ${this.yield('')}
   </dialog>
 `;
