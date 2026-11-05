@@ -87,20 +87,12 @@ export class ClipboardController {
     return typeof activity === 'string' && ALLOWED_PASTE_ACTIVITIES.has(activity);
   }
 
-  private _hasConnectedScope(): boolean {
-    return [...this._scopes].some((scope) => scope.isConnected);
-  }
-
-  private _hasPagePasteScope(): boolean {
-    return [...this._pagePasteScopes].some((scope) => scope.isConnected);
-  }
-
   private _isInsideScope(target: Node | null): boolean {
     if (!target) {
       return false;
     }
 
-    return [...this._scopes].some((scope) => scope.isConnected && scope.contains(target));
+    return [...this._scopes].some((scope) => scope.contains(target));
   }
 
   private _getPastedUrl(text: string): string | null {
@@ -129,17 +121,13 @@ export class ClipboardController {
       return;
     }
 
-    if (!this._hasConnectedScope()) {
-      return;
-    }
-
     const currentActivity = this._router.currentActivity;
     const isInitialState = currentActivity === null;
     const isAllowedActivity = this._isAllowedPasteActivity(currentActivity);
 
     switch (this._config.get('pasteScope')) {
       case 'global':
-        if (!isAllowedActivity && !(isInitialState && this._hasPagePasteScope())) {
+        if (!isAllowedActivity && !(isInitialState && this._pagePasteScopes.size > 0)) {
           return;
         }
         await this._handlePaste(event.clipboardData);
@@ -204,15 +192,12 @@ export class ClipboardController {
 
   /**
    * Register a DOM scope pastes may land in (`pasteScope: 'local'` only
-   * handles pastes targeted inside a registered scope; a `'global'` scope
-   * must merely be connected). `ownsPagePaste` lets a global paste through
-   * while the uploader sits on its start screen. Returns an unregister fn.
+   * handles pastes targeted inside a registered scope). Scopes register while
+   * adopted and unregister on release, so every registered scope is connected.
+   * `ownsPagePaste` lets a global paste through while the uploader sits on its
+   * start screen. Returns an unregister fn.
    */
   public registerScope(scope: Node, { ownsPagePaste = false }: { ownsPagePaste?: boolean } = {}): () => void {
-    if (lifetimeOf(this).signal.aborted) {
-      return () => {};
-    }
-
     const wasEmpty = this._scopes.size === 0;
     this._scopes.add(scope);
     if (ownsPagePaste) {

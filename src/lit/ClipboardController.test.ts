@@ -141,18 +141,6 @@ describe('ClipboardController', () => {
     expect(api.addFileFromObject).not.toHaveBeenCalled();
   });
 
-  it('does nothing without a connected scope', async () => {
-    const { layer, api } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
-    track(layer);
-    const scope = document.createElement('div'); // never connected
-    layer.registerScope(scope);
-
-    window.dispatchEvent(pasteEvent([fileItem(new File(['x'], 'x.txt'))]));
-    await flush();
-
-    expect(api.addFileFromObject).not.toHaveBeenCalled();
-  });
-
   it('unregistering a scope stops handling', async () => {
     const { layer, api } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
     track(layer);
@@ -454,20 +442,11 @@ describe('ClipboardController', () => {
     expect(addSpy.mock.calls.filter((call) => call[0] === 'paste')).toHaveLength(2);
   });
 
-  it('disposing the ctx disarms unconditionally, and registrations after it do not re-arm', async () => {
-    const addSpy = vi.spyOn(window, 'addEventListener');
+  it('disposing the ctx disarms unconditionally', async () => {
     const { layer, api, container } = setup({ pasteScope: 'global', currentActivity: 'start-from' });
 
     layer.registerScope(connectedScope());
     container.dispose();
-    addSpy.mockClear();
-
-    // registerScope after dispose returns an inert no-op unregister — calling
-    // it must be safe (and it arms nothing).
-    const unregister = layer.registerScope(connectedScope());
-    expect(() => unregister()).not.toThrow();
-    const pasteAdds = addSpy.mock.calls.filter((call) => call[0] === 'paste');
-    expect(pasteAdds).toHaveLength(0);
 
     window.dispatchEvent(pasteEvent([fileItem(new File(['x'], 'x.txt'))]));
     await flush();
