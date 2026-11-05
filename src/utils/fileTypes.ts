@@ -70,7 +70,3 @@ export const fileDerivedFields = (
   fileSize: file.size,
   ...(file instanceof File && { fileName: file.name }),
 });
-
-export const isFile = (data: unknown): data is File => {
-  return typeof File !== 'undefined' && data instanceof File;
-};
