@@ -159,31 +159,9 @@ export class ControllerContainer {
       inst[CONTAINER] = this; // tag BEFORE init so @inject works in init()
       this.#instances.set(Ctrl, inst); // cache BEFORE init so re-entrant get() is safe
       this.#order.push(Ctrl);
-      try {
-        (inst as Initializable).init?.();
-      } catch (err) {
-        // `init()` threw: the cached-before-init instance is only partially
-        // wired, so roll it back (remove from `#instances`/`#order`) rather than
-        // leaving a broken singleton every later `get()` would return. A
-        // dependency `init()` resolved before throwing stays cached (it is
-        // fully built); only `Ctrl` — appended once, guaranteed non-re-entrant
-        // by `#resolving` — is removed. Best-effort teardown, then rethrow.
-        this.#instances.delete(Ctrl);
-        const idx = this.#order.indexOf(Ctrl);
-        if (idx !== -1) {
-          this.#order.splice(idx, 1);
-        }
-        try {
-          (inst as Destroyable).destroy?.();
-        } catch {
-          // Teardown of a half-initialized instance is best-effort — never let
-          // it mask the original `init()` failure.
-        }
-        throw err;
-      }
-      // Flush any `whenController` waiters AFTER a successful init, so they
-      // receive a fully initialized instance (and never fire for an instance
-      // that was rolled back above). Do this inside `get()` (the single
+      (inst as Initializable).init?.();
+      // Flush any `whenController` waiters AFTER init, so they receive a fully
+      // initialized instance. Do this inside `get()` (the single
       // resolution point) so it covers both the unbound `new Ctrl()` path and
       // the `bind()`-ed factory path.
       this.#flushControllerWaiters(Ctrl, inst);
