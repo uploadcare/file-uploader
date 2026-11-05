@@ -454,14 +454,14 @@ export class EditorToolbar extends EditorBlock {
 
   /** `EditorFilterControl`'s reported selection: drives the slider, `currentFilter` and the click telemetry. */
   private readonly _handleFilterSelect = (e: FilterSelectEvent): void => {
-    const { operation, filter, active, isOriginal, originalEvent } = e;
+    const { filter, active, isOriginal, originalEvent } = e;
     const sliderFilter = filter || undefined;
 
     if (!active) {
-      this._sliderRef.value?.setOperation(operation, sliderFilter);
+      this._sliderRef.value?.setOperation('filter', sliderFilter);
       this._sliderRef.value?.apply();
     } else if (!isOriginal) {
-      this._sliderRef.value?.setOperation(operation, sliderFilter);
+      this._sliderRef.value?.setOperation('filter', sliderFilter);
       this._setShowSlider(true);
     }
 

@@ -25,7 +25,6 @@ import './EditorIcon';
 export class FilterSelectEvent extends Event {
   public static readonly eventName = 'uc-internal:filter-select';
   public constructor(
-    public readonly operation: 'filter',
     public readonly filter: SliderFilter | '',
     public readonly active: boolean,
     public readonly isOriginal: boolean,
@@ -58,7 +57,7 @@ export class EditorFilterControl extends EditorButtonControl {
   @state()
   public isOriginal = false;
 
-  @state()
+  /** Preview size fallback for a theme that leaves `--l-base-min-width` unset. */
   private _iconSize = 20;
 
   /**
@@ -94,12 +93,12 @@ export class EditorFilterControl extends EditorButtonControl {
   }
 
   public override onClick(e: MouseEvent) {
-    this.dispatchEvent(new FilterSelectEvent('filter', this._filter, this.active, this.isOriginal, e));
+    this.dispatchEvent(new FilterSelectEvent(this._filter, this.active, this.isOriginal, e));
   }
 
   private _previewSrc(): string {
     const cssSize = parseInt(window.getComputedStyle(this).getPropertyValue('--l-base-min-width'), 10);
-    const previewSize = Number.isFinite(cssSize) && cssSize > 0 ? cssSize : this._iconSize || 32;
+    const previewSize = Number.isFinite(cssSize) && cssSize > 0 ? cssSize : this._iconSize;
     const dpr = window.devicePixelRatio;
     const size = Math.ceil(dpr * previewSize);
     const quality = dpr >= 2 ? 'lightest' : 'normal';
@@ -119,10 +118,10 @@ export class EditorFilterControl extends EditorButtonControl {
     });
   }
 
-  private _observerCallback(entries: IntersectionObserverEntry[], observer: IntersectionObserver): void {
+  private _observerCallback(entries: IntersectionObserverEntry[]): void {
     const intersectionEntry = entries[0];
     if (intersectionEntry?.isIntersecting) {
-      this.runTask(() => this._loadPreview(observer));
+      this.runTask(() => this._loadPreview());
     } else {
       this._cancelPreload?.();
     }
@@ -205,7 +204,7 @@ export class EditorFilterControl extends EditorButtonControl {
       : '';
   }
 
-  private async _loadPreview(observer?: IntersectionObserver): Promise<void> {
+  private async _loadPreview(): Promise<void> {
     // An observer entry queued before disconnect can still be delivered after it; `disconnectedCallback` has already
     // disconnected the observer and cancelled the preload.
     const signal = this.adoptionSignal;
@@ -246,7 +245,7 @@ export class EditorFilterControl extends EditorButtonControl {
       this._previewImage = src;
       this._previewLoaded = true;
       this._clearPreviewVisibilityChecks();
-      (observer ?? this._observer)?.unobserve(this);
+      this._observer?.unobserve(this);
     } catch (err) {
       // This load's own adoption: after a move, `this.adoptionSignal` is the next one's, still live.
       if (signal.aborted) throw err;
@@ -285,10 +284,8 @@ export class EditorFilterControl extends EditorButtonControl {
       }
       const rect = this.getBoundingClientRect();
       const hasSize = rect.width > 0 && rect.height > 0;
-      const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
-      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
       const isVisible =
-        hasSize && rect.bottom > 0 && rect.right > 0 && rect.top < viewportHeight && rect.left < viewportWidth;
+        hasSize && rect.bottom > 0 && rect.right > 0 && rect.top < window.innerHeight && rect.left < window.innerWidth;
       // Out of view, the IntersectionObserver loads the preview when it scrolls in.
       if (isVisible) {
         this.runTask(() => this._loadPreview());
