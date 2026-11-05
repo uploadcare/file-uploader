@@ -665,6 +665,32 @@ describe('RouterController (v2)', () => {
       expect(router.currentActivity).toBeNull();
     });
 
+    it('revalidate closes when nothing was shown before the refused activity, as v1 did', () => {
+      const { router } = setup();
+      router.configure({ initActivity: 'start-from' });
+      let listAllowed = true;
+      router.guard('upload-list', () => listAllowed);
+      router.openModal('upload-list'); // initFlow() with files: the modal opens straight on the list
+
+      listAllowed = false;
+      router.revalidate();
+
+      expect(router.currentActivity).toBeNull();
+    });
+
+    it('revalidate keeps a background list that started the flow on its init activity (inline)', () => {
+      const { router } = setup();
+      router.configure({ initActivity: 'start-from' });
+      let listAllowed = true;
+      router.guard('upload-list', () => listAllowed);
+      router.setActivity('upload-list');
+
+      listAllowed = false;
+      router.revalidate();
+
+      expect(router.currentActivity).toBe('start-from');
+    });
+
     it('stays put when the init activity is refused too', () => {
       const { router } = setup();
       router.configure({ initActivity: 'start-from' });

@@ -181,11 +181,15 @@ export class RouterController {
   /**
    * Re-evaluate the current activity against its guard; if it no longer holds,
    * restart at the init activity (v1: an emptied upload list went back to its start screen), or navigate back
-   * without one. Call after external state changes a guard depends on (the upload list calls this when its
-   * collection changes).
+   * without one. A modal the flow opened straight on it closes instead, as v1's `historyBack()` did with no history.
+   * Call after external state changes a guard depends on (the upload list calls this when its collection changes).
    */
   public revalidate(): void {
     if (this._canActivate(this.currentActivity)) return;
+    if (this._modal !== null && this._history.length <= 1) {
+      this.closeModal();
+      return;
+    }
     const fallback = this._fallbackFor(this.currentActivity);
     if (fallback && this._canActivate(fallback)) {
       this.restart(fallback);
