@@ -1,4 +1,4 @@
-import { html, type PropertyValues } from 'lit';
+import { html, type PropertyValues, ReactiveElement } from 'lit';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject, injectOrNull } from '../../abstract/di/inject';
@@ -12,6 +12,9 @@ import type { RegisteredActivityType } from '../../abstract/activity-constants';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { PluginLabel } from '../../abstract/managers/plugin/PluginTypes';
 import { acquireScrollLock } from '../../utils/scroll-lock';
+
+const FOCUSABLE =
+  'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export class Modal extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
@@ -161,6 +164,7 @@ export class Modal extends ChildBlock {
       }
       dialog.show();
       this._inlineOpenedAt = performance.now();
+      await this._settleInitialFocus(dialog);
       return;
     }
     if (dialog.open) {
@@ -171,9 +175,37 @@ export class Modal extends ChildBlock {
     }
     if (typeof dialog.showModal === 'function') {
       dialog.showModal();
+      await this._settleInitialFocus(dialog);
     } else {
       dialog.setAttribute('open', '');
     }
+  }
+
+  /**
+   * v1's first focus stop: the first control once the activity has rendered. Opening focuses what is there at that
+   * moment, which can be the dialog itself (the camera renders its controls later) or the drop area, a focus stop v1
+   * did not have.
+   */
+  // NEXT-MAJOR(a11y): let the dialog's own focusing steps pick the first stop, the drop area included. Kept for 1.x
+  // compat.
+  private async _settleInitialFocus(dialog: HTMLDialogElement): Promise<void> {
+    const initial = document.activeElement;
+    const isDropArea = initial instanceof HTMLElement && initial.localName === 'uc-drop-area';
+    if (initial !== dialog && !(isDropArea && dialog.contains(initial))) return;
+    // Rendering can add blocks that render in turn: wait until a round adds none.
+    let seen = -1;
+    for (let round = 0; round < 5; round++) {
+      const blocks = [...dialog.querySelectorAll('*')].filter((el) => el instanceof ReactiveElement);
+      if (blocks.length === seen) break;
+      seen = blocks.length;
+      await this.whileAdopted(Promise.all(blocks.map((el) => el.updateComplete)));
+    }
+    // The user, or the activity itself, moved focus meanwhile.
+    if (document.activeElement !== initial) return;
+    const first = [...dialog.querySelectorAll<HTMLElement>(FOCUSABLE)].find(
+      (el) => el.localName !== 'uc-drop-area' && el.checkVisibility(),
+    );
+    first?.focus();
   }
 
   protected hide(): void {

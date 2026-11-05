@@ -30,6 +30,7 @@ const CAMERA_E2E = [
   './tests/api/events-ui-and-sources.e2e.test.tsx',
   './tests/solutions/regular.e2e.test.tsx',
   './tests/solutions/inline.e2e.test.tsx',
+  './tests/blocks/modal-initial-focus.e2e.test.tsx',
 ];
 
 const e2eProject = ({
