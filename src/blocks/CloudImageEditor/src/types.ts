@@ -43,14 +43,12 @@ export type { CropAspectRatio, CropPresetList } from '../../../utils/crop/cropPr
 
 export type Direction = '' | 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
 
-export type FrameThumbs = Partial<
-  Record<
-    Direction,
-    {
-      direction: Direction;
-      pathNode: SVGElement;
-      interactionNode: SVGElement;
-      groupNode: SVGElement;
-    }
-  >
+export type FrameThumbs = Record<
+  Direction,
+  {
+    direction: Direction;
+    pathNode: SVGElement;
+    interactionNode: SVGElement;
+    groupNode: SVGElement;
+  }
 >;

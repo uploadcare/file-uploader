@@ -30,7 +30,7 @@ import { EditorBlock } from './editor-context';
 import { classNames } from './lib/classNames.js';
 import type { Direction, FrameThumbs, Rectangle } from './types';
 
-type FrameThumb = NonNullable<FrameThumbs[Direction]>;
+type FrameThumb = FrameThumbs[Direction];
 
 type Delta = [number, number];
 
@@ -183,9 +183,6 @@ export class CropFrame extends EditorBlock {
       return;
     }
     for (const thumb of Object.values(this._frameThumbs)) {
-      if (!thumb) {
-        continue;
-      }
       const { direction, pathNode, interactionNode, groupNode } = thumb;
       const isCenter = direction === '';
       const isCorner = direction.length === 2;
@@ -209,10 +206,7 @@ export class CropFrame extends EditorBlock {
         const pathInfo = isCorner
           ? cornerPath(cropBox, direction, thumbSizeMultiplier)
           : sidePath(cropBox, direction as Extract<Direction, 'n' | 's' | 'e' | 'w'>, thumbSizeMultiplier);
-        const center = pathInfo.center as [number, number] | undefined;
-        if (!center) {
-          continue;
-        }
+        const { center } = pathInfo;
         const size = Math.max(
           MAX_INTERACTION_SIZE * clamp(Math.min(width, height) / MAX_INTERACTION_SIZE / 3, 0, 1),
           MIN_INTERACTION_SIZE,
@@ -223,7 +217,7 @@ export class CropFrame extends EditorBlock {
           width: size * 2,
           height: size * 2,
         });
-        setSvgNodeAttrs(pathNode, { d: pathInfo.d as string });
+        setSvgNodeAttrs(pathNode, { d: pathInfo.d });
       }
 
       const disableThumb = this._shouldThumbBeDisabled(direction);
@@ -244,7 +238,7 @@ export class CropFrame extends EditorBlock {
     });
   }
 
-  private _createThumb(frameThumbs: FrameThumbs, direction: Direction): void {
+  private _createThumb(direction: Direction): FrameThumb {
     const groupNode = createSvgNode('g');
     groupNode.classList.add('uc-thumb');
     groupNode.setAttribute('with-effects', '');
@@ -258,36 +252,28 @@ export class CropFrame extends EditorBlock {
     });
     groupNode.appendChild(pathNode);
     groupNode.appendChild(interactionNode);
-    frameThumbs[direction] = {
-      direction,
-      pathNode,
-      interactionNode,
-      groupNode,
-    };
 
     if (direction === '') {
       groupNode.style.cursor = 'move';
     }
 
     interactionNode.addEventListener('pointerdown', this._handlePointerDown.bind(this, direction));
+    return { direction, pathNode, interactionNode, groupNode };
   }
 
   private _createThumbs(): FrameThumbs {
-    const frameThumbs: FrameThumbs = {};
-
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        const direction = `${['n', '', 's'][i]}${['w', '', 'e'][j]}` as Direction;
-        if (direction === '') {
-          continue;
-        }
-
-        this._createThumb(frameThumbs, direction);
-      }
-    }
-
-    this._createThumb(frameThumbs, '');
-    return frameThumbs;
+    // Key order is the thumbs' DOM order and the hover lookup order: the move thumb ('') must come last.
+    return {
+      nw: this._createThumb('nw'),
+      n: this._createThumb('n'),
+      ne: this._createThumb('ne'),
+      w: this._createThumb('w'),
+      e: this._createThumb('e'),
+      sw: this._createThumb('sw'),
+      s: this._createThumb('s'),
+      se: this._createThumb('se'),
+      '': this._createThumb(''),
+    };
   }
 
   private _createGuides(): SVGElement {
@@ -353,9 +339,6 @@ export class CropFrame extends EditorBlock {
   private _handlePointerDown(direction: Direction, e: PointerEvent): void {
     if (!this._frameThumbs) return;
     const thumb = this._frameThumbs[direction];
-    if (!thumb) {
-      return;
-    }
     if (this._shouldThumbBeDisabled(direction)) {
       return;
     }
@@ -449,16 +432,13 @@ export class CropFrame extends EditorBlock {
     if (!this._frameThumbs) return;
 
     const hoverThumb = Object.values(this._frameThumbs).find((thumb) => {
-      if (!thumb) {
-        return false;
-      }
       if (this._shouldThumbBeDisabled(thumb.direction)) {
         return false;
       }
       return rectContainsPoint(thumb.interactionNode.getBoundingClientRect(), [e.x, e.y]);
     });
 
-    this._hoverThumb = hoverThumb as FrameThumb | undefined;
+    this._hoverThumb = hoverThumb;
     this._updateCursor();
   };
 
@@ -514,11 +494,7 @@ export class CropFrame extends EditorBlock {
 
   public toggleThumbs(visible: boolean): void {
     if (!this._frameThumbs) return;
-    for (const thumb of Object.values(this._frameThumbs)) {
-      if (!thumb) {
-        continue;
-      }
-      const { groupNode } = thumb;
+    for (const { groupNode } of Object.values(this._frameThumbs)) {
       groupNode.setAttribute(
         'class',
         classNames('uc-thumb', {
