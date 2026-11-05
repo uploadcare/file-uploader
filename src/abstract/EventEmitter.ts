@@ -1,11 +1,5 @@
 import { inject } from './di/inject';
-import {
-  type EmitMeta,
-  EventBus,
-  type UploaderEventKey,
-  type UploaderEventPayload,
-  UploaderEventType,
-} from './EventBus';
+import { EventBus, type UploaderEventKey, type UploaderEventPayload, UploaderEventType } from './EventBus';
 
 export const InternalEventType = Object.freeze({
   INIT_SOLUTION: 'init-solution',
@@ -46,17 +40,16 @@ export class EventEmitter {
   public emit<T extends UploaderEventKey>(
     type: T,
     payload?: UploaderEventPayload[T] | (() => UploaderEventPayload[T]),
-    options: { debounce?: boolean } & EmitMeta = {},
+    options: { debounce?: boolean } = {},
   ): void {
     // A value or a thunk is accepted on either path (the runtime resolves
     // both); the single `as` bridges the optional `payload?` to the required
     // payload for events whose payload isn't `undefined`.
     const resolve = () => (typeof payload === 'function' ? payload() : payload) as UploaderEventPayload[T];
-    const { debounce, ...meta } = options;
-    if (debounce) {
-      this._bus.emitDebounced(type, resolve, meta);
+    if (options.debounce) {
+      this._bus.emitDebounced(type, resolve);
     } else {
-      this._bus.emit(type, resolve(), meta);
+      this._bus.emit(type, resolve());
     }
   }
 }

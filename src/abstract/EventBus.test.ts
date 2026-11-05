@@ -58,16 +58,6 @@ describe('EventBus', () => {
     warn.mockRestore();
   });
 
-  it('gives on() handlers only the payload, not the emit meta', () => {
-    const bus = new ControllerContainer().get(EventBus);
-    const handler = vi.fn();
-    bus.on(UploaderEventType.UPLOAD_CLICK, handler);
-
-    bus.emit(UploaderEventType.UPLOAD_CLICK, undefined, { telemetry: false });
-
-    expect(handler.mock.calls).toEqual([[undefined]]);
-  });
-
   it('onAny receives the type and payload of every event', () => {
     const bus = new ControllerContainer().get(EventBus);
     const any = vi.fn();
@@ -75,7 +65,7 @@ describe('EventBus', () => {
 
     bus.emit(UploaderEventType.UPLOAD_CLICK, undefined);
 
-    expect(any).toHaveBeenCalledWith(UploaderEventType.UPLOAD_CLICK, undefined, {});
+    expect(any).toHaveBeenCalledWith(UploaderEventType.UPLOAD_CLICK, undefined);
   });
 
   it('emitDebounced fires once after the window and evaluates the thunk lazily', () => {

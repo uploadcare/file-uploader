@@ -163,15 +163,13 @@ export class UploadCollectionEventsController {
       this._reportedFailures = new Set([...this._reportedFailures].filter((key) => failures.has(key)));
       return;
     }
-    const newFailures = [...failures].filter((key) => !this._reportedFailures.has(key));
+    const hasNewFailure = [...failures].some((key) => !this._reportedFailures.has(key));
     this._reportedFailures = failures;
-    if (newFailures.length > 0) {
-      // v1 reported a file error to telemetry, and a collection validation error only to the page.
-      const hasNewFileFailure = newFailures.some((key) => !key.startsWith(COLLECTION_ERROR_KEY));
+    if (hasNewFailure) {
       this._eventEmitter.emit(
         UploaderEventType.COMMON_UPLOAD_FAILED,
         () => this._outputCollectionState() as OutputCollectionState<'failed'>,
-        hasNewFileFailure ? { debounce: true } : { debounce: true, telemetry: false },
+        { debounce: true },
       );
     }
   }
