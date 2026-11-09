@@ -23,6 +23,14 @@ describe('NPM package', () => {
     expect(stickyPackageVersion(rootModule)).toMatchSnapshot('root export');
   });
 
+  // `instanceof` against an upload's `error` needs the classes themselves, not only their types.
+  test('exports the upload-client error classes as values', async () => {
+    const m: Record<string, unknown> = await import(`@uploadcare/file-uploader/web/${'file-uploader.min.js'}`);
+    for (const name of ['AuthTokenResolverError', 'NetworkError', 'UploadcareError', 'UploadError']) {
+      expect(typeof m[name], name).toBe('function');
+    }
+  });
+
   test('export `abstract/loadFileUploaderFrom.js` should match snapshot', async () => {
     const loadFileUploaderFrom = await import('@uploadcare/file-uploader/abstract/loadFileUploaderFrom.js');
     expect(stickyPackageVersion(loadFileUploaderFrom)).toMatchSnapshot('abstract/loadFileUploaderFrom.js');
