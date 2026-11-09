@@ -71,7 +71,6 @@ export class FileItem extends FileItemConfig {
   })
   public uid: Uid = '' as Uid;
 
-  @state()
   private _pluginFileActions: Owned<PluginFileActionRegistration>[] = [];
 
   private _renderedOnce = false;
@@ -144,22 +143,18 @@ export class FileItem extends FileItemConfig {
     this.entry = entry;
 
     if (!entry) {
-      this._updatePluginFileActions();
       return;
     }
 
-    // ONE keyed subscription drives the only side-effect that is NOT pure
-    // render: the plugin file-action recompute. Everything the row *displays*
-    // (name, badge, flags, hint, progress, aria) is a `getTracked` read in
-    // `render()`, so Lit re-renders on the exact entry keys it reads.
+    // The plugin file actions are recomputed on every update (`willUpdate`); these keys feed what `shouldRender` sees
+    // through `getOutputItem` without being read in `render()`, so they request one. Everything the row *displays*
+    // (name, badge, flags, hint, progress, aria) is a `getTracked` read in `render()`, so Lit re-renders on the exact
+    // entry keys it reads.
     this.subEntryKeys((key) => {
       if (PLUGIN_ACTION_KEYS.has(key)) {
-        this._updatePluginFileActions();
+        this.requestUpdate();
       }
     });
-
-    // Seed the initial side-effect (subscribeKeys does not replay current state).
-    this._updatePluginFileActions();
   }
 
   /**
@@ -181,6 +176,9 @@ export class FileItem extends FileItemConfig {
     // Derived once per update for the getters below; `getTracked` re-runs the update when a read key changes.
     const { entry } = this;
     this._state = entry ? this._deriveState((key) => entry.getTracked(key)) : FileItemState.IDLE;
+    // In the update, so `SignalWatcher` tracks what each `shouldRender` reads: a plugin option it checks through
+    // `pluginApi.config.get` re-renders the row when it changes.
+    this._updatePluginFileActions();
   }
 
   private _updatePluginFileActions(): void {
@@ -246,8 +244,8 @@ export class FileItem extends FileItemConfig {
   protected _wirePluginFileActions(): Unsubscribe {
     return this.container.whenController(PluginController, (pm) => {
       this._pluginManager = pm;
-      this._updatePluginFileActions();
-      return pm.onPluginsChange(() => this._updatePluginFileActions());
+      this.requestUpdate();
+      return pm.onPluginsChange(() => this.requestUpdate());
     });
   }
 

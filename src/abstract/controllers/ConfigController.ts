@@ -75,8 +75,8 @@ export class ConfigController {
    * Distinct from `get()`, which reads the fast bag and is NOT tracked — for
    * imperative readers (every `api.cfg` lookup) on the hot path (see `SignalMap`).
    */
-  public getTracked<K extends keyof ConfigType>(key: K): ConfigType[K] {
-    return this.#state.getTracked(key) as ConfigType[K];
+  public getTracked<K extends keyof KnownConfig>(key: K): KnownConfig[K] {
+    return this.#state.getTracked(key as string) as KnownConfig[K];
   }
 
   /** Notifies only when the value actually changes (`Object.is` dedup). */

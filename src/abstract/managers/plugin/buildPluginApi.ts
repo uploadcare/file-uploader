@@ -56,8 +56,9 @@ export function buildPluginApi(
   };
 
   const configApi: PluginConfigApi = {
+    // Tracked: a read inside a reactive render (a file action's `shouldRender`) re-runs it when the option changes.
     get: <TKey extends keyof (ConfigType & CustomConfig)>(configName: TKey): (ConfigType & CustomConfig)[TKey] => {
-      return config.get(configName);
+      return config.getTracked(configName);
     },
 
     subscribe: <TKey extends keyof (ConfigType & CustomConfig)>(

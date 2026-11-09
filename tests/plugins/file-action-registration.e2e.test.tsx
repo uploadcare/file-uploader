@@ -58,6 +58,36 @@ describe('plugin file actions', () => {
       .not.toBeInTheDocument();
   });
 
+  it('re-checks shouldRender() when a config option it reads changes while the list is open', async () => {
+    const plugin = createTestPlugin({
+      id: 'fa-config',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerConfig({ name: 'showConfigAction', defaultValue: false });
+        pluginApi.registry.registerFileAction({
+          id: 'config-action',
+          icon: 'default',
+          label: 'Config Action' as PlainText,
+          shouldRender: () => Boolean(pluginApi.config.get('showConfigAction')),
+          onClick: () => {},
+        });
+      },
+    });
+
+    const { api, root, config } = await renderSolution('regular', { plugins: [plugin] });
+    api.addFileFromUrl(TEST_IMAGE_URL);
+    api.initFlow();
+    // Settled first: an entry change re-checks shouldRender() too, and would hide what this test is about.
+    await expect.poll(() => api.getOutputCollectionState().isSuccess).toBe(true);
+    const action = within(root).getByRole('button', { name: 'Config Action', exact: true });
+    await expect.element(action).not.toBeInTheDocument();
+
+    config.showConfigAction = true;
+    await expect.element(action).toBeVisible();
+
+    config.showConfigAction = false;
+    await expect.element(action).not.toBeInTheDocument();
+  });
+
   it('calls onClick() with the entry when the button is clicked', async () => {
     const onClick = vi.fn();
     const plugin = createTestPlugin({
@@ -269,3 +299,9 @@ describe('plugin file actions', () => {
     await expect.element(within(root).getByText('prithiviraj-a-fa7Stge3YXs-unsplash.jpg')).toBeVisible();
   });
 });
+
+declare module '@/types/index' {
+  interface CustomConfig {
+    showConfigAction: boolean;
+  }
+}
