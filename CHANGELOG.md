@@ -1,3 +1,9 @@
+## [1.36.1](https://github.com/uploadcare/file-uploader/compare/v1.36.0...v1.36.1) (2026-11-09)
+
+
+### Bug Fixes
+
+* **upload:** pass cdnCnamePrefixed to upload-client ([#1116](https://github.com/uploadcare/file-uploader/issues/1116)) ([0513be7](https://github.com/uploadcare/file-uploader/commit/0513be7fb7f9461ded403c47cc0f8e43ae0434d9))
 # [1.36.0](https://github.com/uploadcare/file-uploader/compare/v1.35.1...v1.36.0) (2026-11-04)
 
 
