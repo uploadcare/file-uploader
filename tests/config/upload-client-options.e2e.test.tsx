@@ -108,6 +108,19 @@ describe.skipIf(isLive)('options upload-client acts on', () => {
     expect(entry(api).cdnUrl).toBe(`https://cdn.example.com/${entry(api).uuid}/`);
   });
 
+  // upload-client re-derives a `baseCDN` that sits inside a prefixed zone under its own `prefixedBaseCDN`, which
+  // defaults to `ucarecd.net`; without `cdnCnamePrefixed` reaching it, `<hash>.m.ucarecd.net` became `<hash>.ucarecd.net`.
+  it('keeps the file URL in the cdnCnamePrefixed zone', async () => {
+    const { api, config } = await renderSolution('regular', { cdnCnamePrefixed: 'https://m.ucarecd.net' });
+    await expect.poll(() => config.cdnCname).toBe('https://1s4oyld5dc.m.ucarecd.net');
+
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
+
+    expect(await finished(api)).toBe('success');
+    expect(entry(api).cdnUrl).toBe(`https://1s4oyld5dc.m.ucarecd.net/${entry(api).uuid}/`);
+  });
+
   it.each([true, false])('stores the file or not as store: %s says', async (store) => {
     const { api, status } = await upload({ store });
 

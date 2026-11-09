@@ -469,6 +469,9 @@ export class LitUploaderBlock extends LitActivityBlock {
       store: this.cfg.store,
       publicKey: this.cfg.pubkey,
       baseCDN: this.cfg.cdnCname,
+      // upload-client re-derives a `baseCDN` inside the prefixed zone; without this it uses its own `ucarecd.net`, so
+      // `<hash>.m.ucarecd.net` became `<hash>.ucarecd.net`.
+      prefixedBaseCDN: this.cfg.cdnCnamePrefixed,
       baseURL: this.cfg.baseUrl,
       userAgent: customUserAgent,
       integration: this.cfg.userAgentIntegration,
