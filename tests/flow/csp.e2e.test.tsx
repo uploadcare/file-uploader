@@ -35,9 +35,14 @@ describe('under the documented CSP', () => {
     // Spacer heights come from measured rows and can be fractional, which layout rounds to 1/64 px.
     expect(spacer.getBoundingClientRect().height).toBeCloseTo(Number.parseFloat(spacer.style.height), 0);
 
+    // Rows below the viewport render empty until they scroll in, and the list's height moves as rows are measured:
+    // scroll again on every poll until the bottom holds the last file.
     const files = root.querySelector<HTMLElement>('.uc-files')!;
-    files.scrollTop = files.scrollHeight;
-    await expect.poll(() => root.querySelector('uc-file-item:last-of-type')?.textContent).toContain('f299.txt');
+    const lastName = () => {
+      files.scrollTop = files.scrollHeight;
+      return root.querySelector('uc-file-item:last-of-type')?.textContent;
+    };
+    await expect.poll(lastName).toContain('f299.txt');
   });
 
   it('places the editor slider thumb and zero dot at their values', async () => {

@@ -75,6 +75,13 @@ describe('uc-upload-list virtualization', () => {
     }
   };
 
+  // Rows below the viewport render empty until they scroll in, and the list's height moves as rows are measured, so
+  // one scroll to the bottom can land short of it: scroll again on every poll.
+  const scrollToBottom = (files: HTMLElement, lastRow: () => Element | undefined) => {
+    files.scrollTop = files.scrollHeight;
+    return lastRow();
+  };
+
   it('renders every file of a page-scrolled inline list, so the page scrolls to the last one', async () => {
     // Nothing bounds the inline uploader's height, so `.uc-files` never scrolls: the page does.
     const { api, root } = await renderSolution('inline', { confirmUpload: true, multipleMax: 1000 });
@@ -109,8 +116,8 @@ describe('uc-upload-list virtualization', () => {
     expect(root.querySelectorAll('uc-file-item').length).toBeLessThan(300);
 
     const files = root.querySelector<HTMLElement>('.uc-files')!;
-    files.scrollTop = files.scrollHeight;
-    await expect.poll(() => root.querySelector('uc-file-item:last-of-type')?.textContent).toContain('f299.txt');
+    const lastRow = () => root.querySelector('uc-file-item:last-of-type') ?? undefined;
+    await expect.poll(() => scrollToBottom(files, lastRow)?.textContent).toContain('f299.txt');
   });
 
   it('drops the gap below the last file only, as in 1.35, not below the last rendered row', async () => {
@@ -128,8 +135,7 @@ describe('uc-upload-list virtualization', () => {
     expect(gapBelow(lastRendered())).toBe('4px');
 
     const files = root.querySelector<HTMLElement>('.uc-files')!;
-    files.scrollTop = files.scrollHeight;
-    await expect.poll(() => lastRendered()?.textContent).toContain('f299.txt');
+    await expect.poll(() => scrollToBottom(files, lastRendered)?.textContent).toContain('f299.txt');
     await expect.poll(() => gapBelow(lastRendered())).toBe('0');
   });
 
@@ -169,8 +175,7 @@ describe('uc-upload-list virtualization', () => {
     expect(withinRows()).toBe(true);
 
     // At the bottom the last file renders with no spacer after it.
-    files.scrollTop = files.scrollHeight;
-    await expect.poll(() => rowIndex(rows().at(-1))).toBe(299);
+    await expect.poll(() => rowIndex(scrollToBottom(files, () => rows().at(-1)))).toBe(299);
     expect(rows().at(-1)!.nextElementSibling?.classList.contains('uc-list-spacer') ?? false).toBe(false);
     expect(withinRows()).toBe(true);
   };
