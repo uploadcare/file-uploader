@@ -21,14 +21,17 @@ const GROUP_CDN_URL = `https://ucarecdn.com/${UUID}~3/`;
 /** What the editor reports when it cannot load the image's info. */
 const IMAGE_INFO_ERROR = 'Error in cloud editor image. Failed to load image info';
 
+const CROP_PRESETS = '1:1, 16:9, 4:3, 3:4, 9:16';
+
 /**
  * `<uc-cloud-image-editor>` is not part of any solution, so it is rendered by hand with its own config. The image
- * defaults to `uuid`; pass `cdn-url` instead to open one carrying operations.
+ * defaults to `uuid`; pass `cdn-url` instead to open one carrying operations. The crop is free unless a
+ * `crop-preset` is passed: a preset reshapes the image's crop to its first ratio as soon as the cropper lays it out.
  */
 const renderEditor = (image: Record<string, string> = { uuid: UUID }, { qualityInsights = false } = {}) => {
   const ctxName = getCtxName();
   const element = createInCtx<HTMLElementTagNameMap['uc-cloud-image-editor']>('uc-cloud-image-editor', ctxName, {
-    'crop-preset': '1:1, 16:9, 4:3, 3:4, 9:16',
+    'crop-preset': '',
     ...image,
   });
   const config = createInCtx('uc-config', ctxName, {
@@ -59,7 +62,7 @@ describe('uc-cloud-image-editor', () => {
   });
 
   it('selects a crop preset', async () => {
-    const { editor } = renderEditor();
+    const { editor } = renderEditor({ uuid: UUID, 'crop-preset': CROP_PRESETS });
     // The preset menu's button is named after the current preset, the first in `crop-preset`.
     await userEvent.click(editor.getByRole('option', { name: 'Crop to 1:1', exact: true }));
 
