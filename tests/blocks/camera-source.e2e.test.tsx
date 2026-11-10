@@ -134,7 +134,8 @@ describe('uc-camera-source (first access)', () => {
     renderRegularHost();
     await navigateToCameraSource();
     const video = () => document.querySelector('uc-camera-source video') as HTMLVideoElement | null;
-    await expect.poll(() => opened.length).toBeGreaterThanOrEqual(4);
+    // The first open, and one recapture per permission change.
+    await expect.poll(() => opened.length).toBeGreaterThanOrEqual(3);
     await expect.poll(() => (video()?.srcObject as MediaStream | null)?.active).toBe(true);
     await delay(300);
 
@@ -198,12 +199,16 @@ describe('uc-camera-source (device selection)', () => {
     return typeof video === 'object' ? (video.deviceId as ConstrainDOMStringParameters | undefined)?.exact : undefined;
   };
 
-  const cameraSelect = () => document.querySelector('uc-camera-source .uc-camera-select select') as HTMLSelectElement;
+  /** A device picker's options: the radios of its section in the settings popup. */
+  const radios = (setting: 'camera' | 'microphone') => [
+    ...document.querySelectorAll<HTMLInputElement>(`uc-camera-source [data-setting="${setting}"] input[type="radio"]`),
+  ];
 
   const pickCamera = async (deviceId: string) => {
-    await expect.poll(() => cameraSelect()?.querySelectorAll('option').length).toBe(devices.length);
-    cameraSelect().value = deviceId;
-    cameraSelect().dispatchEvent(new Event('change'));
+    await expect.poll(() => radios('camera').length).toBe(devices.length);
+    const radio = radios('camera').find((input) => input.value === deviceId)!;
+    radio.checked = true;
+    radio.dispatchEvent(new Event('change', { bubbles: true }));
   };
 
   afterEach(() => {
@@ -310,8 +315,12 @@ describe('uc-camera-source (device selection)', () => {
     getUserMedia.mockRejectedValueOnce(new DOMException('Permission dismissed', 'NotAllowedError'));
     renderRegularHost();
     await navigateToCameraSource();
+    await expect.element(page.getByText('Camera access denied', { exact: true })).toBeVisible();
 
-    await expect.poll(() => cameraSelect()?.querySelectorAll('option').length).toBe(2);
+    // A later capture succeeds, as after a permission change or a press of the request button.
+    document.querySelector<HTMLButtonElement>('uc-camera-source .uc-message-box button')!.click();
+
+    await expect.poll(() => radios('camera').length).toBe(2);
   });
 
   it('keeps the picked camera across a devicechange that still lists it', async () => {
@@ -324,27 +333,29 @@ describe('uc-camera-source (device selection)', () => {
 
     devices = [...devices, device('audioinput', 'mic-a', 'Headset')];
     navigator.mediaDevices.dispatchEvent(new Event('devicechange'));
-    const audioSelect = document.querySelector('uc-camera-source uc-select.uc-audio-select')!;
-    await expect.poll(() => audioSelect.querySelectorAll('option').length).toBe(1);
+    await expect.poll(() => radios('microphone').length).toBe(1);
 
-    // Any later recapture (here the audio select; a permission change does the same) must reopen the camera in use.
+    // Any later recapture (here the hidden request button; a permission change does the same) must reopen the camera
+    // in use.
     getUserMedia.mockClear();
-    audioSelect.dispatchEvent(new Event('change'));
+    document.querySelector<HTMLButtonElement>('uc-camera-source .uc-message-box button')!.click();
     await expect.poll(() => getUserMedia.mock.calls.length).toBe(1);
     expect(requestedCameraId(getUserMedia)).toBe('cam-b');
   });
 
   it('keeps showing the camera in use when a devicechange reorders the list', async () => {
-    const getUserMedia = stubDevices();
+    // The camera opens before the devices are listed. The stubbed ids name no open device, so the first one listed
+    // shows as selected, without a reopen.
+    stubDevices();
     renderRegularHost();
     await navigateToCameraSource();
-    await expect.poll(() => cameraSelect()?.querySelectorAll('option').length).toBe(2);
-    await expect.poll(() => requestedCameraId(getUserMedia)).toBe('cam-a');
+    await expect.poll(() => radios('camera').length).toBe(2);
+    await expect.poll(() => radios('camera').find((radio) => radio.checked)?.value).toBe('cam-a');
 
     devices = [devices[1]!, devices[0]!];
     navigator.mediaDevices.dispatchEvent(new Event('devicechange'));
-    await expect.poll(() => cameraSelect().options[0]?.value).toBe('cam-b');
+    await expect.poll(() => radios('camera')[0]?.value).toBe('cam-b');
 
-    expect(cameraSelect().value).toBe('cam-a');
+    expect(radios('camera').find((radio) => radio.checked)?.value).toBe('cam-a');
   });
 });

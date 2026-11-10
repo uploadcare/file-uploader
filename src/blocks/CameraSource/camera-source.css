@@ -9,12 +9,14 @@
     overflow: hidden;
     background-color: var(--uc-background);
     border-radius: var(--uc-radius);
+    anchor-scope: --uc-camera-settings;
   }
 
   /* The camera's parts lay their content out as if it were the camera's own. */
   uc-camera-header,
   uc-camera-preview,
-  uc-camera-controls {
+  uc-camera-controls,
+  uc-camera-settings {
     display: contents;
   }
 

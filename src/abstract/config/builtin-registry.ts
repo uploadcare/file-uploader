@@ -19,9 +19,16 @@ import {
   asArray,
   asAuthToken,
   asBoolean,
+  asCameraAspectRatio,
+  asCameraAudioMode,
+  asCameraAudioQuality,
   asCameraCapture,
+  asCameraConstraints,
   asCameraMode,
   asCameraModes,
+  asCameraPhotoQuality,
+  asCameraResolution,
+  asCameraVideoFormats,
   asDynamicButtonViewMode,
   asFilesViewMode,
   asFunction,
@@ -141,6 +148,8 @@ export const BUILTIN_REGISTRY = {
   // `assertions.ts`; `cameraModes` replaces it. Kept for 1.x compat.
   enableVideoRecording: { default: null, coerce: asBoolean },
   mediaRecorderOptions: { default: null, coerce: asObject, attribute: false },
+  cameraVideoFormats: { default: 'webm, mp4', coerce: asCameraVideoFormats },
+  cameraConstraints: { default: null, coerce: asCameraConstraints, attribute: false },
 
   maxVideoRecordingDuration: { default: null, coerce: asNumber },
 
@@ -148,6 +157,11 @@ export const BUILTIN_REGISTRY = {
   gridShowFileNames: { default: false, coerce: asBoolean },
   cloudImageEditorAutoOpen: { default: false, coerce: asBoolean },
   cloudImageEditorMaskHref: { default: null, coerce: asString },
+  cameraAspectRatio: { default: '', coerce: asCameraAspectRatio },
+  cameraResolution: { default: 'auto', coerce: asCameraResolution },
+  cameraPhotoQuality: { default: 0.92, coerce: asCameraPhotoQuality },
+  cameraAudioQuality: { default: 'auto', coerce: asCameraAudioQuality },
+  cameraAudioMode: { default: 'voice', coerce: asCameraAudioMode },
 
   testMode: { default: false, coerce: asBoolean },
 

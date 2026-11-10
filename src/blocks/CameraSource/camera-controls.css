@@ -41,6 +41,13 @@
     min-height: 74px;
   }
 
+  /* Wider than the theme's tablet breakpoint, the bar's buttons sit further in from the sides. */
+  @media only screen and (min-width: 681px) {
+    uc-camera-controls .uc-controls {
+      padding-inline: calc(var(--uc-padding) * 2);
+    }
+  }
+
   uc-camera-source:not(.uc-initialized) .uc-controls {
     display: none;
   }
@@ -103,16 +110,10 @@
     z-index: 1;
   }
 
+  /* The mute and settings buttons, on the right of the bottom bar. */
   uc-camera-controls .uc-select {
     display: flex;
-  }
-
-  uc-camera-controls .uc-audio-select {
-    width: 98px;
-  }
-
-  uc-camera-controls .uc-audio-select select {
-    width: 100%;
+    gap: calc(var(--uc-padding) / 2);
   }
 
   uc-camera-controls .uc-camera-action {

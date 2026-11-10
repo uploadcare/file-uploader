@@ -64,37 +64,20 @@ describe('CameraDevices.list', () => {
   });
 });
 
-describe('CameraDevices.requestAccess', () => {
-  it('stops the probe stream, lists the devices and lists them again on a device change', async () => {
-    const { mediaDevices, track } = stubMedia([device('videoinput', 'c1')]);
+describe('CameraDevices.watchDeviceChanges', () => {
+  it('lists the devices again on a device change, until the adoption ends', async () => {
+    const { mediaDevices } = stubMedia([device('videoinput', 'c1')]);
     const { fns, devices, abort } = host();
 
-    await devices.requestAccess();
-    expect(track.stop).toHaveBeenCalledOnce();
-    expect(fns.onDevicesChange).toHaveBeenCalledTimes(1);
-
+    devices.watchDeviceChanges();
     mediaDevices.dispatchEvent(new Event('devicechange'));
     await Promise.resolve();
-    expect(fns.onDevicesChange).toHaveBeenCalledTimes(2);
+    expect(fns.onDevicesChange).toHaveBeenCalledTimes(1);
 
     abort();
     mediaDevices.dispatchEvent(new Event('devicechange'));
     await Promise.resolve();
-    expect(fns.onDevicesChange).toHaveBeenCalledTimes(2);
-  });
-
-  it('reports a refused probe instead of throwing', async () => {
-    const { mediaDevices } = stubMedia([]);
-    mediaDevices.getUserMedia.mockRejectedValueOnce(new DOMException('no', 'NotAllowedError'));
-    const { fns, devices } = host();
-
-    await devices.requestAccess();
-
-    expect(fns.report).toHaveBeenCalledWith(
-      'Failed to get user media',
-      expect.any(DOMException),
-      'camera devices. Failed to get user media',
-    );
+    expect(fns.onDevicesChange).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -1,6 +1,6 @@
 {
   "name": "@uploadcare/file-uploader",
-  "version": "1.35.1",
+  "version": "1.36.1",
   "description": "Building blocks for Uploadcare products integration",
   "keywords": [
     "web components",
@@ -177,7 +177,7 @@
   "size-limit": [
     {
       "path": "dist/index.js",
-      "limit": "99 KB"
+      "limit": "102 KB"
     },
     {
       "path": "dist/env.js",
@@ -197,7 +197,7 @@
     },
     {
       "path": "web/file-uploader.iife.min.js",
-      "limit": "100 KB"
+      "limit": "101 KB"
     },
     {
       "path": "web/uc-cloud-image-editor.min.js",

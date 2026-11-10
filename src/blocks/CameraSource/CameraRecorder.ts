@@ -1,11 +1,4 @@
-const DEFAULT_VIDEO_FORMAT = 'video/webm';
-
-/** `mimeType` when the browser can record it, else WebM, else MP4. */
-export const pickMimeType = (mimeType: string | undefined): string => {
-  if (mimeType && MediaRecorder.isTypeSupported(mimeType)) return mimeType;
-  if (MediaRecorder.isTypeSupported(DEFAULT_VIDEO_FORMAT)) return DEFAULT_VIDEO_FORMAT;
-  return 'video/mp4';
-};
+import { recordingFileType } from '../../abstract/camera/videoFormat';
 
 const KNOWN_CONTAINERS: Record<string, string> = {
   mp4: 'mp4',
@@ -34,7 +27,7 @@ export const createCameraFile = (type: 'camera' | 'video', ext: string, format: 
   return new File([blob], `${type}-${date}.${ext}`, { lastModified: date, type: format });
 };
 
-/** Records a camera stream into a clip: picks a supported format, collects the chunks and names the file. */
+/** Records a camera stream into a clip: collects the chunks and names the file. */
 export class CameraRecorder {
   private _recorder: MediaRecorder | null = null;
   private _chunks: BlobPart[] = [];
@@ -43,10 +36,10 @@ export class CameraRecorder {
     return this._recorder?.state === 'recording';
   }
 
-  /** Starts recording `stream`; `options.mimeType` is used when the browser supports it. */
+  /** Starts recording `stream`. The caller picks a `mimeType` the browser supports, or leaves it to the browser. */
   public start(stream: MediaStream, options: MediaRecorderOptions = {}): void {
     this._chunks = [];
-    this._recorder = new MediaRecorder(stream, { ...options, mimeType: pickMimeType(options.mimeType) });
+    this._recorder = new MediaRecorder(stream, options);
     this._recorder.start();
     this._recorder.addEventListener('dataavailable', (event: BlobEvent) => {
       this._chunks.push(event.data);
@@ -76,7 +69,7 @@ export class CameraRecorder {
     const blob = this.clip();
     const ext = guessExtensionByMime(this._recorder?.mimeType);
     this._chunks = [];
-    return createCameraFile('video', ext, `video/${ext}`, blob);
+    return createCameraFile('video', ext, recordingFileType(this._recorder?.mimeType), blob);
   }
 }
 

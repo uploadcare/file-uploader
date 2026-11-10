@@ -1,25 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createCameraFile, formatTime, guessExtensionByMime, pickMimeType } from './CameraRecorder';
+import { createCameraFile, formatTime, guessExtensionByMime } from './CameraRecorder';
 
 afterEach(() => {
   vi.unstubAllGlobals();
-});
-
-describe('pickMimeType', () => {
-  const supporting = (...types: string[]) =>
-    vi.stubGlobal('MediaRecorder', { isTypeSupported: (type: string) => types.includes(type) });
-
-  it('keeps a supported requested type', () => {
-    supporting('video/mp4;codecs=avc1', 'video/webm');
-    expect(pickMimeType('video/mp4;codecs=avc1')).toBe('video/mp4;codecs=avc1');
-  });
-
-  it('falls back to WebM, then MP4', () => {
-    supporting('video/webm');
-    expect(pickMimeType('video/x-unknown')).toBe('video/webm');
-    supporting();
-    expect(pickMimeType(undefined)).toBe('video/mp4');
-  });
 });
 
 describe('guessExtensionByMime', () => {

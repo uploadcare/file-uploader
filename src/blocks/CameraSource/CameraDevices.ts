@@ -1,5 +1,4 @@
 import { isAbortError } from '../../abstract/di/Lifetime';
-import { stopTracks } from './CameraStream';
 
 export type DeviceOption = { text: string; value: string };
 
@@ -65,29 +64,11 @@ export class CameraDevices {
     this._permissionWatch = null;
   }
 
-  /**
-   * Follows changes to the devices, then asks for access once, so the device labels are readable, and lists them.
-   * When that check fails, the session lists them after its first successful capture. `adoption` is the signal of
-   * the lifetime the calling task started in.
-   */
-  public async requestAccess(adoption = this._host.lifetime.adoptionSignal()): Promise<void> {
-    navigator.mediaDevices.addEventListener('devicechange', () => this._host.lifetime.runTask(() => this.list()), {
+  /** Lists the devices again whenever they change, until `adoption` ends. */
+  public watchDeviceChanges(adoption = this._host.lifetime.adoptionSignal()): void {
+    navigator.mediaDevices?.addEventListener('devicechange', () => this._host.lifetime.runTask(() => this.list()), {
       signal: adoption,
     });
-    try {
-      // Only probes for permission; the block opens the real stream.
-      const probe = await this._host.lifetime.whileAdopted(
-        navigator.mediaDevices.getUserMedia({ video: true, audio: this._host.audioEnabled() }),
-        stopTracks,
-      );
-      stopTracks(probe);
-      await this.list();
-    } catch (error) {
-      // Asks the task's lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
-      // Not the current adoption either: after a move it is the next one's, still live.
-      if (adoption.aborted) throw error;
-      this._host.report('Failed to get user media', error, 'camera devices. Failed to get user media');
-    }
   }
 
   /** Lists the cameras, and the microphones when audio recording is on, and hands them to `onDevicesChange`. */

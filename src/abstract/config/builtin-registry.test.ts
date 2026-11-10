@@ -14,7 +14,8 @@ describe('BUILTIN_REGISTRY', () => {
     expect(complexConfigKeys).toContain('metadata');
     expect(complexConfigKeys).toContain('mediaRecorderOptions');
     expect(complexConfigKeys).toContain('tags');
-    expect(complexConfigKeys).toHaveLength(10);
+    expect(complexConfigKeys).toContain('cameraConstraints');
+    expect(complexConfigKeys).toHaveLength(11);
     for (const key of complexConfigKeys) {
       expect(BUILTIN_REGISTRY[key].attribute).toBe(false);
     }

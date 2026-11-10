@@ -1,29 +1,12 @@
 import { html } from 'lit';
-import { property } from 'lit/decorators.js';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { CameraActionEvent } from './CameraActionEvent';
-import type { DeviceOption } from './CameraDevices';
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
-import '../Select/Select';
 
-/** The camera's header: back, the caption or the camera picker, close. */
+/** The camera's header: back, the caption, close. The camera picker is in the settings. */
 export class CameraHeader extends ChildBlock {
-  /** Shows the camera picker in place of the caption. */
-  @property({ type: Boolean, attribute: false })
-  public pickCamera = false;
-
-  @property({ attribute: false })
-  public cameras: DeviceOption[] = [];
-
-  @property({ attribute: false })
-  public selectedCameraId: string | null = null;
-
   private readonly _emit = (action: CameraActionEvent['action']) => this.dispatchEvent(new CameraActionEvent(action));
-
-  private readonly _handleCameraChange = (event: Event): void => {
-    this._emit({ type: 'select-camera', deviceId: (event.target as HTMLSelectElement).value });
-  };
 
   public override render() {
     return html`
@@ -31,18 +14,10 @@ export class CameraHeader extends ChildBlock {
         <button type="button" class="uc-mini-btn" @click=${() => this._emit({ type: 'back' })} title=${this.l10n('back')}>
           <uc-icon name="back"></uc-icon>
         </button>
-        <div ?hidden=${this.pickCamera}>
+        <div>
           <uc-icon name="camera"></uc-icon>
           <span>${this.l10n('caption-camera')}</span>
         </div>
-        <uc-select
-          class="uc-camera-select"
-          .options=${this.cameras}
-          .value=${this.selectedCameraId ?? ''}
-          ?hidden=${!this.pickCamera}
-          @change=${this._handleCameraChange}
-        >
-        </uc-select>
         <button
           type="button"
           class="uc-mini-btn uc-close-btn"

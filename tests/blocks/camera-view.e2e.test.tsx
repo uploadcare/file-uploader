@@ -23,7 +23,8 @@ const describeView = () => {
     message: shown('.uc-message-box') ? part('.uc-message-box span')?.textContent?.trim() : false,
     requestButton: shown('.uc-message-box button'),
     caption: shown('uc-activity-header > div'),
-    cameraSelect: shown('.uc-camera-select'),
+    // The device pickers are sections of the settings popup, offered while its button shows.
+    cameraSelect: shown('.uc-camera-settings-btn') && shown('[data-setting="camera"]'),
     tabs: `${shown('[data-testid="uc-camera-controls--tab-photo"]') ? 'photo' : '-'} ${shown('[data-testid="uc-camera-controls--tab-video"]') ? 'video' : '-'}`,
     activeTab: part('.uc-switch.uc-active')?.dataset.id ?? '-',
     switcher: shown('.uc-switcher'),
@@ -35,11 +36,12 @@ const describeView = () => {
     mic: shown('[data-testid="uc-camera-controls--toggle-microphone"]')
       ? mic?.querySelector('uc-icon')?.getAttribute('name')
       : false,
-    audioSelect: shown('.uc-audio-select')
-      ? part('.uc-audio-select')?.hasAttribute('disabled')
-        ? 'disabled'
-        : 'enabled'
-      : false,
+    audioSelect:
+      shown('.uc-camera-settings-btn') && shown('[data-setting="microphone"]')
+        ? part('[data-setting="microphone"]')?.classList.contains('uc-disabled')
+          ? 'disabled'
+          : 'enabled'
+        : false,
   };
 };
 
@@ -390,7 +392,7 @@ describe('camera view', () => {
         "activeTab": "photo",
         "audioSelect": false,
         "cameraSelect": true,
-        "caption": false,
+        "caption": true,
         "host": "uc-initialized",
         "message": false,
         "mic": false,
@@ -410,7 +412,7 @@ describe('camera view', () => {
         "activeTab": "video",
         "audioSelect": "enabled",
         "cameraSelect": true,
-        "caption": false,
+        "caption": true,
         "host": "uc-initialized",
         "message": false,
         "mic": "microphone",
@@ -446,15 +448,9 @@ describe('camera view', () => {
   });
 
   it('shows the denied message when the camera cannot start', async () => {
-    const realGetUserMedia = navigator.mediaDevices.getUserMedia.bind(navigator.mediaDevices);
-    let calls = 0;
-    vi.spyOn(navigator.mediaDevices, 'getUserMedia').mockImplementation((constraints) => {
-      // The first call only probes for device labels; the camera itself is the second.
-      calls += 1;
-      return calls === 1
-        ? realGetUserMedia(constraints)
-        : Promise.reject(new DOMException('Permission denied', 'NotAllowedError'));
-    });
+    vi.spyOn(navigator.mediaDevices, 'getUserMedia').mockRejectedValue(
+      new DOMException('Permission denied', 'NotAllowedError'),
+    );
     const { root } = await renderSolution('regular', { cameraModes: 'photo, video' });
     await clickSource(root, 'Camera');
     await expect.poll(() => shown('.uc-message-box')).toBe(true);

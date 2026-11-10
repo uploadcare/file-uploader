@@ -232,4 +232,35 @@ describe('telemetry: sources', () => {
       'stop-camera',
     ]);
   });
+
+  it('reports the capture settings on a shot, never the custom constraints themselves', async () => {
+    const { root } = await renderSolution('regular', {
+      qualityInsights: true,
+      cameraAspectRatio: '1:1',
+      cameraResolution: '720p',
+      cameraAudioQuality: 'high',
+      cameraAudioMode: 'music',
+      cameraConstraints: { video: { deviceId: 'secret-camera-id' } },
+    });
+    await clickSource(root, 'Camera');
+    const shot = within(root).getByRole('button', { name: 'Shot', exact: true });
+    await expect.element(shot).toBeVisible();
+    clearSent();
+
+    await shot.click();
+
+    // A photo reports `shot-camera` only; `start-camera` marks a recording starting (see the test above).
+    await vi.waitFor(() => expect(actionEvents()).toContain('shot-camera'), WAIT);
+    {
+      const [body] = bodiesWithAction('shot-camera');
+      expect(body.payload.metadata).toMatchObject({
+        aspect_ratio: '1:1',
+        resolution: '720p',
+        audio_quality: 'high',
+        audio_mode: 'music',
+        has_custom_constraints: true,
+      });
+      expect(JSON.stringify(body)).not.toContain('secret-camera-id');
+    }
+  });
 });

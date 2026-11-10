@@ -18,8 +18,16 @@ const setup = () => {
     config: {
       audioEnabled: () => false,
       mirror: () => false,
-      recorderOptions: () => ({}),
+      recorderOptions: () => null,
       maxRecordingSeconds: () => undefined,
+      cameraModes: () => [CameraSourceTypes.PHOTO],
+      videoFormats: () => 'webm, mp4',
+      constraints: () => null,
+      aspectRatio: () => '',
+      resolution: () => 'auto',
+      photoQuality: () => 0.92,
+      audioQuality: () => 'auto',
+      audioMode: () => 'voice',
     },
     cameraLabel: (index) => `Camera ${index + 1}`,
     video: () => undefined,
@@ -62,7 +70,7 @@ afterEach(() => {
 });
 
 describe('CameraSession moved while the camera is asked for', () => {
-  it('stops the activation at the access probe without reporting it', async () => {
+  it('stops the activation while the camera opens, without reporting it', async () => {
     const { getUserMedia, pending, stream } = stubMedia();
     const { session, move, report } = setup();
     const activation = session.activate([CameraSourceTypes.PHOTO]);

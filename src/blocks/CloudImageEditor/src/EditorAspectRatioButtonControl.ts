@@ -1,18 +1,11 @@
 import { html, type TemplateResult } from 'lit';
 import { property } from 'lit/decorators.js';
+import { renderAspectRatioSvg } from '../../Icon/aspectRatioIcon';
 import type { CloudImageEditorController } from './CloudImageEditorController';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import type { CropAspectRatio } from './types';
 
 import './EditorIcon';
-
-const SIZE_RECT_FIXED = 12;
-const SIZE_SVG_WRAPPER = 16;
-
-const getAdjustResolutions = (value: CropAspectRatio) =>
-  value.width >= value.height
-    ? { width: SIZE_RECT_FIXED, height: Math.round((SIZE_RECT_FIXED * value.height) / value.width) }
-    : { width: Math.round((SIZE_RECT_FIXED * value.width) / value.height), height: SIZE_RECT_FIXED };
 
 /** Bubbles up to `EditorToolbar`, which owns the toolbar-local `showListAspectRatio` state. */
 export class ShowAspectRatioListEvent extends Event {
@@ -97,31 +90,7 @@ export class EditorAspectRatioButtonControl extends EditorButtonControl {
       return html`<uc-editor-icon name=${this.icon}></uc-editor-icon>`;
     }
 
-    const { width, height } = getAdjustResolutions(ratio);
-    const x = (SIZE_SVG_WRAPPER - width) / 2;
-    const y = (SIZE_SVG_WRAPPER - height) / 2;
-
-    return html`
-      <uc-editor-icon>
-      <svg
-        viewBox="0 0 ${SIZE_SVG_WRAPPER} ${SIZE_SVG_WRAPPER}"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <rect
-          x=${x}
-          y=${y}
-          width=${width}
-          height=${height}
-          rx="2"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.2"
-          stroke-linejoin="round"
-        ></rect>
-      </svg>
-      </uc-editor-icon>
-    `;
+    return html`<uc-editor-icon>${renderAspectRatioSvg(ratio.width, ratio.height)}</uc-editor-icon>`;
   }
 
   protected override renderContent(): TemplateResult {

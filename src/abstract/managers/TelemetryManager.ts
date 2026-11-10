@@ -3,7 +3,7 @@ import { TelemetryAPIService } from '@uploadcare/quality-insights';
 import { Queue } from '@uploadcare/upload-client';
 import { PACKAGE_NAME, PACKAGE_VERSION } from '../../env';
 import type { ConfigType } from '../../types/index';
-import { redactSecrets } from '../../utils/redactSecrets';
+import { REDACTED, redactSecrets } from '../../utils/redactSecrets';
 import { UID } from '../../utils/UID';
 import { initialConfig } from '../config/initialConfig';
 import { controllerLogger } from '../controllerLogger';
@@ -157,7 +157,12 @@ export class TelemetryManager {
 
   private _sanitizedConfig(): TelemetryState['config'] {
     // As in v1: the payload leaves the browser, and a configured `authToken` or `secureSignature` would leave with it.
-    return redactSecrets(this._config) as TelemetryState['config'];
+    const config: Record<string, unknown> = redactSecrets(this._config);
+    // Not a credential, but integrator constraints can carry device IDs, which identify the user's hardware.
+    if (config.cameraConstraints) {
+      config.cameraConstraints = REDACTED;
+    }
+    return config as TelemetryState['config'];
   }
 
   private _formattingPayload(

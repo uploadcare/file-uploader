@@ -1,43 +1,6 @@
-const DEFAULT_VIDEO_CONFIG = {
-  width: { ideal: 1920 },
-  height: { ideal: 1080 },
-  frameRate: { ideal: 30 },
-};
-
 /** Stops every track of `stream`, which releases the camera and the microphone. */
 export const stopTracks = (stream: MediaStream): void => {
   for (const track of stream.getTracks()) track.stop();
-};
-
-/** The `getUserMedia` constraints for the chosen camera and microphone; audio only when recording it is on. */
-export const cameraConstraints = ({
-  cameraId,
-  microphoneId,
-  audio,
-}: {
-  cameraId: string | null;
-  microphoneId: string | null;
-  audio: boolean;
-}): MediaStreamConstraints => ({
-  video: cameraId ? { deviceId: { exact: cameraId } } : { ...DEFAULT_VIDEO_CONFIG },
-  audio: audio ? (microphoneId ? { deviceId: { exact: microphoneId } } : {}) : false,
-});
-
-/** Draws the video's current frame on a canvas, mirrored when the preview is. */
-export const captureFrame = (video: HTMLVideoElement, mirror: boolean): HTMLCanvasElement => {
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  if (!context) {
-    throw new Error('Failed to get canvas context');
-  }
-  canvas.height = video.videoHeight;
-  canvas.width = video.videoWidth;
-  if (mirror) {
-    context.translate(canvas.width, 0);
-    context.scale(-1, 1);
-  }
-  context.drawImage(video, 0, 0);
-  return canvas;
 };
 
 type CameraStreamOptions = {
@@ -116,6 +79,22 @@ export class CameraStream {
       muted = !track.enabled;
     }
     return muted;
+  }
+
+  /**
+   * Swaps the microphone track for `track`, which keeps the camera running. A muted microphone stays muted. The old
+   * tracks are stopped once the new one is in.
+   */
+  public swapAudioTrack(track: MediaStreamTrack): void {
+    const stream = this._stream;
+    if (!stream) return;
+    const previous = stream.getAudioTracks();
+    track.enabled = previous.every((old) => old.enabled);
+    for (const old of previous) {
+      stream.removeTrack(old);
+      old.stop();
+    }
+    stream.addTrack(track);
   }
 
   /** Shows a recorded clip in place of the live stream. */

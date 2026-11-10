@@ -5,13 +5,15 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import type { CameraMode } from '../../abstract/cameraModes';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { CameraActionEvent } from './CameraActionEvent';
-import type { DeviceOption } from './CameraDevices';
+import type { CameraSettingSection } from './CameraSettings';
 import type { CameraView } from './cameraView';
 import '../Icon/Icon';
-import '../Select/Select';
 import './camera-controls.css';
 
-/** The camera's controls: the tab switcher, the recording timer, accept and retake, the shutter and the microphone. */
+/**
+ * The camera's controls: the tab switcher, the recording timer, accept and retake, the shutter, the microphone and the
+ * settings.
+ */
 export class CameraControls extends ChildBlock {
   @property({ attribute: false })
   public view: CameraView | null = null;
@@ -19,11 +21,12 @@ export class CameraControls extends ChildBlock {
   @property({ attribute: false })
   public activeTab: CameraMode | null = null;
 
+  /** The settings popup's sections, devices included. */
   @property({ attribute: false })
-  public microphones: DeviceOption[] = [];
+  public settings: CameraSettingSection[] = [];
 
-  @property({ attribute: false })
-  public selectedMicrophoneId: string | null = null;
+  @property({ type: Boolean, attribute: false })
+  public settingsHidden = true;
 
   /** The shutter waits for a frame: a shot before the first one draws an empty canvas. */
   @property({ type: Boolean, attribute: false })
@@ -47,10 +50,6 @@ export class CameraControls extends ChildBlock {
   }
 
   private readonly _emit = (action: CameraActionEvent['action']) => this.dispatchEvent(new CameraActionEvent(action));
-
-  private readonly _handleMicrophoneChange = (event: Event): void => {
-    this._emit({ type: 'select-microphone', deviceId: (event.target as HTMLSelectElement).value });
-  };
 
   /** Names the shutter after its icon, which is what tells sighted users what a press does next. */
   private _shotLabel(icon: CameraView['shotIcon']): string {
@@ -138,16 +137,7 @@ export class CameraControls extends ChildBlock {
             <uc-icon name=${view.microphoneIcon}></uc-icon>
           </button>
 
-          <uc-select
-            class="uc-audio-select"
-            .options=${this.microphones}
-            .value=${this.selectedMicrophoneId ?? ''}
-            ?hidden=${view.audioSelectHidden}
-            ?disabled=${view.audioSelectDisabled}
-            @change=${this._handleMicrophoneChange}
-            data-testid="audio-select"
-          >
-          </uc-select>
+          <uc-camera-settings .buttonHidden=${this.settingsHidden} .sections=${this.settings}></uc-camera-settings>
         </div>
       </div>
     `;
