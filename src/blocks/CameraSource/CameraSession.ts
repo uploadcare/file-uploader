@@ -462,6 +462,8 @@ export class CameraSession {
       mirror: this._host.config.mirror(),
       quality: this._host.config.photoQuality(),
     });
+    // Accept awaits and reports a failure; until then (or after a retake) the rejection would go unhandled.
+    this._photo.catch(() => {});
     // TODO: There are troubles with this, image isn't freezed after shot due to rendering in progress
     video.pause();
   }
@@ -524,7 +526,7 @@ export class CameraSession {
       if (this.activeTab === CameraSourceTypes.VIDEO) this.phase = 'recorded';
       if (this._videoPending) this._host.lifetime.runTask(() => this._applyVideoConstraints());
       if (this._audioPending) this._host.lifetime.runTask(() => this._applyAudioConstraints());
-    });
+    }, this._host.lifetime.adoptionSignal());
     this._host.setHostClass('uc-recording', false);
     this._track('stop-camera');
   }

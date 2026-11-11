@@ -31,6 +31,7 @@ const CAMERA_E2E = [
   './tests/blocks/camera-settings.e2e.test.tsx',
   './tests/blocks/camera-stream.e2e.test.tsx',
   './tests/blocks/camera-video-format.e2e.test.tsx',
+  './tests/blocks/camera-deferred-changes.e2e.test.tsx',
   './tests/blocks/activity-child-block.e2e.test.tsx',
   './tests/flow/remount-activities.e2e.test.tsx',
   './tests/flow/activity-transitions.e2e.test.tsx',

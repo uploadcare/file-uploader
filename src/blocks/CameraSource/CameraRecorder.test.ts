@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { createCameraFile, formatTime, guessExtensionByMime } from './CameraRecorder';
+import { CameraRecorder, createCameraFile, formatTime, guessExtensionByMime } from './CameraRecorder';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -36,5 +36,49 @@ describe('createCameraFile', () => {
       'video/webm',
       1700000000000,
     ]);
+  });
+});
+
+class FakeRecorder extends EventTarget {
+  public static last: FakeRecorder;
+  public state: RecordingState = 'inactive';
+  public mimeType = 'video/webm';
+  public constructor() {
+    super();
+    FakeRecorder.last = this;
+  }
+  public start(): void {
+    this.state = 'recording';
+  }
+  public stop(): void {
+    this.state = 'inactive';
+  }
+}
+
+describe('CameraRecorder.stop after release', () => {
+  it('drops a stop event that arrives after the adoption ended', () => {
+    vi.stubGlobal('MediaRecorder', FakeRecorder);
+    const recorder = new CameraRecorder();
+    recorder.start(new EventTarget() as unknown as MediaStream);
+    const fake = FakeRecorder.last;
+    const onStopped = vi.fn();
+    const adoption = new AbortController();
+    recorder.stop(onStopped, adoption.signal);
+    adoption.abort();
+    fake.dispatchEvent(new Event('stop'));
+    expect(onStopped).not.toHaveBeenCalled();
+  });
+});
+
+describe('CameraRecorder chunks', () => {
+  it('keeps a late chunk from a discarded recording out of the next one', () => {
+    vi.stubGlobal('MediaRecorder', FakeRecorder);
+    const recorder = new CameraRecorder();
+    recorder.start(new EventTarget() as unknown as MediaStream);
+    const first = FakeRecorder.last;
+    recorder.discard();
+    recorder.start(new EventTarget() as unknown as MediaStream);
+    first.dispatchEvent(Object.assign(new Event('dataavailable'), { data: new Blob(['late']) }));
+    expect(recorder.clip().size).toBe(0);
   });
 });

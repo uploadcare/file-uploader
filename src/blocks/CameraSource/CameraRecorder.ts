@@ -38,17 +38,18 @@ export class CameraRecorder {
 
   /** Starts recording `stream`. The caller picks a `mimeType` the browser supports, or leaves it to the browser. */
   public start(stream: MediaStream, options: MediaRecorderOptions = {}): void {
-    this._chunks = [];
+    const chunks: BlobPart[] = [];
+    this._chunks = chunks;
     this._recorder = new MediaRecorder(stream, options);
     this._recorder.start();
     this._recorder.addEventListener('dataavailable', (event: BlobEvent) => {
-      this._chunks.push(event.data);
+      chunks.push(event.data);
     });
   }
 
-  /** Stops recording; `onStopped` runs once the recorder has handed over its last chunk. */
-  public stop(onStopped: () => void): void {
-    this._recorder?.addEventListener('stop', onStopped);
+  /** Stops recording; `onStopped` runs once the recorder has handed over its last chunk, unless `signal` aborts first. */
+  public stop(onStopped: () => void, signal: AbortSignal): void {
+    this._recorder?.addEventListener('stop', onStopped, { once: true, signal });
     this._recorder?.stop();
   }
 
