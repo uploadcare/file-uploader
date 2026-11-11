@@ -29,6 +29,8 @@ export class RecordingClock implements ClockView {
    */
   public startTimer(maxSeconds: () => number | undefined, onLimit: () => void): void {
     this.stop();
+    // A new recording starts its clip's timeline empty, not where the previous clip's left off.
+    this.progress = null;
     this._startTime = performance.now();
     const tick = (): void => {
       const elapsed = Math.floor((performance.now() - this._startTime) / 1000);

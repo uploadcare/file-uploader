@@ -3,8 +3,8 @@ import { pickVideoMimeType } from '../../../abstract/camera/videoFormat';
 import type { CameraAudioQuality } from '../../../types/exported';
 import { createRecordingSource, type RecordingSource } from './recordingSource';
 
-/** A finished recording, as the recorder handed it over. */
-export type Clip = { blob: Blob; mimeType: string };
+/** A finished recording, as the recorder handed it over. `mirrored`: its mirroring is baked in. */
+export type Clip = { blob: Blob; mimeType: string; mirrored: boolean };
 
 /** The recorder's options: the configured ones, with the audio bitrate and a format the browser can record. */
 export const recorderOptions = (
@@ -35,9 +35,16 @@ export class VideoRecording {
   private _chunks: BlobPart[] = [];
   /** What the recorder records: the camera stream, or a canvas that crops and mirrors it. */
   private _source: RecordingSource | null = null;
+  /** The recorder asked to stop, until its final `stop` event. */
+  private _stopping: MediaRecorder | null = null;
 
   public get isRecording(): boolean {
     return this._recorder?.state === 'recording';
+  }
+
+  /** Asked to stop, and the clip is not handed over yet. */
+  public get isStopping(): boolean {
+    return this._stopping !== null;
   }
 
   /** Starts recording `stream`, as `video` shows it. Throws after stopping its canvas when the recorder can't start. */
@@ -56,10 +63,7 @@ export class VideoRecording {
       this._recorder = new MediaRecorder(this._source?.stream ?? stream, options.recorder);
       this._recorder.start();
     } catch (error) {
-      const source = this._source;
-      source?.stop();
-      // Its mirroring stays for releaseSource(); its canvas is already stopped.
-      if (source) this._source = { ...source, stop: () => {} };
+      this.releaseSource();
       throw error;
     }
     this._recorder.addEventListener('dataavailable', (event: BlobEvent) => {
@@ -67,32 +71,49 @@ export class VideoRecording {
     });
   }
 
-  /** Stops recording; resolves with the clip once the recorder has handed over its last chunk. */
-  public stop(): Promise<Clip> {
+  /**
+   * Stops recording; resolves with the clip once the recorder has handed over its last chunk, or null when the
+   * recording was discarded first. The canvas stops first, so it never draws the clip's playback.
+   */
+  public stop(): Promise<Clip | null> {
     const recorder = this._recorder;
     const chunks = this._chunks;
+    const source = this._source;
+    this._stopping = recorder;
     return new Promise((resolve) => {
       recorder?.addEventListener(
         'stop',
-        () => resolve({ blob: new Blob(chunks, { type: recorder.mimeType }), mimeType: recorder.mimeType }),
+        () => {
+          if (this._recorder !== recorder) {
+            resolve(null);
+            return;
+          }
+          this._stopping = null;
+          this.releaseSource();
+          resolve({
+            blob: new Blob(chunks, { type: recorder.mimeType }),
+            mimeType: recorder.mimeType,
+            mirrored: source?.mirrored ?? false,
+          });
+        },
         { once: true },
       );
       recorder?.stop();
     });
   }
 
-  /** Stops the recording canvas. Returns whether the clip has its mirroring baked in. */
-  public releaseSource(): boolean {
-    const mirrored = this._source?.mirrored ?? false;
+  /** Stops the recording canvas. */
+  public releaseSource(): void {
     this._source?.stop();
     this._source = null;
-    return mirrored;
   }
 
   /** Drops the recording, finished or not, without handing it over. */
   public discard(): void {
     if (this._recorder?.state !== 'inactive') this._recorder?.stop();
     this._recorder = null;
+    this._stopping = null;
     this._chunks = [];
+    this.releaseSource();
   }
 }

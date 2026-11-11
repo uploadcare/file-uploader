@@ -20,12 +20,18 @@ export class PreviewVideo {
 
   private _video: HTMLVideoElement | undefined;
   private _source: MediaStream | null = null;
-  private _clip: ClipHandlers | null = null;
+  /** The handlers of the recorded clip shown, while it is. */
+  @signalState() private _clip: ClipHandlers | null = null;
 
   public constructor(private readonly _runTask: CameraLifetime['runTask']) {}
 
   public get element(): HTMLVideoElement | undefined {
     return this._video;
+  }
+
+  /** A recorded clip is shown, not the live stream. */
+  public get showingClip(): boolean {
+    return this._clip !== null;
   }
 
   /** The preview rendered its `<video>`: shows the current source in it. */

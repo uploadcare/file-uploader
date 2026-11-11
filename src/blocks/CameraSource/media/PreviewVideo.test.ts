@@ -38,6 +38,22 @@ describe('PreviewVideo', () => {
     expect(handlers.onPause).not.toHaveBeenCalled();
   });
 
+  it('shows a clip from showClip until showLive or close', () => {
+    const { preview, video } = setup();
+    preview.attach(video);
+    const handlers = { onPlay: vi.fn(), onPause: vi.fn() };
+    expect(preview.showingClip).toBe(false);
+
+    preview.showClip('blob:clip', handlers);
+    expect(preview.showingClip).toBe(true);
+    preview.showLive(stream());
+    expect(preview.showingClip).toBe(false);
+
+    preview.showClip('blob:clip', handlers);
+    preview.close();
+    expect(preview.showingClip).toBe(false);
+  });
+
   it('show assigns srcObject only when it changes', () => {
     const { preview, video } = setup();
     const live = stream();

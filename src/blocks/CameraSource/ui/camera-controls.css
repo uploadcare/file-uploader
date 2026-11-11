@@ -103,7 +103,6 @@
     background-color: var(--uc-foreground-light);
     transform: scaleX(0);
     transform-origin: left;
-    transition: transform var(--uc-transition);
   }
 
   uc-camera-controls .uc-btn-microphone {

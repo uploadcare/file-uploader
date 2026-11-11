@@ -121,6 +121,17 @@ export class CameraFeed {
     stream.addTrack(track);
   }
 
+  /** Stops the microphone and takes it out of the stream; the camera keeps running. A new one starts unmuted. */
+  public dropAudio(): void {
+    const stream = this._stream;
+    if (!stream) return;
+    for (const track of stream.getAudioTracks()) {
+      stream.removeTrack(track);
+      track.stop();
+    }
+    this.audioMuted = false;
+  }
+
   /**
    * Applies changed video constraints to the open camera without reopening it, so there is no new permission prompt
    * and no black frame. A failure keeps the current ones; `customInvolved` says whether to blame `cameraConstraints`.

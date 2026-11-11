@@ -136,6 +136,21 @@ describe('video recording', () => {
     expect(entry.mimeType).toMatch(/^video\//);
   });
 
+  it('moves the timeline bar with the playback, without easing behind it', async () => {
+    const { camera, shot, openVideoTab } = await openCamera();
+    await openVideoTab();
+    await shot();
+    const timer = camera.getByTestId('uc-camera-controls--recording-timer');
+    await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
+    await shot();
+
+    const line = timer.element().querySelector<HTMLElement>('.uc-line');
+    // Once the clip plays, the bar is written every frame. An eased transition would trail it and run backwards on
+    // a replay.
+    await expect.poll(() => line?.style.transform, { timeout: 10_000 }).toMatch(/^scaleX\(0\.\d+\)$/);
+    expect(line?.getAnimations()).toEqual([]);
+  });
+
   it('releases the preview of a recording that is retaken', async () => {
     const { camera, shot, openVideoTab } = await openCamera();
     await openVideoTab();

@@ -123,6 +123,7 @@ export class CameraSession {
     if (state === 'denied') {
       this._stopCapture();
     }
+    this._captureResolved();
   };
 
   public constructor(private readonly _host: CameraSessionHost) {
@@ -132,7 +133,7 @@ export class CameraSession {
     this.settings = new CaptureSettings(_host.config);
     this.devices = new CameraDevices({
       lifetime: _host.lifetime,
-      audioEnabled: _host.config.audioEnabled,
+      audioEnabled: () => _host.config.audioEnabled(),
       cameraLabel: _host.cameraLabel,
       onDevicesChange: (lists) => {
         this.devices.adopt(lists, this.feed.stream);
@@ -142,7 +143,7 @@ export class CameraSession {
     });
     this._access = new CameraAccess({
       lifetime: _host.lifetime,
-      onPermissionChange: () => _host.lifetime.runTask(() => this._capture()),
+      onPermissionChange: (name) => this._permissionChanged(name),
       report: (message, error, context) => _host.report('warn', message, error, context),
     });
   }
@@ -161,9 +162,12 @@ export class CameraSession {
     return this._review.timelineIcon;
   }
 
-  /** The clip under review has its mirroring baked in, so the preview must not mirror it again. */
+  /**
+   * The clip under review has its mirroring baked in, so the preview must not mirror it again. Only while the preview
+   * shows it: a camera reopened over it shows the live stream at once, which mirrors as configured.
+   */
   public get playbackMirrored(): boolean {
-    return this._review.mirrored;
+    return this._preview.showingClip && this._review.mirrored;
   }
 
   /** The shutter waits for a frame: a shot before the first one draws an empty canvas, which accepting drops. */
@@ -196,9 +200,12 @@ export class CameraSession {
   /** Stops the camera and lets go of every listener; a pending permission state is dropped. */
   public release(): void {
     this._access.cancel();
-    // A recording or a photo in progress belongs to the stream being stopped.
+    // A recording or a photo in progress belongs to the stream being stopped, so the phase is live again. The tab is
+    // left to the next activation: the config is not read after the adoption ended.
     this._recording.discard();
     this._photo.discard();
+    this._host.setHostClass('uc-recording', false);
+    this.phase = 'live';
     this._requested.clearPending();
     this._stopCapture();
     this._access.stopWatchingPermissions();
@@ -206,8 +213,12 @@ export class CameraSession {
     this._review.close();
   }
 
-  /** Falls back to the first configured mode when the current tab isn't one. */
+  /**
+   * Falls back to the first configured mode when the current tab isn't one. A capture not yet resolved keeps its tab:
+   * the shutter still stops its recording, and its review keeps its actions. It falls back once the capture resolves.
+   */
   public selectDefaultTab(cameraModes: CameraMode[]): void {
+    if (this.phase !== 'live' || this._recording.isStopping) return;
     const defaultTab = cameraModes[0];
     if (defaultTab && (!this.activeTab || !cameraModes.includes(this.activeTab))) {
       this._selectTab(defaultTab);
@@ -217,10 +228,13 @@ export class CameraSession {
   /**
    * The option behind `setting` changed in the config: the user's pick gives way to its first listed value, applied to
    * the open camera. A `cameraConstraints` change also forgets that the camera couldn't satisfy the previous ones.
+   * `enableAudioRecording` turning on or off adds or drops the microphone, and lists the microphones again or none.
    */
-  public configChanged(setting: CameraSetting | 'constraints'): void {
+  public configChanged(setting: CameraSetting | 'constraints' | 'audioEnabled'): void {
     if (setting === 'constraints') {
       this.feed.resetCustomDropped();
+    } else if (setting === 'audioEnabled') {
+      if (this.devices.cameras.length) this._host.lifetime.runTask(() => this.devices.list());
     } else {
       this.settings.reset(setting);
     }
@@ -273,6 +287,21 @@ export class CameraSession {
     }
   }
 
+  /**
+   * A camera permission change opens the camera again. A microphone one with the camera open only retries the
+   * microphone, through the audio path, so a capture under review stays.
+   */
+  private _permissionChanged(name: 'camera' | 'microphone'): void {
+    const stream = this.feed.stream;
+    if (name === 'camera' || !stream) {
+      this._host.lifetime.runTask(() => this._capture());
+      return;
+    }
+    // No microphone in the stream: asking for one is a change, even with the request that was refused.
+    if (!stream.getAudioTracks().length) this._requested.noAudio();
+    this._host.lifetime.runTask(() => this._applyAudioConstraints());
+  }
+
   private _selectCamera(deviceId: string): void {
     this.devices.pickCamera(deviceId);
     this._host.lifetime.runTask(() => this._capture());
@@ -318,17 +347,19 @@ export class CameraSession {
    * Applies what `setting` changed to the open camera: the ratio and resolution to the video track, the sound to the
    * microphone, custom constraints to both. The audio bitrate is set when a recording starts, so it needs nothing.
    */
-  private _applyConstraints(setting: CameraSetting | 'constraints'): void {
+  private _applyConstraints(setting: CameraSetting | 'constraints' | 'audioEnabled'): void {
     const { runTask } = this._host.lifetime;
     if (setting === 'aspectRatio' || setting === 'resolution' || setting === 'constraints') {
       runTask(() => this._applyVideoConstraints());
     }
-    if (setting === 'audioMode' || setting === 'constraints') {
+    if (setting === 'audioMode' || setting === 'audioEnabled' || setting === 'constraints') {
       runTask(() => this._applyAudioConstraints());
     }
   }
 
   private _shutter(): void {
+    // The recorder is stopping: the clip is on its way, and a new recording would start before it shows.
+    if (this._recording.isStopping) return;
     // `shot-camera` takes a photo or starts a recording, `start-camera` marks a recording starting, and stopping
     // one reports `stop-camera`.
     if (!this._recording.isRecording) {
@@ -377,23 +408,31 @@ export class CameraSession {
       this._host.setHostClass('uc-recording', true);
       this.phase = 'recording';
     } catch (error) {
-      // The failed recording's mirroring still decides the preview's, as before the split.
-      this._review.mirrored = this._recording.releaseSource();
       this._host.report('error', 'Failed to start recording', error, 'camera recording. Failed to start recording');
     }
   }
 
   private _stopRecording(): void {
+    // The time limit and the shutter can both ask; only the first stops it.
+    if (!this._recording.isRecording) return;
     this._host.setHostClass('uc-recording', false);
     this._track('stop-camera');
     this._host.lifetime.runTask(() => this._showRecording());
   }
 
-  /** Once the recorder handed over the clip: shows it for review, then applies what changed while recording. */
+  /**
+   * Once the recorder handed over the clip: shows it for review, then applies what changed while recording. A clip
+   * recorded from a stream that was replaced meanwhile is dropped: the preview shows the new one live.
+   */
   private async _showRecording(): Promise<void> {
+    const stream = this.feed.stream;
     const clip = await this._host.lifetime.whileAdopted(this._recording.stop());
-    // Before the preview switches to the clip, or the canvas would start drawing the playback.
-    this._review.mirrored = this._recording.releaseSource();
+    if (!clip) return;
+    if (this.feed.stream !== stream) {
+      this._recording.discard();
+      this._captureResolved();
+      return;
+    }
     try {
       this._preview.showClip(this._review.show(clip), this._clipHandlers);
     } catch (error) {
@@ -416,26 +455,34 @@ export class CameraSession {
     this._track('retake-camera');
     this.phase = 'live';
     this._photo.discard();
-    this._review.mirrored = false;
     if (this.activeTab === CameraSourceTypes.VIDEO) {
       this._clock.stop();
+      // The encoded clip stays in the recorder's chunks until dropped.
+      this._recording.discard();
       this._review.close();
       this._preview.showLive(this.feed.stream);
     }
     this._preview.play();
+    this._captureResolved();
   }
 
   private _accept(): void {
     this._track('accept-camera');
     this.phase = 'live';
-    this._review.mirrored = false;
     if (this.activeTab === CameraSourceTypes.PHOTO) {
       const photo = this._photo.claim();
       if (photo) this._host.lifetime.runTask(() => this._addPhoto(photo));
-      return;
+    } else {
+      const clip = this._review.take();
+      this._recording.discard();
+      if (clip) this._addFile(clip);
     }
-    const clip = this._review.take();
-    if (clip) this._addFile(clip);
+    this._captureResolved();
+  }
+
+  /** The capture was accepted, retaken or dropped: a `cameraModes` change that waited for it switches the tab now. */
+  private _captureResolved(): void {
+    this.selectDefaultTab(this._host.config.cameraModes());
   }
 
   private async _addPhoto(photo: Promise<Blob>): Promise<void> {
@@ -454,7 +501,14 @@ export class CameraSession {
   }
 
   private _stopCapture(): void {
-    this._review.mirrored = this._recording.releaseSource();
+    // A recording can't outlive its stream: it ends with no clip. One already stopping drops its clip on arrival.
+    if (this._recording.isRecording) {
+      this._recording.discard();
+      this._host.setHostClass('uc-recording', false);
+      this.phase = 'live';
+      this._captureResolved();
+    }
+    this._recording.releaseSource();
     if (!this.feed.stream) return;
     this._preview.close();
     this.feed.close();
@@ -511,20 +565,29 @@ export class CameraSession {
   }
 
   /**
-   * Applies changed microphone settings by swapping in a newly opened microphone. One that lands during a recording
-   * would break it: the request waits for the stop instead.
+   * Applies changed microphone settings by swapping in a newly opened microphone, or drops it when audio recording is
+   * off. One that lands during a recording would break it: the request waits for the stop instead.
    */
   private async _applyAudioConstraints(): Promise<void> {
     const stream = this.feed.stream;
-    if (!stream || !this._host.config.audioEnabled()) return;
+    if (!stream) return;
     if (this._recording.isRecording) {
       this._requested.deferAudio();
       return;
     }
     const { audio } = buildConstraints(this._constraintsInput());
+    if (!audio) {
+      this._requested.noAudio();
+      this.feed.dropAudio();
+      return;
+    }
     const request = this._requested.requestAudio(audio);
-    if (!request || !audio) return;
-    const gate = { isCurrent: () => this.feed.stream === stream, isRecording: () => this._recording.isRecording };
+    if (!request) return;
+    // Audio recording turned off while the microphone opened: its track is stale too.
+    const gate = {
+      isCurrent: () => this.feed.stream === stream && this._host.config.audioEnabled(),
+      isRecording: () => this._recording.isRecording,
+    };
     const result = await this._microphone.open(audio, gate, (track) => this.feed.swapAudioTrack(track));
     if (result === 'deferred') this._requested.deferAudio(request);
   }
@@ -544,9 +607,12 @@ export class CameraSession {
       this._preview.show(stream);
       this._requested.opened(opened.constraints);
       // Ends on a revoked permission, and also when this stream is stopped for the next one; only the first counts.
-      stream.addEventListener('inactive', () => {
+      const lost = () => {
         if (this.feed.stream === stream) this._access.settleLater('denied', undefined, this._permissionSettled);
-      });
+      };
+      stream.addEventListener('inactive', lost);
+      // The camera alone can end (unplugged, taken by the system) while the microphone keeps the stream active.
+      stream.getVideoTracks()[0]?.addEventListener('ended', lost, { once: true, signal: adoption });
       this._access.settleLater('granted', undefined, this._permissionSettled);
       // Another camera may not do the picked preset: start the resolution picker over if it's no longer offered.
       this.settings.cameraOpened(maxShortSideOf(stream.getVideoTracks()[0]));

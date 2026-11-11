@@ -113,7 +113,7 @@ export class CameraSource extends ChildBlock {
 
   /**
    * A change to a camera setting's option starts its picker over on the first listed value and applies it to the open
-   * camera.
+   * camera; `enableAudioRecording` adds or drops its microphone.
    * @internal
    */
   @subscription()
@@ -124,7 +124,8 @@ export class CameraSource extends ChildBlock {
       cameraAudioQuality: 'audioQuality',
       cameraAudioMode: 'audioMode',
       cameraConstraints: 'constraints',
-    } as const satisfies Record<string, CameraSetting | 'constraints'>;
+      enableAudioRecording: 'audioEnabled',
+    } as const satisfies Record<string, CameraSetting | 'constraints' | 'audioEnabled'>;
     return Object.entries(settings).map(([key, setting]) =>
       this._config.observe(key as keyof typeof settings, () => this._session.configChanged(setting)),
     );

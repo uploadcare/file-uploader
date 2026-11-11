@@ -23,6 +23,15 @@ afterEach(() => {
 });
 
 describe('RecordingClock', () => {
+  it('clears the previous clip timeline when a new recording starts', () => {
+    const clock = new RecordingClock();
+    clock.startTimeline(() => ({ currentTime: 3, duration: 4 }));
+    expect(clock.progress).toBe(0.75);
+
+    clock.startTimer(() => undefined, vi.fn());
+    expect(clock.progress).toBeNull();
+  });
+
   it('timerText reads the elapsed time and changes only when the shown text does', () => {
     const now = vi.spyOn(performance, 'now').mockReturnValue(0);
     const clock = new RecordingClock();
@@ -81,10 +90,11 @@ describe('RecordingClock', () => {
     runFrames();
     expect(clock.timerText).toBe('00:00');
 
+    // A sample of null writes nothing: the timer's reset is what stays.
     playback = null;
     clock.startTimeline(() => playback);
     expect(frames).toEqual([]);
-    expect(clock.progress).toBe(0.5);
+    expect(clock.progress).toBeNull();
   });
 
   it('starting the timeline while the timer runs replaces the timer loop', () => {

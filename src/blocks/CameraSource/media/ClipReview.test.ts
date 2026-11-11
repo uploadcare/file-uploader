@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ClipReview } from './ClipReview';
 
-const clip = { blob: new Blob(['clip']), mimeType: 'video/x-matroska;codecs=avc1' };
+const clip = { blob: new Blob(['clip']), mimeType: 'video/x-matroska;codecs=avc1', mirrored: false };
 
 beforeEach(() => {
   let next = 0;
@@ -37,14 +37,23 @@ describe('ClipReview', () => {
 
   it('close revokes the URL, forgets the clip and drops the mirroring', () => {
     const review = new ClipReview();
-    review.show(clip);
-    review.mirrored = true;
+    review.show({ ...clip, mirrored: true });
+    expect(review.mirrored).toBe(true);
 
     review.close();
     review.close();
 
     expect(URL.revokeObjectURL).toHaveBeenCalledExactlyOnceWith('blob:1');
     expect([review.take(), review.mirrored]).toEqual([null, false]);
+  });
+
+  it('take drops the mirroring with the clip', () => {
+    const review = new ClipReview();
+    review.show({ ...clip, mirrored: true });
+
+    review.take();
+
+    expect(review.mirrored).toBe(false);
   });
 
   it('the icon follows playback', () => {

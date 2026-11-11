@@ -4,6 +4,8 @@ import { Lifetime } from '../../abstract/di/Lifetime';
 import { delay } from '../../utils/delay';
 import { type CameraCommand as CameraAction, CameraSession, type CameraSessionHost } from './CameraSession';
 import { CameraFeed } from './media/CameraFeed';
+import { VideoRecording } from './media/VideoRecording';
+import { RequestedConstraints } from './RequestedConstraints';
 
 /**
  * The camera's flows, pinned before the session is split into parts. Each `inv<N>` names the invariant of the camera
@@ -89,7 +91,7 @@ type FakeTrack = Omit<MediaStreamTrack, 'stop' | 'applyConstraints'> & {
 };
 
 const fakeTrack = (kind: 'audio' | 'video', deviceId: string) =>
-  ({
+  Object.assign(new EventTarget(), {
     kind,
     enabled: true,
     stop: vi.fn(),
@@ -159,10 +161,12 @@ const stubMedia = () => {
       device('audioinput', 'mic-2'),
     ]),
   });
-  const permissions = { query: async () => new EventTarget() };
+  /** Fires `change` on a permission to say it changed. */
+  const permissionStatus = { camera: new EventTarget(), microphone: new EventTarget() };
+  const permissions = { query: async ({ name }: { name: keyof typeof permissionStatus }) => permissionStatus[name] };
   vi.stubGlobal('navigator', { ...navigator, mediaDevices, permissions });
   const microphoneCalls = () => getUserMedia.mock.calls.filter(([constraints]) => !constraints.video);
-  return { getUserMedia, streams, hold, microphoneCalls };
+  return { getUserMedia, streams, hold, microphoneCalls, permissionStatus };
 };
 
 class FakeRecorder extends EventTarget {
@@ -236,10 +240,20 @@ const stubCanvas = (toBlob: (done: BlobCallback) => void = (done) => done(new Bl
       ? (Object.assign(createElement('div'), {
           getContext: () => ({ drawImage, translate: vi.fn(), scale: vi.fn() }),
           toBlob,
+          captureStream: () => fakeStream([fakeTrack('video', 'canvas')]),
         }) as unknown as HTMLCanvasElement)
       : createElement(tag),
   );
   return { drawImage };
+};
+
+/** The camera mirrored and its `<video>` lent, so a recording goes through a canvas that mirrors it. */
+const mirrorRecordings = (ctx: Ctx) => {
+  ctx.host.config.mirror = () => true;
+  const video = fakeVideo();
+  giveVideo(ctx, video);
+  stubCanvas();
+  return video;
 };
 
 const lastCallOrder = (mock: Mock) => mock.mock.invocationCallOrder.at(-1) ?? 0;
@@ -345,6 +359,144 @@ describe('CameraSession flows', () => {
     recorder.dispatchEvent(new Event('stop'));
     await delay(0);
     expect(ctx.session.phase).toBe('recorded');
+  });
+
+  it('inv4: a shutter press while the recorder stops neither stops it again nor starts another', async () => {
+    stubMedia();
+    const ctx = setup();
+    await open(ctx);
+    const recorder = startRecording(ctx);
+    ctx.session.handle({ type: 'shutter' });
+    ctx.track.mockClear();
+
+    ctx.session.handle({ type: 'shutter' });
+    ctx.session.handle({ type: 'shutter' });
+    recorder.dispatchEvent(new Event('stop'));
+    await vi.waitFor(() => expect(ctx.session.phase).toBe('recorded'));
+
+    expect(FakeRecorder.last).toBe(recorder);
+    expect(recorder.stop).toHaveBeenCalledOnce();
+    expect(recorder.state).toBe('inactive');
+    expect(ctx.track).not.toHaveBeenCalled();
+    expect(URL.createObjectURL).toHaveBeenCalledOnce();
+  });
+
+  it('inv4: the time limit and a shutter press stop the recording once, in either order', async () => {
+    stubMedia();
+    const ctx = setup();
+    const now = vi.spyOn(performance, 'now').mockReturnValue(0);
+    ctx.host.config.maxRecordingSeconds = () => 1;
+    await open(ctx);
+
+    const pressedFirst = startRecording(ctx);
+    ctx.session.handle({ type: 'shutter' });
+    now.mockReturnValue(1000);
+    runFrames();
+    expect(pressedFirst.stop).toHaveBeenCalledOnce();
+    pressedFirst.dispatchEvent(new Event('stop'));
+    await vi.waitFor(() => expect(ctx.session.phase).toBe('recorded'));
+    ctx.session.handle({ type: 'retake' });
+
+    now.mockReturnValue(0);
+    const limitFirst = startRecording(ctx);
+    now.mockReturnValue(1000);
+    runFrames();
+    ctx.session.handle({ type: 'shutter' });
+    expect(FakeRecorder.last).toBe(limitFirst);
+    expect(limitFirst.stop).toHaveBeenCalledOnce();
+    expect(ctx.track.mock.calls.filter(([event]) => event === 'stop-camera')).toHaveLength(2);
+  });
+
+  it('a mirrored clip plays back unmirrored, and the live preview mirrors again after a retake', async () => {
+    stubMedia();
+    const ctx = setup();
+    mirrorRecordings(ctx);
+    await open(ctx);
+
+    const recorder = startRecording(ctx);
+    expect(ctx.session.playbackMirrored).toBe(false);
+    await stopRecording(ctx, recorder);
+    expect(ctx.session.playbackMirrored).toBe(true);
+
+    ctx.session.handle({ type: 'retake' });
+    expect(ctx.session.playbackMirrored).toBe(false);
+  });
+
+  it('a mirrored recording that fails to start leaves the live preview mirrored', async () => {
+    stubMedia();
+    const ctx = setup();
+    mirrorRecordings(ctx);
+    await open(ctx);
+    vi.spyOn(FakeRecorder.prototype, 'start').mockImplementation(() => {
+      throw new Error('Simulated');
+    });
+
+    startRecording(ctx);
+
+    expect(ctx.session.phase).toBe('live');
+    expect(ctx.session.playbackMirrored).toBe(false);
+  });
+
+  it('a camera reopened during a mirrored recording leaves the live preview mirrored', async () => {
+    const { getUserMedia } = stubMedia();
+    const ctx = setup();
+    mirrorRecordings(ctx);
+    await open(ctx);
+    startRecording(ctx);
+
+    ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
+    await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+
+    expect(ctx.session.playbackMirrored).toBe(false);
+  });
+
+  it('a camera reopened during a recording ends the recording without a clip', async () => {
+    const { getUserMedia, streams } = stubMedia();
+    const ctx = setup();
+    const video = fakeVideo();
+    giveVideo(ctx, video);
+    await open(ctx);
+    const recorder = startRecording(ctx);
+    ctx.session.handle({ type: 'pick-setting', setting: 'resolution', value: '720p' });
+    const discard = vi.spyOn(VideoRecording.prototype, 'discard');
+
+    ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
+
+    expect(discard).toHaveBeenCalledOnce();
+    expect(recorder.stop).toHaveBeenCalledOnce();
+    expect(ctx.setHostClass).toHaveBeenLastCalledWith('uc-recording', false);
+    expect(ctx.session.phase).toBe('live');
+    expect(frames).toEqual([]);
+    await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+    recorder.dispatchEvent(new Event('stop'));
+    await vi.waitFor(() => expect(video.srcObject).toBe(streams[1]));
+
+    // The next recording is a new one, and its stop applies nothing left over from the discarded one. Its clip is the
+    // only one made: the discarded recorder's late `stop` made none.
+    const next = startRecording(ctx);
+    expect(next).not.toBe(recorder);
+    const flush = vi.spyOn(RequestedConstraints.prototype, 'flush');
+    await stopRecording(ctx, next);
+    expect(URL.createObjectURL).toHaveBeenCalledOnce();
+    expect(flush.mock.results).toEqual([{ type: 'return', value: { video: false, audio: false } }]);
+  });
+
+  it('a camera reopened over a mirrored clip mirrors the live preview again', async () => {
+    const { getUserMedia, streams } = stubMedia();
+    const ctx = setup();
+    const video = mirrorRecordings(ctx);
+    await open(ctx);
+    await stopRecording(ctx, startRecording(ctx));
+
+    ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
+    await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+    // As soon as the new stream shows, not once the permission state settles.
+    await vi.waitFor(() => expect(video.srcObject).toBe(streams[1]));
+    expect(ctx.session.phase).toBe('recorded');
+    expect(ctx.session.playbackMirrored).toBe(false);
+    await vi.waitFor(() => expect(ctx.session.phase).toBe('live'));
+
+    expect(ctx.session.playbackMirrored).toBe(false);
   });
 
   it('inv4: changes made while recording apply after the stop, video first', async () => {
@@ -475,6 +627,25 @@ describe('CameraSession flows', () => {
     expect(recorder.stop).toHaveBeenCalledOnce();
   });
 
+  it('a move during a recording drops uc-recording and the phase, and the camera opens on the configured tab', async () => {
+    const { getUserMedia } = stubMedia();
+    const ctx = setup();
+    await open(ctx);
+    startRecording(ctx);
+    const config = vi.spyOn(ctx.host.config, 'cameraModes');
+
+    ctx.move();
+
+    expect(ctx.setHostClass).toHaveBeenLastCalledWith('uc-recording', false);
+    expect(ctx.session.phase).toBe('live');
+    expect(config).not.toHaveBeenCalled();
+
+    ctx.host.config.cameraModes = () => [PHOTO];
+    await ctx.session.activate([PHOTO]);
+    expect(ctx.session.activeTab).toBe(PHOTO);
+    expect(getUserMedia).toHaveBeenCalledTimes(2);
+  });
+
   it('inv8: picks, devices and tab survive a move', async () => {
     const { getUserMedia } = stubMedia();
     const ctx = setup();
@@ -575,6 +746,256 @@ describe('CameraSession flows', () => {
     expect(video.play).toHaveBeenCalledOnce();
     video.dispatchEvent(new Event('play'));
     expect(ctx.session.timelineIcon).toBe('play');
+  });
+
+  it('a retaken or accepted clip lets go of its recording', async () => {
+    stubMedia();
+    const ctx = setup();
+    giveVideo(ctx, fakeVideo());
+    await open(ctx);
+    const discard = vi.spyOn(VideoRecording.prototype, 'discard');
+
+    await stopRecording(ctx, startRecording(ctx));
+    ctx.session.handle({ type: 'retake' });
+    expect(discard).toHaveBeenCalledOnce();
+
+    await stopRecording(ctx, startRecording(ctx));
+    ctx.session.handle({ type: 'accept' });
+    expect(ctx.addFile).toHaveBeenCalledOnce();
+    expect(discard).toHaveBeenCalledTimes(2);
+  });
+
+  it('drops a clip that arrives after the camera reopened, and waits for it before recording again', async () => {
+    vi.useFakeTimers();
+    const { streams } = stubMedia();
+    const ctx = setup();
+    const video = fakeVideo();
+    giveVideo(ctx, video);
+    await open(ctx);
+    const first = startRecording(ctx);
+    ctx.session.handle({ type: 'shutter' });
+
+    ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
+    await vi.advanceTimersByTimeAsync(1000);
+    expect(ctx.session.phase).toBe('live');
+    ctx.session.handle({ type: 'shutter' });
+    expect(FakeRecorder.last).toBe(first);
+
+    first.dispatchEvent(new Event('stop'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+    expect(ctx.session.phase).toBe('live');
+    expect(video.srcObject).toBe(streams[1]);
+    video.dispatchEvent(new Event('play'));
+    expect(ctx.session.timelineIcon).toBe('play');
+
+    ctx.session.handle({ type: 'shutter' });
+    expect(FakeRecorder.last).not.toBe(first);
+    expect(ctx.session.phase).toBe('recording');
+  });
+
+  it('a clip dropped after the camera reopened leaves no deferred change for the next recording', async () => {
+    vi.useFakeTimers();
+    const { hold } = stubMedia();
+    const ctx = setup();
+    giveVideo(ctx, fakeVideo());
+    await open(ctx);
+    const first = startRecording(ctx);
+    ctx.session.handle({ type: 'pick-setting', setting: 'resolution', value: '720p' });
+    ctx.session.handle({ type: 'select-microphone', deviceId: 'mic-2' });
+    ctx.session.handle({ type: 'shutter' });
+    const reopen = hold();
+    ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
+
+    first.dispatchEvent(new Event('stop'));
+    await vi.advanceTimersByTimeAsync(0);
+    reopen.answer();
+    await vi.advanceTimersByTimeAsync(1000);
+
+    // The reopen asked for everything in effect, so nothing waits for the next stop.
+    const flush = vi.spyOn(RequestedConstraints.prototype, 'flush');
+    const next = startRecording(ctx);
+    expect(next).not.toBe(first);
+    await stopRecording(ctx, next);
+    expect(flush.mock.results).toEqual([{ type: 'return', value: { video: false, audio: false } }]);
+  });
+
+  it('a cameraModes change waits for the recording, its review and the accept before switching the tab', async () => {
+    stubMedia();
+    const ctx = setup();
+    giveVideo(ctx, fakeVideo());
+    await open(ctx);
+    const recorder = startRecording(ctx);
+
+    ctx.host.config.cameraModes = () => [PHOTO];
+    ctx.session.selectDefaultTab([PHOTO]);
+    expect(ctx.session.activeTab).toBe(VIDEO);
+    expect(ctx.session.phase).toBe('recording');
+
+    // The stop button still stops the recording rather than taking a photo.
+    await stopRecording(ctx, recorder);
+    expect(recorder.stop).toHaveBeenCalledOnce();
+    expect(ctx.session.phase).toBe('recorded');
+    expect(ctx.session.activeTab).toBe(VIDEO);
+
+    ctx.session.handle({ type: 'accept' });
+    expect(ctx.addFile).toHaveBeenCalledOnce();
+    expect(ctx.session.activeTab).toBe(PHOTO);
+  });
+
+  it('a cameraModes change waits for a photo under review to be retaken before switching the tab', async () => {
+    stubMedia();
+    const ctx = setup();
+    giveVideo(ctx, fakeVideo());
+    stubCanvas();
+    await open(ctx);
+    ctx.session.handle({ type: 'shutter' });
+    expect(ctx.session.phase).toBe('shot');
+
+    ctx.host.config.cameraModes = () => [VIDEO];
+    ctx.session.selectDefaultTab([VIDEO]);
+    expect(ctx.session.activeTab).toBe(PHOTO);
+
+    ctx.session.handle({ type: 'retake' });
+    expect(ctx.session.phase).toBe('live');
+    expect(ctx.session.activeTab).toBe(VIDEO);
+  });
+
+  it('audio recording turned off lets go of the microphone, and turned on again opens it', async () => {
+    const { getUserMedia, streams } = stubMedia();
+    const ctx = setup();
+    await open(ctx);
+    const live = streams[0];
+    const [video] = live?.getVideoTracks() ?? [];
+    const [audio] = live?.getAudioTracks() ?? [];
+
+    ctx.host.config.audioEnabled = () => false;
+    ctx.session.configChanged('audioEnabled');
+
+    expect(audio?.stop).toHaveBeenCalledOnce();
+    expect(live?.getAudioTracks()).toEqual([]);
+    expect(video?.stop).not.toHaveBeenCalled();
+    expect(getUserMedia).toHaveBeenCalledOnce();
+    await vi.waitFor(() => expect(ctx.session.devices.microphones).toEqual([]));
+
+    // Back on: the same microphone settings as before are a change again.
+    ctx.host.config.audioEnabled = () => true;
+    ctx.session.configChanged('audioEnabled');
+    await vi.waitFor(() => expect(live?.getAudioTracks()).toHaveLength(1));
+  });
+
+  it('audio recording turned on opens the microphone into the open camera', async () => {
+    const { getUserMedia, streams, microphoneCalls } = stubMedia();
+    const ctx = setup();
+    ctx.host.config.audioEnabled = () => false;
+    await ctx.session.activate([PHOTO, VIDEO]);
+    await vi.waitFor(() => expect(ctx.session.devices.cameras).toHaveLength(2));
+    expect(getUserMedia.mock.lastCall?.[0].audio).toBe(false);
+    const live = streams[0];
+
+    ctx.host.config.audioEnabled = () => true;
+    ctx.session.configChanged('audioEnabled');
+    await vi.waitFor(() => expect(live?.getAudioTracks()).toHaveLength(1));
+
+    expect(microphoneCalls()).toHaveLength(1);
+    expect(live?.getVideoTracks()[0]?.stop).not.toHaveBeenCalled();
+    expect(live?.getAudioTracks()[0]?.enabled).toBe(true);
+    await vi.waitFor(() => expect(ctx.session.devices.microphones).toHaveLength(2));
+  });
+
+  it('a microphone that opens after audio recording was turned off is stopped, not swapped in', async () => {
+    const { streams, hold } = stubMedia();
+    const ctx = setup();
+    await open(ctx);
+    const live = streams[0];
+    const slow = hold();
+    ctx.session.handle({ type: 'select-microphone', deviceId: 'mic-2' });
+
+    ctx.host.config.audioEnabled = () => false;
+    ctx.session.configChanged('audioEnabled');
+    const late = slow.answer();
+    await vi.waitFor(() => expect(late.getAudioTracks()[0]?.stop).toHaveBeenCalled());
+
+    expect(live?.getAudioTracks()).toEqual([]);
+  });
+
+  it('a microphone permission granted with the camera open adds the microphone and keeps the photo under review', async () => {
+    const { getUserMedia, streams, hold, microphoneCalls, permissionStatus } = stubMedia();
+    const ctx = setup();
+    ctx.host.config.audioEnabled = () => false;
+    giveVideo(ctx, fakeVideo());
+    stubCanvas();
+    await ctx.session.activate([PHOTO, VIDEO]);
+    await vi.waitFor(() => expect(ctx.session.devices.cameras).toHaveLength(2));
+    const live = streams[0];
+    ctx.session.handle({ type: 'shutter' });
+    expect(ctx.session.phase).toBe('shot');
+
+    // Turned on, and the microphone is refused at first.
+    hold().fail(new DOMException('Simulated', 'NotAllowedError'));
+    ctx.host.config.audioEnabled = () => true;
+    ctx.session.configChanged('audioEnabled');
+    await vi.waitFor(() => expect(ctx.report).toHaveBeenCalled());
+
+    permissionStatus.microphone.dispatchEvent(new Event('change'));
+    await vi.waitFor(() => expect(live?.getAudioTracks()).toHaveLength(1));
+
+    expect(microphoneCalls()).toHaveLength(2);
+    expect(getUserMedia.mock.calls.filter(([constraints]) => constraints.video)).toHaveLength(1);
+    expect(live?.getVideoTracks()[0]?.stop).not.toHaveBeenCalled();
+    expect(ctx.session.phase).toBe('shot');
+
+    // A camera permission change still opens the camera again.
+    permissionStatus.camera.dispatchEvent(new Event('change'));
+    expect(getUserMedia.mock.calls.filter(([constraints]) => constraints.video)).toHaveLength(2);
+  });
+
+  it('audio recording turned off during a recording applies after the stop', async () => {
+    const { streams } = stubMedia();
+    const ctx = setup();
+    await open(ctx);
+    const [audio] = streams[0]?.getAudioTracks() ?? [];
+    const recorder = startRecording(ctx);
+
+    ctx.host.config.audioEnabled = () => false;
+    ctx.session.configChanged('audioEnabled');
+    expect(audio?.stop).not.toHaveBeenCalled();
+
+    await stopRecording(ctx, recorder);
+    expect(audio?.stop).toHaveBeenCalledOnce();
+    expect(streams[0]?.getAudioTracks()).toEqual([]);
+  });
+
+  it('a camera track that ends on its own stops the capture, the microphone too', async () => {
+    vi.useFakeTimers();
+    const { streams } = stubMedia();
+    const ctx = setup();
+    await open(ctx);
+    const [video] = streams[0]?.getVideoTracks() ?? [];
+    const [audio] = streams[0]?.getAudioTracks() ?? [];
+
+    video?.dispatchEvent(new Event('ended'));
+    await vi.runAllTimersAsync();
+
+    expect(ctx.session.permission).toBe('denied');
+    expect(audio?.stop).toHaveBeenCalled();
+    expect(video?.stop).toHaveBeenCalled();
+  });
+
+  it("a replaced camera's track ending changes nothing", async () => {
+    vi.useFakeTimers();
+    const { getUserMedia, streams } = stubMedia();
+    const ctx = setup();
+    await open(ctx);
+    const [oldVideo] = streams[0]?.getVideoTracks() ?? [];
+    ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
+    await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+
+    oldVideo?.dispatchEvent(new Event('ended'));
+    await vi.runAllTimersAsync();
+
+    expect(ctx.session.permission).toBe('granted');
+    expect(streams[1]?.getAudioTracks()[0]?.stop).not.toHaveBeenCalled();
   });
 
   it('inv11: a denied permission stops the capture and keeps the clip URL', async () => {

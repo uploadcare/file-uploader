@@ -28,7 +28,7 @@ const PERMISSION_STATE_DELAY = 300;
 /** What the camera block lends: its lifetime and its reactions. */
 export type CameraAccessHost = {
   lifetime: CameraLifetime;
-  onPermissionChange: () => void;
+  onPermissionChange: (name: (typeof WATCHED_PERMISSIONS)[number]) => void;
   /** Reports a failure that the block recovers from: to the log with `message`, to telemetry with `context`. */
   report: (message: string, error: unknown, context: string) => void;
 };
@@ -68,7 +68,7 @@ export class CameraAccess {
         const status = await this._host.lifetime.whileAdopted(
           navigator.permissions.query({ name: name as PermissionName }),
         );
-        status.addEventListener('change', () => this._host.onPermissionChange(), { signal: watch.signal });
+        status.addEventListener('change', () => this._host.onPermissionChange(name), { signal: watch.signal });
       }
       return true;
     } catch (error) {

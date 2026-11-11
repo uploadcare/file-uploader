@@ -1,8 +1,9 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { delay } from '../../utils/delay';
+import { CameraSession } from './CameraSession';
 import { CameraSource } from './CameraSource';
 
 // Idempotent (same path as defineComponents(UC)).
@@ -58,5 +59,15 @@ describe('CameraSource', () => {
     await el.updateComplete;
     await delay(0);
     expect(videoEl(el)?.style.transform).not.toContain('scaleX(-1)');
+  });
+
+  it('hands an enableAudioRecording change to the session', async () => {
+    const { config } = await mount(freshCtxName());
+    const configChanged = vi.spyOn(CameraSession.prototype, 'configChanged').mockImplementation(() => {});
+
+    config.set('enableAudioRecording', false);
+
+    expect(configChanged).toHaveBeenCalledWith('audioEnabled');
+    configChanged.mockRestore();
   });
 });

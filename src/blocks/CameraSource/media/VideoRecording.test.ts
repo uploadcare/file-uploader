@@ -10,6 +10,7 @@ vi.mock('./recordingSource', () => ({ createRecordingSource: vi.fn() }));
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.mocked(createRecordingSource).mockReset();
 });
 
 describe('guessExtensionByMime', () => {
@@ -89,6 +90,57 @@ describe('VideoRecording.stop', () => {
     expect([blob.size, blob.type, mimeType]).toEqual([4, 'video/webm', 'video/webm']);
   });
 
+  it('stops the canvas on the final stop event, before the clip carries its mirroring out', async () => {
+    vi.stubGlobal('MediaRecorder', FakeRecorder);
+    const stop = vi.fn();
+    vi.mocked(createRecordingSource).mockReturnValue({
+      stream: new EventTarget() as MediaStream,
+      mirrored: true,
+      stop,
+    });
+    const recording = new VideoRecording();
+    recording.start(new EventTarget() as unknown as MediaStream, {} as HTMLVideoElement, {
+      aspectRatio: null,
+      mirror: true,
+      recorder: {},
+    });
+    const recorder = FakeRecorder.last;
+    const clip = recording.stop();
+    expect(stop).not.toHaveBeenCalled();
+
+    recorder.dispatchEvent(new Event('stop'));
+    expect(stop).toHaveBeenCalledOnce();
+    expect((await clip)?.mirrored).toBe(true);
+    recording.releaseSource();
+    expect(stop).toHaveBeenCalledOnce();
+  });
+
+  it('is stopping from the stop until the final stop event', async () => {
+    vi.stubGlobal('MediaRecorder', FakeRecorder);
+    const recording = new VideoRecording();
+    const recorder = startRecording(recording);
+    const clip = recording.stop();
+    expect([recording.isRecording, recording.isStopping]).toEqual([false, true]);
+
+    recorder.dispatchEvent(new Event('stop'));
+    await clip;
+    expect(recording.isStopping).toBe(false);
+  });
+
+  it('hands over no clip for a recording discarded before its final stop event', async () => {
+    vi.stubGlobal('MediaRecorder', FakeRecorder);
+    const recording = new VideoRecording();
+    const recorder = startRecording(recording);
+    recorder.dispatchEvent(Object.assign(new Event('dataavailable'), { data: new Blob(['clip']) }));
+    const clip = recording.stop();
+
+    recording.discard();
+    expect(recording.isStopping).toBe(false);
+    recorder.dispatchEvent(new Event('stop'));
+
+    expect(await clip).toBeNull();
+  });
+
   it('a stop that arrives after the adoption ended does nothing', async () => {
     vi.stubGlobal('MediaRecorder', FakeRecorder);
     const recording = new VideoRecording();
@@ -120,7 +172,34 @@ describe('VideoRecording chunks', () => {
     first.dispatchEvent(Object.assign(new Event('dataavailable'), { data: new Blob(['late']) }));
     const clip = recording.stop();
     second.dispatchEvent(new Event('stop'));
-    expect((await clip).blob.size).toBe(0);
+    expect((await clip)?.blob.size).toBe(0);
+  });
+});
+
+describe('VideoRecording.discard', () => {
+  it('stops the recording canvas, so the next recording starts without the first still drawing', () => {
+    vi.stubGlobal('MediaRecorder', FakeRecorder);
+    const first = vi.fn();
+    const second = vi.fn();
+    vi.mocked(createRecordingSource)
+      .mockReturnValueOnce({ stream: new EventTarget() as MediaStream, mirrored: false, stop: first })
+      .mockReturnValueOnce({ stream: new EventTarget() as MediaStream, mirrored: false, stop: second });
+    const recording = new VideoRecording();
+    const start = () =>
+      recording.start(new EventTarget() as unknown as MediaStream, {} as HTMLVideoElement, {
+        aspectRatio: null,
+        mirror: false,
+        recorder: {},
+      });
+
+    start();
+    recording.discard();
+    expect(first).toHaveBeenCalledOnce();
+
+    start();
+    recording.discard();
+    expect(first).toHaveBeenCalledOnce();
+    expect(second).toHaveBeenCalledOnce();
   });
 });
 
@@ -142,7 +221,7 @@ describe('recorderOptions', () => {
 });
 
 describe('VideoRecording.start failure', () => {
-  it('stops the canvas before the throw and keeps its mirroring for releaseSource', () => {
+  it('stops the canvas before the throw, once', () => {
     const error = new Error('Simulated');
     vi.stubGlobal(
       'MediaRecorder',
@@ -169,8 +248,7 @@ describe('VideoRecording.start failure', () => {
     ).toThrow(error);
     expect(stop).toHaveBeenCalledOnce();
 
-    expect(recording.releaseSource()).toBe(true);
+    recording.releaseSource();
     expect(stop).toHaveBeenCalledOnce();
-    expect(recording.releaseSource()).toBe(false);
   });
 });

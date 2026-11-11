@@ -56,6 +56,12 @@ export class RequestedConstraints {
     return { previous };
   }
 
+  /** No microphone is in use (audio recording off, or one refused): asking for one is a change. */
+  public noAudio(): void {
+    this._audioPending = false;
+    this._audio = JSON.stringify(false);
+  }
+
   public deferVideo(): void {
     this._videoPending = true;
   }
