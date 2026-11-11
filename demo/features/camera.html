@@ -197,8 +197,13 @@
 
       const CTX = 'camera-playground';
 
-      const ASPECT_RATIOS = ['', '1:1', '4:3', '3:4', '16:9', '9:16', '3:2'];
-      const QUALITIES = ['auto', '720p', '1080p', '4k'];
+      /** The list options: one value is a request, a comma list also shows its picker in the camera settings. */
+      const LIST_OPTIONS = [
+        { key: '_aspectRatio', option: 'cameraAspectRatio', attr: 'camera-aspect-ratio', hint: 'Photos are cropped; video only asks the camera.' },
+        { key: '_resolution', option: 'cameraResolution', attr: 'camera-resolution', hint: 'Presets above what the camera can do are left out.' },
+        { key: '_audioQuality', option: 'cameraAudioQuality', attr: 'camera-audio-quality', hint: 'auto, low, standard, high. Video tab with audio on.' },
+        { key: '_audioMode', option: 'cameraAudioMode', attr: 'camera-audio-mode', hint: 'voice, music. Video tab with audio on.' },
+      ];
 
       /** `cameraConstraints` cannot be set as an attribute, so the playground offers a few to switch between. */
       const CONSTRAINT_PRESETS = [
@@ -232,11 +237,8 @@
       /** The state that maps to config; the track and capture readouts refresh far more often and must not re-apply it. */
       const CONFIG_STATE = [
         '_modes',
-        '_aspectRatio',
-        '_quality',
+        ...LIST_OPTIONS.map(({ key }) => key),
         '_photoQuality',
-        '_ratioOptions',
-        '_qualityOptions',
         '_constraints',
         '_mirror',
         '_audio',
@@ -248,10 +250,10 @@
         static properties = {
           _modes: { state: true },
           _aspectRatio: { state: true },
-          _quality: { state: true },
+          _resolution: { state: true },
+          _audioQuality: { state: true },
+          _audioMode: { state: true },
           _photoQuality: { state: true },
-          _ratioOptions: { state: true },
-          _qualityOptions: { state: true },
           _constraints: { state: true },
           _mirror: { state: true },
           _audio: { state: true },
@@ -262,11 +264,11 @@
         constructor() {
           super();
           this._modes = ['photo', 'video'];
-          this._aspectRatio = '';
-          this._quality = 'auto';
+          this._aspectRatio = 'native, 1:1, 4:3, 16:9';
+          this._resolution = 'auto, 720p, 1080p, 4k';
+          this._audioQuality = 'auto, low, standard, high';
+          this._audioMode = 'voice, music';
           this._photoQuality = 0.92;
-          this._ratioOptions = 'native, 1:1, 4:3, 16:9';
-          this._qualityOptions = 'auto, 720p, 1080p, 4k';
           this._constraints = 'none';
           this._mirror = false;
           this._audio = true;
@@ -306,11 +308,8 @@
           const config = this._configEl;
           if (!config) return;
           config.cameraModes = this._modes.join(', ');
-          config.cameraAspectRatio = this._aspectRatio;
-          config.cameraQuality = this._quality;
+          for (const { key, option } of LIST_OPTIONS) config[option] = this[key];
           config.cameraPhotoQuality = this._photoQuality;
-          config.cameraAspectRatioOptions = this._ratioOptions;
-          config.cameraQualityOptions = this._qualityOptions;
           config.cameraConstraints = CONSTRAINT_PRESETS.find((preset) => preset.id === this._constraints)?.value ?? null;
           config.cameraMirror = this._mirror;
           config.enableAudioRecording = this._audio;
@@ -368,24 +367,13 @@
             `  ctx-name="my-uploader"`,
             `  pubkey="YOUR_PUBLIC_KEY"`,
             `  camera-modes="${this._modes.join(', ')}"`,
-            `  camera-aspect-ratio="${this._aspectRatio}"`,
-            `  camera-quality="${this._quality}"`,
+            ...LIST_OPTIONS.map(({ key, attr }) => `  ${attr}="${this[key]}"`),
             `  camera-photo-quality="${this._photoQuality}"`,
-            `  camera-aspect-ratio-options="${this._ratioOptions}"`,
-            `  camera-quality-options="${this._qualityOptions}"`,
             `></uc-config>`,
             ``,
             `// property only`,
             `config.cameraConstraints = ${preset?.code ?? 'null'};`,
           ].join('\n');
-        }
-
-        _renderSelect(value, options, onChange, label = (option) => option || '(native)') {
-          return html`
-            <select @change=${(e) => onChange(e.target.value)}>
-              ${options.map((option) => html`<option value=${option} ?selected=${option === value}>${label(option)}</option>`)}
-            </select>
-          `;
         }
 
         render() {
@@ -417,16 +405,15 @@
                     )}
                   </div>
 
-                  <div class="group">
-                    <div class="group-label">cameraAspectRatio</div>
-                    ${this._renderSelect(this._aspectRatio, ASPECT_RATIOS, (v) => (this._aspectRatio = v))}
-                    <small>Photos are cropped; video only asks the camera.</small>
-                  </div>
-
-                  <div class="group">
-                    <div class="group-label">cameraQuality</div>
-                    ${this._renderSelect(this._quality, QUALITIES, (v) => (this._quality = v), (v) => v)}
-                  </div>
+                  ${LIST_OPTIONS.map(
+                    ({ key, option, hint }) => html`
+                      <div class="group">
+                        <div class="group-label">${option}</div>
+                        <input type="text" .value=${this[key]} @change=${(e) => (this[key] = e.target.value)} />
+                        <small>${hint} One value: no picker.</small>
+                      </div>
+                    `,
+                  )}
 
                   <div class="group">
                     <div class="group-label">cameraPhotoQuality: ${this._photoQuality}</div>
@@ -438,17 +425,6 @@
                       .value=${String(this._photoQuality)}
                       @input=${(e) => (this._photoQuality = Number(e.target.value))}
                     />
-                  </div>
-
-                  <div class="group">
-                    <div class="group-label">cameraAspectRatioOptions</div>
-                    <input type="text" .value=${this._ratioOptions} @change=${(e) => (this._ratioOptions = e.target.value)} />
-                    <small>Empty or one option: no ratio picker.</small>
-                  </div>
-
-                  <div class="group">
-                    <div class="group-label">cameraQualityOptions</div>
-                    <input type="text" .value=${this._qualityOptions} @change=${(e) => (this._qualityOptions = e.target.value)} />
                   </div>
 
                   <div class="group">
