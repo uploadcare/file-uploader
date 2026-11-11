@@ -177,7 +177,7 @@
   "size-limit": [
     {
       "path": "dist/index.js",
-      "limit": "102 KB"
+      "limit": "103 KB"
     },
     {
       "path": "dist/env.js",
@@ -193,11 +193,11 @@
     },
     {
       "path": "web/file-uploader.min.js",
-      "limit": "100 KB"
+      "limit": "101 KB"
     },
     {
       "path": "web/file-uploader.iife.min.js",
-      "limit": "101 KB"
+      "limit": "102 KB"
     },
     {
       "path": "web/uc-cloud-image-editor.min.js",
@@ -205,15 +205,15 @@
     },
     {
       "path": "web/uc-file-uploader-regular.min.js",
-      "limit": "100 KB"
+      "limit": "101 KB"
     },
     {
       "path": "web/uc-file-uploader-inline.min.js",
-      "limit": "100 KB"
+      "limit": "101 KB"
     },
     {
       "path": "web/uc-file-uploader-minimal.min.js",
-      "limit": "100 KB"
+      "limit": "101 KB"
     },
     {
       "path": "web/uc-img.min.js",

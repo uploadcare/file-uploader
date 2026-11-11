@@ -2,9 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vite
 import { type CameraMode, CameraSourceTypes } from '../../abstract/cameraModes';
 import { Lifetime } from '../../abstract/di/Lifetime';
 import { delay } from '../../utils/delay';
-import type { CameraAction } from './CameraActionEvent';
-import { CameraSession, type CameraSessionHost } from './CameraSession';
-import { CameraStream } from './CameraStream';
+import { type CameraCommand as CameraAction, CameraSession, type CameraSessionHost } from './CameraSession';
+import { CameraFeed } from './media/CameraFeed';
 
 /**
  * The camera's flows, pinned before the session is split into parts. Each `inv<N>` names the invariant of the camera
@@ -22,11 +21,6 @@ const setup = () => {
   const track = vi.fn();
   const setHostClass = vi.fn();
   const addFile = vi.fn();
-  // The stream part keeps the `video` reader it was built with, so a lent `<video>` goes into this slot.
-  let video: HTMLVideoElement | undefined;
-  const lendVideo = (element: HTMLVideoElement | undefined) => {
-    video = element;
-  };
   const host: CameraSessionHost = {
     lifetime: {
       whileAdopted: (work, dispose) => adoption.guard(work, dispose),
@@ -48,9 +42,6 @@ const setup = () => {
       audioMode: () => 'voice',
     },
     cameraLabel: (index) => `Camera ${index + 1}`,
-    video: () => video,
-    timer: () => undefined,
-    timeline: () => undefined,
     setHostClass,
     navigate: vi.fn(),
     addFile,
@@ -66,7 +57,7 @@ const setup = () => {
   };
   // The adoption ends and nothing releases the session: whatever is still running belongs to no one.
   const endAdoption = () => adoption.end();
-  return { session, host, move, endAdoption, report, track, setHostClass, addFile, taskFailed, lendVideo };
+  return { session, host, move, endAdoption, report, track, setHostClass, addFile, taskFailed };
 };
 
 type Ctx = ReturnType<typeof setup>;
@@ -87,7 +78,9 @@ type FakeVideo = ReturnType<typeof fakeVideo>;
 
 /** Lends the session the preview's `<video>`. */
 const giveVideo = (ctx: Ctx, video: FakeVideo | undefined) => {
-  ctx.lendVideo(video as unknown as HTMLVideoElement | undefined);
+  // The session lets go of the `<video>` only on release.
+  if (video) ctx.session.previewVideo(video as unknown as HTMLVideoElement);
+  else ctx.session.release();
 };
 
 type FakeTrack = Omit<MediaStreamTrack, 'stop' | 'applyConstraints'> & {
@@ -217,7 +210,7 @@ afterEach(() => {
 /** Opens the camera and waits for the device list, as activation does on screen. */
 const open = async ({ session }: Ctx, modes: CameraMode[] = [PHOTO, VIDEO]) => {
   await session.activate(modes);
-  await vi.waitFor(() => expect(session.microphones).toHaveLength(2));
+  await vi.waitFor(() => expect(session.devices.microphones).toHaveLength(2));
 };
 
 const startRecording = ({ session }: Ctx) => {
@@ -226,10 +219,12 @@ const startRecording = ({ session }: Ctx) => {
   return FakeRecorder.last;
 };
 
-/** Asks to stop, then hands over the recorder's final `stop` event. */
-const stopRecording = ({ session }: Ctx, recorder: FakeRecorder) => {
+/** Asks to stop, hands over the recorder's final `stop` event, and waits until the clip is shown. */
+const stopRecording = async ({ session }: Ctx, recorder: FakeRecorder) => {
+  const shown = vi.mocked(URL.createObjectURL).mock.calls.length;
   session.handle({ type: 'shutter' });
   recorder.dispatchEvent(new Event('stop'));
+  await vi.waitFor(() => expect(URL.createObjectURL).toHaveBeenCalledTimes(shown + 1));
 };
 
 /** A canvas that draws into `drawImage` and encodes through `toBlob`, which happy-dom can't do. */
@@ -348,6 +343,7 @@ describe('CameraSession flows', () => {
     expect(ctx.session.phase).toBe('recording');
 
     recorder.dispatchEvent(new Event('stop'));
+    await delay(0);
     expect(ctx.session.phase).toBe('recorded');
   });
 
@@ -363,7 +359,7 @@ describe('CameraSession flows', () => {
     expect(video?.applyConstraints).not.toHaveBeenCalled();
     expect(microphoneCalls()).toHaveLength(0);
 
-    stopRecording(ctx, recorder);
+    await stopRecording(ctx, recorder);
 
     expect(video?.applyConstraints).toHaveBeenCalledOnce();
     expect(microphoneCalls()).toHaveLength(1);
@@ -382,7 +378,7 @@ describe('CameraSession flows', () => {
     await vi.waitFor(() => expect(late.getAudioTracks()[0]?.stop).toHaveBeenCalled());
     expect(microphoneCalls()).toHaveLength(1);
 
-    stopRecording(ctx, recorder);
+    await stopRecording(ctx, recorder);
 
     expect(microphoneCalls()).toHaveLength(2);
     expect(deviceOf(microphoneCalls()[1]?.[0].audio, '')).toBe('mic-2');
@@ -393,7 +389,7 @@ describe('CameraSession flows', () => {
     const ctx = setup();
     await open(ctx);
     const [video] = streams[0]?.getVideoTracks() ?? [];
-    expect(ctx.session.selectedMicrophoneId).toBe('mic-1');
+    expect(ctx.session.devices.selectedMicrophoneId).toBe('mic-1');
 
     ctx.host.config.aspectRatio = () => '1:1';
     ctx.session.configChanged('aspectRatio');
@@ -402,6 +398,30 @@ describe('CameraSession flows', () => {
     await vi.waitFor(() => expect(video?.applyConstraints).toHaveBeenCalled());
 
     expect(microphoneCalls()).toHaveLength(0);
+  });
+
+  it('mutes the preview again before the cameraConstraints fallback reopens the camera', async () => {
+    const { getUserMedia, hold } = stubMedia();
+    const ctx = setup();
+    const video = fakeVideo();
+    giveVideo(ctx, video);
+    ctx.host.config.constraints = () => ({ video: { width: { exact: 9999 } } });
+    const first = hold();
+    const retryVolumes: number[] = [];
+    getUserMedia.mockImplementationOnce(async (constraints) => {
+      retryVolumes.push(video.volume);
+      return streamFor(constraints);
+    });
+    ctx.session.handle({ type: 'request-access' });
+    await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledOnce());
+    expect(video.volume).toBe(0);
+
+    // A clip shown while the first request is pending unmutes the preview.
+    video.volume = 1;
+    first.fail(new DOMException('Simulated', 'OverconstrainedError'));
+    await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+
+    expect(retryVolumes).toEqual([0]);
   });
 
   it('inv6: a failed live request is not retried', async () => {
@@ -468,8 +488,8 @@ describe('CameraSession flows', () => {
     await ctx.session.activate([PHOTO, VIDEO]);
 
     expect(ctx.session.activeTab).toBe(VIDEO);
-    expect(ctx.session.resolution).toBe('720p');
-    expect(ctx.session.selectedCameraId).toBe('cam-2');
+    expect(ctx.session.settings.resolution).toBe('720p');
+    expect(ctx.session.devices.selectedCameraId).toBe('cam-2');
     expect(deviceOf(getUserMedia.mock.lastCall?.[0].video, '')).toBe('cam-2');
   });
 
@@ -477,19 +497,17 @@ describe('CameraSession flows', () => {
     stubMedia();
     const ctx = setup();
     const now = vi.spyOn(performance, 'now').mockReturnValue(0);
-    const timer = document.createElement('span');
-    ctx.host.timer = () => timer;
     ctx.host.config.maxRecordingSeconds = () => 1;
     await open(ctx);
 
     const recorder = startRecording(ctx);
-    expect(timer.textContent).toBe('00:01');
+    expect(ctx.session.clock.timerText).toBe('00:01');
 
     now.mockReturnValue(1000);
     runFrames();
     runFrames();
 
-    expect(timer.textContent).toBe('00:00');
+    expect(ctx.session.clock.timerText).toBe('00:00');
     expect(recorder.stop).toHaveBeenCalledOnce();
   });
 
@@ -546,7 +564,7 @@ describe('CameraSession flows', () => {
     const video = fakeVideo();
     giveVideo(ctx, video);
     await open(ctx);
-    stopRecording(ctx, startRecording(ctx));
+    await stopRecording(ctx, startRecording(ctx));
     expect(video.srcObject).toBeNull();
     expect(video.src).toBe('blob:clip');
 
@@ -566,7 +584,7 @@ describe('CameraSession flows', () => {
     const video = fakeVideo();
     giveVideo(ctx, video);
     await open(ctx);
-    stopRecording(ctx, startRecording(ctx));
+    await stopRecording(ctx, startRecording(ctx));
     expect(ctx.session.phase).toBe('recorded');
     const live = streams[0];
 
@@ -577,7 +595,7 @@ describe('CameraSession flows', () => {
     expect(ctx.session.permission).toBe('denied');
     expect(live?.getVideoTracks()[0]?.stop).toHaveBeenCalled();
     expect(video.src).toBe('blob:clip');
-    // QUIRK(camera): the denied state stops the stream (`CameraStream.close`, CameraStream.ts:61) but keeps the clip's
+    // QUIRK(camera): the denied state stops the stream (`CameraFeed.close`, CameraFeed.ts:87) but keeps the clip's
     // object URL and `src` until the next clip, retake or release revokes it. Pinned as current behaviour, not endorsed.
     expect(URL.revokeObjectURL).not.toHaveBeenCalled();
   });
@@ -603,21 +621,19 @@ describe('CameraSession edges', () => {
     const ctx = setup();
     const video = fakeVideo();
     giveVideo(ctx, video);
-    const timeline = document.createElement('div');
-    ctx.host.timeline = () => timeline;
     await open(ctx);
     const clip = startRecording(ctx);
     // A toggle while recording does nothing.
     ctx.session.handle({ type: 'toggle-playback' });
     expect(video.play).not.toHaveBeenCalled();
-    stopRecording(ctx, clip);
+    await stopRecording(ctx, clip);
 
     ctx.session.handle({ type: 'toggle-playback' });
     expect(video.play).toHaveBeenCalledOnce();
     Object.assign(video, { paused: false, ended: false, readyState: 4, currentTime: 0.5, duration: 2 });
     video.dispatchEvent(new Event('play'));
     expect(ctx.session.timelineIcon).toBe('pause');
-    expect(timeline.style.transform).toBe('scaleX(0.25)');
+    expect(`scaleX(${ctx.session.clock.progress})`).toBe('scaleX(0.25)');
 
     ctx.session.handle({ type: 'toggle-playback' });
     expect(video.pause).toHaveBeenCalledOnce();
@@ -640,7 +656,7 @@ describe('CameraSession edges', () => {
     const video = fakeVideo();
     giveVideo(ctx, video);
     await open(ctx);
-    stopRecording(ctx, startRecording(ctx));
+    await stopRecording(ctx, startRecording(ctx));
 
     giveVideo(ctx, undefined);
     video.dispatchEvent(new Event('play'));
@@ -685,11 +701,11 @@ describe('CameraSession edges', () => {
     const ctx = setup();
     ctx.host.config.audioQuality = () => 'auto, high';
     ctx.session.handle({ type: 'pick-setting', setting: 'audioQuality', value: 'high' });
-    expect(ctx.session.audioQuality).toBe('high');
+    expect(ctx.session.settings.audioQuality).toBe('high');
 
     ctx.session.configChanged('audioQuality');
 
-    expect(ctx.session.audioQuality).toBe('auto');
+    expect(ctx.session.settings.audioQuality).toBe('auto');
   });
 
   it('navigates back and closes', () => {
@@ -726,7 +742,7 @@ describe('CameraSession edges', () => {
       throw error;
     });
 
-    stopRecording(ctx, startRecording(ctx));
+    await stopRecording(ctx, startRecording(ctx));
 
     expect(ctx.report).toHaveBeenCalledWith(
       'error',
@@ -747,6 +763,23 @@ describe('CameraSession edges', () => {
     ctx.session.handle({ type: 'retake' });
 
     await vi.waitFor(() => expect(ctx.taskFailed).toHaveBeenCalledWith(error));
+  });
+
+  it('drops a recording that stops after the adoption ended', async () => {
+    stubMedia();
+    const ctx = setup();
+    giveVideo(ctx, fakeVideo());
+    await open(ctx);
+    const recorder = startRecording(ctx);
+    ctx.session.handle({ type: 'shutter' });
+
+    ctx.endAdoption();
+    recorder.dispatchEvent(new Event('stop'));
+    await delay(0);
+
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
+    expect(ctx.session.phase).toBe('recording');
+    expect(ctx.taskFailed).not.toHaveBeenCalled();
   });
 
   it('drops a photo that encodes after the adoption ended', async () => {
@@ -780,15 +813,15 @@ describe('CameraSession edges', () => {
 
     const [track] = reopen.answer().getVideoTracks();
     if (track) track.getCapabilities = () => ({ width: { max: 640 }, height: { max: 480 } });
-    await vi.waitFor(() => expect(ctx.session.maxShortSide).toBe(480));
+    await vi.waitFor(() => expect(ctx.session.settings.maxShortSide).toBe(480));
 
-    expect(ctx.session.resolution).toBe('auto');
+    expect(ctx.session.settings.resolution).toBe('auto');
   });
 });
 
-describe('CameraStream', () => {
+describe('CameraFeed', () => {
   it('ignores a microphone swap without a stream', () => {
-    const stream = new CameraStream({ video: () => undefined, onClipPlay: () => {}, onClipPause: () => {} });
+    const stream = new CameraFeed(setup().host.lifetime, vi.fn());
     const track = fakeTrack('audio', 'mic-2');
     stream.swapAudioTrack(track);
     expect(track.stop).not.toHaveBeenCalled();

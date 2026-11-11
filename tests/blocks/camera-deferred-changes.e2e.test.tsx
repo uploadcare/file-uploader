@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { Locator } from 'vitest/browser';
-import { CameraActionEvent } from '@/blocks/CameraSource/CameraActionEvent';
+import { CameraActionEvent } from '@/blocks/CameraSource/ui/CameraActionEvent';
 import type { Config } from '@/index';
 import { settingOf } from '~/tests/utils/camera-settings';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';

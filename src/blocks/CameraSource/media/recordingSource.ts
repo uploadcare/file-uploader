@@ -1,5 +1,5 @@
-import { centerCrop } from '../../abstract/camera/aspectRatio';
-import { logger } from '../../abstract/logger';
+import { centerCrop } from '../../../abstract/camera/aspectRatio';
+import { logger } from '../../../abstract/logger';
 
 const log = logger.scope('camera');
 

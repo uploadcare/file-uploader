@@ -1,15 +1,8 @@
 import { isAbortError } from '../../abstract/di/Lifetime';
+import { signalState } from '../../abstract/di/signalState';
+import type { CameraLifetime } from './CameraSession';
 
 export type DeviceOption = { text: string; value: string };
-
-const WATCHED_PERMISSIONS = ['camera', 'microphone'] as const;
-
-/** The camera block's adoption-bound async helpers (see `ChildBlock`), lent to the parts that do its async work. */
-export type CameraLifetime = {
-  whileAdopted: <T>(work: PromiseLike<T>, dispose?: (value: T) => void) => Promise<T>;
-  runTask: (task: () => unknown) => void;
-  adoptionSignal: () => AbortSignal;
-};
 
 /** What the camera block lends: its lifetime, config reads and its reaction to changes. */
 export type CameraDevicesHost = {
@@ -17,51 +10,56 @@ export type CameraDevicesHost = {
   audioEnabled: () => boolean;
   /** The label for an unnamed camera, by its position in the list. */
   cameraLabel: (index: number) => string;
-  onPermissionChange: () => void;
   onDevicesChange: (devices: { cameras: DeviceOption[]; microphones: DeviceOption[] }) => void;
   /** Reports a failure that the block recovers from: to the log with `message`, to telemetry with `context`. */
   report: (message: string, error: unknown, context: string) => void;
 };
 
-/** The camera's permissions and devices: watches the permission state and lists the cameras and microphones. */
+/**
+ * The device to show as selected: the current choice while it is still listed, otherwise the one the open stream
+ * actually uses, otherwise the first.
+ */
+const resolveSelectedId = (
+  devices: DeviceOption[],
+  currentId: string | null,
+  track: MediaStreamTrack | undefined,
+): string | null => {
+  const listed = (id: string | null | undefined) => !!id && devices.some((device) => device.value === id);
+  if (listed(currentId)) return currentId;
+  const activeId = track?.getSettings().deviceId;
+  if (listed(activeId)) return activeId ?? null;
+  return devices[0]?.value ?? null;
+};
+
+/**
+ * The camera's devices: lists the cameras and microphones, and again whenever they change, and holds the ones picked.
+ */
 export class CameraDevices {
-  /** Aborted to remove the permission listeners: when watching stops, and when it starts over. */
-  private _permissionWatch: AbortController | null = null;
+  @signalState() public cameras: DeviceOption[] = [];
+  @signalState() public microphones: DeviceOption[] = [];
+  @signalState() public selectedCameraId: string | null = null;
+  @signalState() public selectedMicrophoneId: string | null = null;
 
   public constructor(private readonly _host: CameraDevicesHost) {}
 
-  /**
-   * Calls `onPermissionChange` whenever the camera or microphone permission changes. Returns false when the
-   * Permissions API can't be used, in which case the block asks for access directly.
-   */
-  public async watchPermissions(): Promise<boolean> {
-    this.stopWatchingPermissions();
-    const watch = new AbortController();
-    this._permissionWatch = watch;
-    try {
-      for (const name of WATCHED_PERMISSIONS) {
-        const status = await this._host.lifetime.whileAdopted(
-          navigator.permissions.query({ name: name as PermissionName }),
-        );
-        status.addEventListener('change', () => this._host.onPermissionChange(), { signal: watch.signal });
-      }
-      return true;
-    } catch (error) {
-      // Only its own watch: after a move the next adoption has already started another.
-      if (this._permissionWatch === watch) this.stopWatchingPermissions();
-      if (isAbortError(error)) throw error;
-      this._host.report(
-        'Failed to use permissions API. Fallback to manual request mode.',
-        error,
-        'camera permissions. Failed to use permissions API',
-      );
-      return false;
-    }
+  public pickCamera(id: string): void {
+    this.selectedCameraId = id;
   }
 
-  public stopWatchingPermissions(): void {
-    this._permissionWatch?.abort();
-    this._permissionWatch = null;
+  public pickMicrophone(id: string): void {
+    this.selectedMicrophoneId = id;
+  }
+
+  /** Stores the lists and resolves the selection against the open stream's tracks. */
+  public adopt(lists: { cameras: DeviceOption[]; microphones: DeviceOption[] }, stream: MediaStream | null): void {
+    this.cameras = lists.cameras;
+    this.selectedCameraId = resolveSelectedId(lists.cameras, this.selectedCameraId, stream?.getVideoTracks()[0]);
+    this.microphones = lists.microphones;
+    this.selectedMicrophoneId = resolveSelectedId(
+      lists.microphones,
+      this.selectedMicrophoneId,
+      stream?.getAudioTracks()[0],
+    );
   }
 
   /** Lists the devices again whenever they change, until `adoption` ends. */

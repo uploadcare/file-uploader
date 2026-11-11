@@ -1,40 +1,34 @@
-import { html, nothing, type PropertyValues, type TemplateResult } from 'lit';
+import { html, nothing, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
-import { ChildBlock } from '../../lit/ChildBlock';
-import { UID } from '../../utils/UID';
-import { CameraActionEvent, type CameraSetting } from './CameraActionEvent';
-import '../Icon/Icon';
+import { ChildBlock } from '../../../lit/ChildBlock';
+import { UID } from '../../../utils/UID';
+import { renderAspectRatioSvg } from '../../Icon/aspectRatioIcon';
+import { CameraActionEvent } from './CameraActionEvent';
+import type { SettingOptionData, SettingSectionData } from './settingsView';
+import '../../Icon/Icon';
 import './camera-settings.css';
-
-export type CameraSettingOption = { text: string; value: string; icon?: TemplateResult };
-
-/** One section of the settings popup: a device picker or a capture setting, with its options and the value in effect. */
-export type CameraSettingSection = {
-  key: 'camera' | 'microphone' | CameraSetting;
-  label: string;
-  hidden: boolean;
-  options: CameraSettingOption[];
-  value: string;
-  disabled?: boolean;
-};
 
 /**
  * The settings button of the camera's bottom bar and the popup it opens: an accordion with one section per setting,
  * each a row with its label and current value that opens onto radio options. One section is open at a time.
  */
-export class CameraSettings extends ChildBlock {
+export class CameraSettingsPopup extends ChildBlock {
   @property({ type: Boolean, attribute: false })
   public buttonHidden = true;
 
   @property({ attribute: false })
-  public sections: CameraSettingSection[] = [];
+  public sections: SettingSectionData[] = [];
+
+  /** The camera's own shape as the preview shows it, which the native ratio's icon draws. */
+  @property({ attribute: false })
+  public previewShape: { width: number; height: number } | null = null;
 
   private readonly _popoverId = `uc-camera-settings-${UID.generateFastUid()}`;
 
   private readonly _emit = (action: CameraActionEvent['action']) => this.dispatchEvent(new CameraActionEvent(action));
 
-  private _handleChange(key: CameraSettingSection['key'], event: Event): void {
+  private _handleChange(key: SettingSectionData['key'], event: Event): void {
     const value = (event.target as HTMLInputElement | null)?.value;
     if (!value) return;
     if (key === 'camera') {
@@ -64,12 +58,23 @@ export class CameraSettings extends ChildBlock {
     }
   }
 
+  private _text(option: SettingOptionData | undefined): string {
+    return option?.textKey ? this.l10n(option.textKey) : (option?.text ?? '');
+  }
+
+  /** The shape of a ratio option; the native one takes the camera's, once its first frame is in. */
+  private _icon({ shape }: SettingOptionData) {
+    const size = shape === 'native' ? this.previewShape : shape && { width: shape, height: 1 };
+    return size ? html`<uc-icon>${renderAspectRatioSvg(size.width, size.height)}</uc-icon>` : nothing;
+  }
+
   /**
    * The sections share a `name`, so opening one closes the others. A lone section is always open, its heading hidden;
    * any other disabled section is shut and stays shut, its value still on show.
    */
-  private _renderSection(section: CameraSettingSection, lone: boolean) {
-    const { key, label, hidden, options, value, disabled = false } = section;
+  private _renderSection(section: SettingSectionData, lone: boolean) {
+    const { key, labelKey, hidden, options, value, disabled = false } = section;
+    const label = this.l10n(labelKey);
     const current = options.find((option) => option.value === value);
     return html`
       <details
@@ -81,7 +86,7 @@ export class CameraSettings extends ChildBlock {
       >
         <summary aria-disabled=${disabled ? 'true' : 'false'} @click=${this._handleToggle}>
           <span>${label}</span>
-          <span class="uc-camera-setting-value">${current?.text ?? ''}</span>
+          <span class="uc-camera-setting-value">${this._text(current)}</span>
           <uc-icon class="uc-camera-setting-chevron" name="arrow-dropdown"></uc-icon>
         </summary>
         <div class="uc-camera-setting-options" role="radiogroup" aria-label=${label}>
@@ -96,8 +101,8 @@ export class CameraSettings extends ChildBlock {
                   ?disabled=${disabled}
                   @change=${(event: Event) => this._handleChange(key, event)}
                 />
-                ${option.icon ?? nothing}
-                <span>${option.text}</span>
+                ${this._icon(option)}
+                <span>${this._text(option)}</span>
               </label>
             `,
           )}
@@ -128,6 +133,6 @@ export class CameraSettings extends ChildBlock {
 
 declare global {
   interface HTMLElementTagNameMap {
-    'uc-camera-settings': CameraSettings;
+    'uc-camera-settings': CameraSettingsPopup;
   }
 }

@@ -1,8 +1,8 @@
 import { html } from 'lit';
-import { ChildBlock } from '../../lit/ChildBlock';
+import { ChildBlock } from '../../../lit/ChildBlock';
 import { CameraActionEvent } from './CameraActionEvent';
-import '../ActivityHeader/ActivityHeader';
-import '../Icon/Icon';
+import '../../ActivityHeader/ActivityHeader';
+import '../../Icon/Icon';
 
 /** The camera's header: back, the caption, close. The camera picker is in the settings. */
 export class CameraHeader extends ChildBlock {

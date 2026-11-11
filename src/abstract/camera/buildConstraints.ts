@@ -129,7 +129,7 @@ export const buildConstraints = ({
   custom,
   cameraId,
   audioId,
-}: BuildConstraintsInput): MediaStreamConstraints & { video: MediaTrackConstraints } => {
+}: BuildConstraintsInput): { video: MediaTrackConstraints; audio: false | MediaTrackConstraints } => {
   const resolved = resolveCustomConstraints(custom, mode);
 
   const video: MediaTrackConstraints = {

@@ -1,7 +1,7 @@
 import { EDITOR_IMAGE_UUID } from '@uploadcare/api-emulator';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
-import type { CameraPreview } from '@/blocks/CameraSource/CameraPreview';
+import type { CameraPreview } from '@/blocks/CameraSource/ui/CameraPreview';
 import { createInCtx, inCtx, renderSolution, waitForBlocks, within } from '~/tests/utils/render-solution';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';

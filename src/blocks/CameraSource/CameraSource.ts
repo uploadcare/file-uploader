@@ -1,8 +1,7 @@
 import { Signal } from '@lit-labs/signals';
 import { html } from 'lit';
-import { createRef, ref } from 'lit/directives/ref.js';
-import { NATIVE_ASPECT_RATIO, toRatio } from '../../abstract/camera/cameraSettings';
-import { type CameraMode, CameraSourceTypes, parseCameraModes } from '../../abstract/cameraModes';
+import { state } from 'lit/decorators.js';
+import { type CameraMode, parseCameraModes } from '../../abstract/cameraModes';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject } from '../../abstract/di/inject';
@@ -11,17 +10,17 @@ import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
 import { effect } from '../../lit/effect';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
-import type { CameraAudioMode, CameraAudioQuality, CameraResolution } from '../../types/exported';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { UploadSource } from '../../utils/UploadSource';
-import { renderAspectRatioSvg } from '../Icon/aspectRatioIcon';
-import type { CameraActionEvent, CameraSetting } from './CameraActionEvent';
-import { CameraControls } from './CameraControls';
-import { CameraHeader } from './CameraHeader';
-import { CameraPreview } from './CameraPreview';
 import { CameraSession } from './CameraSession';
-import { type CameraSettingSection, CameraSettings } from './CameraSettings';
-import { type CameraView, deriveCameraView } from './cameraView';
+import type { CameraSetting } from './CaptureSettings';
+import type { CameraActionEvent } from './ui/CameraActionEvent';
+import { CameraControls } from './ui/CameraControls';
+import { CameraHeader } from './ui/CameraHeader';
+import { CameraPreview } from './ui/CameraPreview';
+import { CameraSettingsPopup } from './ui/CameraSettingsPopup';
+import { deriveCameraView } from './ui/cameraView';
+import { deriveSettingsView } from './ui/settingsView';
 import './camera-source.css';
 
 export type { CameraMode };
@@ -38,8 +37,8 @@ export class CameraSource extends ChildBlock {
   // Read from the session's accept handler, which runs post-adoption, so `@inject` resolves it safely.
   @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
 
-  private readonly _previewRef = createRef<CameraPreview>();
-  private readonly _controlsRef = createRef<CameraControls>();
+  /** The camera's own shape as the preview shows it, which the native ratio's icon draws. */
+  @state() private _previewShape: { width: number; height: number } | null = null;
   private readonly _requestButtonHidden = canUsePermissionsApi();
 
   private readonly _session = new CameraSession({
@@ -65,9 +64,6 @@ export class CameraSource extends ChildBlock {
       audioMode: () => this._config.getTracked('cameraAudioMode'),
     },
     cameraLabel: (index) => `${this.l10n('caption-camera')} ${index + 1}`,
-    video: () => this._previewRef.value?.video,
-    timer: () => this._controlsRef.value?.timer,
-    timeline: () => this._controlsRef.value?.timeline,
     setHostClass: (name, on) => this.classList.toggle(name, on),
     navigate: (edge) => this._router.traverse(edge),
     addFile: (file) => this._api.addFileFromObject(file, { source: UploadSource.CAMERA }),
@@ -78,8 +74,20 @@ export class CameraSource extends ChildBlock {
     },
   });
 
-  private readonly _handleAction = (event: CameraActionEvent): void => {
-    this._session.handle(event.action);
+  private readonly _handleAction = ({ action }: CameraActionEvent): void => {
+    switch (action.type) {
+      case 'video-element':
+        this._session.previewVideo(action.video);
+        break;
+      case 'video-frame':
+        this._session.previewFrame(action.ready);
+        break;
+      case 'preview-resize':
+        this._previewShape = { width: action.width, height: action.height };
+        break;
+      default:
+        this._session.handle(action);
+    }
   };
 
   // Camera activation is adoption-scoped: it starts here and stops in `controllerReleased`, on disconnect and on ctx
@@ -122,81 +130,6 @@ export class CameraSource extends ChildBlock {
     );
   }
 
-  private _resolutionLabel(value: CameraResolution): string {
-    return value === 'auto' ? this.l10n('camera-setting-auto') : value.toUpperCase();
-  }
-
-  private _audioQualityLabel(value: CameraAudioQuality): string {
-    return value === 'auto' ? this.l10n('camera-setting-auto') : this.l10n(`camera-audio-quality-${value}`);
-  }
-
-  private _audioModeLabel(value: CameraAudioMode): string {
-    return this.l10n(`camera-audio-mode-${value}`);
-  }
-
-  /** The shape of a ratio option; the native one takes the camera's, once its first frame is in. */
-  private _aspectRatioIcon(value: string) {
-    const ratio = toRatio(value);
-    const shape = ratio ? { width: ratio, height: 1 } : this._session.previewShape;
-    return shape ? html`<uc-icon>${renderAspectRatioSvg(shape.width, shape.height)}</uc-icon>` : undefined;
-  }
-
-  /** The settings popup's sections. Audio settings only matter where sound is recorded: video, with audio on. */
-  private _settingSections(view: CameraView, audioEnabled: boolean): CameraSettingSection[] {
-    const session = this._session;
-    const audioContext = session.activeTab === CameraSourceTypes.VIDEO && audioEnabled;
-    return [
-      {
-        key: 'camera',
-        label: this.l10n('caption-camera'),
-        hidden: view.cameraSelectHidden,
-        options: session.cameras,
-        value: session.selectedCameraId ?? '',
-      },
-      {
-        key: 'aspectRatio',
-        label: this.l10n('camera-aspect-ratio'),
-        hidden: session.aspectRatioOptions.length < 2,
-        options: session.aspectRatioOptions.map((value) => ({
-          value,
-          text: value === NATIVE_ASPECT_RATIO ? this.l10n('camera-aspect-ratio-native') : value,
-          icon: this._aspectRatioIcon(value),
-        })),
-        value: session.aspectRatioChoice,
-      },
-      {
-        key: 'resolution',
-        label: this.l10n('camera-resolution'),
-        hidden: session.resolutionOptions.length < 2,
-        options: session.resolutionOptions.map((value) => ({ value, text: this._resolutionLabel(value) })),
-        value: session.resolution,
-      },
-      {
-        // Unlike the other pickers this one needs no config: it offers the microphones there are.
-        key: 'microphone',
-        label: this.l10n('camera-microphone'),
-        hidden: view.audioSelectHidden,
-        options: session.microphones,
-        value: session.selectedMicrophoneId ?? '',
-        disabled: view.audioSelectDisabled,
-      },
-      {
-        key: 'audioQuality',
-        label: this.l10n('camera-audio-quality'),
-        hidden: session.audioQualityOptions.length < 2 || !audioContext,
-        options: session.audioQualityOptions.map((value) => ({ value, text: this._audioQualityLabel(value) })),
-        value: session.audioQuality,
-      },
-      {
-        key: 'audioMode',
-        label: this.l10n('camera-audio-mode'),
-        hidden: session.audioModeOptions.length < 2 || !audioContext,
-        options: session.audioModeOptions.map((value) => ({ value, text: this._audioModeLabel(value) })),
-        value: session.audioMode,
-      },
-    ];
-  }
-
   public override render() {
     const session = this._session;
     const audioEnabled = this._config.getTracked('enableAudioRecording');
@@ -207,32 +140,38 @@ export class CameraSource extends ChildBlock {
       tab: session.activeTab,
       cameraModes: parseCameraModes(this._config.getTracked('cameraModes')),
       audioEnabled,
-      cameraCount: session.cameras.length,
-      microphoneCount: audioEnabled ? session.microphones.length : 0,
-      muted: session.audioMuted,
+      cameraCount: session.devices.cameras.length,
+      microphoneCount: audioEnabled ? session.devices.microphones.length : 0,
+      muted: session.feed.audioMuted,
     });
-    const settings = this._settingSections(view, audioEnabled);
-    const settingsHidden =
-      session.permission !== 'granted' || session.phase !== 'live' || settings.every((section) => section.hidden);
+    const settings = deriveSettingsView({
+      view,
+      permission: session.permission,
+      phase: session.phase,
+      tab: session.activeTab,
+      audioEnabled,
+      devices: session.devices,
+      settings: session.settings,
+    });
     return html`
       <uc-camera-header @uc-internal:camera-action=${this._handleAction}></uc-camera-header>
       <uc-camera-preview
         .view=${view}
         .mirror=${this._config.getTracked('cameraMirror') && !session.playbackMirrored}
-        .aspectRatio=${session.aspectRatio}
+        .aspectRatio=${session.settings.aspectRatio}
         .requestButtonHidden=${this._requestButtonHidden}
         @uc-internal:camera-action=${this._handleAction}
-        ${ref(this._previewRef)}
       ></uc-camera-preview>
       <uc-camera-controls
         .view=${view}
         .activeTab=${session.activeTab}
-        .settings=${settings}
-        .settingsHidden=${settingsHidden}
+        .settings=${settings.sections}
+        .settingsHidden=${settings.hidden}
+        .previewShape=${this._previewShape}
         .hasVideoFrame=${session.hasVideoFrame}
         .timelineIcon=${session.timelineIcon}
+        .clock=${session.clock}
         @uc-internal:camera-action=${this._handleAction}
-        ${ref(this._controlsRef)}
       ></uc-camera-controls>
     `;
   }
@@ -243,7 +182,7 @@ export class CameraSource extends ChildBlock {
     CameraHeader.reg('uc-camera-header');
     CameraPreview.reg('uc-camera-preview');
     CameraControls.reg('uc-camera-controls');
-    CameraSettings.reg('uc-camera-settings');
+    CameraSettingsPopup.reg('uc-camera-settings');
   }
 }
 

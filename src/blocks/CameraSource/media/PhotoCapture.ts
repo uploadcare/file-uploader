@@ -1,4 +1,5 @@
-import { centerCrop } from '../../abstract/camera/aspectRatio';
+import { centerCrop } from '../../../abstract/camera/aspectRatio';
+import { createCameraFile } from './cameraFile';
 
 export type PhotoOptions = {
   /** The source's pixel size: a `<video>` reports it as `videoWidth` / `videoHeight`, not `width` / `height`. */
@@ -48,3 +49,29 @@ export const renderPhoto = (source: CanvasImageSource, options: PhotoOptions): P
     );
   });
 };
+
+/** The photo as a file to upload, named and dated now. */
+export const photoFile = (blob: Blob): File => createCameraFile('camera', 'jpeg', 'image/jpeg', blob);
+
+/** The photo under review, as the JPEG it will be sent as. */
+export class PhotoCapture {
+  private _shot: Promise<Blob> | null = null;
+
+  /** Draws the frame `video` shows and starts encoding it, synchronously; the caller pauses the preview after. */
+  public take(video: HTMLVideoElement, options: Pick<PhotoOptions, 'aspectRatio' | 'mirror' | 'quality'>): void {
+    this._shot = renderPhoto(video, { ...options, width: video.videoWidth, height: video.videoHeight });
+    // Accept awaits and reports a failure; until then (or after a retake) the rejection would go unhandled.
+    this._shot.catch(() => {});
+  }
+
+  /** Hands the shot over and forgets it. */
+  public claim(): Promise<Blob> | null {
+    const shot = this._shot;
+    this._shot = null;
+    return shot;
+  }
+
+  public discard(): void {
+    this._shot = null;
+  }
+}

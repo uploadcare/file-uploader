@@ -1,13 +1,14 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
-import { createRef, ref } from 'lit/directives/ref.js';
-import type { CameraMode } from '../../abstract/cameraModes';
-import { ChildBlock } from '../../lit/ChildBlock';
+import type { CameraMode } from '../../../abstract/cameraModes';
+import { ChildBlock } from '../../../lit/ChildBlock';
+import { cssomStyleMap } from '../../../lit/cssom-style-map';
+import type { ClockView } from '../media/RecordingClock';
 import { CameraActionEvent } from './CameraActionEvent';
-import type { CameraSettingSection } from './CameraSettings';
 import type { CameraView } from './cameraView';
-import '../Icon/Icon';
+import type { SettingSectionData } from './settingsView';
+import '../../Icon/Icon';
 import './camera-controls.css';
 
 /**
@@ -23,7 +24,11 @@ export class CameraControls extends ChildBlock {
 
   /** The settings popup's sections, devices included. */
   @property({ attribute: false })
-  public settings: CameraSettingSection[] = [];
+  public settings: SettingSectionData[] = [];
+
+  /** The camera's own shape, for the native ratio's icon. */
+  @property({ attribute: false })
+  public previewShape: { width: number; height: number } | null = null;
 
   @property({ type: Boolean, attribute: false })
   public settingsHidden = true;
@@ -36,18 +41,9 @@ export class CameraControls extends ChildBlock {
   @property({ attribute: false })
   public timelineIcon = 'play';
 
-  private readonly _timerRef = createRef<HTMLElement>();
-  private readonly _lineRef = createRef<HTMLElement>();
-
-  /** Where the recording time is written. */
-  public get timer(): HTMLElement | undefined {
-    return this._timerRef.value;
-  }
-
-  /** The bar that follows the clip's playback. */
-  public get timeline(): HTMLElement | undefined {
-    return this._lineRef.value;
-  }
+  /** The recording timer and the clip's timeline. Read in render only, so each frame re-renders the controls alone. */
+  @property({ attribute: false })
+  public clock: ClockView | null = null;
 
   private readonly _emit = (action: CameraActionEvent['action']) => this.dispatchEvent(new CameraActionEvent(action));
 
@@ -80,6 +76,7 @@ export class CameraControls extends ChildBlock {
   public override render() {
     const view = this.view;
     if (!view) return html``;
+    const progress = this.clock?.progress ?? null;
     return html`
       <div class="uc-controls">
         <div class="uc-switcher" ?hidden=${!view.timerHidden}>
@@ -94,8 +91,11 @@ export class CameraControls extends ChildBlock {
           data-testid="recording-timer"
         >
           <uc-icon name=${this.timelineIcon}></uc-icon>
-          <span ${ref(this._timerRef)}> 00:00 </span>
-          <span ${ref(this._lineRef)} class="uc-line"></span>
+          <span>${this.clock?.timerText ?? '00:00'}</span>
+          <span
+            class="uc-line"
+            style=${cssomStyleMap({ transform: progress === null ? undefined : `scaleX(${progress})` })}
+          ></span>
         </button>
 
         <div class="uc-camera-actions uc-camera-action" ?hidden=${view.actionsHidden}>
@@ -137,7 +137,11 @@ export class CameraControls extends ChildBlock {
             <uc-icon name=${view.microphoneIcon}></uc-icon>
           </button>
 
-          <uc-camera-settings .buttonHidden=${this.settingsHidden} .sections=${this.settings}></uc-camera-settings>
+          <uc-camera-settings
+            .buttonHidden=${this.settingsHidden}
+            .sections=${this.settings}
+            .previewShape=${this.previewShape}
+          ></uc-camera-settings>
         </div>
       </div>
     `;
