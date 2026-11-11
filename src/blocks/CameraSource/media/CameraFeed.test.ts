@@ -89,6 +89,25 @@ describe('CameraFeed', () => {
     expect(feed.customDropped).toBe(false);
   });
 
+  it('forgets dropped custom constraints when it opens again', async () => {
+    const error = new DOMException('Simulated', 'OverconstrainedError');
+    const getUserMedia = stubGetUserMedia(
+      vi
+        .fn()
+        .mockRejectedValueOnce(error)
+        .mockImplementation(async () => fakeStream([fakeTrack('video')])),
+    );
+    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const custom = input({ video: { width: { exact: 9999 } } });
+    await feed.open(custom, () => {});
+    expect(feed.customDropped).toBe(true);
+
+    await feed.open(custom, () => {});
+
+    expect(getUserMedia.mock.calls[2]?.[0].video).toMatchObject({ width: { exact: 9999 } });
+    expect(feed.customDropped).toBe(false);
+  });
+
   it('swapAudioTrack keeps mute', async () => {
     const oldAudio = fakeTrack('audio');
     stubGetUserMedia(async () => fakeStream([fakeTrack('video'), oldAudio]));

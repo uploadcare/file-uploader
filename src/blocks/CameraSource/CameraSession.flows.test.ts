@@ -21,7 +21,6 @@ const setup = () => {
   const taskFailed = vi.fn();
   const report = vi.fn();
   const track = vi.fn();
-  const setHostClass = vi.fn();
   const addFile = vi.fn();
   const host: CameraSessionHost = {
     lifetime: {
@@ -44,7 +43,6 @@ const setup = () => {
       audioMode: () => 'voice',
     },
     cameraLabel: (index) => `Camera ${index + 1}`,
-    setHostClass,
     navigate: vi.fn(),
     addFile,
     track,
@@ -59,7 +57,7 @@ const setup = () => {
   };
   // The adoption ends and nothing releases the session: whatever is still running belongs to no one.
   const endAdoption = () => adoption.end();
-  return { session, host, move, endAdoption, report, track, setHostClass, addFile, taskFailed };
+  return { session, host, move, endAdoption, report, track, addFile, taskFailed };
 };
 
 type Ctx = ReturnType<typeof setup>;
@@ -85,7 +83,8 @@ const giveVideo = (ctx: Ctx, video: FakeVideo | undefined) => {
   else ctx.session.release();
 };
 
-type FakeTrack = Omit<MediaStreamTrack, 'stop' | 'applyConstraints'> & {
+type FakeTrack = Omit<MediaStreamTrack, 'stop' | 'applyConstraints' | 'readyState'> & {
+  readyState: MediaStreamTrackState;
   stop: Mock<() => void>;
   applyConstraints: Mock<(constraints?: MediaTrackConstraints) => Promise<void>>;
 };
@@ -94,6 +93,7 @@ const fakeTrack = (kind: 'audio' | 'video', deviceId: string) =>
   Object.assign(new EventTarget(), {
     kind,
     enabled: true,
+    readyState: 'live' as MediaStreamTrackState,
     stop: vi.fn(),
     applyConstraints: vi.fn(async () => {}),
     getSettings: () => ({ deviceId }),
@@ -343,7 +343,7 @@ describe('CameraSession flows', () => {
     expect(ctx.taskFailed).not.toHaveBeenCalled();
   });
 
-  it('inv4: stopping a recording drops uc-recording and tracks stop-camera before the recorder stops', async () => {
+  it('inv4: stopping a recording marks it stopping and tracks stop-camera before the recorder stops', async () => {
     stubMedia();
     const ctx = setup();
     await open(ctx);
@@ -352,7 +352,7 @@ describe('CameraSession flows', () => {
 
     ctx.session.handle({ type: 'shutter' });
 
-    expect(ctx.setHostClass).toHaveBeenLastCalledWith('uc-recording', false);
+    expect(ctx.session.isStopping).toBe(true);
     expect(ctx.track).toHaveBeenLastCalledWith('stop-camera', { tabId: VIDEO });
     expect(ctx.session.phase).toBe('recording');
 
@@ -464,7 +464,7 @@ describe('CameraSession flows', () => {
 
     expect(discard).toHaveBeenCalledOnce();
     expect(recorder.stop).toHaveBeenCalledOnce();
-    expect(ctx.setHostClass).toHaveBeenLastCalledWith('uc-recording', false);
+    expect(ctx.session.isStopping).toBe(false);
     expect(ctx.session.phase).toBe('live');
     expect(frames).toEqual([]);
     await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
@@ -529,6 +529,7 @@ describe('CameraSession flows', () => {
     const late = slow.answer();
     await vi.waitFor(() => expect(late.getAudioTracks()[0]?.stop).toHaveBeenCalled());
     expect(microphoneCalls()).toHaveLength(1);
+    expect(ctx.session.feed.stream?.getAudioTracks()[0]?.getSettings().deviceId).toBe('mic-1');
 
     await stopRecording(ctx, recorder);
 
@@ -574,6 +575,20 @@ describe('CameraSession flows', () => {
     await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
 
     expect(retryVolumes).toEqual([0]);
+  });
+
+  it('a camera reopened after its custom constraints were dropped asks for them again', async () => {
+    const { getUserMedia } = stubMedia();
+    const ctx = setup();
+    ctx.host.config.constraints = () => ({ video: { width: { exact: 9999 } } });
+    getUserMedia.mockRejectedValueOnce(new DOMException('Simulated', 'OverconstrainedError'));
+    await open(ctx);
+    expect(ctx.session.feed.customDropped).toBe(true);
+
+    ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
+    await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(3));
+
+    expect(getUserMedia.mock.calls[2]?.[0].video).toMatchObject({ width: { exact: 9999 } });
   });
 
   it('inv6: a failed live request is not retried', async () => {
@@ -627,7 +642,7 @@ describe('CameraSession flows', () => {
     expect(recorder.stop).toHaveBeenCalledOnce();
   });
 
-  it('a move during a recording drops uc-recording and the phase, and the camera opens on the configured tab', async () => {
+  it('a move during a recording drops the phase, and the camera opens on the configured tab', async () => {
     const { getUserMedia } = stubMedia();
     const ctx = setup();
     await open(ctx);
@@ -636,7 +651,7 @@ describe('CameraSession flows', () => {
 
     ctx.move();
 
-    expect(ctx.setHostClass).toHaveBeenLastCalledWith('uc-recording', false);
+    expect(ctx.session.isStopping).toBe(false);
     expect(ctx.session.phase).toBe('live');
     expect(config).not.toHaveBeenCalled();
 
@@ -903,6 +918,25 @@ describe('CameraSession flows', () => {
     await vi.waitFor(() => expect(ctx.session.devices.microphones).toHaveLength(2));
   });
 
+  it('a microphone whose stream changes between the swap resolving and the commit is stopped, not swapped in', async () => {
+    const { hold } = stubMedia();
+    const ctx = setup();
+    await open(ctx);
+    const slow = hold();
+    ctx.session.handle({ type: 'select-microphone', deviceId: 'mic-2' });
+    // The swap's own check passes, and queues the stream's end in the microtask before the session resumes.
+    ctx.host.config.audioEnabled = () => {
+      ctx.host.config.audioEnabled = () => true;
+      queueMicrotask(() => ctx.session.feed.close());
+      return true;
+    };
+
+    const late = slow.answer();
+
+    await vi.waitFor(() => expect(late.getAudioTracks()[0]?.stop).toHaveBeenCalled());
+    expect(late.getAudioTracks()).toHaveLength(1);
+  });
+
   it('a microphone that opens after audio recording was turned off is stopped, not swapped in', async () => {
     const { streams, hold } = stubMedia();
     const ctx = setup();
@@ -917,6 +951,43 @@ describe('CameraSession flows', () => {
     await vi.waitFor(() => expect(late.getAudioTracks()[0]?.stop).toHaveBeenCalled());
 
     expect(live?.getAudioTracks()).toEqual([]);
+  });
+
+  it('a microphone permission granted again after a revoke opens the microphone, its ended track still in the stream', async () => {
+    const { streams, hold, microphoneCalls, permissionStatus } = stubMedia();
+    const ctx = setup();
+    await open(ctx);
+    const live = streams[0];
+    const [ended] = live?.getAudioTracks() ?? [];
+    // Revoked: the track ends but stays in the stream, and the microphone is refused.
+    if (ended) ended.readyState = 'ended';
+    hold().fail(new DOMException('Simulated', 'NotAllowedError'));
+    permissionStatus.microphone.dispatchEvent(new Event('change'));
+    await vi.waitFor(() => expect(ctx.report).toHaveBeenCalled());
+
+    permissionStatus.microphone.dispatchEvent(new Event('change'));
+
+    await vi.waitFor(() => expect(microphoneCalls()).toHaveLength(2));
+    await vi.waitFor(() => expect(live?.getAudioTracks()[0]?.readyState).toBe('live'));
+    expect(ended?.stop).toHaveBeenCalled();
+  });
+
+  it('a microphone permission granted again during a recording, after a revoke, opens the microphone after the stop', async () => {
+    const { streams, microphoneCalls, permissionStatus } = stubMedia();
+    const ctx = setup();
+    await open(ctx);
+    const [ended] = streams[0]?.getAudioTracks() ?? [];
+    const recorder = startRecording(ctx);
+    if (ended) ended.readyState = 'ended';
+    // Revoked, then granted again, both while recording.
+    permissionStatus.microphone.dispatchEvent(new Event('change'));
+    permissionStatus.microphone.dispatchEvent(new Event('change'));
+    await delay(0);
+    expect(microphoneCalls()).toHaveLength(0);
+
+    await stopRecording(ctx, recorder);
+
+    await vi.waitFor(() => expect(microphoneCalls()).toHaveLength(1));
   });
 
   it('a microphone permission granted with the camera open adds the microphone and keeps the photo under review', async () => {
@@ -1034,7 +1105,6 @@ describe('CameraSession edges', () => {
     await vi.runAllTimersAsync();
 
     expect(ctx.session.permission).toBe('idle');
-    expect(ctx.setHostClass).not.toHaveBeenCalledWith('uc-initialized', expect.anything());
   });
 
   it('plays and pauses the clip under review, and the icon and timeline follow', async () => {

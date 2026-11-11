@@ -30,7 +30,6 @@ const setup = () => {
       audioMode: () => 'voice',
     },
     cameraLabel: (index) => `Camera ${index + 1}`,
-    setHostClass: () => {},
     navigate: () => {},
     addFile: () => {},
     track: () => {},

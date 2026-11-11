@@ -151,6 +151,19 @@ describe('video recording', () => {
     expect(line?.getAnimations()).toEqual([]);
   });
 
+  it('draws the timeline bar in the theme primary color', async () => {
+    const { camera } = await openCamera();
+    const timer = camera.getByTestId('uc-camera-controls--recording-timer').element();
+    const line = timer.querySelector<HTMLElement>('.uc-line');
+    // A probe in the same place resolves the palette token for whichever theme is in effect.
+    const probe = document.createElement('span');
+    probe.style.backgroundColor = 'var(--uc-primary)';
+    timer.append(probe);
+    onTestFinished(() => probe.remove());
+
+    expect(line && getComputedStyle(line).backgroundColor).toBe(getComputedStyle(probe).backgroundColor);
+  });
+
   it('releases the preview of a recording that is retaken', async () => {
     const { camera, shot, openVideoTab } = await openCamera();
     await openVideoTab();

@@ -1,5 +1,6 @@
 import { audioBitsPerSecond } from '../../../abstract/camera/buildConstraints';
 import { pickVideoMimeType } from '../../../abstract/camera/videoFormat';
+import { signalState } from '../../../abstract/di/signalState';
 import type { CameraAudioQuality } from '../../../types/exported';
 import { createRecordingSource, type RecordingSource } from './recordingSource';
 
@@ -35,8 +36,8 @@ export class VideoRecording {
   private _chunks: BlobPart[] = [];
   /** What the recorder records: the camera stream, or a canvas that crops and mirrors it. */
   private _source: RecordingSource | null = null;
-  /** The recorder asked to stop, until its final `stop` event. */
-  private _stopping: MediaRecorder | null = null;
+  /** The recorder asked to stop, until its final `stop` event. A signal: the camera element's `uc-recording` reads it. */
+  @signalState() private _stopping: MediaRecorder | null = null;
 
   public get isRecording(): boolean {
     return this._recorder?.state === 'recording';

@@ -1,9 +1,10 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
+import { createRef, ref } from 'lit/directives/ref.js';
 import type { CameraMode } from '../../../abstract/cameraModes';
 import { ChildBlock } from '../../../lit/ChildBlock';
-import { cssomStyleMap } from '../../../lit/cssom-style-map';
+import { effect } from '../../../lit/effect';
 import type { ClockView } from '../media/RecordingClock';
 import { CameraActionEvent } from './CameraActionEvent';
 import type { CameraView } from './cameraView';
@@ -41,9 +42,11 @@ export class CameraControls extends ChildBlock {
   @property({ attribute: false })
   public timelineIcon = 'play';
 
-  /** The recording timer and the clip's timeline. Read in render only, so each frame re-renders the controls alone. */
+  /** The recording timer and the clip's timeline. Set before the first render, which the timeline's effect relies on. */
   @property({ attribute: false })
   public clock: ClockView | null = null;
+
+  private readonly _line = createRef<HTMLElement>();
 
   private readonly _emit = (action: CameraActionEvent['action']) => this.dispatchEvent(new CameraActionEvent(action));
 
@@ -73,10 +76,21 @@ export class CameraControls extends ChildBlock {
     `;
   }
 
+  /**
+   * Moves the timeline bar as the clip plays. An effect rather than a render read: the progress changes every frame, and
+   * re-rendering the controls for it ran their whole template 60 times a second.
+   * @internal
+   */
+  @effect()
+  protected _moveTimeline(): void {
+    const progress = this.clock?.progress ?? null;
+    const line = this._line.value;
+    if (line) line.style.transform = progress === null ? '' : `scaleX(${progress})`;
+  }
+
   public override render() {
     const view = this.view;
     if (!view) return html``;
-    const progress = this.clock?.progress ?? null;
     return html`
       <div class="uc-controls">
         <div class="uc-switcher" ?hidden=${!view.timerHidden}>
@@ -92,10 +106,7 @@ export class CameraControls extends ChildBlock {
         >
           <uc-icon name=${this.timelineIcon}></uc-icon>
           <span>${this.clock?.timerText ?? '00:00'}</span>
-          <span
-            class="uc-line"
-            style=${cssomStyleMap({ transform: progress === null ? undefined : `scaleX(${progress})` })}
-          ></span>
+          <span ${ref(this._line)} class="uc-line"></span>
         </button>
 
         <div class="uc-camera-actions uc-camera-action" ?hidden=${view.actionsHidden}>

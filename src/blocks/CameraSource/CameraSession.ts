@@ -66,8 +66,6 @@ export type CameraSessionHost = {
     audioMode: () => string;
   };
   cameraLabel: (index: number) => string;
-  /** Toggles a class on the camera element (`uc-initialized`, `uc-recording`). */
-  setHostClass: (name: string, on: boolean) => void;
   navigate: (edge: NavigationEdge) => void;
   /** Adds a captured photo or clip to the upload list. */
   addFile: (file: File) => void;
@@ -113,7 +111,6 @@ export class CameraSession {
 
   /** Runs once a permission state settled and shows. */
   private readonly _permissionSettled = (state: SettledPermission): void => {
-    this._host.setHostClass('uc-initialized', state === 'granted');
     if (state === 'prompt') {
       this._stopCapture();
       return;
@@ -155,6 +152,11 @@ export class CameraSession {
   /** Why access ended `denied`, which picks the message shown. */
   public get failure(): CameraFailure {
     return this._access.failure;
+  }
+
+  /** The recording was asked to stop and its clip is not handed over yet. */
+  public get isStopping(): boolean {
+    return this._recording.isStopping;
   }
 
   /** The recorded clip's play/pause icon. */
@@ -204,7 +206,6 @@ export class CameraSession {
     // left to the next activation: the config is not read after the adoption ended.
     this._recording.discard();
     this._photo.discard();
-    this._host.setHostClass('uc-recording', false);
     this.phase = 'live';
     this._requested.clearPending();
     this._stopCapture();
@@ -297,8 +298,9 @@ export class CameraSession {
       this._host.lifetime.runTask(() => this._capture());
       return;
     }
-    // No microphone in the stream: asking for one is a change, even with the request that was refused.
-    if (!stream.getAudioTracks().length) this._requested.noAudio();
+    // No live microphone in the stream: asking for one is a change, even with the request that was refused. A revoke
+    // leaves the ended track in the stream.
+    if (!stream.getAudioTracks().some((track) => track.readyState === 'live')) this._requested.noAudio();
     this._host.lifetime.runTask(() => this._applyAudioConstraints());
   }
 
@@ -405,7 +407,6 @@ export class CameraSession {
         recorder: recorderOptions(config.recorderOptions(), this.settings.audioQuality, config.videoFormats()),
       });
       this._clock.startTimer(config.maxRecordingSeconds, () => this._stopRecording());
-      this._host.setHostClass('uc-recording', true);
       this.phase = 'recording';
     } catch (error) {
       this._host.report('error', 'Failed to start recording', error, 'camera recording. Failed to start recording');
@@ -415,7 +416,6 @@ export class CameraSession {
   private _stopRecording(): void {
     // The time limit and the shutter can both ask; only the first stops it.
     if (!this._recording.isRecording) return;
-    this._host.setHostClass('uc-recording', false);
     this._track('stop-camera');
     this._host.lifetime.runTask(() => this._showRecording());
   }
@@ -504,7 +504,6 @@ export class CameraSession {
     // A recording can't outlive its stream: it ends with no clip. One already stopping drops its clip on arrival.
     if (this._recording.isRecording) {
       this._recording.discard();
-      this._host.setHostClass('uc-recording', false);
       this.phase = 'live';
       this._captureResolved();
     }
@@ -520,14 +519,17 @@ export class CameraSession {
     return this.activeTab ?? this._host.config.cameraModes()[0] ?? CameraSourceTypes.PHOTO;
   }
 
-  private _constraintsInput(): BuildConstraintsInput {
+  /** `custom` defaults to `cameraConstraints`, unless the open camera couldn't satisfy them. */
+  private _constraintsInput(
+    custom = this.feed.customDropped ? null : this._host.config.constraints(),
+  ): BuildConstraintsInput {
     return {
       mode: this._currentMode(),
       enableAudio: this._host.config.audioEnabled(),
       audioMode: this.settings.audioMode,
       aspectRatio: this.settings.aspectRatio,
       resolution: this.settings.resolution,
-      custom: this.feed.customDropped ? null : this._host.config.constraints(),
+      custom,
       cameraId: this.devices.selectedCameraId,
       audioId: this.devices.selectedMicrophoneId,
     };
@@ -584,12 +586,21 @@ export class CameraSession {
     const request = this._requested.requestAudio(audio);
     if (!request) return;
     // Audio recording turned off while the microphone opened: its track is stale too.
-    const gate = {
-      isCurrent: () => this.feed.stream === stream && this._host.config.audioEnabled(),
-      isRecording: () => this._recording.isRecording,
-    };
-    const result = await this._microphone.open(audio, gate, (track) => this.feed.swapAudioTrack(track));
-    if (result === 'deferred') this._requested.deferAudio(request);
+    const isCurrent = () => this.feed.stream === stream && this._host.config.audioEnabled();
+    const track = await this._microphone.open(audio, isCurrent);
+    if (!track) return;
+    // A recording began while it opened: swapping it in now would break the recording, so it waits for the stop.
+    if (this._recording.isRecording) {
+      track.stop();
+      this._requested.deferAudio(request);
+      return;
+    }
+    // Checked again with the swap, no await between: the stream can change in the hop since the swap resolved.
+    if (!isCurrent()) {
+      track.stop();
+      return;
+    }
+    this.feed.swapAudioTrack(track);
   }
 
   /** `adoption` is the signal of the lifetime the calling task started in. */
@@ -599,8 +610,10 @@ export class CameraSession {
     this._stopCapture();
     try {
       this._access.settleLater('prompt', undefined, this._permissionSettled);
-      this.feed.resetCustomDropped();
-      const opened = await this.feed.open(this._constraintsInput(), () => this._preview.silence());
+      // The open forgets dropped custom constraints, so it is asked for the configured ones.
+      const opened = await this.feed.open(this._constraintsInput(this._host.config.constraints()), () =>
+        this._preview.silence(),
+      );
       // A later capture took over; it settles the permission state.
       if (!opened) return;
       const { stream } = opened;

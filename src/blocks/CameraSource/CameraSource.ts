@@ -1,5 +1,5 @@
 import { Signal } from '@lit-labs/signals';
-import { html } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { type CameraMode, parseCameraModes } from '../../abstract/cameraModes';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
@@ -64,7 +64,6 @@ export class CameraSource extends ChildBlock {
       audioMode: () => this._config.getTracked('cameraAudioMode'),
     },
     cameraLabel: (index) => `${this.l10n('caption-camera')} ${index + 1}`,
-    setHostClass: (name, on) => this.classList.toggle(name, on),
     navigate: (edge) => this._router.traverse(edge),
     addFile: (file) => this._api.addFileFromObject(file, { source: UploadSource.CAMERA }),
     track: (event, extra) => this._telemetry.sendActionEvent(event, this.tagName, extra),
@@ -129,6 +128,15 @@ export class CameraSource extends ChildBlock {
     return Object.entries(settings).map(([key, setting]) =>
       this._config.observe(key as keyof typeof settings, () => this._session.configChanged(setting)),
     );
+  }
+
+  // Tracked under SignalWatcher like `render()`, so the host classes the camera's CSS reads follow the session's state.
+  // `uc-recording` drops as stop is pressed, not when the clip arrives.
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+    const session = this._session;
+    this.classList.toggle('uc-initialized', session.permission === 'granted');
+    this.classList.toggle('uc-recording', session.phase === 'recording' && !session.isStopping);
   }
 
   public override render() {

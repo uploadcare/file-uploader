@@ -100,7 +100,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background-color: var(--uc-foreground-light);
+    background-color: var(--uc-primary);
     transform: scaleX(0);
     transform-origin: left;
   }

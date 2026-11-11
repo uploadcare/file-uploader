@@ -33,7 +33,7 @@ export class CameraFeed {
     return this._customDropped;
   }
 
-  /** Before every open and on a `cameraConstraints` change: the next constraints include them again. */
+  /** On a `cameraConstraints` change: the next constraints include them again. */
   public resetCustomDropped(): void {
     this._customDropped = false;
   }
@@ -43,11 +43,13 @@ export class CameraFeed {
    * can't do, opens it once more without them rather than showing the camera as denied. Only the latest open counts:
    * one that a later open overtook resolves to null, its stream stopped (left running, it holds the camera and can
    * freeze the one on screen) or its failure dropped. `beforeAttempt` runs before each request, the retry's too.
+   * Each open asks for `cameraConstraints` again, so `input.custom` is the configured value.
    */
   public async open(
     input: BuildConstraintsInput,
     beforeAttempt: () => void,
   ): Promise<{ stream: MediaStream; constraints: MediaStreamConstraints } | null> {
+    this._customDropped = false;
     try {
       return await this._open(buildConstraints(input), beforeAttempt);
     } catch (error) {

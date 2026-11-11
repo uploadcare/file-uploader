@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UploaderRegistry } from '../../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../../lit/ensureUploaderCtx';
 import { delay } from '../../../utils/delay';
@@ -68,5 +68,19 @@ describe('CameraControls', () => {
     await rendered(el);
 
     expect(line(el)?.style.transform).toBe('scaleX(0.25)');
+  });
+
+  it('moves the timeline on a progress change without re-rendering the controls', async () => {
+    const clock = new RecordingClock();
+    const el = await mount(clock);
+    const render = vi.spyOn(el, 'render');
+
+    clock.progress = 0.5;
+    await rendered(el);
+    clock.progress = 0.75;
+    await rendered(el);
+
+    expect(line(el)?.style.transform).toBe('scaleX(0.75)');
+    expect(render).not.toHaveBeenCalled();
   });
 });
