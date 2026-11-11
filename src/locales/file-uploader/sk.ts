@@ -125,6 +125,8 @@ export default {
   'a11y-activity-header-button-close': 'Zavrieť',
   'a11y-camera-microphone': 'Mikrofón',
   'a11y-camera-stop-recording': 'Zastaviť nahrávanie',
+  'a11y-camera-play': 'Prehrať',
+  'a11y-camera-pause': 'Pozastaviť',
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Ladenie',
   'a11y-editor-tab-crop': 'Orezanie',

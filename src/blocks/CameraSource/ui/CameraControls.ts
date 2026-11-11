@@ -1,4 +1,4 @@
-import { html } from 'lit';
+import { html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
@@ -31,16 +31,16 @@ export class CameraControls extends ChildBlock {
   @property({ attribute: false })
   public previewShape: { width: number; height: number } | null = null;
 
-  @property({ type: Boolean, attribute: false })
+  @property({ attribute: false })
   public settingsHidden = true;
 
   /** The shutter waits for a frame: a shot before the first one draws an empty canvas. */
-  @property({ type: Boolean, attribute: false })
+  @property({ attribute: false })
   public hasVideoFrame = false;
 
   /** The recorded clip's play/pause icon. */
   @property({ attribute: false })
-  public timelineIcon = 'play';
+  public timelineIcon: 'play' | 'pause' = 'play';
 
   /** The recording timer and the clip's timeline. Set before the first render, which the timeline's effect relies on. */
   @property({ attribute: false })
@@ -99,9 +99,12 @@ export class CameraControls extends ChildBlock {
         </div>
 
         <button
+          type="button"
           class="uc-secondary-btn uc-recording-timer"
           @click=${() => this._emit({ type: 'toggle-playback' })}
           ?hidden=${view.timerHidden}
+          ?disabled=${view.timerDisabled}
+          aria-label=${view.timerDisabled ? nothing : this.l10n(`a11y-camera-${this.timelineIcon}`)}
           data-testid="recording-timer"
         >
           <uc-icon name=${this.timelineIcon}></uc-icon>

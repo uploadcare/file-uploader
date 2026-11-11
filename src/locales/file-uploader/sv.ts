@@ -121,6 +121,8 @@ export default {
   'a11y-activity-header-button-close': 'Stäng',
   'a11y-camera-microphone': 'Mikrofon',
   'a11y-camera-stop-recording': 'Stoppa inspelning',
+  'a11y-camera-play': 'Spela upp',
+  'a11y-camera-pause': 'Pausa',
   'a11y-editor-tab-filters': 'Filter',
   'a11y-editor-tab-tuning': 'Inställning',
   'a11y-editor-tab-crop': 'Beskär',

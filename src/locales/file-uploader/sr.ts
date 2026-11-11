@@ -123,6 +123,8 @@ export default {
   'a11y-activity-header-button-close': 'Zatvori',
   'a11y-camera-microphone': 'Микрофон',
   'a11y-camera-stop-recording': 'Заустави снимање',
+  'a11y-camera-play': 'Пусти',
+  'a11y-camera-pause': 'Паузирај',
   'a11y-editor-tab-filters': 'Filteri',
   'a11y-editor-tab-tuning': 'Podešavanje',
   'a11y-editor-tab-crop': 'Iseci',

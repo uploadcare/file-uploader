@@ -124,6 +124,8 @@ export default {
   'a11y-activity-header-button-close': 'Luk',
   'a11y-camera-microphone': 'Mikrofon',
   'a11y-camera-stop-recording': 'Stop optagelse',
+  'a11y-camera-play': 'Afspil',
+  'a11y-camera-pause': 'Pause',
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Justering',
   'a11y-editor-tab-crop': 'Beskær',

@@ -123,6 +123,8 @@ export default {
   'a11y-activity-header-button-close': 'Sulge',
   'a11y-camera-microphone': 'Mikrofon',
   'a11y-camera-stop-recording': 'Peata salvestamine',
+  'a11y-camera-play': 'Esita',
+  'a11y-camera-pause': 'Peata',
   'a11y-editor-tab-filters': 'Filtrid',
   'a11y-editor-tab-tuning': 'Häälestus',
   'a11y-editor-tab-crop': 'Kärbi',

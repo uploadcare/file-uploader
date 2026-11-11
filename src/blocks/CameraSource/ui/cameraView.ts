@@ -33,6 +33,8 @@ export type CameraView = {
   videoTabHidden: boolean;
   /** The recording timer; the tab switcher shows in its place. */
   timerHidden: boolean;
+  /** The timer plays the clip back, so it does nothing until there is one. */
+  timerDisabled: boolean;
   actionsHidden: boolean;
   shotHidden: boolean;
   shotIcon: 'camera-full' | 'video-camera-full' | 'square';
@@ -72,6 +74,7 @@ export function deriveCameraView(input: CameraViewInput): CameraView {
     photoTabHidden: tabsHidden || !cameraModes.includes('photo'),
     videoTabHidden: tabsHidden || !cameraModes.includes('video'),
     timerHidden: !recordingOrRecorded,
+    timerDisabled: phase === 'recording',
     actionsHidden: permission === 'denied' || !captured,
     shotHidden: !granted || captured,
     shotIcon: phase === 'recording' ? 'square' : onVideo ? 'video-camera-full' : 'camera-full',

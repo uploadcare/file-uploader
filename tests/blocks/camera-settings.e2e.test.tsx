@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import type { Locator } from 'vitest/browser';
+import type { CameraSettingsPopup } from '@/blocks/CameraSource/ui/CameraSettingsPopup';
 import type { Config } from '@/index';
 import { settingOf } from '~/tests/utils/camera-settings';
-import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
+import { createInCtx, expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
 /**
@@ -238,5 +239,58 @@ describe('resolution picker', () => {
     await opened.settingsButton.click();
 
     expect(opened.resolution.texts()).toEqual(['Auto', '720P']);
+  });
+});
+
+describe('settings popup in a form', () => {
+  /** The popup alone, inside a page's `<form>`, with a camera picker and a resolution picker. */
+  const renderInForm = async () => {
+    const { ctxName } = await renderSolution('regular');
+    const form = document.createElement('form');
+    const popup = createInCtx<CameraSettingsPopup>('uc-camera-settings', ctxName);
+    popup.buttonHidden = false;
+    popup.sections = [
+      {
+        key: 'camera',
+        labelKey: 'caption-camera',
+        hidden: false,
+        value: 'cam-b',
+        options: [
+          { value: 'cam-a', text: 'Camera A' },
+          { value: 'cam-b', text: 'Camera B' },
+        ],
+      },
+      {
+        key: 'resolution',
+        labelKey: 'camera-resolution',
+        hidden: false,
+        value: '720',
+        options: [
+          { value: '720', text: '720P' },
+          { value: '1080', text: '1080P' },
+        ],
+      },
+    ];
+    form.append(popup);
+    document.body.append(form);
+    onTestFinished(() => form.remove());
+    await popup.updateComplete;
+    const checked = () =>
+      [...popup.querySelectorAll<HTMLInputElement>('input[type="radio"]')].filter((radio) => radio.checked);
+    return { form, checked };
+  };
+
+  it("leaves the camera's settings and device ids out of the form's data", async () => {
+    const { form } = await renderInForm();
+
+    expect([...new FormData(form).keys()]).toEqual([]);
+  });
+
+  it('keeps the shown selection through a form reset', async () => {
+    const { form, checked } = await renderInForm();
+
+    form.reset();
+
+    expect(checked().map((radio) => radio.value)).toEqual(['cam-b', '720']);
   });
 });

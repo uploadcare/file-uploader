@@ -131,6 +131,8 @@ export default {
   'a11y-activity-header-button-close': 'إغلاق',
   'a11y-camera-microphone': 'الميكروفون',
   'a11y-camera-stop-recording': 'إيقاف التسجيل',
+  'a11y-camera-play': 'تشغيل',
+  'a11y-camera-pause': 'إيقاف مؤقت',
   'a11y-editor-tab-filters': 'فلاتر',
   'a11y-editor-tab-tuning': 'ضبط',
   'a11y-editor-tab-crop': 'قص',

@@ -121,6 +121,8 @@ export default {
   'a11y-activity-header-button-close': 'Փակել',
   'a11y-camera-microphone': 'Խոսափող',
   'a11y-camera-stop-recording': 'Դադարեցնել տեսագրումը',
+  'a11y-camera-play': 'Նվագարկել',
+  'a11y-camera-pause': 'Դադարեցնել',
   'a11y-editor-tab-filters': 'Զտիչներ',
   'a11y-editor-tab-tuning': 'Կարգավորում',
   'a11y-editor-tab-crop': 'Կտրել',

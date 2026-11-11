@@ -125,6 +125,8 @@ export default {
   'a11y-activity-header-button-close': 'Закрыть',
   'a11y-camera-microphone': 'Микрофон',
   'a11y-camera-stop-recording': 'Остановить запись',
+  'a11y-camera-play': 'Воспроизвести',
+  'a11y-camera-pause': 'Пауза',
   'a11y-editor-tab-filters': 'Фильтры',
   'a11y-editor-tab-tuning': 'Настройка',
   'a11y-editor-tab-crop': 'Обрезка',

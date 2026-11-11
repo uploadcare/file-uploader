@@ -125,6 +125,8 @@ export default {
   'a11y-activity-header-button-close': 'Schließen',
   'a11y-camera-microphone': 'Mikrofon',
   'a11y-camera-stop-recording': 'Aufnahme beenden',
+  'a11y-camera-play': 'Abspielen',
+  'a11y-camera-pause': 'Pausieren',
   'a11y-editor-tab-filters': 'Filter',
   'a11y-editor-tab-tuning': 'Feinabstimmung',
   'a11y-editor-tab-crop': 'Zuschneiden',

@@ -5,6 +5,7 @@ import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { delay } from '../../utils/delay';
 import { CameraSession } from './CameraSession';
 import { CameraSource } from './CameraSource';
+import { CameraActionEvent } from './ui/CameraActionEvent';
 
 // Idempotent (same path as defineComponents(UC)).
 CameraSource.reg('uc-camera-source');
@@ -84,6 +85,17 @@ const stubCamera = () => {
 };
 
 const videoEl = (el: CameraSource): HTMLVideoElement | null => el.querySelector('video');
+const shotButton = (el: CameraSource) => el.querySelector<HTMLButtonElement>('[data-testid="shot"]');
+const retakeButton = (el: CameraSource) => el.querySelector<HTMLButtonElement>('.uc-camera-actions .uc-secondary-btn');
+const actionsShown = (el: CameraSource) => el.querySelector('.uc-camera-actions')?.hasAttribute('hidden') === false;
+const timerShown = (el: CameraSource) =>
+  el.querySelector('[data-testid="recording-timer"]')?.hasAttribute('hidden') === false;
+
+/** The preview's `<video>` draws its first frame, which the shutter waits for. */
+const firstFrame = async (el: CameraSource): Promise<void> => {
+  videoEl(el)?.dispatchEvent(new Event('loadeddata'));
+  await vi.waitFor(() => expect(shotButton(el)?.disabled).toBe(false));
+};
 
 describe('CameraSource', () => {
   it('re-renders the video transform reactively when cameraMirror changes (getTracked, no subConfigValue)', async () => {
@@ -120,29 +132,94 @@ describe('CameraSource', () => {
     const { recorder } = stubCamera();
     const { el, config } = await mount(freshCtxName());
     config.set('cameraModes', 'video');
-    const session = el['_session'];
     const classes = () => ['uc-initialized', 'uc-recording'].filter((name) => el.classList.contains(name));
     expect(classes()).toEqual([]);
 
     await vi.waitFor(() => expect(classes()).toEqual(['uc-initialized']));
-    session.handle({ type: 'shutter' });
+    await firstFrame(el);
+    shotButton(el)?.click();
     await vi.waitFor(() => expect(classes()).toEqual(['uc-initialized', 'uc-recording']));
 
-    session.handle({ type: 'shutter' });
+    // Stop is pressed, and the clip is still on its way: no accept and retake yet.
+    shotButton(el)?.click();
     await el.updateComplete;
-    expect(session.phase).toBe('recording');
+    expect(actionsShown(el)).toBe(false);
     expect(classes()).toEqual(['uc-initialized']);
 
     recorder().dispatchEvent(new Event('stop'));
-    await vi.waitFor(() => expect(session.phase).toBe('recorded'));
-    session.handle({ type: 'retake' });
-    session.handle({ type: 'shutter' });
+    await vi.waitFor(() => expect(actionsShown(el)).toBe(true));
+    retakeButton(el)?.click();
+    await vi.waitFor(() => expect(shotButton(el)?.hidden).toBe(false));
+    // The live stream is back in the `<video>`, which draws its first frame again.
+    await firstFrame(el);
+    shotButton(el)?.click();
     await vi.waitFor(() => expect(classes()).toEqual(['uc-initialized', 'uc-recording']));
 
     // A same-task move releases the session mid-recording and re-adopts the element.
     document.body.append(el);
     await el.updateComplete;
-    expect(session.phase).toBe('live');
+    expect(timerShown(el)).toBe(false);
     expect(classes()).toEqual(['uc-initialized']);
+  });
+
+  it("shows the camera's stream in the preview's video", async () => {
+    stubCamera();
+    const { el } = await mount(freshCtxName());
+
+    await vi.waitFor(() => expect(videoEl(el)?.srcObject).toBeInstanceOf(MediaStream));
+  });
+
+  it("enables the shutter once the preview's video has a frame, and disables it when the video empties", async () => {
+    stubCamera();
+    const { el } = await mount(freshCtxName());
+    await vi.waitFor(() => expect(el.classList.contains('uc-initialized')).toBe(true));
+    expect(shotButton(el)?.disabled).toBe(true);
+
+    await firstFrame(el);
+
+    videoEl(el)?.dispatchEvent(new Event('emptied'));
+    await vi.waitFor(() => expect(shotButton(el)?.disabled).toBe(true));
+  });
+
+  it("draws the native ratio's icon in the camera's own shape once the preview reports it", async () => {
+    stubCamera();
+    const { el, config } = await mount(freshCtxName());
+    config.set('cameraAspectRatio', 'native, 1:1');
+    await vi.waitFor(() => expect(el.classList.contains('uc-initialized')).toBe(true));
+    const nativeRect = () => el.querySelector('input[value="native"]')?.closest('label')?.querySelector('svg rect');
+    await el.updateComplete;
+    expect(nativeRect()).toBeFalsy();
+
+    const video = videoEl(el);
+    if (!video) throw new Error('no preview video');
+    Object.defineProperties(video, { videoWidth: { value: 1280 }, videoHeight: { value: 720 } });
+    video.dispatchEvent(new Event('resize'));
+
+    await vi.waitFor(() =>
+      expect([nativeRect()?.getAttribute('width'), nativeRect()?.getAttribute('height')]).toEqual(['12', '7']),
+    );
+  });
+
+  it("keeps the camera's internal actions inside it", async () => {
+    stubCamera();
+    const leaked: string[] = [];
+    const listen = (event: Event) => {
+      if (event instanceof CameraActionEvent) leaked.push(event.action.type);
+    };
+    document.addEventListener(CameraActionEvent.eventName, listen);
+    try {
+      const { el, config } = await mount(freshCtxName());
+      // Video, as a photo would need a canvas context happy-dom lacks.
+      config.set('cameraModes', 'video');
+      await vi.waitFor(() => expect(el.classList.contains('uc-initialized')).toBe(true));
+
+      await firstFrame(el);
+      shotButton(el)?.click();
+      await vi.waitFor(() => expect(el.classList.contains('uc-recording')).toBe(true));
+    } finally {
+      document.removeEventListener(CameraActionEvent.eventName, listen);
+    }
+
+    expect(leaked).toEqual([]);
   });
 });

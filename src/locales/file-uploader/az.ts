@@ -123,6 +123,8 @@ export default {
   'a11y-activity-header-button-close': 'Bağla',
   'a11y-camera-microphone': 'Mikrofon',
   'a11y-camera-stop-recording': 'Yazmanı dayandır',
+  'a11y-camera-play': 'Oynat',
+  'a11y-camera-pause': 'Fasilə ver',
   'a11y-editor-tab-filters': 'Filtrlər',
   'a11y-editor-tab-tuning': 'Tənzimləmə',
   'a11y-editor-tab-crop': 'Kəsmə',

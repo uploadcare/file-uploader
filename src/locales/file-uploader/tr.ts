@@ -121,6 +121,8 @@ export default {
   'a11y-activity-header-button-close': 'Kapat',
   'a11y-camera-microphone': 'Mikrofon',
   'a11y-camera-stop-recording': 'Kaydı durdur',
+  'a11y-camera-play': 'Oynat',
+  'a11y-camera-pause': 'Duraklat',
   'a11y-editor-tab-filters': 'Filtreler',
   'a11y-editor-tab-tuning': 'Ayar',
   'a11y-editor-tab-crop': 'Kırp',

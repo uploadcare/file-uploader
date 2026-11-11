@@ -121,6 +121,8 @@ export default {
   'a11y-activity-header-button-close': 'დახურვა',
   'a11y-camera-microphone': 'მიკროფონი',
   'a11y-camera-stop-recording': 'ჩაწერის შეწყვეტა',
+  'a11y-camera-play': 'დაკვრა',
+  'a11y-camera-pause': 'პაუზა',
   'a11y-editor-tab-filters': 'ფილტრები',
   'a11y-editor-tab-tuning': 'რეგულირება',
   'a11y-editor-tab-crop': 'მოჭრა',

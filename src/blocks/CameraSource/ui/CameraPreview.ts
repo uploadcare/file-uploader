@@ -14,7 +14,7 @@ export class CameraPreview extends ChildBlock {
   public view: Pick<CameraView, 'videoHidden' | 'messageHidden' | 'message'> | null = null;
 
   /** Mirrors the video, as `cameraMirror` asks. */
-  @property({ type: Boolean, attribute: false })
+  @property({ attribute: false })
   public mirror = false;
 
   /**
@@ -24,7 +24,7 @@ export class CameraPreview extends ChildBlock {
   @property({ attribute: false })
   public aspectRatio: number | null = null;
 
-  @property({ type: Boolean, attribute: false })
+  @property({ attribute: false })
   public requestButtonHidden = true;
 
   private readonly _videoRef = createRef<HTMLVideoElement>();

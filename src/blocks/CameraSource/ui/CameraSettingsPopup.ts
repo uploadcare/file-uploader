@@ -1,6 +1,7 @@
-import { html, nothing, type PropertyValues } from 'lit';
-import { property } from 'lit/decorators.js';
+import { html, nothing } from 'lit';
+import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
+import { repeat } from 'lit/directives/repeat.js';
 import { ChildBlock } from '../../../lit/ChildBlock';
 import { UID } from '../../../utils/UID';
 import { renderAspectRatioSvg } from '../../Icon/aspectRatioIcon';
@@ -14,7 +15,7 @@ import './camera-settings.css';
  * each a row with its label and current value that opens onto radio options. One section is open at a time.
  */
 export class CameraSettingsPopup extends ChildBlock {
-  @property({ type: Boolean, attribute: false })
+  @property({ attribute: false })
   public buttonHidden = true;
 
   @property({ attribute: false })
@@ -23,6 +24,9 @@ export class CameraSettingsPopup extends ChildBlock {
   /** The camera's own shape as the preview shows it, which the native ratio's icon draws. */
   @property({ attribute: false })
   public previewShape: { width: number; height: number } | null = null;
+
+  /** The section the user opened. A disabled one shuts and stays shut, as the microphone's does on muting. */
+  @state() private _openKey: SettingSectionData['key'] | null = null;
 
   private readonly _popoverId = `uc-camera-settings-${UID.generateFastUid()}`;
 
@@ -40,22 +44,10 @@ export class CameraSettingsPopup extends ChildBlock {
     }
   }
 
-  /** Clicks and Enter or Space alike reach the summary as a click; a disabled section doesn't open. */
-  private readonly _handleToggle = (event: Event): void => {
-    if ((event.currentTarget as HTMLElement).ariaDisabled === 'true') {
-      event.preventDefault();
-    }
-  };
-
-  // Muting while the microphone section is open shuts it, unless it is the only one; the `open` binding only covers
-  // that one.
-  protected override updated(changedProperties: PropertyValues<this>): void {
-    super.updated(changedProperties);
-    for (const section of this.querySelectorAll<HTMLDetailsElement>(
-      '.uc-camera-setting.uc-disabled:not(.uc-lone)[open]',
-    )) {
-      section.open = false;
-    }
+  // The shared `name` closes the others as one opens, each firing its own `toggle`, in either order.
+  private _sectionToggled(key: SettingSectionData['key'], event: Event): void {
+    if ((event.currentTarget as HTMLDetailsElement).open) this._openKey = key;
+    else if (this._openKey === key) this._openKey = null;
   }
 
   private _text(option: SettingOptionData | undefined): string {
@@ -70,7 +62,9 @@ export class CameraSettingsPopup extends ChildBlock {
 
   /**
    * The sections share a `name`, so opening one closes the others. A lone section is always open, its heading hidden;
-   * any other disabled section is shut and stays shut, its value still on show.
+   * any other disabled section is shut and stays shut, its value still on show: clicks and Enter or Space alike reach
+   * its summary as a click, which doesn't open it. The radios name no form (`form=""` matches no id), so a page's
+   * `<form>` around the camera neither submits nor resets them; they still group by `name`.
    */
   private _renderSection(section: SettingSectionData, lone: boolean) {
     const { key, labelKey, hidden, options, value, disabled = false } = section;
@@ -81,20 +75,27 @@ export class CameraSettingsPopup extends ChildBlock {
         class=${classMap({ 'uc-camera-setting': true, 'uc-disabled': disabled, 'uc-lone': lone })}
         data-setting=${key}
         name=${this._popoverId}
-        ?open=${lone}
+        ?open=${lone || (key === this._openKey && !disabled)}
         ?hidden=${hidden}
+        @toggle=${(event: Event) => this._sectionToggled(key, event)}
       >
-        <summary aria-disabled=${disabled ? 'true' : 'false'} @click=${this._handleToggle}>
+        <summary
+          aria-disabled=${disabled ? 'true' : 'false'}
+          @click=${(event: Event) => disabled && event.preventDefault()}
+        >
           <span>${label}</span>
           <span class="uc-camera-setting-value">${this._text(current)}</span>
           <uc-icon class="uc-camera-setting-chevron" name="arrow-dropdown"></uc-icon>
         </summary>
         <div class="uc-camera-setting-options" role="radiogroup" aria-label=${label}>
-          ${options.map(
+          ${repeat(
+            options,
+            (option) => option.value,
             (option) => html`
               <label class="uc-camera-setting-option">
                 <input
                   type="radio"
+                  form=""
                   name=${`${this._popoverId}-${key}`}
                   value=${option.value}
                   .checked=${option.value === value}

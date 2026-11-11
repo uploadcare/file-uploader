@@ -123,6 +123,8 @@ export default {
   'a11y-activity-header-button-close': 'Aizvērt',
   'a11y-camera-microphone': 'Mikrofons',
   'a11y-camera-stop-recording': 'Apturēt ierakstīšanu',
+  'a11y-camera-play': 'Atskaņot',
+  'a11y-camera-pause': 'Pauzēt',
   'a11y-editor-tab-filters': 'Filtri',
   'a11y-editor-tab-tuning': 'Pielāgošana',
   'a11y-editor-tab-crop': 'Apgriezt',

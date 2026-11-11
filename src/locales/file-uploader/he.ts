@@ -123,6 +123,8 @@ export default {
   'a11y-activity-header-button-close': 'סגור',
   'a11y-camera-microphone': 'מיקרופון',
   'a11y-camera-stop-recording': 'עצור הקלטה',
+  'a11y-camera-play': 'הפעל',
+  'a11y-camera-pause': 'השהה',
   'a11y-editor-tab-filters': 'מסננים',
   'a11y-editor-tab-tuning': 'כיוון',
   'a11y-editor-tab-crop': 'חיתוך',

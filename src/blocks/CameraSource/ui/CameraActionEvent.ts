@@ -11,12 +11,15 @@ export type PreviewPlumbing =
   /** The preview's frame size, on its first frame and whenever the camera's shape changes, as on turning a phone. */
   | { type: 'preview-resize'; width: number; height: number };
 
-/** Bubbles from the camera's parts to `<uc-camera-source>`. */
+/**
+ * Bubbles from the camera's parts to `<uc-camera-source>`, which stops it. Not composed: the parts render into light
+ * DOM, so no shadow root lies between them.
+ */
 export class CameraActionEvent extends Event {
   public static readonly eventName = 'uc-internal:camera-action';
 
   public constructor(public readonly action: CameraCommand | PreviewPlumbing) {
-    super(CameraActionEvent.eventName, { bubbles: true, composed: true });
+    super(CameraActionEvent.eventName, { bubbles: true });
   }
 }
 

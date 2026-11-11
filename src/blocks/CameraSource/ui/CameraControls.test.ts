@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UploaderRegistry } from '../../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../../lit/ensureUploaderCtx';
 import { delay } from '../../../utils/delay';
+import type { CameraPhase } from '../CameraSession';
 import { RecordingClock } from '../media/RecordingClock';
 import { CameraControls } from './CameraControls';
 import { deriveCameraView } from './cameraView';
@@ -16,13 +17,17 @@ afterEach(() => {
   UploaderRegistry.dispose(ctxName);
 });
 
-const mount = async (clock: RecordingClock): Promise<CameraControls> => {
+const mount = async (
+  clock: RecordingClock,
+  parent: HTMLElement = document.body,
+  phase: CameraPhase = 'recording',
+): Promise<CameraControls> => {
   ensureUploaderCtx(ctxName);
   const el = document.createElement('uc-camera-controls');
   el.setAttribute('ctx-name', ctxName);
   el.view = deriveCameraView({
     permission: 'granted',
-    phase: 'recording',
+    phase,
     tab: 'video',
     cameraModes: ['photo', 'video'],
     audioEnabled: true,
@@ -31,8 +36,8 @@ const mount = async (clock: RecordingClock): Promise<CameraControls> => {
     muted: false,
   });
   el.clock = clock;
-  document.body.append(el);
-  mounted.push(el);
+  parent.append(el);
+  mounted.push(parent === document.body ? el : parent);
   await el.updateComplete;
   return el;
 };
@@ -82,5 +87,36 @@ describe('CameraControls', () => {
 
     expect(line(el)?.style.transform).toBe('scaleX(0.75)');
     expect(render).not.toHaveBeenCalled();
+  });
+
+  it("doesn't submit the page's form when the clip's play button is clicked", async () => {
+    const form = document.createElement('form');
+    document.body.append(form);
+    const submit = vi.fn((event: Event) => event.preventDefault());
+    form.addEventListener('submit', submit);
+    const el = await mount(new RecordingClock(), form);
+
+    el.querySelector<HTMLButtonElement>('[data-testid="recording-timer"]')?.click();
+
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it('names the clip button after what a press does, play or pause', async () => {
+    const el = await mount(new RecordingClock(), document.body, 'recorded');
+    const timer = () => el.querySelector('[data-testid="recording-timer"]');
+    expect(timer()?.getAttribute('aria-label')).toBe('Play');
+
+    el.timelineIcon = 'pause';
+    await el.updateComplete;
+
+    expect(timer()?.getAttribute('aria-label')).toBe('Pause');
+  });
+
+  it('disables the clip button while recording and enables it once the clip is in', async () => {
+    const recording = await mount(new RecordingClock());
+    expect(recording.querySelector<HTMLButtonElement>('[data-testid="recording-timer"]')?.disabled).toBe(true);
+
+    const recorded = await mount(new RecordingClock(), document.body, 'recorded');
+    expect(recorded.querySelector<HTMLButtonElement>('[data-testid="recording-timer"]')?.disabled).toBe(false);
   });
 });

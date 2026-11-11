@@ -54,6 +54,7 @@ describe('deriveCameraView', () => {
     const recording = deriveCameraView(input({ tab: 'video', phase: 'recording' }));
     expect(recording).toMatchObject({
       timerHidden: false,
+      timerDisabled: true,
       shotIcon: 'square',
       shotClass: 'uc-shot-btn uc-camera-action uc-stop-record',
       microphoneHidden: false,
@@ -61,6 +62,7 @@ describe('deriveCameraView', () => {
     });
     expect(deriveCameraView(input({ tab: 'video', phase: 'recorded' }))).toMatchObject({
       timerHidden: false,
+      timerDisabled: false,
       shotHidden: true,
       actionsHidden: false,
       microphoneHidden: true,

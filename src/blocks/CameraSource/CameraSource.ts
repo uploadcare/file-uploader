@@ -73,7 +73,10 @@ export class CameraSource extends ChildBlock {
     },
   });
 
-  private readonly _handleAction = ({ action }: CameraActionEvent): void => {
+  // The actions are the camera's own business, so they stop here rather than reach the page.
+  private readonly _handleAction = (event: CameraActionEvent): void => {
+    event.stopPropagation();
+    const { action } = event;
     switch (action.type) {
       case 'video-element':
         this._session.previewVideo(action.video);

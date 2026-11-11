@@ -121,6 +121,8 @@ export default {
   'a11y-activity-header-button-close': 'Loka',
   'a11y-camera-microphone': 'Hljóðnemi',
   'a11y-camera-stop-recording': 'Stöðva upptöku',
+  'a11y-camera-play': 'Spila',
+  'a11y-camera-pause': 'Gera hlé',
   'a11y-editor-tab-filters': 'Síur',
   'a11y-editor-tab-tuning': 'Stilling',
   'a11y-editor-tab-crop': 'Klippa',

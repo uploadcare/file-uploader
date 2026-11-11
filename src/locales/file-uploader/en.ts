@@ -113,6 +113,8 @@ const templates = {
   'a11y-activity-header-button-close': 'Close',
   'a11y-camera-microphone': 'Microphone',
   'a11y-camera-stop-recording': 'Stop recording',
+  'a11y-camera-play': 'Play',
+  'a11y-camera-pause': 'Pause',
   finished: 'Finished',
   failed: 'Failed',
   uploading: 'Uploading',

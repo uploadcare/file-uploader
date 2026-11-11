@@ -121,6 +121,8 @@ export default {
   'a11y-activity-header-button-close': 'Жабу',
   'a11y-camera-microphone': 'Микрофон',
   'a11y-camera-stop-recording': 'Жазуды тоқтату',
+  'a11y-camera-play': 'Ойнату',
+  'a11y-camera-pause': 'Кідірту',
   'a11y-editor-tab-filters': 'Фильтрлер',
   'a11y-editor-tab-tuning': 'Тюнинг',
   'a11y-editor-tab-crop': 'Қырқу',

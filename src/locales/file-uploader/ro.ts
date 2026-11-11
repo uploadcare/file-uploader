@@ -124,6 +124,8 @@ export default {
   'a11y-activity-header-button-close': 'Închide',
   'a11y-camera-microphone': 'Microfon',
   'a11y-camera-stop-recording': 'Oprește înregistrarea',
+  'a11y-camera-play': 'Redă',
+  'a11y-camera-pause': 'Pauză',
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Ajustare',
   'a11y-editor-tab-crop': 'Decupare',

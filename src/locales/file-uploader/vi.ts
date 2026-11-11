@@ -121,6 +121,8 @@ export default {
   'a11y-activity-header-button-close': 'Đóng',
   'a11y-camera-microphone': 'Micrô',
   'a11y-camera-stop-recording': 'Dừng ghi',
+  'a11y-camera-play': 'Phát',
+  'a11y-camera-pause': 'Tạm dừng',
   'a11y-editor-tab-filters': 'Bộ lọc',
   'a11y-editor-tab-tuning': 'Tuning',
   'a11y-editor-tab-crop': 'Cắt',
