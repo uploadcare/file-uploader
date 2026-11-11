@@ -1,8 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Lifetime } from '../../../abstract/di/Lifetime';
 import { delay } from '../../../utils/delay';
-import { createCameraFile, guessExtensionByMime } from './cameraFile';
-import { formatTime } from './RecordingClock';
+import { FakeRecorder } from '../__tests__/camera-fixtures';
 import { createRecordingSource } from './recordingSource';
 import { type Clip, recorderOptions, VideoRecording } from './VideoRecording';
 
@@ -12,56 +11,6 @@ afterEach(() => {
   vi.unstubAllGlobals();
   vi.mocked(createRecordingSource).mockReset();
 });
-
-describe('guessExtensionByMime', () => {
-  it.each([
-    ['video/webm;codecs=vp9', 'webm'],
-    ['video/mp4', 'mp4'],
-    ['video/quicktime', 'mov'],
-    ['video/x-matroska;codecs=avc1,opus', 'mkv'],
-    ['', 'webm'],
-    ['video/unknown', 'avi'],
-    ['audio/ogg', 'avi'],
-    [undefined, 'avi'],
-  ])('%s → %s', (mime, ext) => {
-    expect(guessExtensionByMime(mime)).toBe(ext);
-  });
-});
-
-describe('formatTime', () => {
-  it('formats minutes and seconds', () => {
-    expect(formatTime(0)).toBe('00:00');
-    expect(formatTime(65.9)).toBe('01:05');
-  });
-});
-
-describe('createCameraFile', () => {
-  it('names the file after its kind and the time', () => {
-    vi.spyOn(Date, 'now').mockReturnValue(1700000000000);
-    const file = createCameraFile('video', 'webm', 'video/webm', new Blob(['x']));
-    expect([file.name, file.type, file.lastModified]).toEqual([
-      'video-1700000000000.webm',
-      'video/webm',
-      1700000000000,
-    ]);
-  });
-});
-
-class FakeRecorder extends EventTarget {
-  public static last: FakeRecorder;
-  public state: RecordingState = 'inactive';
-  public mimeType = 'video/webm';
-  public constructor() {
-    super();
-    FakeRecorder.last = this;
-  }
-  public start(): void {
-    this.state = 'recording';
-  }
-  public stop(): void {
-    this.state = 'inactive';
-  }
-}
 
 const startRecording = (recording: VideoRecording) => {
   recording.start(new EventTarget() as unknown as MediaStream, undefined, {

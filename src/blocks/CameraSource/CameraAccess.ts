@@ -1,7 +1,7 @@
 import { isAbortError } from '../../abstract/di/Lifetime';
 import { signalState } from '../../abstract/di/signalState';
 import { debounce } from '../../utils/debounce';
-import type { CameraLifetime } from './CameraSession';
+import type { CameraLifetime, CameraReport } from './cameraHost';
 
 /** Camera access: not asked yet, being asked, or the outcome. */
 export type CameraPermission = 'idle' | 'prompt' | 'granted' | 'denied';
@@ -29,8 +29,9 @@ const PERMISSION_STATE_DELAY = 300;
 export type CameraAccessHost = {
   lifetime: CameraLifetime;
   onPermissionChange: (name: (typeof WATCHED_PERMISSIONS)[number]) => void;
-  /** Reports a failure that the block recovers from: to the log with `message`, to telemetry with `context`. */
-  report: (message: string, error: unknown, context: string) => void;
+  /** Runs once a permission state settled and shows. */
+  onSettled: (state: SettledPermission) => void;
+  report: CameraReport;
 };
 
 /** The camera's access state: what shows for it, settled after a short delay, and the watch on its permissions. */
@@ -42,24 +43,21 @@ export class CameraAccess {
   /** Aborted to remove the permission listeners: when watching stops, and when it starts over. */
   private _permissionWatch: AbortController | null = null;
 
-  private readonly _settle = debounce(
-    (state: SettledPermission, failure: CameraFailure = 'denied', onSettled: (state: SettledPermission) => void) => {
-      // A state settling after the camera was released belongs to no one.
-      if (this._host.lifetime.adoptionSignal().aborted) return;
-      this.failure = failure;
-      this.permission = state;
-      onSettled(state);
-    },
-    PERMISSION_STATE_DELAY,
-  );
+  private readonly _settle = debounce((state: SettledPermission, failure: CameraFailure = 'denied') => {
+    // A state settling after the camera was released belongs to no one.
+    if (this._host.lifetime.adoptionSignal().aborted) return;
+    this.failure = failure;
+    this.permission = state;
+    this._host.onSettled(state);
+  }, PERMISSION_STATE_DELAY);
 
   public constructor(private readonly _host: CameraAccessHost) {}
 
   /**
-   * Calls `onPermissionChange` whenever the camera or microphone permission changes. Returns false when the
-   * Permissions API can't be used, in which case the block asks for access directly.
+   * Calls `onPermissionChange` whenever the camera or microphone permission changes. When the Permissions API can't
+   * be used it reports that and watches nothing.
    */
-  public async watchPermissions(): Promise<boolean> {
+  public async watchPermissions(): Promise<void> {
     this.stopWatchingPermissions();
     const watch = new AbortController();
     this._permissionWatch = watch;
@@ -70,17 +68,16 @@ export class CameraAccess {
         );
         status.addEventListener('change', () => this._host.onPermissionChange(name), { signal: watch.signal });
       }
-      return true;
     } catch (error) {
       // Only its own watch: after a move the next adoption has already started another.
       if (this._permissionWatch === watch) this.stopWatchingPermissions();
       if (isAbortError(error)) throw error;
       this._host.report(
+        'warn',
         'Failed to use permissions API. Fallback to manual request mode.',
         error,
         'camera permissions. Failed to use permissions API',
       );
-      return false;
     }
   }
 
@@ -93,12 +90,8 @@ export class CameraAccess {
    * Shows `state` once it held for 300 ms; a later call replaces it. Dropped when the adoption ended by then. Sets
    * `failure` (refused access when not given), then `permission`, then calls `onSettled`.
    */
-  public settleLater(
-    state: SettledPermission,
-    failure: CameraFailure | undefined,
-    onSettled: (state: SettledPermission) => void,
-  ): void {
-    this._settle(state, failure, onSettled);
+  public settleLater(state: SettledPermission, failure?: CameraFailure): void {
+    this._settle(state, failure);
   }
 
   /** Drops a pending state. */

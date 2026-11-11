@@ -1,26 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { BuildConstraintsInput } from '../../../abstract/camera/buildConstraints';
-import { Lifetime } from '../../../abstract/di/Lifetime';
-import type { CameraLifetime } from '../CameraSession';
+import { fakeStream, fakeTrack, lifetimeOf } from '../__tests__/camera-fixtures';
 import { CameraFeed } from './CameraFeed';
-
-const lifetimeOf = (lifetime = new Lifetime()): CameraLifetime => ({
-  whileAdopted: (work, dispose) => lifetime.guard(work, dispose),
-  runTask: (task) => lifetime.run(task, () => {}),
-  adoptionSignal: () => lifetime.signal,
-});
-
-const fakeTrack = (kind: 'audio' | 'video') => ({ kind, enabled: true, stop: vi.fn() });
-type FakeTrack = ReturnType<typeof fakeTrack>;
-
-const fakeStream = (tracks: FakeTrack[]) =>
-  ({
-    getTracks: () => [...tracks],
-    getVideoTracks: () => tracks.filter((t) => t.kind === 'video'),
-    getAudioTracks: () => tracks.filter((t) => t.kind === 'audio'),
-    addTrack: (t: FakeTrack) => tracks.push(t),
-    removeTrack: (t: FakeTrack) => tracks.splice(tracks.indexOf(t), 1),
-  }) as unknown as MediaStream;
 
 const stubGetUserMedia = (impl: (constraints: MediaStreamConstraints) => Promise<MediaStream>) => {
   const getUserMedia = vi.fn(impl);
@@ -134,10 +115,11 @@ describe('CameraFeed', () => {
     await feed.open(input(), () => {});
     expect(feed.audioMuted).toBe(false);
 
-    expect(feed.close()).toBe(true);
-    expect(video.stop).toHaveBeenCalled();
+    feed.close();
+    expect(video.stop).toHaveBeenCalledOnce();
     expect(feed.stream).toBeNull();
-    expect(feed.close()).toBe(false);
+    feed.close();
+    expect(video.stop).toHaveBeenCalledOnce();
   });
 
   it("drops a superseded open's failure", async () => {

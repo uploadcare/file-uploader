@@ -1,20 +1,10 @@
 import { Signal } from '@lit-labs/signals';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { RecordingClock } from './RecordingClock';
-
-let frames: FrameRequestCallback[] = [];
-const runFrames = () => {
-  const due = frames;
-  frames = [];
-  for (const frame of due) frame(0);
-};
+import { frames, runFrames, stubAnimationFrames } from '../__tests__/camera-fixtures';
+import { formatTime, RecordingClock } from './RecordingClock';
 
 beforeEach(() => {
-  frames = [];
-  vi.stubGlobal('requestAnimationFrame', (frame: FrameRequestCallback) => frames.push(frame));
-  vi.stubGlobal('cancelAnimationFrame', () => {
-    frames = [];
-  });
+  stubAnimationFrames();
 });
 
 afterEach(() => {
@@ -129,5 +119,12 @@ describe('RecordingClock', () => {
 
     expect(clock.timerText).toBe('00:00');
     expect(onLimit).toHaveBeenCalledOnce();
+  });
+});
+
+describe('formatTime', () => {
+  it('formats minutes and seconds', () => {
+    expect(formatTime(0)).toBe('00:00');
+    expect(formatTime(65.9)).toBe('01:05');
   });
 });

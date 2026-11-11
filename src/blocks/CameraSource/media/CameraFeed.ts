@@ -1,7 +1,7 @@
 import { type BuildConstraintsInput, buildConstraints } from '../../../abstract/camera/buildConstraints';
 import { isAbortError } from '../../../abstract/di/Lifetime';
 import { signalState } from '../../../abstract/di/signalState';
-import type { CameraLifetime, CameraSessionHost } from '../CameraSession';
+import type { CameraLifetime, CameraReport } from '../cameraHost';
 import { stopTracks } from './tracks';
 
 const isOverconstrained = (error: unknown): boolean => (error as Error | null)?.name === 'OverconstrainedError';
@@ -22,7 +22,7 @@ export class CameraFeed {
 
   public constructor(
     private readonly _lifetime: CameraLifetime,
-    private readonly _report: CameraSessionHost['report'],
+    private readonly _report: CameraReport,
   ) {}
 
   public get stream(): MediaStream | null {
@@ -88,13 +88,11 @@ export class CameraFeed {
     return { stream, constraints };
   }
 
-  /** Stops the camera. Returns whether it was running. */
-  public close(): boolean {
-    const stream = this._stream;
-    if (!stream) return false;
-    stopTracks(stream);
+  /** Stops the camera, if it runs. */
+  public close(): void {
+    if (!this._stream) return;
+    stopTracks(this._stream);
     this._stream = null;
-    return true;
   }
 
   /** Flips the microphone; without one, nothing changes. */

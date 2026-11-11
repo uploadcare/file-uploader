@@ -27,7 +27,7 @@ export type CameraView = {
   messageHidden: boolean;
   /** The l10n key of the message, when one shows. */
   message: 'camera-permissions-prompt' | (typeof FAILURE_MESSAGE)[CameraFailure];
-  /** The camera picker; the caption shows in its place. */
+  /** The camera section of the settings popup. */
   cameraSelectHidden: boolean;
   photoTabHidden: boolean;
   videoTabHidden: boolean;

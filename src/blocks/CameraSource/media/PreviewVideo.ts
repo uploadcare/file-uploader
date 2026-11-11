@@ -1,6 +1,6 @@
 import { isAbortError } from '../../../abstract/di/Lifetime';
 import { signalState } from '../../../abstract/di/signalState';
-import type { CameraLifetime } from '../CameraSession';
+import type { CameraLifetime } from '../cameraHost';
 
 /** The recorded clip started or stopped playing in the preview. */
 export type ClipHandlers = { onPlay: () => void; onPause: () => void };

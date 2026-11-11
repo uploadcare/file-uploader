@@ -14,6 +14,7 @@ import {
 } from './CameraAccess';
 import { CameraDevices } from './CameraDevices';
 import { type CameraSetting, CaptureSettings } from './CaptureSettings';
+import type { CameraLifetime, CameraReport } from './cameraHost';
 import { CameraFeed } from './media/CameraFeed';
 import { ClipReview } from './media/ClipReview';
 import { MicrophoneSwap } from './media/MicrophoneSwap';
@@ -41,13 +42,6 @@ export type CameraCommand =
   | { type: 'toggle-microphone' }
   | { type: 'toggle-playback' };
 
-/** The camera block's adoption-bound async helpers (see `ChildBlock`), lent to the parts that do its async work. */
-export type CameraLifetime = {
-  whileAdopted: <T>(work: PromiseLike<T>, dispose?: (value: T) => void) => Promise<T>;
-  runTask: (task: () => unknown) => void;
-  adoptionSignal: () => AbortSignal;
-};
-
 /** What the camera element lends the session: its lifetime, config, elements, and the ways out. */
 export type CameraSessionHost = {
   lifetime: CameraLifetime;
@@ -71,8 +65,7 @@ export type CameraSessionHost = {
   addFile: (file: File) => void;
   /** Reports a user action to telemetry. */
   track: (event: string, extra: Record<string, unknown>) => void;
-  /** Reports a failure the camera recovers from: to the log at `level`, and to telemetry with `context`. */
-  report: (level: 'warn' | 'error', message: string, error: unknown, context: string) => void;
+  report: CameraReport;
 };
 
 /**
@@ -110,7 +103,7 @@ export class CameraSession {
   private readonly _requested = new RequestedConstraints();
 
   /** Runs once a permission state settled and shows. */
-  private readonly _permissionSettled = (state: SettledPermission): void => {
+  private _permissionSettled(state: SettledPermission): void {
     if (state === 'prompt') {
       this._stopCapture();
       return;
@@ -121,7 +114,7 @@ export class CameraSession {
       this._stopCapture();
     }
     this._captureResolved();
-  };
+  }
 
   public constructor(private readonly _host: CameraSessionHost) {
     this._preview = new PreviewVideo(_host.lifetime.runTask);
@@ -136,12 +129,13 @@ export class CameraSession {
         this.devices.adopt(lists, this.feed.stream);
         this._syncRequestedConstraints();
       },
-      report: (message, error, context) => _host.report('warn', message, error, context),
+      report: _host.report,
     });
     this._access = new CameraAccess({
       lifetime: _host.lifetime,
       onPermissionChange: (name) => this._permissionChanged(name),
-      report: (message, error, context) => _host.report('warn', message, error, context),
+      onSettled: (state) => this._permissionSettled(state),
+      report: _host.report,
     });
   }
 
@@ -380,7 +374,7 @@ export class CameraSession {
   }
 
   private _shot(): void {
-    if (this.activeTab === CameraSourceTypes.PHOTO) this.phase = 'shot';
+    this.phase = 'shot';
     const video = this._preview.element;
     if (!video) {
       throw new Error('Video element not found');
@@ -609,7 +603,7 @@ export class CameraSession {
     // 'granted' supersedes it, which left the previous camera running after a device switch.
     this._stopCapture();
     try {
-      this._access.settleLater('prompt', undefined, this._permissionSettled);
+      this._access.settleLater('prompt');
       // The open forgets dropped custom constraints, so it is asked for the configured ones.
       const opened = await this.feed.open(this._constraintsInput(this._host.config.constraints()), () =>
         this._preview.silence(),
@@ -621,12 +615,12 @@ export class CameraSession {
       this._requested.opened(opened.constraints);
       // Ends on a revoked permission, and also when this stream is stopped for the next one; only the first counts.
       const lost = () => {
-        if (this.feed.stream === stream) this._access.settleLater('denied', undefined, this._permissionSettled);
+        if (this.feed.stream === stream) this._access.settleLater('denied');
       };
       stream.addEventListener('inactive', lost);
       // The camera alone can end (unplugged, taken by the system) while the microphone keeps the stream active.
       stream.getVideoTracks()[0]?.addEventListener('ended', lost, { once: true, signal: adoption });
-      this._access.settleLater('granted', undefined, this._permissionSettled);
+      this._access.settleLater('granted');
       // Another camera may not do the picked preset: start the resolution picker over if it's no longer offered.
       this.settings.cameraOpened(maxShortSideOf(stream.getVideoTracks()[0]));
       // Access is granted now, so the labels are readable: list the devices the first time.
@@ -638,7 +632,7 @@ export class CameraSession {
       // Asks the task's lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
       // Not the current adoption either: after a move it is the next one's, still live.
       if (adoption.aborted) throw error;
-      this._access.settleLater('denied', cameraFailureOf(error), this._permissionSettled);
+      this._access.settleLater('denied', cameraFailureOf(error));
       this._host.report('warn', 'Failed to capture camera', error, 'camera capturing. Failed to capture camera');
     }
   }

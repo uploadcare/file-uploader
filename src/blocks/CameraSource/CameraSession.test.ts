@@ -1,47 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CameraSourceTypes } from '../../abstract/cameraModes';
-import { Lifetime } from '../../abstract/di/Lifetime';
 import { delay } from '../../utils/delay';
-import { CameraSession, type CameraSessionHost } from './CameraSession';
+import { setupSession } from './__tests__/camera-fixtures';
 
-/** A session lent a block-like lifetime: one `Lifetime` per adoption, replaced on a move as `ChildBlock` does. */
-const setup = () => {
-  let adoption = new Lifetime();
-  const taskFailed = vi.fn();
-  const report = vi.fn();
-  const host: CameraSessionHost = {
-    lifetime: {
-      whileAdopted: (work, dispose) => adoption.guard(work, dispose),
-      runTask: (task) => adoption.run(task, taskFailed),
-      adoptionSignal: () => adoption.signal,
-    },
-    config: {
-      audioEnabled: () => false,
-      mirror: () => false,
-      recorderOptions: () => null,
-      maxRecordingSeconds: () => undefined,
-      cameraModes: () => [CameraSourceTypes.PHOTO],
-      videoFormats: () => 'webm, mp4',
-      constraints: () => null,
-      aspectRatio: () => '',
-      resolution: () => 'auto',
-      photoQuality: () => 0.92,
-      audioQuality: () => 'auto',
-      audioMode: () => 'voice',
-    },
-    cameraLabel: (index) => `Camera ${index + 1}`,
-    navigate: () => {},
-    addFile: () => {},
-    track: () => {},
-    report,
-  };
-  // A same-task DOM move: the block is released and re-adopted at once.
-  const move = () => {
-    adoption.end();
-    adoption = new Lifetime();
-  };
-  return { session: new CameraSession(host), host, move, taskFailed, report };
-};
+const setup = () =>
+  setupSession({
+    audioEnabled: () => false,
+    cameraModes: () => [CameraSourceTypes.PHOTO],
+    aspectRatio: () => '',
+    resolution: () => 'auto',
+  });
 
 const stubMedia = () => {
   const pending: PromiseWithResolvers<MediaStream>[] = [];
@@ -68,7 +36,7 @@ afterEach(() => {
 describe('CameraSession moved while the camera is asked for', () => {
   it('stops the activation while the camera opens, without reporting it', async () => {
     const { getUserMedia, pending, stream } = stubMedia();
-    const { session, move, report } = setup();
+    const { session, readopt: move, report } = setup();
     const activation = session.activate([CameraSourceTypes.PHOTO]);
     await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(1));
     // A camera the released activation still opened would answer at once, so a regression fails, not hangs.
@@ -86,7 +54,7 @@ describe('CameraSession moved while the camera is asked for', () => {
   it('drops the capture without reporting it or denying access', async () => {
     vi.useFakeTimers();
     const { getUserMedia, pending, stream } = stubMedia();
-    const { session, move, taskFailed, report } = setup();
+    const { session, readopt: move, taskFailed, report } = setup();
     session.handle({ type: 'request-access' });
     await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(1));
 

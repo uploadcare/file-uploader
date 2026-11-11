@@ -1,13 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Lifetime } from '../../../abstract/di/Lifetime';
-import type { CameraLifetime } from '../CameraSession';
+import { lifetimeOf } from '../__tests__/camera-fixtures';
 import { MicrophoneSwap } from './MicrophoneSwap';
-
-const lifetimeOf = (lifetime = new Lifetime()): CameraLifetime => ({
-  whileAdopted: (work, dispose) => lifetime.guard(work, dispose),
-  runTask: (task) => lifetime.run(task, () => {}),
-  adoptionSignal: () => lifetime.signal,
-});
 
 const fakeTrack = () => ({ kind: 'audio', enabled: true, stop: vi.fn() });
 const microphone = (track = fakeTrack()) =>

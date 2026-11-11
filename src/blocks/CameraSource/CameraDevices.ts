@@ -1,6 +1,6 @@
 import { isAbortError } from '../../abstract/di/Lifetime';
 import { signalState } from '../../abstract/di/signalState';
-import type { CameraLifetime } from './CameraSession';
+import type { CameraLifetime, CameraReport } from './cameraHost';
 
 export type DeviceOption = { text: string; value: string };
 
@@ -11,8 +11,7 @@ export type CameraDevicesHost = {
   /** The label for an unnamed camera, by its position in the list. */
   cameraLabel: (index: number) => string;
   onDevicesChange: (devices: { cameras: DeviceOption[]; microphones: DeviceOption[] }) => void;
-  /** Reports a failure that the block recovers from: to the log with `message`, to telemetry with `context`. */
-  report: (message: string, error: unknown, context: string) => void;
+  report: CameraReport;
 };
 
 /**
@@ -87,7 +86,7 @@ export class CameraDevices {
       this._host.onDevicesChange({ cameras, microphones });
     } catch (error) {
       if (isAbortError(error)) throw error;
-      this._host.report('Failed to get devices', error, 'camera devices. Failed to get devices');
+      this._host.report('warn', 'Failed to get devices', error, 'camera devices. Failed to get devices');
     }
   }
 }

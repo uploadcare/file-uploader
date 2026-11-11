@@ -48,14 +48,6 @@ const pickMicrophone = (camera: Locator, deviceId: string) => {
   radio.dispatchEvent(new Event('change', { bubbles: true }));
 };
 
-const gate = () => {
-  let open!: () => void;
-  const closed = new Promise<void>((resolve) => {
-    open = resolve;
-  });
-  return { closed, open };
-};
-
 describe('camera deferred changes', () => {
   it('a microphone change made during a recording applies after the stop', async () => {
     const { camera, shot } = await openCamera();
@@ -87,19 +79,19 @@ describe('camera deferred changes', () => {
     const deviceId = liveStream(camera).getVideoTracks()[0]?.getSettings().deviceId ?? '';
     // Simulated: a camera that takes a while to open. Chromium's fake device offers one camera, so the switch picks it
     // again, which reopens it all the same.
-    const reopen = gate();
+    const reopen = Promise.withResolvers<void>();
     getUserMedia.mockImplementation(async (constraints) => {
-      if (constraints?.video) await reopen.closed;
+      if (constraints?.video) await reopen.promise;
       return realGetUserMedia(constraints);
     });
 
     camera
       .element()
-      .querySelector('uc-camera-preview')
+      .querySelector('uc-camera-settings')
       ?.dispatchEvent(new CameraActionEvent({ type: 'select-camera', deviceId }));
 
     await expect.element(shot).toBeDisabled();
-    reopen.open();
+    reopen.resolve();
     await expect.element(shot, { timeout: 10_000 }).toBeEnabled();
   });
 });

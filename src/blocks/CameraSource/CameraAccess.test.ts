@@ -13,6 +13,7 @@ const host = (overrides: Partial<CameraAccessHost> = {}) => {
       adoptionSignal: () => controller.signal,
     },
     onPermissionChange: vi.fn(),
+    onSettled: vi.fn(),
     report: vi.fn(),
     ...overrides,
   };
@@ -27,12 +28,12 @@ afterEach(() => {
 describe('CameraAccess.settleLater', () => {
   it('settles once after 300 ms with the last state', () => {
     vi.useFakeTimers();
-    const { devices: access } = host();
-    const onSettled = vi.fn();
+    const { fns, devices: access } = host();
+    const { onSettled } = fns;
 
-    access.settleLater('prompt', undefined, onSettled);
+    access.settleLater('prompt');
     vi.advanceTimersByTime(299);
-    access.settleLater('denied', 'not-found', onSettled);
+    access.settleLater('denied', 'not-found');
     vi.advanceTimersByTime(299);
     expect(onSettled).not.toHaveBeenCalled();
     expect(access.permission).toBe('idle');
@@ -47,10 +48,10 @@ describe('CameraAccess.settleLater', () => {
 
   it('drops a settle after the adoption ended', () => {
     vi.useFakeTimers();
-    const { devices: access, abort } = host();
-    const onSettled = vi.fn();
+    const { fns, devices: access, abort } = host();
+    const { onSettled } = fns;
 
-    access.settleLater('granted', undefined, onSettled);
+    access.settleLater('granted');
     abort();
     vi.advanceTimersByTime(300);
 
@@ -60,10 +61,10 @@ describe('CameraAccess.settleLater', () => {
 
   it('drops a cancelled settle', () => {
     vi.useFakeTimers();
-    const { devices: access } = host();
-    const onSettled = vi.fn();
+    const { fns, devices: access } = host();
+    const { onSettled } = fns;
 
-    access.settleLater('granted', undefined, onSettled);
+    access.settleLater('granted');
     access.cancel();
     vi.advanceTimersByTime(300);
 
@@ -84,7 +85,7 @@ describe('CameraAccess.watchPermissions', () => {
     });
     const { fns, devices } = host();
 
-    await expect(devices.watchPermissions()).resolves.toBe(true);
+    await devices.watchPermissions();
     for (const status of statuses) status.dispatchEvent(new Event('change'));
     expect(fns.onPermissionChange).toHaveBeenCalledTimes(2);
 
@@ -93,14 +94,15 @@ describe('CameraAccess.watchPermissions', () => {
     expect(fns.onPermissionChange).toHaveBeenCalledTimes(2);
   });
 
-  it('returns false and reports when the Permissions API fails', async () => {
+  it('reports when the Permissions API fails', async () => {
     stubPermissions(async () => {
       throw new TypeError('camera is not a valid permission name');
     });
     const { fns, devices } = host();
 
-    await expect(devices.watchPermissions()).resolves.toBe(false);
+    await devices.watchPermissions();
     expect(fns.report).toHaveBeenCalledWith(
+      'warn',
       'Failed to use permissions API. Fallback to manual request mode.',
       expect.any(TypeError),
       'camera permissions. Failed to use permissions API',
@@ -141,7 +143,7 @@ describe('CameraAccess moved while the permissions are queried', () => {
     // A same-task DOM move: the block is released and re-adopted, and the next adoption watches again.
     adoption.end();
     adoption = new Lifetime();
-    await expect(devices.watchPermissions()).resolves.toBe(true);
+    await devices.watchPermissions();
     first.resolve(new EventTarget() as PermissionStatus);
     await expect(released).rejects.toThrow(/owner of this work is gone/);
 

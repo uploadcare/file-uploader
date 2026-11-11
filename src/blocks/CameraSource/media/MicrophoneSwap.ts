@@ -1,4 +1,4 @@
-import type { CameraLifetime, CameraSessionHost } from '../CameraSession';
+import type { CameraLifetime, CameraReport } from '../cameraHost';
 import { stopTracks } from './tracks';
 
 /**
@@ -12,7 +12,7 @@ export class MicrophoneSwap {
 
   public constructor(
     private readonly _lifetime: CameraLifetime,
-    private readonly _report: CameraSessionHost['report'],
+    private readonly _report: CameraReport,
   ) {}
 
   /**

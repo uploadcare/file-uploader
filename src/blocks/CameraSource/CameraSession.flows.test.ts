@@ -1,8 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
 import { type CameraMode, CameraSourceTypes } from '../../abstract/cameraModes';
-import { Lifetime } from '../../abstract/di/Lifetime';
 import { delay } from '../../utils/delay';
-import { type CameraCommand as CameraAction, CameraSession, type CameraSessionHost } from './CameraSession';
+import {
+  FakeRecorder,
+  type FakeStream,
+  fakeStream,
+  fakeTrack,
+  frames,
+  runFrames,
+  setupSession as setup,
+  stubAnimationFrames,
+  stubCanvas,
+} from './__tests__/camera-fixtures';
+import type { CameraCommand as CameraAction } from './CameraSession';
 import { CameraFeed } from './media/CameraFeed';
 import { VideoRecording } from './media/VideoRecording';
 import { RequestedConstraints } from './RequestedConstraints';
@@ -14,51 +24,6 @@ import { RequestedConstraints } from './RequestedConstraints';
  */
 
 const { PHOTO, VIDEO } = CameraSourceTypes;
-
-/** A session lent a block-like lifetime: one `Lifetime` per adoption, replaced on a move as `ChildBlock` does. */
-const setup = () => {
-  let adoption = new Lifetime();
-  const taskFailed = vi.fn();
-  const report = vi.fn();
-  const track = vi.fn();
-  const addFile = vi.fn();
-  const host: CameraSessionHost = {
-    lifetime: {
-      whileAdopted: (work, dispose) => adoption.guard(work, dispose),
-      runTask: (task) => adoption.run(task, taskFailed),
-      adoptionSignal: () => adoption.signal,
-    },
-    config: {
-      audioEnabled: () => true,
-      mirror: () => false,
-      recorderOptions: () => null,
-      maxRecordingSeconds: () => undefined,
-      cameraModes: () => [PHOTO, VIDEO],
-      videoFormats: () => 'webm, mp4',
-      constraints: () => null,
-      aspectRatio: () => 'native, 1:1',
-      resolution: () => 'auto, 720p',
-      photoQuality: () => 0.92,
-      audioQuality: () => 'auto',
-      audioMode: () => 'voice',
-    },
-    cameraLabel: (index) => `Camera ${index + 1}`,
-    navigate: vi.fn(),
-    addFile,
-    track,
-    report,
-  };
-  const session = new CameraSession(host);
-  // A same-task DOM move: the element releases the session, and the block is re-adopted at once.
-  const move = () => {
-    session.release();
-    adoption.end();
-    adoption = new Lifetime();
-  };
-  // The adoption ends and nothing releases the session: whatever is still running belongs to no one.
-  const endAdoption = () => adoption.end();
-  return { session, host, move, endAdoption, report, track, addFile, taskFailed };
-};
 
 type Ctx = ReturnType<typeof setup>;
 
@@ -82,40 +47,6 @@ const giveVideo = (ctx: Ctx, video: FakeVideo | undefined) => {
   if (video) ctx.session.previewVideo(video as unknown as HTMLVideoElement);
   else ctx.session.release();
 };
-
-type FakeTrack = Omit<MediaStreamTrack, 'stop' | 'applyConstraints' | 'readyState'> & {
-  readyState: MediaStreamTrackState;
-  stop: Mock<() => void>;
-  applyConstraints: Mock<(constraints?: MediaTrackConstraints) => Promise<void>>;
-};
-
-const fakeTrack = (kind: 'audio' | 'video', deviceId: string) =>
-  Object.assign(new EventTarget(), {
-    kind,
-    enabled: true,
-    readyState: 'live' as MediaStreamTrackState,
-    stop: vi.fn(),
-    applyConstraints: vi.fn(async () => {}),
-    getSettings: () => ({ deviceId }),
-    getCapabilities: () => ({}),
-  }) as unknown as FakeTrack;
-
-const fakeStream = (tracks: FakeTrack[]) =>
-  Object.assign(new EventTarget(), {
-    getTracks: () => [...tracks],
-    getVideoTracks: () => tracks.filter((t) => t.kind === 'video'),
-    getAudioTracks: () => tracks.filter((t) => t.kind === 'audio'),
-    addTrack: (t: FakeTrack) => {
-      tracks.push(t);
-    },
-    removeTrack: (t: FakeTrack) => {
-      tracks.splice(tracks.indexOf(t), 1);
-    },
-  }) as unknown as Omit<MediaStream, 'getVideoTracks' | 'getAudioTracks'> & {
-    getVideoTracks: () => FakeTrack[];
-    getAudioTracks: () => FakeTrack[];
-  };
-type FakeStream = ReturnType<typeof fakeStream>;
 
 const deviceOf = (constraints: MediaStreamConstraints['video'], fallback: string) =>
   (constraints as { deviceId?: { exact?: string } } | undefined)?.deviceId?.exact ?? fallback;
@@ -169,38 +100,9 @@ const stubMedia = () => {
   return { getUserMedia, streams, hold, microphoneCalls, permissionStatus };
 };
 
-class FakeRecorder extends EventTarget {
-  public static last: FakeRecorder;
-  public static isTypeSupported = () => true;
-  public state: RecordingState = 'inactive';
-  public mimeType = 'video/webm';
-  public stop = vi.fn(() => {
-    this.state = 'inactive';
-  });
-  public constructor() {
-    super();
-    FakeRecorder.last = this;
-  }
-  public start(): void {
-    this.state = 'recording';
-  }
-}
-
-/** Animation frames run only when `runFrames` says so. */
-let frames: FrameRequestCallback[] = [];
-const runFrames = () => {
-  const due = frames;
-  frames = [];
-  for (const frame of due) frame(0);
-};
-
 beforeEach(() => {
-  frames = [];
+  stubAnimationFrames();
   vi.stubGlobal('MediaRecorder', FakeRecorder);
-  vi.stubGlobal('requestAnimationFrame', (frame: FrameRequestCallback) => frames.push(frame));
-  vi.stubGlobal('cancelAnimationFrame', () => {
-    frames = [];
-  });
   vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:clip');
   vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 });
@@ -229,22 +131,6 @@ const stopRecording = async ({ session }: Ctx, recorder: FakeRecorder) => {
   session.handle({ type: 'shutter' });
   recorder.dispatchEvent(new Event('stop'));
   await vi.waitFor(() => expect(URL.createObjectURL).toHaveBeenCalledTimes(shown + 1));
-};
-
-/** A canvas that draws into `drawImage` and encodes through `toBlob`, which happy-dom can't do. */
-const stubCanvas = (toBlob: (done: BlobCallback) => void = (done) => done(new Blob(['jpeg']))) => {
-  const drawImage = vi.fn();
-  const createElement = document.createElement.bind(document);
-  vi.spyOn(document, 'createElement').mockImplementation((tag: string) =>
-    tag === 'canvas'
-      ? (Object.assign(createElement('div'), {
-          getContext: () => ({ drawImage, translate: vi.fn(), scale: vi.fn() }),
-          toBlob,
-          captureStream: () => fakeStream([fakeTrack('video', 'canvas')]),
-        }) as unknown as HTMLCanvasElement)
-      : createElement(tag),
-  );
-  return { drawImage };
 };
 
 /** The camera mirrored and its `<video>` lent, so a recording goes through a canvas that mirrors it. */
@@ -357,8 +243,7 @@ describe('CameraSession flows', () => {
     expect(ctx.session.phase).toBe('recording');
 
     recorder.dispatchEvent(new Event('stop'));
-    await delay(0);
-    expect(ctx.session.phase).toBe('recorded');
+    await vi.waitFor(() => expect(ctx.session.phase).toBe('recorded'));
   });
 
   it('inv4: a shutter press while the recorder stops neither stops it again nor starts another', async () => {
@@ -728,7 +613,8 @@ describe('CameraSession flows', () => {
     process.on('unhandledRejection', unhandled);
     try {
       ctx.session.handle({ type: 'shutter' });
-      await delay(10);
+      // Node reports a rejection left unhandled once the task it happened in ends, so the next task is late enough.
+      await delay(0);
       expect(unhandled).not.toHaveBeenCalled();
 
       ctx.session.handle({ type: 'accept' });
@@ -982,7 +868,7 @@ describe('CameraSession flows', () => {
     // Revoked, then granted again, both while recording.
     permissionStatus.microphone.dispatchEvent(new Event('change'));
     permissionStatus.microphone.dispatchEvent(new Event('change'));
-    await delay(0);
+    await ctx.tasksSettled();
     expect(microphoneCalls()).toHaveLength(0);
 
     await stopRecording(ctx, recorder);
@@ -1087,8 +973,9 @@ describe('CameraSession flows', () => {
     expect(ctx.session.permission).toBe('denied');
     expect(live?.getVideoTracks()[0]?.stop).toHaveBeenCalled();
     expect(video.src).toBe('blob:clip');
-    // QUIRK(camera): the denied state stops the stream (`CameraFeed.close`, CameraFeed.ts:87) but keeps the clip's
-    // object URL and `src` until the next clip, retake or release revokes it. Pinned as current behaviour, not endorsed.
+    // QUIRK(camera): the denied state stops the capture (`_permissionSettled` → `_stopCapture`, CameraSession.ts:497),
+    // which never calls `_review.close()`, so the clip's object URL and `src` stay until the next clip, retake or release
+    // revokes them. Pinned as current behaviour, not endorsed.
     expect(URL.revokeObjectURL).not.toHaveBeenCalled();
   });
 });
@@ -1124,7 +1011,7 @@ describe('CameraSession edges', () => {
     Object.assign(video, { paused: false, ended: false, readyState: 4, currentTime: 0.5, duration: 2 });
     video.dispatchEvent(new Event('play'));
     expect(ctx.session.timelineIcon).toBe('pause');
-    expect(`scaleX(${ctx.session.clock.progress})`).toBe('scaleX(0.25)');
+    expect(ctx.session.clock.progress).toBe(0.25);
 
     ctx.session.handle({ type: 'toggle-playback' });
     expect(video.pause).toHaveBeenCalledOnce();
@@ -1181,7 +1068,7 @@ describe('CameraSession edges', () => {
 
     ctx.endAdoption();
     listing.resolve([]);
-    await delay(0);
+    await ctx.tasksSettled();
 
     expect(ctx.report).not.toHaveBeenCalled();
     expect(ctx.taskFailed).not.toHaveBeenCalled();
@@ -1266,9 +1153,11 @@ describe('CameraSession edges', () => {
 
     ctx.endAdoption();
     recorder.dispatchEvent(new Event('stop'));
-    await delay(0);
+    await ctx.tasksSettled();
 
     expect(URL.createObjectURL).not.toHaveBeenCalled();
+    // QUIRK(camera): the clip's guarded await in `_showRecording` (CameraSession.ts:423) aborts, so nothing moves the
+    // phase on and a session nobody released still shows the recording. Pinned as current behaviour, not endorsed.
     expect(ctx.session.phase).toBe('recording');
     expect(ctx.taskFailed).not.toHaveBeenCalled();
   });
@@ -1287,7 +1176,7 @@ describe('CameraSession edges', () => {
 
     ctx.endAdoption();
     encode(new Blob(['jpeg']));
-    await delay(0);
+    await ctx.tasksSettled();
 
     expect(ctx.addFile).not.toHaveBeenCalled();
     expect(ctx.report).not.toHaveBeenCalled();
