@@ -69,6 +69,21 @@ describe('editor blocks cancelling their own work while adopted', () => {
     expect(error).not.toHaveBeenCalled();
   });
 
+  it('a filter preview that moved into view within one frame loads', async () => {
+    const loadPreview = vi.spyOn(EditorFilterControl.prototype as unknown as FilterInternals, '_loadPreview');
+    mountRoot();
+
+    const control = document.createElement('uc-test-own-cancel-filter') as EditorFilterControl;
+    control.filter = 'adaris';
+    mounted[0]?.append(control);
+    await control.updateComplete;
+    loadPreview.mockClear();
+
+    // Both entries arrive in the same callback, oldest first: off screen, then on.
+    (control as unknown as FilterInternals)._observerCallback([{ isIntersecting: false }, { isIntersecting: true }]);
+    expect(loadPreview).toHaveBeenCalledTimes(1);
+  });
+
   it('a cropper deactivated mid-load logs nothing', async () => {
     const error = vi.spyOn(console, 'error').mockImplementation(() => {});
     const activate = vi.spyOn(EditorImageCropper.prototype, 'activate');

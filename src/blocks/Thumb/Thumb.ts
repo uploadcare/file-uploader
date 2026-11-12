@@ -254,8 +254,10 @@ export class Thumb extends FileItemConfig {
     }
   }
 
+  // Several entries in one callback are oldest first: a thumb that moved into view within a frame reports off screen,
+  // then on. Only the latest says where it is.
   private _observerCallback(entries: IntersectionObserverEntry[]): void {
-    const [entry] = entries;
+    const entry = entries.at(-1);
     if (!entry) {
       return;
     }

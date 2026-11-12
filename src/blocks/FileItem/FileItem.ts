@@ -124,8 +124,10 @@ export class FileItem extends FileItemConfig {
     return FileItemState.IDLE;
   }
 
+  // One callback can carry several entries for the row, oldest first: one that moved into view within a frame reports
+  // off screen, then on. Only the latest says where it is.
   private _observerCallback(entries: IntersectionObserverEntry[]): void {
-    const [entry] = entries;
+    const entry = entries.at(-1);
     if (!entry) {
       return;
     }

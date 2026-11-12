@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
@@ -139,5 +139,38 @@ describe('Thumb', () => {
     // The fall-through ran to completion: no `file` on this entry, so the block
     // reaches the SVG placeholder rather than stopping at the failed URL build.
     expect(collection.readProp(uid, 'thumbUrl')).toMatch(/^blob:/);
+  });
+});
+
+describe('Thumb lazy observer', () => {
+  it('takes the latest intersection, when one callback reports the thumb off screen and then on', async () => {
+    let report: IntersectionObserverCallback = () => {};
+    const disconnect = vi.fn<() => void>();
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        public constructor(callback: IntersectionObserverCallback) {
+          report = callback;
+        }
+        public observe(): void {}
+        public disconnect = disconnect;
+      },
+    );
+    onTestFinished(() => {
+      vi.unstubAllGlobals();
+    });
+    const { el } = await mount(freshCtxName());
+    disconnect.mockClear();
+
+    // A thumb that moved into view within one frame: both entries arrive in the same callback.
+    const entry = (isIntersecting: boolean) =>
+      ({
+        isIntersecting,
+        intersectionRatio: isIntersecting ? 1 : 0,
+        target: el,
+      }) as unknown as IntersectionObserverEntry;
+    report([entry(false), entry(true)], {} as IntersectionObserver);
+    // Seen in view: the one-shot observer is done.
+    expect(disconnect).toHaveBeenCalled();
   });
 });

@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { PluginController } from '../../abstract/managers/plugin';
@@ -174,6 +174,36 @@ describe('FileItem', () => {
 // Parity net for the entry-state → rendered-output mapping (`_calculateState`/
 // `_handleState`/`_updateHintAndProgress` today; derived `getTracked` reads after
 // S2). Asserts the DOM/child-props render commits, so it survives the refactor.
+describe('FileItem render gate', () => {
+  it('opens on the latest intersection, when one callback reports the row off screen and then on', async () => {
+    let report: IntersectionObserverCallback = () => {};
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        public constructor(callback: IntersectionObserverCallback) {
+          report = callback;
+        }
+        public observe(): void {}
+        public disconnect(): void {}
+      },
+    );
+    onTestFinished(() => {
+      vi.unstubAllGlobals();
+    });
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    el.uid = getCollection(ctxName).add({ fileName: 'a.png' });
+    await el.updateComplete;
+    expect(inner(el)).toBeNull();
+
+    // A row that moved into view within one frame: both entries arrive in the same callback.
+    const entry = (isIntersecting: boolean) => ({ isIntersecting, target: el }) as unknown as IntersectionObserverEntry;
+    report([entry(false), entry(true)], {} as IntersectionObserver);
+    await el.updateComplete;
+    expect(inner(el)).not.toBeNull();
+  });
+});
+
 describe('FileItem entry-state rendering', () => {
   it('IDLE entry: no status flags, empty badge, zero progress, name shown', async () => {
     const ctxName = freshCtxName();

@@ -29,7 +29,12 @@ const openList = async (count: number, configProps: Partial<Config> = {}) => {
   const rows = () => [...root.querySelectorAll<Row>('uc-file-item')];
   const rowAt = (index: number) => rows().find((row) => row.uid === ids()[index]);
   const files = root.querySelector<HTMLElement>('.uc-files')!;
-  return { ...uploader, list: list.element() as HTMLElement, files, ids, rows, rowAt };
+  // A row renders empty until it has scrolled into view: its buttons come with that render.
+  const buttonOf = async (index: number) => {
+    await expect.poll(() => rowAt(index)?.querySelector('button')).toBeTruthy();
+    return rowAt(index)!.querySelector('button')!;
+  };
+  return { ...uploader, list: list.element() as HTMLElement, files, ids, rows, rowAt, buttonOf };
 };
 
 /** The row holding focus, and its index in the whole list (-1 when focus is not in a row). */
@@ -145,12 +150,14 @@ describe('uc-upload-list keyboard access', () => {
   });
 
   it('goes from the current row through its own buttons to the footer, and back with Shift+Tab', async () => {
-    const { root, ids, rowAt } = await openList(300);
+    const { root, ids, buttonOf } = await openList(300);
     await tabIntoList(root);
     await press('ArrowDown', 3);
     await expect.poll(() => focusIsOnRow(ids)).toBe(3);
 
-    const remove = rowAt(3)!.querySelector('button')!;
+    const remove = await buttonOf(3);
+    // The row made current re-renders its buttons into the tab order.
+    await expect.poll(() => remove.tabIndex).toBe(0);
     await userEvent.tab();
     expect(document.activeElement).toBe(remove);
     await userEvent.tab();
@@ -251,8 +258,8 @@ describe('uc-upload-list keyboard access', () => {
 
 describe('uc-upload-list focus retention', () => {
   it('keeps focus on its row when the list scrolls far away', async () => {
-    const { files, ids, rowAt } = await openList(300);
-    rowAt(2)!.querySelector('button')!.focus();
+    const { files, ids, rowAt, buttonOf } = await openList(300);
+    (await buttonOf(2)).focus();
     expect(focusedIndex(ids)).toBe(2);
 
     files.scrollTop = files.scrollHeight / 2;
@@ -265,9 +272,9 @@ describe('uc-upload-list focus retention', () => {
   });
 
   it('moves focus to the next row when the focused row is removed with its button', async () => {
-    const { ids, rowAt } = await openList(300);
+    const { ids, buttonOf } = await openList(300);
     const next = ids()[6];
-    rowAt(5)!.querySelector('button')!.focus();
+    (await buttonOf(5)).focus();
 
     await press('Enter');
     await expect.poll(() => ids()).toHaveLength(299);

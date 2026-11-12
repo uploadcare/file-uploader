@@ -116,9 +116,9 @@ export class EditorFilterControl extends EditorButtonControl {
     });
   }
 
+  // One callback can carry several entries for the control, oldest first. Only the latest says where it is.
   private _observerCallback(entries: IntersectionObserverEntry[]): void {
-    const intersectionEntry = entries[0];
-    if (intersectionEntry?.isIntersecting) {
+    if (entries.at(-1)?.isIntersecting) {
       this.runTask(() => this._loadPreview());
     } else {
       this._cancelPreload?.();
