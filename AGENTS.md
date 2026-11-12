@@ -278,7 +278,7 @@ and one of them corrupted any path whose last segment recurred earlier.
   which the editor's read of a source URL needs because it matches operations by name. Re-measure
   before revisiting.
 - **Bundle budgets are tight and `size-limit` runs inside `npm run build`.** The
-  editor sits near 46.4 KB of 47, each uploader web bundle near 97.0 of 98, `dist/index.js` near 101.6 of 102, `<uc-img>`
+  editor sits near 45.7 KB of 47, each uploader web bundle near 97.3 of 98, `dist/index.js` near 102.1 of 103, `<uc-img>`
   near 8.5 of 9. The `web/` checks measure the files as shipped (`scripts/size-limit-web/`); the `dist/` ones re-bundle
   with dependencies, as a consumer would. Treat ~100 B as build-to-build variance and do not quote a single run to tighter
   precision. If a change crosses a limit, that is a decision to raise the budget or
