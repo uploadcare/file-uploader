@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, beforeEach } from 'vitest';
+import { afterEach, beforeAll, beforeEach, expect } from 'vitest';
 import { page } from 'vitest/browser';
 import type { UploadCtxProvider } from '@/index';
 import { resetEmulator } from '~/tests/utils/emulator.browser';
@@ -10,8 +10,13 @@ import '~/tests/utils/test-renderer';
  */
 beforeEach(resetEmulator);
 
-/** Registers every custom element once per file, so no spec has to. `<uc-img>` ships from its own entry. */
+/**
+ * Registers every custom element once per file, so no spec has to. `<uc-img>` ships from its own entry. A
+ * `*.bundle.e2e.test.tsx` file registers them from the built bundle it tests instead: whichever class defines a tag
+ * first wins, so these would leave the bundle's own classes unused.
+ */
 beforeAll(async () => {
+  if (expect.getState().testPath?.endsWith('.bundle.e2e.test.tsx')) return;
   const UC = await import('@/index.js');
   UC.defineComponents(UC);
   await import('@/solutions/adaptive-image/index.js');

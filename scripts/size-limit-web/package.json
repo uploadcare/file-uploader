@@ -1,0 +1,44 @@
+{
+  "//": "Measures web/*.js as shipped: with only @size-limit/file installed here, size-limit brotlis each file as written instead of re-bundling and re-minifying it like the root preset does.",
+  "private": true,
+  "devDependencies": {
+    "@size-limit/file": "^12.0.1"
+  },
+  "size-limit": [
+    {
+      "name": "web/file-uploader.min.js",
+      "path": "../../web/file-uploader.min.js",
+      "limit": "102 KB"
+    },
+    {
+      "name": "web/file-uploader.iife.min.js",
+      "path": "../../web/file-uploader.iife.min.js",
+      "limit": "103 KB"
+    },
+    {
+      "name": "web/uc-cloud-image-editor.min.js",
+      "path": "../../web/uc-cloud-image-editor.min.js",
+      "limit": "51 KB"
+    },
+    {
+      "name": "web/uc-file-uploader-regular.min.js",
+      "path": "../../web/uc-file-uploader-regular.min.js",
+      "limit": "102 KB"
+    },
+    {
+      "name": "web/uc-file-uploader-inline.min.js",
+      "path": "../../web/uc-file-uploader-inline.min.js",
+      "limit": "102 KB"
+    },
+    {
+      "name": "web/uc-file-uploader-minimal.min.js",
+      "path": "../../web/uc-file-uploader-minimal.min.js",
+      "limit": "102 KB"
+    },
+    {
+      "name": "web/uc-img.min.js",
+      "path": "../../web/uc-img.min.js",
+      "limit": "10 KB"
+    }
+  ]
+}

@@ -124,6 +124,7 @@ async function build(buildItem: BuildItem) {
     outDir: buildItem.outDir,
     target: 'esnext',
     minify: buildItem.minify,
+    terserOptions: { compress: { passes: 2 } },
     banner: {
       js: banner(),
       css: banner(),
@@ -146,6 +147,8 @@ async function build(buildItem: BuildItem) {
       // mainFields when an `exports` condition matches).
       options.mainFields = ['exports', 'module', 'main'];
       options.platform = 'browser';
+      // tsup turns esbuild's minifier off for `'terser'`; it stays on, so terser starts from esbuild's output.
+      options.minify = Boolean(buildItem.minify);
       options.legalComments = 'linked';
       options.logOverride = { 'ignored-bare-import': 'silent' };
       if (buildItem.mangleProps) {

@@ -95,7 +95,7 @@
     "tsc:test": "tsc --project tsconfig.test.json",
     "tsc:e2e": "tsc --project tsconfig.e2e-test.json",
     "tsc:node": "tsc --project tsconfig.node.json",
-    "lint:size": "size-limit",
+    "lint:size": "size-limit && cd scripts/size-limit-web && size-limit",
     "lint:js": "biome lint && eslint .",
     "lint:js:fix": "biome lint --write",
     "lint:css": "stylelint './**/*.css'",
@@ -151,6 +151,7 @@
     "stylelint-declaration-block-no-ignored-properties": "^3.0.0",
     "stylelint-order": "^8.0.0",
     "svg-sprite": "^2.0.4",
+    "terser": "5.51.2",
     "ts-lit-plugin": "^2.0.2",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
@@ -189,34 +190,6 @@
     },
     {
       "path": "dist/index.ssr.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "web/file-uploader.min.js",
-      "limit": "102 KB"
-    },
-    {
-      "path": "web/file-uploader.iife.min.js",
-      "limit": "103 KB"
-    },
-    {
-      "path": "web/uc-cloud-image-editor.min.js",
-      "limit": "51 KB"
-    },
-    {
-      "path": "web/uc-file-uploader-regular.min.js",
-      "limit": "102 KB"
-    },
-    {
-      "path": "web/uc-file-uploader-inline.min.js",
-      "limit": "102 KB"
-    },
-    {
-      "path": "web/uc-file-uploader-minimal.min.js",
-      "limit": "102 KB"
-    },
-    {
-      "path": "web/uc-img.min.js",
       "limit": "10 KB"
     }
   ],
