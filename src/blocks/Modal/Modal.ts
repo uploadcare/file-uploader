@@ -1,8 +1,9 @@
-import { html, type PropertyValues, ReactiveElement } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject, injectOrNull } from '../../abstract/di/inject';
 import { ChildBlock } from '../../lit/ChildBlock';
+import { blocksRendered, firstFocusable } from '../../lit/focus';
 import { delay } from '../../utils/delay';
 import './modal.css';
 import { property } from 'lit/decorators.js';
@@ -12,9 +13,6 @@ import type { RegisteredActivityType } from '../../abstract/activity-constants';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { PluginLabel } from '../../abstract/managers/plugin/PluginTypes';
 import { acquireScrollLock } from '../../utils/scroll-lock';
-
-const FOCUSABLE =
-  'a[href], button:not([disabled]), input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])';
 
 export class Modal extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-modal'];
@@ -173,20 +171,10 @@ export class Modal extends ChildBlock {
     const initial = document.activeElement;
     const isDropArea = initial instanceof HTMLElement && initial.localName === 'uc-drop-area';
     if (initial !== dialog && !(isDropArea && dialog.contains(initial))) return;
-    // Rendering can add blocks that render in turn: wait until a round adds none.
-    let seen = -1;
-    for (let round = 0; round < 5; round++) {
-      const blocks = [...dialog.querySelectorAll('*')].filter((el) => el instanceof ReactiveElement);
-      if (blocks.length === seen) break;
-      seen = blocks.length;
-      await this.whileAdopted(Promise.all(blocks.map((el) => el.updateComplete)));
-    }
+    await blocksRendered(dialog, (work) => this.whileAdopted(work));
     // The user, or the activity itself, moved focus meanwhile.
     if (document.activeElement !== initial) return;
-    const first = [...dialog.querySelectorAll<HTMLElement>(FOCUSABLE)].find(
-      (el) => el.localName !== 'uc-drop-area' && el.checkVisibility(),
-    );
-    first?.focus();
+    firstFocusable(dialog, (el) => el.localName === 'uc-drop-area')?.focus();
   }
 
   protected hide(): void {

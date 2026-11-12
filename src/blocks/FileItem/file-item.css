@@ -14,6 +14,15 @@
      row height (`:last-of-type` would match the last rendered row). */
   uc-file-item:last-child {
     --uc-file-item-gap: 0;
+
+    /* A unitless 0 makes the `calc()` of `--uc-file-item-height` invalid, which would leave the row no minimum
+       height: before it renders it would have none, and never scroll into view to render. */
+    min-height: calc(var(--uc-preview-size) + var(--uc-padding) * 2);
+  }
+
+  /* Inside the row: the list's scroll container clips what is drawn outside it. */
+  uc-file-item:focus-visible {
+    outline-offset: -2px;
   }
 
   uc-file-item > .uc-inner {

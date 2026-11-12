@@ -71,6 +71,10 @@ export class FileItem extends FileItemConfig {
   })
   public uid: Uid = '' as Uid;
 
+  /** Whether the row's buttons are in the tab order: only the list's current row has them there. */
+  @property({ attribute: false })
+  public tabbable = true;
+
   private _pluginFileActions: Owned<PluginFileActionRegistration>[] = [];
 
   private _renderedOnce = false;
@@ -169,13 +173,6 @@ export class FileItem extends FileItemConfig {
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
-
-    if (changedProperties.has('uid')) {
-      this._handleEntryId(this.uid);
-    }
-    // Derived once per update for the getters below; `getTracked` re-runs the update when a read key changes.
-    const { entry } = this;
-    this._state = entry ? this._deriveState((key) => entry.getTracked(key)) : FileItemState.IDLE;
     // In the update, so `SignalWatcher` tracks what each `shouldRender` reads: a plugin option it checks through
     // `pluginApi.config.get` re-renders the row when it changes.
     this._updatePluginFileActions();
@@ -255,6 +252,7 @@ export class FileItem extends FileItemConfig {
 
   public override connectedCallback(): void {
     super.connectedCallback();
+    this.setAttribute('role', 'listitem');
 
     // One-shot render gate: un-pause on first view (see `_pauseRender`). The
     // observer watches this element's own node.
@@ -277,11 +275,26 @@ export class FileItem extends FileItemConfig {
   // resulting entry mutations through `getTracked` reads in `render()`
   // (state/badge/progress/…) plus the keyed side-effect subscription.
 
+  // Ahead of the render gate, which Lit calls in here even while it holds: the row the keyboard just scrolled in takes
+  // focus before it first renders, and needs its name by then.
   protected override shouldUpdate(changedProperties: PropertyValues<this>): boolean {
-    if (this._pauseRender) {
+    if (!super.shouldUpdate(changedProperties)) {
       return false;
     }
-    return super.shouldUpdate(changedProperties);
+    if (changedProperties.has('uid')) {
+      this._handleEntryId(this.uid);
+    }
+    // Derived once per update for the getters below; `getTracked` re-runs the update when a read key changes.
+    const { entry } = this;
+    this._state = entry ? this._deriveState((key) => entry.getTracked(key)) : FileItemState.IDLE;
+    // The row's name, on the listitem itself, so it is what a screen reader reads when the row takes focus.
+    const status = this._statusText;
+    if (status) {
+      this.setAttribute('aria-label', status);
+    } else {
+      this.removeAttribute('aria-label');
+    }
+    return !this._pauseRender;
   }
 
   private _state: FileItemStateValue = FileItemState.IDLE;
@@ -365,7 +378,7 @@ export class FileItem extends FileItemConfig {
       >
         <uc-thumb .uid=${this.uid} .badgeIcon=${this._badgeIcon}></uc-thumb>
 
-        <div class="uc-file-name-wrapper" role="group" aria-label=${this._statusText}>
+        <div class="uc-file-name-wrapper">
           <span class="uc-file-name" data-testid="file-name" ?hidden=${!this._showFileNames}>${this._itemName}</span>
           <span class="uc-file-error" ?hidden=${!this._errorText}>${this._errorText}</span>
           <span class="uc-file-hint" ?hidden=${!this._hint}>${this._hint}</span>
@@ -381,6 +394,7 @@ export class FileItem extends FileItemConfig {
                 aria-label=${label}
                 class="uc-plugin-action-btn uc-mini-btn"
                 data-plugin-action-id=${action.id}
+                tabindex=${this.tabbable ? 0 : -1}
               >
                 <uc-icon name=${action.icon}></uc-icon>
               </button>
@@ -391,6 +405,7 @@ export class FileItem extends FileItemConfig {
             .uploading=${this._isUploading}
             .queued=${this._isQueued}
             .progress=${this._progressValue}
+            .tabbable=${this.tabbable}
           ></uc-file-action-button>
         </div>
       </div>

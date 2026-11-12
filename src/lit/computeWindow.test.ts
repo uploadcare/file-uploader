@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { computeWindow, type WindowMetrics } from './computeWindow';
+import { computeWindow, pinWindow, type WindowMetrics } from './computeWindow';
 
 // (relocated to src/lit/ — shared virtualization primitive used by VirtualListController)
 
@@ -186,5 +186,70 @@ describe('computeWindow', () => {
       expect(result.start).toBeLessThan(result.end);
       expect(result.end).toBe(100);
     });
+  });
+});
+
+describe('pinWindow', () => {
+  // 100 rows of 40px; the window is rows 50..60.
+  const list = { start: 50, end: 60, topPad: 50 * 40, bottomPad: 40 * 40 };
+  const listPin = (pinned: number) => pinWindow(list, { pinned, total: 100, rowHeight: 40, columns: 1 });
+  // Whatever the pin, the spacers and rendered rows still add up to the whole list.
+  const height = (s: ReturnType<typeof listPin>, columns = 1) =>
+    s.topPad +
+    s.gapPad +
+    s.bottomPad +
+    (Math.ceil(s.end / columns) - Math.floor(s.start / columns) + (s.pinned >= 0 ? 1 : 0)) * 40;
+
+  it('changes nothing for a pin inside the window, or no pin', () => {
+    expect(listPin(55)).toEqual({ ...list, pinned: -1, gapPad: 0 });
+    expect(listPin(-1)).toEqual({ ...list, pinned: -1, gapPad: 0 });
+    expect(listPin(100)).toEqual({ ...list, pinned: -1, gapPad: 0 });
+  });
+
+  it('changes nothing before the rows are measured, when the window is the whole list', () => {
+    const all = { start: 0, end: 100, topPad: 0, bottomPad: 0 };
+    expect(pinWindow(all, { pinned: 3, total: 100, rowHeight: 0, columns: 1 })).toEqual({
+      ...all,
+      pinned: -1,
+      gapPad: 0,
+    });
+  });
+
+  it('renders a pin above the window at its own offset, with the rows between as a spacer', () => {
+    expect(listPin(2)).toEqual({ start: 50, end: 60, topPad: 2 * 40, gapPad: 47 * 40, bottomPad: 40 * 40, pinned: 2 });
+    expect(height(listPin(2))).toBe(100 * 40);
+    expect(listPin(0).topPad).toBe(0);
+  });
+
+  it('renders a pin below the window at its own offset', () => {
+    expect(listPin(90)).toEqual({
+      start: 50,
+      end: 60,
+      topPad: 50 * 40,
+      gapPad: 30 * 40,
+      bottomPad: 9 * 40,
+      pinned: 90,
+    });
+    expect(height(listPin(90))).toBe(100 * 40);
+    expect(listPin(99).bottomPad).toBe(0);
+  });
+
+  it('widens the window by the row next to it instead of a zero-height spacer', () => {
+    expect(listPin(49)).toEqual({ start: 49, end: 60, topPad: 49 * 40, bottomPad: 40 * 40, pinned: -1, gapPad: 0 });
+    expect(listPin(60)).toEqual({ start: 50, end: 61, topPad: 50 * 40, bottomPad: 39 * 40, pinned: -1, gapPad: 0 });
+  });
+
+  it('pins a grid cell on a row of its own', () => {
+    // 100 items in 3 columns = 34 rows; the window is rows 10..12 (items 30..36).
+    const grid = { start: 30, end: 36, topPad: 10 * 40, bottomPad: 22 * 40 };
+    const pin = (pinned: number) => pinWindow(grid, { pinned, total: 100, rowHeight: 40, columns: 3 });
+    // Item 7 is on row 2.
+    expect(pin(7)).toEqual({ ...grid, topPad: 2 * 40, gapPad: 7 * 40, pinned: 7 });
+    expect(height(pin(7), 3)).toBe(34 * 40);
+    // Item 99 is alone on the last row, 33.
+    expect(pin(99)).toEqual({ ...grid, gapPad: 21 * 40, bottomPad: 0, pinned: 99 });
+    expect(height(pin(99), 3)).toBe(34 * 40);
+    // Item 37 is on row 12, next to the window: the window takes the whole row.
+    expect(pin(37)).toEqual({ ...grid, end: 39, bottomPad: 21 * 40, pinned: -1, gapPad: 0 });
   });
 });

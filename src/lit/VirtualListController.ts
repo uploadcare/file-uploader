@@ -1,5 +1,5 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
-import { computeWindow } from './computeWindow';
+import { computeWindow, pinWindow } from './computeWindow';
 
 export type VirtualListRowMetrics = {
   /** Columns per row (1 for a vertical list, N for a wrapped grid). */
@@ -8,9 +8,17 @@ export type VirtualListRowMetrics = {
   rowHeight: number;
 };
 
+export type VirtualListRow<T> = {
+  item: T;
+  /** The item's index in the whole list. */
+  index: number;
+  /** Height of a spacer to render right before this row, in px (0 for none): the rows between a pinned row and the window. */
+  padBefore: number;
+};
+
 export type VirtualListSlice<T> = {
-  /** The items to actually render this frame (the visible window + overscan). */
-  items: readonly T[];
+  /** The rows to actually render this frame, in order: the visible window + overscan, and the pinned item. */
+  rows: readonly VirtualListRow<T>[];
   /** Spacer height above the window, in px (preserves scroll height). */
   topPad: number;
   /** Spacer height below the window, in px. */
@@ -26,7 +34,7 @@ export type VirtualListOptions = {
   scrollContainer: () => HTMLElement | null;
   /**
    * Selector for a rendered row inside the scroll container, used to measure row height. The rendered rows must be
-   * consecutive element siblings, in `window()` order.
+   * element siblings, in `window()` order; other siblings between them (a row's `padBefore` spacer) are skipped.
    */
   itemSelector: string;
   /**
@@ -122,20 +130,40 @@ export class VirtualListController implements ReactiveController {
   /**
    * Slice `items` down to the current window. Call in the host's `render()`.
    * `topPad`/`bottomPad` are the heights of full-width spacer elements the host
-   * renders before/after the windowed items.
+   * renders before/after the rows, and each row's `padBefore` one it renders right before that row.
+   * The item at index `pinned` renders even when the window scrolled away from it (the row holding focus), see
+   * {@link pinWindow}. An index, not the item: the host keeps it, so a scroll's render does not search the list for it.
    */
-  public window<T>(items: readonly T[]): VirtualListSlice<T> {
-    const slice = computeWindow({
-      total: items.length,
-      scrollTop: this._scrollTop,
-      viewportHeight: this._viewportHeight,
+  public window<T>(items: readonly T[], pinned = -1): VirtualListSlice<T> {
+    const total = items.length;
+    const metrics = {
+      total,
       rowHeight: this._rowHeight,
       columns: this._columns,
-      overscanRows: this._overscanRows,
+      scrollTop: this._scrollTop,
+      viewportHeight: this._viewportHeight,
+    };
+    const slice = pinWindow(computeWindow({ ...metrics, overscanRows: this._overscanRows }), {
+      ...metrics,
+      pinned,
     });
-    const windowed = slice.start === 0 && slice.end === items.length ? items : items.slice(slice.start, slice.end);
-    this._windowedCount = windowed.length;
-    return { items: windowed, topPad: slice.topPad, bottomPad: slice.bottomPad };
+    const pinnedAbove = slice.pinned >= 0 && slice.pinned < slice.start;
+    const rows = items.slice(slice.start, slice.end).map((item, i) => ({
+      item,
+      index: slice.start + i,
+      padBefore: pinnedAbove && i === 0 ? slice.gapPad : 0,
+    }));
+    const pinnedItem = items[slice.pinned];
+    if (pinnedItem !== undefined) {
+      const row = { item: pinnedItem, index: slice.pinned, padBefore: pinnedAbove ? 0 : slice.gapPad };
+      if (pinnedAbove) {
+        rows.unshift(row);
+      } else {
+        rows.push(row);
+      }
+    }
+    this._windowedCount = rows.length;
+    return { rows, topPad: slice.topPad, bottomPad: slice.bottomPad };
   }
 
   // rAF-coalesced: a scroll burst updates `_scrollTop` at most once per frame,
@@ -233,8 +261,10 @@ export class VirtualListController implements ReactiveController {
   // Observe the rendered rows (cheap: no layout read) and stop observing the ones the window dropped.
   private _observeRows(firstRow: Element | null): void {
     const rows = new Map<Element, number>();
-    let row = firstRow;
-    for (let i = 0; row && i < this._windowedCount; i++, row = row.nextElementSibling) {
+    for (let row = firstRow; row && rows.size < this._windowedCount; row = row.nextElementSibling) {
+      if (!row.matches(this._itemSelector)) {
+        continue;
+      }
       const height = this._rows.get(row);
       rows.set(row, height ?? 0);
       if (height === undefined) {

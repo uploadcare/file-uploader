@@ -205,4 +205,19 @@ describe('uc-upload-list virtualization', () => {
 
     await expectSpacersToMatchRows(root);
   });
+
+  it('keeps a minimum height on the last file, which has no gap below it', async () => {
+    // A row renders empty until it scrolls into view, so with no height of its own the last one never would.
+    const { api, root } = await renderSolution('regular', { confirmUpload: true, multipleMax: 1000 });
+    addFiles(api, 3);
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+    await expect.poll(() => root.querySelectorAll('uc-file-item').length).toBe(3);
+
+    const [first, , last] = root.querySelectorAll('uc-file-item');
+    const minHeight = (row: Element | undefined) => Number.parseFloat(row ? getComputedStyle(row).minHeight : '');
+    expect(minHeight(last)).toBeGreaterThan(0);
+    // The gap is all it drops.
+    expect(minHeight(first) - minHeight(last)).toBe(4);
+  });
 });

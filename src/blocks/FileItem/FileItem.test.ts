@@ -240,10 +240,9 @@ describe('FileItem entry-state rendering', () => {
 
     // One polite region per row queues an announcement per row on every state change; the list header announces.
     expect(el.querySelector('[aria-live]')).toBeNull();
-    // ARIA prohibits naming the generic role, so the status label sits on a group.
-    const wrapper = el.querySelector('.uc-file-name-wrapper');
-    expect(wrapper?.getAttribute('role')).toBe('group');
-    expect(wrapper?.getAttribute('aria-label')).toBe('File photo.png in status uploading');
+    // ARIA prohibits naming the generic role, so the status label sits on the row's listitem.
+    expect(el.getAttribute('role')).toBe('listitem');
+    expect(el.getAttribute('aria-label')).toBe('File photo.png in status uploading');
   });
 
   it.each([
@@ -258,7 +257,7 @@ describe('FileItem entry-state rendering', () => {
     const ctxName = freshCtxName();
     const { el } = await mount(ctxName);
     await bindEntry(el, getCollection(ctxName), { fileName: 'photo.png', ...fields });
-    expect(el.querySelector('.uc-file-name-wrapper')?.getAttribute('aria-label')).toBe(label);
+    expect(el.getAttribute('aria-label')).toBe(label);
   });
 
   it('QUEUED-UPLOADING entry: remove hidden, progress NOT zeroed', async () => {
@@ -465,8 +464,6 @@ describe('FileItem status', () => {
     const { el } = await mount(ctxName);
     await bindEntry(el, getCollection(ctxName), { fileName: 'a.png', ...init });
 
-    expect(el.querySelector('.uc-file-name-wrapper')?.getAttribute('aria-label')).toBe(
-      `File a.png in status ${status}`,
-    );
+    expect(el.getAttribute('aria-label')).toBe(`File a.png in status ${status}`);
   });
 });

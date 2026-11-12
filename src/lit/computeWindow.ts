@@ -68,3 +68,41 @@ export function computeWindow(metrics: WindowMetrics): WindowSlice {
 
   return { start, end, topPad, bottomPad };
 }
+
+export type PinnedWindowSlice = WindowSlice & {
+  /** The pinned item's index when it renders outside `[start, end)`, else -1. */
+  pinned: number;
+  /** Spacer height between the pinned item and the window, in px (0 without a pin outside the window). */
+  gapPad: number;
+};
+
+/**
+ * Keeps item `pinned` (the list's current row) rendered when the window scrolled away from it, so focus on it
+ * survives a scroll. The pinned item stands in for its whole row, alone on a flex line in a grid, and the rows
+ * between it and the window become one more spacer, so every rendered row keeps its offset. A pin on the row next to
+ * the window just widens the window by that row: nothing of zero height could break a grid line there without adding
+ * a gap.
+ */
+export function pinWindow(
+  slice: WindowSlice,
+  { pinned, total, rowHeight, columns }: Pick<WindowMetrics, 'total' | 'rowHeight' | 'columns'> & { pinned: number },
+): PinnedWindowSlice {
+  if (pinned < 0 || pinned >= total || rowHeight <= 0 || (pinned >= slice.start && pinned < slice.end)) {
+    return { ...slice, pinned: -1, gapPad: 0 };
+  }
+  const row = Math.floor(pinned / columns);
+  const startRow = Math.floor(slice.start / columns);
+  const endRow = Math.ceil(slice.end / columns);
+  if (row === startRow - 1) {
+    return { ...slice, start: row * columns, topPad: slice.topPad - rowHeight, pinned: -1, gapPad: 0 };
+  }
+  if (row === endRow) {
+    const end = Math.min(total, (row + 1) * columns);
+    return { ...slice, end, bottomPad: slice.bottomPad - rowHeight, pinned: -1, gapPad: 0 };
+  }
+  if (row < startRow) {
+    return { ...slice, topPad: row * rowHeight, gapPad: (startRow - row - 1) * rowHeight, pinned };
+  }
+  const totalRows = Math.ceil(total / columns);
+  return { ...slice, gapPad: (row - endRow) * rowHeight, bottomPad: (totalRows - row - 1) * rowHeight, pinned };
+}

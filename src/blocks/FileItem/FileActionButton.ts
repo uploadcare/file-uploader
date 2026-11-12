@@ -24,6 +24,10 @@ export class FileActionButton extends ChildBlock {
   @property({ type: Number })
   public progress = 0;
 
+  /** Whether the button is in the tab order (out of it in a list row that is not the current one). */
+  @property({ attribute: false })
+  public tabbable = true;
+
   private get _normalizedProgress(): number {
     return Math.min(Math.max(this.progress || 0, 0), 100);
   }
@@ -56,6 +60,7 @@ export class FileActionButton extends ChildBlock {
           title=${actionLabel}
           aria-label=${actionLabel}
           class=${classes}
+          tabindex=${this.tabbable ? 0 : -1}
         >
           <span class="uc-icon-wrap">
             <uc-icon name="close"></uc-icon>

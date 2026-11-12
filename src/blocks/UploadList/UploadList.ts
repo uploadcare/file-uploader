@@ -1,4 +1,4 @@
-import { html, type PropertyValues } from 'lit';
+import { html, nothing, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ACTIVITY_TYPES } from '../../abstract/activity-constants';
 import {
@@ -14,19 +14,23 @@ import { deriveEntryStatus } from '../../abstract/deriveEntryStatus';
 import { inject } from '../../abstract/di/inject';
 import { EventType } from '../../abstract/EventEmitter';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import type { Uid } from '../../abstract/Uid';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { cssomStyleMap } from '../../lit/cssom-style-map';
+import { blocksRendered, firstFocusable } from '../../lit/focus';
+import { survivingNeighbour, targetRowIndex } from '../../lit/list-navigation';
 import { throttled } from '../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
 import './upload-list.css';
+import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
 import { VirtualListController } from '../../lit/VirtualListController';
+import { FileItem } from '../FileItem/FileItem';
 
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
-import '../FileItem/FileItem';
 import '../DropArea/DropArea';
 
 import type { FilesViewMode } from '../../abstract/config/validatorsType';
@@ -100,24 +104,143 @@ export class UploadList extends ActivityChildBlock {
   // so this block supplies them. It degrades to rendering the full list whenever
   // the container isn't laid out (happy-dom, hidden panel, pre-measurement paint).
   private readonly _virtualList = new VirtualListController(this, {
-    scrollContainer: () => this.querySelector<HTMLElement>('.uc-files'),
+    scrollContainer: () => this._filesRef.value ?? null,
     itemSelector: 'uc-file-item',
     rowMetrics: (scrollEl, firstItem) => {
       if (this._config.get('filesViewMode') !== 'grid') {
         this._rowGap = 0;
         return { columns: 1, rowHeight: firstItem.offsetHeight };
       }
-      const gridCol = Number.parseInt(getComputedStyle(this).getPropertyValue('--uc-grid-col'), 10);
       // Flex `gap` sits BETWEEN grid cells (not in offsetHeight), so one grid row
       // is a cell plus one inter-row gap; list rows fold the gap into their box.
       const rowGap = Number.parseFloat(getComputedStyle(scrollEl).rowGap) || 0;
       this._rowGap = rowGap;
-      return {
-        columns: Number.isFinite(gridCol) && gridCol >= 1 ? gridCol : 1,
-        rowHeight: firstItem.offsetHeight + rowGap,
-      };
+      return { columns: this._columns(), rowHeight: firstItem.offsetHeight + rowGap };
     },
   });
+
+  private readonly _filesRef = createRef<HTMLElement>();
+  private readonly _rowsRef = createRef<HTMLElement>();
+  private readonly _addMoreRef = createRef<HTMLButtonElement>();
+
+  // Roving tabindex: the list is one Tab stop, the current row (the first until the user moves). The virtualizer pins
+  // it, so it stays rendered and keeps focus however far the list scrolls.
+  @state()
+  private _currentUid: Uid | null = null;
+
+  // The list the last update rendered, to find the neighbour of a removed current row.
+  private _uploadList: readonly Uid[] = [];
+
+  // Where `_currentUid` sits in `_uploadList` (-1 for none), found again only when either changes: a scroll's render
+  // must not search the whole list.
+  private _currentIndex = -1;
+  private _indexedUid: Uid | null = null;
+
+  // Focus was in the list when its last row went: hand it on once the summary tick settles the toolbar and the router.
+  private _refocusWhenSettled = false;
+
+  private _columns(): number {
+    if (this._config.get('filesViewMode') !== 'grid') {
+      return 1;
+    }
+    const gridCol = Number.parseInt(getComputedStyle(this).getPropertyValue('--uc-grid-col'), 10);
+    return Number.isFinite(gridCol) && gridCol >= 1 ? gridCol : 1;
+  }
+
+  private _rowElement(uid: Uid): FileItem | undefined {
+    for (const row of this._rowsRef.value?.children ?? []) {
+      if (row instanceof FileItem && row.uid === uid) {
+        return row;
+      }
+    }
+    return undefined;
+  }
+
+  // The current row is pinned, so it is rendered once this update lands; `focus()` scrolls it into the window.
+  private _focusRow(uid: Uid): void {
+    this._currentUid = uid;
+    this.runTask(async () => {
+      await this.whileAdopted(this.updateComplete);
+      this._focusCurrentRow(uid);
+    });
+  }
+
+  // After the await: unless a later move superseded this one, or focus went elsewhere meanwhile (a page handler of the
+  // same key). Focus left on the body is the removed row's, still ours to move.
+  private _focusCurrentRow(uid: Uid): void {
+    const active = document.activeElement;
+    const ours = !active || active === document.body || this._rowsRef.value?.contains(active);
+    if (ours && this._currentUid === uid) {
+      this._rowElement(uid)?.focus();
+    }
+  }
+
+  private _handleFocusIn = (event: FocusEvent): void => {
+    const row = event.composedPath().find((target) => target instanceof FileItem);
+    if (row) {
+      this._currentUid = row.uid;
+    }
+  };
+
+  private _handleKeyDown = (event: KeyboardEvent): void => {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+      return;
+    }
+    const row = event.composedPath().find((target) => target instanceof FileItem);
+    const list = this._uploadList;
+    const from = row ? list.indexOf(row.uid) : -1;
+    const files = this._filesRef.value;
+    if (!row || from < 0 || !files) {
+      return;
+    }
+    // A grid row is a tile plus the gap under it (`_rowGap` is 0 in list mode).
+    const pageRows = Math.floor(files.clientHeight / (row.offsetHeight + this._rowGap || 1));
+    const rtl = getComputedStyle(files).direction === 'rtl';
+    const to = list[targetRowIndex(event.key, from, list.length, this._columns(), pageRows, rtl) ?? -1];
+    if (to) {
+      event.preventDefault();
+      this._focusRow(to);
+    }
+  };
+
+  // The current row was removed: its neighbour takes over, and takes focus when the row had it. Runs before the
+  // update removes the row, while focus is still in it.
+  private _replaceRemovedCurrentRow(list: readonly Uid[], removed: Uid): void {
+    const next = survivingNeighbour(this._uploadList, list, removed);
+    this._currentUid = next;
+    const active = document.activeElement;
+    if (!active || !this._rowsRef.value?.contains(active)) {
+      return;
+    }
+    this.runTask(async () => {
+      await this.whileAdopted(this.updateComplete);
+      if (next) {
+        this._focusCurrentRow(next);
+        return;
+      }
+      this._refocusWhenSettled = true;
+      this._throttledHandleCollectionUpdate();
+    });
+  }
+
+  // The emptied list either stays open, with Add more enabled by the tick that just ran (in grid view the compact
+  // chrome's toolbar one is hidden), or closes: then the router's next screen, or a modal returning focus to its
+  // opener, may have placed focus already, and otherwise the uploader's first control (the minimal one's trigger) takes it.
+  private async _focusAfterEmptied(): Promise<void> {
+    const root = this.closest('[uc-wgt-common]') ?? this;
+    await blocksRendered(root, (work) => this.whileAdopted(work));
+    if (document.activeElement && document.activeElement !== document.body) {
+      return;
+    }
+    const addMore = this._addMoreRef.value;
+    if (!this.isActivityActive) {
+      firstFocusable(root)?.focus();
+    } else if (addMore?.matches(':enabled') && addMore.checkVisibility()) {
+      addMore.focus();
+    } else {
+      firstFocusable(this)?.focus();
+    }
+  }
 
   // The measured inter-row flex gap (grid mode; 0 in list mode). A spacer is
   // itself a flex line, so the browser inserts one extra `gap` between it and the
@@ -182,6 +305,11 @@ export class UploadList extends ActivityChildBlock {
 
     if (!this._config.get('confirmUpload')) {
       this._api.uploadAll();
+    }
+
+    if (this._refocusWhenSettled) {
+      this._refocusWhenSettled = false;
+      this.runTask(() => this._focusAfterEmptied());
     }
   }
 
@@ -345,6 +473,30 @@ export class UploadList extends ActivityChildBlock {
     // runs on the first post-adoption render, before first paint. `mode` is not a
     // reactive property, so setting it schedules no further update.
     this.setAttribute('mode', this._config.getTracked('filesViewMode'));
+
+    const list = this._collectionState.getTracked('uploadList');
+    if (list !== this._uploadList || this._currentUid !== this._indexedUid) {
+      const indexOf = (uid: Uid | null) => (uid ? list.indexOf(uid) : -1);
+      let index = indexOf(this._currentUid);
+      if (this._currentUid && index < 0) {
+        this._replaceRemovedCurrentRow(list, this._currentUid);
+        index = indexOf(this._currentUid);
+      }
+      this._indexedUid = this._currentUid;
+      this._currentIndex = index;
+    }
+    this._uploadList = list;
+  }
+
+  // A spacer holding the height of rows outside the window. A spacer occupies its own flex line, so the flex `gap`
+  // adds one extra gap between it and the adjacent row — shrink the spacer by that gap so the rendered window lands
+  // where the scroll position expects (grid mode; `_rowGap` is 0 in list mode, where the gap is folded into each row's
+  // own box). The height goes through `cssomStyleMap` (CSSOM): a CSP without `'unsafe-inline'` drops a `style` attribute.
+  private _spacer(pad: number) {
+    const height = pad - this._rowGap;
+    return height > 0
+      ? html`<div class="uc-list-spacer" style=${cssomStyleMap({ height: `${height}px` })}></div>`
+      : nothing;
   }
 
   // A list⇆grid view-mode switch changes row height + column count but need not
@@ -363,21 +515,15 @@ export class UploadList extends ActivityChildBlock {
     // `collectionErrors` (via `_commonErrorMessage`) drives the common-error row —
     // both `getTracked` off `CollectionStateController`, auto-tracked under
     // `SignalWatcher`, so a collection change re-renders.
-    const uploadList = this._collectionState.getTracked('uploadList');
+    const uploadList = this._uploadList;
     const commonErrorMessage = this._commonErrorMessage;
     const compact = this.chrome === 'compact';
+    const currentIndex = Math.max(0, this._currentIndex);
+    const current = uploadList[currentIndex];
 
-    // Render only the visible window (+ overscan) with top/bottom spacers holding
+    // Render only the visible window (+ overscan) and the current row, with spacers holding
     // the scroll height. Unmeasured geometry → full list, no spacers (unchanged).
-    const view = this._virtualList.window(uploadList);
-    const windowItems = view.items;
-    // A spacer occupies its own flex line, so the flex `gap` adds one extra gap
-    // between it and the adjacent row — shrink the spacer by that gap so the
-    // rendered window lands where the scroll position expects (grid mode; `_rowGap`
-    // is 0 in list mode, where the gap is folded into each row's own box).
-    // The heights go through `cssomStyleMap` (CSSOM): a CSP without `'unsafe-inline'` drops a `style` attribute.
-    const topSpacer = Math.max(0, view.topPad - this._rowGap);
-    const bottomSpacer = Math.max(0, view.bottomPad - this._rowGap);
+    const view = this._virtualList.window(uploadList, currentIndex);
     return html`
   ${
     compact
@@ -403,15 +549,21 @@ export class UploadList extends ActivityChildBlock {
     ${this.yield('empty', html`<span>${this.l10n('no-files')}</span>`)}
   </div>
 
-  <div class="uc-files">
-    <div class="uc-files-wrapper">
-    ${topSpacer > 0 ? html`<div class="uc-list-spacer" style=${cssomStyleMap({ height: `${topSpacer}px` })}></div>` : ''}
+  <div class="uc-files" role="list" ${ref(this._filesRef)} @focusin=${this._handleFocusIn} @keydown=${this._handleKeyDown}>
+    <div class="uc-files-wrapper" role="none" ${ref(this._rowsRef)}>
+    ${this._spacer(view.topPad)}
     ${repeat(
-      windowItems,
-      (uid) => uid,
-      (uid) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
+      view.rows,
+      (row) => row.item,
+      (row) => html`${this._spacer(row.padBefore)}<uc-file-item
+        .uid=${row.item}
+        .tabbable=${row.item === current}
+        tabindex=${row.item === current ? 0 : -1}
+        aria-setsize=${uploadList.length}
+        aria-posinset=${row.index + 1}
+      ></uc-file-item>`,
     )}
-    ${bottomSpacer > 0 ? html`<div class="uc-list-spacer" style=${cssomStyleMap({ height: `${bottomSpacer}px` })}></div>` : ''}
+    ${this._spacer(view.bottomPad)}
     </div>
     <button
       type="button"
@@ -438,6 +590,7 @@ export class UploadList extends ActivityChildBlock {
     <button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
+      ${ref(this._addMoreRef)}
       ?hidden=${!this._addMoreBtnVisible}
       ?disabled=${!this._addMoreBtnEnabled}
       @click=${this._handleAdd}
@@ -451,6 +604,7 @@ export class UploadList extends ActivityChildBlock {
     <button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
+      ${ref(this._addMoreRef)}
       ?hidden=${!this._addMoreBtnVisible}
       ?disabled=${!this._addMoreBtnEnabled}
       @click=${this._handleAdd}
