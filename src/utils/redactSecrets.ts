@@ -17,8 +17,6 @@ export const SECRET_KEYS = ['authToken', 'secureSignature'] as const satisfies r
 
 export const REDACTED = '<redacted>';
 
-export const isSecretKey = (key: string): boolean => (SECRET_KEYS as readonly string[]).includes(key);
-
 /** A shallow copy with every credential replaced, for logging or sending. */
 export const redactSecrets = <T extends Record<string, unknown>>(source: T): T => {
   const result = { ...source };

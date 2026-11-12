@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { isSecretKey, REDACTED, redactSecrets } from './redactSecrets';
+import { REDACTED, redactSecrets } from './redactSecrets';
 
 describe('redactSecrets', () => {
   it('replaces credentials and leaves everything else alone', () => {
@@ -37,12 +37,5 @@ describe('redactSecrets', () => {
   it('leaves an absent credential absent rather than redacting nothing', () => {
     expect(redactSecrets({ publicKey: 'k' })).toEqual({ publicKey: 'k' });
     expect(redactSecrets({ authToken: undefined })).toEqual({ authToken: undefined });
-  });
-
-  it('knows which keys are secret', () => {
-    expect(isSecretKey('authToken')).toBe(true);
-    expect(isSecretKey('secureSignature')).toBe(true);
-    expect(isSecretKey('secureExpire')).toBe(false);
-    expect(isSecretKey('pubkey')).toBe(false);
   });
 });

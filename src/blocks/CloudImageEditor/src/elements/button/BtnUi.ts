@@ -3,22 +3,19 @@ import { html } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import { LitBlock } from '../../../../../lit/LitBlock';
-
-import '../../../../Icon/Icon';
 import type { AriaRole } from '../../../../../types/dom';
+import { EditorBlock } from '../../editor-context';
+import type { EditorL10nKey } from '../../editor-locale';
+import '../../EditorIcon';
 
 type Theme = string | null;
 
-export class BtnUi extends LitBlock {
+export class BtnUi extends EditorBlock {
   @property({ type: String })
   public text = '';
 
   @property({ type: String })
   public icon = '';
-
-  @property({ type: Boolean, reflect: true })
-  public reverse = false;
 
   @property({ type: String, reflect: true })
   public theme: Theme = 'default';
@@ -29,40 +26,32 @@ export class BtnUi extends LitBlock {
   @property({ attribute: 'aria-controls' })
   public ariaControls = '';
 
-  @property({ attribute: 'title-prop' })
-  public titleProp = '';
+  /** `aria-selected` of the inner button, for `aria-role="tab"`; unset renders none. */
+  @property({ type: Boolean, attribute: false })
+  public selected: boolean | undefined = undefined;
 
-  /**
-   * CSS-only attribute
-   */
-  @property({ type: Boolean, noAccessor: true })
-  public active = false;
+  @property({ attribute: 'title-prop' })
+  public titleProp: EditorL10nKey | '' = '';
 
   protected override firstUpdated(changed: PropertyValues<this>): void {
     super.firstUpdated(changed);
-    this._applyReverse();
     this._applyThemeClass();
   }
 
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
 
-    if (changed.has('reverse')) {
-      this._applyReverse();
-    }
-
     if (changed.has('theme')) {
-      this._applyThemeClass();
+      this._applyThemeClass(changed.get('theme'));
     }
   }
 
-  private _applyReverse(): void {
-    this.style.flexDirection = this.reverse ? 'row-reverse' : '';
-  }
-
-  private _applyThemeClass(): void {
+  private _applyThemeClass(previous?: Theme): void {
+    if (previous) {
+      this.classList.remove(`uc-${previous}`);
+    }
     if (this.theme && this.theme !== 'custom') {
-      this.className = `uc-${this.theme}`;
+      this.classList.add(`uc-${this.theme}`);
     }
   }
 
@@ -70,8 +59,7 @@ export class BtnUi extends LitBlock {
     const iconHidden = this._computedIconHidden;
     return {
       'uc-icon': true,
-      'uc-icon_left': !this.reverse,
-      'uc-icon_right': this.reverse,
+      'uc-icon_left': true,
       'uc-icon_hidden': iconHidden,
       'uc-icon_single': this._computedIconSingle,
     };
@@ -85,20 +73,26 @@ export class BtnUi extends LitBlock {
     return !this.text && !this._computedIconHidden;
   }
 
+  private get _ariaSelected(): 'true' | 'false' | undefined {
+    if (this.selected === undefined) return undefined;
+    return this.selected ? 'true' : 'false';
+  }
+
   public override render() {
     return html`
       <button
         type="button"
         role=${ifDefined(this.ariaRole || undefined)}
         aria-controls=${ifDefined(this.ariaControls || undefined)}
-        aria-label=${ifDefined(this.l10n(this.titleProp))}
-        title=${ifDefined(this.l10n(this.titleProp))}
+        aria-selected=${ifDefined(this._ariaSelected)}
+        aria-label=${ifDefined(this.titleProp ? this.l10nSafe(this.titleProp) : undefined)}
+        title=${ifDefined(this.titleProp ? this.l10nSafe(this.titleProp) : undefined)}
       >
-        <uc-icon
+        <uc-editor-icon
           class=${classMap(this._iconClassMap)}
           name=${ifDefined(this.icon || undefined)}
           ?hidden=${this._computedIconHidden}
-        ></uc-icon>
+        ></uc-editor-icon>
         <div class="uc-text">${this.text}</div>
       </button>
     `;

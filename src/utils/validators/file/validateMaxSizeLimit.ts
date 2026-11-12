@@ -1,4 +1,4 @@
-import type { FuncFileValidator } from '../../../abstract/managers/ValidationManager';
+import type { FuncFileValidator } from '../../../abstract/validatorTypes';
 import { prettyBytes } from '../../prettyBytes';
 
 export const validateMaxSizeLimit: FuncFileValidator = (outputEntry, api) => {

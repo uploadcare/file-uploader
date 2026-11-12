@@ -12,16 +12,13 @@ import '~/types/jsx';
  */
 
 describe('unknown internal ids', () => {
-  // QUIRK(api): api.mdx documents `getOutputItem(internalId: string) => OutputFileEntry` with no mention that it can
-  // throw, so a caller reading the docs would expect null/undefined for a stale id. Pinned as current behaviour,
-  // not endorsed (UploaderPublicApi.ts:295).
+  // Documented (api.mdx): `getOutputItem` throws for an id that is not in this uploader's list.
   it('getOutputItem throws rather than returning null', async () => {
     const { api } = await renderSolution();
     expect(() => api.getOutputItem('does-not-exist')).toThrow(/not found in the upload collection/);
   });
 
-  // QUIRK(api): same shape — documented as `=> void`, throws on an id it does not know
-  // (UploaderPublicApi.ts:193). Removing the same file twice is the realistic way to hit it.
+  // Documented (api.mdx): `removeFileByInternalId` throws for an unknown id — removing the same file twice hits it.
   it('removeFileByInternalId throws for an unknown id', async () => {
     const { api } = await renderSolution();
     expect(() => api.removeFileByInternalId('does-not-exist')).toThrow(/not found/);
@@ -35,15 +32,13 @@ describe('unknown internal ids', () => {
     expect(() => api.removeFileByInternalId(entry.internalId)).toThrow(/not found/);
   });
 
-  // QUIRK(api): entry stores live in a single module-level Map keyed by internal id (PubSubCompat.ts:8), not per
-  // ctx-name, so one uploader will happily return another uploader's entry. Ids are random, so this is not reachable
-  // by accident — but the isolation the multi-ctx model implies is not there. Pinned, not endorsed.
-  it('getOutputItem reads across ctx boundaries', async () => {
+  it("getOutputItem does not resolve another uploader's entry", async () => {
     const first = await renderSolution();
     const entry = first.api.addFileFromObject(IMAGE.PIXEL, { fileName: 'from-first.jpg' });
 
     const second = await renderSolution();
-    expect(second.api.getOutputItem(entry.internalId).name).toBe('from-first.jpg');
+    expect(() => second.api.getOutputItem(entry.internalId)).toThrow(/not found in the upload collection/);
+    expect(first.api.getOutputItem(entry.internalId).name).toBe('from-first.jpg');
   });
 });
 
@@ -113,8 +108,30 @@ describe('setCurrentActivity / setModalState misuse', () => {
     api.setCurrentActivity('no-such-activity' as 'start-from');
 
     await vi.waitFor(() => {
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('not found in the context'));
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[uc]/),
+        expect.stringContaining('not found in the context'),
+      );
     });
+  });
+
+  // As in v1, which reports an activity when its block activates: the activity is set, but nothing in the ctx shows it.
+  it('reports no activity-change for an activity nothing shows', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    // No external source in the list, so the external-source plugin and its block are never loaded.
+    const { api, provider } = await renderSolution('regular', { sourceList: 'local, url, camera' });
+    const recorder = recordEvents(provider);
+    api.setCurrentActivity('external', { externalSourceType: 'gdrive' });
+
+    // The warning is the last thing the call does.
+    await vi.waitFor(() => {
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[uc]/),
+        expect.stringContaining('"external" not found in the context'),
+      );
+    });
+    expect(recorder.detailsOf('activity-change')).toEqual([]);
+    expect(api.getCurrentActivity()).toBe('external');
   });
 
   it('warns when asked to open the modal with no current activity', async () => {
@@ -123,7 +140,10 @@ describe('setCurrentActivity / setModalState misuse', () => {
     api.setModalState(true);
 
     await vi.waitFor(() => {
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining("Can't open modal without current activity"));
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[uc]/),
+        expect.stringContaining("Can't open modal without current activity"),
+      );
     });
   });
 });
@@ -211,14 +231,20 @@ describe('silent: true', () => {
 });
 
 describe('addFileFromUuid', () => {
-  // QUIRK(api): nothing validates the uuid at add time — unlike addFileFromCdnUrl, which throws on input it cannot
-  // parse (UploaderPublicApi.ts:85). A malformed uuid is accepted here and only surfaces later, when the entry is
-  // resolved. Pinned as current behaviour, not endorsed.
-  it('accepts a malformed uuid without complaint', async () => {
+  // Like `addFileFromCdnUrl`, a value that is not exactly a file uuid is rejected up front and nothing is added.
+  it('throws for a value that is not a uuid', async () => {
     const { api } = await renderSolution();
-    const entry = api.addFileFromUuid('not-a-uuid');
 
-    expect(entry.uuid).toBe('not-a-uuid');
-    expect(entry.status).toBe('idle');
+    for (const value of ['not-a-uuid', '', 'f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f/-/resize/100x/']) {
+      expect(() => api.addFileFromUuid(value)).toThrow('Invalid UUID');
+    }
+    expect(api.getOutputCollectionState().totalCount).toBe(0);
+  });
+
+  it('adds a valid uuid', async () => {
+    const { api } = await renderSolution();
+    const entry = api.addFileFromUuid('f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f');
+
+    expect(entry.uuid).toBe('f4dc9ebc-ed6d-4b4d-83d1-863bf1e4bb7f');
   });
 });

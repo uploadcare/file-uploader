@@ -8,8 +8,21 @@
     min-height: var(--uc-file-item-height);
   }
 
-  uc-file-item:last-of-type {
+  /* No gap below the last file, as in 1.35. Under windowing a spacer follows the
+     last rendered row until the end of the list is in view, so `:last-child`
+     matches only the true last row and mid-list rows keep the virtualizer's
+     row height (`:last-of-type` would match the last rendered row). */
+  uc-file-item:last-child {
     --uc-file-item-gap: 0;
+
+    /* A unitless 0 makes the `calc()` of `--uc-file-item-height` invalid, which would leave the row no minimum
+       height: before it renders it would have none, and never scroll into view to render. */
+    min-height: calc(var(--uc-preview-size) + var(--uc-padding) * 2);
+  }
+
+  /* Inside the row: the list's scroll container clips what is drawn outside it. */
+  uc-file-item:focus-visible {
+    outline-offset: -2px;
   }
 
   uc-file-item > .uc-inner {
@@ -25,10 +38,6 @@
     background-color: var(--uc-muted);
     border-radius: var(--uc-radius);
     transition: background-color var(--uc-transition);
-  }
-
-  uc-file-item > .uc-inner[data-focused] {
-    background-color: transparent;
   }
 
   uc-file-item > .uc-inner[data-uploading] .uc-edit-btn {

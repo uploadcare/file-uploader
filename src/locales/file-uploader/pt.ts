@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'URL CDN',
   'file-size-unknown': 'Desconhecido',
   'camera-permissions-denied': 'Acesso à câmera negado',
+  'camera-microphone-denied': 'Acesso ao microfone negado',
   'camera-permissions-prompt': 'Por favor, permita o acesso à câmera',
   'camera-permissions-request': 'Solicitar acesso',
   'camera-settings': 'Configurações da câmera',
@@ -107,6 +108,8 @@ export default {
   'camera-audio-quality-high': 'Alta',
   'camera-audio-mode-voice': 'Voz',
   'camera-audio-mode-music': 'Música',
+  'camera-not-found': 'Nenhuma câmera encontrada',
+  'camera-unavailable': 'A câmera está em uso ou indisponível',
   'files-count-limit-error-title': 'Limite de quantidade de arquivos excedido',
   'files-count-limit-error-too-few':
     'Você selecionou {{total}} {{plural:file(total)}}. Pelo menos {{min}} {{plural:file(min)}} são necessários.',
@@ -120,6 +123,10 @@ export default {
   'file-item-edit-button': 'Editar',
   'file-item-remove-button': 'Remover',
   'a11y-activity-header-button-close': 'Fechar',
+  'a11y-camera-microphone': 'Microfone',
+  'a11y-camera-stop-recording': 'Parar gravação',
+  'a11y-camera-play': 'Reproduzir',
+  'a11y-camera-pause': 'Pausar',
   'a11y-editor-tab-filters': 'Filtros',
   'a11y-editor-tab-tuning': 'Ajustes',
   'a11y-editor-tab-crop': 'Cortar',
@@ -146,6 +153,8 @@ export default {
 
   custom: 'Forma livre',
   'freeform-crop': 'Recorte livre',
+  'network-error': 'Erro de rede',
+  retry: 'Tentar novamente',
 
   'upload-from': 'Carregar de {{source}}',
   'get-from': 'Obter de {{source}}',

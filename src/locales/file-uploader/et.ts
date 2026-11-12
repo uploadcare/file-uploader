@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Tundmatu',
   'camera-permissions-denied': 'Kaamera ligipääs keelatud',
+  'camera-microphone-denied': 'Mikrofoni ligipääs keelatud',
   'camera-permissions-prompt': 'Palun luba kaamera ligipääs',
   'camera-permissions-request': 'Küsi ligipääsu',
   'camera-settings': 'Kaamera seaded',
@@ -107,6 +108,8 @@ export default {
   'camera-audio-quality-high': 'Kõrge',
   'camera-audio-mode-voice': 'Kõne',
   'camera-audio-mode-music': 'Muusika',
+  'camera-not-found': 'Kaamerat ei leitud',
+  'camera-unavailable': 'Kaamera on kasutusel või pole saadaval',
   'files-count-limit-error-title': 'Failide arvu piir ületatud',
   'files-count-limit-error-too-few':
     'Valisid {{total}} {{plural:file(total)}}. Vähemalt {{min}} {{plural:file(min)}} on nõutud.',
@@ -119,6 +122,10 @@ export default {
   'file-item-edit-button': 'Redigeeri',
   'file-item-remove-button': 'Eemalda',
   'a11y-activity-header-button-close': 'Sulge',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Peata salvestamine',
+  'a11y-camera-play': 'Esita',
+  'a11y-camera-pause': 'Peata',
   'a11y-editor-tab-filters': 'Filtrid',
   'a11y-editor-tab-tuning': 'Häälestus',
   'a11y-editor-tab-crop': 'Kärbi',
@@ -143,6 +150,8 @@ export default {
 
   custom: 'Vaba vorm',
   'freeform-crop': 'Vaba lõikamine',
+  'network-error': 'Võrguviga',
+  retry: 'Proovi uuesti',
 
   'upload-from': 'Lae üles {{source}}',
   'get-from': 'Hangi {{source}}',

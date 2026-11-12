@@ -30,7 +30,7 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
   await expectActivity(rendered.root, 'camera');
 
   const camera = within(rendered.root).getByTestId('uc-camera-source');
-  await expect.element(camera.getByRole('button', { name: 'Shot', exact: true }), { timeout: 20_000 }).toBeVisible();
+  await expect.element(camera.getByTestId('uc-camera-controls--shot'), { timeout: 20_000 }).toBeVisible();
   await camera.getByRole('button', { name: 'Video', exact: true }).click();
 
   return {
@@ -87,8 +87,8 @@ const spyOnRecorderOptions = () => {
 };
 
 const startRecording = async (camera: Locator) => {
-  await camera.getByRole('button', { name: 'Shot', exact: true }).click();
-  await expect.element(camera.getByTestId('uc-camera-source--recording-timer')).toBeVisible();
+  await camera.getByTestId('uc-camera-controls--shot').click();
+  await expect.element(camera.getByTestId('uc-camera-controls--recording-timer')).toBeVisible();
 };
 
 describe('cameraAudioMode', () => {
@@ -129,7 +129,7 @@ describe('cameraAudioMode', () => {
 
   it('keeps a muted microphone muted across a change', async () => {
     const { camera, config } = await openCamera();
-    await camera.getByTestId('uc-camera-source--toggle-microphone').click();
+    await camera.getByTestId('uc-camera-controls--toggle-microphone').click();
     const oldMic = audioTrack(camera);
     expect(oldMic?.enabled).toBe(false);
 
@@ -147,7 +147,7 @@ describe('cameraAudioMode', () => {
     await new Promise((resolve) => setTimeout(resolve, 500));
     expect(microphoneRequests(getUserMedia)).toEqual([]);
 
-    await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+    await camera.getByTestId('uc-camera-controls--shot').click();
 
     await vi.waitFor(() => expect(microphoneRequests(getUserMedia)).toEqual([{ audio: MUSIC_ON_THE_SAME_MIC }]), {
       timeout: 10_000,
@@ -277,7 +277,7 @@ describe('microphone picker', () => {
       ...opened.camera.element().querySelectorAll('.uc-controls uc-select, .uc-controls [role="radiogroup"]'),
     ].filter((picker) => !picker.closest('[popover]'));
     expect(barPickers).toEqual([]);
-    await expect.element(opened.camera.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
+    await expect.element(opened.camera.getByTestId('uc-camera-controls--toggle-microphone')).toBeVisible();
   });
 
   it('switches microphones without reopening the camera', async () => {
@@ -299,7 +299,7 @@ describe('microphone picker', () => {
 
   it('is disabled while the microphone is muted, open if it is the only setting', async () => {
     const opened = await openCamera();
-    await opened.camera.getByTestId('uc-camera-source--toggle-microphone').click();
+    await opened.camera.getByTestId('uc-camera-controls--toggle-microphone').click();
 
     await opened.settingsButton.click();
 
@@ -314,7 +314,7 @@ describe('microphone picker', () => {
     await expect.poll(() => opened.microphone.isOpen()).toBe(true);
 
     // The click outside also dismisses the popup.
-    await opened.camera.getByTestId('uc-camera-source--toggle-microphone').click();
+    await opened.camera.getByTestId('uc-camera-controls--toggle-microphone').click();
     await opened.settingsButton.click();
 
     const summary = opened.microphone.options.element().closest('details')?.querySelector('summary');

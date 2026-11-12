@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Nezināms',
   'camera-permissions-denied': 'Kameras piekļuve liegta',
+  'camera-microphone-denied': 'Mikrofona piekļuve liegta',
   'camera-permissions-prompt': 'Lūdzu, atļaujiet piekļuvi kamerai',
   'camera-permissions-request': 'Pieprasīt piekļuvi',
   'camera-settings': 'Kameras iestatījumi',
@@ -107,6 +108,8 @@ export default {
   'camera-audio-quality-high': 'Augsta',
   'camera-audio-mode-voice': 'Balss',
   'camera-audio-mode-music': 'Mūzika',
+  'camera-not-found': 'Kamera netika atrasta',
+  'camera-unavailable': 'Kamera tiek izmantota vai nav pieejama',
   'files-count-limit-error-title': 'Failu skaita limits pārsniegts',
   'files-count-limit-error-too-few':
     'Jūs esat izvēlējies {{total}} {{plural:file(total)}}. Nepieciešami vismaz {{min}} {{plural:file(min)}}.',
@@ -119,6 +122,10 @@ export default {
   'file-item-edit-button': 'Rediģēt',
   'file-item-remove-button': 'Noņemt',
   'a11y-activity-header-button-close': 'Aizvērt',
+  'a11y-camera-microphone': 'Mikrofons',
+  'a11y-camera-stop-recording': 'Apturēt ierakstīšanu',
+  'a11y-camera-play': 'Atskaņot',
+  'a11y-camera-pause': 'Pauzēt',
   'a11y-editor-tab-filters': 'Filtri',
   'a11y-editor-tab-tuning': 'Pielāgošana',
   'a11y-editor-tab-crop': 'Apgriezt',
@@ -145,6 +152,8 @@ export default {
 
   custom: 'Brīvā forma',
   'freeform-crop': 'Brīva apgriešana',
+  'network-error': 'Tīkla kļūda',
+  retry: 'Mēģināt vēlreiz',
 
   'upload-from': 'Augšupielādēt no {{source}}',
   'get-from': 'Iegūt no {{source}}',

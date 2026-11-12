@@ -5,6 +5,7 @@ import type {
   ConfigAttributesType,
   ConfigComplexType,
   ConfigPlainType,
+  ConfigType,
   FileValidatorDescriptor,
   FuncCollectionValidator,
   FuncFileValidator,
@@ -220,6 +221,19 @@ test('the auth-token attribute carries only the plain token', () => {
   expectTypeOf<ConfigAttributesType['authtoken']>().toEqualTypeOf<string | null>();
 });
 
+test('the internal modalPresentation option reaches the published types', () => {
+  // Undocumented, but the dashboard's previews set it through these types, so the build must not strip it.
+  expectTypeOf<ConfigType['modalPresentation']>().toEqualTypeOf<'modal' | 'inline'>();
+  expectTypeOf<ConfigAttributesType['modal-presentation']>().toEqualTypeOf<'modal' | 'inline'>();
+  () => <uc-config ctx-name="1" modalPresentation="inline" />;
+  () => {
+    const ref = useRef<Config | null>(null);
+    if (ref.current) {
+      ref.current.modalPresentation = 'inline';
+    }
+  };
+});
+
 test('validators take sync, async and descriptor forms', () => {
   () => {
     const ref = useRef<Config | null>(null);
@@ -339,10 +353,6 @@ test('every documented option has its documented value type', () => {
   config.iconHrefResolver = (name) => `#uc-icon-${name}`;
   config.plugins = [{ id: 'p', setup: () => {} }];
 
-  // QUIRK(types): options.mdx says returning nothing from `iconHrefResolver` falls back to the default sprite, and
-  // `Icon._updateResolvedHref` implements that (`customHref ?? defaultHref`) — but the published type is
-  // `(iconName: string) => string`, so the documented resolver does not compile. When the type is widened to
-  // `string | undefined` this `@ts-expect-error` starts failing, which is the signal to delete it.
-  // @ts-expect-error the documented "return nothing" form is not expressible in the published type
+  // options.mdx: returning nothing falls back to the default sprite.
   config.iconHrefResolver = () => undefined;
 });

@@ -1,7 +1,7 @@
 import { html } from 'lit';
 import { property } from 'lit/decorators.js';
-import { styleMap } from 'lit/directives/style-map.js';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
+import { ChildBlock } from '../../lit/ChildBlock';
+import { cssomStyleMap } from '../../lit/cssom-style-map';
 
 import '../Icon/Icon';
 
@@ -10,26 +10,23 @@ import { classMap } from 'lit/directives/class-map.js';
 
 const L10N_REMOVE_KEY = 'file-item-remove-button';
 
-export class FileActionButton extends LitUploaderBlock {
+export class FileActionButton extends ChildBlock {
   public static override styleAttrs = [...super.styleAttrs, 'uc-file-action-button'];
 
   @property({ type: Boolean })
   public uploading = false;
 
+  // Queued to upload (accepted, not yet started). Rendered as an indeterminate
+  // (continuously spinning) preloader so it's clear the file is waiting in queue.
   @property({ type: Boolean })
-  public failed = false;
-
-  @property({ type: Boolean })
-  public success = false;
-
-  @property({ type: Boolean })
-  public idle = false;
-
-  @property({ type: Boolean })
-  public hideRemove = false;
+  public queued = false;
 
   @property({ type: Number })
   public progress = 0;
+
+  /** Whether the button is in the tab order (out of it in a list row that is not the current one). */
+  @property({ attribute: false })
+  public tabbable = true;
 
   private get _normalizedProgress(): number {
     return Math.min(Math.max(this.progress || 0, 0), 100);
@@ -48,13 +45,12 @@ export class FileActionButton extends LitUploaderBlock {
     const classes = classMap({
       'uc-remove-btn': true,
       'uc-mini-btn': true,
-      'uc-idle': this.idle,
       'uc-uploading': this.uploading,
-      'uc-hide-remove': this.hideRemove,
-      'uc-failed': this.failed,
-      'uc-success': this.success,
+      'uc-queued': this.queued,
     });
-    const progressOffset = 100 - this._normalizedProgress;
+    // Queued → a fixed partial arc that the CSS spins (indeterminate); otherwise
+    // the determinate upload progress.
+    const progressOffset = this.queued ? 65 : 100 - this._normalizedProgress;
     const actionLabel = this.l10n(L10N_REMOVE_KEY);
 
     return html`
@@ -64,6 +60,7 @@ export class FileActionButton extends LitUploaderBlock {
           title=${actionLabel}
           aria-label=${actionLabel}
           class=${classes}
+          tabindex=${this.tabbable ? 0 : -1}
         >
           <span class="uc-icon-wrap">
             <uc-icon name="close"></uc-icon>
@@ -72,7 +69,7 @@ export class FileActionButton extends LitUploaderBlock {
           <uc-icon
             name="preloader"
             class="uc-preloader"
-            style=${styleMap({
+            style=${cssomStyleMap({
               '--l-progress-offset': String(progressOffset),
             })}
           ></uc-icon>

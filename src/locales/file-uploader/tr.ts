@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Bilinmiyor',
   'camera-permissions-denied': 'Kamera erişimi reddedildi',
+  'camera-microphone-denied': 'Mikrofon erişimi reddedildi',
   'camera-permissions-prompt': 'Lütfen kameraya erişime izin verin',
   'camera-permissions-request': 'Erişim iste',
   'camera-settings': 'Kamera ayarları',
@@ -105,6 +106,8 @@ export default {
   'camera-audio-quality-high': 'Yüksek',
   'camera-audio-mode-voice': 'Konuşma',
   'camera-audio-mode-music': 'Müzik',
+  'camera-not-found': 'Kamera bulunamadı',
+  'camera-unavailable': 'Kamera kullanımda veya kullanılamıyor',
   'files-count-limit-error-title': 'Dosya sayısı limiti aşıldı',
   'files-count-limit-error-too-few':
     '{{total}} {{plural:file(total)}} seçtiniz. En az {{min}} {{plural:file(min)}} gerekli.',
@@ -117,6 +120,10 @@ export default {
   'file-item-edit-button': 'Düzenle',
   'file-item-remove-button': 'Kaldır',
   'a11y-activity-header-button-close': 'Kapat',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Kaydı durdur',
+  'a11y-camera-play': 'Oynat',
+  'a11y-camera-pause': 'Duraklat',
   'a11y-editor-tab-filters': 'Filtreler',
   'a11y-editor-tab-tuning': 'Ayar',
   'a11y-editor-tab-crop': 'Kırp',
@@ -143,6 +150,8 @@ export default {
 
   custom: 'Serbest form',
   'freeform-crop': 'Serbest kırpma',
+  'network-error': 'Ağ hatası',
+  retry: 'Tekrar dene',
 
   'upload-from': '{{source}} kaynağından yükle',
   'get-from': '{{source}} kaynağından al',

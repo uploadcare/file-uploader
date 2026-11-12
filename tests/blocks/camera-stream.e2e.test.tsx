@@ -21,7 +21,7 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
   await expectActivity(rendered.root, 'camera');
 
   const camera = within(rendered.root).getByTestId('uc-camera-source');
-  await expect.element(camera.getByRole('button', { name: 'Shot', exact: true }), { timeout: 20_000 }).toBeVisible();
+  await expect.element(camera.getByTestId('uc-camera-controls--shot'), { timeout: 20_000 }).toBeVisible();
 
   return { ...rendered, camera, getUserMedia };
 };
@@ -135,7 +135,11 @@ describe('cameraConstraints', () => {
 
     expect(getUserMedia).toHaveBeenCalledTimes(2);
     expect(lastVideoRequest(getUserMedia)).toMatchObject({ width: { ideal: 1920 } });
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('cannot satisfy cameraConstraints'), expect.anything());
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining('[uc]'),
+      expect.stringContaining('cannot satisfy cameraConstraints'),
+      expect.anything(),
+    );
   });
 
   it('applies a change to the open camera without reopening it', async () => {
@@ -170,14 +174,14 @@ describe('cameraConstraints', () => {
     await camera.getByRole('button', { name: 'Video', exact: true }).click();
     const applyConstraints = vi.spyOn(MediaStreamTrack.prototype, 'applyConstraints');
 
-    await camera.getByRole('button', { name: 'Shot', exact: true }).click();
-    const timer = camera.getByTestId('uc-camera-source--recording-timer');
+    await camera.getByTestId('uc-camera-controls--shot').click();
+    const timer = camera.getByTestId('uc-camera-controls--recording-timer');
     await expect.element(timer).toBeVisible();
     config.cameraConstraints = { video: { frameRate: { ideal: 15 } } };
     await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
     expect(applyConstraints).not.toHaveBeenCalled();
 
-    await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+    await camera.getByTestId('uc-camera-controls--shot').click();
 
     await vi.waitFor(() =>
       expect(applyConstraints).toHaveBeenCalledWith(expect.objectContaining({ frameRate: { ideal: 15 } })),

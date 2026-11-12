@@ -21,7 +21,7 @@ describe('photos', () => {
     await expectActivity(root, 'start-from');
     await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Camera', exact: true }).click();
     const camera = within(root).getByTestId('uc-camera-source');
-    const shot = camera.getByRole('button', { name: 'Shot', exact: true });
+    const shot = camera.getByTestId('uc-camera-controls--shot');
     await expect.element(shot, { timeout: 20_000 }).toBeVisible();
     const video = camera.element().querySelector('video') as HTMLVideoElement;
     await vi.waitFor(() => expect(video.videoWidth).toBeGreaterThan(0));

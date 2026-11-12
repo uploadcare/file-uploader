@@ -1,8 +1,7 @@
 import type { PropertyValues, TemplateResult } from 'lit';
 import { html } from 'lit';
-import { state } from 'lit/decorators.js';
+import { property } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
-import { LitBlock } from '../../../lit/LitBlock';
 import { UID } from '../../../utils/UID';
 import {
   clamp,
@@ -27,29 +26,45 @@ import {
   THUMB_SIDE_SIZE,
   THUMB_STROKE_WIDTH,
 } from './cropper-constants.js';
+import { EditorBlock } from './editor-context';
 import { classNames } from './lib/classNames.js';
-import type { CropAspectRatio, Direction, FrameThumbs, Rectangle } from './types';
+import type { Direction, FrameThumbs, Rectangle } from './types';
 
-type FrameThumb = NonNullable<FrameThumbs[Direction]>;
+type FrameThumb = FrameThumbs[Direction];
 
 type Delta = [number, number];
 
-export class CropFrame extends LitBlock {
-  private _backdropMask?: SVGMaskElement;
-  private _backdropMaskInner?: SVGRectElement;
+const EMPTY_RECT: Rectangle = { x: 0, y: 0, width: 0, height: 0 };
+
+/** Dispatched by `CropFrame` when a drag gesture moves/resizes the crop box — the parent (`EditorImageCropper`) is the source of truth for `cropBox` and writes it back down as a prop. */
+export type CropBoxChangeEvent = CustomEvent<Rectangle>;
+
+export class CropFrame extends EditorBlock {
+  // Passed down by `EditorImageCropper` (cropper-subtree-local state — see
+  // `EditorState`): NOT read from the editor controller. Drag changes are reported back up via `cropboxchange`
+  // (see `_commitCropBox`); the parent is the single source of truth and
+  // re-passes the (possibly clamped) value down.
+  @property({ attribute: false })
+  public imageBox: Rectangle = EMPTY_RECT;
+
+  @property({ attribute: false })
+  public cropBox: Rectangle = EMPTY_RECT;
+
+  private readonly _backdropMaskRef = createRef<SVGMaskElement>();
+  private readonly _backdropMaskInnerRef = createRef<SVGRectElement>();
   private readonly _backdropMaskId = `uc-backdrop-mask-${UID.generateFastUid()}`;
   private _frameThumbs?: FrameThumbs;
-  private _frameGuides?: SVGElement;
+  private readonly _frameGuidesRef = createRef<SVGSVGElement>();
   private _draggingThumb?: FrameThumb;
   private _hoverThumb?: FrameThumb;
   private _dragStartPoint?: Delta;
   private _dragStartCrop?: Rectangle;
   private _frameImage?: SVGImageElement;
   private _guidesHidden = false;
-  @state()
   private _draggingValue = false;
   private readonly _svgRef = createRef<SVGSVGElement>();
   private _svgReady = false;
+  private _renderFrame = 0;
   private _pendingMaskHref: string | null = null;
 
   private get _svgElement(): SVGSVGElement | null {
@@ -69,10 +84,11 @@ export class CropFrame extends LitBlock {
   }
 
   private _applyGuidesDragState(): void {
-    if (!this._frameGuides) {
+    const guides = this._frameGuidesRef.value;
+    if (!guides) {
       return;
     }
-    this._frameGuides.setAttribute(
+    guides.setAttribute(
       'class',
       classNames({
         'uc-guides--hidden': this._guidesHidden,
@@ -83,10 +99,7 @@ export class CropFrame extends LitBlock {
   }
 
   private _shouldThumbBeDisabled(direction: Direction): boolean {
-    const imageBox = this.$['*imageBox'] as Rectangle | undefined;
-    if (!imageBox) {
-      return false;
-    }
+    const imageBox = this.imageBox;
 
     if (direction === '' && imageBox.height <= MIN_CROP_SIZE && imageBox.width <= MIN_CROP_SIZE) {
       return true;
@@ -97,87 +110,38 @@ export class CropFrame extends LitBlock {
     return tooHigh || tooWide;
   }
 
-  private _createBackdrop(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle | undefined;
-    if (!cropBox) {
-      return;
-    }
-    const { x, y, width, height } = cropBox;
-    const svg = this._svgElement;
-    if (!svg) {
-      return;
-    }
-
-    const mask = createSvgNode('mask', { id: this._backdropMaskId }) as SVGMaskElement;
-    const maskRectOuter = createSvgNode('rect', {
-      x: 0,
-      y: 0,
-      width: '100%',
-      height: '100%',
-      fill: 'white',
-    }) as SVGRectElement;
-    const maskRectInner = createSvgNode('rect', {
-      x,
-      y,
-      width,
-      height,
-      fill: 'black',
-    }) as SVGRectElement;
-    mask.appendChild(maskRectOuter);
-    mask.appendChild(maskRectInner);
-
-    const backdropRect = createSvgNode('rect', {
-      x: 0,
-      y: 0,
-      width: '100%',
-      height: '100%',
-      fill: 'var(--color-image-background)',
-      'fill-opacity': 0.85,
-      mask: `url(#${this._backdropMaskId})`,
-    });
-    svg.appendChild(backdropRect);
-    svg.appendChild(mask);
-
-    this._backdropMask = mask;
-    this._backdropMaskInner = maskRectInner;
-  }
-
   /**
    * @private Super Tricky workaround for the chromium bug See
    *   https://bugs.chromium.org/p/chromium/issues/detail?id=330815
    */
   private _resizeBackdrop(): void {
-    if (!this._backdropMask) {
+    const mask = this._backdropMaskRef.value;
+    if (!mask) {
       return;
     }
-    this._backdropMask.style.display = 'none';
+    mask.style.display = 'none';
     window.requestAnimationFrame(() => {
-      if (this._backdropMask) {
-        this._backdropMask.style.display = 'block';
-      }
+      mask.style.display = 'block';
     });
   }
 
   private _updateBackdrop(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle | undefined;
-    if (!cropBox) {
-      return;
-    }
+    const cropBox = this.cropBox;
     const { x, y, width, height } = cropBox;
 
-    this._backdropMaskInner && setSvgNodeAttrs(this._backdropMaskInner, { x, y, width, height });
+    if (this._backdropMaskInnerRef.value) {
+      setSvgNodeAttrs(this._backdropMaskInnerRef.value, { x, y, width, height });
+    }
   }
 
   private _updateFrame(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle | undefined;
+    const cropBox = this.cropBox;
+    const guides = this._frameGuidesRef.value;
 
-    if (!cropBox || !this._frameGuides || !this._frameThumbs) {
+    if (!guides || !this._frameThumbs) {
       return;
     }
     for (const thumb of Object.values(this._frameThumbs)) {
-      if (!thumb) {
-        continue;
-      }
       const { direction, pathNode, interactionNode, groupNode } = thumb;
       const isCenter = direction === '';
       const isCorner = direction.length === 2;
@@ -201,10 +165,7 @@ export class CropFrame extends LitBlock {
         const pathInfo = isCorner
           ? cornerPath(cropBox, direction, thumbSizeMultiplier)
           : sidePath(cropBox, direction as Extract<Direction, 'n' | 's' | 'e' | 'w'>, thumbSizeMultiplier);
-        const center = pathInfo.center as [number, number] | undefined;
-        if (!center) {
-          continue;
-        }
+        const { center } = pathInfo;
         const size = Math.max(
           MAX_INTERACTION_SIZE * clamp(Math.min(width, height) / MAX_INTERACTION_SIZE / 3, 0, 1),
           MIN_INTERACTION_SIZE,
@@ -215,7 +176,7 @@ export class CropFrame extends LitBlock {
           width: size * 2,
           height: size * 2,
         });
-        setSvgNodeAttrs(pathNode, { d: pathInfo.d as string });
+        setSvgNodeAttrs(pathNode, { d: pathInfo.d });
       }
 
       const disableThumb = this._shouldThumbBeDisabled(direction);
@@ -228,7 +189,7 @@ export class CropFrame extends LitBlock {
       );
     }
 
-    setSvgNodeAttrs(this._frameGuides, {
+    setSvgNodeAttrs(guides, {
       x: cropBox.x - GUIDE_STROKE_WIDTH * 0.5,
       y: cropBox.y - GUIDE_STROKE_WIDTH * 0.5,
       width: cropBox.width + GUIDE_STROKE_WIDTH,
@@ -236,7 +197,7 @@ export class CropFrame extends LitBlock {
     });
   }
 
-  private _createThumb(frameThumbs: FrameThumbs, direction: Direction): void {
+  private _createThumb(direction: Direction): FrameThumb {
     const groupNode = createSvgNode('g');
     groupNode.classList.add('uc-thumb');
     groupNode.setAttribute('with-effects', '');
@@ -250,82 +211,28 @@ export class CropFrame extends LitBlock {
     });
     groupNode.appendChild(pathNode);
     groupNode.appendChild(interactionNode);
-    frameThumbs[direction] = {
-      direction,
-      pathNode,
-      interactionNode,
-      groupNode,
-    };
 
     if (direction === '') {
       groupNode.style.cursor = 'move';
     }
 
     interactionNode.addEventListener('pointerdown', this._handlePointerDown.bind(this, direction));
+    return { direction, pathNode, interactionNode, groupNode };
   }
 
   private _createThumbs(): FrameThumbs {
-    const frameThumbs: FrameThumbs = {};
-
-    for (let i = 0; i < 3; i++) {
-      for (let j = 0; j < 3; j++) {
-        const direction = `${['n', '', 's'][i]}${['w', '', 'e'][j]}` as Direction;
-        if (direction === '') {
-          continue;
-        }
-
-        this._createThumb(frameThumbs, direction);
-      }
-    }
-
-    this._createThumb(frameThumbs, '');
-    return frameThumbs;
-  }
-
-  private _createGuides(): SVGElement {
-    const svg = createSvgNode('svg');
-
-    const rect = createSvgNode('rect', {
-      x: 0,
-      y: 0,
-      width: '100%',
-      height: '100%',
-      fill: 'none',
-      stroke: 'currentColor',
-      'stroke-width': GUIDE_STROKE_WIDTH,
-      'stroke-opacity': 0.5,
-    });
-    svg.appendChild(rect);
-
-    for (let i = 1; i <= 2; i++) {
-      const line = createSvgNode('line', {
-        x1: `${GUIDE_THIRD * i}%`,
-        y1: `0%`,
-        x2: `${GUIDE_THIRD * i}%`,
-        y2: `100%`,
-        stroke: 'currentColor',
-        'stroke-width': GUIDE_STROKE_WIDTH,
-        'stroke-opacity': 0.3,
-      });
-      svg.appendChild(line);
-    }
-
-    for (let i = 1; i <= 2; i++) {
-      const line = createSvgNode('line', {
-        x1: `0%`,
-        y1: `${GUIDE_THIRD * i}%`,
-        x2: `100%`,
-        y2: `${GUIDE_THIRD * i}%`,
-        stroke: 'currentColor',
-        'stroke-width': GUIDE_STROKE_WIDTH,
-        'stroke-opacity': 0.3,
-      });
-      svg.appendChild(line);
-    }
-
-    svg.classList.add('uc-guides', 'uc-guides--semi-hidden');
-
-    return svg;
+    // Key order is the thumbs' DOM order and the hover lookup order: the move thumb ('') must come last.
+    return {
+      nw: this._createThumb('nw'),
+      n: this._createThumb('n'),
+      ne: this._createThumb('ne'),
+      w: this._createThumb('w'),
+      e: this._createThumb('e'),
+      sw: this._createThumb('sw'),
+      s: this._createThumb('s'),
+      se: this._createThumb('se'),
+      '': this._createThumb(''),
+    };
   }
 
   private _createFrame(): void {
@@ -335,9 +242,6 @@ export class CropFrame extends LitBlock {
     }
     const fr = document.createDocumentFragment();
 
-    const frameGuides = this._createGuides();
-    fr.appendChild(frameGuides);
-
     const frameThumbs = this._createThumbs();
     for (const { groupNode } of Object.values(frameThumbs)) {
       fr.appendChild(groupNode);
@@ -345,21 +249,17 @@ export class CropFrame extends LitBlock {
 
     svg.appendChild(fr);
     this._frameThumbs = frameThumbs;
-    this._frameGuides = frameGuides;
     this._applyGuidesDragState();
   }
 
   private _handlePointerDown(direction: Direction, e: PointerEvent): void {
     if (!this._frameThumbs) return;
     const thumb = this._frameThumbs[direction];
-    if (!thumb) {
-      return;
-    }
     if (this._shouldThumbBeDisabled(direction)) {
       return;
     }
 
-    const cropBox = this.$['*cropBox'] as Rectangle;
+    const cropBox = this.cropBox;
     const svgElement = this._svgElement;
     if (!svgElement) {
       return;
@@ -406,16 +306,27 @@ export class CropFrame extends LitBlock {
 
     const movedCropBox = this._calcCropBox(direction, [dx, dy]);
     if (movedCropBox) {
-      this.$['*cropBox'] = movedCropBox;
+      this._commitCropBox(movedCropBox);
     }
   };
 
+  /** Reports a drag-driven crop-box change up to the parent (`EditorImageCropper`), which owns `cropBox` and re-passes the (possibly clamped) value back down as a prop — see `CropBoxChangeEvent`. */
+  private _commitCropBox(rect: Rectangle): void {
+    this.dispatchEvent(
+      new CustomEvent<Rectangle>('uc-internal:cropboxchange', {
+        detail: rect,
+        bubbles: true,
+        composed: true,
+      }) satisfies CropBoxChangeEvent,
+    );
+  }
+
   private _calcCropBox(direction: Direction, delta: Delta): Rectangle | undefined {
     const [dx, dy] = delta;
-    const imageBox = this.$['*imageBox'] as Rectangle;
-    let rect = this._dragStartCrop ?? (this.$['*cropBox'] as Rectangle);
+    const imageBox = this.imageBox;
+    let rect = this._dragStartCrop ?? this.cropBox;
 
-    const cropPreset = this.$['*currentAspectRatio'] as CropAspectRatio | null;
+    const cropPreset = this.editorController.currentAspectRatio;
     const aspectRatio = cropPreset ? cropPreset.width / cropPreset.height : undefined;
 
     if (direction === '') {
@@ -425,7 +336,7 @@ export class CropFrame extends LitBlock {
     }
 
     if (!Object.values(rect).every((number) => Number.isFinite(number) && number >= 0)) {
-      console.error('CropFrame is trying to create invalid rectangle', {
+      this._log.error('CropFrame is trying to create invalid rectangle', {
         payload: rect,
       });
       return;
@@ -437,25 +348,13 @@ export class CropFrame extends LitBlock {
     if (!this._frameThumbs) return;
 
     const hoverThumb = Object.values(this._frameThumbs).find((thumb) => {
-      if (!thumb) {
-        return false;
-      }
       if (this._shouldThumbBeDisabled(thumb.direction)) {
         return false;
       }
-      const node = thumb.interactionNode;
-      const bounds = node.getBoundingClientRect();
-      const rect = {
-        x: bounds.x,
-        y: bounds.y,
-        width: bounds.width,
-        height: bounds.height,
-      };
-      const hover = rectContainsPoint(rect, [e.x, e.y]);
-      return hover;
+      return rectContainsPoint(thumb.interactionNode.getBoundingClientRect(), [e.x, e.y]);
     });
 
-    this._hoverThumb = hoverThumb as FrameThumb | undefined;
+    this._hoverThumb = hoverThumb;
     this._updateCursor();
   };
 
@@ -480,25 +379,13 @@ export class CropFrame extends LitBlock {
       return;
     }
     this._pendingMaskHref = null;
-    const fr = document.createDocumentFragment();
-
-    const imageNode = createSvgNode('image', {
-      href,
-    }) as SVGImageElement;
-
-    imageNode.setAttribute('class', 'uc-cloud-mask');
-
-    fr.appendChild(imageNode);
-
-    svg.appendChild(fr);
-
-    this._frameImage = imageNode;
+    this._frameImage = svg.appendChild(createSvgNode('image', { href, class: 'uc-cloud-mask' }));
   }
 
   private _updateMask(): void {
-    const cropBox = this.$['*cropBox'] as Rectangle | undefined;
+    const cropBox = this.cropBox;
 
-    if (!cropBox || !this._frameImage) {
+    if (!this._frameImage) {
       return;
     }
 
@@ -523,11 +410,7 @@ export class CropFrame extends LitBlock {
 
   public toggleThumbs(visible: boolean): void {
     if (!this._frameThumbs) return;
-    for (const thumb of Object.values(this._frameThumbs)) {
-      if (!thumb) {
-        continue;
-      }
-      const { groupNode } = thumb;
+    for (const { groupNode } of Object.values(this._frameThumbs)) {
       groupNode.setAttribute(
         'class',
         classNames('uc-thumb', {
@@ -538,41 +421,58 @@ export class CropFrame extends LitBlock {
     }
   }
 
-  public override initCallback(): void {
-    super.initCallback();
+  public constructor() {
+    super();
 
-    this.sub('*imageBox', () => {
-      this._resizeBackdrop();
-      if (!this._svgReady) {
-        return;
-      }
-      window.requestAnimationFrame(() => {
-        this._render();
-      });
-    });
-
-    this.sub('*cropBox', (cropBox: Rectangle | undefined) => {
-      if (!cropBox) {
-        return;
-      }
-      this._guidesHidden = cropBox.height <= MIN_CROP_SIZE || cropBox.width <= MIN_CROP_SIZE;
-      this._applyGuidesDragState();
-      if (!this._svgReady) {
-        return;
-      }
-      window.requestAnimationFrame(() => {
-        this._render();
-      });
-    });
-
-    this.subConfigValue('cloudImageEditorMaskHref', (maskHref: string | null) => {
+    // Controller-dependent setup (mirrors `ChildBlock.controllerReady`):
+    // reads the mask config once per
+    // (re)attach. `cloudImageEditorMaskHref` is effectively static for the
+    // life of an editor instance, so a one-shot read is enough — no
+    // observer is needed here.
+    this.onEditorAttach(() => {
+      const maskHref = this.editorController.getConfig('cloudImageEditorMaskHref');
       if (maskHref) {
         this._createMask(maskHref);
       }
     });
+  }
+
+  public override connectedCallback(): void {
+    super.connectedCallback();
 
     document.addEventListener('pointermove', this._handlePointerMove, true);
     document.addEventListener('pointerup', this._handlePointerUp, true);
+    // Re-attach the svg listener that `disconnectedCallback` removed — the svg
+    // is set up once in `_initializeSvg` (gated by `_svgReady`), so on a
+    // light-DOM reconnect that method early-returns and would not re-add it.
+    if (this._svgReady) {
+      this._svgElement?.addEventListener('pointermove', this._handleSvgPointerMove, true);
+    }
+  }
+
+  protected override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+
+    if (changedProperties.has('imageBox')) {
+      this._resizeBackdrop();
+    }
+
+    if (changedProperties.has('cropBox')) {
+      this._guidesHidden = this.cropBox.height <= MIN_CROP_SIZE || this.cropBox.width <= MIN_CROP_SIZE;
+      this._applyGuidesDragState();
+    }
+
+    // One draw per frame, however many boxes changed.
+    if (
+      (changedProperties.has('imageBox') || changedProperties.has('cropBox')) &&
+      this._svgReady &&
+      !this._renderFrame
+    ) {
+      this._renderFrame = window.requestAnimationFrame(() => {
+        this._renderFrame = 0;
+        this._render();
+      });
+    }
   }
 
   protected override firstUpdated(changedProperties: PropertyValues<this>): void {
@@ -585,7 +485,6 @@ export class CropFrame extends LitBlock {
     if (!svg || this._svgReady) {
       return;
     }
-    this._createBackdrop();
     this._createFrame();
     this._svgReady = true;
     svg.addEventListener('pointermove', this._handleSvgPointerMove, true);
@@ -609,7 +508,25 @@ export class CropFrame extends LitBlock {
   }
 
   public override render(): TemplateResult {
-    return html`<svg class="uc-svg" xmlns="http://www.w3.org/2000/svg" ${ref(this._svgRef)}></svg>`;
+    const maskId = this._backdropMaskId;
+    // Static backdrop and guides; `_render` sizes them, and `_createFrame` appends the thumbs after them.
+    // No whitespace between the nodes, so the svg holds elements only. `stroke-width="1"` is `GUIDE_STROKE_WIDTH`.
+    return html`<svg class="uc-svg" xmlns="http://www.w3.org/2000/svg" ${ref(this._svgRef)}><rect
+      x="0" y="0" width="100%" height="100%" fill="var(--color-image-background)" fill-opacity="0.85"
+      mask="url(#${maskId})"></rect><mask id=${maskId} ${ref(this._backdropMaskRef)}><rect
+      x="0" y="0" width="100%" height="100%" fill="white"></rect><rect
+      fill="black" ${ref(this._backdropMaskInnerRef)}></rect></mask><svg
+      class="uc-guides uc-guides--semi-hidden" ${ref(this._frameGuidesRef)}><rect
+      x="0" y="0" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1"
+      stroke-opacity="0.5"></rect><line
+      x1="${GUIDE_THIRD}%" y1="0%" x2="${GUIDE_THIRD}%" y2="100%" stroke="currentColor" stroke-width="1"
+      stroke-opacity="0.3"></line><line
+      x1="${GUIDE_THIRD * 2}%" y1="0%" x2="${GUIDE_THIRD * 2}%" y2="100%" stroke="currentColor" stroke-width="1"
+      stroke-opacity="0.3"></line><line
+      x1="0%" y1="${GUIDE_THIRD}%" x2="100%" y2="${GUIDE_THIRD}%" stroke="currentColor" stroke-width="1"
+      stroke-opacity="0.3"></line><line
+      x1="0%" y1="${GUIDE_THIRD * 2}%" x2="100%" y2="${GUIDE_THIRD * 2}%" stroke="currentColor" stroke-width="1"
+      stroke-opacity="0.3"></line></svg></svg>`;
   }
 }
 

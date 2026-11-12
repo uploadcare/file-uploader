@@ -1,18 +1,16 @@
-import type { Metadata, Tags, UploadcareFile } from '@uploadcare/upload-client';
+import type { UploadcareFile } from '@uploadcare/upload-client';
 import type { OutputErrorFile } from '../types/index';
 import type { TypedData } from './TypedData';
 
 export interface UploadEntryData extends Record<string, unknown> {
-  file: File | null;
+  file: File | Blob | null;
   externalUrl: string | null;
   fileName: string | null;
   fileSize: number | null;
-  lastModified: number;
   uploadProgress: number;
   uuid: string | null;
   isImage: boolean;
   mimeType: string | null;
-  ctxName: string | null;
   cdnUrl: string | null;
   cdnUrlModifiers: string | null;
   fileInfo: UploadcareFile | null;
@@ -22,8 +20,6 @@ export interface UploadEntryData extends Record<string, unknown> {
   silent: boolean;
   source: string | null;
   fullPath: string | null;
-  metadata: Metadata | null;
-  tags: Tags | null;
   errors: OutputErrorFile[];
   uploadError: Error | null;
   isRemoved: boolean;
@@ -37,12 +33,10 @@ export const initialUploadEntryData: UploadEntryData = {
   externalUrl: null,
   fileName: null,
   fileSize: null,
-  lastModified: Date.now(),
   uploadProgress: 0,
   uuid: null,
   isImage: false,
   mimeType: null,
-  ctxName: null,
   cdnUrl: null,
   cdnUrlModifiers: null,
   fileInfo: null,
@@ -52,8 +46,6 @@ export const initialUploadEntryData: UploadEntryData = {
   silent: false,
   source: null,
   fullPath: null,
-  metadata: null,
-  tags: null,
   errors: [],
   uploadError: null,
   isRemoved: false,
@@ -65,7 +57,7 @@ export const initialUploadEntryData: UploadEntryData = {
 /**
  * Maps an already-uploaded Uploadcare file to the entry fields derived from its
  * uuid (cdnUrl, fileInfo, name, size, image flag, mime type). Shared by
- * `addFileFromUploadcareFile` and `replaceFileFromUploadcareFile` so the two
+ * `addFileFromUploadcareFile` and `replaceFile` so the two
  * derivations cannot drift apart.
  */
 export function uploadcareFileToEntryData(

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { EventType, InternalEventType } from '@/blocks/UploadCtxProvider/EventEmitter';
+import { EventType, InternalEventType } from '@/abstract/EventEmitter';
 import surface from './public-surface.json' with { type: 'json' };
 
 /**

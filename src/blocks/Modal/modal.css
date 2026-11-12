@@ -5,8 +5,10 @@
       background-color: oklch(0% 0 0 / 0.1);
     }
     :where([uc-modal])[strokes] > dialog::backdrop {
-      /* TODO: it's not working, fix it */
-      background-image: var(--modal-backdrop-background-image);
+      background-image: var(
+        --modal-backdrop-background-image,
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath stroke='rgba(0,0,0,.1)' d='M0 10 10 0'/%3E%3C/svg%3E")
+      );
     }
   }
 

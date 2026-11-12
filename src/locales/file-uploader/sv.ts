@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Okänd',
   'camera-permissions-denied': 'Tillgång till kamera nekad',
+  'camera-microphone-denied': 'Tillgång till mikrofon nekad',
   'camera-permissions-prompt': 'Vänligen tillåt tillgång till kameran',
   'camera-permissions-request': 'Begär tillgång',
   'camera-settings': 'Kamerainställningar',
@@ -105,6 +106,8 @@ export default {
   'camera-audio-quality-high': 'Hög',
   'camera-audio-mode-voice': 'Tal',
   'camera-audio-mode-music': 'Musik',
+  'camera-not-found': 'Ingen kamera hittades',
+  'camera-unavailable': 'Kameran används eller är inte tillgänglig',
   'files-count-limit-error-title': 'För många filer',
   'files-count-limit-error-too-few':
     'Du har valt {{total}} {{plural:file(total)}}. Minst {{min}} {{plural:file(min)}} krävs.',
@@ -117,6 +120,10 @@ export default {
   'file-item-edit-button': 'Redigera',
   'file-item-remove-button': 'Ta bort',
   'a11y-activity-header-button-close': 'Stäng',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Stoppa inspelning',
+  'a11y-camera-play': 'Spela upp',
+  'a11y-camera-pause': 'Pausa',
   'a11y-editor-tab-filters': 'Filter',
   'a11y-editor-tab-tuning': 'Inställning',
   'a11y-editor-tab-crop': 'Beskär',
@@ -143,6 +150,8 @@ export default {
 
   custom: 'Fri form',
   'freeform-crop': 'Fri beskärning',
+  'network-error': 'Nätverksfel',
+  retry: 'Försök igen',
 
   'upload-from': 'Ladda upp från {{source}}',
   'get-from': 'Hämta från {{source}}',

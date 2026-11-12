@@ -7,7 +7,7 @@ import { instagramPlugin } from '../../plugins/instagramPlugin';
 import { localSourcePlugin } from '../../plugins/localSourcePlugin';
 import { urlSourcePlugin } from '../../plugins/urlSourcePlugin';
 import { deserializeCsv } from '../../utils/comma-separated';
-import { ExternalUploadSource, UploadSource } from '../../utils/UploadSource';
+import { ExternalUploadSource, INSTAGRAM_SOURCE, UploadSource } from '../../utils/UploadSource';
 
 export const fileUploaderLazyPlugins: LazyPluginEntry[] = [
   {
@@ -32,13 +32,15 @@ export const fileUploaderLazyPlugins: LazyPluginEntry[] = [
   },
   {
     configDeps: ['sourceList'],
-    isEnabled: (get) => deserializeCsv(get('sourceList')).includes('instagram'),
+    isEnabled: (get) => deserializeCsv(get('sourceList')).includes(INSTAGRAM_SOURCE),
     load: () => instagramPlugin,
   },
   {
     configDeps: ['sourceList'],
-    isEnabled: (get) =>
-      Object.values(ExternalUploadSource).some((src) => deserializeCsv(get('sourceList')).includes(src)),
+    isEnabled: (get) => {
+      const sources = deserializeCsv(get('sourceList'));
+      return Object.values(ExternalUploadSource).some((src) => sources.includes(src));
+    },
     load: () => externalSourcesPlugin,
   },
   {

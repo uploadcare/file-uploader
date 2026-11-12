@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'URL CDN',
   'file-size-unknown': 'Necunoscută',
   'camera-permissions-denied': 'Accesul la cameră a fost refuzat',
+  'camera-microphone-denied': 'Accesul la microfon a fost refuzat',
   'camera-permissions-prompt': 'Vă rugăm să permiteți accesul la cameră',
   'camera-permissions-request': 'Solicitați acces',
   'camera-settings': 'Setări cameră',
@@ -107,6 +108,8 @@ export default {
   'camera-audio-quality-high': 'Înaltă',
   'camera-audio-mode-voice': 'Voce',
   'camera-audio-mode-music': 'Muzică',
+  'camera-not-found': 'Nu a fost găsită nicio cameră',
+  'camera-unavailable': 'Camera este folosită sau indisponibilă',
   'files-count-limit-error-title': 'Limita numărului de fișiere depășită',
   'files-count-limit-error-too-few':
     'Ați selectat {{total}} {{plural:file(total)}}. Cel puțin {{min}} {{plural:file(min)}} sunt necesare.',
@@ -120,6 +123,10 @@ export default {
   'file-item-edit-button': 'Editează',
   'file-item-remove-button': 'Elimină',
   'a11y-activity-header-button-close': 'Închide',
+  'a11y-camera-microphone': 'Microfon',
+  'a11y-camera-stop-recording': 'Oprește înregistrarea',
+  'a11y-camera-play': 'Redă',
+  'a11y-camera-pause': 'Pauză',
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Ajustare',
   'a11y-editor-tab-crop': 'Decupare',
@@ -146,6 +153,8 @@ export default {
 
   custom: 'Formă liberă',
   'freeform-crop': 'Decupare liberă',
+  'network-error': 'Eroare de rețea',
+  retry: 'Reîncearcă',
 
   'upload-from': 'Încărcați din {{source}}',
   'get-from': 'Obțineți din {{source}}',

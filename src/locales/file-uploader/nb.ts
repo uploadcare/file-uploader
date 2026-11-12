@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Ukjent',
   'camera-permissions-denied': 'Tilgang til kamera nektet',
+  'camera-microphone-denied': 'Tilgang til mikrofon nektet',
   'camera-permissions-prompt': 'Vennligst gi tilgang til kameraet',
   'camera-permissions-request': 'Be om tilgang',
   'camera-settings': 'Kamerainnstillinger',
@@ -105,6 +106,8 @@ export default {
   'camera-audio-quality-high': 'Høy',
   'camera-audio-mode-voice': 'Tale',
   'camera-audio-mode-music': 'Musikk',
+  'camera-not-found': 'Fant ikke noe kamera',
+  'camera-unavailable': 'Kameraet er i bruk eller utilgjengelig',
   'files-count-limit-error-title': 'Filtellgrensen overskredet',
   'files-count-limit-error-too-few':
     'Du har valgt {{total}} {{plural:file(total)}}. Minst {{min}} {{plural:file(min)}} kreves.',
@@ -117,6 +120,10 @@ export default {
   'file-item-edit-button': 'Rediger',
   'file-item-remove-button': 'Fjern',
   'a11y-activity-header-button-close': 'Lukk',
+  'a11y-camera-microphone': 'Mikrofon',
+  'a11y-camera-stop-recording': 'Stopp opptak',
+  'a11y-camera-play': 'Spill av',
+  'a11y-camera-pause': 'Pause',
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Innstillinger',
   'a11y-editor-tab-crop': 'Beskjær',
@@ -143,6 +150,8 @@ export default {
 
   custom: 'Fri form',
   'freeform-crop': 'Fri beskjæring',
+  'network-error': 'Nettverksfeil',
+  retry: 'Prøv igjen',
 
   'upload-from': 'Last opp fra {{source}}',
   'get-from': 'Hent fra {{source}}',

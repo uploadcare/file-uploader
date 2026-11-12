@@ -1,42 +1,54 @@
 import type { PropertyValues } from 'lit';
-import { html } from 'lit';
+import { html, type TemplateResult } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
-import { LitBlock } from '../../../lit/LitBlock';
+import type { CloudImageEditorController } from './CloudImageEditorController';
+import { EditorBlock } from './editor-context';
 
-import '../../Icon/Icon';
+import './EditorIcon';
 
-export class EditorButtonControl extends LitBlock {
-  // This is public because it's used in the updated lifecycle to assign to the shared state.
+export class EditorButtonControl extends EditorBlock {
   @state()
   public active = false;
 
-  // TODO: Rename title since it conflicts with HTMLElement.title
+  /** The button's accessible name, also shown as its tooltip. */
   @state()
-  public override title = '';
+  protected buttonLabel = '';
+
+  /** Text shown inside the button; hidden when empty. */
+  @state()
+  protected caption = '';
 
   @state()
   protected icon = '';
 
-  @state()
-  protected titleProp = '';
-
-  protected get buttonClasses(): Record<string, boolean> {
-    const isActive = this.active;
-    return {
-      'uc-active': isActive,
-      'uc-not_active': !isActive,
-    };
-  }
-
   private _updateHostStateClasses(): void {
-    const classes = this.buttonClasses;
-    for (const [className, enabled] of Object.entries(classes)) {
-      this.classList.toggle(className, enabled);
-    }
+    this.classList.toggle('uc-active', this.active);
+    this.classList.toggle('uc-not_active', !this.active);
   }
 
   protected onClick(_event: MouseEvent): void {}
+
+  /**
+   * Sets `buttonLabel`, `caption` and `icon`. Runs before every render, so labels resolved before the editor attached
+   * or before a locale switch are redone.
+   */
+  protected updateLabels(): void {}
+
+  /** Whether the control shows as selected, derived from controller state. Keeps `active` by default. */
+  protected isActive(_controller: CloudImageEditorController): boolean {
+    return this.active;
+  }
+
+  protected override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+    this.updateLabels();
+    // Derived here, not in `render`, so `updated` sees `active` change and toggles the host classes.
+    const controller = this.editorControllerOrNull;
+    if (controller) {
+      this.active = this.isActive(controller);
+    }
+  }
 
   public override connectedCallback(): void {
     super.connectedCallback();
@@ -50,21 +62,26 @@ export class EditorButtonControl extends LitBlock {
     }
   }
 
-  public override render() {
-    const clickHandler = this.onClick;
-    const title = this.title;
+  /** What goes inside the button: the icon, then the caption. */
+  protected renderContent(): TemplateResult {
+    return html`<uc-editor-icon name=${this.icon}></uc-editor-icon>${this.renderCaption()}`;
+  }
 
+  protected renderCaption(): TemplateResult {
+    return html`<div class="uc-title" ?hidden=${!this.caption}>${this.caption}</div>`;
+  }
+
+  public override render() {
     return html`
       <button
         role="option"
         aria-selected=${this.active ? 'true' : 'false'}
         type="button"
-        aria-label=${ifDefined(this.titleProp)}
-        title=${ifDefined(this.titleProp)}
-        @click=${clickHandler}
+        aria-label=${ifDefined(this.buttonLabel)}
+        title=${ifDefined(this.buttonLabel)}
+        @click=${this.onClick}
       >
-        <uc-icon name=${this.icon}></uc-icon>
-        <div class="uc-title" ?hidden=${!title}>${title}</div>
+        ${this.renderContent()}
       </button>
     `;
   }

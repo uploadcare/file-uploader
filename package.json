@@ -12,7 +12,6 @@
     "image editing",
     "image size",
     "cloud image editor",
-    "symbiote.js",
     "upload api client",
     "building blocks",
     "blocks",
@@ -77,9 +76,10 @@
   "scripts": {
     "dev": "vite dev",
     "test": "npm run test:types && npm run test:coverage && npm run test:locales",
-    "test:types": "vitest run --project types",
+    "test:types": "vitest run --project types --project types-react19",
     "test:attw": "attw --pack . --profile esm-only",
     "test:publint": "publint",
+    "test:dts-internals": "tsx ./scripts/check-dts-internals.ts",
     "test:specs": "vitest run --project specs",
     "test:e2e": "vitest run --project e2e --project e2e-camera",
     "test:e2e:dev": "vitest --project e2e --project e2e-camera --browser.headless=false",
@@ -88,15 +88,14 @@
     "release": "shipjs prepare",
     "build:lib": "npm run clean:web && npm run clean:dist && tsx ./scripts/build.ts",
     "build:ssr-stubs": "tsx ./scripts/build-ssr-stubs.ts",
-    "build:jsx:types": "tsx ./scripts/build-jsx-types.ts",
     "build:svg-sprites": "tsx ./scripts/build-svg-sprite.ts",
-    "build": "run-s build:svg-sprites build:lib build:ssr-stubs build:jsx:types && npm run test:attw && npm run test:publint && npm run lint:size",
+    "build": "run-s build:svg-sprites build:lib build:ssr-stubs && npm run test:dts-internals && npm run test:attw && npm run test:publint && npm run lint:size",
     "tsc": "run-s tsc:app tsc:test tsc:e2e tsc:node",
     "tsc:app": "tsc --project tsconfig.app.json",
     "tsc:test": "tsc --project tsconfig.test.json",
     "tsc:e2e": "tsc --project tsconfig.e2e-test.json",
     "tsc:node": "tsc --project tsconfig.node.json",
-    "lint:size": "size-limit",
+    "lint:size": "size-limit && cd scripts/size-limit-web && size-limit",
     "lint:js": "biome lint && eslint .",
     "lint:js:fix": "biome lint --write",
     "lint:css": "stylelint './**/*.css'",
@@ -119,15 +118,18 @@
     "@happy-dom/global-registrator": "^20.8.3",
     "@mswjs/interceptors": "0.45.7",
     "@size-limit/esbuild-why": "^12.0.1",
+    "@size-limit/file": "^12.0.1",
     "@size-limit/preset-small-lib": "^12.0.1",
     "@total-typescript/ts-reset": "^0.6.1",
     "@types/node": "^25",
     "@types/react": "^18.0.0",
+    "@types/react-19": "npm:@types/react@19.2.7",
     "@types/svg-sprite": "^0.0.39",
     "@uploadcare/api-emulator": "^6.24.0",
     "@vitest/browser": "^4.1.11",
     "@vitest/browser-playwright": "^4.1.11",
     "@vitest/coverage-v8": "^4.1.11",
+    "axe-core": "4.14.0",
     "esbuild-minify-templates": "^0.13.1",
     "eslint": "^10.0.3",
     "eslint-plugin-lit": "^2.2.1",
@@ -151,6 +153,7 @@
     "stylelint-declaration-block-no-ignored-properties": "^3.0.0",
     "stylelint-order": "^8.0.0",
     "svg-sprite": "^2.0.4",
+    "terser": "5.51.2",
     "ts-lit-plugin": "^2.0.2",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",
@@ -163,20 +166,21 @@
   "author": "Uploadcare Inc.",
   "license": "MIT",
   "dependencies": {
+    "@lit-labs/signals": "^0.3.0",
     "@lit/context": "^1.1.6",
+    "@uploadcare/cdn-url": "6.25.1",
     "@uploadcare/cname-prefix": "^6.19.0",
     "@uploadcare/image-shrink": "^6.19.0",
     "@uploadcare/quality-insights": "^6.19.0",
     "@uploadcare/signed-uploads": "^6.23.0",
     "@uploadcare/upload-client": "^6.23.0",
     "keyux": "^0.11.3",
-    "lit": "^3.3.2",
-    "nanostores": "^1.1.1"
+    "lit": "^3.3.2"
   },
   "size-limit": [
     {
       "path": "dist/index.js",
-      "limit": "100 KB"
+      "limit": "103 KB"
     },
     {
       "path": "dist/env.js",
@@ -188,35 +192,7 @@
     },
     {
       "path": "dist/index.ssr.js",
-      "limit": "10 KB"
-    },
-    {
-      "path": "web/file-uploader.min.js",
-      "limit": "100 KB"
-    },
-    {
-      "path": "web/file-uploader.iife.min.js",
-      "limit": "100 KB"
-    },
-    {
-      "path": "web/uc-cloud-image-editor.min.js",
-      "limit": "50 KB"
-    },
-    {
-      "path": "web/uc-file-uploader-regular.min.js",
-      "limit": "100 KB"
-    },
-    {
-      "path": "web/uc-file-uploader-inline.min.js",
-      "limit": "100 KB"
-    },
-    {
-      "path": "web/uc-file-uploader-minimal.min.js",
-      "limit": "100 KB"
-    },
-    {
-      "path": "web/uc-img.min.js",
-      "limit": "10 KB"
+      "limit": "2 KB"
     }
   ],
   "overrides": {

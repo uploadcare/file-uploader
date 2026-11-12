@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Άγνωστο',
   'camera-permissions-denied': 'Άρνηση πρόσβασης στην κάμερα',
+  'camera-microphone-denied': 'Άρνηση πρόσβασης στο μικρόφωνο',
   'camera-permissions-prompt': 'Παρακαλώ επιτρέψτε την πρόσβαση στην κάμερα',
   'camera-permissions-request': 'Αίτημα πρόσβασης',
   'camera-settings': 'Ρυθμίσεις κάμερας',
@@ -107,6 +108,8 @@ export default {
   'camera-audio-quality-high': 'Υψηλή',
   'camera-audio-mode-voice': 'Φωνή',
   'camera-audio-mode-music': 'Μουσική',
+  'camera-not-found': 'Δεν βρέθηκε κάμερα',
+  'camera-unavailable': 'Η κάμερα χρησιμοποιείται ή δεν είναι διαθέσιμη',
   'files-count-limit-error-title': 'Υπέρβαση ορίου αριθμού αρχείων',
   'files-count-limit-error-too-few':
     'Έχετε επιλέξει {{total}} {{plural:file(total)}}. Απαιτούνται τουλάχιστον {{min}} {{plural:file(min)}}.',
@@ -121,6 +124,10 @@ export default {
   'file-item-edit-button': 'Επεξεργασία',
   'file-item-remove-button': 'Αφαίρεση',
   'a11y-activity-header-button-close': 'Κλείσιμο',
+  'a11y-camera-microphone': 'Μικρόφωνο',
+  'a11y-camera-stop-recording': 'Διακοπή εγγραφής',
+  'a11y-camera-play': 'Αναπαραγωγή',
+  'a11y-camera-pause': 'Παύση',
   'a11y-editor-tab-filters': 'Φίλτρα',
   'a11y-editor-tab-tuning': 'Ρύθμιση',
   'a11y-editor-tab-crop': 'Περικοπή',
@@ -145,6 +152,8 @@ export default {
 
   custom: 'Ελεύθερη μορφή',
   'freeform-crop': 'Ελεύθερη περικοπή',
+  'network-error': 'Σφάλμα δικτύου',
+  retry: 'Επανάληψη',
 
   'upload-from': 'Μεταφόρτωση από {{source}}',
   'get-from': 'Λήψη από {{source}}',

@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import type { IconHrefResolver } from '@/index';
 import { IMAGE } from '~/tests/fixtures/files';
 import { recordEvents } from '~/tests/utils/event-recorder';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
@@ -45,7 +44,7 @@ describe('showEmptyList', () => {
   });
 
   it('lets the empty upload list open when set', async () => {
-    // `UploadList.couldOpenActivity` is `showEmptyList || size > 0` (UploadList.ts:178); without it the activity
+    // `UploadList.couldOpenActivity` is `showEmptyList || size > 0`; without it the activity
     // bounces straight back to the init activity.
     const { root, api } = await renderSolution('inline', { showEmptyList: true });
     await expectActivity(root, 'start-from');
@@ -55,19 +54,17 @@ describe('showEmptyList', () => {
     await expectActivity(root, 'upload-list');
   });
 
-  it('bounces the empty upload list back to start-from when not set', async () => {
+  it('keeps the empty upload list from opening when not set', async () => {
     const { root, api, provider } = await renderSolution('inline');
     await expectActivity(root, 'start-from');
     const recorder = recordEvents(provider);
 
     api.setCurrentActivity('upload-list');
+    // The sentinel: an allowed activity asked for next goes through the same deferred navigation, after the refused one.
+    api.setCurrentActivity('url');
 
-    // The list opens and hands straight back: start-from coming back after it is the end of the bounce.
-    await expect
-      .poll(() => recorder.detailsOf('activity-change').map((detail) => detail.activity))
-      .toEqual(['upload-list', 'start-from']);
-    await expectActivity(root, 'start-from');
-    expect(api.getCurrentActivity()).toBe('start-from');
+    await expect.poll(() => recorder.detailsOf('activity-change').map((detail) => detail.activity)).toEqual(['url']);
+    await expectActivity(root, 'url');
   });
 });
 
@@ -94,7 +91,7 @@ describe('filesViewMode', () => {
 });
 
 describe('gridShowFileNames', () => {
-  /** The name is always in the DOM; the option toggles `hidden` on it (FileItem.ts:557). */
+  /** The name is always in the DOM; the option toggles `hidden` on it (`FileItem._showFileNames`). */
   const fileName = async (configProps: Parameters<typeof renderSolution>[1]) => {
     const { root, api } = await renderSolution('regular', configProps);
     api.addFileFromObject(IMAGE.PIXEL);
@@ -118,7 +115,7 @@ describe('gridShowFileNames', () => {
   });
 
   it('is ignored in list mode, where names always show', async () => {
-    // `_updateShowFileNames` short-circuits for list mode (FileItem.ts:266), so the option only means anything in
+    // `FileItem._showFileNames` short-circuits for list mode, so the option only means anything in
     // grid mode — the docs describe it as grid-only and the code agrees.
     await expect
       .element(await fileName({ filesViewMode: 'list', gridShowFileNames: false }))
@@ -149,13 +146,8 @@ describe('iconHrefResolver', () => {
       .toMatch(/^https:\/\/icons\.example\.com\/.+\.svg#icon$/);
   });
 
-  // QUIRK(types): options.mdx says "If nothing is returned, the default icon sprite will be used", and
-  // `Icon._updateResolvedHref` implements exactly that (`customHref ?? defaultHref`) — but the published type is
-  // `IconHrefResolver = (iconName: string) => string` (types/exported.ts:46), so a TypeScript user cannot write the
-  // documented resolver without a cast. The cast below exists only to express that gap. Pinned, not endorsed.
   it('falls back to the default href when the resolver returns undefined', async () => {
-    const resolver = (() => undefined) as unknown as IconHrefResolver;
-    const { root, api } = await renderSolution('regular', { iconHrefResolver: resolver });
+    const { root, api } = await renderSolution('regular', { iconHrefResolver: () => undefined });
     api.initFlow();
     await expectActivity(root, 'start-from');
 

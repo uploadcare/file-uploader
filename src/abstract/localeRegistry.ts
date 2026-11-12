@@ -1,7 +1,14 @@
-import { default as en } from '../locales/file-uploader/en';
+import { type EnglishTemplates, default as en } from '../locales/file-uploader/en';
+import { logger } from './logger';
 
+const log = logger.scope('locale-registry');
+
+/** The keys of the English dictionary, each a translated string. */
 export type LocaleDefinition = typeof en;
-export type LocaleDefinitionResolver = () => Promise<LocaleDefinition>;
+export type { EnglishTemplates };
+/** What a locale defines: any of the English keys and the custom ones; a missing key falls back to English. */
+type LocaleInput = Partial<LocaleDefinition & CustomLocaleDefinition>;
+export type LocaleDefinitionResolver = () => Promise<LocaleInput>;
 
 /**
  * Interface for TypeScript module augmentation.
@@ -23,12 +30,12 @@ export interface CustomLocaleDefinition {}
 const localeRegistry: Map<string, LocaleDefinition> = new Map();
 const localeResolvers: Map<string, LocaleDefinitionResolver> = new Map();
 
-const defineLocaleSync = (localeName: string, definition: LocaleDefinition): LocaleDefinition => {
+const defineLocaleSync = (localeName: string, definition: LocaleInput): LocaleDefinition => {
   if (localeRegistry.has(localeName)) {
-    console.log(`Locale ${localeName} is already defined. Overwriting...`);
+    log.warn(`Locale ${localeName} is already defined. Overwriting...`);
   }
 
-  const locale: LocaleDefinition = { ...(en as unknown as LocaleDefinition), ...definition };
+  const locale: LocaleDefinition = { ...en, ...definition };
   localeRegistry.set(localeName, locale);
 
   return locale;
@@ -40,7 +47,7 @@ const defineLocaleAsync = (localeName: string, definitionResolver: LocaleDefinit
 
 export const defineLocale = (
   localeName: string,
-  definitionOrResolver: LocaleDefinition | LocaleDefinitionResolver,
+  definitionOrResolver: LocaleInput | LocaleDefinitionResolver,
 ): void => {
   if (typeof definitionOrResolver === 'function') {
     defineLocaleAsync(localeName, definitionOrResolver);

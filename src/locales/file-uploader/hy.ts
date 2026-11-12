@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Անհայտ է',
   'camera-permissions-denied': 'Կամերայի մուտքի մերժում',
+  'camera-microphone-denied': 'Խոսափողի մուտքը մերժված է',
   'camera-permissions-prompt': 'Խնդրում ենք տրամադրել մուտք կամերային',
   'camera-permissions-request': 'Հարցում մուտքի համար',
   'camera-settings': 'Կամերայի կարգավորումներ',
@@ -105,6 +106,8 @@ export default {
   'camera-audio-quality-high': 'Բարձր',
   'camera-audio-mode-voice': 'Ձայն',
   'camera-audio-mode-music': 'Երաժշտություն',
+  'camera-not-found': 'Կամերա չի գտնվել',
+  'camera-unavailable': 'Կամերան զբաղված է կամ անհասանելի է',
   'files-count-limit-error-title': 'Ֆայլերի քանակի գերազանցում',
   'files-count-limit-error-too-few':
     'Դուք ընտրել եք {{total}} {{plural:file(total)}}։ Պետք է ընտրվեն առնվազն {{min}} {{plural:file(min)}}։',
@@ -117,6 +120,10 @@ export default {
   'file-item-edit-button': 'Խմբագրել',
   'file-item-remove-button': 'Հեռացնել',
   'a11y-activity-header-button-close': 'Փակել',
+  'a11y-camera-microphone': 'Խոսափող',
+  'a11y-camera-stop-recording': 'Դադարեցնել տեսագրումը',
+  'a11y-camera-play': 'Նվագարկել',
+  'a11y-camera-pause': 'Դադարեցնել',
   'a11y-editor-tab-filters': 'Զտիչներ',
   'a11y-editor-tab-tuning': 'Կարգավորում',
   'a11y-editor-tab-crop': 'Կտրել',
@@ -141,6 +148,8 @@ export default {
 
   custom: 'Ազատ ձև',
   'freeform-crop': 'Ազատ կտրում',
+  'network-error': 'Ցանցի սխալ',
+  retry: 'Կրկին փորձել',
 
   'upload-from': 'Բեռնել {{source}}-ից',
   'get-from': 'Ստանալ {{source}}-ից',

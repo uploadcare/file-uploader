@@ -1,32 +1,80 @@
-import { html } from 'lit';
-import { state } from 'lit/decorators.js';
-import { LitActivityBlock } from '../../lit/LitActivityBlock';
-import { LitUploaderBlock } from '../../lit/LitUploaderBlock';
-import type { OutputCollectionErrorType, OutputError } from '../../types';
-import { throttle } from '../../utils/throttle';
-import { EventType, InternalEventType } from '../UploadCtxProvider/EventEmitter';
+import { html, nothing, type PropertyValues } from 'lit';
+import { property, state } from 'lit/decorators.js';
+import { ACTIVITY_TYPES } from '../../abstract/activity-constants';
+import {
+  COLLECTION_SUMMARY_THROTTLE_MS,
+  type CollectionSummary,
+  collectionHeader,
+  partitionByStatus,
+} from '../../abstract/collectionSummary';
+import { CollectionStateController } from '../../abstract/controllers/CollectionStateController';
+import { ConfigController } from '../../abstract/controllers/ConfigController';
+import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
+import { deriveEntryStatus } from '../../abstract/deriveEntryStatus';
+import { inject } from '../../abstract/di/inject';
+import { EventType } from '../../abstract/EventEmitter';
+import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
+import type { Uid } from '../../abstract/Uid';
+import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
+import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
+import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
+import { cssomStyleMap } from '../../lit/cssom-style-map';
+import { blocksRendered, firstFocusable } from '../../lit/focus';
+import { survivingNeighbour, targetRowIndex } from '../../lit/list-navigation';
+import { throttled } from '../../lit/rate-limited-method';
+import { subscription, type Unsubscribe } from '../../lit/subscription';
 import './upload-list.css';
+import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
+import { VirtualListController } from '../../lit/VirtualListController';
+import { FileItem } from '../FileItem/FileItem';
 
 import '../ActivityHeader/ActivityHeader';
 import '../Icon/Icon';
-import '../FileItem/FileItem';
 import '../DropArea/DropArea';
 
-export type FilesViewMode = 'grid' | 'list';
+import type { FilesViewMode } from '../../abstract/config/validatorsType';
 
-export type Summary = {
-  total: number;
-  succeed: number;
-  uploading: number;
-  failed: number;
-  validatingBeforeUploading: number;
-};
+export type { FilesViewMode };
 
-export class UploadList extends LitUploaderBlock {
-  public override couldBeCtxOwner = true;
-  protected override historyTracked = true;
-  public override activityType = LitActivityBlock.activities.UPLOAD_LIST;
+/**
+ * Visual chrome of the upload list. Solutions set this at composition time;
+ * default preserves the full modal-list UI (header + full toolbar).
+ *
+ * - `default` — activity header (title + close) and full toolbar
+ * - `compact` — no header; toolbar is add-more only (minimal solution)
+ */
+export type UploadListChrome = 'default' | 'compact';
+
+export class UploadList extends ActivityChildBlock {
+  // `@inject` getters re-resolve from the current container on each access, so
+  // re-adoption is safe. `RouterController` is inherited from `ActivityChildBlock`.
+  // The throttled collection-update tick is adoption-guarded by `@throttled`, so
+  // it reads these fields directly; only the visibility predicate — which can
+  // also run during a teardown tick — reads via `useOrNull`.
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  @inject(CollectionStateController) private readonly _collectionState!: CollectionStateController;
+  @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
+  @inject(UploaderPublicApi) private readonly _api!: UploaderPublicApi;
+  @inject(UploadCollectionController) private readonly _uploadCollection!: UploadCollectionController;
+
+  public override activityType = ACTIVITY_TYPES.UPLOAD_LIST;
+
+  /**
+   * Chrome variant. Prefer omitting nodes over solution CSS `display: none`.
+   * Only non-default values reflect (`chrome="compact"`); default leaves the
+   * attribute off so regular/inline hosts stay free of a redundant host attr.
+   * Block CSS keys off `[chrome="compact"]`.
+   */
+  @property({
+    reflect: true,
+    converter: {
+      fromAttribute: (value: string | null): UploadListChrome => (value === 'compact' ? 'compact' : 'default'),
+      // `null` removes the attribute (Lit) when chrome is the default.
+      toAttribute: (value: UploadListChrome): string | null => (value === 'compact' ? 'compact' : null),
+    },
+  })
+  public chrome: UploadListChrome = 'default';
 
   @state()
   private _doneBtnVisible = false;
@@ -44,214 +92,478 @@ export class UploadList extends LitUploaderBlock {
   private _addMoreBtnEnabled = false;
 
   @state()
-  private _commonErrorMessage: string | null = null;
-
-  @state()
   private _hasFiles = false;
 
   @state()
-  private _latestSummary: Summary | null = null;
+  private _latestSummary: CollectionSummary | null = null;
+
+  // List virtualization: only ~viewport±overscan `<uc-file-item>` render at large
+  // file counts. The shared controller measures the `.uc-files` scroll container
+  // and turns `uploadList` into the visible slice + spacer heights; row metrics
+  // are app-specific (list = 1 col, grid = `--uc-grid-col` cols + inter-row gap),
+  // so this block supplies them. It degrades to rendering the full list whenever
+  // the container isn't laid out (happy-dom, hidden panel, pre-measurement paint).
+  private readonly _virtualList = new VirtualListController(this, {
+    scrollContainer: () => this._filesRef.value ?? null,
+    itemSelector: 'uc-file-item',
+    rowMetrics: (scrollEl, firstItem) => {
+      if (this._config.get('filesViewMode') !== 'grid') {
+        this._rowGap = 0;
+        return { columns: 1, rowHeight: firstItem.offsetHeight };
+      }
+      // Flex `gap` sits BETWEEN grid cells (not in offsetHeight), so one grid row
+      // is a cell plus one inter-row gap; list rows fold the gap into their box.
+      const rowGap = Number.parseFloat(getComputedStyle(scrollEl).rowGap) || 0;
+      this._rowGap = rowGap;
+      return { columns: this._columns(), rowHeight: firstItem.offsetHeight + rowGap };
+    },
+  });
+
+  private readonly _filesRef = createRef<HTMLElement>();
+  private readonly _rowsRef = createRef<HTMLElement>();
+  private readonly _addMoreRef = createRef<HTMLButtonElement>();
+
+  // Roving tabindex: the list is one Tab stop, the current row (the first until the user moves). The virtualizer pins
+  // it, so it stays rendered and keeps focus however far the list scrolls.
+  @state()
+  private _currentUid: Uid | null = null;
+
+  // The list the last update rendered, to find the neighbour of a removed current row.
+  private _uploadList: readonly Uid[] = [];
+
+  // Where `_currentUid` sits in `_uploadList` (-1 for none), found again only when either changes: a scroll's render
+  // must not search the whole list.
+  private _currentIndex = -1;
+  private _indexedUid: Uid | null = null;
+
+  // Focus was in the list when its last row went: hand it on once the summary tick settles the toolbar and the router.
+  private _refocusWhenSettled = false;
+
+  private _columns(): number {
+    if (this._config.get('filesViewMode') !== 'grid') {
+      return 1;
+    }
+    const gridCol = Number.parseInt(getComputedStyle(this).getPropertyValue('--uc-grid-col'), 10);
+    return Number.isFinite(gridCol) && gridCol >= 1 ? gridCol : 1;
+  }
+
+  private _rowElement(uid: Uid): FileItem | undefined {
+    for (const row of this._rowsRef.value?.children ?? []) {
+      if (row instanceof FileItem && row.uid === uid) {
+        return row;
+      }
+    }
+    return undefined;
+  }
+
+  // The current row is pinned, so it is rendered once this update lands; `focus()` scrolls it into the window.
+  private _focusRow(uid: Uid): void {
+    this._currentUid = uid;
+    this.runTask(async () => {
+      await this.whileAdopted(this.updateComplete);
+      this._focusCurrentRow(uid);
+    });
+  }
+
+  // After the await: unless a later move superseded this one, or focus went elsewhere meanwhile (a page handler of the
+  // same key). Focus left on the body is the removed row's, still ours to move.
+  private _focusCurrentRow(uid: Uid): void {
+    const active = document.activeElement;
+    const ours = !active || active === document.body || this._rowsRef.value?.contains(active);
+    if (ours && this._currentUid === uid) {
+      this._rowElement(uid)?.focus();
+    }
+  }
+
+  private _handleFocusIn = (event: FocusEvent): void => {
+    const row = event.composedPath().find((target) => target instanceof FileItem);
+    if (row) {
+      this._currentUid = row.uid;
+    }
+  };
+
+  private _handleKeyDown = (event: KeyboardEvent): void => {
+    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
+      return;
+    }
+    const row = event.composedPath().find((target) => target instanceof FileItem);
+    const list = this._uploadList;
+    const from = row ? list.indexOf(row.uid) : -1;
+    const files = this._filesRef.value;
+    if (!row || from < 0 || !files) {
+      return;
+    }
+    // A grid row is a tile plus the gap under it (`_rowGap` is 0 in list mode).
+    const pageRows = Math.floor(files.clientHeight / (row.offsetHeight + this._rowGap || 1));
+    const rtl = getComputedStyle(files).direction === 'rtl';
+    const to = list[targetRowIndex(event.key, from, list.length, this._columns(), pageRows, rtl) ?? -1];
+    if (to) {
+      event.preventDefault();
+      this._focusRow(to);
+    }
+  };
+
+  // The current row was removed: its neighbour takes over, and takes focus when the row had it. Runs before the
+  // update removes the row, while focus is still in it.
+  private _replaceRemovedCurrentRow(list: readonly Uid[], removed: Uid): void {
+    const next = survivingNeighbour(this._uploadList, list, removed);
+    this._currentUid = next;
+    const active = document.activeElement;
+    if (!active || !this._rowsRef.value?.contains(active)) {
+      return;
+    }
+    this.runTask(async () => {
+      await this.whileAdopted(this.updateComplete);
+      if (next) {
+        this._focusCurrentRow(next);
+        return;
+      }
+      this._refocusWhenSettled = true;
+      this._throttledHandleCollectionUpdate();
+    });
+  }
+
+  // The emptied list either stays open, with Add more enabled by the tick that just ran (in grid view the compact
+  // chrome's toolbar one is hidden), or closes: then the router's next screen, or a modal returning focus to its
+  // opener, may have placed focus already, and otherwise the uploader's first control (the minimal one's trigger) takes it.
+  private async _focusAfterEmptied(): Promise<void> {
+    const root = this.closest('[uc-wgt-common]') ?? this;
+    await blocksRendered(root, (work) => this.whileAdopted(work));
+    if (document.activeElement && document.activeElement !== document.body) {
+      return;
+    }
+    const addMore = this._addMoreRef.value;
+    if (!this.isActivityActive) {
+      firstFocusable(root)?.focus();
+    } else if (addMore?.matches(':enabled') && addMore.checkVisibility()) {
+      addMore.focus();
+    } else {
+      firstFocusable(this)?.focus();
+    }
+  }
+
+  // The measured inter-row flex gap (grid mode; 0 in list mode). A spacer is
+  // itself a flex line, so the browser inserts one extra `gap` between it and the
+  // adjacent item row — subtract it from the spacer height so the visible window
+  // isn't pushed down/up by one gap.
+  private _rowGap = 0;
 
   private get _headerText() {
     if (!this._latestSummary) {
       return '';
     }
-    return this._getHeaderText(this._latestSummary);
+    const { key, count } = collectionHeader(this._latestSummary);
+    return this.l10n(key, { count });
+  }
+
+  /**
+   * Tracked getter: the common (collection-level) error message, derived from
+   * `collectionErrors` (owned by `CollectionStateController`). Reading it via
+   * `getTracked` in `render()` auto-tracks under `SignalWatcher`, so a
+   * collection-error change re-renders.
+   */
+  private get _commonErrorMessage(): string | null {
+    const errors = this._collectionState.getTracked('collectionErrors');
+    return errors.find((err) => err.type !== 'SOME_FILES_HAS_ERRORS')?.message ?? null;
   }
 
   private _handleAdd = (): void => {
-    this.telemetryManager.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'add-more',
-          node: this.tagName,
-        },
-      },
-    });
-    this.api.initFlow(true);
+    this._telemetry.sendActionEvent('add-more', this.tagName);
+    this._api.initFlow(true);
   };
 
   private _handleUpload = (): void => {
     this.emit(EventType.UPLOAD_CLICK);
-    this.api.uploadAll();
+    this._api.uploadAll();
     this._throttledHandleCollectionUpdate();
   };
 
   private _handleDone = (): void => {
-    this.emit(EventType.DONE_CLICK, this.api.getOutputCollectionState());
-    this.api.doneFlow();
+    this.emit(EventType.DONE_CLICK, this._api.getOutputCollectionState());
+    this._api.doneFlow();
   };
 
   private _handleCancel = (): void => {
-    this.telemetryManager.sendEvent({
-      eventType: InternalEventType.ACTION_EVENT,
-      payload: {
-        metadata: {
-          event: 'clear-all',
-          node: this.tagName,
-        },
-      },
-    });
+    this._telemetry.sendActionEvent('clear-all', this.tagName);
 
-    this.uploadCollection.clearAll();
+    this._uploadCollection.clearAll();
   };
 
-  private _throttledHandleCollectionUpdate = throttle(() => {
-    if (!this.isConnected) {
-      return;
-    }
+  // `@throttled` makes this adopted-guarded (a trailing tick after release —
+  // e.g. a registry-unregistration race — no-ops) and cancels the pending timer
+  // on release, so the body reads its throwing `@inject` fields directly. Callers
+  // use `this._throttledHandleCollectionUpdate` (a stable bound reference, safe
+  // to hand to `observeCollection`).
+  /** @internal */
+  @throttled(COLLECTION_SUMMARY_THROTTLE_MS)
+  protected _throttledHandleCollectionUpdate(): void {
     this._updateUploadsState();
 
-    if (!this.couldOpenActivity && this.$['*currentActivity'] === this.activityType) {
-      this.historyBack();
+    // The router guard (registered via `_guardNonEmpty`) decides whether the
+    // empty list may stay open; ask it to re-check now that the collection changed.
+    this._router.revalidate();
+
+    if (!this._config.get('confirmUpload')) {
+      this._api.uploadAll();
     }
 
-    if (!this.cfg.confirmUpload) {
-      this.api.uploadAll();
+    if (this._refocusWhenSettled) {
+      this._refocusWhenSettled = false;
+      this.runTask(() => this._focusAfterEmptied());
     }
-  }, 300);
+  }
+
+  // Cheap toolbar summary over the raw collection entries, instead of `getOutputCollectionState()`, which builds a
+  // full `OutputFileEntry` per entry just for these numbers. The status of each entry comes from `deriveEntryStatus`,
+  // as in `getOutputItem`. `anyValidationPending` covers every entry; `validatingBeforeUploading` only idle ones.
+  private _computeSummary(): CollectionSummary & { anyValidationPending: boolean } {
+    const collection = this._uploadCollection;
+    const fields: UploadEntryData[] = collection.entries().map((entry) => entry.values);
+    const { success, uploading, failed, idle } = partitionByStatus(fields, deriveEntryStatus);
+
+    return {
+      total: collection.size,
+      success: success.length,
+      uploading: uploading.length,
+      failed: failed.length,
+      validatingBeforeUploading: idle.filter((entry) => entry.isValidationPending).length,
+      anyValidationPending: fields.some((entry) => entry.isValidationPending),
+    };
+  }
 
   private _updateUploadsState(): void {
-    const collectionState = this.api.getOutputCollectionState();
-    const summary: Summary = {
-      total: collectionState.totalCount,
-      succeed: collectionState.successCount,
-      uploading: collectionState.uploadingCount,
-      failed: collectionState.failedCount,
-      validatingBeforeUploading: collectionState.idleEntries.filter((e) => e.isValidationPending).length,
-    };
-    const fitCountRestrictions = !collectionState.errors.some(
-      (err) => err.type === 'TOO_MANY_FILES' || err.type === 'TOO_FEW_FILES',
-    );
-    const tooMany = collectionState.errors.some((err) => err.type === 'TOO_MANY_FILES');
-    const exact = collectionState.totalCount === (this.cfg.multiple ? this.cfg.multipleMax : 1);
-    const isValidationPending = collectionState.allEntries.some((entry) => entry.isValidationPending);
-    const validationOk = summary.failed === 0 && collectionState.errors.length === 0 && !isValidationPending;
+    // Imperative derived-state recompute (writes the toolbar/button `@state`
+    // below), not a render read — runs only from the throttled tick after its
+    // container guard, so the container is adopted and `@inject` reads resolve.
+    // Config reads use the untracked `get()` (a re-render is driven by the
+    // throttled tick's config-`observe`/collection observers, not by tracking here).
+    const config = this._config;
+    const { anyValidationPending, ...summary } = this._computeSummary();
+    const errors = this._collectionState.get('collectionErrors');
+
+    // One pass over the (tiny) collection-error list instead of two `.some()` scans.
+    let tooMany = false;
+    let fitCountRestrictions = true;
+    for (const err of errors) {
+      if (err.type === 'TOO_MANY_FILES') {
+        tooMany = true;
+        fitCountRestrictions = false;
+      } else if (err.type === 'TOO_FEW_FILES') {
+        fitCountRestrictions = false;
+      }
+    }
+
+    const multiple = config.get('multiple');
+    const exact = summary.total === (multiple ? config.get('multipleMax') : 1);
+    const validationOk = summary.failed === 0 && errors.length === 0 && !anyValidationPending;
     let uploadBtnVisible = false;
     let allDone = false;
     let doneBtnEnabled = false;
 
-    const readyToUpload = summary.total - summary.succeed - summary.uploading - summary.failed;
-    if (readyToUpload > 0 && fitCountRestrictions && validationOk && this.cfg.confirmUpload) {
+    const readyToUpload = summary.total - summary.success - summary.uploading - summary.failed;
+    if (readyToUpload > 0 && fitCountRestrictions && validationOk && config.get('confirmUpload')) {
       uploadBtnVisible = true;
     } else {
       allDone = true;
-      const groupOk = this.cfg.groupOutput ? !!collectionState.group : true;
-      doneBtnEnabled = summary.total === summary.succeed && fitCountRestrictions && validationOk && groupOk;
+      const groupOk = config.get('groupOutput') ? !!this._collectionState.get('groupInfo') : true;
+      doneBtnEnabled = summary.total === summary.success && fitCountRestrictions && validationOk && groupOk;
     }
 
     this._doneBtnVisible = allDone;
     this._doneBtnEnabled = doneBtnEnabled;
     this._uploadBtnVisible = uploadBtnVisible;
     this._addMoreBtnEnabled = summary.total === 0 || (!tooMany && !exact);
-    this._addMoreBtnVisible = !exact || this.cfg.multiple;
+    this._addMoreBtnVisible = !exact || multiple;
     this._hasFiles = summary.total > 0;
 
-    this._latestSummary = summary;
+    // Only replace the summary object when a count actually changed — a fresh
+    // object every tick would dirty `@state` and force a re-render even when the
+    // toolbar text is identical (the other fields above are primitives Lit dedups).
+    const prev = this._latestSummary;
+    if (
+      !prev ||
+      prev.total !== summary.total ||
+      prev.success !== summary.success ||
+      prev.uploading !== summary.uploading ||
+      prev.failed !== summary.failed ||
+      prev.validatingBeforeUploading !== summary.validatingBeforeUploading
+    ) {
+      this._latestSummary = summary;
+    }
   }
 
-  private _getHeaderText(summary: Summary): string {
-    const localizedText = (status: keyof Summary) => {
-      let count = summary[status];
-      if (status === 'uploading') {
-        count += summary.validatingBeforeUploading;
-      }
-      return this.l10n(`header-${status}`, {
-        count: count,
-      });
-    };
-    if (summary.uploading > 0 || summary.validatingBeforeUploading > 0) {
-      return localizedText('uploading');
-    }
-    if (summary.failed > 0) {
-      return localizedText('failed');
-    }
-    if (summary.succeed > 0) {
-      return localizedText('succeed');
-    }
-
-    return localizedText('total');
+  // Guard: the upload list may only be open while it has files (or
+  // `showEmptyList`). The router blocks navigating into it otherwise and
+  // `revalidate()` (called on collection changes) leaves it once it empties.
+  // The predicate reads null-tolerantly (`useOrNull`) — it can fire during a
+  // teardown-time navigation, after the container is released, where `use()`
+  // would throw.
+  /** @internal */
+  @subscription()
+  protected _guardNonEmpty(): Unsubscribe {
+    return this._router.guard(
+      this.activityType,
+      () =>
+        (this.useOrNull(ConfigController)?.get('showEmptyList') ?? false) ||
+        (this.useOrNull(UploadCollectionController)?.size ?? 0) > 0,
+    );
   }
 
-  public override get couldOpenActivity(): boolean {
-    return this.cfg.showEmptyList || this.uploadCollection.size > 0;
+  // Group-size config re-runs the derived toolbar/button recompute — which
+  // writes `@state` outside `render()`, so it's a subscription, not a tracked
+  // render read. Per-key `observe` avoids re-firing on unrelated config changes;
+  // `immediate` runs it once on wiring.
+  /** @internal */
+  @subscription()
+  protected _wireGroupSizeConfig(): Unsubscribe[] {
+    const rerun = () => this._throttledHandleCollectionUpdate();
+    return [
+      this._config.observe('multiple', rerun, { immediate: true }),
+      this._config.observe('multipleMin', rerun),
+      this._config.observe('multipleMax', rerun),
+    ];
   }
 
-  public override initCallback() {
-    super.initCallback();
-
-    this.registerActivity(this.activityType);
-
-    this.subConfigValue('multiple', this._throttledHandleCollectionUpdate);
-    this.subConfigValue('multipleMin', this._throttledHandleCollectionUpdate);
-    this.subConfigValue('multipleMax', this._throttledHandleCollectionUpdate);
-    this.sub('*groupInfo', (groupInfo) => {
-      if (groupInfo) {
-        this._throttledHandleCollectionUpdate();
-      }
-    });
-
-    this.subConfigValue('filesViewMode', (mode: FilesViewMode) => {
-      this.setAttribute('mode', mode);
-    });
-
-    this.sub('*currentActivity', (currentActivity) => {
-      if (!this.couldOpenActivity && currentActivity === this.activityType) {
-        this.$['*currentActivity'] = this.initActivity;
-      }
-    });
-
-    // TODO: could be performance issue on many files
-    // there is no need to update buttons state on every progress tick
-    this.uploadCollection.observeProperties(this._throttledHandleCollectionUpdate);
-    this.uploadCollection.observeCollection(this._throttledHandleCollectionUpdate);
-
-    this.sub('*collectionErrors', (errors: OutputError<OutputCollectionErrorType>[]) => {
-      const firstError = errors.filter((err) => err.type !== 'SOME_FILES_HAS_ERRORS')[0];
-      if (!firstError) {
-        this._commonErrorMessage = null;
-        return;
-      }
-      this._commonErrorMessage = firstError.message;
-    });
+  // `groupInfo` (owned by `CollectionStateController`): fire the recompute only
+  // when `groupInfo` itself changes (its atomic `observe` dedups, so an
+  // unrelated collection-state write never re-triggers it), plus an eager pass.
+  /** @internal */
+  @subscription()
+  protected _wireGroupInfo(): Unsubscribe {
+    return this._collectionState.observe(
+      'groupInfo',
+      (groupInfo) => {
+        if (groupInfo) {
+          this._throttledHandleCollectionUpdate();
+        }
+      },
+      { immediate: true },
+    );
   }
 
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    if (this.has('*uploadCollection')) {
-      this.uploadCollection.unobserveProperties(this._throttledHandleCollectionUpdate);
-      this.uploadCollection.unobserveCollection(this._throttledHandleCollectionUpdate);
+  // Recompute button/summary state on collection changes. The uploader-scope
+  // `UploadCollectionController` resolves only once the scope attaches, so go
+  // through `whenController` (now-or-when-available); its callback returns the
+  // observers directly and `whenController`'s unsubscribe disposes them.
+  //
+  // The summary + buttons derive from counts/status/validation — NOT per-entry
+  // `uploadProgress` (that drives the progress bar, not this) — so we declare
+  // only the status-affecting keys, so progress ticks don't wake this recompute.
+  /** @internal */
+  @subscription()
+  protected _wireCollectionObservers(): Unsubscribe {
+    return this.container.whenController(UploadCollectionController, (collection) => [
+      collection.observeProperties(
+        ['fileInfo', 'errors', 'uploadError', 'isUploading', 'isValidationPending'],
+        this._throttledHandleCollectionUpdate,
+      ),
+      collection.observeCollection(this._throttledHandleCollectionUpdate),
+    ]);
+  }
+
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+    // Host CSS attribute: `uc-upload-list[mode="grid"]` keys off `mode` ON THE
+    // HOST (grid/list box sizing), so drive it there from the tracked config
+    // signal (the Modal/Copyright `willUpdate` + `getTracked` host-attr recipe).
+    // Reading `filesViewMode` via `getTracked` auto-tracks under `SignalWatcher`,
+    // so a config change re-runs this update and re-sets the attribute.
+    // This block has no lazy-render gate (unlike FileItem's `_pauseRender`, which
+    // is why FileItem keeps its `mode` host attr imperative), so `willUpdate`
+    // runs on the first post-adoption render, before first paint. `mode` is not a
+    // reactive property, so setting it schedules no further update.
+    this.setAttribute('mode', this._config.getTracked('filesViewMode'));
+
+    const list = this._collectionState.getTracked('uploadList');
+    if (list !== this._uploadList || this._currentUid !== this._indexedUid) {
+      const indexOf = (uid: Uid | null) => (uid ? list.indexOf(uid) : -1);
+      let index = indexOf(this._currentUid);
+      if (this._currentUid && index < 0) {
+        this._replaceRemovedCurrentRow(list, this._currentUid);
+        index = indexOf(this._currentUid);
+      }
+      this._indexedUid = this._currentUid;
+      this._currentIndex = index;
     }
+    this._uploadList = list;
+  }
+
+  // A spacer holding the height of rows outside the window. A spacer occupies its own flex line, so the flex `gap`
+  // adds one extra gap between it and the adjacent row — shrink the spacer by that gap so the rendered window lands
+  // where the scroll position expects (grid mode; `_rowGap` is 0 in list mode, where the gap is folded into each row's
+  // own box). The height goes through `cssomStyleMap` (CSSOM): a CSP without `'unsafe-inline'` drops a `style` attribute.
+  private _spacer(pad: number) {
+    const height = pad - this._rowGap;
+    return height > 0
+      ? html`<div class="uc-list-spacer" style=${cssomStyleMap({ height: `${height}px` })}></div>`
+      : nothing;
+  }
+
+  // A list⇆grid view-mode switch changes row height + column count but need not
+  // resize the scroll container (so the ResizeObserver may not fire), so drop the
+  // virtualizer's latched row metrics on the change to force a re-measure.
+  // `observe` dedups per key and fires only on an actual change — no prev-value
+  // bookkeeping.
+  /** @internal */
+  @subscription()
+  protected _invalidateVirtualListOnViewMode(): Unsubscribe {
+    return this._config.observe('filesViewMode', () => this._virtualList.invalidate());
   }
 
   public override render() {
+    // Tracked render reads: `uploadList` drives the `<uc-file-item>` list and
+    // `collectionErrors` (via `_commonErrorMessage`) drives the common-error row —
+    // both `getTracked` off `CollectionStateController`, auto-tracked under
+    // `SignalWatcher`, so a collection change re-renders.
+    const uploadList = this._uploadList;
+    const commonErrorMessage = this._commonErrorMessage;
+    const compact = this.chrome === 'compact';
+    const currentIndex = Math.max(0, this._currentIndex);
+    const current = uploadList[currentIndex];
+
+    // Render only the visible window (+ overscan) and the current row, with spacers holding
+    // the scroll height. Unmeasured geometry → full list, no spacers (unchanged).
+    const view = this._virtualList.window(uploadList, currentIndex);
     return html`
+  ${
+    compact
+      ? null
+      : html`
   <uc-activity-header>
     <span aria-live="polite" class="uc-header-text">${this._headerText}</span>
     <button
       type="button"
       class="uc-mini-btn uc-close-btn"
-      data-testid="close"
-      @click=${this.$['*closeModal']}
+        data-testid="close"
+      @click=${() => this._router.traverse('onClose')}
       title=${this.l10n('a11y-activity-header-button-close')}
       aria-label=${this.l10n('a11y-activity-header-button-close')}
     >
       <uc-icon name="close"></uc-icon>
     </button>
   </uc-activity-header>
+`
+  }
 
   <div class="uc-no-files" ?hidden=${this._hasFiles}>
     ${this.yield('empty', html`<span>${this.l10n('no-files')}</span>`)}
   </div>
 
-  <div class="uc-files">
-    <div class="uc-files-wrapper">
+  <div class="uc-files" role="list" ${ref(this._filesRef)} @focusin=${this._handleFocusIn} @keydown=${this._handleKeyDown}>
+    <div class="uc-files-wrapper" role="none" ${ref(this._rowsRef)}>
+    ${this._spacer(view.topPad)}
     ${repeat(
-      this.$['*uploadList'] ?? [],
-      ({ uid }) => uid,
-      ({ uid }) => html`<uc-file-item .uid=${uid}></uc-file-item>`,
+      view.rows,
+      (row) => row.item,
+      (row) => html`${this._spacer(row.padBefore)}<uc-file-item
+        .uid=${row.item}
+        .tabbable=${row.item === current}
+        tabindex=${row.item === current ? 0 : -1}
+        aria-setsize=${uploadList.length}
+        aria-posinset=${row.index + 1}
+      ></uc-file-item>`,
     )}
+    ${this._spacer(view.bottomPad)}
     </div>
     <button
       type="button"
@@ -266,17 +578,33 @@ export class UploadList extends LitUploaderBlock {
   </div>
 
   <div class="uc-common-error"
-  ?hidden=${!this._commonErrorMessage}
+  ?hidden=${!commonErrorMessage}
   >
-  ${this._commonErrorMessage ?? ''}
+  ${commonErrorMessage ?? ''}
   </div>
 
   <div class="uc-toolbar">
+    ${
+      compact
+        ? html`
+    <button
+      type="button"
+      class="uc-add-more-btn uc-secondary-btn"
+      ${ref(this._addMoreRef)}
+      ?hidden=${!this._addMoreBtnVisible}
+      ?disabled=${!this._addMoreBtnEnabled}
+      @click=${this._handleAdd}
+    >
+      <uc-icon name="add"></uc-icon><span>${this.l10n('add-more')}</span>
+    </button>
+`
+        : html`
     <button type="button" class="uc-cancel-btn uc-secondary-btn" @click=${this._handleCancel}>${this.l10n('clear')}</button>
     <div class="uc-toolbar-spacer"></div>
     <button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
+      ${ref(this._addMoreRef)}
       ?hidden=${!this._addMoreBtnVisible}
       ?disabled=${!this._addMoreBtnEnabled}
       @click=${this._handleAdd}
@@ -298,6 +626,8 @@ export class UploadList extends LitUploaderBlock {
     >
       ${this.l10n('done')}
     </button>
+`
+    }
   </div>
 
   <uc-drop-area ghost></uc-drop-area>

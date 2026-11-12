@@ -20,7 +20,7 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
   await expectActivity(rendered.root, 'camera');
 
   const camera = within(rendered.root).getByTestId('uc-camera-source');
-  await expect.element(camera.getByRole('button', { name: 'Shot', exact: true }), { timeout: 20_000 }).toBeVisible();
+  await expect.element(camera.getByTestId('uc-camera-controls--shot'), { timeout: 20_000 }).toBeVisible();
 
   return { ...rendered, camera, getUserMedia };
 };
@@ -43,7 +43,7 @@ const boxRatio = (element: Element) => {
 
 /** Takes a photo, accepts it and returns its pixel size. */
 const takePhoto = async ({ api, camera }: Awaited<ReturnType<typeof openCamera>>) => {
-  await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+  await camera.getByTestId('uc-camera-controls--shot').click();
   await camera.getByRole('button', { name: 'Accept', exact: true }).click();
 
   await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
@@ -56,10 +56,10 @@ const takePhoto = async ({ api, camera }: Awaited<ReturnType<typeof openCamera>>
 /** Records about a second of video, accepts it and returns the file and its pixel size. */
 const recordVideo = async ({ api, camera }: Awaited<ReturnType<typeof openCamera>>) => {
   await camera.getByRole('button', { name: 'Video', exact: true }).click();
-  await camera.getByRole('button', { name: 'Shot', exact: true }).click();
-  const timer = camera.getByTestId('uc-camera-source--recording-timer');
+  await camera.getByTestId('uc-camera-controls--shot').click();
+  const timer = camera.getByTestId('uc-camera-controls--recording-timer');
   await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
-  await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+  await camera.getByTestId('uc-camera-controls--shot').click();
   await camera.getByRole('button', { name: 'Accept', exact: true }).click();
 
   await expect.poll(() => api.getOutputCollectionState().totalCount, { timeout: 20_000 }).toBe(1);
@@ -91,12 +91,13 @@ describe('cameraAspectRatio', () => {
 
   it('crops the photo to a square', async () => {
     const opened = await openCamera({ cameraAspectRatio: '1:1' });
-    const video = await preview(opened.camera);
+    // Read before the shot: accepting leaves the camera, which stops its stream.
+    const { videoWidth, videoHeight } = await preview(opened.camera);
 
     const photo = await takePhoto(opened);
 
     expect(photo.width).toBe(photo.height);
-    expect(photo.width).toBe(Math.min(video.videoWidth, video.videoHeight));
+    expect(photo.width).toBe(Math.min(videoWidth, videoHeight));
   });
 
   it('crops the photo to portrait from a landscape frame', async () => {
@@ -146,10 +147,11 @@ describe('cameraAspectRatio', () => {
   it('falls back to the native shape for an invalid value', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
     const opened = await openCamera({ cameraAspectRatio: '16/9' });
-    const video = await preview(opened.camera);
+    // Read before the shot: accepting leaves the camera, which stops its stream.
+    const { videoWidth, videoHeight } = await preview(opened.camera);
 
     expect(opened.config.cameraAspectRatio).toBe('');
-    expect(await takePhoto(opened)).toEqual({ width: video.videoWidth, height: video.videoHeight });
+    expect(await takePhoto(opened)).toEqual({ width: videoWidth, height: videoHeight });
   });
 });
 
@@ -203,10 +205,10 @@ describe('cameraAspectRatio in video mode', () => {
     const opened = await openCamera({ cameraMirror: true });
 
     await opened.camera.getByRole('button', { name: 'Video', exact: true }).click();
-    await opened.camera.getByRole('button', { name: 'Shot', exact: true }).click();
-    const timer = opened.camera.getByTestId('uc-camera-source--recording-timer');
+    await opened.camera.getByTestId('uc-camera-controls--shot').click();
+    const timer = opened.camera.getByTestId('uc-camera-controls--recording-timer');
     await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
-    await opened.camera.getByRole('button', { name: 'Shot', exact: true }).click();
+    await opened.camera.getByTestId('uc-camera-controls--shot').click();
 
     expect(scale).toHaveBeenCalledWith(-1, 1);
     await expect.element(opened.camera.getByRole('button', { name: 'Accept', exact: true })).toBeVisible();
@@ -224,7 +226,10 @@ describe('cameraAspectRatio in video mode', () => {
       const clip = await recordVideo(opened);
 
       expect(clip.width / clip.height).toBeCloseTo(16 / 9, 2);
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('cannot crop or mirror video recordings'));
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('[uc]'),
+        expect.stringContaining('cannot crop or mirror video recordings'),
+      );
     } finally {
       Object.defineProperty(HTMLCanvasElement.prototype, 'captureStream', { value: original, configurable: true });
     }

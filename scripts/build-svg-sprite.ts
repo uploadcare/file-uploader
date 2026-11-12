@@ -19,6 +19,11 @@ const DATA: SpriteItem[] = [
 ];
 
 const config: any = {
+  // Classes in an icon are the stylesheet's hooks (`uc-preloader-progress`), so neither svg-sprite nor `prefixIds`
+  // below may rename them.
+  svg: {
+    namespaceClassnames: false,
+  },
   mode: {
     symbol: {
       inline: true,
@@ -31,14 +36,34 @@ const config: any = {
     transform: [
       {
         svgo: {
+          // multipass + slightly more aggressive cleanup; icons are decorative
+          // (aria-hidden on <uc-icon>) so xmlns/dimensions can go. Keeps viewBox.
+          multipass: true,
           plugins: [
             {
               name: 'preset-default',
+              params: {
+                overrides: {
+                  // viewBox is required for scaled symbol sprites
+                  removeViewBox: false,
+                },
+              },
+            },
+            'removeDimensions',
+            'removeXMLNS',
+            {
+              name: 'cleanupNumericValues',
+              params: { floatPrecision: 1 },
+            },
+            {
+              name: 'convertPathData',
+              params: { floatPrecision: 1 },
             },
             {
               name: 'prefixIds',
               params: {
                 prefix: 'uc-icon-id',
+                prefixClassNames: false,
               },
             },
           ],
@@ -47,6 +72,44 @@ const config: any = {
     ],
   },
 };
+
+/**
+ * Collapse byte-identical gradient definitions and repoint every reference at
+ * the survivor. Design exports routinely emit one `<linearGradient>` per path
+ * even when all of them are the same definition in the same coordinate space
+ * (`vibrance.svg` shipped 8 identical copies), and SVGO has no plugin for it —
+ * `removeUselessDefs` only drops *unreferenced* defs. Runs on the assembled
+ * sprite, after `prefixIds` has made ids unique per icon, so duplicates within
+ * one icon and across icons are both caught.
+ */
+function dedupeGradients(sprite: string): string {
+  const defRe = /<(linearGradient|radialGradient)\s+id="([^"]+)"([^>]*)>([\s\S]*?)<\/\1>/g;
+  const survivorByShape = new Map<string, string>();
+  const replacementById = new Map<string, string>();
+
+  for (const [, tag, id, attrs, body] of sprite.matchAll(defRe)) {
+    // Everything but the id decides identity: same element, same attributes,
+    // same stops = same paint.
+    const shape = `${tag}|${attrs.trim()}|${body}`;
+    const survivor = survivorByShape.get(shape);
+    if (survivor) {
+      replacementById.set(id, survivor);
+    } else {
+      survivorByShape.set(shape, id);
+    }
+  }
+
+  if (replacementById.size === 0) {
+    return sprite;
+  }
+
+  let out = sprite.replace(defRe, (whole, _tag, id: string) => (replacementById.has(id) ? '' : whole));
+  for (const [duplicate, survivor] of replacementById) {
+    out = out.replaceAll(`url(#${duplicate})`, `url(#${survivor})`);
+  }
+  console.log(`Deduped ${replacementById.size} identical gradient definition(s)`);
+  return out;
+}
 
 console.log('Generating SVG sprite...');
 
@@ -71,9 +134,16 @@ DATA.forEach((item: SpriteItem) => {
         throw error;
       }
 
-      const jsTemplate = `export default "${result.symbol.sprite.contents.toString().replace(/"/g, "'")}";`
-        .trim()
-        .concat('\n');
+      // svg-sprite positions the inline sprite with a `style` attribute, which a CSP without `'unsafe-inline'` reports
+      // on every render; a class lets the stylesheet do it instead.
+      const spriteContents = dedupeGradients(result.symbol.sprite.contents.toString()).replace(
+        'style="position:absolute"',
+        'class="uc-svg-sprite"',
+      );
+      if (spriteContents.includes('style=')) {
+        throw new Error(`${item.output}: the sprite still carries an inline style, which the documented CSP reports`);
+      }
+      const jsTemplate = `export default "${spriteContents.replace(/"/g, "'")}";`.trim().concat('\n');
 
       fs.writeFileSync(item.output, jsTemplate);
     });

@@ -43,8 +43,8 @@
     --modal-header-height: var(--size-panel-heading);
     --modal-toolbar-height: var(--size-panel-heading);
 
-    --transparent-pixel: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=");
-
+    /* The standalone editor's stylesheet has no uc-basic common.css to apply the theme font. */
+    font-family: var(--uc-font-family);
     display: block;
     width: 100%;
     height: 100%;
@@ -92,12 +92,6 @@
     --modal-toolbar-height: calc(var(--size-panel-heading) * 2);
   }
 
-  [uc-cloud-image-editor].uc-editor_OFF {
-    --modal-header-opacity: 1;
-    --modal-header-height: var(--size-panel-heading);
-    --modal-toolbar-height: var(--size-panel-heading);
-  }
-
   [uc-cloud-image-editor] > .uc-wrapper {
     --l-min-img-height: var(--modal-toolbar-height);
     --l-max-img-height: 100%;
@@ -129,52 +123,6 @@
     overflow: hidden;
   }
 
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-image_container > .uc-image {
-    --viewer-image-opacity: 1;
-
-    position: absolute;
-    top: 0px;
-    left: 0px;
-    z-index: 10;
-    display: block;
-    box-sizing: border-box;
-    width: 100%;
-    height: 100%;
-    object-fit: scale-down;
-    background-color: var(--color-image-background);
-    transform: scale(1);
-    opacity: var(--viewer-image-opacity);
-    user-select: none;
-    pointer-events: auto;
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-image_container > .uc-image.uc-image_visible_viewer {
-    transition:
-      opacity var(--transition-duration-3) ease-in-out,
-      transform var(--transition-duration-4);
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-image_container > .uc-image.uc-image_hidden_to_cropper {
-    --viewer-image-opacity: 0;
-
-    background-image: var(--transparent-pixel);
-    transform: scale(1);
-    transition:
-      transform var(--transition-duration-4),
-      opacity var(--transition-duration-3) steps(1, jump-end);
-    pointer-events: none;
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-image_container > .uc-image.uc-image_hidden_effects {
-    --viewer-image-opacity: 0;
-
-    transform: scale(1);
-    transition:
-      opacity var(--transition-duration-3) cubic-bezier(0.5, 0, 1, 1),
-      transform var(--transition-duration-4);
-    pointer-events: none;
-  }
-
   [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-image_container {
     position: relative;
     display: block;
@@ -200,35 +148,8 @@
     background-color: var(--color-fill-contrast);
   }
 
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-toolbar > .uc-toolbar_content.uc-toolbar_content__viewer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: var(--size-panel-heading);
-    padding-right: var(--l-toolbar-horizontal-padding);
-    padding-left: var(--l-toolbar-horizontal-padding);
-  }
-
   [uc-cloud-image-editor] > .uc-wrapper > .uc-toolbar > .uc-toolbar_content.uc-toolbar_content__editor {
     display: flex;
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-info_pan {
-    position: absolute;
-    user-select: none;
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-file_type_outer {
-    position: absolute;
-    z-index: 2;
-    display: flex;
-    max-width: 120px;
-    transform: translateX(-40px);
-    user-select: none;
-  }
-
-  [uc-cloud-image-editor] > .uc-wrapper > .uc-viewport > .uc-file_type_outer > .uc-file_type {
-    padding: 4px 0.8em;
   }
 
   [uc-cloud-image-editor] > .uc-wrapper > .uc-network_problems_splash {
@@ -385,7 +306,7 @@
     grid-template-columns: auto var(--l-base-min-width);
   }
 
-  uc-editor-freeform-button-control > button > uc-icon {
+  uc-editor-freeform-button-control > button > uc-editor-icon {
     margin-left: var(--cldtr-gap-mid-1);
     width: 10px;
   }
@@ -398,13 +319,13 @@
       uc-editor-filter-control,
       uc-editor-operation-control
     )
-    > uc-icon
+    > uc-editor-icon
     > svg {
     width: var(--size-icon);
     height: var(--size-icon);
   }
 
-  uc-editor-filter-control > uc-icon.uc-original-icon > svg {
+  uc-editor-filter-control > uc-editor-icon.uc-original-icon > svg {
     width: 100%;
     height: 100%;
   }
@@ -480,12 +401,12 @@
     padding-right: 0;
   }
 
-  uc-editor-button-control > button uc-icon,
-  uc-editor-operation-control > button uc-icon,
-  uc-editor-crop-button-control > button uc-icon,
-  uc-editor-aspect-ratio-button-control > button uc-icon,
-  uc-editor-freeform-button-control > button uc-icon,
-  uc-editor-filter-control > button uc-icon {
+  uc-editor-button-control > button uc-editor-icon,
+  uc-editor-operation-control > button uc-editor-icon,
+  uc-editor-crop-button-control > button uc-editor-icon,
+  uc-editor-aspect-ratio-button-control > button uc-editor-icon,
+  uc-editor-freeform-button-control > button uc-editor-icon,
+  uc-editor-filter-control > button uc-editor-icon {
     pointer-events: none;
   }
 
@@ -540,15 +461,6 @@
     pointer-events: auto;
   }
 
-  uc-editor-image-cropper.uc-active_from_viewer {
-    transform: scale(1) translate(0px, 0px);
-    opacity: 1;
-    transition:
-      transform var(--transition-duration-4) cubic-bezier(0.37, 0, 0.63, 1) 0.4s,
-      opacity var(--transition-duration-3);
-    pointer-events: auto;
-  }
-
   uc-editor-image-cropper.uc-inactive_to_editor {
     opacity: 0;
     transition:
@@ -574,16 +486,6 @@
     display: block;
     width: 100%;
     height: 100%;
-  }
-
-  uc-editor-image-fader.uc-active_from_viewer {
-    z-index: 3;
-    transform: scale(1);
-    opacity: 1;
-    transition:
-      transform var(--transition-duration-4),
-      opacity var(--transition-duration-3) steps(1, jump-start);
-    pointer-events: auto;
   }
 
   uc-editor-image-fader.uc-active_from_cropper {
@@ -721,6 +623,10 @@
     padding-left: var(--l-controls-padding);
   }
 
+  uc-editor-toolbar > .uc-toolbar-container > .uc-sub-toolbar > .uc-controls-row > .uc-cancel-btn {
+    order: -1;
+  }
+
   uc-editor-toolbar > .uc-toolbar-container > .uc-sub-toolbar > .uc-controls-row > .uc-tab-toggles {
     position: relative;
     display: grid;
@@ -804,7 +710,7 @@
     > .uc-tab-toggles
     > .uc-tab-toggle
     > uc-btn-ui
-    > uc-icon
+    > uc-editor-icon
     > svg {
     width: var(--size-icon);
     height: var(--size-icon);
@@ -918,7 +824,7 @@
     user-select: none;
   }
 
-  uc-btn-ui > button > uc-icon {
+  uc-btn-ui > button > uc-editor-icon {
     pointer-events: none;
   }
 
@@ -938,11 +844,6 @@
   uc-btn-ui .uc-icon_left {
     margin-right: var(--cldtr-gap-mid-1);
     margin-left: 0px;
-  }
-
-  uc-btn-ui .uc-icon_right {
-    margin-right: 0px;
-    margin-left: var(--cldtr-gap-mid-1);
   }
 
   uc-btn-ui .uc-icon_single {
@@ -1063,32 +964,6 @@
     width: var(--uc-button-size);
   }
 
-  uc-btn-ui.uc-default > button {
-    --idle-color-rgb: var(--uc-secondary-foreground);
-    --idle-brightness: 1;
-    --idle-opacity: 1;
-    --idle-background: var(--uc-secondary);
-    --hover-color-rgb: var(--uc-secondary-foreground);
-    --hover-brightness: 1;
-    --hover-opacity: 1;
-    --hover-background: var(--uc-secondary-hover);
-    --down-color-rgb: var(--uc-secondary-foreground);
-    --down-brightness: 0.75;
-    --down-opacity: 1;
-    --down-background: var(--uc-secondary);
-    --active-color-rgb: var(--uc-primary);
-    --active-brightness: 1;
-    --active-opacity: 1;
-    --active-background: var(--uc-primary-transparent);
-  }
-
-  :where(.uc-contrast) uc-btn-ui.uc-default > button {
-    --idle-background: transparent;
-    --hover-background: var(--uc-secondary);
-    --active-background: var(--uc-foreground);
-    --active-color-rgb: var(--uc-background);
-  }
-
   uc-line-loader-ui {
     position: absolute;
     top: 0px;
@@ -1097,6 +972,7 @@
     width: 100%;
     height: 2px;
     opacity: 0.5;
+    container-type: inline-size;
   }
 
   uc-line-loader-ui .uc-inner {
@@ -1109,8 +985,20 @@
     width: 100%;
     height: 100%;
     background-color: var(--uc-primary);
+    opacity: 0;
     transform: translateX(-101%);
-    transition: transform 1s;
+  }
+
+  uc-line-loader-ui[active] .uc-line {
+    opacity: 1;
+    animation: uc-line-loader 1s infinite;
+  }
+
+  /* From just off the left edge until the line's left edge reaches the right one. */
+  @keyframes uc-line-loader {
+    to {
+      transform: translateX(100cqw);
+    }
   }
 
   uc-slider-ui {
@@ -1133,12 +1021,11 @@
 
   uc-slider-ui .uc-thumb {
     position: absolute;
-    left: 0px;
+    left: calc((100% - var(--l-thumb-size)) * var(--l-fraction, 0));
     width: var(--l-thumb-size);
     height: var(--l-thumb-size);
     background-color: var(--l-color);
     border-radius: 50%;
-    transform: translateX(0px);
     opacity: 1;
     transition:
       opacity var(--transition-duration-2),
@@ -1176,7 +1063,14 @@
   uc-slider-ui .uc-zero-dot {
     position: absolute;
     top: calc(100% - var(--l-zero-dot-offset) * 2);
-    left: calc(var(--l-thumb-size) / 2 - var(--l-zero-dot-size) / 2);
+    left: calc(
+      var(--l-thumb-size) /
+      2 -
+      var(--l-zero-dot-size) /
+      2 +
+      (100% - var(--l-thumb-size)) *
+      var(--l-fraction, 0)
+    );
     width: var(--l-zero-dot-size);
     height: var(--l-zero-dot-size);
     background-color: var(--color-primary-accent);
@@ -1229,7 +1123,7 @@
     display: flex;
   }
 
-  [uc-aspect-ratio-freeform] uc-icon {
+  [uc-aspect-ratio-freeform] uc-editor-icon {
     display: none;
   }
 

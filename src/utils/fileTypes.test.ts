@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fileIsImage, isBlob, isFile, matchExtension, matchMimeType, mergeFileTypes } from './fileTypes';
+import { fileIsImage, matchExtension, matchMimeType, mergeFileTypes } from './fileTypes';
 
 describe('mergeFileTypes', () => {
   it('should join input strings with comma', () => {
@@ -70,29 +70,5 @@ describe('fileIsImage', () => {
   it('should return false if file is not image', () => {
     const file = new File([''], 'name', { type: 'text/plain' });
     expect(fileIsImage(file)).toBe(false);
-  });
-});
-
-describe('isBlob', () => {
-  it('should return true if Blob is passed', () => {
-    expect(isBlob(new Blob(['']))).toBe(true);
-  });
-  it('should return true if File is passed', () => {
-    expect(isBlob(new File([''], 'test.txt'))).toBe(true);
-  });
-  it('should return false if something else passed', () => {
-    expect(isBlob('test')).toBe(false);
-    expect(isBlob({ uri: 'test' })).toBe(false);
-  });
-});
-
-describe('isFile', () => {
-  it('should return true if File is passed', () => {
-    expect(isFile(new File([''], 'test.txt'))).toBe(true);
-  });
-  it('should return false if something else passed', () => {
-    expect(isFile(new Blob(['']))).toBe(false);
-    expect(isFile('test')).toBe(false);
-    expect(isFile({ uri: 'test' })).toBe(false);
   });
 });

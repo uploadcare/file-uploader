@@ -1,4 +1,11 @@
-import type { PasteScope } from '../abstract/features/ClipboardLayer';
+import type { CameraMode } from '../abstract/cameraModes';
+import type { ComplexConfigKey as PropertyOnlyConfigKey } from '../abstract/config/builtin-registry';
+import type {
+  DynamicButtonMode,
+  FilesViewMode,
+  ModalPresentation,
+  PasteScope,
+} from '../abstract/config/validatorsType';
 import type { CustomLocaleDefinition, LocaleDefinition } from '../abstract/localeRegistry';
 import type { UploaderPlugin } from '../abstract/managers/plugin';
 import type {
@@ -6,10 +13,7 @@ import type {
   FileValidatorDescriptor,
   FuncCollectionValidator,
   FuncFileValidator,
-} from '../abstract/managers/ValidationManager';
-import type { CameraMode } from '../blocks/CameraSource/CameraSource';
-import type { PropertyOnlyConfigKey } from '../blocks/Config/Config';
-import type { FilesViewMode } from '../blocks/UploadList/UploadList';
+} from '../abstract/validatorTypes';
 
 export {
   type AuthToken,
@@ -47,7 +51,8 @@ export type SecureDeliveryProxyUrlResolver = (
 ) => Promise<string> | string;
 export type SecureUploadsSignatureAndExpire = { secureSignature: string; secureExpire: string };
 export type SecureUploadsSignatureResolver = () => Promise<SecureUploadsSignatureAndExpire | null>;
-export type IconHrefResolver = (iconName: string) => string;
+/** Returning nothing falls back to the built-in sprite, as documented. */
+export type IconHrefResolver = (iconName: string) => string | undefined;
 export type CameraConstraints = { video?: MediaTrackConstraints; audio?: MediaTrackConstraints };
 /** The values `cameraResolution`, `cameraAudioQuality` and `cameraAudioMode` take, alone or as a list. */
 export type CameraResolution = 'auto' | '720p' | '1080p' | '4k';
@@ -163,6 +168,12 @@ export type ConfigType = {
    */
   modalBackdropStrokes: boolean;
   /**
+   * How `<uc-modal>` opens its dialog: `'modal'` in the top layer with a backdrop, or `'inline'` in the page flow
+   * (`open` attribute, no backdrop or scroll lock; an outside click or Escape closes it).
+   * @default 'modal'
+   */
+  modalPresentation: ModalPresentation;
+  /**
    * Wrap the source list.
    */
   sourceListWrap: boolean;
@@ -225,6 +236,9 @@ export type ConfigType = {
   multipartMaxConcurrentRequests: number;
   /**
    * Maximum number of attempts for multipart uploads.
+   *
+   * @deprecated Has no effect: failed chunks are retried per `retryThrottledRequestMaxTimes` and
+   * `retryNetworkErrorMaxTimes`. Will be removed in the next major release.
    */
   multipartMaxAttempts: number;
   /**
@@ -473,6 +487,7 @@ export type PropertyOnlyConfigType = Pick<ConfigType, PropertyOnlyConfigKey>;
 /** Options settable via an attribute (as well as as a property). */
 export type AttributeConfigType = Omit<ConfigType, PropertyOnlyConfigKey>;
 
+// NEXT-MAJOR(config): remove the `ConfigComplexType` and `ConfigPlainType` aliases. Kept for 1.x compat.
 /**
  * @deprecated Renamed to {@link PropertyOnlyConfigType}. Kept as an alias so
  *   existing imports keep compiling.
@@ -626,9 +641,10 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
   | {
       status: 'uploading';
       fileInfo: null;
-      uuid: null;
-      cdnUrl: null;
-      cdnUrlModifiers: null;
+      // Set before the upload for a file added by uuid or CDN URL.
+      uuid: string | null;
+      cdnUrl: string | null;
+      cdnUrlModifiers: string | null;
       isUploading: true;
       isSuccess: false;
       isFailed: false;
@@ -650,9 +666,10 @@ export type OutputFileEntry<TStatus extends OutputFileStatus = OutputFileStatus>
   | {
       status: 'idle';
       fileInfo: null;
-      uuid: null;
-      cdnUrl: null;
-      cdnUrlModifiers: null;
+      // Set before the upload for a file added by uuid or CDN URL.
+      uuid: string | null;
+      cdnUrl: string | null;
+      cdnUrlModifiers: string | null;
       isUploading: false;
       isSuccess: false;
       isFailed: false;
@@ -680,6 +697,12 @@ export type OutputCollectionState<
   failedEntries: OutputFileEntry<'failed'>[];
   uploadingEntries: OutputFileEntry<'uploading'>[];
   idleEntries: OutputFileEntry<'idle'>[];
+
+  /**
+   * A plain copy of every field, read now. Call it synchronously, in the event handler, to keep the state as the
+   * event saw it; `{...state}` does the same.
+   */
+  snapshot(): OutputCollectionState<TStatus, TGroupFlag>;
 } & (TGroupFlag extends 'has-group'
   ? { group: UploadcareGroup }
   : TGroupFlag extends 'maybe-has-group'
@@ -720,8 +743,7 @@ export type OutputCollectionState<
       }
   );
 
-import type { DynamicButtonMode } from '../blocks/DynamicBtn/DynamicBtn';
-import { type EventPayload, EventType } from '../blocks/UploadCtxProvider/EventEmitter';
+import { type EventPayload, EventType } from '../abstract/EventEmitter';
 
 export type { EventPayload };
 export { EventType };

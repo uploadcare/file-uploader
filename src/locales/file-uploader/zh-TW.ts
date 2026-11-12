@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN 網址',
   'file-size-unknown': '未知',
   'camera-permissions-denied': '相機訪問被拒絕',
+  'camera-microphone-denied': '麥克風訪問被拒絕',
   'camera-permissions-prompt': '請允許訪問相機',
   'camera-permissions-request': '請求訪問',
   'camera-settings': '相機設定',
@@ -105,6 +106,8 @@ export default {
   'camera-audio-quality-high': '高',
   'camera-audio-mode-voice': '人聲',
   'camera-audio-mode-music': '音樂',
+  'camera-not-found': '找不到相機',
+  'camera-unavailable': '相機正在使用中或無法使用',
   'files-count-limit-error-title': '檔案數量超出限制',
   'files-count-limit-error-too-few':
     '您選擇了 {{total}} {{plural:file(total)}}。至少需要 {{min}} {{plural:file(min)}}。',
@@ -117,6 +120,10 @@ export default {
   'file-item-edit-button': '編輯',
   'file-item-remove-button': '移除',
   'a11y-activity-header-button-close': '關閉',
+  'a11y-camera-microphone': '麥克風',
+  'a11y-camera-stop-recording': '停止錄影',
+  'a11y-camera-play': '播放',
+  'a11y-camera-pause': '暫停',
   'a11y-editor-tab-filters': '篩選器',
   'a11y-editor-tab-tuning': '調整',
   'a11y-editor-tab-crop': '裁剪',
@@ -143,6 +150,8 @@ export default {
 
   custom: '自由形式',
   'freeform-crop': '自由裁剪',
+  'network-error': '網路錯誤',
+  retry: '重試',
 
   'upload-from': '從 {{source}} 上傳',
   'get-from': '從 {{source}} 取得',

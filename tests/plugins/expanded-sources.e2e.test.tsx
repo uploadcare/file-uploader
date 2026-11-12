@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { PlainText } from '@/abstract/l10n';
 import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
 
 describe('plugin sources: expand()', () => {
@@ -8,20 +9,20 @@ describe('plugin sources: expand()', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'parent-source',
-          label: 'Parent',
+          label: 'Parent' as PlainText,
           expand: () => ['child-photo', 'child-video'],
           onSelect: () => {},
         });
 
         pluginApi.registry.registerSource({
           id: 'child-photo',
-          label: 'Photo',
+          label: 'Photo' as PlainText,
           onSelect: () => {},
         });
 
         pluginApi.registry.registerSource({
           id: 'child-video',
-          label: 'Video',
+          label: 'Video' as PlainText,
           onSelect: () => {},
         });
       },
@@ -46,20 +47,20 @@ describe('plugin sources: expand()', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'camera-like',
-          label: 'Camera',
+          label: 'Camera' as PlainText,
           expand: () => ['photo-mode', 'video-mode'],
           onSelect: () => {},
         });
 
         pluginApi.registry.registerSource({
           id: 'photo-mode',
-          label: 'Take Photo',
+          label: 'Take Photo' as PlainText,
           onSelect: onSelectPhoto,
         });
 
         pluginApi.registry.registerSource({
           id: 'video-mode',
-          label: 'Record Video',
+          label: 'Record Video' as PlainText,
           onSelect: onSelectVideo,
         });
       },
@@ -83,7 +84,7 @@ describe('plugin sources: expand()', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'desktop-camera',
-          label: 'Desktop Camera',
+          label: 'Desktop Camera' as PlainText,
           expand: () => ['desktop-camera'],
           onSelect: () => {},
         });
@@ -103,14 +104,14 @@ describe('plugin sources: expand()', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'partial-expand',
-          label: 'Partial',
+          label: 'Partial' as PlainText,
           expand: () => ['registered-child', 'unregistered-child'],
           onSelect: () => {},
         });
 
         pluginApi.registry.registerSource({
           id: 'registered-child',
-          label: 'Registered Child',
+          label: 'Registered Child' as PlainText,
           onSelect: () => {},
         });
       },

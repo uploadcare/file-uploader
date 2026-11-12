@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Непознато',
   'camera-permissions-denied': 'Приступ камери одбијен',
+  'camera-microphone-denied': 'Приступ микрофону одбијен',
   'camera-permissions-prompt': 'Молимо дозволите приступ камери',
   'camera-permissions-request': 'Затражи приступ',
   'camera-settings': 'Подешавања камере',
@@ -107,6 +108,8 @@ export default {
   'camera-audio-quality-high': 'Висок',
   'camera-audio-mode-voice': 'Глас',
   'camera-audio-mode-music': 'Музика',
+  'camera-not-found': 'Камера није пронађена',
+  'camera-unavailable': 'Камера је у употреби или није доступна',
   'files-count-limit-error-title': 'Прекорачење лимита броја датотека',
   'files-count-limit-error-too-few':
     'Изабрали сте {{total}} {{plural:file(total)}}. Најмање {{min}} {{plural:file(min)}} је потребно.',
@@ -119,6 +122,10 @@ export default {
   'file-item-edit-button': 'Izmeni',
   'file-item-remove-button': 'Ukloni',
   'a11y-activity-header-button-close': 'Zatvori',
+  'a11y-camera-microphone': 'Микрофон',
+  'a11y-camera-stop-recording': 'Заустави снимање',
+  'a11y-camera-play': 'Пусти',
+  'a11y-camera-pause': 'Паузирај',
   'a11y-editor-tab-filters': 'Filteri',
   'a11y-editor-tab-tuning': 'Podešavanje',
   'a11y-editor-tab-crop': 'Iseci',
@@ -145,6 +152,8 @@ export default {
 
   custom: 'Слободна форма',
   'freeform-crop': 'Слободно исецање',
+  'network-error': 'Грешка мреже',
+  retry: 'Покушај поново',
 
   'upload-from': 'Отпреми са {{source}}',
   'get-from': 'Добиј са {{source}}',

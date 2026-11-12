@@ -30,11 +30,11 @@ const recordClip = async (configProps: Partial<Config> = {}) => {
   await expectActivity(root, 'camera');
 
   const camera = within(root).getByTestId('uc-camera-source');
-  const shot = camera.getByRole('button', { name: 'Shot', exact: true });
+  const shot = camera.getByTestId('uc-camera-controls--shot');
   await expect.element(shot, { timeout: 20_000 }).toBeVisible();
   await camera.getByRole('button', { name: 'Video', exact: true }).click();
   await shot.click();
-  const timer = camera.getByTestId('uc-camera-source--recording-timer');
+  const timer = camera.getByTestId('uc-camera-controls--recording-timer');
   await expect.poll(() => timer.element().textContent?.trim(), { timeout: 10_000 }).toMatch(/00:0[1-9]/);
   await shot.click();
   await camera.getByRole('button', { name: 'Accept', exact: true }).click();

@@ -1,6 +1,11 @@
-import { joinCdnOperations } from '../../../../utils/cdn-utils.js';
-import { stringToArray } from '../../../../utils/stringToArray.js';
+import { type CdnOperation, modifiers, type OperationLiteral } from '@uploadcare/cdn-url';
+import { FILTER_NAMES, type FilterName } from '@uploadcare/cdn-url/ops';
+import { logger } from '../../../../abstract/logger';
+import { operationsFromModifiers } from '../../../../utils/cdn/operations';
+import { deserializeCsv } from '../../../../utils/comma-separated';
 import type { Transformations } from '../types';
+
+const log = logger.scope('transformation-utils');
 
 type OperationDefaults = Readonly<Record<keyof Transformations, unknown>>;
 
@@ -36,54 +41,96 @@ const SUPPORTED_OPERATIONS_ORDERED = [
   'crop',
 ] as const satisfies readonly (keyof Transformations)[];
 
-function transformationToStr<T extends keyof Transformations>(operation: T, options: Transformations[T]): string {
-  if (typeof options === 'number') {
-    const value = options;
-    return OPERATIONS_DEFAULTS[operation] !== value ? `${operation}/${value}` : '';
-  }
+/**
+ * One typed operation literal per transformation. Each writer authors the
+ * CDN's own grammar directly — `crop/640x480/10,20`, `filter/adaris/50` — as a
+ * template literal typed against `OperationLiteral`. The `satisfies` clause
+ * below is the typo guard: it fails the build if a writer produces a string
+ * the union does not accept, which is what the previous per-operation
+ * creators validated at runtime (`__DEV__`-only, so production shipped the
+ * checking machinery without the checks). What is lost by moving off the
+ * creators is dev-only numeric range checking (e.g. `brightness(500)`
+ * throwing).
+ */
+const OPERATION_WRITERS = {
+  enhance: (value: number) => `enhance/${value}` as const,
+  brightness: (value: number) => `brightness/${value}` as const,
+  exposure: (value: number) => `exposure/${value}` as const,
+  gamma: (value: number) => `gamma/${value}` as const,
+  contrast: (value: number) => `contrast/${value}` as const,
+  saturation: (value: number) => `saturation/${value}` as const,
+  vibrance: (value: number) => `vibrance/${value}` as const,
+  warmth: (value: number) => `warmth/${value}` as const,
+  filter: ({ name, amount }: NonNullable<Transformations['filter']>) => `filter/${name}/${amount}` as const,
+  mirror: () => 'mirror' as const,
+  flip: () => 'flip' as const,
+  rotate: (value: number) => `rotate/${value}` as const,
+  crop: ({ dimensions, coords }: NonNullable<Transformations['crop']>) =>
+    `crop/${dimensions[0]}x${dimensions[1]}/${coords[0]},${coords[1]}` as const,
+} satisfies { [K in (typeof SUPPORTED_OPERATIONS_ORDERED)[number]]: (value: never) => OperationLiteral };
 
-  if (typeof options === 'boolean') {
-    const value = options;
-    return OPERATIONS_DEFAULTS[operation] !== value ? `${operation}` : '';
+/** Whether a value carries information, i.e. differs from the operation's default. */
+function isMeaningful<T extends keyof Transformations>(operation: T, value: Transformations[T]): boolean {
+  if (value === undefined || value === null) {
+    return false;
   }
+  if (operation === 'filter') {
+    // A filter at its default amount contributes nothing.
+    return (value as NonNullable<Transformations['filter']>).amount !== OPERATIONS_DEFAULTS.filter;
+  }
+  if (operation === 'crop') {
+    return true;
+  }
+  return OPERATIONS_DEFAULTS[operation] !== value;
+}
 
-  if (operation === 'filter' && options) {
-    const { name, amount } = options as NonNullable<Transformations['filter']>;
-    if (OPERATIONS_DEFAULTS.filter === amount) {
-      return '';
+/**
+ * Build transformations into operations, in the editor's fixed order. Values
+ * equal to their default are omitted — a deliberate "don't bloat the URL"
+ * policy, and the reason an explicit `brightness/0` does not survive a
+ * round-trip.
+ */
+export function transformationsToOperations(transformations: Transformations): CdnOperation[] {
+  const literals: OperationLiteral[] = [];
+  for (const operation of SUPPORTED_OPERATIONS_ORDERED) {
+    const value = transformations[operation];
+    if (!isMeaningful(operation, value)) {
+      continue;
     }
-    return `${operation}/${name}/${amount}`;
+    const write = OPERATION_WRITERS[operation] as (value: Transformations[typeof operation]) => OperationLiteral;
+    literals.push(write(value));
   }
 
-  if (operation === 'crop' && options) {
-    const { dimensions, coords } = options as NonNullable<Transformations['crop']>;
-    return `${operation}/${dimensions.join('x')}/${coords.join(',')}`;
-  }
-
-  return '';
+  // A template literal cannot throw the way a creator could, so there is
+  // nothing left here to catch. The parse below is not circular: it is the
+  // same `operationsFromModifiers` that already turns loose user strings into
+  // `CdnOperation[]` elsewhere, and `parseOperations` is in this bundle
+  // regardless — `withOperations` needs structure, not a string.
+  return operationsFromModifiers(modifiers(...literals));
 }
 
-export function transformationsToOperations(transformations: Transformations): string {
-  return joinCdnOperations(
-    ...SUPPORTED_OPERATIONS_ORDERED.filter(
-      (operation) => typeof transformations[operation] !== 'undefined' && transformations[operation] !== null,
-    )
-      .map((operation) => {
-        const options = transformations[operation];
-        return transformationToStr(operation, options);
-      })
-      .filter((str) => !!str),
-  );
-}
-
-export const COMMON_OPERATIONS = joinCdnOperations('format/auto', 'progressive/yes');
+/** Applied to every editor-generated URL. */
+export const COMMON_OPERATIONS: CdnOperation[] = operationsFromModifiers(modifiers('format/auto', 'progressive/yes'));
 
 const asNumber = ([value]: [unknown]) => (typeof value !== 'undefined' ? Number(value) : undefined);
 const asBoolean = () => true;
-const asFilter = ([name, amount]: [string, unknown]) => ({
-  name,
-  amount: typeof amount !== 'undefined' ? Number(amount) : 100,
-});
+const isFilterName = (value: string): value is FilterName => (FILTER_NAMES as readonly string[]).includes(value);
+
+/**
+ * A filter name comes off a URL, so it is untrusted: validate it against the
+ * CDN's own list rather than typing it as a `FilterName` we haven't checked.
+ * An unrecognised name is rejected the same way unsupported crop syntax is —
+ * the caller logs and skips the operation.
+ */
+const asFilter = ([name, amount]: [string, unknown]) => {
+  if (!isFilterName(name)) {
+    throw new Error(`Unknown filter "${name}".`);
+  }
+  return {
+    name,
+    amount: typeof amount !== 'undefined' ? Number(amount) : 100,
+  };
+};
 
 /**
  * Docs: https://uploadcare.com/docs/transformations/image/resize-crop/#operation-crop We don't support percentages and
@@ -97,8 +144,8 @@ const asCrop = ([dimensions, alignment]: [string, string]) => {
   }
 
   return {
-    dimensions: stringToArray(dimensions, 'x').map(Number),
-    coords: stringToArray(alignment).map(Number),
+    dimensions: dimensions.split('x').map(Number),
+    coords: deserializeCsv(alignment).map(Number),
   };
 };
 
@@ -135,10 +182,10 @@ const OPERATION_PROCESSORS: OperationProcessorMap = Object.freeze({
   },
 });
 
-export function operationsToTransformations(operations: string[]): Transformations {
+export function operationsToTransformations(operations: readonly CdnOperation[]): Transformations {
   const transformations: Partial<Record<keyof Transformations, unknown>> = {};
   for (const operation of operations) {
-    const [name, ...args] = operation.split('/');
+    const { name, params: args } = operation;
     if (!name || !SUPPORTED_OPERATIONS_ORDERED.includes(name as keyof Transformations)) {
       continue;
     }
@@ -150,9 +197,11 @@ export function operationsToTransformations(operations: string[]): Transformatio
       const value = processor(args as ProcessorTuple<typeof operationName>);
       transformations[operationName] = value;
     } catch (err) {
-      console.warn(
+      log.warn(
         [
-          `Failed to parse URL operation "${operation}". It will be ignored.`,
+          // Include the params: `crop` alone doesn't say which syntax was rejected,
+          // and an unrepresentable crop is the most common reason to land here.
+          `Failed to parse URL operation "${[name, ...args].join('/')}". It will be ignored.`,
           err instanceof Error ? `Error message: "${err.message}"` : err,
           'If you need this functionality, please feel free to open an issue at https://github.com/uploadcare/blocks/issues/new',
         ].join('\n'),

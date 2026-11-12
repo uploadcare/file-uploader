@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'כתובת CDN',
   'file-size-unknown': 'לא ידוע',
   'camera-permissions-denied': 'גישה למצלמה נדחתה',
+  'camera-microphone-denied': 'הגישה למיקרופון נדחתה',
   'camera-permissions-prompt': 'אנא אפשר גישה למצלמה',
   'camera-permissions-request': 'בקש גישה',
   'camera-settings': 'הגדרות מצלמה',
@@ -107,6 +108,8 @@ export default {
   'camera-audio-quality-high': 'גבוהה',
   'camera-audio-mode-voice': 'דיבור',
   'camera-audio-mode-music': 'מוזיקה',
+  'camera-not-found': 'לא נמצאה מצלמה',
+  'camera-unavailable': 'המצלמה בשימוש או אינה זמינה',
   'files-count-limit-error-title': 'חריגה ממגבלת כמות הקבצים',
   'files-count-limit-error-too-few':
     'בחרת {{total}} {{plural:file(total)}}. לפחות {{min}} {{plural:file(min)}} נדרשים.',
@@ -119,6 +122,10 @@ export default {
   'file-item-edit-button': 'ערוך',
   'file-item-remove-button': 'הסר',
   'a11y-activity-header-button-close': 'סגור',
+  'a11y-camera-microphone': 'מיקרופון',
+  'a11y-camera-stop-recording': 'עצור הקלטה',
+  'a11y-camera-play': 'הפעל',
+  'a11y-camera-pause': 'השהה',
   'a11y-editor-tab-filters': 'מסננים',
   'a11y-editor-tab-tuning': 'כיוון',
   'a11y-editor-tab-crop': 'חיתוך',
@@ -145,6 +152,8 @@ export default {
 
   custom: 'צורה חופשית',
   'freeform-crop': 'חיתוך חופשי',
+  'network-error': 'שגיאת רשת',
+  retry: 'נסה שוב',
 
   'upload-from': 'העלה מ{{source}}',
   'get-from': 'קבל מ{{source}}',

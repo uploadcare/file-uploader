@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Tuntematon',
   'camera-permissions-denied': 'Kameran käyttöoikeus evätty',
+  'camera-microphone-denied': 'Mikrofonin käyttöoikeus evätty',
   'camera-permissions-prompt': 'Salli kameran käyttö',
   'camera-permissions-request': 'Pyydä käyttöoikeutta',
   'camera-settings': 'Kameran asetukset',
@@ -105,6 +106,8 @@ export default {
   'camera-audio-quality-high': 'Korkea',
   'camera-audio-mode-voice': 'Puhe',
   'camera-audio-mode-music': 'Musiikki',
+  'camera-not-found': 'Kameraa ei löytynyt',
+  'camera-unavailable': 'Kamera on käytössä tai ei ole käytettävissä',
   'files-count-limit-error-title': 'Tiedostojen lukumäärän ylitys',
   'files-count-limit-error-too-few':
     'Olet valinnut {{total}} {{plural:file(total)}}. Vähintään {{min}} {{plural:file(min)}} vaaditaan.',
@@ -121,6 +124,10 @@ export default {
   'a11y-editor-tab-tuning': 'Säätö',
   'a11y-editor-tab-crop': 'Rajaus',
   'a11y-activity-header-button-close': 'Sulje',
+  'a11y-camera-microphone': 'Mikrofoni',
+  'a11y-camera-stop-recording': 'Lopeta tallennus',
+  'a11y-camera-play': 'Toista',
+  'a11y-camera-pause': 'Keskeytä',
   flip: 'Käännä',
   mirror: 'Peilaa',
   'a11y-cloud-editor-apply-filter': 'Käytä {{name}} suodatin',
@@ -144,6 +151,8 @@ export default {
 
   custom: 'Vapaa muoto',
   'freeform-crop': 'Vapaa rajaus',
+  'network-error': 'Verkkovirhe',
+  retry: 'Yritä uudelleen',
 
   'upload-from': 'Lataa {{source}}',
   'get-from': 'Hae kohteesta {{source}}',

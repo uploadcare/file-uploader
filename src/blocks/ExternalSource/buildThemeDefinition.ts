@@ -28,16 +28,12 @@ const ucCustomProperties: ThemeCustomProperty[] = [
   '--uc-border',
 ];
 
-const getCssValue = (element: HTMLElement, propName: ThemeCustomProperty): string => {
-  const style = window.getComputedStyle(element);
-  return style.getPropertyValue(propName).trim();
-};
-
 export const buildThemeDefinition = (element: HTMLElement): Record<ThemeCustomProperty, string> => {
   const theme: Partial<Record<ThemeCustomProperty, string>> = {};
+  const style = window.getComputedStyle(element);
 
   for (const prop of ucCustomProperties) {
-    const value = getCssValue(element, prop);
+    const value = style.getPropertyValue(prop).trim();
     if (value) {
       theme[prop] = value;
     }

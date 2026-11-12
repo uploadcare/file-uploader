@@ -16,11 +16,21 @@ export interface BuildItem {
   entry: Options['entry'];
   outDir: string;
   format: 'esm' | 'iife';
-  minify: boolean;
+  /**
+   * `'terser'` minifies with esbuild, then again with terser after tsup's rollup tree-shaking pass, whose output undoes
+   * part of esbuild's minification (it prints `!0` as `true`). Only for `web/`: `dist/` consumers minify it themselves.
+   */
+  minify: boolean | 'terser';
   filename?: string;
   cssFilename?: string;
   bundleExternalDependencies: boolean;
-  mangleProps?: boolean;
+  /**
+   * Rename `_`-prefixed properties. `'reserved'` renames them to `$<digit>…` only, for a bundle that leaves deps
+   * external (see the `dist/` item).
+   */
+  mangleProps?: boolean | 'reserved';
+  /** Source modules this bundle must not contain; the build fails naming the first one found. */
+  forbiddenModules?: RegExp[];
 }
 
 export const buildItems: BuildItem[] = [
@@ -35,7 +45,11 @@ export const buildItems: BuildItem[] = [
     format: 'esm',
     minify: true,
     bundleExternalDependencies: false,
-    mangleProps: false,
+    // Reserved names, unlike `web/`: `lit` stays external, so esbuild can't see the short names Lit's own production
+    // build uses, and a plain `mangleProps` handed the same ones to our `_` fields (`_lifetime` became `C` and replaced
+    // one of Lit's methods). Every `_` name instead becomes `$<digit>…`, a name no dependency uses.
+    // `specs/npm/production-bundle.test.ts` builds a consumer's production bundle to catch a regression.
+    mangleProps: 'reserved',
   },
   // uc-blocks
   {
@@ -43,7 +57,7 @@ export const buildItems: BuildItem[] = [
     outDir: outPath('./web'),
     cssFilename: 'uc-basic.min.css',
     format: 'esm',
-    minify: true,
+    minify: 'terser',
     bundleExternalDependencies: true,
     mangleProps: true,
   },
@@ -52,7 +66,7 @@ export const buildItems: BuildItem[] = [
     outDir: outPath('./web'),
     cssFilename: 'uc-basic.min.css',
     format: 'iife',
-    minify: true,
+    minify: 'terser',
     bundleExternalDependencies: true,
     mangleProps: true,
   },
@@ -63,9 +77,17 @@ export const buildItems: BuildItem[] = [
     },
     outDir: outPath('./web'),
     format: 'esm',
-    minify: true,
+    minify: 'terser',
     bundleExternalDependencies: true,
     mangleProps: true,
+    // The standalone editor uploads nothing: the upload stack must stay out of it. `@uploadcare/upload-client` itself
+    // can't be listed: the editor takes two small helpers from it (`Queue`, `isAuthTokenResolver`), and the package
+    // is one bundled file, so the metafile can't tell them from its upload functions.
+    forbiddenModules: [
+      /src\/abstract\/UploaderPublicApi\.ts$/,
+      /src\/abstract\/managers\/plugin\/PluginController\.ts$/,
+      /src\/abstract\/controllers\/UploadController\.ts$/,
+    ],
   },
   // file-uploader-regular
   {
@@ -74,7 +96,7 @@ export const buildItems: BuildItem[] = [
     },
     outDir: outPath('./web'),
     format: 'esm',
-    minify: true,
+    minify: 'terser',
     bundleExternalDependencies: true,
     mangleProps: true,
   },
@@ -85,7 +107,7 @@ export const buildItems: BuildItem[] = [
     },
     outDir: outPath('./web'),
     format: 'esm',
-    minify: true,
+    minify: 'terser',
     bundleExternalDependencies: true,
     mangleProps: true,
   },
@@ -96,7 +118,7 @@ export const buildItems: BuildItem[] = [
     },
     outDir: outPath('./web'),
     format: 'esm',
-    minify: true,
+    minify: 'terser',
     bundleExternalDependencies: true,
     mangleProps: true,
   },
@@ -105,7 +127,7 @@ export const buildItems: BuildItem[] = [
     entry: { 'uc-img.min': srcPath('./solutions/adaptive-image/index.ts') },
     outDir: outPath('./web'),
     format: 'esm',
-    minify: true,
+    minify: 'terser',
     bundleExternalDependencies: true,
     mangleProps: true,
   },

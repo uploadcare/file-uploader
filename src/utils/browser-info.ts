@@ -1,20 +1,10 @@
-const calcIsDesktopSafari = (): boolean => {
-  const ua = navigator.userAgent;
-  return /Macintosh|Windows/.test(ua) && /Version\/[\d.]+.*Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR/.test(ua);
+export const browserInfo = {
+  safariDesktop: ((ua) =>
+    /Macintosh|Windows/.test(ua) && /Version\/[\d.]+.*Safari/.test(ua) && !/Chrome|Chromium|Edg|OPR/.test(ua))(
+    navigator.userAgent,
+  ),
 };
 
-const calcHtmlMediaCaptureSupport = (): boolean => {
-  return 'capture' in document.createElement('input');
+export const browserFeatures = {
+  htmlMediaCapture: 'capture' in document.createElement('input'),
 };
-
-export const calcBrowserInfo = (): { safariDesktop: boolean } => ({
-  safariDesktop: calcIsDesktopSafari(),
-});
-
-export const calcBrowserFeatures = (): { htmlMediaCapture: boolean } => ({
-  htmlMediaCapture: calcHtmlMediaCaptureSupport(),
-});
-
-export const browserInfo = calcBrowserInfo();
-
-export const browserFeatures = calcBrowserFeatures();

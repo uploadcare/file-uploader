@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { PluginConfigApi } from '@/index.ts';
 import { createTestPlugin, renderSolution } from '~/tests/utils/render-solution';
+import { getCtxName } from '~/tests/utils/test-renderer';
 
 describe('custom config: values', () => {
   it('applies defaultValue from the config definition', async () => {
@@ -209,7 +210,11 @@ describe('custom config: values', () => {
     config.throwingNormOption = 'bad';
 
     await vi.waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('normalize()'), expect.any(Error));
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[uc]/),
+        expect.stringContaining('normalize()'),
+        expect.any(Error),
+      );
     });
 
     await expect.poll(() => config.throwingNormOption).toBe('safe');
@@ -241,7 +246,29 @@ describe('custom config: values', () => {
     const { config } = await renderSolution('regular', { plugins: [pluginA, pluginB] });
 
     await expect.poll(() => config.dupOption).toBe('first');
-    expect(warnSpy).toHaveBeenCalledWith('[CustomConfig] Config option "dupOption" is already registered');
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/\[uc].*\[plugin:cfg-dup-b]/),
+      'Config option "dupOption" is already registered',
+    );
+  });
+
+  it('ignores a write to a custom option once <uc-config> moves to a ctx without the plugin', async () => {
+    const plugin = createTestPlugin({
+      id: 'cfg-readopt',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerConfig({ name: 'readoptOption', defaultValue: 'a' });
+      },
+    });
+    const { config } = await renderSolution('regular', { plugins: [plugin] });
+    await expect.poll(() => config.readoptOption).toBe('a');
+
+    // The accessor defined for the plugin's option outlives the move; the new ctx has no plugin manager behind it.
+    config.setAttribute('ctx-name', getCtxName());
+    await config.updateComplete;
+
+    expect(() => {
+      config.readoptOption = 'b';
+    }).not.toThrow();
   });
 });
 
@@ -257,5 +284,6 @@ declare module '@/types/index' {
     normalizedOption: number;
     throwingNormOption: string;
     dupOption: string;
+    readoptOption: string;
   }
 }

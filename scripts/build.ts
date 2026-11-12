@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path, { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import postcssCascadeLayers from '@csstools/postcss-cascade-layers';
+import { type Plugin as EsbuildPlugin, build as esbuild } from 'esbuild';
 import { minifyTemplates, writeFiles } from 'esbuild-minify-templates';
 import postcss from 'postcss';
 import { build as tsupBuild } from 'tsup';
@@ -31,7 +32,100 @@ function banner() {
   ].join('\n');
 }
 
+/** Fails the build if the bundle's module graph contains one of `patterns`. */
+const forbidModules = (patterns: RegExp[]): EsbuildPlugin => ({
+  name: 'forbid-modules',
+  setup(build) {
+    build.onEnd((result) => {
+      const inputs = result.metafile?.inputs ?? {};
+      for (const pattern of patterns) {
+        const found = Object.keys(inputs).find((input) => pattern.test(input));
+        if (found) {
+          // Walk back to the entry along the first importer of each module, so the error shows how it got in.
+          const chain = [found];
+          for (let current = found; ; ) {
+            const importer = Object.keys(inputs).find(
+              (input) => !chain.includes(input) && inputs[input]?.imports.some((imported) => imported.path === current),
+            );
+            if (!importer) break;
+            chain.push(importer);
+            current = importer;
+          }
+          throw new Error(
+            `The bundle must not contain ${found} (${pattern}). Import chain: ${chain.reverse().join(' -> ')}`,
+          );
+        }
+      }
+    });
+  },
+});
+
+// No dependency or native object has a `$<digit>…` property name (`RegExp.$1`-`$9` are only on the constructor).
+const RESERVED_MANGLE_PREFIX = '$';
+
+/**
+ * The `index`-th reserved name: `$`, a digit, then base36. The digit comes first so a name never spells a property a
+ * framework puts on objects it manages (`$el`, `$on`, `$t`).
+ */
+const reservedMangleName = (index: number): string =>
+  `${RESERVED_MANGLE_PREFIX}${index % 10}${index < 10 ? '' : Math.floor(index / 10).toString(36)}`;
+
+/**
+ * Maps every `_` name the build will mangle to a reserved `$<digit>…` name, collected by a probe build of the same
+ * entries. Rebuilt on every build: a stale cache would leave new names to esbuild, which picks its own short ones.
+ */
+async function reservedMangleCache(buildItem: BuildItem): Promise<Record<string, string>> {
+  const probe = await esbuild({
+    entryPoints: buildItem.entry,
+    outdir: buildItem.outDir,
+    bundle: true,
+    write: false,
+    packages: 'external',
+    tsconfig: TSCONFIG_PATH,
+    conditions: ['browser', 'production'],
+    mainFields: ['exports', 'module', 'main'],
+    platform: 'browser',
+    format: buildItem.format,
+    loader: { '.css': 'empty' },
+    logLevel: 'silent',
+    mangleProps: /^_/,
+    mangleCache: {},
+  });
+  return Object.fromEntries(Object.keys(probe.mangleCache ?? {}).map((name, i) => [name, reservedMangleName(i)]));
+}
+
+/**
+ * Native property names, which esbuild must not hand out as mangled names. It avoids every name the bundle's own
+ * source uses as a property, but knows nothing of the ones only native objects carry: Lit's `_$litType$` became `at`
+ * once, and Lit took every array a template rendered (`Array.prototype.at`) for a template result and threw.
+ */
+const nativePropertyNames = (): Record<string, false> =>
+  Object.fromEntries(
+    [Object, Array, Function, String, Number, Boolean, Symbol, Promise, Map, Set, WeakMap, WeakSet, RegExp, Date, Error]
+      .flatMap((type) => [...Object.getOwnPropertyNames(type), ...Object.getOwnPropertyNames(type.prototype)])
+      .map((name) => [name, false]),
+  );
+
+/**
+ * Fails the build if esbuild mangled a name the probe missed, i.e. gave it a short name of its own. Checked against the
+ * reserved names themselves, not their prefix: esbuild's own short names can start with `$` too.
+ */
+const requireReservedMangle = (reserved: Record<string, string>): EsbuildPlugin => ({
+  name: 'require-reserved-mangle',
+  setup(build) {
+    build.onEnd((result) => {
+      const unreserved = Object.entries(result.mangleCache ?? {}).filter(
+        ([name, mangled]) => typeof mangled === 'string' && mangled !== reserved[name],
+      );
+      if (unreserved.length > 0) {
+        throw new Error(`Mangled outside the reserved names: ${unreserved.map(([name]) => name).join(', ')}`);
+      }
+    });
+  },
+});
+
 async function build(buildItem: BuildItem) {
+  const mangleCache = buildItem.mangleProps === 'reserved' ? await reservedMangleCache(buildItem) : undefined;
   await tsupBuild({
     tsconfig: TSCONFIG_PATH,
     outExtension: () => ({ js: '.js', dts: '.d.ts' }),
@@ -39,31 +133,55 @@ async function build(buildItem: BuildItem) {
     outDir: buildItem.outDir,
     target: 'esnext',
     minify: buildItem.minify,
+    terserOptions: { compress: { passes: 2 } },
     banner: {
       js: banner(),
       css: banner(),
     },
     format: buildItem.format,
     skipNodeModulesBundle: true,
-    loader: { '.svg': 'dataurl' },
     esbuildOptions(options) {
-      options.conditions = ['browser'];
-      options.mainFields = ['exports'];
+      // `production` pins the prod build of deps that ship both (dev builds carry
+      // extra dev-time warnings). Without it, resolution only lands on prod by
+      // falling through to the bare `import`/`default` entry — correct today, but
+      // it depends on a dep's `exports` key order rather than on our intent, and
+      // any dep declaring `development` before a bare fallback would hand us the
+      // dev build. Vite still resolves `development` when serving, so `npm run dev`
+      // keeps the friendlier builds.
+      options.conditions = ['browser', 'production'];
+      // `exports` first (modern packages resolve via conditions), then the
+      // classic `module`/`main` fallback for deps that ship no `exports` map —
+      // e.g. `signal-polyfill` (ESM, `main`-only), pulled in via `SignalMap`.
+      // Packages that DO declare `exports` are unaffected (esbuild ignores
+      // mainFields when an `exports` condition matches).
+      options.mainFields = ['exports', 'module', 'main'];
       options.platform = 'browser';
+      // tsup turns esbuild's minifier off for `'terser'`; it stays on, so terser starts from esbuild's output.
+      options.minify = Boolean(buildItem.minify);
       options.legalComments = 'linked';
       options.logOverride = { 'ignored-bare-import': 'silent' };
       if (buildItem.mangleProps) {
         options.mangleProps = /^_/;
+        // The reserved names all share a prefix no native property has.
+        options.mangleCache = mangleCache ?? nativePropertyNames();
+      }
+      if (buildItem.forbiddenModules) {
+        options.metafile = true;
       }
     },
-    esbuildPlugins: buildItem.minify ? [minifyTemplates(), writeFiles()] : [],
+    esbuildPlugins: [
+      ...(buildItem.minify ? [minifyTemplates(), writeFiles()] : []),
+      ...(buildItem.forbiddenModules ? [forbidModules(buildItem.forbiddenModules)] : []),
+      ...(mangleCache ? [requireReservedMangle(mangleCache)] : []),
+    ],
     noExternal: buildItem.bundleExternalDependencies ? [/.*/] : undefined,
     globalName: buildItem.format === 'iife' ? 'UC' : undefined,
-    keepNames: buildItem.format === 'iife' ? true : undefined,
     splitting: false,
     treeshake: true,
     shims: false,
-    dts: true,
+    // `stripInternal` drops `@internal` members: `mangleProps` renames `_`-prefixed ones, so a published type for
+    // them would compile and read `undefined`.
+    dts: { compilerOptions: { stripInternal: true } },
     env: {
       NODE_ENV: 'production',
     },

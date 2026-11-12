@@ -10,31 +10,45 @@ declare global {
   }
 }
 
-/**
- * @param url File Uploader pack url
- * @param [register] Register connected package, if it not registered yet
- */
-export function loadFileUploaderFrom(url: string, register = false): Promise<IndexModule | null> {
-  return new Promise((resolve, reject) => {
-    if (typeof document !== 'object') {
-      resolve(null);
-      return;
-    }
-    if (typeof window === 'object' && window[UC_WINDOW_KEY]) {
-      resolve(window[UC_WINDOW_KEY]);
-      return;
-    }
+/** Loads still in flight, so a second call before the first one finishes shares its `<script>`. */
+const pending = new Map<string, Promise<IndexModule>>();
+
+const loadScript = (url: string): Promise<IndexModule> => {
+  const inFlight = pending.get(url);
+  if (inFlight) {
+    return inFlight;
+  }
+  const loading = new Promise<IndexModule>((resolve, reject) => {
     const script = document.createElement('script');
     script.async = true;
     script.src = url;
     script.onerror = () => {
-      reject();
+      script.remove();
+      reject(new Error(`Failed to load ${url}`));
     };
     script.onload = () => {
-      const blocks = window[UC_WINDOW_KEY] as IndexModule;
-      register && defineComponents(blocks);
-      resolve(blocks);
+      resolve(window[UC_WINDOW_KEY] as IndexModule);
     };
     document.head.appendChild(script);
-  });
+  }).finally(() => pending.delete(url));
+  pending.set(url, loading);
+  return loading;
+};
+
+/**
+ * @param url File Uploader pack url
+ * @param [register] Register connected package, if it not registered yet
+ */
+export async function loadFileUploaderFrom(url: string, register = false): Promise<IndexModule | null> {
+  if (typeof document !== 'object') {
+    return null;
+  }
+  if (typeof window === 'object' && window[UC_WINDOW_KEY]) {
+    return window[UC_WINDOW_KEY];
+  }
+  const blocks = await loadScript(url);
+  if (register) {
+    defineComponents(blocks);
+  }
+  return blocks;
 }

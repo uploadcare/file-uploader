@@ -16,14 +16,14 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
   await expectActivity(rendered.root, 'camera');
 
   const camera = within(rendered.root).getByTestId('uc-camera-source');
-  await expect.element(camera.getByRole('button', { name: 'Shot', exact: true }), { timeout: 20_000 }).toBeVisible();
+  await expect.element(camera.getByTestId('uc-camera-controls--shot'), { timeout: 20_000 }).toBeVisible();
 
   return { ...rendered, camera, getUserMedia };
 };
 
 /** Takes a photo, accepts it and returns its file. */
 const takePhoto = async ({ api, camera }: Awaited<ReturnType<typeof openCamera>>) => {
-  await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+  await camera.getByTestId('uc-camera-controls--shot').click();
   await camera.getByRole('button', { name: 'Accept', exact: true }).click();
 
   await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);

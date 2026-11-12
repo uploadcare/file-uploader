@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN сілтемесі',
   'file-size-unknown': 'Белгісіз',
   'camera-permissions-denied': 'Камераға рұқсат берілмеді',
+  'camera-microphone-denied': 'Микрофонға рұқсат берілмеді',
   'camera-permissions-prompt': 'Камераға рұқсат беріңіз',
   'camera-permissions-request': 'Рұқсат сұрау',
   'camera-settings': 'Камера параметрлері',
@@ -105,6 +106,8 @@ export default {
   'camera-audio-quality-high': 'Жоғары',
   'camera-audio-mode-voice': 'Дауыс',
   'camera-audio-mode-music': 'Музыка',
+  'camera-not-found': 'Камера табылмады',
+  'camera-unavailable': 'Камера пайдаланылуда немесе қолжетімсіз',
   'files-count-limit-error-title': 'Файлдар санының шектеуі асып түсті',
   'files-count-limit-error-too-few':
     'Сіз {{total}} {{plural:file(total)}} таңдадыңыз. Кемінде {{min}} {{plural:file(min)}} қажет.',
@@ -117,6 +120,10 @@ export default {
   'file-item-edit-button': 'Өңдеу',
   'file-item-remove-button': 'Жою',
   'a11y-activity-header-button-close': 'Жабу',
+  'a11y-camera-microphone': 'Микрофон',
+  'a11y-camera-stop-recording': 'Жазуды тоқтату',
+  'a11y-camera-play': 'Ойнату',
+  'a11y-camera-pause': 'Кідірту',
   'a11y-editor-tab-filters': 'Фильтрлер',
   'a11y-editor-tab-tuning': 'Тюнинг',
   'a11y-editor-tab-crop': 'Қырқу',
@@ -143,6 +150,8 @@ export default {
 
   custom: 'Еркін форма',
   'freeform-crop': 'Еркін кесу',
+  'network-error': 'Желі қатесі',
+  retry: 'Қайталау',
 
   'upload-from': '{{source}} жүктеу',
   'get-from': '{{source}}-дан алу',

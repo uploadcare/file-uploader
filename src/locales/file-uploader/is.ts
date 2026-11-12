@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Óþekkt',
   'camera-permissions-denied': 'Aðgangur að myndavél neitað',
+  'camera-microphone-denied': 'Aðgangi að hljóðnema neitað',
   'camera-permissions-prompt': 'Vinsamlegast leyfðu aðgang að myndavél',
   'camera-permissions-request': 'Biðja um aðgang',
   'camera-settings': 'Myndavélarstillingar',
@@ -105,6 +106,8 @@ export default {
   'camera-audio-quality-high': 'Mikil',
   'camera-audio-mode-voice': 'Tal',
   'camera-audio-mode-music': 'Tónlist',
+  'camera-not-found': 'Engin myndavél fannst',
+  'camera-unavailable': 'Myndavélin er í notkun eða ekki tiltæk',
   'files-count-limit-error-title': 'Fjölda skráa takmark yfirflæði',
   'files-count-limit-error-too-few':
     'Þú valdir {{total}} {{plural:file(total)}}. Að lágmarki {{min}} {{plural:file(min)}} þarf.',
@@ -117,6 +120,10 @@ export default {
   'file-item-edit-button': 'Breyta',
   'file-item-remove-button': 'Fjarlægja',
   'a11y-activity-header-button-close': 'Loka',
+  'a11y-camera-microphone': 'Hljóðnemi',
+  'a11y-camera-stop-recording': 'Stöðva upptöku',
+  'a11y-camera-play': 'Spila',
+  'a11y-camera-pause': 'Gera hlé',
   'a11y-editor-tab-filters': 'Síur',
   'a11y-editor-tab-tuning': 'Stilling',
   'a11y-editor-tab-crop': 'Klippa',
@@ -143,6 +150,8 @@ export default {
 
   custom: 'Frjáls form',
   'freeform-crop': 'Frjáls klipping',
+  'network-error': 'Netvilla',
+  retry: 'Reyna aftur',
 
   'upload-from': 'Hlaða upp frá {{source}}',
   'get-from': 'Sækja frá {{source}}',

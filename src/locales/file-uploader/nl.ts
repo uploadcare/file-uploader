@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Onbekend',
   'camera-permissions-denied': 'Toegang tot de camera geweigerd',
+  'camera-microphone-denied': 'Toegang tot de microfoon geweigerd',
   'camera-permissions-prompt': 'Geef toegang tot de camera alstublieft',
   'camera-permissions-request': 'Toegang aanvragen',
   'camera-settings': 'Camera-instellingen',
@@ -105,6 +106,8 @@ export default {
   'camera-audio-quality-high': 'Hoog',
   'camera-audio-mode-voice': 'Spraak',
   'camera-audio-mode-music': 'Muziek',
+  'camera-not-found': 'Geen camera gevonden',
+  'camera-unavailable': 'De camera is in gebruik of niet beschikbaar',
   'files-count-limit-error-title': 'Bestandslimiet overschreden',
   'files-count-limit-error-too-few':
     'U heeft {{total}} {{plural:file(total)}} gekozen. Minimaal {{min}} {{plural:file(min)}} vereist.',
@@ -118,6 +121,10 @@ export default {
   'file-item-edit-button': 'Bewerken',
   'file-item-remove-button': 'Verwijderen',
   'a11y-activity-header-button-close': 'Sluiten',
+  'a11y-camera-microphone': 'Microfoon',
+  'a11y-camera-stop-recording': 'Opname stoppen',
+  'a11y-camera-play': 'Afspelen',
+  'a11y-camera-pause': 'Pauzeren',
   'a11y-editor-tab-filters': 'Filters',
   'a11y-editor-tab-tuning': 'Afstemming',
   'a11y-editor-tab-crop': 'Bijsnijden',
@@ -144,6 +151,8 @@ export default {
 
   custom: 'Vrije vorm',
   'freeform-crop': 'Vrije uitsnijding',
+  'network-error': 'Netwerkfout',
+  retry: 'Opnieuw proberen',
 
   'upload-from': 'Uploaden van {{source}}',
   'get-from': 'Ophalen van {{source}}',

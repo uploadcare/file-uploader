@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { PlainText } from '@/abstract/l10n';
 import { instagramPlugin } from '@/plugins/instagramPlugin';
 import { addSource, createTestPlugin, openModal, renderSolution, within } from '~/tests/utils/render-solution';
+
+declare module '@/abstract/localeRegistry' {
+  interface CustomLocaleDefinition {
+    'src-type-custom': string;
+  }
+}
 
 describe('plugin sources', () => {
   it('shows a registered source in the source list', async () => {
@@ -9,7 +16,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'my-source',
-          label: 'My Custom Source',
+          label: 'My Custom Source' as PlainText,
           onSelect: () => {},
         });
       },
@@ -29,7 +36,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'click-source',
-          label: 'Click Me',
+          label: 'Click Me' as PlainText,
           onSelect,
         });
       },
@@ -77,7 +84,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'removable-source',
-          label: 'Removable Source',
+          label: 'Removable Source' as PlainText,
           onSelect: () => {},
         });
       },
@@ -102,7 +109,10 @@ describe('plugin sources', () => {
     await openModal(root);
 
     await vi.waitFor(() => {
-      expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining('Instagram source was removed'));
+      expect(errorSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/^\[uc]/),
+        expect.stringContaining('Instagram source was removed'),
+      );
     });
 
     // The list has rendered once the local source it keeps is there; only then does instagram's absence mean anything.
@@ -119,7 +129,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'shared-source',
-          label: 'First',
+          label: 'First' as PlainText,
           onSelect: () => {},
         });
       },
@@ -130,7 +140,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'shared-source',
-          label: 'Second',
+          label: 'Second' as PlainText,
           onSelect: () => {},
         });
       },
@@ -140,7 +150,7 @@ describe('plugin sources', () => {
     addSource(config, 'shared-source');
 
     await vi.waitFor(() => {
-      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('"shared-source"'));
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringMatching(/^\[uc]/), expect.stringContaining('"shared-source"'));
     });
 
     await openModal(root);
@@ -154,7 +164,7 @@ describe('plugin sources', () => {
       setup: ({ pluginApi }) => {
         pluginApi.registry.registerSource({
           id: 'unlisted-source',
-          label: 'Unlisted Source',
+          label: 'Unlisted Source' as PlainText,
           onSelect: () => {},
         });
       },
@@ -164,5 +174,17 @@ describe('plugin sources', () => {
 
     await openModal(root);
     await expect.element(within(root).getByText('Unlisted Source')).not.toBeInTheDocument();
+  });
+});
+
+describe('source aliases', () => {
+  it('labels an aliased source with the name it shares', async () => {
+    // `dropboxchooser` shares Dropbox's name and icon; its button asked for a `src-type-dropboxchooser` key no locale has.
+    const { root } = await renderSolution('regular', { sourceList: 'local, dropboxchooser' });
+
+    await openModal(root);
+    await expect
+      .element(within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Dropbox', exact: true }))
+      .toBeVisible();
   });
 });

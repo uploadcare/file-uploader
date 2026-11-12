@@ -13,25 +13,34 @@ const alias = {
   '~': __dirname,
 };
 
-// Chromium's fake capture device is shared by every page in the browser, and a file recording from it while another
-// opens the camera leaves the second without video frames. These files open the camera, so they run one at a time in
-// their own project, after the rest. A new e2e file that opens the camera goes here.
+/**
+ * Every e2e file that opens the camera. Chromium's fake capture device is shared by every page in the browser, and a
+ * file recording from it while another opens it leaves the second one without video frames: run in parallel, these
+ * failed each other at random. They run one at a time, after the rest.
+ */
 const CAMERA_E2E = [
+  './tests/blocks/camera-source.e2e.test.tsx',
+  './tests/blocks/camera-view.e2e.test.tsx',
+  './tests/blocks/camera-recording.e2e.test.tsx',
+  './tests/blocks/camera-options.e2e.test.tsx',
   './tests/blocks/camera-aspect-ratio.e2e.test.tsx',
   './tests/blocks/camera-audio.e2e.test.tsx',
-  './tests/blocks/camera-options.e2e.test.tsx',
   './tests/blocks/camera-photo-capture.e2e.test.tsx',
   './tests/blocks/camera-quality.e2e.test.tsx',
-  './tests/blocks/camera-recording.e2e.test.tsx',
   './tests/blocks/camera-review-bugs.e2e.test.tsx',
   './tests/blocks/camera-settings.e2e.test.tsx',
   './tests/blocks/camera-stream.e2e.test.tsx',
   './tests/blocks/camera-video-format.e2e.test.tsx',
+  './tests/blocks/camera-deferred-changes.e2e.test.tsx',
+  './tests/blocks/camera-microphone-denied.e2e.test.tsx',
+  './tests/blocks/activity-child-block.e2e.test.tsx',
+  './tests/flow/remount-activities.e2e.test.tsx',
   './tests/flow/activity-transitions.e2e.test.tsx',
   './tests/api/telemetry/editor-and-sources.e2e.test.tsx',
   './tests/api/events-ui-and-sources.e2e.test.tsx',
   './tests/solutions/regular.e2e.test.tsx',
   './tests/solutions/inline.e2e.test.tsx',
+  './tests/blocks/modal-initial-focus.e2e.test.tsx',
 ];
 
 const e2eProject = ({
@@ -53,17 +62,18 @@ const e2eProject = ({
   plugins: [msw({ mode: 'worker-only' })],
   test: {
     name,
-    // Groups run in order, so the camera files start only once the rest of the suite is done.
-    sequence: { groupOrder },
-    fileParallelism,
     setupFiles: ['./tests/setup.e2e.ts'],
     // Reaches the page as `import.meta.env.E2E_NET`: vitest defines `env` into the browser bundle.
     env: { E2E_NET: mode },
+    // Browser e2e lives only under `tests/` — see the note on the specs
+    // project for why this is rooted rather than `./**`.
     include,
     // Fake-only: these read back what the emulator received or steer it with scenarios, and a live run has no
     // emulator. They never measured the real API either: before the emulator they ran on a stubbed `fetch` or
     // `uploadFile`, live or not.
     exclude: [...exclude, ...(isLive ? ['./tests/api/telemetry/**'] : [])],
+    fileParallelism,
+    sequence: { groupOrder },
     // Nothing to retry when the network is the emulator (`@uploadcare/api-emulator`, run in the page by
     // `tests/utils/emulator.browser.ts`): it answers the same way every time, so a second attempt would only
     // hide a real flake. A live run still races the real API, and still gets one.
@@ -108,6 +118,15 @@ export default defineConfig({
     // them as attributes; esbuild's never did.
     jsx: { development: false },
     jsxInject: "import { renderer } from '~/tests/utils/test-renderer';",
+    // Force the experimental (legacy) decorator transform so it deterministically
+    // matches `tsc`. Without this, the solution-style root tsconfig leaves the
+    // inferred decorator mode ambiguous for `src` files; the DI
+    // `@inject`/`@signalState` decorators require the legacy transform, and every
+    // existing Lit decorator is happy with it too. The two class-field options are
+    // Oxc's spelling of `useDefineForClassFields: false`.
+    decorator: { legacy: true },
+    assumptions: { setPublicClassFields: true },
+    typescript: { removeClassFieldsWithoutInitializer: true },
   },
   test: {
     // Every project starts each test with the real implementations back and the stubbed globals gone, so a test that
@@ -144,8 +163,13 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'specs',
-          include: ['./specs/npm/*.test.ts', './**/*.test.{ts,js}'],
+          // Rooted at the directories tests actually live in, not `./**`. A
+          // repo-wide glob also collected `.claude/worktrees/<branch>/` — a full
+          // second checkout when an agent works in a git worktree — which doubled
+          // the suite and surfaced an unrelated branch's failures as ours.
+          include: ['./specs/*/*.test.ts', './src/**/*.test.{ts,js}'],
           environment: 'happy-dom',
+          setupFiles: ['./tests/setup.specs.ts'],
         },
       },
       {
@@ -166,9 +190,24 @@ export default defineConfig({
           },
         },
       },
+      {
+        extends: true,
+        tsconfig: './tsconfig.types-test-react19.json',
+        test: {
+          name: 'types-react19',
+          include: ['./types/test-react19/**/*.test-d.tsx'],
+          // The same JSX typing checked against React 19's types, which read only `React.JSX`.
+          typecheck: {
+            enabled: true,
+            only: true,
+            include: ['./types/test-react19/**/*.test-d.tsx'],
+            tsconfig: './tsconfig.types-test-react19.json',
+          },
+        },
+      },
       e2eProject({
         name: 'e2e',
-        include: ['./**/*.e2e.test.ts', './**/*.e2e.test.tsx'],
+        include: ['./tests/**/*.e2e.test.{ts,tsx}'],
         exclude: CAMERA_E2E,
         fileParallelism: true,
         groupOrder: 0,
