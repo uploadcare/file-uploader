@@ -117,10 +117,7 @@ export class CameraSession {
     }
     // No stream: whatever was captured from the lost one is gone. A grant leaves the phase alone: the capture reset
     // it as it began, and one started on the new stream since must keep its own.
-    if (state === 'denied') {
-      this.phase = 'live';
-      this._stopCapture();
-    }
+    if (state === 'denied') this._dropCapture();
     this._captureResolved();
   }
 
@@ -475,6 +472,20 @@ export class CameraSession {
     this._host.navigate('onFileAdd');
   }
 
+  /**
+   * Stops the camera and forgets what was captured from it: the phase is live again, and the photo or clip under
+   * review goes with its stream. A recording in progress ends in `_stopCapture`, and one still stopping drops its clip
+   * as it arrives.
+   */
+  private _dropCapture(): void {
+    const recorderIdle = !this._recording.isRecording && !this._recording.isStopping;
+    this._stopCapture();
+    this.phase = 'live';
+    this._photo.discard();
+    this._review.close();
+    if (recorderIdle) this._recording.discard();
+  }
+
   private _stopCapture(): void {
     // A recording can't outlive its stream: it ends with no clip. One already stopping drops its clip on arrival.
     if (this._recording.isRecording) {
@@ -591,9 +602,7 @@ export class CameraSession {
   private async _capture(adoption = this._host.lifetime.adoptionSignal()): Promise<void> {
     // Release the current stream first. The prompt state below used to do it, but it is debounced and a quick
     // 'granted' supersedes it, which left the previous camera running after a device switch.
-    this._stopCapture();
-    // A new stream: whatever was captured from the previous one is gone.
-    this.phase = 'live';
+    this._dropCapture();
     try {
       this._access.settleLater('prompt');
       // The open forgets dropped custom constraints, so it is asked for the configured ones.

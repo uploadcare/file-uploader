@@ -386,6 +386,59 @@ describe('CameraSession flows', () => {
     expect(ctx.session.playbackMirrored).toBe(false);
   });
 
+  it('a camera reopened over a clip under review drops the clip and its recording', async () => {
+    const { getUserMedia } = stubMedia();
+    const ctx = setup();
+    giveVideo(ctx, fakeVideo());
+    const discard = vi.spyOn(VideoRecording.prototype, 'discard');
+    await open(ctx);
+    await stopRecording(ctx, startRecording(ctx));
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    discard.mockClear();
+
+    ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
+    await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:clip');
+    expect(discard).toHaveBeenCalled();
+  });
+
+  it('a camera reopened over a photo under review forgets the photo', async () => {
+    const { getUserMedia } = stubMedia();
+    const ctx = setup();
+    giveVideo(ctx, fakeVideo());
+    stubCanvas();
+    await open(ctx, [PHOTO]);
+    ctx.session.handle({ type: 'shutter' });
+
+    ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
+    await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+    // No longer offered: the phase is live again. A stale accept must not add the old camera's photo.
+    ctx.session.handle({ type: 'accept' });
+    await ctx.tasksSettled();
+
+    expect(ctx.addFile).not.toHaveBeenCalled();
+  });
+
+  it('a camera lost with a photo under review forgets the photo', async () => {
+    vi.useFakeTimers();
+    const { streams } = stubMedia();
+    const ctx = setup();
+    giveVideo(ctx, fakeVideo());
+    stubCanvas();
+    await open(ctx, [PHOTO]);
+    ctx.session.handle({ type: 'shutter' });
+
+    streams[0]?.dispatchEvent(new Event('inactive'));
+    await vi.runAllTimersAsync();
+    expect(ctx.session.permission).toBe('denied');
+    // No longer offered. A stale accept must not add the lost camera's photo.
+    ctx.session.handle({ type: 'accept' });
+    await vi.runAllTimersAsync();
+
+    expect(ctx.addFile).not.toHaveBeenCalled();
+  });
+
   it('a recording started on a reopened camera before its grant settles keeps its phase', async () => {
     const { getUserMedia } = stubMedia();
     const ctx = setup();
@@ -1153,7 +1206,7 @@ describe('CameraSession flows', () => {
     expect(streams[1]?.getAudioTracks()[0]?.stop).not.toHaveBeenCalled();
   });
 
-  it('inv11: a denied permission stops the capture and keeps the clip URL', async () => {
+  it('inv11: a denied permission stops the capture and drops the clip under review', async () => {
     vi.useFakeTimers();
     const { streams } = stubMedia();
     const ctx = setup();
@@ -1162,6 +1215,7 @@ describe('CameraSession flows', () => {
     await open(ctx);
     await stopRecording(ctx, startRecording(ctx));
     expect(ctx.session.phase).toBe('recorded');
+    const discard = vi.spyOn(VideoRecording.prototype, 'discard');
     const live = streams[0];
 
     live?.dispatchEvent(new Event('inactive'));
@@ -1170,11 +1224,9 @@ describe('CameraSession flows', () => {
     expect(ctx.session.phase).toBe('live');
     expect(ctx.session.permission).toBe('denied');
     expect(live?.getVideoTracks()[0]?.stop).toHaveBeenCalled();
-    expect(video.src).toBe('blob:clip');
-    // QUIRK(camera): the denied state stops the capture (`_permissionSettled` → `CameraSession._stopCapture`), which
-    // never calls `_review.close()`, so the clip's object URL and `src` stay until the next clip, retake or release
-    // revokes them. Pinned as current behaviour, not endorsed.
-    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    // The clip went with the camera it was recorded from: its object URL is revoked and its recording dropped.
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:clip');
+    expect(discard).toHaveBeenCalled();
   });
 });
 
