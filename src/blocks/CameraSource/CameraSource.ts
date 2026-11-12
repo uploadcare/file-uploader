@@ -139,7 +139,7 @@ export class CameraSource extends ChildBlock {
     super.willUpdate(changed);
     const session = this._session;
     this.classList.toggle('uc-initialized', session.permission === 'granted');
-    this.classList.toggle('uc-recording', session.phase === 'recording' && !session.isStopping);
+    this.classList.toggle('uc-recording', session.phase === 'recording' && !session.recording.isStopping);
   }
 
   public override render() {
@@ -147,7 +147,7 @@ export class CameraSource extends ChildBlock {
     const audioEnabled = this._config.getTracked('enableAudioRecording');
     const view = deriveCameraView({
       permission: session.permission,
-      failure: session.failure,
+      failure: session.access.failure,
       phase: session.phase,
       tab: session.activeTab,
       cameraModes: parseCameraModes(this._config.getTracked('cameraModes')),
@@ -155,7 +155,7 @@ export class CameraSource extends ChildBlock {
       cameraCount: session.devices.cameras.length,
       microphoneCount: audioEnabled ? session.devices.microphones.length : 0,
       muted: session.feed.audioMuted,
-      microphoneDenied: session.microphoneDenied,
+      microphoneDenied: session.access.microphoneDenied,
     });
     const settings = deriveSettingsView({
       view,
@@ -181,8 +181,8 @@ export class CameraSource extends ChildBlock {
         .settings=${settings.sections}
         .settingsHidden=${settings.hidden}
         .previewShape=${this._previewShape}
-        .hasVideoFrame=${session.hasVideoFrame}
-        .timelineIcon=${session.timelineIcon}
+        .hasVideoFrame=${session.preview.hasVideoFrame}
+        .timelineIcon=${session.review.timelineIcon}
         .clock=${session.clock}
         @uc-internal:camera-action=${this._handleAction}
       ></uc-camera-controls>

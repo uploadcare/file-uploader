@@ -5,13 +5,7 @@ import type { NavigationEdge } from '../../abstract/controllers/RouterController
 import { isAbortError } from '../../abstract/di/Lifetime';
 import { signalState } from '../../abstract/di/signalState';
 import type { CameraConstraints, CameraConstraintsResolver } from '../../types/exported';
-import {
-  CameraAccess,
-  type CameraFailure,
-  type CameraPermission,
-  cameraFailureOf,
-  type SettledPermission,
-} from './CameraAccess';
+import { CameraAccess, type CameraPermission, cameraFailureOf, type SettledPermission } from './CameraAccess';
 import { CameraDevices } from './CameraDevices';
 import { type CameraSetting, CaptureSettings } from './CaptureSettings';
 import type { CameraLifetime, CameraReport } from './cameraHost';
@@ -79,11 +73,17 @@ export class CameraSession {
 
   private readonly _photo = new PhotoCapture();
   private readonly _recording = new VideoRecording();
+  /** `isStopping`: the recording was asked to stop and its clip is not handed over yet. */
+  public readonly recording: Readonly<Pick<VideoRecording, 'isStopping'>> = this._recording;
   private readonly _review = new ClipReview();
+  /** The recorded clip's play/pause icon. */
+  public readonly review: Readonly<Pick<ClipReview, 'timelineIcon'>> = this._review;
   private readonly _clock = new RecordingClock();
   /** The recording timer and the clip's timeline, for the controls to render. */
   public readonly clock: ClockView = this._clock;
-  private readonly _preview: PreviewVideo;
+  private readonly _preview = new PreviewVideo(this._host.lifetime.runTask);
+  /** The shutter waits for a frame: a shot before the first one draws an empty canvas, which accepting drops. */
+  public readonly preview: Readonly<Pick<PreviewVideo, 'hasVideoFrame'>> = this._preview;
   private readonly _clipHandlers: ClipHandlers = {
     onPlay: () => {
       this._clock.startTimeline(() => this._preview.sample());
@@ -99,7 +99,14 @@ export class CameraSession {
   private readonly _microphone: MicrophoneSwap;
   public readonly settings: CaptureSettings;
   public readonly devices: CameraDevices;
-  private readonly _access: CameraAccess;
+  private readonly _access = new CameraAccess({
+    lifetime: this._host.lifetime,
+    onPermissionChange: (name) => this._permissionChanged(name),
+    onSettled: (state) => this._permissionSettled(state),
+    report: this._host.report,
+  });
+  /** Why access ended `denied`, and whether the camera opened without the refused microphone. */
+  public readonly access: Readonly<Pick<CameraAccess, 'failure' | 'microphoneDenied'>> = this._access;
   private readonly _requested = new RequestedConstraints();
 
   /** Runs once a permission state settled and shows. */
@@ -118,7 +125,6 @@ export class CameraSession {
   }
 
   public constructor(private readonly _host: CameraSessionHost) {
-    this._preview = new PreviewVideo(_host.lifetime.runTask);
     this.feed = new CameraFeed(_host.lifetime, _host.report);
     this._microphone = new MicrophoneSwap(_host.lifetime, _host.report);
     this.settings = new CaptureSettings(_host.config);
@@ -132,36 +138,10 @@ export class CameraSession {
       },
       report: _host.report,
     });
-    this._access = new CameraAccess({
-      lifetime: _host.lifetime,
-      onPermissionChange: (name) => this._permissionChanged(name),
-      onSettled: (state) => this._permissionSettled(state),
-      report: _host.report,
-    });
   }
 
   public get permission(): CameraPermission {
     return this._access.permission;
-  }
-
-  /** Why access ended `denied`, which picks the message shown. */
-  public get failure(): CameraFailure {
-    return this._access.failure;
-  }
-
-  /** The camera opened without the microphone because access to it was refused. */
-  public get microphoneDenied(): boolean {
-    return this._access.microphoneDenied;
-  }
-
-  /** The recording was asked to stop and its clip is not handed over yet. */
-  public get isStopping(): boolean {
-    return this._recording.isStopping;
-  }
-
-  /** The recorded clip's play/pause icon. */
-  public get timelineIcon(): 'play' | 'pause' {
-    return this._review.timelineIcon;
   }
 
   /**
@@ -170,11 +150,6 @@ export class CameraSession {
    */
   public get playbackMirrored(): boolean {
     return this._preview.showingClip && this._review.mirrored;
-  }
-
-  /** The shutter waits for a frame: a shot before the first one draws an empty canvas, which accepting drops. */
-  public get hasVideoFrame(): boolean {
-    return this._preview.hasVideoFrame;
   }
 
   /** The preview rendered its `<video>`, which the stream and the clip are shown in until release. */
