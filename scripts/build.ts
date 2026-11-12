@@ -60,11 +60,18 @@ const forbidModules = (patterns: RegExp[]): EsbuildPlugin => ({
   },
 });
 
-// No dependency or native object has a `$<base36>` property name (`RegExp.$1`-`$9` are only on the constructor).
+// No dependency or native object has a `$<digit>…` property name (`RegExp.$1`-`$9` are only on the constructor).
 const RESERVED_MANGLE_PREFIX = '$';
 
 /**
- * Maps every `_` name the build will mangle to a reserved `$<base36>` name, collected by a probe build of the same
+ * The `index`-th reserved name: `$`, a digit, then base36. The digit comes first so a name never spells a property a
+ * framework puts on objects it manages (`$el`, `$on`, `$t`).
+ */
+const reservedMangleName = (index: number): string =>
+  `${RESERVED_MANGLE_PREFIX}${index % 10}${index < 10 ? '' : Math.floor(index / 10).toString(36)}`;
+
+/**
+ * Maps every `_` name the build will mangle to a reserved `$<digit>…` name, collected by a probe build of the same
  * entries. Rebuilt on every build: a stale cache would leave new names to esbuild, which picks its own short ones.
  */
 async function reservedMangleCache(buildItem: BuildItem): Promise<Record<string, string>> {
@@ -84,9 +91,7 @@ async function reservedMangleCache(buildItem: BuildItem): Promise<Record<string,
     mangleProps: /^_/,
     mangleCache: {},
   });
-  return Object.fromEntries(
-    Object.keys(probe.mangleCache ?? {}).map((name, i) => [name, `${RESERVED_MANGLE_PREFIX}${i.toString(36)}`]),
-  );
+  return Object.fromEntries(Object.keys(probe.mangleCache ?? {}).map((name, i) => [name, reservedMangleName(i)]));
 }
 
 /**
