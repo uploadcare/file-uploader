@@ -178,7 +178,7 @@
   "size-limit": [
     {
       "path": "dist/index.js",
-      "limit": "104 KB"
+      "limit": "102 KB"
     },
     {
       "path": "dist/env.js",
@@ -190,7 +190,7 @@
     },
     {
       "path": "dist/index.ssr.js",
-      "limit": "10 KB"
+      "limit": "2 KB"
     }
   ],
   "overrides": {

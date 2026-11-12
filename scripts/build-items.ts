@@ -25,7 +25,7 @@ export interface BuildItem {
   cssFilename?: string;
   bundleExternalDependencies: boolean;
   /**
-   * Rename `_`-prefixed properties. `'reserved'` renames them to `__u<base36>` only, for a bundle that leaves deps
+   * Rename `_`-prefixed properties. `'reserved'` renames them to `$<base36>` only, for a bundle that leaves deps
    * external (see the `dist/` item).
    */
   mangleProps?: boolean | 'reserved';
@@ -47,7 +47,7 @@ export const buildItems: BuildItem[] = [
     bundleExternalDependencies: false,
     // Reserved names, unlike `web/`: `lit` stays external, so esbuild can't see the short names Lit's own production
     // build uses, and a plain `mangleProps` handed the same ones to our `_` fields (`_lifetime` became `C` and replaced
-    // one of Lit's methods). Every `_` name instead becomes `__u<base36>`, a prefix no dependency uses.
+    // one of Lit's methods). Every `_` name instead becomes `$<base36>`, a name no dependency uses.
     // `specs/npm/production-bundle.test.ts` builds a consumer's production bundle to catch a regression.
     mangleProps: 'reserved',
   },

@@ -60,10 +60,11 @@ const forbidModules = (patterns: RegExp[]): EsbuildPlugin => ({
   },
 });
 
-const RESERVED_MANGLE_PREFIX = '__u';
+// No dependency or native object has a `$<base36>` property name (`RegExp.$1`-`$9` are only on the constructor).
+const RESERVED_MANGLE_PREFIX = '$';
 
 /**
- * Maps every `_` name the build will mangle to a reserved `__u<base36>` name, collected by a probe build of the same
+ * Maps every `_` name the build will mangle to a reserved `$<base36>` name, collected by a probe build of the same
  * entries. Rebuilt on every build: a stale cache would leave new names to esbuild, which picks its own short ones.
  */
 async function reservedMangleCache(buildItem: BuildItem): Promise<Record<string, string>> {
@@ -100,20 +101,23 @@ const nativePropertyNames = (): Record<string, false> =>
       .map((name) => [name, false]),
   );
 
-/** Fails the build if esbuild mangled a name the probe missed, i.e. gave it a short name of its own. */
-const requireReservedMangle: EsbuildPlugin = {
+/**
+ * Fails the build if esbuild mangled a name the probe missed, i.e. gave it a short name of its own. Checked against the
+ * reserved names themselves, not their prefix: esbuild's own short names can start with `$` too.
+ */
+const requireReservedMangle = (reserved: Record<string, string>): EsbuildPlugin => ({
   name: 'require-reserved-mangle',
   setup(build) {
     build.onEnd((result) => {
       const unreserved = Object.entries(result.mangleCache ?? {}).filter(
-        ([, mangled]) => typeof mangled === 'string' && !mangled.startsWith(RESERVED_MANGLE_PREFIX),
+        ([name, mangled]) => typeof mangled === 'string' && mangled !== reserved[name],
       );
       if (unreserved.length > 0) {
-        throw new Error(`Mangled outside the reserved prefix: ${unreserved.map(([name]) => name).join(', ')}`);
+        throw new Error(`Mangled outside the reserved names: ${unreserved.map(([name]) => name).join(', ')}`);
       }
     });
   },
-};
+});
 
 async function build(buildItem: BuildItem) {
   const mangleCache = buildItem.mangleProps === 'reserved' ? await reservedMangleCache(buildItem) : undefined;
@@ -163,7 +167,7 @@ async function build(buildItem: BuildItem) {
     esbuildPlugins: [
       ...(buildItem.minify ? [minifyTemplates(), writeFiles()] : []),
       ...(buildItem.forbiddenModules ? [forbidModules(buildItem.forbiddenModules)] : []),
-      ...(mangleCache ? [requireReservedMangle] : []),
+      ...(mangleCache ? [requireReservedMangle(mangleCache)] : []),
     ],
     noExternal: buildItem.bundleExternalDependencies ? [/.*/] : undefined,
     globalName: buildItem.format === 'iife' ? 'UC' : undefined,

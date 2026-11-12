@@ -8,37 +8,37 @@
     {
       "name": "web/file-uploader.min.js",
       "path": "../../web/file-uploader.min.js",
-      "limit": "102 KB"
+      "limit": "98 KB"
     },
     {
       "name": "web/file-uploader.iife.min.js",
       "path": "../../web/file-uploader.iife.min.js",
-      "limit": "103 KB"
+      "limit": "98 KB"
     },
     {
       "name": "web/uc-cloud-image-editor.min.js",
       "path": "../../web/uc-cloud-image-editor.min.js",
-      "limit": "51 KB"
+      "limit": "47 KB"
     },
     {
       "name": "web/uc-file-uploader-regular.min.js",
       "path": "../../web/uc-file-uploader-regular.min.js",
-      "limit": "102 KB"
+      "limit": "98 KB"
     },
     {
       "name": "web/uc-file-uploader-inline.min.js",
       "path": "../../web/uc-file-uploader-inline.min.js",
-      "limit": "102 KB"
+      "limit": "98 KB"
     },
     {
       "name": "web/uc-file-uploader-minimal.min.js",
       "path": "../../web/uc-file-uploader-minimal.min.js",
-      "limit": "102 KB"
+      "limit": "98 KB"
     },
     {
       "name": "web/uc-img.min.js",
       "path": "../../web/uc-img.min.js",
-      "limit": "10 KB"
+      "limit": "9 KB"
     }
   ]
 }

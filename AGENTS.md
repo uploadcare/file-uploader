@@ -278,8 +278,9 @@ and one of them corrupted any path whose last segment recurred earlier.
   which the editor's merge needs because it matches operations by name. Re-measure
   before revisiting.
 - **Bundle budgets are tight and `size-limit` runs inside `npm run build`.** The
-  editor sits near 47.7 KB of 51, the IIFE near 102.0 of 103, `dist/index.js` near 103.7 of 104, `<uc-img>` near 8.7 of
-  10. Treat ~100 B as build-to-build variance and do not quote a single run to tighter
+  editor sits near 46.4 KB of 47, each uploader web bundle near 97.0 of 98, `dist/index.js` near 101.6 of 102, `<uc-img>`
+  near 8.5 of 9. The `web/` checks measure the files as shipped (`scripts/size-limit-web/`); the `dist/` ones re-bundle
+  with dependencies, as a consumer would. Treat ~100 B as build-to-build variance and do not quote a single run to tighter
   precision. If a change crosses a limit, that is a decision to raise the budget or
   trim, not something to work around.
 - **The editor bundle may not contain the upload stack.** Its build item lists
