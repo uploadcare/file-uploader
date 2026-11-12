@@ -518,6 +518,20 @@ describe('uc-cloud-image-editor', () => {
       await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
       await expect.poll(() => loaderActive(element)).toBe(false);
     });
+
+    it('runs the loading line while the image loads, and stops it once it arrived', async () => {
+      const images = holdImages();
+      const { element } = renderUncachedEditor(619);
+      const lineAnimations = () => element.querySelector('uc-line-loader-ui .uc-line')?.getAnimations().length;
+      await expect.poll(images.held).toBeGreaterThan(0);
+
+      await expect.poll(() => loaderActive(element)).toBe(true);
+      await expect.poll(lineAnimations).toBeGreaterThan(0);
+
+      images.release();
+      await expect.poll(() => loaderActive(element)).toBe(false);
+      await expect.poll(lineAnimations).toBe(0);
+    });
   });
 
   it('keeps the tab indicator under the active tab, also when a new image arrives', async () => {

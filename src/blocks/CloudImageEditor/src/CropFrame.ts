@@ -50,11 +50,11 @@ export class CropFrame extends EditorBlock {
   @property({ attribute: false })
   public cropBox: Rectangle = EMPTY_RECT;
 
-  private _backdropMask?: SVGMaskElement;
-  private _backdropMaskInner?: SVGRectElement;
+  private readonly _backdropMaskRef = createRef<SVGMaskElement>();
+  private readonly _backdropMaskInnerRef = createRef<SVGRectElement>();
   private readonly _backdropMaskId = `uc-backdrop-mask-${UID.generateFastUid()}`;
   private _frameThumbs?: FrameThumbs;
-  private _frameGuides?: SVGElement;
+  private readonly _frameGuidesRef = createRef<SVGSVGElement>();
   private _draggingThumb?: FrameThumb;
   private _hoverThumb?: FrameThumb;
   private _dragStartPoint?: Delta;
@@ -84,10 +84,11 @@ export class CropFrame extends EditorBlock {
   }
 
   private _applyGuidesDragState(): void {
-    if (!this._frameGuides) {
+    const guides = this._frameGuidesRef.value;
+    if (!guides) {
       return;
     }
-    this._frameGuides.setAttribute(
+    guides.setAttribute(
       'class',
       classNames({
         'uc-guides--hidden': this._guidesHidden,
@@ -109,61 +110,18 @@ export class CropFrame extends EditorBlock {
     return tooHigh || tooWide;
   }
 
-  private _createBackdrop(): void {
-    const cropBox = this.cropBox;
-    const { x, y, width, height } = cropBox;
-    const svg = this._svgElement;
-    if (!svg) {
-      return;
-    }
-
-    const mask = createSvgNode('mask', { id: this._backdropMaskId });
-    const maskRectOuter = createSvgNode('rect', {
-      x: 0,
-      y: 0,
-      width: '100%',
-      height: '100%',
-      fill: 'white',
-    });
-    const maskRectInner = createSvgNode('rect', {
-      x,
-      y,
-      width,
-      height,
-      fill: 'black',
-    });
-    mask.appendChild(maskRectOuter);
-    mask.appendChild(maskRectInner);
-
-    const backdropRect = createSvgNode('rect', {
-      x: 0,
-      y: 0,
-      width: '100%',
-      height: '100%',
-      fill: 'var(--color-image-background)',
-      'fill-opacity': 0.85,
-      mask: `url(#${this._backdropMaskId})`,
-    });
-    svg.appendChild(backdropRect);
-    svg.appendChild(mask);
-
-    this._backdropMask = mask;
-    this._backdropMaskInner = maskRectInner;
-  }
-
   /**
    * @private Super Tricky workaround for the chromium bug See
    *   https://bugs.chromium.org/p/chromium/issues/detail?id=330815
    */
   private _resizeBackdrop(): void {
-    if (!this._backdropMask) {
+    const mask = this._backdropMaskRef.value;
+    if (!mask) {
       return;
     }
-    this._backdropMask.style.display = 'none';
+    mask.style.display = 'none';
     window.requestAnimationFrame(() => {
-      if (this._backdropMask) {
-        this._backdropMask.style.display = 'block';
-      }
+      mask.style.display = 'block';
     });
   }
 
@@ -171,15 +129,16 @@ export class CropFrame extends EditorBlock {
     const cropBox = this.cropBox;
     const { x, y, width, height } = cropBox;
 
-    if (this._backdropMaskInner) {
-      setSvgNodeAttrs(this._backdropMaskInner, { x, y, width, height });
+    if (this._backdropMaskInnerRef.value) {
+      setSvgNodeAttrs(this._backdropMaskInnerRef.value, { x, y, width, height });
     }
   }
 
   private _updateFrame(): void {
     const cropBox = this.cropBox;
+    const guides = this._frameGuidesRef.value;
 
-    if (!this._frameGuides || !this._frameThumbs) {
+    if (!guides || !this._frameThumbs) {
       return;
     }
     for (const thumb of Object.values(this._frameThumbs)) {
@@ -230,7 +189,7 @@ export class CropFrame extends EditorBlock {
       );
     }
 
-    setSvgNodeAttrs(this._frameGuides, {
+    setSvgNodeAttrs(guides, {
       x: cropBox.x - GUIDE_STROKE_WIDTH * 0.5,
       y: cropBox.y - GUIDE_STROKE_WIDTH * 0.5,
       width: cropBox.width + GUIDE_STROKE_WIDTH,
@@ -276,54 +235,12 @@ export class CropFrame extends EditorBlock {
     };
   }
 
-  private _createGuides(): SVGElement {
-    const svg = createSvgNode('svg');
-
-    const rect = createSvgNode('rect', {
-      x: 0,
-      y: 0,
-      width: '100%',
-      height: '100%',
-      fill: 'none',
-      stroke: 'currentColor',
-      'stroke-width': GUIDE_STROKE_WIDTH,
-      'stroke-opacity': 0.5,
-    });
-    svg.appendChild(rect);
-
-    // Vertical thirds, then horizontal thirds.
-    for (const vertical of [true, false]) {
-      for (const i of [1, 2]) {
-        const at = `${GUIDE_THIRD * i}%`;
-        const [x1, y1, x2, y2] = vertical ? [at, '0%', at, '100%'] : ['0%', at, '100%', at];
-        svg.appendChild(
-          createSvgNode('line', {
-            x1,
-            y1,
-            x2,
-            y2,
-            stroke: 'currentColor',
-            'stroke-width': GUIDE_STROKE_WIDTH,
-            'stroke-opacity': 0.3,
-          }),
-        );
-      }
-    }
-
-    svg.classList.add('uc-guides', 'uc-guides--semi-hidden');
-
-    return svg;
-  }
-
   private _createFrame(): void {
     const svg = this._svgElement;
     if (!svg) {
       return;
     }
     const fr = document.createDocumentFragment();
-
-    const frameGuides = this._createGuides();
-    fr.appendChild(frameGuides);
 
     const frameThumbs = this._createThumbs();
     for (const { groupNode } of Object.values(frameThumbs)) {
@@ -332,7 +249,6 @@ export class CropFrame extends EditorBlock {
 
     svg.appendChild(fr);
     this._frameThumbs = frameThumbs;
-    this._frameGuides = frameGuides;
     this._applyGuidesDragState();
   }
 
@@ -569,7 +485,6 @@ export class CropFrame extends EditorBlock {
     if (!svg || this._svgReady) {
       return;
     }
-    this._createBackdrop();
     this._createFrame();
     this._svgReady = true;
     svg.addEventListener('pointermove', this._handleSvgPointerMove, true);
@@ -593,7 +508,25 @@ export class CropFrame extends EditorBlock {
   }
 
   public override render(): TemplateResult {
-    return html`<svg class="uc-svg" xmlns="http://www.w3.org/2000/svg" ${ref(this._svgRef)}></svg>`;
+    const maskId = this._backdropMaskId;
+    // Static backdrop and guides; `_render` sizes them, and `_createFrame` appends the thumbs after them.
+    // No whitespace between the nodes, so the svg holds elements only. `stroke-width="1"` is `GUIDE_STROKE_WIDTH`.
+    return html`<svg class="uc-svg" xmlns="http://www.w3.org/2000/svg" ${ref(this._svgRef)}><rect
+      x="0" y="0" width="100%" height="100%" fill="var(--color-image-background)" fill-opacity="0.85"
+      mask="url(#${maskId})"></rect><mask id=${maskId} ${ref(this._backdropMaskRef)}><rect
+      x="0" y="0" width="100%" height="100%" fill="white"></rect><rect
+      fill="black" ${ref(this._backdropMaskInnerRef)}></rect></mask><svg
+      class="uc-guides uc-guides--semi-hidden" ${ref(this._frameGuidesRef)}><rect
+      x="0" y="0" width="100%" height="100%" fill="none" stroke="currentColor" stroke-width="1"
+      stroke-opacity="0.5"></rect><line
+      x1="${GUIDE_THIRD}%" y1="0%" x2="${GUIDE_THIRD}%" y2="100%" stroke="currentColor" stroke-width="1"
+      stroke-opacity="0.3"></line><line
+      x1="${GUIDE_THIRD * 2}%" y1="0%" x2="${GUIDE_THIRD * 2}%" y2="100%" stroke="currentColor" stroke-width="1"
+      stroke-opacity="0.3"></line><line
+      x1="0%" y1="${GUIDE_THIRD}%" x2="100%" y2="${GUIDE_THIRD}%" stroke="currentColor" stroke-width="1"
+      stroke-opacity="0.3"></line><line
+      x1="0%" y1="${GUIDE_THIRD * 2}%" x2="100%" y2="${GUIDE_THIRD * 2}%" stroke="currentColor" stroke-width="1"
+      stroke-opacity="0.3"></line></svg></svg>`;
   }
 }
 

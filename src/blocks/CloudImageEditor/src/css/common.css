@@ -972,6 +972,7 @@
     width: 100%;
     height: 2px;
     opacity: 0.5;
+    container-type: inline-size;
   }
 
   uc-line-loader-ui .uc-inner {
@@ -984,8 +985,20 @@
     width: 100%;
     height: 100%;
     background-color: var(--uc-primary);
+    opacity: 0;
     transform: translateX(-101%);
-    transition: transform 1s;
+  }
+
+  uc-line-loader-ui[active] .uc-line {
+    opacity: 1;
+    animation: uc-line-loader 1s infinite;
+  }
+
+  /* From just off the left edge until the line's left edge reaches the right one. */
+  @keyframes uc-line-loader {
+    to {
+      transform: translateX(100cqw);
+    }
   }
 
   uc-slider-ui {

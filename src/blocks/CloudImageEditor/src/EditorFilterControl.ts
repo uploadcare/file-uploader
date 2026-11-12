@@ -46,7 +46,6 @@ export class EditorFilterControl extends EditorButtonControl {
   private _observer?: IntersectionObserver;
   private _cancelPreload?: () => void;
   private _lastPreviewRequestId = 0;
-  private _previewVisibilityCheckRaf?: number;
 
   @state()
   private _previewImage: string | null = null;
@@ -180,7 +179,6 @@ export class EditorFilterControl extends EditorButtonControl {
     super.disconnectedCallback();
     this._observer?.disconnect();
     this._cancelPreload?.();
-    this._clearPreviewVisibilityChecks();
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
@@ -243,7 +241,6 @@ export class EditorFilterControl extends EditorButtonControl {
       }
       this._previewImage = src;
       this._previewLoaded = true;
-      this._clearPreviewVisibilityChecks();
       this._observer?.unobserve(this);
     } catch (err) {
       // This load's own adoption: after a move, `this.adoptionSignal` is the next one's, still live.
@@ -260,6 +257,10 @@ export class EditorFilterControl extends EditorButtonControl {
     }
   }
 
+  /**
+   * The observer reports a change of intersection only, so it stays quiet at the two moments the control may already be
+   * in view: the image becoming known and the network coming back. Observing anew makes it report the current state.
+   */
   private _schedulePreviewVisibilityCheck(): void {
     if (
       this.adoptionSignal.aborted ||
@@ -268,35 +269,10 @@ export class EditorFilterControl extends EditorButtonControl {
       this.isOriginal ||
       this.editorController.networkProblems
     ) {
-      this._clearPreviewVisibilityChecks();
       return;
     }
-    if (this._previewVisibilityCheckRaf) {
-      cancelAnimationFrame(this._previewVisibilityCheckRaf);
-    }
-    this._previewVisibilityCheckRaf = requestAnimationFrame(() => {
-      this._previewVisibilityCheckRaf = undefined;
-      // No adoption check: `disconnectedCallback` cancels this frame.
-      if (this._previewImage || this._previewLoaded || this.isOriginal) {
-        this._clearPreviewVisibilityChecks();
-        return;
-      }
-      const rect = this.getBoundingClientRect();
-      const hasSize = rect.width > 0 && rect.height > 0;
-      const isVisible =
-        hasSize && rect.bottom > 0 && rect.right > 0 && rect.top < window.innerHeight && rect.left < window.innerWidth;
-      // Out of view, the IntersectionObserver loads the preview when it scrolls in.
-      if (isVisible) {
-        this.runTask(() => this._loadPreview());
-      }
-    });
-  }
-
-  private _clearPreviewVisibilityChecks(): void {
-    if (this._previewVisibilityCheckRaf) {
-      cancelAnimationFrame(this._previewVisibilityCheckRaf);
-      this._previewVisibilityCheckRaf = undefined;
-    }
+    this._observer?.unobserve(this);
+    this._observer?.observe(this);
   }
 
   private get _shouldShowPreview(): boolean {
