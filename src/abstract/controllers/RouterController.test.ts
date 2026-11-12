@@ -754,34 +754,13 @@ describe('RouterController (v2)', () => {
       return { router: container.get(RouterController) };
     };
 
-    it('logs slot transitions, flagging background vs modal', () => {
-      const { router } = setupDebug();
-      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
-
-      router.navigate('start-from'); // background strategy → background slot
-      expect(log).toHaveBeenCalledWith(...badge, 'background activity: none → start-from');
-
-      router.navigationStrategy = () => 'foreground';
-      router.navigate('camera'); // foreground → modal slot
-      expect(log).toHaveBeenCalledWith(...badge, 'modal activity: none → camera');
-    });
-
-    it('logs a traverse intent and a guard refusal', () => {
+    it('logs a guard refusal', () => {
       const { router } = setupDebug();
       router.guard('camera', () => false); // camera not activatable
       const log = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-      router.traverse('onClose');
       router.navigate('camera'); // refused by the guard
 
-      expect(log).toHaveBeenCalledWith(
-        '%c uc %c router %c',
-        UC_BADGE_STYLE,
-        SCOPE_BADGE_STYLE,
-        '',
-        'traverse "onClose"',
-      );
       expect(log).toHaveBeenCalledWith(
         '%c uc %c router %c',
         UC_BADGE_STYLE,
@@ -791,51 +770,15 @@ describe('RouterController (v2)', () => {
       );
     });
 
-    it('logs the applied navigation strategy', () => {
-      const { router } = setupDebug();
-      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
-
-      router.navigate('upload-list');
-
-      expect(log).toHaveBeenCalledWith(...badge, 'strategy for "upload-list": background');
-    });
-
-    it('logs guard registration and unregistration', () => {
-      const { router } = setupDebug();
-      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-      const badge = ['%c uc %c router %c', UC_BADGE_STYLE, SCOPE_BADGE_STYLE, ''] as const;
-
-      const off = router.guard('camera', () => true);
-      expect(log).toHaveBeenCalledWith(...badge, 'guard registered: "camera"');
-
-      off();
-      expect(log).toHaveBeenCalledWith(...badge, 'guard unregistered: "camera"');
-    });
-
-    it('logs the configured done activity', () => {
-      const { router } = setupDebug();
-      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
-
-      router.configure({ doneActivity: 'upload-list' });
-
-      expect(log).toHaveBeenCalledWith(
-        '%c uc %c router %c',
-        UC_BADGE_STYLE,
-        SCOPE_BADGE_STYLE,
-        '',
-        'configure: done activity = upload-list',
-      );
-    });
-
     it('does not log when this ctx has debug off', () => {
       const container = new ControllerContainer();
       container.bind(EventEmitter, () => ({ emit: vi.fn() }) as unknown as EventEmitter);
       const router = container.get(RouterController);
+      router.guard('camera', () => false);
       const log = vi.spyOn(console, 'log').mockImplementation(() => {});
 
       router.navigate('start-from');
-      router.traverse('onClose');
+      router.navigate('camera'); // refused by the guard
 
       expect(log).not.toHaveBeenCalled();
     });

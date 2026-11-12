@@ -135,7 +135,6 @@ export class RouterController {
   /** Per-preset routing config (solution-level), e.g. the post-flow done activity. */
   public configure(table: RouteTable): void {
     this._table = { ...table };
-    this._log.debug(lazy(() => [`configure: done activity = ${this._table.doneActivity ?? 'none'}`]));
   }
 
   // ─── Guards ───
@@ -149,11 +148,9 @@ export class RouterController {
    */
   public guard(activityId: ActivityId, canActivate: () => boolean): () => void {
     this._guards.set(activityId, canActivate);
-    this._log.debug(lazy(() => [`guard registered: "${activityId}"`]));
     return () => {
       if (this._guards.get(activityId) === canActivate) {
         this._guards.delete(activityId);
-        this._log.debug(lazy(() => [`guard unregistered: "${activityId}"`]));
       }
     };
   }
@@ -273,7 +270,6 @@ export class RouterController {
     // A background target closes any open modal first — the inline content is
     // the focus now; a foreground target leaves the background slot untouched.
     const slot = this.navigationStrategy(to);
-    this._log.debug(lazy(() => [`strategy for "${to}": ${slot}`]));
     if (slot === 'background') {
       this._transition(to, null);
     } else {
@@ -288,7 +284,6 @@ export class RouterController {
    * upload list while a modal is open in the foreground slot).
    */
   public setActivity(to: EdgeTarget, params?: Record<string, unknown>): void {
-    this._log.debug(lazy(() => [`set activity (direct): ${to ?? 'null'}`]));
     if (!this._canActivate(to)) {
       const fallback = this._fallbackFor(to);
       if (fallback) this.setActivity(fallback);
@@ -309,23 +304,12 @@ export class RouterController {
    * Always notifies subscribers, so params-only updates still re-render.
    */
   private _transition(nextActivity: EdgeTarget, nextModal: EdgeTarget): void {
-    const prevActivity = this._activity;
     const prevModal = this._modal;
     const prevEffective = this._currentActivity;
     this._activity = nextActivity;
     this._modal = nextModal;
     const nextEffective = this._modal ?? this._activity;
     this._currentActivity = nextEffective;
-
-    // Per-slot debug logs (verbose): flag the background vs the foreground (modal)
-    // slot explicitly, so a background change while a modal is open (which leaves
-    // the *effective* activity unchanged) is still visible.
-    if (nextActivity !== prevActivity) {
-      this._log.debug(lazy(() => [`background activity: ${prevActivity ?? 'none'} → ${nextActivity ?? 'none'}`]));
-    }
-    if (nextModal !== prevModal) {
-      this._log.debug(lazy(() => [`modal activity: ${prevModal ?? 'none'} → ${nextModal ?? 'none'}`]));
-    }
 
     // NEXT-MAJOR(router): fire these only when the dialog opens and closes; a screen change is `activity-change`.
     // Kept for 1.x compat.
@@ -435,7 +419,6 @@ export class RouterController {
    * - `onFileAdd` → the first `hooks.onFileAdd` decision, else `upload-list`.
    */
   public traverse(edge: NavigationEdge): void {
-    this._log.debug(lazy(() => [`traverse "${edge}"`]));
     switch (edge) {
       case 'onBack':
       case 'onCancel':

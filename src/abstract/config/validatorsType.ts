@@ -49,21 +49,23 @@ const asBoolean = (value: unknown): boolean => {
 
 const asStore = (value: unknown): boolean | 'auto' => (value === 'auto' ? value : asBoolean(value));
 
-const asCameraCapture = (value: unknown): '' | 'user' | 'environment' => {
-  const strValue = asString(value);
-  if (strValue !== 'user' && strValue !== 'environment' && strValue !== '') {
-    throw new Error(`Invalid value: "${strValue}"`);
-  }
-  return strValue;
-};
+/** An option that takes one value out of `allowed`. */
+const asOneOf =
+  <T extends string>(allowed: readonly T[]) =>
+  (value: unknown): T => {
+    const str = asString(value);
+    const match = allowed.find((item) => item === str);
+    if (match === undefined) {
+      throw new Error(`Invalid value: "${str}"`);
+    }
+    return match;
+  };
 
-const asCameraMode = (value: unknown): ModeCameraType => {
-  const strValue = asString(value);
-  if (!Object.values(CameraSourceTypes).includes(strValue as ModeCameraType)) {
-    throw new Error(`Invalid value: "${strValue}"`);
-  }
-  return strValue as ModeCameraType;
-};
+const asCameraCapture = asOneOf(['', 'user', 'environment'] as const);
+const asCameraMode = asOneOf(Object.values(CameraSourceTypes));
+const asModalPresentation = asOneOf<ModalPresentation>(['modal', 'inline']);
+const asFilesViewMode = asOneOf<FilesViewMode>(['grid', 'list']);
+const asDynamicButtonViewMode = asOneOf<DynamicButtonMode>(['auto', 'menu', 'toolbar', 'compact', 'plain']);
 
 const asCameraModes = (value: unknown): string => {
   const str = asString(value);
@@ -83,14 +85,6 @@ const asPasteScope = (value: unknown): PasteScope => {
     return false;
   }
 
-  throw new Error(`Invalid value: "${strValue}"`);
-};
-
-const asModalPresentation = (value: unknown): ModalPresentation => {
-  const strValue = asString(value);
-  if (strValue === 'modal' || strValue === 'inline') {
-    return strValue;
-  }
   throw new Error(`Invalid value: "${strValue}"`);
 };
 
@@ -221,24 +215,6 @@ const asArray = <T>(value: unknown): T => {
   }
 
   throw new Error('Must be an array.');
-};
-
-const asFilesViewMode = (value: unknown): FilesViewMode => {
-  const strValue = asString(value);
-
-  if (['grid', 'list'].includes(strValue)) {
-    return strValue as FilesViewMode;
-  }
-
-  throw new Error(`Invalid value: "${strValue}"`);
-};
-
-const asDynamicButtonViewMode = (value: unknown): DynamicButtonMode => {
-  const strValue = asString(value);
-  if (['auto', 'menu', 'toolbar', 'compact', 'plain'].includes(strValue)) {
-    return strValue as DynamicButtonMode;
-  }
-  throw new Error(`Invalid value: "${strValue}"`);
 };
 
 export {
