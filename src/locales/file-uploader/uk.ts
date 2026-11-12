@@ -94,6 +94,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Невідомо',
   'camera-permissions-denied': 'Доступ до камери заборонено',
+  'camera-microphone-denied': 'Доступ до мікрофона заборонено',
   'camera-permissions-prompt': 'Будь ласка, дозвольте доступ до камери',
   'camera-permissions-request': 'Запитати доступ',
   'camera-settings': 'Налаштування камери',

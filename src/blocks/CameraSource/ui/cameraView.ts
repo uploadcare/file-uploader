@@ -19,6 +19,8 @@ export type CameraViewInput = {
   cameraCount: number;
   microphoneCount: number;
   muted: boolean;
+  /** The camera opened without the microphone because access to it was refused. */
+  microphoneDenied: boolean;
 };
 
 /** What the camera shows, as a function of its state: every `hidden` toggle, the message, and the shutter. */
@@ -41,6 +43,10 @@ export type CameraView = {
   shotClass: string;
   microphoneHidden: boolean;
   microphoneIcon: 'microphone' | 'microphone-mute';
+  /** The l10n key of the microphone button's label, which says why it is crossed out when access was refused. */
+  microphoneLabel: 'a11y-camera-microphone' | 'camera-microphone-denied';
+  /** Access to the microphone was refused, so the button can do nothing; it stays focusable for its label. */
+  microphoneDisabled: boolean;
   audioSelectHidden: boolean;
   audioSelectDisabled: boolean;
 };
@@ -58,6 +64,7 @@ export function deriveCameraView(input: CameraViewInput): CameraView {
     cameraCount,
     microphoneCount,
     muted,
+    microphoneDenied,
   } = input;
   const granted = permission === 'granted';
   const captured = phase === 'shot' || phase === 'recorded';
@@ -80,7 +87,9 @@ export function deriveCameraView(input: CameraViewInput): CameraView {
     shotIcon: phase === 'recording' ? 'square' : onVideo ? 'video-camera-full' : 'camera-full',
     shotClass: phase === 'recording' ? `${SHOT_CLASS} uc-stop-record` : SHOT_CLASS,
     microphoneHidden: !onVideo || !audioEnabled || phase === 'recorded',
-    microphoneIcon: muted ? 'microphone-mute' : 'microphone',
+    microphoneIcon: muted || microphoneDenied ? 'microphone-mute' : 'microphone',
+    microphoneLabel: microphoneDenied ? 'camera-microphone-denied' : 'a11y-camera-microphone',
+    microphoneDisabled: microphoneDenied,
     audioSelectHidden: !onVideo || !audioEnabled || microphoneCount <= 1 || phase !== 'live',
     audioSelectDisabled: !audioEnabled || muted,
   };

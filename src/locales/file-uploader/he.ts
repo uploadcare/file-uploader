@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'כתובת CDN',
   'file-size-unknown': 'לא ידוע',
   'camera-permissions-denied': 'גישה למצלמה נדחתה',
+  'camera-microphone-denied': 'הגישה למיקרופון נדחתה',
   'camera-permissions-prompt': 'אנא אפשר גישה למצלמה',
   'camera-permissions-request': 'בקש גישה',
   'camera-settings': 'הגדרות מצלמה',

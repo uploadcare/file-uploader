@@ -11,6 +11,7 @@ const input = (overrides: Partial<CameraViewInput> = {}): CameraViewInput => ({
   cameraCount: 1,
   microphoneCount: 2,
   muted: false,
+  microphoneDenied: false,
   ...overrides,
 });
 
@@ -137,5 +138,13 @@ describe('a camera that could not start', () => {
   it('reads an error it does not know as unavailable', () => {
     expect(cameraFailureOf(new TypeError('boom'))).toBe('unavailable');
     expect(cameraFailureOf('nope')).toBe('unavailable');
+  });
+
+  it('crosses out the microphone and names why while its access is denied', () => {
+    expect(deriveCameraView(input({ tab: 'video', microphoneDenied: true }))).toMatchObject({
+      microphoneIcon: 'microphone-mute',
+      microphoneLabel: 'camera-microphone-denied',
+    });
+    expect(deriveCameraView(input({ tab: 'video' })).microphoneLabel).toBe('a11y-camera-microphone');
   });
 });

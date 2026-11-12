@@ -39,6 +39,11 @@ export class CameraAccess {
   @signalState() public permission: CameraPermission = 'idle';
   /** Why access ended `denied`, which picks the message shown. */
   @signalState() public failure: CameraFailure = 'denied';
+  /**
+   * The camera opened without the microphone because access to it was refused. Cleared once a microphone is in use or
+   * none is wanted.
+   */
+  @signalState() public microphoneDenied = false;
 
   /** Aborted to remove the permission listeners: when watching stops, and when it starts over. */
   private _permissionWatch: AbortController | null = null;

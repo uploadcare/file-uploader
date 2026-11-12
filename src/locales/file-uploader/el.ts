@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Άγνωστο',
   'camera-permissions-denied': 'Άρνηση πρόσβασης στην κάμερα',
+  'camera-microphone-denied': 'Άρνηση πρόσβασης στο μικρόφωνο',
   'camera-permissions-prompt': 'Παρακαλώ επιτρέψτε την πρόσβαση στην κάμερα',
   'camera-permissions-request': 'Αίτημα πρόσβασης',
   'camera-settings': 'Ρυθμίσεις κάμερας',

@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'უცნობია',
   'camera-permissions-denied': 'კამერის წვდომა აკრძალულია',
+  'camera-microphone-denied': 'მიკროფონის წვდომა აკრძალულია',
   'camera-permissions-prompt': 'გთხოვთ, დართეთ წვდომა კამერაზე',
   'camera-permissions-request': 'წვდომის მოთხოვნა',
   'camera-settings': 'კამერის პარამეტრები',

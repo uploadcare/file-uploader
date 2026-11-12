@@ -312,10 +312,16 @@ describe('uc-camera-source (device selection)', () => {
   it('lists the cameras once a capture succeeds after the first access check failed', async () => {
     // The device list was only read after the first check, so failing it left the camera picker empty for good.
     const getUserMedia = stubDevices();
+    // The prompt closed without an answer: both permissions still read 'prompt', so the camera isn't asked for again
+    // without the microphone.
+    vi.spyOn(navigator.permissions, 'query').mockImplementation(
+      async () => Object.assign(new EventTarget(), { state: 'prompt' }) as PermissionStatus,
+    );
     getUserMedia.mockRejectedValueOnce(new DOMException('Permission dismissed', 'NotAllowedError'));
     renderRegularHost();
     await navigateToCameraSource();
     await expect.element(page.getByText('Camera access denied', { exact: true })).toBeVisible();
+    expect(getUserMedia).toHaveBeenCalledOnce();
 
     // A later capture succeeds, as after a permission change or a press of the request button.
     document.querySelector<HTMLButtonElement>('uc-camera-source .uc-message-box button')!.click();

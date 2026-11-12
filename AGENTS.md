@@ -278,7 +278,7 @@ and one of them corrupted any path whose last segment recurred earlier.
   which the editor's merge needs because it matches operations by name. Re-measure
   before revisiting.
 - **Bundle budgets are tight and `size-limit` runs inside `npm run build`.** The
-  editor sits near 47.6 KB of 51, the IIFE near 101.0 of 102, `dist/index.js` near 102.7 of 103, `<uc-img>` near 8.7 of
+  editor sits near 47.7 KB of 51, the IIFE near 102.0 of 103, `dist/index.js` near 103.7 of 104, `<uc-img>` near 8.7 of
   10. Treat ~100 B as build-to-build variance and do not quote a single run to tighter
   precision. If a change crosses a limit, that is a decision to raise the budget or
   trim, not something to work around.

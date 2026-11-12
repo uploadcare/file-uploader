@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN 網址',
   'file-size-unknown': '未知',
   'camera-permissions-denied': '相機訪問被拒絕',
+  'camera-microphone-denied': '麥克風訪問被拒絕',
   'camera-permissions-prompt': '請允許訪問相機',
   'camera-permissions-request': '請求訪問',
   'camera-settings': '相機設定',

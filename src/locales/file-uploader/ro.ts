@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'URL CDN',
   'file-size-unknown': 'Necunoscută',
   'camera-permissions-denied': 'Accesul la cameră a fost refuzat',
+  'camera-microphone-denied': 'Accesul la microfon a fost refuzat',
   'camera-permissions-prompt': 'Vă rugăm să permiteți accesul la cameră',
   'camera-permissions-request': 'Solicitați acces',
   'camera-settings': 'Setări cameră',

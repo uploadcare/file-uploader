@@ -1,3 +1,4 @@
+import { cameraFailureOf } from '../CameraAccess';
 import type { CameraLifetime, CameraReport } from '../cameraHost';
 import { stopTracks } from './tracks';
 
@@ -18,9 +19,12 @@ export class MicrophoneSwap {
   /**
    * Opens a microphone with `audio` and resolves with its track, for the caller to swap in. Only the latest swap gets
    * one: a superseded one, or one that `isCurrent` no longer wants, stops its tracks and resolves null, as does one
-   * that failed to open.
+   * that failed to open. The latest one whose access was refused resolves `'refused'`.
    */
-  public async open(audio: MediaTrackConstraints, isCurrent: () => boolean): Promise<MediaStreamTrack | null> {
+  public async open(
+    audio: MediaTrackConstraints,
+    isCurrent: () => boolean,
+  ): Promise<MediaStreamTrack | 'refused' | null> {
     const swap = ++this._swaps;
     const adoption = this._lifetime.adoptionSignal();
     let next: MediaStream;
@@ -35,7 +39,8 @@ export class MicrophoneSwap {
         error,
         'camera capturing. Failed to reopen the microphone',
       );
-      return null;
+      // A superseded refusal is not what the microphone is now: a later swap decides.
+      return swap === this._swaps && cameraFailureOf(error) === 'denied' ? 'refused' : null;
     }
     const [track] = next.getAudioTracks();
     if (swap !== this._swaps || !isCurrent() || !track) {

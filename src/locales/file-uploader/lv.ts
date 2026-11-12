@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Nezināms',
   'camera-permissions-denied': 'Kameras piekļuve liegta',
+  'camera-microphone-denied': 'Mikrofona piekļuve liegta',
   'camera-permissions-prompt': 'Lūdzu, atļaujiet piekļuvi kamerai',
   'camera-permissions-request': 'Pieprasīt piekļuvi',
   'camera-settings': 'Kameras iestatījumi',

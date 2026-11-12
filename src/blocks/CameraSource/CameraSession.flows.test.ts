@@ -377,11 +377,45 @@ describe('CameraSession flows', () => {
     await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
     // As soon as the new stream shows, not once the permission state settles.
     await vi.waitFor(() => expect(video.srcObject).toBe(streams[1]));
-    expect(ctx.session.phase).toBe('recorded');
+    // The recapture dropped the clip's phase as it began.
+    expect(ctx.session.phase).toBe('live');
     expect(ctx.session.playbackMirrored).toBe(false);
-    await vi.waitFor(() => expect(ctx.session.phase).toBe('live'));
+    // Past the 300 ms the reopened camera's 'granted' takes to settle.
+    await delay(400);
 
     expect(ctx.session.playbackMirrored).toBe(false);
+  });
+
+  it('a recording started on a reopened camera before its grant settles keeps its phase', async () => {
+    const { getUserMedia } = stubMedia();
+    const ctx = setup();
+    giveVideo(ctx, fakeVideo());
+    await open(ctx);
+    ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
+    await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+    await ctx.tasksSettled();
+
+    const recorder = startRecording(ctx);
+    expect(ctx.session.phase).toBe('recording');
+    // Past the 300 ms the reopened camera's 'granted' takes to settle.
+    await delay(400);
+
+    expect(ctx.session.phase).toBe('recording');
+    expect(recorder.state).toBe('recording');
+  });
+
+  it('a camera reopened over a photo under review shows it live at once', async () => {
+    stubMedia();
+    const ctx = setup();
+    giveVideo(ctx, fakeVideo());
+    stubCanvas();
+    await open(ctx);
+    ctx.session.handle({ type: 'shutter' });
+    expect(ctx.session.phase).toBe('shot');
+
+    ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
+
+    expect(ctx.session.phase).toBe('live');
   });
 
   it('inv4: changes made while recording apply after the stop, video first', async () => {
@@ -907,6 +941,170 @@ describe('CameraSession flows', () => {
     expect(getUserMedia.mock.calls.filter(([constraints]) => constraints.video)).toHaveLength(2);
   });
 
+  it('a refused microphone opens the camera without sound, and asks for the microphone no more', async () => {
+    const { getUserMedia, streams, microphoneCalls } = stubMedia();
+    getUserMedia.mockRejectedValueOnce(new DOMException('Simulated', 'NotAllowedError'));
+    const ctx = setup({ cameraModes: () => [VIDEO] });
+
+    await open(ctx, [VIDEO]);
+    await vi.waitFor(() => expect(ctx.session.permission).toBe('granted'));
+    await ctx.tasksSettled();
+
+    expect(getUserMedia).toHaveBeenCalledTimes(2);
+    expect(getUserMedia.mock.calls[1]?.[0].audio).toBe(false);
+    expect(streams[0]?.getVideoTracks()).toHaveLength(1);
+    expect(streams[0]?.getAudioTracks()).toHaveLength(0);
+    // The applies after the open see the microphone as asked for: no second prompt for it.
+    expect(microphoneCalls()).toHaveLength(0);
+    expect(ctx.session.microphoneDenied).toBe(true);
+  });
+
+  it('a camera switch that has the microphone refused again keeps it denied', async () => {
+    const { getUserMedia, streams } = stubMedia();
+    getUserMedia.mockRejectedValueOnce(new DOMException('Simulated', 'NotAllowedError'));
+    const ctx = setup({ cameraModes: () => [VIDEO] });
+    await open(ctx, [VIDEO]);
+    expect(ctx.session.microphoneDenied).toBe(true);
+
+    getUserMedia.mockRejectedValueOnce(new DOMException('Simulated', 'NotAllowedError'));
+    ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
+    await vi.waitFor(() => expect(streams).toHaveLength(2));
+    await ctx.tasksSettled();
+
+    expect(ctx.session.microphoneDenied).toBe(true);
+  });
+
+  it('a microphone permission granted after the microphone was refused at open opens it into the camera', async () => {
+    const { getUserMedia, streams, microphoneCalls, permissionStatus } = stubMedia();
+    getUserMedia.mockRejectedValueOnce(new DOMException('Simulated', 'NotAllowedError'));
+    const ctx = setup({ cameraModes: () => [VIDEO] });
+    await open(ctx, [VIDEO]);
+    await ctx.tasksSettled();
+    const live = streams[0];
+
+    permissionStatus.microphone.dispatchEvent(new Event('change'));
+
+    await vi.waitFor(() => expect(live?.getAudioTracks()).toHaveLength(1));
+    expect(microphoneCalls()).toHaveLength(1);
+    expect(live?.getVideoTracks()[0]?.stop).not.toHaveBeenCalled();
+    expect(ctx.session.microphoneDenied).toBe(false);
+  });
+
+  it('a camera refused along with the microphone shows the camera denied, as before', async () => {
+    const { getUserMedia } = stubMedia();
+    const error = new DOMException('Simulated', 'NotAllowedError');
+    getUserMedia.mockRejectedValue(error);
+    const ctx = setup({ cameraModes: () => [VIDEO] });
+
+    await ctx.session.activate([VIDEO]);
+    await vi.waitFor(() => expect(ctx.session.permission).toBe('denied'));
+
+    expect(getUserMedia).toHaveBeenCalledTimes(2);
+    expect(ctx.session.failure).toBe('denied');
+    expect(ctx.report).toHaveBeenCalledOnce();
+    expect(ctx.report).toHaveBeenCalledWith(
+      'warn',
+      'Failed to capture camera',
+      error,
+      'camera capturing. Failed to capture camera',
+    );
+  });
+
+  it('a camera refused without audio recording is asked once', async () => {
+    const { getUserMedia } = stubMedia();
+    getUserMedia.mockRejectedValue(new DOMException('Simulated', 'NotAllowedError'));
+    const ctx = setup({ cameraModes: () => [VIDEO], audioEnabled: () => false });
+
+    await ctx.session.activate([VIDEO]);
+    await vi.waitFor(() => expect(ctx.session.permission).toBe('denied'));
+
+    expect(getUserMedia).toHaveBeenCalledOnce();
+    expect(ctx.session.microphoneDenied).toBe(false);
+  });
+
+  it('audio recording turned off after the microphone was refused clears the denial', async () => {
+    const { getUserMedia } = stubMedia();
+    getUserMedia.mockRejectedValueOnce(new DOMException('Simulated', 'NotAllowedError'));
+    const ctx = setup({ cameraModes: () => [VIDEO] });
+    await open(ctx, [VIDEO]);
+    expect(ctx.session.microphoneDenied).toBe(true);
+
+    ctx.host.config.audioEnabled = () => false;
+    ctx.session.configChanged('audioEnabled');
+    await ctx.tasksSettled();
+
+    expect(ctx.session.microphoneDenied).toBe(false);
+  });
+
+  it('a microphone refused when audio recording is turned on marks it denied, the camera kept', async () => {
+    const { streams, hold } = stubMedia();
+    const ctx = setup({ cameraModes: () => [VIDEO], audioEnabled: () => false });
+    await ctx.session.activate([VIDEO]);
+    await vi.waitFor(() => expect(ctx.session.devices.cameras).toHaveLength(2));
+
+    hold().fail(new DOMException('Simulated', 'NotAllowedError'));
+    ctx.host.config.audioEnabled = () => true;
+    ctx.session.configChanged('audioEnabled');
+
+    await vi.waitFor(() => expect(ctx.session.microphoneDenied).toBe(true));
+    expect(streams[0]?.getVideoTracks()[0]?.stop).not.toHaveBeenCalled();
+  });
+
+  it('a microphone refused when another is picked, with none live, marks it denied', async () => {
+    const { streams, hold } = stubMedia();
+    const ctx = setup({ cameraModes: () => [VIDEO] });
+    await open(ctx, [VIDEO]);
+    expect(ctx.session.microphoneDenied).toBe(false);
+    const [ended] = streams[0]?.getAudioTracks() ?? [];
+    if (ended) ended.readyState = 'ended';
+
+    hold().fail(new DOMException('Simulated', 'SecurityError'));
+    ctx.session.handle({ type: 'select-microphone', deviceId: 'mic-2' });
+
+    await vi.waitFor(() => expect(ctx.session.microphoneDenied).toBe(true));
+  });
+
+  it('a microphone refused again after a permission change marks it denied', async () => {
+    const { streams, hold, permissionStatus } = stubMedia();
+    const ctx = setup({ cameraModes: () => [VIDEO] });
+    await open(ctx, [VIDEO]);
+    const [ended] = streams[0]?.getAudioTracks() ?? [];
+    if (ended) ended.readyState = 'ended';
+
+    hold().fail(new DOMException('Simulated', 'NotAllowedError'));
+    permissionStatus.microphone.dispatchEvent(new Event('change'));
+
+    await vi.waitFor(() => expect(ctx.session.microphoneDenied).toBe(true));
+  });
+
+  it('a microphone refused while the current one still records keeps it, and only warns', async () => {
+    const { streams, hold } = stubMedia();
+    const ctx = setup({ cameraModes: () => [VIDEO] });
+    await open(ctx, [VIDEO]);
+    const [working] = streams[0]?.getAudioTracks() ?? [];
+
+    hold().fail(new DOMException('Simulated', 'NotAllowedError'));
+    ctx.session.handle({ type: 'select-microphone', deviceId: 'mic-2' });
+    await vi.waitFor(() => expect(ctx.report).toHaveBeenCalled());
+    await ctx.tasksSettled();
+
+    expect(streams[0]?.getAudioTracks()).toEqual([working]);
+    expect(ctx.session.microphoneDenied).toBe(false);
+  });
+
+  it('a microphone that fails to start when another is picked only warns', async () => {
+    const { hold } = stubMedia();
+    const ctx = setup({ cameraModes: () => [VIDEO] });
+    await open(ctx, [VIDEO]);
+
+    hold().fail(new DOMException('Simulated', 'NotReadableError'));
+    ctx.session.handle({ type: 'select-microphone', deviceId: 'mic-2' });
+    await vi.waitFor(() => expect(ctx.report).toHaveBeenCalled());
+    await ctx.tasksSettled();
+
+    expect(ctx.session.microphoneDenied).toBe(false);
+  });
+
   it('audio recording turned off during a recording applies after the stop', async () => {
     const { streams } = stubMedia();
     const ctx = setup();
@@ -973,8 +1171,8 @@ describe('CameraSession flows', () => {
     expect(ctx.session.permission).toBe('denied');
     expect(live?.getVideoTracks()[0]?.stop).toHaveBeenCalled();
     expect(video.src).toBe('blob:clip');
-    // QUIRK(camera): the denied state stops the capture (`_permissionSettled` → `_stopCapture`, CameraSession.ts:497),
-    // which never calls `_review.close()`, so the clip's object URL and `src` stay until the next clip, retake or release
+    // QUIRK(camera): the denied state stops the capture (`_permissionSettled` → `CameraSession._stopCapture`), which
+    // never calls `_review.close()`, so the clip's object URL and `src` stay until the next clip, retake or release
     // revokes them. Pinned as current behaviour, not endorsed.
     expect(URL.revokeObjectURL).not.toHaveBeenCalled();
   });
@@ -1028,7 +1226,7 @@ describe('CameraSession edges', () => {
     expect(ctx.session.phase).toBe('live');
   });
 
-  it('stops the timeline when the preview is gone', async () => {
+  it('ignores playback events after release', async () => {
     stubMedia();
     const ctx = setup();
     const video = fakeVideo();
@@ -1156,7 +1354,7 @@ describe('CameraSession edges', () => {
     await ctx.tasksSettled();
 
     expect(URL.createObjectURL).not.toHaveBeenCalled();
-    // QUIRK(camera): the clip's guarded await in `_showRecording` (CameraSession.ts:423) aborts, so nothing moves the
+    // QUIRK(camera): the clip's guarded await in `CameraSession._showRecording` aborts, so nothing moves the
     // phase on and a session nobody released still shows the recording. Pinned as current behaviour, not endorsed.
     expect(ctx.session.phase).toBe('recording');
     expect(ctx.taskFailed).not.toHaveBeenCalled();

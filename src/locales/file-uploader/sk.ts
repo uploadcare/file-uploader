@@ -94,6 +94,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Neznáma',
   'camera-permissions-denied': 'Prístup ku kamere bol zamietnutý',
+  'camera-microphone-denied': 'Prístup k mikrofónu bol zamietnutý',
   'camera-permissions-prompt': 'Prosím, povolte prístup ku kamere',
   'camera-permissions-request': 'Požiadať o prístup',
   'camera-settings': 'Nastavenia kamery',

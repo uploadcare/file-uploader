@@ -155,6 +155,7 @@ export class CameraSource extends ChildBlock {
       cameraCount: session.devices.cameras.length,
       microphoneCount: audioEnabled ? session.devices.microphones.length : 0,
       muted: session.feed.audioMuted,
+      microphoneDenied: session.microphoneDenied,
     });
     const settings = deriveSettingsView({
       view,

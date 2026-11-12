@@ -4,6 +4,7 @@ import { ensureUploaderCtx } from '../../../lit/ensureUploaderCtx';
 import { delay } from '../../../utils/delay';
 import type { CameraPhase } from '../CameraSession';
 import { RecordingClock } from '../media/RecordingClock';
+import { CameraActionEvent } from './CameraActionEvent';
 import { CameraControls } from './CameraControls';
 import { deriveCameraView } from './cameraView';
 
@@ -34,6 +35,7 @@ const mount = async (
     cameraCount: 1,
     microphoneCount: 1,
     muted: false,
+    microphoneDenied: false,
   });
   el.clock = clock;
   parent.append(el);
@@ -94,9 +96,11 @@ describe('CameraControls', () => {
     document.body.append(form);
     const submit = vi.fn((event: Event) => event.preventDefault());
     form.addEventListener('submit', submit);
-    const el = await mount(new RecordingClock(), form);
+    const el = await mount(new RecordingClock(), form, 'recorded');
+    const play = el.querySelector<HTMLButtonElement>('[data-testid="recording-timer"]');
+    expect(play?.disabled).toBe(false);
 
-    el.querySelector<HTMLButtonElement>('[data-testid="recording-timer"]')?.click();
+    play?.click();
 
     expect(submit).not.toHaveBeenCalled();
   });
@@ -118,5 +122,55 @@ describe('CameraControls', () => {
 
     const recorded = await mount(new RecordingClock(), document.body, 'recorded');
     expect(recorded.querySelector<HTMLButtonElement>('[data-testid="recording-timer"]')?.disabled).toBe(false);
+  });
+
+  it('labels the crossed-out microphone with why while its access is denied', async () => {
+    const el = await mount(new RecordingClock(), document.body, 'live');
+    el.view = deriveCameraView({
+      permission: 'granted',
+      phase: 'live',
+      tab: 'video',
+      cameraModes: ['photo', 'video'],
+      audioEnabled: true,
+      cameraCount: 1,
+      microphoneCount: 1,
+      muted: false,
+      microphoneDenied: true,
+    });
+    await el.updateComplete;
+
+    const button = el.querySelector('[data-testid="toggle-microphone"]');
+    expect(button?.getAttribute('aria-label')).toBe('Microphone access denied');
+    expect(button?.getAttribute('aria-pressed')).toBe('false');
+    expect(button?.querySelector('uc-icon')?.getAttribute('name')).toBe('microphone-mute');
+  });
+
+  it.each([
+    [true, 'true', 0],
+    [false, 'false', 1],
+  ] as const)('with the microphone denied: %s, its button is aria-disabled %s and a click sends %i actions', async (microphoneDenied, ariaDisabled, sent) => {
+    const el = await mount(new RecordingClock(), document.body, 'live');
+    el.view = deriveCameraView({
+      permission: 'granted',
+      phase: 'live',
+      tab: 'video',
+      cameraModes: ['photo', 'video'],
+      audioEnabled: true,
+      cameraCount: 1,
+      microphoneCount: 1,
+      muted: false,
+      microphoneDenied,
+    });
+    await el.updateComplete;
+    const actions = vi.fn();
+    el.addEventListener(CameraActionEvent.eventName, actions);
+
+    const button = el.querySelector<HTMLButtonElement>('[data-testid="toggle-microphone"]');
+    button?.click();
+
+    expect(button?.getAttribute('aria-disabled')).toBe(ariaDisabled);
+    // Still focusable, so its label can be read.
+    expect(button?.disabled).toBe(false);
+    expect(actions).toHaveBeenCalledTimes(sent);
   });
 });

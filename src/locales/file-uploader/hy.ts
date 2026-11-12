@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Անհայտ է',
   'camera-permissions-denied': 'Կամերայի մուտքի մերժում',
+  'camera-microphone-denied': 'Խոսափողի մուտքը մերժված է',
   'camera-permissions-prompt': 'Խնդրում ենք տրամադրել մուտք կամերային',
   'camera-permissions-request': 'Հարցում մուտքի համար',
   'camera-settings': 'Կամերայի կարգավորումներ',

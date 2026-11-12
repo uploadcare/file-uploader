@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': '未知',
   'camera-permissions-denied': '相机访问被拒绝',
+  'camera-microphone-denied': '麦克风访问被拒绝',
   'camera-permissions-prompt': '请允许访问相机',
   'camera-permissions-request': '请求访问',
   'camera-settings': '相机设置',

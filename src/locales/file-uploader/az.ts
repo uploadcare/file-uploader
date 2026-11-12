@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Naməlum',
   'camera-permissions-denied': 'Kamera girişi qadağandır',
+  'camera-microphone-denied': 'Mikrofona giriş qadağandır',
   'camera-permissions-prompt': 'Lütfən, kameraya girişə icazə verin',
   'camera-permissions-request': 'Girişə icazə istə',
   'camera-settings': 'Kamera parametrləri',

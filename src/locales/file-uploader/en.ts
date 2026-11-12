@@ -82,6 +82,7 @@ const templates = {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Unknown',
   'camera-permissions-denied': 'Camera access denied',
+  'camera-microphone-denied': 'Microphone access denied',
   'camera-permissions-prompt': 'Please allow access to the camera',
   'camera-permissions-request': 'Request access',
   'camera-settings': 'Camera settings',

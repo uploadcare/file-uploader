@@ -108,9 +108,10 @@ export class CameraSession {
       this._stopCapture();
       return;
     }
-    // A new stream, or none: whatever was captured from the previous one is gone.
-    this.phase = 'live';
+    // No stream: whatever was captured from the lost one is gone. A grant leaves the phase alone: the capture reset
+    // it as it began, and one started on the new stream since must keep its own.
     if (state === 'denied') {
+      this.phase = 'live';
       this._stopCapture();
     }
     this._captureResolved();
@@ -146,6 +147,11 @@ export class CameraSession {
   /** Why access ended `denied`, which picks the message shown. */
   public get failure(): CameraFailure {
     return this._access.failure;
+  }
+
+  /** The camera opened without the microphone because access to it was refused. */
+  public get microphoneDenied(): boolean {
+    return this._access.microphoneDenied;
   }
 
   /** The recording was asked to stop and its clip is not handed over yet. */
@@ -575,6 +581,7 @@ export class CameraSession {
     if (!audio) {
       this._requested.noAudio();
       this.feed.dropAudio();
+      this._access.microphoneDenied = false;
       return;
     }
     const request = this._requested.requestAudio(audio);
@@ -583,6 +590,13 @@ export class CameraSession {
     const isCurrent = () => this.feed.stream === stream && this._host.config.audioEnabled();
     const track = await this._microphone.open(audio, isCurrent);
     if (!track) return;
+    // Refused after the camera opened: the same denial as a microphone refused with it, unless the one in use still
+    // works, which keeps recording sound.
+    if (track === 'refused') {
+      const live = stream.getAudioTracks().some((old) => old.readyState === 'live');
+      if (isCurrent() && !live) this._access.microphoneDenied = true;
+      return;
+    }
     // A recording began while it opened: swapping it in now would break the recording, so it waits for the stop.
     if (this._recording.isRecording) {
       track.stop();
@@ -595,6 +609,7 @@ export class CameraSession {
       return;
     }
     this.feed.swapAudioTrack(track);
+    this._access.microphoneDenied = false;
   }
 
   /** `adoption` is the signal of the lifetime the calling task started in. */
@@ -602,6 +617,8 @@ export class CameraSession {
     // Release the current stream first. The prompt state below used to do it, but it is debounced and a quick
     // 'granted' supersedes it, which left the previous camera running after a device switch.
     this._stopCapture();
+    // A new stream: whatever was captured from the previous one is gone.
+    this.phase = 'live';
     try {
       this._access.settleLater('prompt');
       // The open forgets dropped custom constraints, so it is asked for the configured ones.
@@ -613,6 +630,7 @@ export class CameraSession {
       const { stream } = opened;
       this._preview.show(stream);
       this._requested.opened(opened.constraints);
+      this._access.microphoneDenied = opened.microphoneRefused;
       // Ends on a revoked permission, and also when this stream is stopped for the next one; only the first counts.
       const lost = () => {
         if (this.feed.stream === stream) this._access.settleLater('denied');

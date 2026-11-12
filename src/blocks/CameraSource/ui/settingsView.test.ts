@@ -12,6 +12,7 @@ const input = (overrides: Partial<SettingsViewInput> = {}): SettingsViewInput =>
     cameraCount: 2,
     microphoneCount: 2,
     muted: false,
+    microphoneDenied: false,
   }),
   permission: 'granted',
   phase: 'live',

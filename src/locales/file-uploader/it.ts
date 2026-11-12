@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'URL CDN',
   'file-size-unknown': 'Sconosciuta',
   'camera-permissions-denied': 'Accesso alla fotocamera negato',
+  'camera-microphone-denied': 'Accesso al microfono negato',
   'camera-permissions-prompt': "Per favore consenti l'accesso alla fotocamera",
   'camera-permissions-request': 'Richiedi accesso',
   'camera-settings': 'Impostazioni fotocamera',

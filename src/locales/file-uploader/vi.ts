@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'URL CDN',
   'file-size-unknown': 'Không xác định',
   'camera-permissions-denied': 'Truy cập máy ảnh bị từ chối',
+  'camera-microphone-denied': 'Truy cập micrô bị từ chối',
   'camera-permissions-prompt': 'Vui lòng cho phép truy cập vào máy ảnh',
   'camera-permissions-request': 'Yêu cầu truy cập',
   'camera-settings': 'Cài đặt máy ảnh',

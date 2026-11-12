@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Okänd',
   'camera-permissions-denied': 'Tillgång till kamera nekad',
+  'camera-microphone-denied': 'Tillgång till mikrofon nekad',
   'camera-permissions-prompt': 'Vänligen tillåt tillgång till kameran',
   'camera-permissions-request': 'Begär tillgång',
   'camera-settings': 'Kamerainställningar',

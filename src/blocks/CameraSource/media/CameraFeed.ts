@@ -1,10 +1,13 @@
 import { type BuildConstraintsInput, buildConstraints } from '../../../abstract/camera/buildConstraints';
 import { isAbortError } from '../../../abstract/di/Lifetime';
 import { signalState } from '../../../abstract/di/signalState';
+import { cameraFailureOf } from '../CameraAccess';
 import type { CameraLifetime, CameraReport } from '../cameraHost';
 import { stopTracks } from './tracks';
 
 const isOverconstrained = (error: unknown): boolean => (error as Error | null)?.name === 'OverconstrainedError';
+
+type Opened = { stream: MediaStream; constraints: MediaStreamConstraints };
 
 /** The camera's media stream and its tracks: opens it, applies changed settings to it, and stops it. */
 export class CameraFeed {
@@ -42,16 +45,18 @@ export class CameraFeed {
    * Opens the stream with the constraints built from `input`. If `cameraConstraints` asks for something the camera
    * can't do, opens it once more without them rather than showing the camera as denied. Only the latest open counts:
    * one that a later open overtook resolves to null, its stream stopped (left running, it holds the camera and can
-   * freeze the one on screen) or its failure dropped. `beforeAttempt` runs before each request, the retry's too.
-   * Each open asks for `cameraConstraints` again, so `input.custom` is the configured value.
+   * freeze the one on screen) or its failure dropped. `beforeAttempt` runs before each request, the retries' too.
+   * Each open asks for `cameraConstraints` again, so `input.custom` is the configured value. A refused request that
+   * asked for the microphone is asked once more without it, so a refused microphone doesn't take the camera with it;
+   * the constraints handed back are then still the ones asked for, microphone included, and `microphoneRefused` says so.
    */
   public async open(
     input: BuildConstraintsInput,
     beforeAttempt: () => void,
-  ): Promise<{ stream: MediaStream; constraints: MediaStreamConstraints } | null> {
+  ): Promise<(Opened & { microphoneRefused: boolean }) | null> {
     this._customDropped = false;
     try {
-      return await this._open(buildConstraints(input), beforeAttempt);
+      return await this._openOrWithoutMicrophone(buildConstraints(input), beforeAttempt);
     } catch (error) {
       if (!input.custom || !isOverconstrained(error)) throw error;
       this._report(
@@ -61,14 +66,61 @@ export class CameraFeed {
         'camera capturing. cameraConstraints could not be satisfied',
       );
       this._customDropped = true;
-      return this._open(buildConstraints({ ...input, custom: null }), beforeAttempt);
+      return this._openOrWithoutMicrophone(buildConstraints({ ...input, custom: null }), beforeAttempt);
     }
   }
 
-  private async _open(
+  private async _openOrWithoutMicrophone(
     constraints: MediaStreamConstraints,
     beforeAttempt: () => void,
-  ): Promise<{ stream: MediaStream; constraints: MediaStreamConstraints } | null> {
+  ): Promise<(Opened & { microphoneRefused: boolean }) | null> {
+    try {
+      const opened = await this._open(constraints, beforeAttempt);
+      return opened && { ...opened, microphoneRefused: false };
+    } catch (error) {
+      if (!constraints.audio || cameraFailureOf(error) !== 'denied') throw error;
+      const opens = this._opens;
+      const dismissed = await this._promptDismissed();
+      // A later open began while the permissions were read; it decides what the camera shows, refused or not.
+      if (opens !== this._opens) return null;
+      if (dismissed) throw error;
+      const opened = await this._open({ ...constraints, audio: false }, beforeAttempt);
+      // Reported once it is clear only the microphone was refused; a camera refused too is the caller's to report.
+      // The context is the one the refusal reported under before the camera opened without the microphone.
+      if (opened) {
+        this._report(
+          'warn',
+          'The microphone was refused, opening the camera without it',
+          error,
+          'camera capturing. Failed to capture camera',
+        );
+      }
+      return opened && { ...opened, constraints, microphoneRefused: true };
+    }
+  }
+
+  /**
+   * Whether a refusal was a prompt closed without an answer, which Chrome also rejects as `NotAllowedError`: the camera
+   * can still be asked for, and the microphone was not refused. Asking for the camera alone then would prompt again,
+   * and an allowed camera would blame the microphone. Without the Permissions API, it reads as a refusal.
+   */
+  private async _promptDismissed(): Promise<boolean> {
+    try {
+      const [camera, microphone] = await this._lifetime.whileAdopted(
+        Promise.all(
+          (['camera', 'microphone'] as const).map((name) =>
+            navigator.permissions.query({ name: name as PermissionName }),
+          ),
+        ),
+      );
+      return camera?.state === 'prompt' && microphone?.state !== 'denied';
+    } catch (error) {
+      if (isAbortError(error)) throw error;
+      return false;
+    }
+  }
+
+  private async _open(constraints: MediaStreamConstraints, beforeAttempt: () => void): Promise<Opened | null> {
     const open = ++this._opens;
     beforeAttempt();
     let stream: MediaStream;

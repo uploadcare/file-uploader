@@ -92,6 +92,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Tundmatu',
   'camera-permissions-denied': 'Kaamera ligipääs keelatud',
+  'camera-microphone-denied': 'Mikrofoni ligipääs keelatud',
   'camera-permissions-prompt': 'Palun luba kaamera ligipääs',
   'camera-permissions-request': 'Küsi ligipääsu',
   'camera-settings': 'Kaamera seaded',

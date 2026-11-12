@@ -92,4 +92,31 @@ describe('MicrophoneSwap', () => {
     await expect(result).rejects.toThrow();
     expect(report).not.toHaveBeenCalled();
   });
+
+  it.each(['NotAllowedError', 'SecurityError'])('resolves refused on %s, still reporting it', async (name) => {
+    const calls = stubGetUserMedia();
+    const report = vi.fn();
+    const swap = new MicrophoneSwap(lifetimeOf(), report);
+    const opening = swap.open({}, current);
+    calls[0]?.reject(new DOMException('Simulated', name));
+
+    await expect(opening).resolves.toBe('refused');
+    expect(report).toHaveBeenCalledOnce();
+  });
+
+  it('a superseded refusal resolves null, still reporting it', async () => {
+    const calls = stubGetUserMedia();
+    const report = vi.fn();
+    const swap = new MicrophoneSwap(lifetimeOf(), report);
+    const older = swap.open({}, current);
+    const newer = swap.open({}, current);
+    const latest = fakeTrack();
+    calls[1]?.resolve(microphone(latest));
+    await expect(newer).resolves.toBe(latest);
+
+    calls[0]?.reject(new DOMException('Simulated', 'NotAllowedError'));
+
+    await expect(older).resolves.toBeNull();
+    expect(report).toHaveBeenCalledOnce();
+  });
 });

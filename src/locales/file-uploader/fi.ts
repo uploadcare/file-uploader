@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Tuntematon',
   'camera-permissions-denied': 'Kameran käyttöoikeus evätty',
+  'camera-microphone-denied': 'Mikrofonin käyttöoikeus evätty',
   'camera-permissions-prompt': 'Salli kameran käyttö',
   'camera-permissions-request': 'Pyydä käyttöoikeutta',
   'camera-settings': 'Kameran asetukset',

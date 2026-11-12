@@ -87,6 +87,12 @@
     overflow: hidden;
   }
 
+  /* Disabled while recording, which has nothing to play yet; the elapsed time stays fully visible. */
+  uc-camera-controls .uc-recording-timer[disabled] {
+    opacity: 1;
+    cursor: default;
+  }
+
   :where(uc-camera-controls) .uc-recording-timer uc-icon {
     width: 10px;
     height: 10px;

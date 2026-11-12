@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': '不明',
   'camera-permissions-denied': 'カメラへのアクセスが拒否されました',
+  'camera-microphone-denied': 'マイクへのアクセスが拒否されました',
   'camera-permissions-prompt': 'カメラへのアクセスを許可してください',
   'camera-permissions-request': 'アクセスをリクエスト',
   'camera-settings': 'カメラ設定',

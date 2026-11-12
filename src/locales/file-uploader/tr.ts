@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Bilinmiyor',
   'camera-permissions-denied': 'Kamera erişimi reddedildi',
+  'camera-microphone-denied': 'Mikrofon erişimi reddedildi',
   'camera-permissions-prompt': 'Lütfen kameraya erişime izin verin',
   'camera-permissions-request': 'Erişim iste',
   'camera-settings': 'Kamera ayarları',

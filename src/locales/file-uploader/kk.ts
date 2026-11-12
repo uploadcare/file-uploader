@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN сілтемесі',
   'file-size-unknown': 'Белгісіз',
   'camera-permissions-denied': 'Камераға рұқсат берілмеді',
+  'camera-microphone-denied': 'Микрофонға рұқсат берілмеді',
   'camera-permissions-prompt': 'Камераға рұқсат беріңіз',
   'camera-permissions-request': 'Рұқсат сұрау',
   'camera-settings': 'Камера параметрлері',

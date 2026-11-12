@@ -218,6 +218,22 @@ describe('video recording', () => {
     await shot();
   });
 
+  it('keeps the disabled timer fully visible while recording', async () => {
+    const { camera, shot, openVideoTab } = await openCamera();
+    await openVideoTab();
+
+    await shot();
+    const timer = camera.getByTestId('uc-camera-controls--recording-timer');
+    await expect.element(timer).toBeVisible();
+
+    await expect.element(timer).toBeDisabled();
+    const style = getComputedStyle(timer.element());
+    expect(style.opacity).toBe('1');
+    expect(style.cursor).toBe('default');
+
+    await shot();
+  });
+
   it('stops on its own once maxVideoRecordingDuration is reached', async () => {
     // Also the only coverage of that option: the timer counts down from it and stops the recording at zero.
     const { api, camera, shot, accept, openVideoTab } = await openCamera({ maxVideoRecordingDuration: 2 });

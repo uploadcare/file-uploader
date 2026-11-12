@@ -90,6 +90,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Óþekkt',
   'camera-permissions-denied': 'Aðgangur að myndavél neitað',
+  'camera-microphone-denied': 'Aðgangi að hljóðnema neitað',
   'camera-permissions-prompt': 'Vinsamlegast leyfðu aðgang að myndavél',
   'camera-permissions-request': 'Biðja um aðgang',
   'camera-settings': 'Myndavélarstillingar',

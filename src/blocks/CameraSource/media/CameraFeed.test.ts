@@ -3,9 +3,18 @@ import type { BuildConstraintsInput } from '../../../abstract/camera/buildConstr
 import { fakeStream, fakeTrack, lifetimeOf } from '../__tests__/camera-fixtures';
 import { CameraFeed } from './CameraFeed';
 
-const stubGetUserMedia = (impl: (constraints: MediaStreamConstraints) => Promise<MediaStream>) => {
+/** `permissions` answers the Permissions API with these states; without it, there is no Permissions API. */
+const stubGetUserMedia = (
+  impl: (constraints: MediaStreamConstraints) => Promise<MediaStream>,
+  permissions?: { camera: PermissionState; microphone: PermissionState },
+) => {
   const getUserMedia = vi.fn(impl);
-  vi.stubGlobal('navigator', { ...navigator, mediaDevices: { getUserMedia } });
+  const query = async ({ name }: { name: 'camera' | 'microphone' }) => ({ state: permissions?.[name] });
+  vi.stubGlobal('navigator', {
+    ...navigator,
+    mediaDevices: { getUserMedia },
+    ...(permissions && { permissions: { query } }),
+  });
   return getUserMedia;
 };
 
@@ -68,6 +77,130 @@ describe('CameraFeed', () => {
     );
     feed.resetCustomDropped();
     expect(feed.customDropped).toBe(false);
+  });
+
+  it('a refused microphone opens the camera once more without it, and hands back the asked constraints', async () => {
+    const error = new DOMException('Simulated', 'NotAllowedError');
+    const stream = fakeStream([fakeTrack('video')]);
+    const getUserMedia = stubGetUserMedia(vi.fn().mockRejectedValueOnce(error).mockResolvedValueOnce(stream));
+    const report = vi.fn();
+    const feed = new CameraFeed(lifetimeOf(), report);
+    const beforeAttempt = vi.fn();
+
+    const opened = await feed.open({ ...input(), mode: 'video' }, beforeAttempt);
+
+    expect(opened?.stream).toBe(stream);
+    expect(getUserMedia.mock.calls[0]?.[0].audio).toBeTruthy();
+    expect(getUserMedia.mock.calls[1]?.[0]).toEqual({ ...getUserMedia.mock.calls[0]?.[0], audio: false });
+    expect(opened?.constraints).toBe(getUserMedia.mock.calls[0]?.[0]);
+    expect(beforeAttempt).toHaveBeenCalledTimes(2);
+    expect(report).toHaveBeenCalledWith(
+      'warn',
+      'The microphone was refused, opening the camera without it',
+      error,
+      'camera capturing. Failed to capture camera',
+    );
+  });
+
+  it('a camera refused without the microphone too rejects with that refusal', async () => {
+    const cameraRefused = new DOMException('Camera', 'NotAllowedError');
+    const getUserMedia = stubGetUserMedia(
+      vi.fn().mockRejectedValueOnce(new DOMException('Both', 'NotAllowedError')).mockRejectedValueOnce(cameraRefused),
+    );
+    const report = vi.fn();
+    const feed = new CameraFeed(lifetimeOf(), report);
+
+    await expect(feed.open({ ...input(), mode: 'video' }, () => {})).rejects.toBe(cameraRefused);
+    expect(getUserMedia).toHaveBeenCalledTimes(2);
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it('a dismissed prompt is the camera refused: not retried without the microphone', async () => {
+    const error = new DOMException('Permission dismissed', 'NotAllowedError');
+    const getUserMedia = stubGetUserMedia(vi.fn().mockRejectedValue(error), { camera: 'prompt', microphone: 'prompt' });
+    const report = vi.fn();
+    const feed = new CameraFeed(lifetimeOf(), report);
+
+    await expect(feed.open({ ...input(), mode: 'video' }, () => {})).rejects.toBe(error);
+    expect(getUserMedia).toHaveBeenCalledOnce();
+    expect(report).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['the microphone refused, the camera never asked', { camera: 'prompt', microphone: 'denied' }],
+    ['the camera granted, the microphone refused', { camera: 'granted', microphone: 'denied' }],
+    ['both refused', { camera: 'denied', microphone: 'denied' }],
+  ] as const)('a refusal with %s is retried without the microphone', async (_, permissions) => {
+    const getUserMedia = stubGetUserMedia(
+      vi
+        .fn()
+        .mockRejectedValueOnce(new DOMException('Simulated', 'NotAllowedError'))
+        .mockResolvedValueOnce(fakeStream([fakeTrack('video')])),
+      permissions,
+    );
+    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+
+    await expect(feed.open({ ...input(), mode: 'video' }, () => {})).resolves.toMatchObject({
+      microphoneRefused: true,
+    });
+    expect(getUserMedia).toHaveBeenCalledTimes(2);
+  });
+
+  it('a refusal whose permissions answer after a later open began leaves the camera to it', async () => {
+    const latest = fakeStream([fakeTrack('video')]);
+    const getUserMedia = stubGetUserMedia(
+      vi.fn().mockRejectedValueOnce(new DOMException('Simulated', 'NotAllowedError')).mockResolvedValueOnce(latest),
+      { camera: 'granted', microphone: 'denied' },
+    );
+    const answered = Promise.withResolvers<{ state: PermissionState }>();
+    const query = vi.fn(() => answered.promise);
+    Object.assign(navigator.permissions, { query });
+    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const superseded = feed.open({ ...input(), mode: 'video' }, () => {});
+    await vi.waitFor(() => expect(query).toHaveBeenCalled());
+
+    const current = feed.open({ ...input(), enableAudio: false }, () => {});
+    answered.resolve({ state: 'denied' });
+
+    await expect(superseded).resolves.toBeNull();
+    await expect(current).resolves.toMatchObject({ stream: latest });
+    expect(getUserMedia).toHaveBeenCalledTimes(2);
+    expect(feed.stream).toBe(latest);
+  });
+
+  it('a dismissed prompt whose permissions answer after a later open began gives way to it', async () => {
+    const latest = Promise.withResolvers<MediaStream>();
+    stubGetUserMedia(
+      vi
+        .fn()
+        .mockRejectedValueOnce(new DOMException('Permission dismissed', 'NotAllowedError'))
+        .mockReturnValueOnce(latest.promise),
+      { camera: 'prompt', microphone: 'prompt' },
+    );
+    const answered = Promise.withResolvers<{ state: PermissionState }>();
+    const query = vi.fn(() => answered.promise);
+    Object.assign(navigator.permissions, { query });
+    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const superseded = feed.open({ ...input(), mode: 'video' }, () => {});
+    await vi.waitFor(() => expect(query).toHaveBeenCalled());
+
+    // The newer open is still waiting on the camera when the older one's permissions answer.
+    const current = feed.open({ ...input(), enableAudio: false }, () => {});
+    answered.resolve({ state: 'prompt' });
+
+    await expect(superseded).resolves.toBeNull();
+    const stream = fakeStream([fakeTrack('video')]);
+    latest.resolve(stream);
+    await expect(current).resolves.toMatchObject({ stream });
+  });
+
+  it('a refusal of an open without the microphone is not retried', async () => {
+    const error = new DOMException('Simulated', 'NotAllowedError');
+    const getUserMedia = stubGetUserMedia(vi.fn().mockRejectedValue(error));
+    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+
+    await expect(feed.open({ ...input(), enableAudio: false }, () => {})).rejects.toBe(error);
+    expect(getUserMedia).toHaveBeenCalledOnce();
   });
 
   it('forgets dropped custom constraints when it opens again', async () => {

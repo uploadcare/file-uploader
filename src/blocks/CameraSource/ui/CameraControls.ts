@@ -142,9 +142,12 @@ export class CameraControls extends ChildBlock {
           <button
             type="button"
             class="uc-mini-btn uc-btn-microphone"
-            @click=${() => this._emit({ type: 'toggle-microphone' })}
+            @click=${() => {
+              if (!view.microphoneDisabled) this._emit({ type: 'toggle-microphone' });
+            }}
             ?hidden=${view.microphoneHidden}
-            aria-label=${this.l10n('a11y-camera-microphone')}
+            aria-label=${this.l10n(view.microphoneLabel)}
+            aria-disabled=${view.microphoneDisabled ? 'true' : 'false'}
             aria-pressed=${view.microphoneIcon === 'microphone' ? 'true' : 'false'}
             data-testid="toggle-microphone"
           >
