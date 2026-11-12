@@ -174,7 +174,6 @@ describe('editor state reactions', () => {
     element.setAttribute('uuid', DEMO_IMAGE_UUID);
     await expect.poll(() => controllerOf(element).originalUrl).toContain(DEMO_IMAGE_UUID);
     await cropperActive(element);
-    expect(controllerOf(element).sourceOperations).toEqual([]);
 
     await userEvent.click(editor.getByRole('button', { name: /apply/i }));
     await expect.poll(() => applied.length).toBe(1);
@@ -253,7 +252,6 @@ describe('editor state reactions', () => {
     // (CloudImageEditorBlock.ts `originalUrl === …originalUrl` check), so a cdn-url carrying new operations for the
     // open image is dropped. Pinned as current behaviour, not endorsed.
     expect(controller.editorTransformations.rotate ?? 0).toBe(0);
-    expect(controller.sourceOperations).toEqual([]);
   });
 
   it('shows the network problems screen when a filter preview URL cannot be resolved', async () => {

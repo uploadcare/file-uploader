@@ -275,7 +275,7 @@ and one of them corrupted any path whose last segment recurred earlier.
   is added weight, not a replacement. Going tiny-only would recover ~0.5 KB and cost
   the uuid validation behind `addFileFromCdnUrl`'s documented error, the kind
   discrimination the editor and `<uc-img>` degrade on, and `CdnOperation` itself,
-  which the editor's merge needs because it matches operations by name. Re-measure
+  which the editor's read of a source URL needs because it matches operations by name. Re-measure
   before revisiting.
 - **Bundle budgets are tight and `size-limit` runs inside `npm run build`.** The
   editor sits near 46.4 KB of 47, each uploader web bundle near 97.0 of 98, `dist/index.js` near 101.6 of 102, `<uc-img>`

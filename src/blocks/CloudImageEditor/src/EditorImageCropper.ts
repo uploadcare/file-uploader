@@ -113,16 +113,9 @@ export class EditorImageCropper extends EditorBlock {
     this._lastOriginalUrl = controller.originalUrl;
     this._syncActivation();
     const react = () => this._reactToState();
-    return (
-      [
-        'currentAspectRatio',
-        'originalUrl',
-        'tabId',
-        'networkProblems',
-        'editorTransformations',
-        'sourceOperations',
-      ] as const
-    ).map((key) => controller.observe(key, react));
+    return (['currentAspectRatio', 'originalUrl', 'tabId', 'networkProblems', 'editorTransformations'] as const).map(
+      (key) => controller.observe(key, react),
+    );
   }
 
   private _reactToState(): void {
@@ -564,7 +557,7 @@ export class EditorImageCropper extends EditorBlock {
     signal: AbortSignal,
   ): Promise<HTMLImageElement> {
     const src = await this.whileAdopted(
-      controller.proxyUrl(cropperImageSrc(originalUrl, this.offsetWidth, transformations, controller.sourceOperations)),
+      controller.proxyUrl(cropperImageSrc(originalUrl, this.offsetWidth, transformations)),
     );
     // Before the loading flag goes up: an image that never starts loading would never clear it.
     signal.throwIfAborted();

@@ -112,7 +112,6 @@ export class EditorFilterControl extends EditorButtonControl {
     return editorPreviewUrl({
       originalUrl: this._originalUrl,
       transformations,
-      sourceOperations: this.editorController.sourceOperations,
       quality,
       sizeOperations: operationsFromModifiers(modifiers(`scale_crop/${size}x${size}/center`)),
     });

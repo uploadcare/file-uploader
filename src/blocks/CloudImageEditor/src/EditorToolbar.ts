@@ -310,14 +310,7 @@ export class EditorToolbar extends EditorBlock {
     const width = this.imageContainer?.offsetWidth ?? 0;
     if (originalUrl && width > 0) {
       const src = await this.whileAdopted(
-        this.editorController.proxyUrl(
-          viewerImageSrc(
-            originalUrl,
-            width,
-            this.editorController.editorTransformations,
-            this.editorController.sourceOperations,
-          ),
-        ),
+        this.editorController.proxyUrl(viewerImageSrc(originalUrl, width, this.editorController.editorTransformations)),
       );
       this._cancelPreload?.();
       const { cancel } = batchPreloadImages([src]);

@@ -105,7 +105,7 @@ export function transformationsToOperations(transformations: Transformations): C
   // nothing left here to catch. The parse below is not circular: it is the
   // same `operationsFromModifiers` that already turns loose user strings into
   // `CdnOperation[]` elsewhere, and `parseOperations` is in this bundle
-  // regardless — the merge below needs structure, not a string.
+  // regardless — `withOperations` needs structure, not a string.
   return operationsFromModifiers(modifiers(...literals));
 }
 
@@ -182,17 +182,6 @@ const OPERATION_PROCESSORS: OperationProcessorMap = Object.freeze({
   },
 });
 
-const MODELLED_OPERATION_NAMES: ReadonlySet<string> = new Set(SUPPORTED_OPERATIONS_ORDERED);
-
-/**
- * The transformations that change geometry. Listed explicitly rather than derived
- * from `SUPPORTED_OPERATIONS_ORDERED`'s tail: they happen to sit there today, but a
- * new appearance operation appended to that list would silently join this set.
- * `satisfies` makes the compiler reject a name that is not a real transformation.
- */
-const GEOMETRY_OPERATIONS = ['mirror', 'flip', 'rotate', 'crop'] as const satisfies readonly (keyof Transformations)[];
-const GEOMETRY_OPERATION_NAMES: ReadonlySet<string> = new Set(GEOMETRY_OPERATIONS);
-
 export function operationsToTransformations(operations: readonly CdnOperation[]): Transformations {
   const transformations: Partial<Record<keyof Transformations, unknown>> = {};
   for (const operation of operations) {
@@ -221,112 +210,4 @@ export function operationsToTransformations(operations: readonly CdnOperation[])
   }
 
   return transformations as Transformations;
-}
-
-/**
- * The source operations the editor cannot model, with its own `preview`
- * marker dropped. These are rendered as-is and survive an edit untouched — a
- * watermark `overlay`, a `blur`, a `resize` the UI has no control for.
- */
-export function preservedOperations(source: readonly CdnOperation[]): CdnOperation[] {
-  return source.filter((operation) => operation.name !== 'preview' && !MODELLED_OPERATION_NAMES.has(operation.name));
-}
-
-/**
- * The source operations before its first geometry operation: the image its `crop` coordinates address. Everything
- * from that operation on is applied after the editor's geometry (see `mergeTransformationsIntoOperations`).
- */
-export function operationsBeforeGeometry(source: readonly CdnOperation[]): readonly CdnOperation[] {
-  const firstGeometry = source.findIndex((operation) => GEOMETRY_OPERATION_NAMES.has(operation.name));
-  return firstGeometry === -1 ? source : source.slice(0, firstGeometry);
-}
-
-/**
- * Edit the source URL's operations in place rather than rebuilding the list
- * from scratch and appending what the editor cannot model. Placement matters
- * to the CDN for some pairs (`stretch` applies to a *following* resize), so an
- * operation the editor does not model stays exactly where the source had it —
- * except for the editor's own geometry operations, which always move to the
- * end (see below).
- *
- * Rules:
- * - A modelled *appearance* operation (anything but `mirror`/`flip`/`rotate`/
- *   `crop`) present in `source` and still meaningful in `transformations` is
- *   replaced in its existing slot with what the corresponding creator
- *   produces for the current value.
- * - A modelled operation present in `source` but no longer meaningful (unset,
- *   or equal to its default — see `isMeaningful`) is removed; its slot
- *   disappears rather than being left empty.
- * - A modelled appearance operation that is meaningful in `transformations`
- *   but absent from `source` is appended after the last source operation, in
- *   the editor's canonical `SUPPORTED_OPERATIONS_ORDERED` order relative to
- *   other newly-added ones.
- * - The editor's geometry operations (`mirror`, `flip`, `rotate`, `crop`) are
- *   emitted together, at the point of the source's first geometry operation —
- *   after everything else when the source had none. `crop` coordinates are
- *   only meaningful relative to a point in the operation chain, and that point
- *   is "original + the preserved operations before it", which is what
- *   `editorImageInfoUrl` measures. A source `-/crop/…/-/resize/100x/` keeps
- *   cropping before resizing.
- * - An operation the editor does not model is kept verbatim, in place: before
- *   the geometry if the source had it there, after it otherwise.
- * - Every `preview` in `source` is dropped. The merge itself does not
- *   append one — that marker belongs to the applied URL (`editorAppliedUrl`),
- *   so an open/apply cycle never stacks markers.
- * - A modelled operation appearing more than once in `source` keeps the
- *   position of its *last* occurrence; earlier occurrences are dropped. That
- *   matches `operationsToTransformations`, where a later occurrence overwrites
- *   an earlier one, so reading and writing agree on which occurrence wins.
- */
-export function mergeTransformationsIntoOperations(
-  source: readonly CdnOperation[],
-  transformations: Transformations,
-): CdnOperation[] {
-  const modelled = transformationsToOperations(transformations);
-  // Geometry is emitted where the source's first geometry operation was, so `crop` coordinates keep addressing
-  // "original + the preserved operations before it", the space `_imageSize` measures.
-  const beforeGeometry = operationsBeforeGeometry(source).length;
-  const afterGeometry: CdnOperation[] = [];
-  const geometry = modelled.filter((operation) => GEOMETRY_OPERATION_NAMES.has(operation.name));
-  const appearance = modelled.filter((operation) => !GEOMETRY_OPERATION_NAMES.has(operation.name));
-  const appearanceByName = new Map(appearance.map((operation) => [operation.name, operation]));
-
-  const lastAppearanceIndexByName = new Map<string, number>();
-  source.forEach((operation, index) => {
-    if (MODELLED_OPERATION_NAMES.has(operation.name) && !GEOMETRY_OPERATION_NAMES.has(operation.name)) {
-      lastAppearanceIndexByName.set(operation.name, index);
-    }
-  });
-
-  const placedNames = new Set<string>();
-  const merged: CdnOperation[] = [];
-  source.forEach((operation, index) => {
-    // The editor's own marker and its geometry operations are re-emitted
-    // below, so the source's copies are dropped here rather than duplicated.
-    if (operation.name === 'preview' || GEOMETRY_OPERATION_NAMES.has(operation.name)) {
-      return;
-    }
-    if (!MODELLED_OPERATION_NAMES.has(operation.name)) {
-      (index < beforeGeometry ? merged : afterGeometry).push(operation);
-      return;
-    }
-    // An earlier occurrence of a repeated modelled operation: its slot is
-    // dropped, only the last occurrence's position survives.
-    if (lastAppearanceIndexByName.get(operation.name) !== index) {
-      return;
-    }
-    const replacement = appearanceByName.get(operation.name);
-    if (replacement) {
-      merged.push(replacement);
-      placedNames.add(operation.name);
-    }
-  });
-
-  for (const operation of appearance) {
-    if (!placedNames.has(operation.name)) {
-      merged.push(operation);
-    }
-  }
-
-  return [...merged, ...geometry, ...afterGeometry];
 }

@@ -123,8 +123,7 @@ export class EditorImageFader extends EditorBlock {
    * Controller-dependent setup (mirrors EditorImageCropper): the fader drives
    * itself from state instead of the toolbar/root/slider calling its methods.
    * It reacts to `tabId`/`originalUrl`/`editorTransformations`/`colorPreview`
-   * (+ the `imageSize` prop, and `sourceOperations`, which the images it loads
-   * are built from) and calls its own activate/set/deactivate/setTransformations.
+   * (+ the `imageSize` prop) and calls its own activate/set/deactivate/setTransformations.
    * @internal
    */
   @subscription()
@@ -133,9 +132,9 @@ export class EditorImageFader extends EditorBlock {
     this._lastOriginalUrl = controller.originalUrl;
     this._lastColorPreview = controller.colorPreview;
     const sync = () => this._syncFromState();
-    const unsubscribers = (
-      ['tabId', 'originalUrl', 'editorTransformations', 'colorPreview', 'sourceOperations'] as const
-    ).map((key) => controller.observe(key, sync));
+    const unsubscribers = (['tabId', 'originalUrl', 'editorTransformations', 'colorPreview'] as const).map((key) =>
+      controller.observe(key, sync),
+    );
     // A (re)attach can find the fader ready to show already — e.g. after an activation aborted by a reconnect.
     this._syncFromState();
     return unsubscribers;
@@ -327,7 +326,7 @@ export class EditorImageFader extends EditorBlock {
 
     // do not use getBoundingClientRect because scale transform affects it
     const width = this.offsetWidth;
-    return controller.proxyUrl(viewerImageSrc(url, width, transformations, controller.sourceOperations));
+    return controller.proxyUrl(viewerImageSrc(url, width, transformations));
   }
 
   private async _constructKeypoint(

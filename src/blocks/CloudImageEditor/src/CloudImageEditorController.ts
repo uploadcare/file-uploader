@@ -1,5 +1,4 @@
 import { Signal, signal } from '@lit-labs/signals';
-import type { CdnOperation } from '@uploadcare/cdn-url';
 import { type ObserveOptions, SignalMap } from '../../../abstract/di/SignalMap';
 import type { ConfigType } from '../../../types/index';
 import { DEFAULT_CDN_ORIGIN } from '../../../utils/cdn/origin';
@@ -54,8 +53,6 @@ export type EditorState = {
   loadingImages: number;
   networkProblems: boolean;
   editorTransformations: Transformations;
-  /** The incoming URL's operations, edited in place on Apply. Always empty in 1.x; kept for the next major. */
-  sourceOperations: readonly CdnOperation[];
   currentAspectRatio: CropAspectRatio | null;
   tabId: TabIdValue;
   colorPreview: ColorPreview;
@@ -67,7 +64,6 @@ function createDefaultState(): EditorState {
     loadingImages: 0,
     networkProblems: false,
     editorTransformations: {},
-    sourceOperations: [],
     currentAspectRatio: null,
     tabId: TabId.CROP,
     colorPreview: null,
@@ -208,13 +204,6 @@ export class CloudImageEditorController {
   }
   public set editorTransformations(value: EditorState['editorTransformations']) {
     this.#state.set('editorTransformations', value);
-  }
-
-  public get sourceOperations(): EditorState['sourceOperations'] {
-    return this.#read('sourceOperations');
-  }
-  public set sourceOperations(value: EditorState['sourceOperations']) {
-    this.#state.set('sourceOperations', value);
   }
 
   public get currentAspectRatio(): EditorState['currentAspectRatio'] {

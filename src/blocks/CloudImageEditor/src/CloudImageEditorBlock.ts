@@ -407,11 +407,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   /** The `apply`/`change` event detail for `transformations`. */
   private _result(originalUrl: string, transformations: Transformations): ApplyResult {
-    const sourceOperations = this._editorController.sourceOperations;
-    // Always empty in 1.x (the editor cuts what it does not model, as v1 did), so
-    // the result carries only the modelled transformations. The pipeline stays on
-    // purpose for the next major, which edits the source's operations in place.
-    const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations, sourceOperations });
+    const { cdnUrl, cdnUrlModifiers } = editorAppliedUrl({ originalUrl, transformations });
     return { originalUrl, cdnUrlModifiers, cdnUrl, transformations };
   }
 
@@ -678,9 +674,10 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         return;
       }
       editorController.originalUrl = originalUrl;
-      // NEXT-MAJOR(cloud-image-editor): record `parsed.operations` as `sourceOperations`. Cutting what the editor does
-      // not model silently loses the user's resize/overlay/blur/format; the merge in `transformationUtils` keeps them in
-      // place and crops in the space the operations before the geometry leave. Either write order works, since `change`
+      // NEXT-MAJOR(cloud-image-editor): record the source URL's operations and merge the editor's edits into them in
+      // place. Cutting what the editor does not model silently loses the user's resize/overlay/blur/format. The merge
+      // that did this was removed by the child of 980212b7; restore it from 980212b7 (`lib/transformationUtils.ts`
+      // `mergeTransformationsIntoOperations` and friends, plus their tests). Either write order works, since `change`
       // fires once the task's writes settle. v1 cut them, as the docs say. Kept for 1.x compat.
       editorController.editorTransformations = operationsToTransformations(parsed.operations);
     } else if (this.uuid) {
@@ -693,9 +690,6 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
       // Either order works here: an empty `editorTransformations` fires no `change`.
       if (Object.keys(editorController.editorTransformations).length > 0) {
         editorController.editorTransformations = {};
-      }
-      if (editorController.sourceOperations.length > 0) {
-        editorController.sourceOperations = [];
       }
     } else {
       throw new Error('No UUID nor CDN URL provided');
@@ -726,9 +720,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
     try {
       const originalUrlValue = editorController.originalUrl as string;
-      const cdnUrl = await this._lifetime.guard(
-        this.proxyUrl(editorImageInfoUrl(originalUrlValue, editorController.sourceOperations)),
-      );
+      const cdnUrl = await this._lifetime.guard(this.proxyUrl(editorImageInfoUrl(originalUrlValue)));
       const json = (await this._lifetime.guard(
         fetch(cdnUrl, { signal: this._lifetime.signal }).then((response) => {
           if (!response.ok) {
@@ -764,15 +756,13 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
    * and the cropper or fader asks for it. Without this the image request waits for the info.
    */
   private async _preloadImage(): Promise<void> {
-    const { originalUrl, tabId, editorTransformations, sourceOperations } = this._editorController;
+    const { originalUrl, tabId, editorTransformations } = this._editorController;
     const width = this._imgContainerRef.value?.offsetWidth ?? 0;
     if (!originalUrl || width === 0) {
       return;
     }
     const imageSrc = tabId === TabId.CROP ? cropperImageSrc : viewerImageSrc;
-    const src = await this._lifetime.guard(
-      this.proxyUrl(imageSrc(originalUrl, width, editorTransformations, sourceOperations)),
-    );
+    const src = await this._lifetime.guard(this.proxyUrl(imageSrc(originalUrl, width, editorTransformations)));
     batchPreloadImages([src]);
   }
 
