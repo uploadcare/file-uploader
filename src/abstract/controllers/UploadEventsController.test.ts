@@ -180,12 +180,12 @@ describe('UploadEventsController', () => {
       expect(t.deps.runOnAddHooks).toHaveBeenCalledTimes(1);
     });
 
-    it('on remove: marks removed, clears abortController, revokes thumbUrl, cleans validation, emits FILE_REMOVED', () => {
+    // The thumbnail's object URL is revoked by its owner, `ThumbnailController` (pinned in its spec).
+    it('on remove: marks removed, clears abortController, cleans validation, emits FILE_REMOVED', () => {
       const t = setup();
       const id = t.collection.add({ fileName: 'a.txt', thumbUrl: 'blob:xyz' });
       const entry = t.collection.read(id) as Entry;
       entry.set('abortController', new AbortController());
-      const revokeSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
       t.fireCollection([], new Set(), new Set([entry]));
 
@@ -194,7 +194,6 @@ describe('UploadEventsController', () => {
       // now; this handler only clears state (and nulls the abortController).
       expect(entry.get('abortController')).toBeNull();
       expect(entry.get('isRemoved')).toBe(true);
-      expect(revokeSpy).toHaveBeenCalledWith('blob:xyz');
       expect(t.emit).toHaveBeenCalledWith(UploaderEventType.FILE_REMOVED, expect.objectContaining({ internalId: id }));
     });
 

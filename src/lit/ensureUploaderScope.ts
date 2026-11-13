@@ -6,15 +6,19 @@ import { ValidationController } from '../abstract/controllers/ValidationControll
 import type { ControllerContainer } from '../abstract/di/ControllerContainer';
 import { UploaderPublicApi } from '../abstract/UploaderPublicApi';
 import { ensurePluginManager } from './ensurePluginManager';
+import { ThumbnailController } from './ThumbnailController';
 
 /**
  * Attach the uploader scope to a ctx's container. Idempotent. Resolution order fixes the container's insertion order
- * and so its reverse-order teardown: UploadEvents → Validation → Upload → SecureUploads → PublicApi →
- * UploadCollection, so the collection observers detach while the collection is still alive.
+ * and so its reverse-order teardown: UploadEvents → Validation → Upload → SecureUploads → PublicApi → Thumbnail →
+ * UploadCollection, so the collection observers detach while the collection is still alive. `ThumbnailController` is
+ * resolved here rather than by the first thumb so that it starts observing an empty collection: observing one that
+ * already has files schedules a membership flush.
  */
 export function ensureUploaderScope(container: ControllerContainer): void {
   if (!container.has(UploadEventsController)) {
     container.get(UploadCollectionController);
+    container.get(ThumbnailController);
     container.get(UploaderPublicApi);
     container.get(SecureUploadsController);
     container.get(UploadController);

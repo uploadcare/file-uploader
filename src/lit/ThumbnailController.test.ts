@@ -163,4 +163,39 @@ describe('ThumbnailController.store', () => {
 
     expect(revoke).not.toHaveBeenCalled();
   });
+
+  it('revokes the object url of an entry once it is removed', async () => {
+    const { thumbnails, collection, uid, entry } = setup();
+    thumbnails.store(entry, 'blob:local');
+
+    collection.remove(uid);
+    // The collection reports a removal on its next flush.
+    await delay(0);
+
+    expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:local');
+  });
+
+  it('revokes an object url that arrives after its entry was removed, and leaves the entry as it was', async () => {
+    const { thumbnails, collection, uid, entry } = setup();
+    const drawn = thumbnails.draw(entry, file, 40, new AbortController().signal);
+
+    collection.remove(uid);
+    await delay(0);
+    drawings[0]?.resolve('blob:late-drawn');
+    await drawn;
+
+    expect(entry.get('thumbUrl')).toBeNull();
+    expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:late-drawn');
+  });
+
+  it('revokes an object url that arrives after the uploader was destroyed', async () => {
+    const { thumbnails, entry } = setup();
+    const drawn = thumbnails.draw(entry, file, 40, new AbortController().signal);
+
+    container.dispose();
+    drawings[0]?.resolve('blob:late-drawn');
+    await drawn;
+
+    expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:late-drawn');
+  });
 });

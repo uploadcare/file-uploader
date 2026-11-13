@@ -223,6 +223,20 @@ describe('uc-thumb local thumbnail, across thumbs of one file', () => {
     expect(drawn()).toBe(1);
     expect([...urls.live]).toEqual([shown()?.src]);
   });
+
+  it('releases a thumbnail that was still being drawn when its file was removed', async () => {
+    const drawn = slowDrawing();
+    const urls = trackThumbnailUrls();
+    const { ctxName, api } = renderUploadHost();
+    const { internalId } = api.addFileFromObject(IMAGE.PIXEL);
+    mountThumb(ctxName, internalId);
+    await expect.poll(drawn).toBe(1);
+
+    api.removeFileByInternalId(internalId);
+
+    await expect.poll(urls.created, { timeout: 10_000 }).toBe(1);
+    await expect.poll(() => urls.live.size).toBe(0);
+  });
 });
 
 describe('generateThumb', () => {

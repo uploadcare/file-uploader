@@ -1,3 +1,6 @@
+import { UploadCollectionController } from '../abstract/controllers/UploadCollectionController';
+import { lifetimeOf } from '../abstract/di/ControllerContainer';
+import { inject } from '../abstract/di/inject';
 import type { UploadEntryTypedData } from '../abstract/uploadEntrySchema';
 import { generateThumb } from '../utils/resizeImage';
 import { queueThumbnail } from '../utils/thumbnail-queue';
@@ -14,16 +17,38 @@ type Drawing = (signal: AbortSignal) => Promise<void>;
  * Container-resolved, in `src/lit` because drawing needs the DOM (`generateThumb`).
  */
 export class ThumbnailController {
+  @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
+
   private readonly _drawing = new Map<UploadEntryTypedData, Drawing>();
   /** The object URLs among the thumbnails stored on entries: this is their only owner, so the only one to revoke them. */
   private readonly _urls = new Set<string>();
 
-  /** Make `url` the entry's thumbnail and release the one it replaces. An object URL is owned from here on. */
+  /** Runs once the container built this instance, since `@inject` does not resolve inside a constructor. */
+  public init(): void {
+    this._collection.observeCollection((_list, _added, removed) => {
+      for (const entry of removed) this._revoke(entry.get('thumbUrl'));
+    });
+  }
+
+  private _revoke(url: string | null): void {
+    if (url && this._urls.delete(url)) URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Make `url` the entry's thumbnail and release the one it replaces. An object URL is owned from here on. One that
+   * arrives after its entry was removed, or after the uploader was destroyed, is released at once: nothing is left to
+   * show it, and the removal has already released what the entry had.
+   */
   public store(entry: UploadEntryTypedData, url: string): void {
+    if (url.startsWith('blob:')) this._urls.add(url);
+    // The lifetime first: the collection cannot be read once the container is disposed.
+    if (lifetimeOf(this).signal.aborted || this._collection.read(entry.uid) !== entry) {
+      this._revoke(url);
+      return;
+    }
     const replaced = entry.get('thumbUrl');
     entry.set('thumbUrl', url);
-    if (url.startsWith('blob:')) this._urls.add(url);
-    if (replaced && this._urls.delete(replaced)) URL.revokeObjectURL(replaced);
+    if (replaced !== url) this._revoke(replaced);
   }
 
   /**
