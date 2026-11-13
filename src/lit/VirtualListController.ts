@@ -220,6 +220,10 @@ export class VirtualListController implements ReactiveController {
           return;
         }
         const height = container.contentRect.height;
+        // A container with no layout (a hidden panel) says nothing about its height: the window stays as it was.
+        if (height <= 0) {
+          return;
+        }
         // A resize can change viewport AND row metrics (grid cell height scales
         // with width via aspect-ratio), so re-latch. This callback runs outside
         // the update lifecycle → direct requestUpdate is safe.

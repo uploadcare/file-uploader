@@ -238,6 +238,28 @@ describe('VirtualListController', () => {
     expect(flat(controller.window(listOf(100))).items).toHaveLength(10); // 400/40
   });
 
+  it('keeps its window while the container is hidden, where it has no height', () => {
+    const host = new FakeHost();
+    const scrollEl = makeScrollEl({ clientHeight: 200, itemHeight: 40 });
+    const controller = new VirtualListController(host, {
+      scrollContainer: () => scrollEl,
+      itemSelector: 'x',
+      rowMetrics: (_el, firstItem) => ({ columns: 1, rowHeight: firstItem.offsetHeight }),
+      overscanRows: 0,
+    });
+    controller.hostUpdated();
+    expect(flat(controller.window(listOf(100))).items).toHaveLength(5);
+
+    // `display: none` on an ancestor: rendering every row of a list nobody sees is the worst answer.
+    const before = host.updateCount;
+    fireResize(0);
+    expect(host.updateCount).toBe(before);
+    expect(flat(controller.window(listOf(100))).items).toHaveLength(5);
+
+    fireResize(400);
+    expect(flat(controller.window(listOf(100))).items).toHaveLength(10);
+  });
+
   it('seeds scrollTop from the container on attach (reconnect to an already-scrolled list)', () => {
     const host = new FakeHost();
     const firstItem = { offsetHeight: 40, matches: () => true };

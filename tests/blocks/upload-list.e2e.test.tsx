@@ -136,6 +136,23 @@ describe('uc-upload-list virtualization', () => {
     await expect.poll(() => belowTheFold().every((row) => row.childElementCount > 0)).toBe(true);
   });
 
+  it.skipIf(isLive)('keeps the list windowed while it is hidden', async () => {
+    const { api, root } = await renderSolution('regular', { confirmUpload: true, multipleMax: 1000 });
+    addFiles(api, 300);
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+    await expect.poll(() => root.querySelector('.uc-list-spacer')).not.toBeNull();
+    const rows = () => root.querySelectorAll('uc-file-item').length;
+    const files = root.querySelector<HTMLElement>('.uc-files')!;
+
+    api.setModalState(false);
+    await expect.poll(() => files.checkVisibility()).toBe(false);
+    // The sentinel: the list re-renders for the added file, hidden as it is.
+    addFiles(api, 1);
+    await expect.poll(() => root.querySelector('uc-file-item')?.getAttribute('aria-setsize')).toBe('301');
+    expect(rows()).toBeLessThan(100);
+  });
+
   it('drops the gap below the last file only, as in 1.35, not below the last rendered row', async () => {
     const { api, root } = await renderSolution('regular', { confirmUpload: true, multipleMax: 1000 });
     addFiles(api, 300);
