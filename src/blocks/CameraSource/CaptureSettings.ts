@@ -22,6 +22,9 @@ export type CaptureSettingsConfig = {
   audioMode(): string;
 };
 
+const offered = <T extends string>(options: readonly T[], value: string): T | undefined =>
+  options.find((option) => option === value);
+
 /**
  * The capture settings: the options offered, and the value in effect for each, which is the user's pick, else the
  * first listed value.
@@ -86,19 +89,20 @@ export class CaptureSettings {
     return this._pickedAudioMode ?? this.audioModeOptions[0] ?? 'voice';
   }
 
+  /** Picks `value` for `setting` when it is one of the options offered: the value comes from the page, as a string. */
   public pick(setting: CameraSetting, value: string): void {
     switch (setting) {
       case 'aspectRatio':
-        this._pickedAspectRatio = value;
+        this._pickedAspectRatio = offered(this.aspectRatioOptions, value) ?? this._pickedAspectRatio;
         break;
       case 'resolution':
-        this._pickedResolution = value as CameraResolution;
+        this._pickedResolution = offered(this.resolutionOptions, value) ?? this._pickedResolution;
         break;
       case 'audioQuality':
-        this._pickedAudioQuality = value as CameraAudioQuality;
+        this._pickedAudioQuality = offered(this.audioQualityOptions, value) ?? this._pickedAudioQuality;
         break;
       case 'audioMode':
-        this._pickedAudioMode = value as CameraAudioMode;
+        this._pickedAudioMode = offered(this.audioModeOptions, value) ?? this._pickedAudioMode;
         break;
     }
   }

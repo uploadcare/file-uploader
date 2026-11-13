@@ -23,6 +23,26 @@ describe('CaptureSettings', () => {
     expect(capture.audioQuality).toBe('high');
   });
 
+  it('ignores a pick that is not one of the options offered', () => {
+    const capture = settings({
+      aspectRatio: () => '16:9, 4:3',
+      resolution: () => '720p, 1080p',
+      audioQuality: () => 'low, high',
+      audioMode: () => 'voice, music',
+    });
+    capture.pick('resolution', '1080p');
+
+    capture.pick('aspectRatio', '1:1');
+    capture.pick('resolution', 'bogus');
+    capture.pick('audioQuality', '720p');
+    capture.pick('audioMode', '4:3');
+
+    expect(capture.aspectRatioChoice).toBe('16:9');
+    expect(capture.resolution).toBe('1080p');
+    expect(capture.audioQuality).toBe('low');
+    expect(capture.audioMode).toBe('voice');
+  });
+
   it('reset gives way to the first listed value', () => {
     const capture = settings({ audioMode: () => 'voice, music' });
     capture.pick('audioMode', 'music');
