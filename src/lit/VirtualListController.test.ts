@@ -480,6 +480,112 @@ describe('VirtualListController row height estimate', () => {
   });
 });
 
+describe('VirtualListController geometry', () => {
+  // A grid of 3 columns: 100px tiles with a 20px gap between rows, in a 250px viewport.
+  const setup = (scroll: { scrollHeight?: number } = {}) => {
+    const host = new FakeHost();
+    const firstItem = { offsetHeight: 100, matches: () => true };
+    let columns = 3;
+    const scrollEl = Object.assign(makeScrollEl({ clientHeight: 250, itemHeight: 100 }), scroll, {
+      querySelector: () => firstItem,
+    });
+    const controller = new VirtualListController(host, {
+      scrollContainer: () => scrollEl,
+      itemSelector: 'x',
+      rowMetrics: (_el, item) => ({ columns, rowHeight: item.offsetHeight + 20, rowGap: 20 }),
+      overscanRows: 0,
+    });
+    controller.hostUpdated();
+    return { host, controller, scrollEl, firstItem, setColumns: (n: number) => (columns = n) };
+  };
+  const items = listOf(300);
+
+  it('reports nothing measured before the first render', () => {
+    const controller = new VirtualListController(new FakeHost(), {
+      scrollContainer: () => null,
+      itemSelector: 'x',
+      rowMetrics: () => ({ columns: 3, rowHeight: 120 }),
+    });
+    expect(controller.metrics).toEqual({ columns: 1, rowHeight: 0, rowGap: 0, viewportRows: 0 });
+  });
+
+  it('reports the geometry its window is computed from', () => {
+    const { controller } = setup();
+    // floor(250 / 120) whole rows fit, though the window renders ceil(250 / 120) = 3 rows.
+    expect(controller.metrics).toEqual({ columns: 3, rowHeight: 120, rowGap: 20, viewportRows: 2 });
+    expect(controller.window(items).rows).toHaveLength(3 * 3);
+  });
+
+  it('takes a column count that is not a number, or under 1, as one column', () => {
+    const { controller, setColumns } = setup({ scrollHeight: 250 });
+    setColumns(Number.NaN);
+    controller.hostUpdated();
+    expect(controller.metrics.columns).toBe(1);
+    setColumns(0);
+    controller.hostUpdated();
+    expect(controller.metrics.columns).toBe(1);
+  });
+
+  it('follows the viewport a resize reports', () => {
+    const { controller } = setup();
+    fireResize(500);
+    expect(controller.metrics.viewportRows).toBe(4);
+  });
+
+  it('takes the row gap off every spacer, which gets one as a line of its own', () => {
+    const { controller, scrollEl } = setup();
+    scrollEl.scrollTop = 50 * 120;
+    scrollEl._fire('scroll');
+    const { rows, topPad, bottomPad } = controller.window(items, 3);
+    expect(topPad).toBe(1 * 120 - 20);
+    expect(rows.map((row) => row.padBefore).filter(Boolean)).toEqual([48 * 120 - 20]);
+    expect(bottomPad).toBe(47 * 120 - 20);
+  });
+
+  it('renders no spacer shorter than its gap', () => {
+    const host = new FakeHost();
+    const scrollEl = makeScrollEl({ clientHeight: 250, itemHeight: 10 });
+    const controller = new VirtualListController(host, {
+      scrollContainer: () => scrollEl,
+      itemSelector: 'x',
+      rowMetrics: (_el, item) => ({ columns: 1, rowHeight: item.offsetHeight, rowGap: 20 }),
+      overscanRows: 0,
+    });
+    controller.hostUpdated();
+    // One 10px row is left below the window.
+    expect(controller.window(listOf(26)).bottomPad).toBe(0);
+  });
+
+  it('measures a container that does not scroll on each render, without windowing it', () => {
+    const { controller, firstItem, setColumns } = setup({ scrollHeight: 250 });
+    expect(controller.metrics).toEqual({ columns: 3, rowHeight: 120, rowGap: 20, viewportRows: 2 });
+    expect(flat(controller.window(items))).toEqual({ items, topPad: 0, bottomPad: 0 });
+
+    // Not latched: nothing re-measures such a list but its next render.
+    setColumns(2);
+    firstItem.offsetHeight = 30;
+    controller.hostUpdated();
+    expect(controller.metrics).toEqual({ columns: 2, rowHeight: 50, rowGap: 20, viewportRows: 5 });
+  });
+
+  it('re-renders on a resize that keeps the height, which can still change the columns', () => {
+    const { host, controller, setColumns } = setup({ scrollHeight: 250 });
+    const before = host.updateCount;
+    setColumns(1);
+    fireResize(250);
+    expect(host.updateCount).toBe(before + 1);
+    controller.hostUpdated();
+    expect(controller.metrics.columns).toBe(1);
+  });
+
+  it('keeps the last geometry while a row cannot be measured', () => {
+    const { controller, firstItem } = setup({ scrollHeight: 250 });
+    firstItem.offsetHeight = -20;
+    controller.hostUpdated();
+    expect(controller.metrics.rowHeight).toBe(120);
+  });
+});
+
 describe('VirtualListController pinned item', () => {
   const setup = () => {
     const host = new FakeHost();

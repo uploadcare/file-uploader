@@ -109,14 +109,17 @@ export class UploadList extends ActivityChildBlock {
     itemSelector: 'uc-file-item',
     rowMetrics: (scrollEl, firstItem) => {
       if (this._config.get('filesViewMode') !== 'grid') {
-        this._rowGap = 0;
         return { columns: 1, rowHeight: firstItem.offsetHeight };
       }
       // Flex `gap` sits BETWEEN grid cells (not in offsetHeight), so one grid row
       // is a cell plus one inter-row gap; list rows fold the gap into their box.
       const rowGap = Number.parseFloat(getComputedStyle(scrollEl).rowGap) || 0;
-      this._rowGap = rowGap;
-      return { columns: this._columns(), rowHeight: firstItem.offsetHeight + rowGap };
+      return {
+        // Not a number without the theme's property: the controller takes anything under 1 as one column.
+        columns: Number.parseInt(getComputedStyle(this).getPropertyValue('--uc-grid-col'), 10),
+        rowHeight: firstItem.offsetHeight + rowGap,
+        rowGap,
+      };
     },
   });
 
@@ -144,14 +147,6 @@ export class UploadList extends ActivityChildBlock {
   protected override controllerReleased(container: ControllerContainer): void {
     super.controllerReleased(container);
     this._refocusWhenSettled = false;
-  }
-
-  private _columns(): number {
-    if (this._config.get('filesViewMode') !== 'grid') {
-      return 1;
-    }
-    const gridCol = Number.parseInt(getComputedStyle(this).getPropertyValue('--uc-grid-col'), 10);
-    return Number.isFinite(gridCol) && gridCol >= 1 ? gridCol : 1;
   }
 
   private _rowElement(uid: Uid): FileItem | undefined {
@@ -200,10 +195,10 @@ export class UploadList extends ActivityChildBlock {
     if (!row || from < 0 || !files) {
       return;
     }
-    // A grid row is a tile plus the gap under it (`_rowGap` is 0 in list mode).
-    const pageRows = Math.floor(files.clientHeight / (row.offsetHeight + this._rowGap || 1));
+    // The columns and the page are the ones the window was computed from.
+    const { columns, viewportRows } = this._virtualList.metrics;
     const rtl = getComputedStyle(files).direction === 'rtl';
-    const to = list[targetRowIndex(event.key, from, list.length, this._columns(), pageRows, rtl) ?? -1];
+    const to = list[targetRowIndex(event.key, from, list.length, columns, viewportRows, rtl) ?? -1];
     if (to) {
       event.preventDefault();
       // At either end the key has nowhere to go: focus stays where it is, on a button of the row if it was there.
@@ -249,12 +244,6 @@ export class UploadList extends ActivityChildBlock {
       firstFocusable(this)?.focus();
     }
   }
-
-  // The measured inter-row flex gap (grid mode; 0 in list mode). A spacer is
-  // itself a flex line, so the browser inserts one extra `gap` between it and the
-  // adjacent item row — subtract it from the spacer height so the visible window
-  // isn't pushed down/up by one gap.
-  private _rowGap = 0;
 
   private get _headerText() {
     if (!this._latestSummary) {
@@ -496,12 +485,10 @@ export class UploadList extends ActivityChildBlock {
     this._uploadList = list;
   }
 
-  // A spacer holding the height of rows outside the window. A spacer occupies its own flex line, so the flex `gap`
-  // adds one extra gap between it and the adjacent row — shrink the spacer by that gap so the rendered window lands
-  // where the scroll position expects (grid mode; `_rowGap` is 0 in list mode, where the gap is folded into each row's
-  // own box). The height goes through `cssomStyleMap` (CSSOM): a CSP without `'unsafe-inline'` drops a `style` attribute.
-  private _spacer(pad: number) {
-    const height = pad - this._rowGap;
+  // A spacer holding the height of rows outside the window (the virtualizer has already taken off the flex `gap` its
+  // own line gets in grid mode). The height goes through `cssomStyleMap` (CSSOM): a CSP without `'unsafe-inline'`
+  // drops a `style` attribute.
+  private _spacer(height: number) {
     return height > 0
       ? html`<div class="uc-list-spacer" style=${cssomStyleMap({ height: `${height}px` })}></div>`
       : nothing;

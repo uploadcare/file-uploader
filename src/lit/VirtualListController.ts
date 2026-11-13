@@ -6,13 +6,32 @@ export type VirtualListRowMetrics = {
   columns: number;
   /** Measured height of one row in px — the item box plus the inter-row gap in grid mode. */
   rowHeight: number;
+  /**
+   * The gap the layout puts between two rows, in px, when it is not part of an item's own box (a flex-wrap grid's
+   * `row-gap`; default 0). A spacer is a line of its own there and gets one such gap too, so the pads are that much
+   * shorter.
+   */
+  rowGap?: number;
 };
+
+/** The geometry the window is computed from. A host that moves by rows or pages reads it to agree with the window. */
+export type VirtualListMetrics = Readonly<{
+  columns: number;
+  /** The current estimate of one row's height in px, gap included (0 until a row was measured). */
+  rowHeight: number;
+  rowGap: number;
+  /** Whole rows that fit the scroll container (0 until measured). */
+  viewportRows: number;
+}>;
 
 export type VirtualListRow<T> = {
   item: T;
   /** The item's index in the whole list. */
   index: number;
-  /** Height of a spacer to render right before this row, in px (0 for none): the rows between a pinned row and the window. */
+  /**
+   * Height of a spacer to render right before this row, in px (0 for none): the rows between a pinned row and the
+   * window. Like `topPad` and `bottomPad`, already less the `rowGap` the spacer's own line gets.
+   */
   padBefore: number;
 };
 
@@ -89,6 +108,9 @@ export class VirtualListController implements ReactiveController {
   private _measured = false;
   // What rowMetrics adds to an item's own height (a grid's row gap).
   private _rowExtra = 0;
+  private _rowGap = 0;
+  // Whether the container scrolls its rows. One that grows with them is measured too, but never windowed.
+  private _scrolls = false;
   // Whether the rows' average has replaced the seed since the last latch.
   private _averaged = false;
   // The latched row height is only a seed: a row measured early can be collapsed (the modal's opening layout), and
@@ -138,9 +160,10 @@ export class VirtualListController implements ReactiveController {
    */
   public window<T>(items: readonly T[], pinned = -1): VirtualListSlice<T> {
     const total = items.length;
+    const spacer = (pad: number) => Math.max(0, pad - this._rowGap);
     const metrics = {
       total,
-      rowHeight: this._rowHeight,
+      rowHeight: this._scrolls ? this._rowHeight : 0,
       columns: this._columns,
       scrollTop: this._scrollTop,
       viewportHeight: this._viewportHeight,
@@ -153,11 +176,11 @@ export class VirtualListController implements ReactiveController {
     const rows = items.slice(slice.start, slice.end).map((item, i) => ({
       item,
       index: slice.start + i,
-      padBefore: pinnedAbove && i === 0 ? slice.gapPad : 0,
+      padBefore: pinnedAbove && i === 0 ? spacer(slice.gapPad) : 0,
     }));
     const pinnedItem = items[slice.pinned];
     if (pinnedItem !== undefined) {
-      const row = { item: pinnedItem, index: slice.pinned, padBefore: pinnedAbove ? 0 : slice.gapPad };
+      const row = { item: pinnedItem, index: slice.pinned, padBefore: pinnedAbove ? 0 : spacer(slice.gapPad) };
       if (pinnedAbove) {
         rows.unshift(row);
       } else {
@@ -165,7 +188,18 @@ export class VirtualListController implements ReactiveController {
       }
     }
     this._windowedCount = rows.length;
-    return { rows, topPad: slice.topPad, bottomPad: slice.bottomPad };
+    return { rows, topPad: spacer(slice.topPad), bottomPad: spacer(slice.bottomPad) };
+  }
+
+  /** The geometry behind {@link window}, as last measured: what the keyboard moves by is what the window shows. */
+  public get metrics(): VirtualListMetrics {
+    const rowHeight = this._rowHeight;
+    return {
+      columns: this._columns,
+      rowHeight,
+      rowGap: this._rowGap,
+      viewportRows: rowHeight > 0 ? Math.floor(this._viewportHeight / rowHeight) : 0,
+    };
   }
 
   // rAF-coalesced: a scroll burst updates `_scrollTop` at most once per frame,
@@ -225,38 +259,42 @@ export class VirtualListController implements ReactiveController {
           return;
         }
         // A resize can change viewport AND row metrics (grid cell height scales
-        // with width via aspect-ratio), so re-latch. This callback runs outside
-        // the update lifecycle → direct requestUpdate is safe.
-        if (height !== this._viewportHeight || this._measured) {
-          this._viewportHeight = height;
-          this._unlatch();
-          this._host.requestUpdate();
-        }
+        // with width via aspect-ratio, and the column count can follow the width), so re-latch. This callback
+        // runs outside the update lifecycle → direct requestUpdate is safe.
+        this._viewportHeight = height;
+        this._unlatch();
+        this._host.requestUpdate();
       });
       this._resizeObserver.observe(scrollEl);
     }
 
     if (!this._measured) {
+      const firstItem = scrollEl.querySelector<HTMLElement>(this._itemSelector);
+      const {
+        columns,
+        rowHeight,
+        rowGap = 0,
+      } = firstItem ? this._rowMetrics(scrollEl, firstItem) : { columns: 1, rowHeight: 0 };
+      const rowMeasured = firstItem && rowHeight > 0;
+      if (rowMeasured) {
+        this._columns = columns >= 1 ? columns : 1;
+        this._rowHeight = rowHeight;
+        this._rowExtra = rowHeight - firstItem.offsetHeight;
+        this._rowGap = rowGap;
+      }
       // A container that grows with its content (an unsized inline uploader, where the page scrolls) never scrolls,
-      // so its clientHeight is the whole list, not a viewport: render every row. Checked until the list overflows.
+      // so its clientHeight is the whole list, not a viewport: render every row. Checked until the list overflows,
+      // and its rows are measured on each render meanwhile, for `metrics`.
       // 1px tolerance: sub-pixel row heights can round scrollHeight one past clientHeight.
       if (scrollEl.scrollHeight - scrollEl.clientHeight <= 1) {
-        if (this._rowHeight > 0) {
-          this._rowHeight = 0;
+        if (this._scrolls) {
+          this._scrolls = false;
           this._scheduleMeasureUpdate();
         }
-        return;
-      }
-      const firstItem = scrollEl.querySelector<HTMLElement>(this._itemSelector);
-      if (firstItem) {
-        const { columns, rowHeight } = this._rowMetrics(scrollEl, firstItem);
-        if (rowHeight > 0) {
-          this._columns = columns >= 1 ? columns : 1;
-          this._rowHeight = rowHeight;
-          this._rowExtra = rowHeight - firstItem.offsetHeight;
-          this._measured = true;
-          this._scheduleMeasureUpdate();
-        }
+      } else if (rowMeasured) {
+        this._scrolls = true;
+        this._measured = true;
+        this._scheduleMeasureUpdate();
       }
       // The rows are observed from the windowed render the latch schedules, not this unwindowed one.
       return;
