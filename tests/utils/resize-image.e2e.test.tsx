@@ -196,6 +196,18 @@ describe('generateThumb', () => {
     expect(close).toHaveBeenCalledTimes(_ === 'rejects' ? 0 : 1);
   });
 
+  it('draws a very elongated image itself, where a resized bitmap would be upscaled to a huge one', async () => {
+    // Shorter side 2px scaled up to 40 is 20 times: the longer side would be asked for at 12,000px.
+    const strip = await makeImage(2, 600, 'image/png');
+    const createImageBitmap = vi.spyOn(globalThis, 'createImageBitmap');
+    onTestFinished(() => createImageBitmap.mockRestore());
+
+    const thumb = await readThumb(await generateThumb(strip, 40));
+
+    expect(createImageBitmap).not.toHaveBeenCalled();
+    expect(thumb.width).toBe(40);
+  });
+
   it('returns an object url of the file itself for an svg', async () => {
     const createBitmap = vi.spyOn(globalThis, 'createImageBitmap');
     const createObjectURL = vi.spyOn(URL, 'createObjectURL');
