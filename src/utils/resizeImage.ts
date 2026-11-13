@@ -11,30 +11,41 @@ export async function generateThumb(imgFile: Blob, size = 40): Promise<string> {
     throw new Error('Canvas context not supported');
   }
   const srcUrl = URL.createObjectURL(imgFile);
+  // Loaded for its size only, which costs no decode: an `<img>` is decoded when it is first drawn.
   const { promise, image: img } = preloadImage(srcUrl);
-  return promise
-    .finally(() => URL.revokeObjectURL(srcUrl))
-    .then(
-      () =>
-        new Promise<string>((resolve, reject) => {
-          const ratio = img.height / img.width;
-          if (ratio > 1) {
-            canvas.width = size;
-            canvas.height = size * ratio;
-          } else {
-            canvas.height = size;
-            canvas.width = size / ratio;
-          }
-          ctx.fillStyle = 'rgb(240, 240, 240)';
-          ctx.fillRect(0, 0, canvas.width, canvas.height);
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          canvas.toBlob((blob: Blob | null) => {
-            if (!blob) {
-              reject(new Error('Failed to encode the thumbnail'));
-              return;
-            }
-            resolve(URL.createObjectURL(blob));
-          });
-        }),
-    );
+  await promise.finally(() => URL.revokeObjectURL(srcUrl));
+  const ratio = img.height / img.width;
+  const isPortrait = ratio > 1;
+  canvas.width = isPortrait ? size : size / ratio;
+  canvas.height = isPortrait ? size * ratio : size;
+  ctx.fillStyle = 'rgb(240, 240, 240)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  // Decodes and downscales off the main thread. Only the shorter side is asked for, so the longer one tells whether
+  // the browser did as asked: one that drops the resize options answers full size, one that drops the orientation
+  // answers with a picture lying on its side.
+  const bitmap = await globalThis
+    .createImageBitmap?.(imgFile, {
+      [isPortrait ? 'resizeWidth' : 'resizeHeight']: size,
+      resizeQuality: 'medium',
+      imageOrientation: 'from-image',
+    })
+    .catch(() => undefined);
+  // The bitmap's longer side is rounded where the canvas truncates.
+  if (bitmap && Math.abs(bitmap.width - canvas.width) < 2 && Math.abs(bitmap.height - canvas.height) < 2) {
+    ctx.drawImage(bitmap, 0, 0);
+  } else {
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  }
+  bitmap?.close();
+
+  return new Promise<string>((resolve, reject) => {
+    canvas.toBlob((blob: Blob | null) => {
+      if (!blob) {
+        reject(new Error('Failed to encode the thumbnail'));
+        return;
+      }
+      resolve(URL.createObjectURL(blob));
+    });
+  });
 }
