@@ -160,6 +160,71 @@ describe('uc-thumb local thumbnail', () => {
   });
 });
 
+/** Slows the last step of drawing a thumbnail down, so the test can act while one is being drawn. Returns the count. */
+const slowDrawing = () => {
+  const toBlob = HTMLCanvasElement.prototype.toBlob;
+  let drawn = 0;
+  HTMLCanvasElement.prototype.toBlob = function (callback, ...rest) {
+    drawn++;
+    setTimeout(() => toBlob.call(this, callback, ...rest), 400);
+  };
+  onTestFinished(() => {
+    HTMLCanvasElement.prototype.toBlob = toBlob;
+  });
+  return () => drawn;
+};
+
+/** The object URLs of drawn thumbnails: those come from a canvas blob, the ones `generateThumb` decodes from a File. */
+const trackThumbnailUrls = () => {
+  const live = new Set<string>();
+  let created = 0;
+  const createObjectURL = URL.createObjectURL.bind(URL);
+  vi.spyOn(URL, 'createObjectURL').mockImplementation((source) => {
+    const url = createObjectURL(source);
+    if (!(source instanceof File)) {
+      live.add(url);
+      created++;
+    }
+    return url;
+  });
+  const revokeObjectURL = URL.revokeObjectURL.bind(URL);
+  vi.spyOn(URL, 'revokeObjectURL').mockImplementation((url) => {
+    live.delete(url);
+    revokeObjectURL(url);
+  });
+  return { live, created: () => created };
+};
+
+/** A thumb of its own for the entry, as each list row and the primary action button have. */
+const mountThumb = (ctxName: string, uid: string) => {
+  const thumb = document.createElement('uc-thumb');
+  thumb.setAttribute('ctx-name', ctxName);
+  thumb.uid = uid as Uid;
+  document.body.append(thumb);
+  onTestFinished(() => thumb.remove());
+  return thumb;
+};
+
+describe('uc-thumb local thumbnail, across thumbs of one file', () => {
+  it('draws the thumbnail once for a row that left the list while it was drawn and came back', async () => {
+    const drawn = slowDrawing();
+    const urls = trackThumbnailUrls();
+    const { ctxName, api } = renderUploadHost();
+    const { internalId } = api.addFileFromObject(IMAGE.PIXEL);
+
+    const first = mountThumb(ctxName, internalId);
+    await expect.poll(drawn).toBe(1);
+    // What the virtual list does to a row scrolled out of its window and back in: a new element for the same file.
+    first.remove();
+    const second = mountThumb(ctxName, internalId);
+
+    const shown = () => second.querySelector<HTMLImageElement>('img.uc-thumb__img:not([hidden])');
+    await expect.poll(shown, { timeout: 10_000 }).not.toBeNull();
+    expect(drawn()).toBe(1);
+    expect([...urls.live]).toEqual([shown()?.src]);
+  });
+});
+
 describe('generateThumb', () => {
   it.each([
     ['decodes', IMAGE.SQUARE],

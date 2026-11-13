@@ -8,11 +8,10 @@ import { isAbortError } from '../../abstract/di/Lifetime';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { effect } from '../../lit/effect';
 import { cancelPending, debounced } from '../../lit/rate-limited-method';
+import { ThumbnailController } from '../../lit/ThumbnailController';
 import { operationsFromModifiers } from '../../utils/cdn/operations';
 import { latestIntersectionObserver, NEAR_VIEW } from '../../utils/near-view';
 import { preloadImage } from '../../utils/preloadImage';
-import { generateThumb } from '../../utils/resizeImage';
-import { queueThumbnail } from '../../utils/thumbnail-queue';
 import { FileItemConfig } from '../FileItem/FileItemConfig';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds';
 import './thumb.css';
@@ -38,10 +37,12 @@ export class Thumb extends FileItemConfig {
   // (`.get()` / method calls). The thumb image itself renders from the per-entry
   // `thumbUrl` observer (`subEntry`). `UploadCollectionController` is the entry source for
   // `_bindToEntry`, which only runs while adopted (`controllerReady` and the
-  // render-gated `firstUpdated`/`updated`).
+  // render-gated `firstUpdated`/`updated`). `ThumbnailController` owns the
+  // thumbnail itself: this block asks it to draw or store one and shows the result.
   @inject(ConfigController) private readonly _config!: ConfigController;
   @inject(TelemetryManager) private readonly _telemetry!: TelemetryManager;
   @inject(UploadCollectionController) private readonly _collection!: UploadCollectionController;
+  @inject(ThumbnailController) private readonly _thumbnails!: ThumbnailController;
 
   @property({ type: String })
   public badgeIcon = '';
@@ -86,7 +87,7 @@ export class Thumb extends FileItemConfig {
 
   // Runs as an adoption task (`runTask`): each await of outside work goes through `whileAdopted`, so a thumb released
   // mid-generation stops instead of reaching its `@inject` fields. A thumbnail that arrives late is still stored on the
-  // entry (its `dispose`), since the entry outlives this block — a row scrolled out of the virtualized list keeps it.
+  // entry, since the entry outlives this block — a row scrolled out of the virtualized list keeps it.
   private async _generateThumbnail(force = false): Promise<void> {
     const entry = this.entry;
     if (!entry) return;
@@ -140,16 +141,13 @@ export class Thumb extends FileItemConfig {
         }
 
         const { promise } = preloadImage(thumbUrl);
-        const storeThumb = () => {
-          entry.set('thumbUrl', thumbUrl);
-          if (currentThumbUrl?.startsWith('blob:')) {
-            URL.revokeObjectURL(currentThumbUrl);
-          }
-        };
+        // Read while adopted: `storeThumb` also runs after release, where the `@inject` field no longer resolves.
+        const thumbnails = this._thumbnails;
+        const storeThumb = () => thumbnails.store(entry, thumbUrl);
 
         try {
           // `dispose` here commits rather than releases, on purpose: the entry outlives this row, so a thumbnail that
-          // finishes after the row went away is still the entry's. The `generateThumb` awaits below do the same.
+          // finishes after the row went away is still the entry's. A local one drawn below is kept the same way.
           await this.whileAdopted(promise, storeThumb);
           storeThumb();
         } catch (error) {
@@ -171,24 +169,19 @@ export class Thumb extends FileItemConfig {
     if (file?.type.includes('image')) {
       await this._storeLocalThumb(entry, file, size);
     } else {
-      entry.set('thumbUrl', this._placeholderThumb());
+      this._thumbnails.store(entry, this._placeholderThumb());
     }
   }
 
   /** Store a thumbnail drawn from the local file, or the placeholder if that fails. */
   private async _storeLocalThumb(entry: UploadEntryTypedData, file: Blob, size: number): Promise<void> {
     try {
-      // Queued, since each one decodes the full-size file. A thumb released while still waiting is dropped from the
-      // queue; one already decoding finishes and is stored by `dispose`.
-      const thumbUrl = await this.whileAdopted(
-        queueThumbnail(() => generateThumb(file, size), this.adoptionSignal),
-        (url) => entry.set('thumbUrl', url),
-      );
-      entry.set('thumbUrl', thumbUrl);
+      // Drawn and stored by the entry's one drawing, which this thumb joins if another thumb of the entry asked first.
+      await this.whileAdopted(this._thumbnails.draw(entry, file, size, this.adoptionSignal));
     } catch (err) {
       if (isAbortError(err)) throw err;
       this._telemetry.sendEventError(err, 'thumbnail generation. Failed to generate thumb from file');
-      entry.set('thumbUrl', this._placeholderThumb());
+      this._thumbnails.store(entry, this._placeholderThumb());
     }
   }
 
