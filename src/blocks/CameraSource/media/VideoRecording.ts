@@ -78,11 +78,13 @@ export class VideoRecording {
    */
   public stop(): Promise<Clip | null> {
     const recorder = this._recorder;
+    // Nothing is recording: there is no final `stop` event to wait for.
+    if (!recorder) return Promise.resolve(null);
     const chunks = this._chunks;
     const source = this._source;
     this._stopping = recorder;
     return new Promise((resolve) => {
-      recorder?.addEventListener(
+      recorder.addEventListener(
         'stop',
         () => {
           if (this._recorder !== recorder) {
@@ -99,7 +101,7 @@ export class VideoRecording {
         },
         { once: true },
       );
-      recorder?.stop();
+      recorder.stop();
     });
   }
 

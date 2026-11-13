@@ -39,6 +39,12 @@ describe('VideoRecording.stop', () => {
     expect([blob.size, blob.type, mimeType]).toEqual([4, 'video/webm', 'video/webm']);
   });
 
+  it('resolves with no clip when nothing is recording, instead of waiting for a stop event that never comes', async () => {
+    const recording = new VideoRecording();
+    await expect(recording.stop()).resolves.toBeNull();
+    expect(recording.isStopping).toBe(false);
+  });
+
   it('stops the canvas on the final stop event, before the clip carries its mirroring out', async () => {
     vi.stubGlobal('MediaRecorder', FakeRecorder);
     const stop = vi.fn();
