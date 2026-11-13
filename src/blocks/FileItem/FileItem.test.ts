@@ -202,6 +202,43 @@ describe('FileItem render gate', () => {
     await el.updateComplete;
     expect(inner(el)).not.toBeNull();
   });
+
+  it('renders at once, with no observer of its own, in a list that vouches for the row', async () => {
+    const observe = vi.fn<() => void>();
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        public observe = observe;
+        public disconnect(): void {}
+      },
+    );
+    onTestFinished(() => {
+      vi.unstubAllGlobals();
+    });
+    const ctxName = freshCtxName();
+    ensureUploaderCtx(ctxName);
+    const el = document.createElement('uc-file-item') as FileItem;
+    el.setAttribute('ctx-name', ctxName);
+    el.nearView = true;
+    el.uid = getCollection(ctxName).add({ fileName: 'a.png' });
+    document.body.appendChild(el);
+    mounted.push(el);
+    await el.updateComplete;
+    expect(observe).not.toHaveBeenCalled();
+    expect(inner(el)).not.toBeNull();
+  });
+
+  it('opens when the list starts vouching for a row that was waiting', async () => {
+    const ctxName = freshCtxName();
+    const { el } = await mount(ctxName);
+    el.uid = getCollection(ctxName).add({ fileName: 'a.png' });
+    await el.updateComplete;
+    expect(inner(el)).toBeNull();
+
+    el.nearView = true;
+    await el.updateComplete;
+    expect(inner(el)).not.toBeNull();
+  });
 });
 
 describe('FileItem entry-state rendering', () => {

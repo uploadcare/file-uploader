@@ -42,6 +42,11 @@ export type VirtualListSlice<T> = {
   topPad: number;
   /** Spacer height below the window, in px. */
   bottomPad: number;
+  /**
+   * Whether every row here is at or next to the viewport: the list is windowed and its container has layout. Such
+   * rows have nothing to wait for; in any other list each row finds out for itself when it comes near.
+   */
+  near: boolean;
 };
 
 export type VirtualListOptions = {
@@ -113,6 +118,8 @@ export class VirtualListController implements ReactiveController {
   private _scrolls = false;
   // Whether the rows' average has replaced the seed since the last latch.
   private _averaged = false;
+  // Whether the container last reported no layout (a hidden panel).
+  private _hidden = false;
   // The latched row height is only a seed: a row measured early can be collapsed (the modal's opening layout), and
   // rows differ (a row not yet scrolled into view is a shorter shell). The ResizeObserver reports each rendered row,
   // and the estimate follows their average height (0 = not reported yet).
@@ -188,7 +195,12 @@ export class VirtualListController implements ReactiveController {
       }
     }
     this._windowedCount = rows.length;
-    return { rows, topPad: spacer(slice.topPad), bottomPad: spacer(slice.bottomPad) };
+    return {
+      rows,
+      topPad: spacer(slice.topPad),
+      bottomPad: spacer(slice.bottomPad),
+      near: rows.length < total && !this._hidden,
+    };
   }
 
   /** The geometry behind {@link window}, as last measured: what the keyboard moves by is what the window shows. */
@@ -255,7 +267,8 @@ export class VirtualListController implements ReactiveController {
         }
         const height = container.contentRect.height;
         // A container with no layout (a hidden panel) says nothing about its height: the window stays as it was.
-        if (height <= 0) {
+        this._hidden = height <= 0;
+        if (this._hidden) {
           return;
         }
         // A resize can change viewport AND row metrics (grid cell height scales

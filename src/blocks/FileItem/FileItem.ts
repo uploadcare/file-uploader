@@ -79,9 +79,16 @@ export class FileItem extends FileItemConfig {
   @property({ attribute: false })
   public tabbable = true;
 
+  /**
+   * Set by a list that only keeps the rows near its viewport in the DOM: the row then renders at once. In any other
+   * list it waits to come near the viewport, watching for that itself.
+   * @internal
+   */
+  @property({ attribute: false })
+  public nearView = false;
+
   private _pluginFileActions: Owned<PluginFileActionRegistration>[] = [];
 
-  private _renderedOnce = false;
   private _observer?: IntersectionObserver;
   private _pluginManager: PluginController | null = null;
 
@@ -128,15 +135,10 @@ export class FileItem extends FileItemConfig {
     return FileItemState.IDLE;
   }
 
-  private _observerCallback(entry: IntersectionObserverEntry): void {
-    if (entry.isIntersecting && !this._renderedOnce) {
-      this._pauseRender = false;
-      this._renderedOnce = true;
-      // One-shot: the observer's only job is to un-pause on first view. Disconnect
-      // so it stops firing on every subsequent scroll for this row's whole life
-      // (matches Thumb).
-      this._observer?.disconnect();
-    }
+  // One-shot: the observer's only job is to un-pause on first view, so it stops firing on every later scroll.
+  private _renderNow(): void {
+    this._pauseRender = false;
+    this._observer?.disconnect();
   }
 
   private _handleEntryId(id: Uid): void {
@@ -253,9 +255,12 @@ export class FileItem extends FileItemConfig {
     super.connectedCallback();
     this.setAttribute('role', 'listitem');
 
-    // One-shot render gate: un-pause on first view (see `_pauseRender`). The
-    // observer watches this element's own node.
-    this._observer = latestIntersectionObserver((entry) => this._observerCallback(entry), {
+    // One-shot render gate: un-pause on first view (see `_pauseRender`), unless the list already vouches for the row
+    // (`nearView`, set before the row is connected). The observer watches this element's own node.
+    if (this.nearView) {
+      return;
+    }
+    this._observer = latestIntersectionObserver((entry) => entry.isIntersecting && this._renderNow(), {
       ...NEAR_VIEW,
       threshold: [0, 1],
     });
@@ -293,6 +298,9 @@ export class FileItem extends FileItemConfig {
       this.setAttribute('aria-label', status);
     } else {
       this.removeAttribute('aria-label');
+    }
+    if (this.nearView) {
+      this._renderNow();
     }
     return !this._pauseRender;
   }

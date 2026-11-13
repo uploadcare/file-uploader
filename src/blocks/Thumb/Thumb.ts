@@ -10,7 +10,6 @@ import { effect } from '../../lit/effect';
 import { cancelPending, debounced } from '../../lit/rate-limited-method';
 import { ThumbnailController } from '../../lit/ThumbnailController';
 import { operationsFromModifiers } from '../../utils/cdn/operations';
-import { latestIntersectionObserver, NEAR_VIEW } from '../../utils/near-view';
 import { preloadImage } from '../../utils/preloadImage';
 import { FileItemConfig } from '../FileItem/FileItemConfig';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds';
@@ -57,26 +56,16 @@ export class Thumb extends FileItemConfig {
 
   private _renderedGridOnce = false;
 
-  private _thumbRect: IntersectionObserverEntry['boundingClientRect'] | null = null;
-
-  private _isIntersecting = false;
-
   private _firstViewMode: ConfigType['filesViewMode'] | undefined;
-
-  private _observer?: IntersectionObserver;
 
   private _pendingThumbUpdate?: PendingThumbUpdate;
 
   /** The thumbnail being generated, so a second request for the same one does not start over. */
   private _generating?: string;
 
-  private _calculateThumbSize(force = false): number {
-    if (force) {
-      this._thumbRect = this.getBoundingClientRect();
-    }
-
-    const rect = this._thumbRect;
-    let size = Math.max(Math.trunc(rect?.height || 0), Math.trunc(rect?.width || 0), this._config.get('thumbSize'));
+  private _calculateThumbSize(): number {
+    const rect = this.getBoundingClientRect();
+    let size = Math.max(Math.trunc(rect.height), Math.trunc(rect.width), this._config.get('thumbSize'));
 
     if (window.devicePixelRatio > 1) {
       size *= window.devicePixelRatio;
@@ -88,12 +77,12 @@ export class Thumb extends FileItemConfig {
   // Runs as an adoption task (`runTask`): each await of outside work goes through `whileAdopted`, so a thumb released
   // mid-generation stops instead of reaching its `@inject` fields. A thumbnail that arrives late is still stored on the
   // entry, since the entry outlives this block — a row scrolled out of the virtualized list keeps it.
-  private async _generateThumbnail(force = false): Promise<void> {
+  private async _generateThumbnail(): Promise<void> {
     const entry = this.entry;
     if (!entry) return;
-    const size = this._calculateThumbSize(force);
+    const size = this._calculateThumbSize();
     const uuid = entry.get('fileInfo') && entry.get('isImage') && entry.get('uuid');
-    // Binding to the entry and the row coming into view each ask for a thumbnail, the second while the first is still
+    // Binding to the entry and a change of the entry each ask for a thumbnail, the second while the first may still be
     // decoding the file. A local thumbnail is drawn once whatever the size; a CDN one differs by size and operations.
     const job = uuid ? `${uuid}/${size}/${entry.get('cdnUrlModifiers')}` : 'local';
     if (this._generating === job) return;
@@ -241,17 +230,15 @@ export class Thumb extends FileItemConfig {
       });
   }
 
-  private _requestThumbGeneration(force = false): void {
+  // A thumb is only in the DOM once its row is at or near the viewport (`FileItem` holds its render until then), so
+  // it has nothing to wait for. `now` skips the debounce that collects a burst of entry changes.
+  private _requestThumbGeneration(now = false): void {
     if (!this.entry) {
       return;
     }
 
-    if (force) {
-      this.runTask(() => this._generateThumbnail(true));
-      return;
-    }
-
-    if (!this._isIntersecting) {
+    if (now) {
+      this.runTask(() => this._generateThumbnail());
       return;
     }
 
@@ -267,20 +254,6 @@ export class Thumb extends FileItemConfig {
     super.updated(changedProperties);
     if (changedProperties.has('uid')) {
       this._bindToEntry();
-    }
-  }
-
-  private _observerCallback(entry: IntersectionObserverEntry): void {
-    this._isIntersecting = entry.isIntersecting;
-
-    if (entry.isIntersecting) {
-      this._thumbRect = entry.boundingClientRect;
-      this._requestThumbGeneration();
-      this._observer?.disconnect();
-    }
-
-    if (entry.intersectionRatio === 0) {
-      cancelPending(this._debouncedGenerateThumb);
     }
   }
 
@@ -350,23 +323,10 @@ export class Thumb extends FileItemConfig {
     }
   }
 
-  public override connectedCallback(): void {
-    super.connectedCallback();
-
-    this._observer?.disconnect();
-    this._observer = latestIntersectionObserver((entry) => this._observerCallback(entry), {
-      ...NEAR_VIEW,
-      threshold: 0.1,
-    });
-
-    this._observer.observe(this);
-  }
-
   public override disconnectedCallback(): void {
     super.disconnectedCallback();
 
     this._cancelPendingThumbUpdate();
-    this._observer?.disconnect();
   }
 
   public override render() {

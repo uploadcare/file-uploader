@@ -260,6 +260,29 @@ describe('VirtualListController', () => {
     expect(flat(controller.window(listOf(100))).items).toHaveLength(10);
   });
 
+  it('vouches for its rows being near the viewport only while windowed and laid out', () => {
+    const host = new FakeHost();
+    const scrollEl = makeScrollEl({ clientHeight: 200, itemHeight: 40 });
+    const controller = new VirtualListController(host, {
+      scrollContainer: () => scrollEl,
+      itemSelector: 'x',
+      rowMetrics: (_el, firstItem) => ({ columns: 1, rowHeight: firstItem.offsetHeight }),
+      overscanRows: 0,
+    });
+    // Not measured yet: every row is rendered, wherever it is.
+    expect(controller.window(listOf(100)).near).toBe(false);
+    controller.hostUpdated();
+    expect(controller.window(listOf(100)).near).toBe(true);
+    // A list that fits its window is not windowed.
+    expect(controller.window(listOf(3)).near).toBe(false);
+
+    // Hidden: the window is kept, but nothing in it is near a viewport.
+    fireResize(0);
+    expect(controller.window(listOf(100)).near).toBe(false);
+    fireResize(400);
+    expect(controller.window(listOf(100)).near).toBe(true);
+  });
+
   it('seeds scrollTop from the container on attach (reconnect to an already-scrolled list)', () => {
     const host = new FakeHost();
     const firstItem = { offsetHeight: 40, matches: () => true };

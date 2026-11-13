@@ -550,6 +550,7 @@ export class UploadList extends ActivityChildBlock {
       (row) => row.item,
       (row) => html`${this._spacer(row.padBefore)}<uc-file-item
         .uid=${row.item}
+        .nearView=${view.near}
         .tabbable=${row.item === current}
         tabindex=${row.item === current ? 0 : -1}
         aria-setsize=${uploadList.length}
