@@ -180,13 +180,11 @@ export class CameraSession {
     // A recording or a photo in progress belongs to the stream being stopped, so the phase is live again. The tab is
     // left to the next activation: the config is not read after the adoption ended.
     this._recording.discard();
-    this._photo.discard();
-    this.phase = 'live';
+    this._forgetReview();
     this._requested.clearPending();
     this._stopCapture();
     this._access.stopWatchingPermissions();
     this._preview.release();
-    this._review.close();
   }
 
   /**
@@ -428,36 +426,42 @@ export class CameraSession {
 
   private _retake(): void {
     this._track('retake-camera');
-    this.phase = 'live';
-    this._photo.discard();
-    if (this.activeTab === CameraSourceTypes.VIDEO) {
-      this._clock.stop();
-      // The encoded clip stays in the recorder's chunks until dropped.
-      this._recording.discard();
-      this._review.close();
-      this._preview.showLive(this.feed.stream);
-    }
+    this._forgetReview();
+    if (this.activeTab === CameraSourceTypes.VIDEO) this._backToLive();
     this._preview.play();
     this._captureResolved();
   }
 
   private _accept(): void {
     this._track('accept-camera');
-    this.phase = 'live';
     if (this.activeTab === CameraSourceTypes.PHOTO) {
       const photo = this._photo.claim();
+      this._forgetReview();
       if (photo) this._host.lifetime.runTask(() => this._addPhoto(photo));
     } else {
       const clip = this._review.take();
-      this._clock.stop();
-      this._recording.discard();
+      this._forgetReview();
       // The camera can stay open after the file is added (an `onFileAdd` hook): the preview goes back to live.
-      this._review.close();
-      this._preview.showLive(this.feed.stream);
+      this._backToLive();
       this._preview.play();
       if (clip) this._addFile(clip);
     }
     this._captureResolved();
+  }
+
+  /** Nothing is under review any more: the phase is live, and the photo and the clip are let go, with the clip's url. */
+  private _forgetReview(): void {
+    this.phase = 'live';
+    this._photo.discard();
+    this._review.close();
+    this._clock.stop();
+  }
+
+  /** After a clip's review: its recording is dropped and the preview shows the camera again. */
+  private _backToLive(): void {
+    // The encoded clip stays in the recorder's chunks until dropped.
+    this._recording.discard();
+    this._preview.showLive(this.feed.stream);
   }
 
   /** The capture was accepted, retaken or dropped: a `cameraModes` change that waited for it switches the tab now. */
@@ -488,9 +492,7 @@ export class CameraSession {
   private _dropCapture(): void {
     const recorderIdle = !this._recording.isRecording && !this._recording.isStopping;
     this._stopCapture();
-    this.phase = 'live';
-    this._photo.discard();
-    this._review.close();
+    this._forgetReview();
     if (recorderIdle) this._recording.discard();
   }
 
