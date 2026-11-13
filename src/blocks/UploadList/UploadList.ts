@@ -21,9 +21,9 @@ import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { cssomStyleMap } from '../../lit/cssom-style-map';
 import { blocksRendered, firstFocusable } from '../../lit/focus';
+import { RovingRowController } from '../../lit/RovingRowController';
 import { throttled } from '../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
-import { survivingNeighbour, targetRowIndex } from '../../utils/list-navigation';
 import './upload-list.css';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { repeat } from 'lit/directives/repeat.js';
@@ -129,101 +129,40 @@ export class UploadList extends ActivityChildBlock {
 
   // Roving tabindex: the list is one Tab stop, the current row (the first until the user moves). The virtualizer pins
   // it, so it stays rendered and keeps focus however far the list scrolls.
-  @state()
-  private _currentUid: Uid | null = null;
+  private readonly _roving = new RovingRowController<Uid>(this, {
+    items: () => this._collectionState.getTracked('uploadList'),
+    keyOf: (event) => event.composedPath().find((target) => target instanceof FileItem)?.uid,
+    rowElement: (uid) => {
+      for (const row of this._rowsRef.value?.children ?? []) {
+        if (row instanceof FileItem && row.uid === uid) {
+          return row;
+        }
+      }
+      return undefined;
+    },
+    rowsContainer: () => this._rowsRef.value,
+    // The columns and the page are the ones the window was computed from.
+    columns: () => this._virtualList.metrics.columns,
+    pageRows: () => this._virtualList.metrics.viewportRows,
+    afterUpdate: (work) =>
+      this.runTask(async () => {
+        await this.whileAdopted(this.updateComplete);
+        work();
+      }),
+    // Hand focus on once the summary tick settles the toolbar and the router.
+    onEmptied: () => {
+      this._refocusWhenSettled = true;
+      this._throttledHandleCollectionUpdate();
+    },
+  });
 
-  // The list the last update rendered, to find the neighbour of a removed current row.
-  private _uploadList: readonly Uid[] = [];
-
-  // Where `_currentUid` sits in `_uploadList` (-1 for none), found again only when either changes: a scroll's render
-  // must not search the whole list.
-  private _currentIndex = -1;
-  private _indexedUid: Uid | null = null;
-
-  // Focus was in the list when its last row went: hand it on once the summary tick settles the toolbar and the router.
+  // Focus was in the list when its last row went: see `_focusAfterEmptied`.
   private _refocusWhenSettled = false;
 
   // A handoff still waiting belongs to the adoption that asked for it: a moved list must not take focus later.
   protected override controllerReleased(container: ControllerContainer): void {
     super.controllerReleased(container);
     this._refocusWhenSettled = false;
-  }
-
-  private _rowElement(uid: Uid): FileItem | undefined {
-    for (const row of this._rowsRef.value?.children ?? []) {
-      if (row instanceof FileItem && row.uid === uid) {
-        return row;
-      }
-    }
-    return undefined;
-  }
-
-  // The current row is pinned, so it is rendered once this update lands; `focus()` scrolls it into the window.
-  private _focusRow(uid: Uid): void {
-    this._currentUid = uid;
-    this.runTask(async () => {
-      await this.whileAdopted(this.updateComplete);
-      this._focusCurrentRow(uid);
-    });
-  }
-
-  // After the await: unless a later move superseded this one, or focus went elsewhere meanwhile (a page handler of the
-  // same key). Focus left on the body is the removed row's, still ours to move.
-  private _focusCurrentRow(uid: Uid): void {
-    const active = document.activeElement;
-    const ours = !active || active === document.body || this._rowsRef.value?.contains(active);
-    if (ours && this._currentUid === uid) {
-      this._rowElement(uid)?.focus();
-    }
-  }
-
-  private _handleFocusIn = (event: FocusEvent): void => {
-    const row = event.composedPath().find((target) => target instanceof FileItem);
-    if (row) {
-      this._currentUid = row.uid;
-    }
-  };
-
-  private _handleKeyDown = (event: KeyboardEvent): void => {
-    if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) {
-      return;
-    }
-    const row = event.composedPath().find((target) => target instanceof FileItem);
-    const list = this._uploadList;
-    const from = row ? list.indexOf(row.uid) : -1;
-    const files = this._filesRef.value;
-    if (!row || from < 0 || !files) {
-      return;
-    }
-    // The columns and the page are the ones the window was computed from.
-    const { columns, viewportRows } = this._virtualList.metrics;
-    const rtl = getComputedStyle(files).direction === 'rtl';
-    const to = list[targetRowIndex(event.key, from, list.length, columns, viewportRows, rtl) ?? -1];
-    if (to) {
-      event.preventDefault();
-      // At either end the key has nowhere to go: focus stays where it is, on a button of the row if it was there.
-      if (to !== row.uid) this._focusRow(to);
-    }
-  };
-
-  // The current row was removed: its neighbour takes over, and takes focus when the row had it. Runs before the
-  // update removes the row, while focus is still in it.
-  private _replaceRemovedCurrentRow(list: readonly Uid[], removed: Uid): void {
-    const next = survivingNeighbour(this._uploadList, list, removed);
-    this._currentUid = next;
-    const active = document.activeElement;
-    if (!active || !this._rowsRef.value?.contains(active)) {
-      return;
-    }
-    this.runTask(async () => {
-      await this.whileAdopted(this.updateComplete);
-      if (next) {
-        this._focusCurrentRow(next);
-        return;
-      }
-      this._refocusWhenSettled = true;
-      this._throttledHandleCollectionUpdate();
-    });
   }
 
   // The emptied list either stays open, with Add more enabled by the tick that just ran (in grid view the compact
@@ -470,19 +409,6 @@ export class UploadList extends ActivityChildBlock {
     // runs on the first post-adoption render, before first paint. `mode` is not a
     // reactive property, so setting it schedules no further update.
     this.setAttribute('mode', this._config.getTracked('filesViewMode'));
-
-    const list = this._collectionState.getTracked('uploadList');
-    if (list !== this._uploadList || this._currentUid !== this._indexedUid) {
-      const indexOf = (uid: Uid | null) => (uid ? list.indexOf(uid) : -1);
-      let index = indexOf(this._currentUid);
-      if (this._currentUid && index < 0) {
-        this._replaceRemovedCurrentRow(list, this._currentUid);
-        index = indexOf(this._currentUid);
-      }
-      this._indexedUid = this._currentUid;
-      this._currentIndex = index;
-    }
-    this._uploadList = list;
   }
 
   // A spacer holding the height of rows outside the window (the virtualizer has already taken off the flex `gap` its
@@ -506,12 +432,12 @@ export class UploadList extends ActivityChildBlock {
   }
 
   public override render() {
-    // `_uploadList` is the list `willUpdate` read with `getTracked`, so a collection change re-renders; the
-    // `collectionErrors` read behind `_commonErrorMessage` is tracked here, and drives the common-error row.
-    const uploadList = this._uploadList;
+    // Tracked reads: a collection change re-renders, and the `collectionErrors` read behind `_commonErrorMessage`
+    // drives the common-error row.
+    const uploadList = this._collectionState.getTracked('uploadList');
     const commonErrorMessage = this._commonErrorMessage;
     const compact = this.chrome === 'compact';
-    const currentIndex = Math.max(0, this._currentIndex);
+    const currentIndex = Math.max(0, this._roving.currentIndex);
     const current = uploadList[currentIndex];
 
     // Render only the visible window (+ overscan) and the current row, with spacers holding
@@ -542,7 +468,7 @@ export class UploadList extends ActivityChildBlock {
     ${this.yield('empty', html`<span>${this.l10n('no-files')}</span>`)}
   </div>
 
-  <div class="uc-files" role="list" ${ref(this._filesRef)} @focusin=${this._handleFocusIn} @keydown=${this._handleKeyDown}>
+  <div class="uc-files" role="list" ${ref(this._filesRef)} @focusin=${this._roving.onFocusIn} @keydown=${this._roving.onKeyDown}>
     <div class="uc-files-wrapper" role="none" ${ref(this._rowsRef)}>
     ${this._spacer(view.topPad)}
     ${repeat(
