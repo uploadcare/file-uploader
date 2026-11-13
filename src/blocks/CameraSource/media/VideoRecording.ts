@@ -1,11 +1,15 @@
 import { audioBitsPerSecond } from '../../../abstract/camera/buildConstraints';
-import { pickVideoMimeType } from '../../../abstract/camera/videoFormat';
-import { signalState } from '../../../abstract/di/signalState';
+import { pickVideoMimeType, recordingFileType } from '../../../abstract/camera/videoFormat';
 import type { CameraAudioQuality } from '../../../types/exported';
+import { createCameraFile, guessExtensionByMime } from './cameraFile';
 import { createRecordingSource, type RecordingSource } from './recordingSource';
 
 /** A finished recording, as the recorder handed it over. `mirrored`: its mirroring is baked in. */
 export type Clip = { blob: Blob; mimeType: string; mirrored: boolean };
+
+/** The clip as a file to upload, named and dated now. */
+export const clipFile = (clip: Clip): File =>
+  createCameraFile('video', guessExtensionByMime(clip.mimeType), recordingFileType(clip.mimeType), clip.blob);
 
 /** The recorder's options: the configured ones, with the audio bitrate and a format the browser can record. */
 export const recorderOptions = (
@@ -36,16 +40,9 @@ export class VideoRecording {
   private _chunks: BlobPart[] = [];
   /** What the recorder records: the camera stream, or a canvas that crops and mirrors it. */
   private _source: RecordingSource | null = null;
-  /** The recorder asked to stop, until its final `stop` event. A signal: the camera element's `uc-recording` reads it. */
-  @signalState() private _stopping: MediaRecorder | null = null;
 
   public get isRecording(): boolean {
     return this._recorder?.state === 'recording';
-  }
-
-  /** Asked to stop, and the clip is not handed over yet. */
-  public get isStopping(): boolean {
-    return this._stopping !== null;
   }
 
   /** Starts recording `stream`, as `video` shows it. Throws after stopping its canvas when the recorder can't start. */
@@ -82,7 +79,6 @@ export class VideoRecording {
     if (!recorder) return Promise.resolve(null);
     const chunks = this._chunks;
     const source = this._source;
-    this._stopping = recorder;
     return new Promise((resolve) => {
       recorder.addEventListener(
         'stop',
@@ -91,7 +87,6 @@ export class VideoRecording {
             resolve(null);
             return;
           }
-          this._stopping = null;
           this.releaseSource();
           resolve({
             blob: new Blob(chunks, { type: recorder.mimeType }),
@@ -115,7 +110,6 @@ export class VideoRecording {
   public discard(): void {
     if (this._recorder?.state !== 'inactive') this._recorder?.stop();
     this._recorder = null;
-    this._stopping = null;
     this._chunks = [];
     this.releaseSource();
   }

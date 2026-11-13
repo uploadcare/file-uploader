@@ -42,7 +42,6 @@ describe('VideoRecording.stop', () => {
   it('resolves with no clip when nothing is recording, instead of waiting for a stop event that never comes', async () => {
     const recording = new VideoRecording();
     await expect(recording.stop()).resolves.toBeNull();
-    expect(recording.isStopping).toBe(false);
   });
 
   it('stops the canvas on the final stop event, before the clip carries its mirroring out', async () => {
@@ -70,16 +69,17 @@ describe('VideoRecording.stop', () => {
     expect(stop).toHaveBeenCalledOnce();
   });
 
-  it('is stopping from the stop until the final stop event', async () => {
+  it('is no longer recording from the stop on', async () => {
     vi.stubGlobal('MediaRecorder', FakeRecorder);
     const recording = new VideoRecording();
     const recorder = startRecording(recording);
+    expect(recording.isRecording).toBe(true);
+
     const clip = recording.stop();
-    expect([recording.isRecording, recording.isStopping]).toEqual([false, true]);
+    expect(recording.isRecording).toBe(false);
 
     recorder.dispatchEvent(new Event('stop'));
     await clip;
-    expect(recording.isStopping).toBe(false);
   });
 
   it('hands over no clip for a recording discarded before its final stop event', async () => {
@@ -90,7 +90,6 @@ describe('VideoRecording.stop', () => {
     const clip = recording.stop();
 
     recording.discard();
-    expect(recording.isStopping).toBe(false);
     recorder.dispatchEvent(new Event('stop'));
 
     expect(await clip).toBeNull();

@@ -868,6 +868,25 @@ describe('CameraSession flows', () => {
     expect(ctx.session.activeTab).toBe(PHOTO);
   });
 
+  it('a tab switched during a recording leaves the shutter stopping it, and its clip reviewed and accepted as one', async () => {
+    stubMedia();
+    const ctx = setup();
+    giveVideo(ctx, fakeVideo());
+    await open(ctx);
+    const recorder = startRecording(ctx);
+    // The tabs are hidden while recording, so only a command sent past the controls gets here.
+    ctx.session.handle({ type: 'select-tab', tab: PHOTO });
+
+    await stopRecording(ctx, recorder);
+    expect(recorder.stop).toHaveBeenCalledOnce();
+    expect(ctx.session.phase).toBe('recorded');
+
+    ctx.session.handle({ type: 'accept' });
+    expect(ctx.addFile).toHaveBeenCalledOnce();
+    expect((ctx.addFile.mock.lastCall as [File])[0].type).toBe('video/webm');
+    expect(ctx.session.phase).toBe('live');
+  });
+
   it('a cameraModes change waits for a photo under review to be retaken before switching the tab', async () => {
     stubMedia();
     const ctx = setup();

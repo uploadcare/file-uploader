@@ -38,20 +38,18 @@ describe('PreviewVideo', () => {
     expect(handlers.onPause).not.toHaveBeenCalled();
   });
 
-  it('shows a clip from showClip until showLive or close', () => {
+  it('close detaches the clip listeners, as showLive does', () => {
     const { preview, video } = setup();
     preview.attach(video);
     const handlers = { onPlay: vi.fn(), onPause: vi.fn() };
-    expect(preview.showingClip).toBe(false);
-
-    preview.showClip('blob:clip', handlers);
-    expect(preview.showingClip).toBe(true);
-    preview.showLive(stream());
-    expect(preview.showingClip).toBe(false);
 
     preview.showClip('blob:clip', handlers);
     preview.close();
-    expect(preview.showingClip).toBe(false);
+    video.dispatchEvent(new Event('play'));
+    video.dispatchEvent(new Event('pause'));
+
+    expect(handlers.onPlay).not.toHaveBeenCalled();
+    expect(handlers.onPause).not.toHaveBeenCalled();
   });
 
   it('show assigns srcObject only when it changes', () => {

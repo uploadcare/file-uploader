@@ -13,12 +13,12 @@ import { type CameraSetting, CaptureSettings } from './CaptureSettings';
 import type { CameraLifetime, CameraReport } from './cameraHost';
 import type { CameraCommand, CameraPhase, ClockView } from './cameraTypes';
 import { CameraFeed } from './media/CameraFeed';
-import { ClipReview } from './media/ClipReview';
+import { Capture } from './media/Capture';
 import { MicrophoneSwap } from './media/MicrophoneSwap';
-import { PhotoCapture, photoFile } from './media/PhotoCapture';
+import { photoFile } from './media/PhotoCapture';
 import { type ClipHandlers, PreviewVideo } from './media/PreviewVideo';
 import { RecordingClock } from './media/RecordingClock';
-import { recorderOptions, VideoRecording } from './media/VideoRecording';
+import { recorderOptions } from './media/VideoRecording';
 
 /** What the camera element lends the session: its lifetime, config, elements, and the ways out. */
 export type CameraSessionHost = {
@@ -53,16 +53,14 @@ export type CameraSessionHost = {
  * renders them re-renders on every change.
  */
 export class CameraSession {
-  @signalState() public phase: CameraPhase = 'live';
   @signalState() public activeTab: CameraMode | null = null;
 
-  private readonly _photo = new PhotoCapture();
-  private readonly _recording = new VideoRecording();
+  /** What is captured and under review; the phase and what the preview shows of it are read from here. */
+  private readonly _capture = new Capture();
   /** `isStopping`: the recording was asked to stop and its clip is not handed over yet. */
-  public readonly recording: Readonly<Pick<VideoRecording, 'isStopping'>> = this._recording;
-  private readonly _review = new ClipReview();
+  public readonly recording: Readonly<Pick<Capture, 'isStopping'>> = this._capture;
   /** The recorded clip's play/pause icon. */
-  public readonly review: Readonly<Pick<ClipReview, 'timelineIcon'>> = this._review;
+  public readonly review: Readonly<Pick<Capture, 'timelineIcon'>> = this._capture;
   private readonly _clock = new RecordingClock();
   /** The recording timer and the clip's timeline, for the controls to render. */
   public readonly clock: ClockView = this._clock;
@@ -72,10 +70,10 @@ export class CameraSession {
   private readonly _clipHandlers: ClipHandlers = {
     onPlay: () => {
       this._clock.startTimeline(() => this._preview.sample());
-      this._review.playing(true);
+      this._capture.playing(true);
     },
     onPause: () => {
-      this._review.playing(false);
+      this._capture.playing(false);
       this._clock.stop();
     },
   };
@@ -96,14 +94,11 @@ export class CameraSession {
 
   /** Runs once a permission state settled and shows. */
   private _permissionSettled(state: SettledPermission): void {
-    if (state === 'prompt') {
-      this._stopCapture();
-      return;
-    }
-    // No stream: whatever was captured from the lost one is gone. A grant leaves the phase alone: the capture reset
-    // it as it began, and one started on the new stream since must keep its own.
-    if (state === 'denied') this._dropCapture();
-    this._captureResolved();
+    // No stream, asked for or refused: whatever was captured from the lost one is gone. A grant leaves the phase
+    // alone: opening the camera reset it, and a capture started on the new stream since must keep its own.
+    if (state !== 'granted') this._dropCapture();
+    // While the camera is asked for the tab waits, as it does for the capture.
+    if (state !== 'prompt') this._captureResolved();
   }
 
   public constructor(private readonly _host: CameraSessionHost) {
@@ -127,12 +122,13 @@ export class CameraSession {
     return this._access.permission;
   }
 
-  /**
-   * The clip under review has its mirroring baked in, so the preview must not mirror it again. Only while the preview
-   * shows it: a camera reopened over it shows the live stream at once, which mirrors as configured.
-   */
+  public get phase(): CameraPhase {
+    return this._capture.phase;
+  }
+
+  /** The clip under review has its mirroring baked in, so the preview must not mirror it again. */
   public get playbackMirrored(): boolean {
-    return this._preview.showingClip && this._review.mirrored;
+    return this._capture.playbackMirrored;
   }
 
   /** The preview rendered its `<video>`, which the stream and the clip are shown in until release. */
@@ -153,7 +149,7 @@ export class CameraSession {
     const adoption = this._host.lifetime.adoptionSignal();
     await this._access.watchPermissions();
     this.devices.watchDeviceChanges(adoption);
-    await this._capture(adoption);
+    await this._openCamera(adoption);
     // Read now, not before the permission prompt: the modes can change while it is open.
     this._captureResolved();
   }
@@ -163,10 +159,9 @@ export class CameraSession {
     this._access.cancel();
     // A recording or a photo in progress belongs to the stream being stopped, so the phase is live again. The tab is
     // left to the next activation: the config is not read after the adoption ended.
-    this._recording.discard();
-    this._forgetReview();
+    this._capture.end();
     this._requested.clearPending();
-    this._stopCapture();
+    this._closeCamera();
     this._access.stopWatchingPermissions();
     this._preview.release();
   }
@@ -176,7 +171,7 @@ export class CameraSession {
    * the shutter still stops its recording, and its review keeps its actions. It falls back once the capture resolves.
    */
   public selectDefaultTab(cameraModes: CameraMode[]): void {
-    if (this.phase !== 'live' || this._recording.isStopping) return;
+    if (this.phase !== 'live' || this._capture.isStopping) return;
     const defaultTab = cameraModes[0];
     if (defaultTab && (!this.activeTab || !cameraModes.includes(this.activeTab))) {
       this._selectTab(defaultTab);
@@ -217,7 +212,7 @@ export class CameraSession {
         this._pickSetting(action.setting, action.value);
         break;
       case 'request-access':
-        this._host.lifetime.runTask(() => this._capture());
+        this._host.lifetime.runTask(() => this._openCamera());
         break;
       case 'select-tab':
         this._selectTab(action.tab);
@@ -252,7 +247,7 @@ export class CameraSession {
   private _permissionChanged(name: 'camera' | 'microphone'): void {
     const stream = this.feed.stream;
     if (name === 'camera' || !stream) {
-      this._host.lifetime.runTask(() => this._capture());
+      this._host.lifetime.runTask(() => this._openCamera());
       return;
     }
     // No live microphone in the stream: asking for one is a change, even with the request that was refused. A revoke
@@ -263,7 +258,7 @@ export class CameraSession {
 
   private _selectCamera(deviceId: string): void {
     this.devices.pickCamera(deviceId);
-    this._host.lifetime.runTask(() => this._capture());
+    this._host.lifetime.runTask(() => this._openCamera());
   }
 
   private _selectMicrophone(deviceId: string): void {
@@ -292,7 +287,7 @@ export class CameraSession {
 
   private _selectTab(tab: CameraMode): void {
     if (tab === CameraSourceTypes.VIDEO) {
-      this._review.resetIcon();
+      this._capture.resetIcon();
     }
     this._track('camera-tab-switch', { tabId: tab });
     this.activeTab = tab;
@@ -318,33 +313,31 @@ export class CameraSession {
 
   private _shutter(): void {
     // The recorder is stopping: the clip is on its way, and a new recording would start before it shows.
-    if (this._recording.isStopping) return;
+    if (this._capture.isStopping) return;
+    // A recording is what the shutter stops, whatever the tab says by now.
+    if (this._capture.isRecording) {
+      this._stopRecording();
+      return;
+    }
     // `shot-camera` takes a photo or starts a recording, `start-camera` marks a recording starting, and stopping
     // one reports `stop-camera`.
-    if (!this._recording.isRecording) {
-      this._trackCapture('shot-camera');
-      if (this.activeTab === CameraSourceTypes.VIDEO) this._trackCapture('start-camera');
-    }
+    this._trackCapture('shot-camera');
     if (this.activeTab === CameraSourceTypes.PHOTO) {
       this._shot();
     } else if (this.activeTab === CameraSourceTypes.VIDEO) {
-      if (this._recording.isRecording) {
-        this._stopRecording();
-      } else {
-        this._startRecording();
-      }
+      this._trackCapture('start-camera');
+      this._startRecording();
     }
   }
 
   private _shot(): void {
-    this.phase = 'shot';
     const video = this._preview.element;
     if (!video) {
       throw new Error('Video element not found');
     }
     // The preview frame as the shutter is pressed, cropped, mirrored and encoded as it will be sent. A still from
     // `ImageCapture.takePhoto()` was tried on main: with a real camera the preview changed after a shot and a retake.
-    this._photo.take(video, {
+    this._capture.shoot(video, {
       aspectRatio: this.settings.aspectRatio,
       mirror: this._host.config.mirror(),
       quality: this._host.config.photoQuality(),
@@ -358,13 +351,12 @@ export class CameraSession {
     if (!stream) return;
     const { config } = this._host;
     try {
-      this._recording.start(stream, this._preview.element, {
+      this._capture.record(stream, this._preview.element, {
         aspectRatio: this.settings.aspectRatio,
         mirror: config.mirror(),
         recorder: recorderOptions(config.recorderOptions(), this.settings.audioQuality, config.videoFormats()),
       });
       this._clock.startTimer(config.maxRecordingSeconds, () => this._stopRecording());
-      this.phase = 'recording';
     } catch (error) {
       this._host.report('error', 'Failed to start recording', error, 'camera recording. Failed to start recording');
     }
@@ -372,7 +364,7 @@ export class CameraSession {
 
   private _stopRecording(): void {
     // The time limit and the shutter can both ask; only the first stops it.
-    if (!this._recording.isRecording) return;
+    if (!this._capture.isRecording) return;
     this._track('stop-camera');
     this._host.lifetime.runTask(() => this._showRecording());
   }
@@ -382,21 +374,18 @@ export class CameraSession {
    * recorded from a stream that was replaced meanwhile is dropped: the preview shows the new one live.
    */
   private async _showRecording(): Promise<void> {
-    const stream = this.feed.stream;
-    const clip = await this._host.lifetime.whileAdopted(this._recording.stop());
-    if (!clip) return;
-    if (this.feed.stream !== stream) {
-      this._recording.discard();
+    const clip = await this._host.lifetime.whileAdopted(this._capture.stop());
+    if (!clip) {
       this._captureResolved();
       return;
     }
     try {
-      this._preview.showClip(this._review.show(clip), this._clipHandlers);
+      // The clip is under review whatever the tab says by now: accept and retake go by what was captured.
+      this._preview.showClip(this._capture.review(clip), this._clipHandlers);
     } catch (error) {
       this._host.report('error', 'Failed to preview video', error, 'camera previewing. Failed to preview video');
     }
     this._clock.stop();
-    if (this.activeTab === CameraSourceTypes.VIDEO) this.phase = 'recorded';
     const pending = this._requested.flush();
     if (pending.video) this._host.lifetime.runTask(() => this._applyVideoConstraints());
     if (pending.audio) this._host.lifetime.runTask(() => this._applyAudioConstraints());
@@ -404,48 +393,37 @@ export class CameraSession {
 
   /** Pauses or resumes the recorded clip's preview. */
   private _toggleClipPlayback(): void {
-    if (this._recording.isRecording) return;
+    if (this._capture.isRecording) return;
     this._preview.togglePlayback();
   }
 
   private _retake(): void {
     this._track('retake-camera');
-    this._forgetReview();
-    if (this.activeTab === CameraSourceTypes.VIDEO) this._backToLive();
+    this._endReview();
     this._preview.play();
     this._captureResolved();
   }
 
   private _accept(): void {
     this._track('accept-camera');
-    if (this.activeTab === CameraSourceTypes.PHOTO) {
-      const photo = this._photo.claim();
-      this._forgetReview();
-      if (photo) this._host.lifetime.runTask(() => this._addPhoto(photo));
-    } else {
-      const clip = this._review.take();
-      this._forgetReview();
+    const photo = this._capture.photo;
+    const clip = this._capture.clipFile();
+    this._endReview();
+    if (photo) this._host.lifetime.runTask(() => this._addPhoto(photo));
+    if (clip) {
       // The camera can stay open after the file is added (an `onFileAdd` hook): the preview goes back to live.
-      this._backToLive();
       this._preview.play();
-      if (clip) this._addFile(clip);
+      this._addFile(clip);
     }
     this._captureResolved();
   }
 
-  /** Nothing is under review any more: the phase is live, and the photo and the clip are let go, with the clip's url. */
-  private _forgetReview(): void {
-    this.phase = 'live';
-    this._photo.discard();
-    this._review.close();
+  /** Nothing is under review any more: the capture ends, and a clip's preview gives way to the camera again. */
+  private _endReview(): void {
+    const clipShown = this.phase === 'recorded';
+    this._capture.end();
     this._clock.stop();
-  }
-
-  /** After a clip's review: its recording is dropped and the preview shows the camera again. */
-  private _backToLive(): void {
-    // The encoded clip stays in the recorder's chunks until dropped.
-    this._recording.discard();
-    this._preview.showLive(this.feed.stream);
+    if (clipShown) this._preview.showLive(this.feed.stream);
   }
 
   /** The capture was accepted, retaken or dropped: a `cameraModes` change that waited for it switches the tab now. */
@@ -470,28 +448,22 @@ export class CameraSession {
 
   /**
    * Stops the camera and forgets what was captured from it: the phase is live again, and the photo or clip under
-   * review goes with its stream. A recording in progress ends in `_stopCapture`, and one still stopping drops its clip
-   * as it arrives.
+   * review goes with its stream. A recording can't outlive its stream: it ends with no clip, and one already stopping
+   * drops its clip as it arrives.
    */
   private _dropCapture(): void {
-    const recorderIdle = !this._recording.isRecording && !this._recording.isStopping;
-    this._stopCapture();
-    this._forgetReview();
-    if (recorderIdle) this._recording.discard();
+    const recording = this._capture.isRecording;
+    this._capture.abandon();
+    // The recording was the capture a `cameraModes` change waited for.
+    if (recording) this._captureResolved();
+    this._closeCamera();
   }
 
-  private _stopCapture(): void {
-    // A recording can't outlive its stream: it ends with no clip. One already stopping drops its clip on arrival.
-    if (this._recording.isRecording) {
-      this._recording.discard();
-      this.phase = 'live';
-      this._captureResolved();
-    }
-    this._recording.releaseSource();
+  private _closeCamera(): void {
+    this._clock.stop();
     if (!this.feed.stream) return;
     this._preview.close();
     this.feed.close();
-    this._clock.stop();
   }
 
   /** The mode the camera opens for: the active tab, or the tab about to become active. */
@@ -535,7 +507,7 @@ export class CameraSession {
   /** Applies changed video constraints to the open camera. A change during a recording waits for it to stop. */
   private async _applyVideoConstraints(): Promise<void> {
     if (!this.feed.stream?.getVideoTracks()[0]) return;
-    if (this._recording.isRecording) {
+    if (this._capture.isRecording) {
       this._requested.deferVideo();
       return;
     }
@@ -553,7 +525,7 @@ export class CameraSession {
   private async _applyAudioConstraints(): Promise<void> {
     const stream = this.feed.stream;
     if (!stream) return;
-    if (this._recording.isRecording) {
+    if (this._capture.isRecording) {
       this._requested.deferAudio();
       return;
     }
@@ -578,7 +550,7 @@ export class CameraSession {
       return;
     }
     // A recording began while it opened: swapping it in now would break the recording, so it waits for the stop.
-    if (this._recording.isRecording) {
+    if (this._capture.isRecording) {
       track.stop();
       this._requested.deferAudio(request);
       return;
@@ -593,7 +565,7 @@ export class CameraSession {
   }
 
   /** `adoption` is the signal of the lifetime the calling task started in. */
-  private async _capture(adoption = this._host.lifetime.adoptionSignal()): Promise<void> {
+  private async _openCamera(adoption = this._host.lifetime.adoptionSignal()): Promise<void> {
     // Release the current stream first. The prompt state below used to do it, but it is debounced and a quick
     // 'granted' supersedes it, which left the previous camera running after a device switch.
     this._dropCapture();
