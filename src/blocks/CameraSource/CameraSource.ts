@@ -96,7 +96,7 @@ export class CameraSource extends ChildBlock {
   // Camera activation is adoption-scoped: it starts here and stops in `controllerReleased`, on disconnect and on ctx
   // release/re-adoption alike.
   protected override controllerReady(): void {
-    this.runTask(() => this._session.activate(parseCameraModes(this._config.get('cameraModes'))));
+    this.runTask(() => this._session.activate());
   }
 
   protected override controllerReleased(): void {

@@ -37,7 +37,7 @@ describe('CameraSession moved while the camera is asked for', () => {
   it('stops the activation while the camera opens, without reporting it', async () => {
     const { getUserMedia, pending, stream } = stubMedia();
     const { session, readopt: move, report } = setup();
-    const activation = session.activate([CameraSourceTypes.PHOTO]);
+    const activation = session.activate();
     await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(1));
     // A camera the released activation still opened would answer at once, so a regression fails, not hangs.
     getUserMedia.mockResolvedValue(stream());

@@ -165,12 +165,13 @@ export class CameraSession {
    * Watches the permissions and opens the camera on the first configured tab, asking for it once. The devices are
    * listed once it opened, when their labels are readable, and again whenever they change.
    */
-  public async activate(cameraModes: CameraMode[]): Promise<void> {
+  public async activate(): Promise<void> {
     const adoption = this._host.lifetime.adoptionSignal();
     await this._access.watchPermissions();
     this.devices.watchDeviceChanges(adoption);
     await this._capture(adoption);
-    this.selectDefaultTab(cameraModes);
+    // Read now, not before the permission prompt: the modes can change while it is open.
+    this._captureResolved();
   }
 
   /** Stops the camera and lets go of every listener; a pending permission state is dropped. */
