@@ -64,6 +64,9 @@ export class Thumb extends FileItemConfig {
 
   private _pendingThumbUpdate?: PendingThumbUpdate;
 
+  /** The thumbnail being generated, so a second request for the same one does not start over. */
+  private _generating?: string;
+
   private _calculateThumbSize(force = false): number {
     if (force) {
       this._thumbRect = this.getBoundingClientRect();
@@ -85,12 +88,25 @@ export class Thumb extends FileItemConfig {
   private async _generateThumbnail(force = false): Promise<void> {
     const entry = this.entry;
     if (!entry) return;
+    const size = this._calculateThumbSize(force);
+    const uuid = entry.get('fileInfo') && entry.get('isImage') && entry.get('uuid');
+    // Binding to the entry and the row coming into view each ask for a thumbnail, the second while the first is still
+    // decoding the file. A local thumbnail is drawn once whatever the size; a CDN one differs by size and operations.
+    const job = uuid ? `${uuid}/${size}/${entry.get('cdnUrlModifiers')}` : 'local';
+    if (this._generating === job) return;
+    this._generating = job;
+    try {
+      await this._generate(entry, size);
+    } finally {
+      if (this._generating === job) this._generating = undefined;
+    }
+  }
+
+  private async _generate(entry: UploadEntryTypedData, size: number): Promise<void> {
     const fileInfo = entry.get('fileInfo');
     const isImage = entry.get('isImage');
     const uuid = entry.get('uuid');
     const currentThumbUrl = entry.get('thumbUrl');
-
-    const size = this._calculateThumbSize(force);
 
     if (fileInfo && isImage && uuid) {
       let cdnThumbUrl: string | undefined;
@@ -278,6 +294,7 @@ export class Thumb extends FileItemConfig {
     super.reset();
     cancelPending(this._debouncedGenerateThumb);
     this._cancelPendingThumbUpdate();
+    this._generating = undefined;
     this._thumbUrl = '';
   }
 

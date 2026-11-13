@@ -134,6 +134,32 @@ describe('uc-thumb (parity, real upload flow)', () => {
   });
 });
 
+describe('uc-thumb local thumbnail', () => {
+  // The thumb asks for its thumbnail when it binds to its entry and again once it is in view, 100ms later.
+  it('draws the thumbnail of a local image once, however long the drawing takes', async () => {
+    const toBlob = HTMLCanvasElement.prototype.toBlob;
+    let drawn = 0;
+    // Slower than the second request arrives.
+    HTMLCanvasElement.prototype.toBlob = function (callback, ...rest) {
+      drawn++;
+      setTimeout(() => toBlob.call(this, callback, ...rest), 400);
+    };
+    onTestFinished(() => {
+      HTMLCanvasElement.prototype.toBlob = toBlob;
+    });
+    const { config, api } = renderUploadHost();
+    config.confirmUpload = true;
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+
+    await expect
+      .poll(() => document.querySelector('img.uc-thumb__img:not([hidden])'), { timeout: 10_000 })
+      .not.toBeNull();
+    expect(drawn).toBe(1);
+  });
+});
+
 describe('generateThumb', () => {
   it.each([
     ['decodes', IMAGE.SQUARE],
