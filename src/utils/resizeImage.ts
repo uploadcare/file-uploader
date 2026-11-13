@@ -33,7 +33,8 @@ export async function generateThumb(imgFile: Blob, size = 40): Promise<string> {
       ? undefined
       : await globalThis
           .createImageBitmap?.(imgFile, {
-            [isPortrait ? 'resizeWidth' : 'resizeHeight']: size,
+            // Spread, not a computed key: that one would turn off the check of the option names.
+            ...(isPortrait ? { resizeWidth: size } : { resizeHeight: size }),
             resizeQuality: 'medium',
             imageOrientation: 'from-image',
           })
