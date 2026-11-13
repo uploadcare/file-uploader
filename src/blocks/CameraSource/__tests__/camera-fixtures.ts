@@ -51,6 +51,7 @@ export const setupSession = (config: Partial<CameraSessionHost['config']> = {}) 
       ...config,
     },
     cameraLabel: (index) => `Camera ${index + 1}`,
+    microphoneLabel: (index) => `Microphone ${index + 1}`,
     navigate: vi.fn(),
     addFile,
     track,

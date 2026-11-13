@@ -54,6 +54,7 @@ export type CameraSessionHost = {
     audioMode: () => string;
   };
   cameraLabel: (index: number) => string;
+  microphoneLabel: (index: number) => string;
   navigate: (edge: NavigationEdge) => void;
   /** Adds a captured photo or clip to the upload list. */
   addFile: (file: File) => void;
@@ -129,6 +130,7 @@ export class CameraSession {
       lifetime: _host.lifetime,
       audioEnabled: () => _host.config.audioEnabled(),
       cameraLabel: _host.cameraLabel,
+      microphoneLabel: _host.microphoneLabel,
       onDevicesChange: (lists) => {
         this.devices.adopt(lists, this.feed.stream);
         this._syncRequestedConstraints();

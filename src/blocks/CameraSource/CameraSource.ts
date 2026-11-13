@@ -64,6 +64,7 @@ export class CameraSource extends ChildBlock {
       audioMode: () => this._config.getTracked('cameraAudioMode'),
     },
     cameraLabel: (index) => `${this.l10n('caption-camera')} ${index + 1}`,
+    microphoneLabel: (index) => `${this.l10n('camera-microphone')} ${index + 1}`,
     navigate: (edge) => this._router.traverse(edge),
     addFile: (file) => this._api.addFileFromObject(file, { source: UploadSource.CAMERA }),
     track: (event, extra) => this._telemetry.sendActionEvent(event, this.tagName, extra),

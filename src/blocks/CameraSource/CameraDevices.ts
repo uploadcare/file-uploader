@@ -10,6 +10,8 @@ export type CameraDevicesHost = {
   audioEnabled: () => boolean;
   /** The label for an unnamed camera, by its position in the list. */
   cameraLabel: (index: number) => string;
+  /** The same for an unnamed microphone. */
+  microphoneLabel: (index: number) => string;
   onDevicesChange: (devices: { cameras: DeviceOption[]; microphones: DeviceOption[] }) => void;
   report: CameraReport;
 };
@@ -81,7 +83,10 @@ export class CameraDevices {
       const microphones = this._host.audioEnabled()
         ? devices
             .filter((device) => device.kind === 'audioinput')
-            .map((device) => ({ text: device.label.trim(), value: device.deviceId }))
+            .map((device, index) => ({
+              text: device.label.trim() || this._host.microphoneLabel(index),
+              value: device.deviceId,
+            }))
         : [];
       this._host.onDevicesChange({ cameras, microphones });
     } catch (error) {

@@ -13,6 +13,7 @@ const host = (overrides: Partial<CameraDevicesHost> = {}) => {
     },
     audioEnabled: () => true,
     cameraLabel: (index: number) => `Camera ${index + 1}`,
+    microphoneLabel: (index: number) => `Microphone ${index + 1}`,
     onDevicesChange: vi.fn(),
     report: vi.fn(),
     ...overrides,
@@ -49,6 +50,21 @@ describe('CameraDevices.list', () => {
         { text: 'Camera 2', value: 'c2' },
       ],
       microphones: [{ text: 'Mic', value: 'm1' }],
+    });
+  });
+
+  it('names a microphone the browser gives no label for by its position, as it does a camera', async () => {
+    stubMedia([device('videoinput', 'c1'), device('audioinput', 'm1', 'Mic'), device('audioinput', 'm2', ' ')]);
+    const { fns, devices } = host();
+
+    await devices.list();
+
+    expect(fns.onDevicesChange).toHaveBeenCalledWith({
+      cameras: [{ text: 'Camera 1', value: 'c1' }],
+      microphones: [
+        { text: 'Mic', value: 'm1' },
+        { text: 'Microphone 2', value: 'm2' },
+      ],
     });
   });
 
