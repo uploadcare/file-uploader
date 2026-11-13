@@ -8,6 +8,7 @@ import { isAbortError } from '../../../abstract/di/Lifetime';
 import { cssomStyleMap } from '../../../lit/cssom-style-map';
 import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { operationsFromModifiers } from '../../../utils/cdn/operations';
+import { latestIntersectionObserver } from '../../../utils/near-view';
 import { preloadImage } from '../../../utils/preloadImage.js';
 import { EditorButtonControl } from './EditorButtonControl.js';
 import { FAKE_ORIGINAL_FILTER, type SliderFilter } from './EditorSlider.js';
@@ -116,9 +117,8 @@ export class EditorFilterControl extends EditorButtonControl {
     });
   }
 
-  // One callback can carry several entries for the control, oldest first. Only the latest says where it is.
-  private _observerCallback(entries: IntersectionObserverEntry[]): void {
-    if (entries.at(-1)?.isIntersecting) {
+  private _observerCallback(entry: Pick<IntersectionObserverEntry, 'isIntersecting'>): void {
+    if (entry.isIntersecting) {
       this.runTask(() => this._loadPreview());
     } else {
       this._cancelPreload?.();
@@ -165,7 +165,7 @@ export class EditorFilterControl extends EditorButtonControl {
   public override connectedCallback(): void {
     super.connectedCallback();
 
-    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+    this._observer = latestIntersectionObserver((entry) => this._observerCallback(entry), {
       threshold: [0, 1],
     });
 

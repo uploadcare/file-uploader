@@ -9,7 +9,7 @@ import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { effect } from '../../lit/effect';
 import { cancelPending, debounced } from '../../lit/rate-limited-method';
 import { operationsFromModifiers } from '../../utils/cdn/operations';
-import { NEAR_VIEW } from '../../utils/near-view';
+import { latestIntersectionObserver, NEAR_VIEW } from '../../utils/near-view';
 import { preloadImage } from '../../utils/preloadImage';
 import { generateThumb } from '../../utils/resizeImage';
 import { queueThumbnail } from '../../utils/thumbnail-queue';
@@ -277,13 +277,7 @@ export class Thumb extends FileItemConfig {
     }
   }
 
-  // Several entries in one callback are oldest first: a thumb that moved into view within a frame reports off screen,
-  // then on. Only the latest says where it is.
-  private _observerCallback(entries: IntersectionObserverEntry[]): void {
-    const entry = entries.at(-1);
-    if (!entry) {
-      return;
-    }
+  private _observerCallback(entry: IntersectionObserverEntry): void {
     this._isIntersecting = entry.isIntersecting;
 
     if (entry.isIntersecting) {
@@ -367,7 +361,7 @@ export class Thumb extends FileItemConfig {
     super.connectedCallback();
 
     this._observer?.disconnect();
-    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+    this._observer = latestIntersectionObserver((entry) => this._observerCallback(entry), {
       ...NEAR_VIEW,
       threshold: 0.1,
     });

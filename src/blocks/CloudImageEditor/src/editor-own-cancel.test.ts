@@ -29,6 +29,7 @@ const mounted: HTMLElement[] = [];
 afterEach(() => {
   for (const el of mounted.splice(0)) el.remove();
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 function mountRoot(): CloudImageEditorController {
@@ -45,7 +46,7 @@ function mountRoot(): CloudImageEditorController {
 type FilterInternals = {
   _cancelPreload?: () => void;
   _loadPreview(): Promise<void>;
-  _observerCallback(entries: Pick<IntersectionObserverEntry, 'isIntersecting'>[]): void;
+  _observerCallback(entry: Pick<IntersectionObserverEntry, 'isIntersecting'>): void;
 };
 
 describe('editor blocks cancelling their own work while adopted', () => {
@@ -60,9 +61,9 @@ describe('editor blocks cancelling their own work while adopted', () => {
     await control.updateComplete;
     const internals = control as unknown as FilterInternals;
 
-    internals._observerCallback([{ isIntersecting: true }]);
+    internals._observerCallback({ isIntersecting: true });
     await vi.waitFor(() => expect(internals._cancelPreload).toBeDefined());
-    internals._observerCallback([{ isIntersecting: false }]);
+    internals._observerCallback({ isIntersecting: false });
 
     await loadPreview.mock.results[0]?.value.catch(() => {});
     await Promise.resolve();
@@ -70,6 +71,18 @@ describe('editor blocks cancelling their own work while adopted', () => {
   });
 
   it('a filter preview that moved into view within one frame loads', async () => {
+    let report: IntersectionObserverCallback = () => {};
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        public constructor(callback: IntersectionObserverCallback) {
+          report = callback;
+        }
+        public observe(): void {}
+        public unobserve(): void {}
+        public disconnect(): void {}
+      },
+    );
     const loadPreview = vi.spyOn(EditorFilterControl.prototype as unknown as FilterInternals, '_loadPreview');
     mountRoot();
 
@@ -80,7 +93,8 @@ describe('editor blocks cancelling their own work while adopted', () => {
     loadPreview.mockClear();
 
     // Both entries arrive in the same callback, oldest first: off screen, then on.
-    (control as unknown as FilterInternals)._observerCallback([{ isIntersecting: false }, { isIntersecting: true }]);
+    const entry = (isIntersecting: boolean) => ({ isIntersecting }) as IntersectionObserverEntry;
+    report([entry(false), entry(true)], {} as IntersectionObserver);
     expect(loadPreview).toHaveBeenCalledTimes(1);
   });
 

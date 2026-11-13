@@ -9,7 +9,7 @@ import type { Owned } from '../../abstract/managers/plugin/PluginTypes';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryData, UploadEntryKeys } from '../../abstract/uploadEntrySchema';
-import { NEAR_VIEW } from '../../utils/near-view';
+import { latestIntersectionObserver, NEAR_VIEW } from '../../utils/near-view';
 import { isExternalSource, sourceLabelKey } from '../../utils/UploadSource';
 import './file-item.css';
 import type { Uid } from '../../abstract/Uid';
@@ -125,14 +125,7 @@ export class FileItem extends FileItemConfig {
     return FileItemState.IDLE;
   }
 
-  // One callback can carry several entries for the row, oldest first: one that moved into view within a frame reports
-  // off screen, then on. Only the latest says where it is.
-  private _observerCallback(entries: IntersectionObserverEntry[]): void {
-    const entry = entries.at(-1);
-    if (!entry) {
-      return;
-    }
-
+  private _observerCallback(entry: IntersectionObserverEntry): void {
     if (entry.isIntersecting && !this._renderedOnce) {
       this._pauseRender = false;
       this._renderedOnce = true;
@@ -259,7 +252,7 @@ export class FileItem extends FileItemConfig {
 
     // One-shot render gate: un-pause on first view (see `_pauseRender`). The
     // observer watches this element's own node.
-    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+    this._observer = latestIntersectionObserver((entry) => this._observerCallback(entry), {
       ...NEAR_VIEW,
       threshold: [0, 1],
     });

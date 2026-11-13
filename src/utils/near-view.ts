@@ -5,3 +5,17 @@
  * it ignores the option and waits for the element itself.
  */
 export const NEAR_VIEW: IntersectionObserverInit & { scrollMargin: string } = { scrollMargin: '100% 0px' };
+
+/**
+ * An `IntersectionObserver` for one element that reports where it is now. One callback can carry several entries for
+ * the element, oldest first: one that moved into view within a frame reports off screen, then on. Only the latest
+ * says where it is.
+ */
+export const latestIntersectionObserver = (
+  onChange: (entry: IntersectionObserverEntry) => void,
+  init?: IntersectionObserverInit,
+): IntersectionObserver =>
+  new window.IntersectionObserver((entries) => {
+    const entry = entries.at(-1);
+    if (entry) onChange(entry);
+  }, init);
