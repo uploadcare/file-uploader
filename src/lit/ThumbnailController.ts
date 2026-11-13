@@ -30,6 +30,12 @@ export class ThumbnailController {
     });
   }
 
+  /** Run by the container when the uploader is destroyed: an object URL holds its blob for as long as the page lives. */
+  public destroy(): void {
+    for (const url of this._urls) URL.revokeObjectURL(url);
+    this._urls.clear();
+  }
+
   private _revoke(url: string | null): void {
     if (url && this._urls.delete(url)) URL.revokeObjectURL(url);
   }

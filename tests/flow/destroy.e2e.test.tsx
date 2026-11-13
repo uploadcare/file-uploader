@@ -77,6 +77,21 @@ describe('after the uploader is destroyed', () => {
     expect(recorder.types.slice(eventsBefore)).toEqual([]);
   });
 
+  it('revokes the thumbnails it drew from local files', async () => {
+    const revoke = vi.spyOn(URL, 'revokeObjectURL');
+    const { ctxName, api, root } = await renderSolution('regular', { confirmUpload: true });
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+    const thumbnail = () => root.querySelector<HTMLImageElement>('img.uc-thumb__img[src^="blob:"]')?.src;
+    await expect.poll(thumbnail, { timeout: 10_000 }).toBeTruthy();
+    const url = thumbnail();
+
+    await destroy(ctxName);
+
+    expect(revoke).toHaveBeenCalledWith(url);
+  });
+
   it('starts no upload that was still queued', async () => {
     const { ctxName, api } = await renderSolution('regular', { maxConcurrentRequests: 1 });
     api.addFileFromObject(IMAGE.PIXEL);

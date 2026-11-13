@@ -188,6 +188,18 @@ describe('ThumbnailController.store', () => {
     expect(revoke).toHaveBeenCalledExactlyOnceWith('blob:late-drawn');
   });
 
+  it('revokes every object url it stored once the uploader is destroyed', () => {
+    const { thumbnails, collection, entry } = setup();
+    const other = collection.read(collection.add({ file }));
+    if (!other) throw new Error('entry not added');
+    thumbnails.store(entry, 'blob:one');
+    thumbnails.store(other, 'blob:other');
+
+    container.dispose();
+
+    expect(revoke.mock.calls).toEqual([['blob:one'], ['blob:other']]);
+  });
+
   it('revokes an object url that arrives after the uploader was destroyed', async () => {
     const { thumbnails, entry } = setup();
     const drawn = thumbnails.draw(entry, file, 40, new AbortController().signal);
