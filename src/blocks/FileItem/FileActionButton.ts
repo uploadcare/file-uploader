@@ -24,7 +24,10 @@ export class FileActionButton extends ChildBlock {
   @property({ type: Number })
   public progress = 0;
 
-  /** Whether the button is in the tab order (out of it in a list row that is not the current one). */
+  /**
+   * Whether the button is in the tab order (out of it in a list row that is not the current one).
+   * @internal
+   */
   @property({ attribute: false })
   public tabbable = true;
 

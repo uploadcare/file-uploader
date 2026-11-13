@@ -72,7 +72,10 @@ export class FileItem extends FileItemConfig {
   })
   public uid: Uid = '' as Uid;
 
-  /** Whether the row's buttons are in the tab order: only the list's current row has them there. */
+  /**
+   * Whether the row's buttons are in the tab order: only the list's current row has them there.
+   * @internal
+   */
   @property({ attribute: false })
   public tabbable = true;
 
