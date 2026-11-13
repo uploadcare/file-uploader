@@ -199,7 +199,8 @@ export class UploadList extends ActivityChildBlock {
     const to = list[targetRowIndex(event.key, from, list.length, this._columns(), pageRows, rtl) ?? -1];
     if (to) {
       event.preventDefault();
-      this._focusRow(to);
+      // At either end the key has nowhere to go: focus stays where it is, on a button of the row if it was there.
+      if (to !== row.uid) this._focusRow(to);
     }
   };
 

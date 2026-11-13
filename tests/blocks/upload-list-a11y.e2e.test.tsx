@@ -1,6 +1,7 @@
 import { describe, expect, it, onTestFinished } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import type { Config } from '@/index.js';
+import { delay } from '@/utils/delay';
 import { isLive } from '~/tests/utils/emulator.browser';
 import { expectNoA11yViolations } from '../utils/a11y';
 import { type RenderedUploader, renderSolution, within } from '../utils/render-solution';
@@ -160,6 +161,32 @@ describe('uc-upload-list keyboard access', () => {
     await press('End');
     await expect.poll(() => focusIsOnRow(ids)).toBe(299);
     expect(namesOnFocus.at(-1)).toMatch(/^File f299\.txt in status /);
+  });
+
+  it('leaves focus on a button of the first or last row when a key has no further row to move to', async () => {
+    const { buttonOf, list } = await openList(3);
+    // A move lands once the list has updated, a task later.
+    const settled = async () => {
+      await (list.closest('uc-upload-list') as HTMLElement & { updateComplete: Promise<boolean> }).updateComplete;
+      await delay(0);
+    };
+    const first = await buttonOf(0);
+    first.focus();
+    await press('ArrowUp');
+    await press('Home');
+    await settled();
+    expect(document.activeElement).toBe(first);
+
+    const last = await buttonOf(2);
+    last.focus();
+    await press('ArrowDown');
+    await press('End');
+    await settled();
+    expect(document.activeElement).toBe(last);
+
+    // Still the list's keys: a row further on takes focus as before.
+    await press('ArrowUp');
+    expect(document.activeElement?.localName).toBe('uc-file-item');
   });
 
   it('keeps moving down with ArrowDown past the rendered window, and by a page with PageDown', async () => {
