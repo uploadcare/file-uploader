@@ -12,6 +12,7 @@ import { operationsFromModifiers } from '../../utils/cdn/operations';
 import { NEAR_VIEW } from '../../utils/near-view';
 import { preloadImage } from '../../utils/preloadImage';
 import { generateThumb } from '../../utils/resizeImage';
+import { queueThumbnail } from '../../utils/thumbnail-queue';
 import { FileItemConfig } from '../FileItem/FileItemConfig';
 import { fileCssBg } from '../svg-backgrounds/svg-backgrounds';
 import './thumb.css';
@@ -177,7 +178,12 @@ export class Thumb extends FileItemConfig {
   /** Store a thumbnail drawn from the local file, or the placeholder if that fails. */
   private async _storeLocalThumb(entry: UploadEntryTypedData, file: Blob, size: number): Promise<void> {
     try {
-      const thumbUrl = await this.whileAdopted(generateThumb(file, size), (url) => entry.set('thumbUrl', url));
+      // Queued, since each one decodes the full-size file. A thumb released while still waiting is dropped from the
+      // queue; one already decoding finishes and is stored by `dispose`.
+      const thumbUrl = await this.whileAdopted(
+        queueThumbnail(() => generateThumb(file, size), this.adoptionSignal),
+        (url) => entry.set('thumbUrl', url),
+      );
       entry.set('thumbUrl', thumbUrl);
     } catch (err) {
       if (isAbortError(err)) throw err;
