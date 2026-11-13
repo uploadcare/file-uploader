@@ -16,9 +16,13 @@ import { CameraSourceTypes, type ModeCameraType } from '../cameraModes';
 
 /** Where a paste adds files: inside the uploader, anywhere on the page, or nowhere. */
 export type PasteScope = 'local' | 'global' | false;
-export type DynamicButtonMode = 'auto' | 'menu' | 'toolbar' | 'compact' | 'plain';
-export type FilesViewMode = 'grid' | 'list';
-export type ModalPresentation = 'modal' | 'inline';
+// Each type is read off the list its validator accepts, so the two cannot drift apart.
+const DYNAMIC_BUTTON_MODES = ['auto', 'menu', 'toolbar', 'compact', 'plain'] as const;
+const FILES_VIEW_MODES = ['grid', 'list'] as const;
+const MODAL_PRESENTATIONS = ['modal', 'inline'] as const;
+export type DynamicButtonMode = (typeof DYNAMIC_BUTTON_MODES)[number];
+export type FilesViewMode = (typeof FILES_VIEW_MODES)[number];
+export type ModalPresentation = (typeof MODAL_PRESENTATIONS)[number];
 
 const asString = (value: unknown): string => String(value);
 
@@ -63,9 +67,9 @@ const asOneOf =
 
 const asCameraCapture = asOneOf(['', 'user', 'environment'] as const);
 const asCameraMode = asOneOf(Object.values(CameraSourceTypes));
-const asModalPresentation = asOneOf<ModalPresentation>(['modal', 'inline']);
-const asFilesViewMode = asOneOf<FilesViewMode>(['grid', 'list']);
-const asDynamicButtonViewMode = asOneOf<DynamicButtonMode>(['auto', 'menu', 'toolbar', 'compact', 'plain']);
+const asModalPresentation = asOneOf(MODAL_PRESENTATIONS);
+const asFilesViewMode = asOneOf(FILES_VIEW_MODES);
+const asDynamicButtonViewMode = asOneOf(DYNAMIC_BUTTON_MODES);
 
 const asCameraModes = (value: unknown): string => {
   const str = asString(value);
