@@ -1,24 +1,19 @@
-import { type BuildConstraintsInput, buildConstraints } from '../../abstract/camera/buildConstraints';
 import { cameraFailureOf } from '../../abstract/camera/cameraFailure';
-import { maxShortSideOf } from '../../abstract/camera/cameraSettings';
-import { RequestedConstraints } from '../../abstract/camera/RequestedConstraints';
 import { type CameraMode, CameraSourceTypes } from '../../abstract/cameraModes';
 import type { NavigationEdge } from '../../abstract/controllers/RouterController';
 import { isAbortError } from '../../abstract/di/Lifetime';
 import { signalState } from '../../abstract/di/signalState';
 import type { CameraConstraints, CameraConstraintsResolver } from '../../types/exported';
 import { CameraAccess, type CameraPermission, type SettledPermission } from './CameraAccess';
-import { CameraDevices } from './CameraDevices';
-import { type CameraSetting, CaptureSettings } from './CaptureSettings';
+import type { CameraSetting } from './CaptureSettings';
 import type { CameraLifetime, CameraReport } from './cameraHost';
 import type { CameraCommand, CameraPhase, ClockView } from './cameraTypes';
-import { CameraFeed } from './media/CameraFeed';
 import { Capture } from './media/Capture';
-import { MicrophoneSwap } from './media/MicrophoneSwap';
 import { photoFile } from './media/PhotoCapture';
 import { type ClipHandlers, PreviewVideo } from './media/PreviewVideo';
 import { RecordingClock } from './media/RecordingClock';
 import { recorderOptions } from './media/VideoRecording';
+import { type StreamChange, StreamSettings } from './StreamSettings';
 
 /** What the camera element lends the session: its lifetime, config, elements, and the ways out. */
 export type CameraSessionHost = {
@@ -48,9 +43,9 @@ export type CameraSessionHost = {
 };
 
 /**
- * One camera's state and everything it does: asks for access, opens the stream, lists the devices, takes photos,
- * records clips, and reacts to what the user does in the camera's parts. The fields are signals, so the element that
- * renders them re-renders on every change.
+ * One camera's state and what it does with a capture: asks for access, opens the camera, takes photos, records clips,
+ * and reacts to what the user does in the camera's parts. How the stream is set up is `StreamSettings`' part. The
+ * fields are signals, so the element that renders them re-renders on every change.
  */
 export class CameraSession {
   @signalState() public activeTab: CameraMode | null = null;
@@ -77,20 +72,27 @@ export class CameraSession {
       this._clock.stop();
     },
   };
-  /** The camera's media stream and its tracks. */
-  public readonly feed: CameraFeed;
-  private readonly _microphone: MicrophoneSwap;
-  public readonly settings: CaptureSettings;
-  public readonly devices: CameraDevices;
+  private readonly _stream = new StreamSettings({
+    lifetime: this._host.lifetime,
+    config: this._host.config,
+    // The active tab, or the tab about to become active.
+    mode: () => this.activeTab ?? this._host.config.cameraModes()[0] ?? CameraSourceTypes.PHOTO,
+    isRecording: () => this._capture.isRecording,
+    cameraLabel: this._host.cameraLabel,
+    microphoneLabel: this._host.microphoneLabel,
+    report: this._host.report,
+  });
+  /** The camera's stream, the devices and settings picked for it, and whether it opened without a refused microphone. */
+  public readonly stream: Readonly<Pick<StreamSettings, 'feed' | 'devices' | 'settings' | 'microphoneDenied'>> =
+    this._stream;
   private readonly _access = new CameraAccess({
     lifetime: this._host.lifetime,
     onPermissionChange: (name) => this._permissionChanged(name),
     onSettled: (state) => this._permissionSettled(state),
     report: this._host.report,
   });
-  /** Why access ended `denied`, and whether the camera opened without the refused microphone. */
-  public readonly access: Readonly<Pick<CameraAccess, 'failure' | 'microphoneDenied'>> = this._access;
-  private readonly _requested = new RequestedConstraints();
+  /** Why access ended `denied`. */
+  public readonly access: Readonly<Pick<CameraAccess, 'failure'>> = this._access;
 
   /** Runs once a permission state settled and shows. */
   private _permissionSettled(state: SettledPermission): void {
@@ -101,22 +103,7 @@ export class CameraSession {
     if (state !== 'prompt') this._captureResolved();
   }
 
-  public constructor(private readonly _host: CameraSessionHost) {
-    this.feed = new CameraFeed(_host.lifetime, _host.report);
-    this._microphone = new MicrophoneSwap(_host.lifetime, _host.report);
-    this.settings = new CaptureSettings(_host.config);
-    this.devices = new CameraDevices({
-      lifetime: _host.lifetime,
-      audioEnabled: () => _host.config.audioEnabled(),
-      cameraLabel: _host.cameraLabel,
-      microphoneLabel: _host.microphoneLabel,
-      onDevicesChange: (lists) => {
-        this.devices.adopt(lists, this.feed.stream);
-        this._syncRequestedConstraints();
-      },
-      report: _host.report,
-    });
-  }
+  public constructor(private readonly _host: CameraSessionHost) {}
 
   public get permission(): CameraPermission {
     return this._access.permission;
@@ -148,7 +135,7 @@ export class CameraSession {
   public async activate(): Promise<void> {
     const adoption = this._host.lifetime.adoptionSignal();
     await this._access.watchPermissions();
-    this.devices.watchDeviceChanges(adoption);
+    this._stream.devices.watchDeviceChanges(adoption);
     await this._openCamera(adoption);
     // Read now, not before the permission prompt: the modes can change while it is open.
     this._captureResolved();
@@ -160,7 +147,7 @@ export class CameraSession {
     // A recording or a photo in progress belongs to the stream being stopped, so the phase is live again. The tab is
     // left to the next activation: the config is not read after the adoption ended.
     this._capture.end();
-    this._requested.clearPending();
+    this._stream.forgetDeferred();
     this._closeCamera();
     this._access.stopWatchingPermissions();
     this._preview.release();
@@ -178,20 +165,9 @@ export class CameraSession {
     }
   }
 
-  /**
-   * The option behind `setting` changed in the config: the user's pick gives way to its first listed value, applied to
-   * the open camera. A `cameraConstraints` change also forgets that the camera couldn't satisfy the previous ones.
-   * `enableAudioRecording` turning on or off adds or drops the microphone, and lists the microphones again or none.
-   */
-  public configChanged(setting: CameraSetting | 'constraints' | 'audioEnabled'): void {
-    if (setting === 'constraints') {
-      this.feed.resetCustomDropped();
-    } else if (setting === 'audioEnabled') {
-      if (this.devices.cameras.length) this._host.lifetime.runTask(() => this.devices.list());
-    } else {
-      this.settings.reset(setting);
-    }
-    this._applyConstraints(setting);
+  /** The option behind `change` changed in the config, which the open camera follows. */
+  public configChanged(change: StreamChange): void {
+    this._stream.configChanged(change);
   }
 
   public handle(action: CameraCommand): void {
@@ -206,7 +182,7 @@ export class CameraSession {
         this._selectCamera(action.deviceId);
         break;
       case 'select-microphone':
-        this._selectMicrophone(action.deviceId);
+        this._stream.selectMicrophone(action.deviceId);
         break;
       case 'pick-setting':
         this._pickSetting(action.setting, action.value);
@@ -227,7 +203,7 @@ export class CameraSession {
         this._accept();
         break;
       case 'toggle-microphone':
-        this.feed.toggleAudio();
+        this._stream.feed.toggleAudio();
         break;
       case 'toggle-playback':
         this._toggleClipPlayback();
@@ -245,31 +221,22 @@ export class CameraSession {
    * microphone, through the audio path, so a capture under review stays.
    */
   private _permissionChanged(name: 'camera' | 'microphone'): void {
-    const stream = this.feed.stream;
-    if (name === 'camera' || !stream) {
+    if (name === 'camera' || !this._stream.feed.stream) {
       this._host.lifetime.runTask(() => this._openCamera());
-      return;
+    } else {
+      this._stream.retryMicrophone();
     }
-    // No live microphone in the stream: asking for one is a change, even with the request that was refused. A revoke
-    // leaves the ended track in the stream.
-    if (!stream.getAudioTracks().some((track) => track.readyState === 'live')) this._requested.noAudio();
-    this._host.lifetime.runTask(() => this._applyAudioConstraints());
   }
 
   private _selectCamera(deviceId: string): void {
-    this.devices.pickCamera(deviceId);
+    this._stream.devices.pickCamera(deviceId);
     this._host.lifetime.runTask(() => this._openCamera());
   }
 
-  private _selectMicrophone(deviceId: string): void {
-    this.devices.pickMicrophone(deviceId);
-    this._host.lifetime.runTask(() => this._applyAudioConstraints());
-  }
-
   private _pickSetting(setting: CameraSetting, value: string): void {
-    this.settings.pick(setting, value);
+    this._stream.settings.pick(setting, value);
     this._track('camera-setting-change', { tabId: this.activeTab, setting, value });
-    this._applyConstraints(setting);
+    this._stream.apply(setting);
   }
 
   private _track(event: string, extra: Record<string, unknown> = { tabId: this.activeTab }): void {
@@ -281,7 +248,7 @@ export class CameraSession {
     this._track(event, {
       tabId: this.activeTab,
       hasCustomConstraints: Boolean(this._host.config.constraints()),
-      ...this.settings.telemetry(),
+      ...this._stream.settings.telemetry(),
     });
   }
 
@@ -293,21 +260,7 @@ export class CameraSession {
     this.activeTab = tab;
     // Only the function form can differ between modes.
     if (typeof this._host.config.constraints() === 'function') {
-      this._applyConstraints('constraints');
-    }
-  }
-
-  /**
-   * Applies what `setting` changed to the open camera: the ratio and resolution to the video track, the sound to the
-   * microphone, custom constraints to both. The audio bitrate is set when a recording starts, so it needs nothing.
-   */
-  private _applyConstraints(setting: CameraSetting | 'constraints' | 'audioEnabled'): void {
-    const { runTask } = this._host.lifetime;
-    if (setting === 'aspectRatio' || setting === 'resolution' || setting === 'constraints') {
-      runTask(() => this._applyVideoConstraints());
-    }
-    if (setting === 'audioMode' || setting === 'audioEnabled' || setting === 'constraints') {
-      runTask(() => this._applyAudioConstraints());
+      this._stream.apply('constraints');
     }
   }
 
@@ -338,7 +291,7 @@ export class CameraSession {
     // The preview frame as the shutter is pressed, cropped, mirrored and encoded as it will be sent. A still from
     // `ImageCapture.takePhoto()` was tried on main: with a real camera the preview changed after a shot and a retake.
     this._capture.shoot(video, {
-      aspectRatio: this.settings.aspectRatio,
+      aspectRatio: this._stream.settings.aspectRatio,
       mirror: this._host.config.mirror(),
       quality: this._host.config.photoQuality(),
     });
@@ -347,14 +300,14 @@ export class CameraSession {
   }
 
   private _startRecording(): void {
-    const stream = this.feed.stream;
-    if (!stream) return;
+    const { feed, settings } = this._stream;
+    if (!feed.stream) return;
     const { config } = this._host;
     try {
-      this._capture.record(stream, this._preview.element, {
-        aspectRatio: this.settings.aspectRatio,
+      this._capture.record(feed.stream, this._preview.element, {
+        aspectRatio: settings.aspectRatio,
         mirror: config.mirror(),
-        recorder: recorderOptions(config.recorderOptions(), this.settings.audioQuality, config.videoFormats()),
+        recorder: recorderOptions(config.recorderOptions(), settings.audioQuality, config.videoFormats()),
       });
       this._clock.startTimer(config.maxRecordingSeconds, () => this._stopRecording());
     } catch (error) {
@@ -386,9 +339,7 @@ export class CameraSession {
       this._host.report('error', 'Failed to preview video', error, 'camera previewing. Failed to preview video');
     }
     this._clock.stop();
-    const pending = this._requested.flush();
-    if (pending.video) this._host.lifetime.runTask(() => this._applyVideoConstraints());
-    if (pending.audio) this._host.lifetime.runTask(() => this._applyAudioConstraints());
+    this._stream.resume();
   }
 
   /** Pauses or resumes the recorded clip's preview. */
@@ -423,7 +374,7 @@ export class CameraSession {
     const clipShown = this.phase === 'recorded';
     this._capture.end();
     this._clock.stop();
-    if (clipShown) this._preview.showLive(this.feed.stream);
+    if (clipShown) this._preview.showLive(this._stream.feed.stream);
   }
 
   /** The capture was accepted, retaken or dropped: a `cameraModes` change that waited for it switches the tab now. */
@@ -461,107 +412,10 @@ export class CameraSession {
 
   private _closeCamera(): void {
     this._clock.stop();
-    if (!this.feed.stream) return;
+    const { feed } = this._stream;
+    if (!feed.stream) return;
     this._preview.close();
-    this.feed.close();
-  }
-
-  /** The mode the camera opens for: the active tab, or the tab about to become active. */
-  private _currentMode(): CameraMode {
-    return this.activeTab ?? this._host.config.cameraModes()[0] ?? CameraSourceTypes.PHOTO;
-  }
-
-  /** `custom` defaults to `cameraConstraints`, unless the open camera couldn't satisfy them. */
-  private _constraintsInput(
-    custom = this.feed.customDropped ? null : this._host.config.constraints(),
-  ): BuildConstraintsInput {
-    return {
-      mode: this._currentMode(),
-      enableAudio: this._host.config.audioEnabled(),
-      audioMode: this.settings.audioMode,
-      aspectRatio: this.settings.aspectRatio,
-      resolution: this.settings.resolution,
-      custom,
-      cameraId: this.devices.selectedCameraId,
-      audioId: this.devices.selectedMicrophoneId,
-    };
-  }
-
-  /**
-   * Once the device list names the devices already in use, asking for them by id is the same request, not a change.
-   * Without this, the first unrelated change would reopen the microphone for nothing.
-   */
-  private _syncRequestedConstraints(): void {
-    const stream = this.feed.stream;
-    if (!stream) return;
-    this._requested.syncDevices(
-      buildConstraints(this._constraintsInput()),
-      {
-        cameraId: stream.getVideoTracks()[0]?.getSettings().deviceId,
-        microphoneId: stream.getAudioTracks()[0]?.getSettings().deviceId,
-      },
-      { cameraId: this.devices.selectedCameraId, microphoneId: this.devices.selectedMicrophoneId },
-    );
-  }
-
-  /** Applies changed video constraints to the open camera. A change during a recording waits for it to stop. */
-  private async _applyVideoConstraints(): Promise<void> {
-    if (!this.feed.stream?.getVideoTracks()[0]) return;
-    if (this._capture.isRecording) {
-      this._requested.deferVideo();
-      return;
-    }
-    const input = this._constraintsInput();
-    const { video } = buildConstraints(input);
-    if (!this._requested.requestVideo(video)) return;
-    // Only blame `cameraConstraints` when they took part in the request.
-    await this.feed.applyVideo(video, Boolean(input.custom));
-  }
-
-  /**
-   * Applies changed microphone settings by swapping in a newly opened microphone, or drops it when audio recording is
-   * off. One that lands during a recording would break it: the request waits for the stop instead.
-   */
-  private async _applyAudioConstraints(): Promise<void> {
-    const stream = this.feed.stream;
-    if (!stream) return;
-    if (this._capture.isRecording) {
-      this._requested.deferAudio();
-      return;
-    }
-    const { audio } = buildConstraints(this._constraintsInput());
-    if (!audio) {
-      this._requested.noAudio();
-      this.feed.dropAudio();
-      this._access.microphoneDenied = false;
-      return;
-    }
-    const request = this._requested.requestAudio(audio);
-    if (!request) return;
-    // Audio recording turned off while the microphone opened: its track is stale too.
-    const isCurrent = () => this.feed.stream === stream && this._host.config.audioEnabled();
-    const track = await this._microphone.open(audio, isCurrent);
-    if (!track) return;
-    // Refused after the camera opened: the same denial as a microphone refused with it, unless the one in use still
-    // works, which keeps recording sound.
-    if (track === 'refused') {
-      const live = stream.getAudioTracks().some((old) => old.readyState === 'live');
-      if (isCurrent() && !live) this._access.microphoneDenied = true;
-      return;
-    }
-    // A recording began while it opened: swapping it in now would break the recording, so it waits for the stop.
-    if (this._capture.isRecording) {
-      track.stop();
-      this._requested.deferAudio(request);
-      return;
-    }
-    // Checked again with the swap, no await between: the stream can change in the hop since the swap resolved.
-    if (!isCurrent()) {
-      track.stop();
-      return;
-    }
-    this.feed.swapAudioTrack(track);
-    this._access.microphoneDenied = false;
+    feed.close();
   }
 
   /** `adoption` is the signal of the lifetime the calling task started in. */
@@ -571,31 +425,18 @@ export class CameraSession {
     this._dropCapture();
     try {
       this._access.settleLater('prompt');
-      // The open forgets dropped custom constraints, so it is asked for the configured ones.
-      const opened = await this.feed.open(this._constraintsInput(this._host.config.constraints()), () =>
-        this._preview.silence(),
-      );
-      // A later capture took over; it settles the permission state.
-      if (!opened) return;
-      const { stream } = opened;
+      const stream = await this._stream.open(() => this._preview.silence());
+      // A later open took over; it settles the permission state.
+      if (!stream) return;
       this._preview.show(stream);
-      this._requested.opened(opened.constraints);
-      this._access.microphoneDenied = opened.microphoneRefused;
       // Ends on a revoked permission, and also when this stream is stopped for the next one; only the first counts.
       const lost = () => {
-        if (this.feed.stream === stream) this._access.settleLater('denied');
+        if (this._stream.feed.stream === stream) this._access.settleLater('denied');
       };
       stream.addEventListener('inactive', lost);
       // The camera alone can end (unplugged, taken by the system) while the microphone keeps the stream active.
       stream.getVideoTracks()[0]?.addEventListener('ended', lost, { once: true, signal: adoption });
       this._access.settleLater('granted');
-      // Another camera may not do the picked preset: start the resolution picker over if it's no longer offered.
-      this.settings.cameraOpened(maxShortSideOf(stream.getVideoTracks()[0]));
-      // Access is granted now, so the labels are readable: list the devices the first time.
-      if (!this.devices.cameras.length) this._host.lifetime.runTask(() => this.devices.list());
-      // The camera opened with what was in effect when it was asked for. Apply what is in effect now: a preset the
-      // camera turned out not to do was left out of the picker, and a pick made while it opened was not applied.
-      this._applyConstraints('constraints');
     } catch (error) {
       // Asks the task's lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
       // Not the current adoption either: after a move it is the next one's, still live.

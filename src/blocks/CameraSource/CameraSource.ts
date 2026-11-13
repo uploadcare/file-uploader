@@ -145,6 +145,7 @@ export class CameraSource extends ChildBlock {
 
   public override render() {
     const session = this._session;
+    const { stream } = session;
     const audioEnabled = this._config.getTracked('enableAudioRecording');
     const view = deriveCameraView({
       permission: session.permission,
@@ -153,10 +154,10 @@ export class CameraSource extends ChildBlock {
       tab: session.activeTab,
       cameraModes: parseCameraModes(this._config.getTracked('cameraModes')),
       audioEnabled,
-      cameraCount: session.devices.cameras.length,
-      microphoneCount: audioEnabled ? session.devices.microphones.length : 0,
-      muted: session.feed.audioMuted,
-      microphoneDenied: session.access.microphoneDenied,
+      cameraCount: stream.devices.cameras.length,
+      microphoneCount: audioEnabled ? stream.devices.microphones.length : 0,
+      muted: stream.feed.audioMuted,
+      microphoneDenied: stream.microphoneDenied,
     });
     const settings = deriveSettingsView({
       view,
@@ -164,15 +165,15 @@ export class CameraSource extends ChildBlock {
       phase: session.phase,
       tab: session.activeTab,
       audioEnabled,
-      devices: session.devices,
-      settings: session.settings,
+      devices: stream.devices,
+      settings: stream.settings,
     });
     return html`
       <uc-camera-header @uc-internal:camera-action=${this._handleAction}></uc-camera-header>
       <uc-camera-preview
         .view=${view}
         .mirror=${this._config.getTracked('cameraMirror') && !session.playbackMirrored}
-        .aspectRatio=${session.settings.aspectRatio}
+        .aspectRatio=${stream.settings.aspectRatio}
         .requestButtonHidden=${this._requestButtonHidden}
         @uc-internal:camera-action=${this._handleAction}
       ></uc-camera-preview>
