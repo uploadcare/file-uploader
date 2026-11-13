@@ -519,10 +519,8 @@ export class UploadList extends ActivityChildBlock {
   }
 
   public override render() {
-    // Tracked render reads: `uploadList` drives the `<uc-file-item>` list and
-    // `collectionErrors` (via `_commonErrorMessage`) drives the common-error row —
-    // both `getTracked` off `CollectionStateController`, auto-tracked under
-    // `SignalWatcher`, so a collection change re-renders.
+    // `_uploadList` is the list `willUpdate` read with `getTracked`, so a collection change re-renders; the
+    // `collectionErrors` read behind `_commonErrorMessage` is tracked here, and drives the common-error row.
     const uploadList = this._uploadList;
     const commonErrorMessage = this._commonErrorMessage;
     const compact = this.chrome === 'compact';

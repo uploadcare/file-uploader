@@ -25,7 +25,7 @@ export type WindowSlice = {
 };
 
 /**
- * Pure windowing math for {@link UploadList}: given the scroll geometry, return
+ * Pure windowing math for {@link VirtualListController}: given the scroll geometry, return
  * the `[start, end)` slice of items to render plus the top/bottom spacer heights
  * that keep the scrollbar sized as if the whole list were laid out.
  *

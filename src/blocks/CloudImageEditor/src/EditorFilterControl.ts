@@ -140,7 +140,7 @@ export class EditorFilterControl extends EditorButtonControl {
           this._originalUrl = nextUrl ?? '';
           if (!this.isOriginal && this._originalUrl && this.isConnected && !this._previewImage) {
             this._observer?.observe(this);
-            this._schedulePreviewVisibilityCheck();
+            this._reobservePreview();
           }
         },
         { immediate: true },
@@ -154,7 +154,7 @@ export class EditorFilterControl extends EditorButtonControl {
           if (this._previewImage) {
             this.runTask(() => this._loadPreview());
           } else {
-            this._schedulePreviewVisibilityCheck();
+            this._reobservePreview();
           }
         },
         { immediate: true },
@@ -171,7 +171,7 @@ export class EditorFilterControl extends EditorButtonControl {
 
     if (!this.isOriginal) {
       this._observer.observe(this);
-      this._schedulePreviewVisibilityCheck();
+      this._reobservePreview();
     }
   }
 
@@ -190,7 +190,7 @@ export class EditorFilterControl extends EditorButtonControl {
       } else {
         this._observer?.observe(this);
         // Untracked: the check's controller reads are no state this control renders.
-        Signal.subtle.untrack(() => this._schedulePreviewVisibilityCheck());
+        Signal.subtle.untrack(() => this._reobservePreview());
       }
     }
   }
@@ -249,7 +249,7 @@ export class EditorFilterControl extends EditorButtonControl {
       if (isAbortError(err)) return;
       this.editorController.networkProblems = true;
       this._log.error('Failed to load image', { error: err });
-      this._schedulePreviewVisibilityCheck();
+      this._reobservePreview();
     } finally {
       if (this._lastPreviewRequestId === requestId) {
         this._cancelPreload = undefined;
@@ -261,7 +261,7 @@ export class EditorFilterControl extends EditorButtonControl {
    * The observer reports a change of intersection only, so it stays quiet at the two moments the control may already be
    * in view: the image becoming known and the network coming back. Observing anew makes it report the current state.
    */
-  private _schedulePreviewVisibilityCheck(): void {
+  private _reobservePreview(): void {
     if (
       this.adoptionSignal.aborted ||
       this._previewImage ||
