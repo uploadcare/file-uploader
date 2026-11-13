@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { computeWindow, pinWindow, type WindowMetrics } from './computeWindow';
 
-// (relocated to src/lit/ — shared virtualization primitive used by VirtualListController)
+// Shared virtualization primitive used by VirtualListController (src/lit).
 
 const base: WindowMetrics = {
   total: 0,

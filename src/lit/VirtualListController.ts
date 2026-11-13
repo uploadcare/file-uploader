@@ -1,5 +1,5 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
-import { computeWindow, pinWindow } from './computeWindow';
+import { computeWindow, pinWindow } from '../utils/computeWindow';
 
 export type VirtualListRowMetrics = {
   /** Columns per row (1 for a vertical list, N for a wrapped grid). */
