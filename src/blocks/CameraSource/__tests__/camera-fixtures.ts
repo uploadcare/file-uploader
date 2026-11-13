@@ -1,10 +1,31 @@
 import { type Mock, vi } from 'vitest';
-import { CameraSourceTypes } from '../../../abstract/cameraModes';
+import { ConfigController } from '../../../abstract/controllers/ConfigController';
 import { Lifetime } from '../../../abstract/di/Lifetime';
+import type { ConfigType } from '../../../types/exported';
 import { CameraSession, type CameraSessionHost } from '../CameraSession';
 import type { CameraLifetime } from '../cameraHost';
 
-const { PHOTO, VIDEO } = CameraSourceTypes;
+/** A ctx's config with the camera's options as the specs start: both modes, audio and every choice. */
+export const cameraConfig = (options: Partial<ConfigType> = {}): ConfigController => {
+  const config = new ConfigController();
+  const camera: Partial<ConfigType> = {
+    enableAudioRecording: true,
+    cameraMirror: false,
+    mediaRecorderOptions: null,
+    maxVideoRecordingDuration: null,
+    cameraModes: 'photo, video',
+    cameraVideoFormats: 'webm, mp4',
+    cameraConstraints: null,
+    cameraAspectRatio: 'native, 1:1',
+    cameraResolution: 'auto, 720p',
+    cameraPhotoQuality: 0.92,
+    cameraAudioQuality: 'auto',
+    cameraAudioMode: 'voice',
+    ...options,
+  };
+  for (const [key, value] of Object.entries(camera)) config.setDynamic(key, value);
+  return config;
+};
 
 /** A block-like lifetime over one `Lifetime`: tasks that fail land nowhere. */
 export const lifetimeOf = (lifetime = new Lifetime()): CameraLifetime => ({
@@ -15,9 +36,10 @@ export const lifetimeOf = (lifetime = new Lifetime()): CameraLifetime => ({
 
 /**
  * A session lent a block-like lifetime: one `Lifetime` per adoption, replaced on a move as `ChildBlock` does. The
- * config allows both modes, audio and every choice; pass `config` to narrow it.
+ * config allows both modes, audio and every choice; pass `options` to narrow it.
  */
-export const setupSession = (config: Partial<CameraSessionHost['config']> = {}) => {
+export const setupSession = (options: Partial<ConfigType> = {}) => {
+  const config = cameraConfig(options);
   let adoption = new Lifetime();
   const taskFailed = vi.fn();
   const report = vi.fn();
@@ -35,21 +57,7 @@ export const setupSession = (config: Partial<CameraSessionHost['config']> = {}) 
       },
       adoptionSignal: () => adoption.signal,
     },
-    config: {
-      audioEnabled: () => true,
-      mirror: () => false,
-      recorderOptions: () => null,
-      maxRecordingSeconds: () => undefined,
-      cameraModes: () => [PHOTO, VIDEO],
-      videoFormats: () => 'webm, mp4',
-      constraints: () => null,
-      aspectRatio: () => 'native, 1:1',
-      resolution: () => 'auto, 720p',
-      photoQuality: () => 0.92,
-      audioQuality: () => 'auto',
-      audioMode: () => 'voice',
-      ...config,
-    },
+    config,
     cameraLabel: (index) => `Camera ${index + 1}`,
     microphoneLabel: (index) => `Microphone ${index + 1}`,
     navigate: vi.fn(),
@@ -77,7 +85,7 @@ export const setupSession = (config: Partial<CameraSessionHost['config']> = {}) 
       await Promise.allSettled(tasks);
     }
   };
-  return { session, host, move, readopt, endAdoption, tasksSettled, report, track, addFile, taskFailed };
+  return { session, host, config, move, readopt, endAdoption, tasksSettled, report, track, addFile, taskFailed };
 };
 
 export type FakeTrack = Omit<MediaStreamTrack, 'stop' | 'applyConstraints' | 'readyState'> & {

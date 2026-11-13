@@ -1,14 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { CameraSourceTypes } from '../../abstract/cameraModes';
 import { delay } from '../../utils/delay';
 import { setupSession } from './__tests__/camera-fixtures';
 
 const setup = () =>
   setupSession({
-    audioEnabled: () => false,
-    cameraModes: () => [CameraSourceTypes.PHOTO],
-    aspectRatio: () => '',
-    resolution: () => 'auto',
+    enableAudioRecording: false,
+    cameraModes: 'photo',
+    cameraAspectRatio: '',
+    cameraResolution: 'auto',
   });
 
 const stubMedia = () => {

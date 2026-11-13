@@ -116,7 +116,7 @@ afterEach(() => {
 /** Opens the camera and waits for the device list, as activation does on screen. */
 /** Opens the camera with `modes` configured. */
 const activate = (ctx: Ctx, modes: CameraMode[] = [PHOTO, VIDEO]) => {
-  ctx.host.config.cameraModes = () => modes;
+  ctx.config.set('cameraModes', modes.join(', '));
   return ctx.session.activate();
 };
 
@@ -141,7 +141,7 @@ const stopRecording = async ({ session }: Ctx, recorder: FakeRecorder) => {
 
 /** The camera mirrored and its `<video>` lent, so a recording goes through a canvas that mirrors it. */
 const mirrorRecordings = (ctx: Ctx) => {
-  ctx.host.config.mirror = () => true;
+  ctx.config.set('cameraMirror', true);
   const video = fakeVideo();
   giveVideo(ctx, video);
   stubCanvas();
@@ -276,7 +276,7 @@ describe('CameraSession flows', () => {
     stubMedia();
     const ctx = setup();
     const now = vi.spyOn(performance, 'now').mockReturnValue(0);
-    ctx.host.config.maxRecordingSeconds = () => 1;
+    ctx.config.set('maxVideoRecordingDuration', 1);
     await open(ctx);
 
     const pressedFirst = startRecording(ctx);
@@ -522,10 +522,9 @@ describe('CameraSession flows', () => {
     const [video] = streams[0]?.getVideoTracks() ?? [];
     expect(ctx.session.stream.devices.selectedMicrophoneId).toBe('mic-1');
 
-    ctx.host.config.aspectRatio = () => '1:1';
-    ctx.session.configChanged('aspectRatio');
+    ctx.config.set('cameraAspectRatio', '1:1');
     // `aspectRatio` alone never touches the microphone; `constraints` does, so it is what the device record guards.
-    ctx.session.configChanged('constraints');
+    ctx.config.set('cameraConstraints', {});
     await vi.waitFor(() => expect(video?.applyConstraints).toHaveBeenCalled());
 
     expect(microphoneCalls()).toHaveLength(0);
@@ -536,7 +535,7 @@ describe('CameraSession flows', () => {
     const ctx = setup();
     const video = fakeVideo();
     giveVideo(ctx, video);
-    ctx.host.config.constraints = () => ({ video: { width: { exact: 9999 } } });
+    ctx.config.set('cameraConstraints', { video: { width: { exact: 9999 } } });
     const first = hold();
     const retryVolumes: number[] = [];
     getUserMedia.mockImplementationOnce(async (constraints) => {
@@ -558,7 +557,7 @@ describe('CameraSession flows', () => {
   it('a camera reopened after its custom constraints were dropped asks for them again', async () => {
     const { getUserMedia } = stubMedia();
     const ctx = setup();
-    ctx.host.config.constraints = () => ({ video: { width: { exact: 9999 } } });
+    ctx.config.set('cameraConstraints', { video: { width: { exact: 9999 } } });
     getUserMedia.mockRejectedValueOnce(new DOMException('Simulated', 'OverconstrainedError'));
     await open(ctx);
     expect(ctx.session.stream.feed.customDropped).toBe(true);
@@ -575,11 +574,11 @@ describe('CameraSession flows', () => {
     await open(ctx);
     const [video] = streams[0]?.getVideoTracks() ?? [];
     video?.applyConstraints.mockRejectedValue(new DOMException('Simulated refusal', 'OverconstrainedError'));
-    ctx.host.config.aspectRatio = () => '1:1';
 
-    ctx.session.configChanged('aspectRatio');
+    ctx.config.set('cameraAspectRatio', '1:1');
     await vi.waitFor(() => expect(ctx.report).toHaveBeenCalled());
-    ctx.session.configChanged('aspectRatio');
+    // The option changed again, and still asks the camera for the same ratio.
+    ctx.config.set('cameraAspectRatio', '1:1, 16:9');
 
     expect(video?.applyConstraints).toHaveBeenCalledOnce();
     expect(ctx.report).toHaveBeenCalledWith(
@@ -613,7 +612,7 @@ describe('CameraSession flows', () => {
     const activation = activate(ctx, [VIDEO]);
     await vi.waitFor(() => expect(navigator.mediaDevices.getUserMedia).toHaveBeenCalled());
 
-    ctx.host.config.cameraModes = () => [PHOTO];
+    ctx.config.set('cameraModes', PHOTO);
     opening.answer();
     await activation;
 
@@ -639,15 +638,15 @@ describe('CameraSession flows', () => {
     const ctx = setup();
     await open(ctx);
     startRecording(ctx);
-    const config = vi.spyOn(ctx.host.config, 'cameraModes');
+    const read = vi.spyOn(ctx.config, 'get');
 
     ctx.move();
 
     expect(ctx.session.recording.isStopping).toBe(false);
     expect(ctx.session.phase).toBe('live');
-    expect(config).not.toHaveBeenCalled();
+    expect(read).not.toHaveBeenCalledWith('cameraModes');
 
-    ctx.host.config.cameraModes = () => [PHOTO];
+    ctx.config.set('cameraModes', PHOTO);
     await activate(ctx, [PHOTO]);
     expect(ctx.session.activeTab).toBe(PHOTO);
     expect(getUserMedia).toHaveBeenCalledTimes(2);
@@ -675,7 +674,7 @@ describe('CameraSession flows', () => {
     stubMedia();
     const ctx = setup();
     const now = vi.spyOn(performance, 'now').mockReturnValue(0);
-    ctx.host.config.maxRecordingSeconds = () => 1;
+    ctx.config.set('maxVideoRecordingDuration', 1);
     await open(ctx);
 
     const recorder = startRecording(ctx);
@@ -852,8 +851,7 @@ describe('CameraSession flows', () => {
     await open(ctx);
     const recorder = startRecording(ctx);
 
-    ctx.host.config.cameraModes = () => [PHOTO];
-    ctx.session.selectDefaultTab([PHOTO]);
+    ctx.config.set('cameraModes', PHOTO);
     expect(ctx.session.activeTab).toBe(VIDEO);
     expect(ctx.session.phase).toBe('recording');
 
@@ -896,8 +894,7 @@ describe('CameraSession flows', () => {
     ctx.session.handle({ type: 'shutter' });
     expect(ctx.session.phase).toBe('shot');
 
-    ctx.host.config.cameraModes = () => [VIDEO];
-    ctx.session.selectDefaultTab([VIDEO]);
+    ctx.config.set('cameraModes', VIDEO);
     expect(ctx.session.activeTab).toBe(PHOTO);
 
     ctx.session.handle({ type: 'retake' });
@@ -913,8 +910,7 @@ describe('CameraSession flows', () => {
     const [video] = live?.getVideoTracks() ?? [];
     const [audio] = live?.getAudioTracks() ?? [];
 
-    ctx.host.config.audioEnabled = () => false;
-    ctx.session.configChanged('audioEnabled');
+    ctx.config.set('enableAudioRecording', false);
 
     expect(audio?.stop).toHaveBeenCalledOnce();
     expect(live?.getAudioTracks()).toEqual([]);
@@ -923,22 +919,20 @@ describe('CameraSession flows', () => {
     await vi.waitFor(() => expect(ctx.session.stream.devices.microphones).toEqual([]));
 
     // Back on: the same microphone settings as before are a change again.
-    ctx.host.config.audioEnabled = () => true;
-    ctx.session.configChanged('audioEnabled');
+    ctx.config.set('enableAudioRecording', true);
     await vi.waitFor(() => expect(live?.getAudioTracks()).toHaveLength(1));
   });
 
   it('audio recording turned on opens the microphone into the open camera', async () => {
     const { getUserMedia, streams, microphoneCalls } = stubMedia();
     const ctx = setup();
-    ctx.host.config.audioEnabled = () => false;
+    ctx.config.set('enableAudioRecording', false);
     await activate(ctx, [PHOTO, VIDEO]);
     await vi.waitFor(() => expect(ctx.session.stream.devices.cameras).toHaveLength(2));
     expect(getUserMedia.mock.lastCall?.[0].audio).toBe(false);
     const live = streams[0];
 
-    ctx.host.config.audioEnabled = () => true;
-    ctx.session.configChanged('audioEnabled');
+    ctx.config.set('enableAudioRecording', true);
     await vi.waitFor(() => expect(live?.getAudioTracks()).toHaveLength(1));
 
     expect(microphoneCalls()).toHaveLength(1);
@@ -954,11 +948,11 @@ describe('CameraSession flows', () => {
     const slow = hold();
     ctx.session.handle({ type: 'select-microphone', deviceId: 'mic-2' });
     // The swap's own check passes, and queues the stream's end in the microtask before the session resumes.
-    ctx.host.config.audioEnabled = () => {
-      ctx.host.config.audioEnabled = () => true;
+    const read = vi.spyOn(ctx.config, 'get');
+    read.mockImplementationOnce(() => {
       queueMicrotask(() => ctx.session.stream.feed.close());
       return true;
-    };
+    });
 
     const late = slow.answer();
 
@@ -974,8 +968,7 @@ describe('CameraSession flows', () => {
     const slow = hold();
     ctx.session.handle({ type: 'select-microphone', deviceId: 'mic-2' });
 
-    ctx.host.config.audioEnabled = () => false;
-    ctx.session.configChanged('audioEnabled');
+    ctx.config.set('enableAudioRecording', false);
     const late = slow.answer();
     await vi.waitFor(() => expect(late.getAudioTracks()[0]?.stop).toHaveBeenCalled());
 
@@ -1022,7 +1015,7 @@ describe('CameraSession flows', () => {
   it('a microphone permission granted with the camera open adds the microphone and keeps the photo under review', async () => {
     const { getUserMedia, streams, hold, microphoneCalls, permissionStatus } = stubMedia();
     const ctx = setup();
-    ctx.host.config.audioEnabled = () => false;
+    ctx.config.set('enableAudioRecording', false);
     giveVideo(ctx, fakeVideo());
     stubCanvas();
     await activate(ctx, [PHOTO, VIDEO]);
@@ -1033,8 +1026,7 @@ describe('CameraSession flows', () => {
 
     // Turned on, and the microphone is refused at first.
     hold().fail(new DOMException('Simulated', 'NotAllowedError'));
-    ctx.host.config.audioEnabled = () => true;
-    ctx.session.configChanged('audioEnabled');
+    ctx.config.set('enableAudioRecording', true);
     await vi.waitFor(() => expect(ctx.report).toHaveBeenCalled());
 
     permissionStatus.microphone.dispatchEvent(new Event('change'));
@@ -1053,7 +1045,7 @@ describe('CameraSession flows', () => {
   it('a refused microphone opens the camera without sound, and asks for the microphone no more', async () => {
     const { getUserMedia, streams, microphoneCalls } = stubMedia();
     getUserMedia.mockRejectedValueOnce(new DOMException('Simulated', 'NotAllowedError'));
-    const ctx = setup({ cameraModes: () => [VIDEO] });
+    const ctx = setup({ cameraModes: VIDEO });
 
     await open(ctx, [VIDEO]);
     await vi.waitFor(() => expect(ctx.session.permission).toBe('granted'));
@@ -1071,7 +1063,7 @@ describe('CameraSession flows', () => {
   it('a camera switch that has the microphone refused again keeps it denied', async () => {
     const { getUserMedia, streams } = stubMedia();
     getUserMedia.mockRejectedValueOnce(new DOMException('Simulated', 'NotAllowedError'));
-    const ctx = setup({ cameraModes: () => [VIDEO] });
+    const ctx = setup({ cameraModes: VIDEO });
     await open(ctx, [VIDEO]);
     expect(ctx.session.stream.microphoneDenied).toBe(true);
 
@@ -1086,7 +1078,7 @@ describe('CameraSession flows', () => {
   it('a microphone permission granted after the microphone was refused at open opens it into the camera', async () => {
     const { getUserMedia, streams, microphoneCalls, permissionStatus } = stubMedia();
     getUserMedia.mockRejectedValueOnce(new DOMException('Simulated', 'NotAllowedError'));
-    const ctx = setup({ cameraModes: () => [VIDEO] });
+    const ctx = setup({ cameraModes: VIDEO });
     await open(ctx, [VIDEO]);
     await ctx.tasksSettled();
     const live = streams[0];
@@ -1103,7 +1095,7 @@ describe('CameraSession flows', () => {
     const { getUserMedia } = stubMedia();
     const error = new DOMException('Simulated', 'NotAllowedError');
     getUserMedia.mockRejectedValue(error);
-    const ctx = setup({ cameraModes: () => [VIDEO] });
+    const ctx = setup({ cameraModes: VIDEO });
 
     await activate(ctx, [VIDEO]);
     await vi.waitFor(() => expect(ctx.session.permission).toBe('denied'));
@@ -1122,7 +1114,7 @@ describe('CameraSession flows', () => {
   it('a camera refused without audio recording is asked once', async () => {
     const { getUserMedia } = stubMedia();
     getUserMedia.mockRejectedValue(new DOMException('Simulated', 'NotAllowedError'));
-    const ctx = setup({ cameraModes: () => [VIDEO], audioEnabled: () => false });
+    const ctx = setup({ cameraModes: VIDEO, enableAudioRecording: false });
 
     await activate(ctx, [VIDEO]);
     await vi.waitFor(() => expect(ctx.session.permission).toBe('denied'));
@@ -1134,12 +1126,11 @@ describe('CameraSession flows', () => {
   it('audio recording turned off after the microphone was refused clears the denial', async () => {
     const { getUserMedia } = stubMedia();
     getUserMedia.mockRejectedValueOnce(new DOMException('Simulated', 'NotAllowedError'));
-    const ctx = setup({ cameraModes: () => [VIDEO] });
+    const ctx = setup({ cameraModes: VIDEO });
     await open(ctx, [VIDEO]);
     expect(ctx.session.stream.microphoneDenied).toBe(true);
 
-    ctx.host.config.audioEnabled = () => false;
-    ctx.session.configChanged('audioEnabled');
+    ctx.config.set('enableAudioRecording', false);
     await ctx.tasksSettled();
 
     expect(ctx.session.stream.microphoneDenied).toBe(false);
@@ -1147,13 +1138,12 @@ describe('CameraSession flows', () => {
 
   it('a microphone refused when audio recording is turned on marks it denied, the camera kept', async () => {
     const { streams, hold } = stubMedia();
-    const ctx = setup({ cameraModes: () => [VIDEO], audioEnabled: () => false });
+    const ctx = setup({ cameraModes: VIDEO, enableAudioRecording: false });
     await activate(ctx, [VIDEO]);
     await vi.waitFor(() => expect(ctx.session.stream.devices.cameras).toHaveLength(2));
 
     hold().fail(new DOMException('Simulated', 'NotAllowedError'));
-    ctx.host.config.audioEnabled = () => true;
-    ctx.session.configChanged('audioEnabled');
+    ctx.config.set('enableAudioRecording', true);
 
     await vi.waitFor(() => expect(ctx.session.stream.microphoneDenied).toBe(true));
     expect(streams[0]?.getVideoTracks()[0]?.stop).not.toHaveBeenCalled();
@@ -1161,7 +1151,7 @@ describe('CameraSession flows', () => {
 
   it('a microphone refused when another is picked, with none live, marks it denied', async () => {
     const { streams, hold } = stubMedia();
-    const ctx = setup({ cameraModes: () => [VIDEO] });
+    const ctx = setup({ cameraModes: VIDEO });
     await open(ctx, [VIDEO]);
     expect(ctx.session.stream.microphoneDenied).toBe(false);
     const [ended] = streams[0]?.getAudioTracks() ?? [];
@@ -1175,7 +1165,7 @@ describe('CameraSession flows', () => {
 
   it('a microphone refused again after a permission change marks it denied', async () => {
     const { streams, hold, permissionStatus } = stubMedia();
-    const ctx = setup({ cameraModes: () => [VIDEO] });
+    const ctx = setup({ cameraModes: VIDEO });
     await open(ctx, [VIDEO]);
     const [ended] = streams[0]?.getAudioTracks() ?? [];
     if (ended) ended.readyState = 'ended';
@@ -1188,7 +1178,7 @@ describe('CameraSession flows', () => {
 
   it('a microphone refused while the current one still records keeps it, and only warns', async () => {
     const { streams, hold } = stubMedia();
-    const ctx = setup({ cameraModes: () => [VIDEO] });
+    const ctx = setup({ cameraModes: VIDEO });
     await open(ctx, [VIDEO]);
     const [working] = streams[0]?.getAudioTracks() ?? [];
 
@@ -1203,7 +1193,7 @@ describe('CameraSession flows', () => {
 
   it('a microphone that fails to start when another is picked only warns', async () => {
     const { hold } = stubMedia();
-    const ctx = setup({ cameraModes: () => [VIDEO] });
+    const ctx = setup({ cameraModes: VIDEO });
     await open(ctx, [VIDEO]);
 
     hold().fail(new DOMException('Simulated', 'NotReadableError'));
@@ -1221,8 +1211,7 @@ describe('CameraSession flows', () => {
     const [audio] = streams[0]?.getAudioTracks() ?? [];
     const recorder = startRecording(ctx);
 
-    ctx.host.config.audioEnabled = () => false;
-    ctx.session.configChanged('audioEnabled');
+    ctx.config.set('enableAudioRecording', false);
     expect(audio?.stop).not.toHaveBeenCalled();
 
     await stopRecording(ctx, recorder);
@@ -1382,12 +1371,12 @@ describe('CameraSession edges', () => {
 
   it('a config change gives a pick back to the first listed value', async () => {
     stubMedia();
-    const ctx = setup();
-    ctx.host.config.audioQuality = () => 'auto, high';
+    const ctx = setup({ cameraAudioQuality: 'auto, high' });
+    await activate(ctx);
     ctx.session.handle({ type: 'pick-setting', setting: 'audioQuality', value: 'high' });
     expect(ctx.session.stream.settings.audioQuality).toBe('high');
 
-    ctx.session.configChanged('audioQuality');
+    ctx.config.set('cameraAudioQuality', 'auto, standard, high');
 
     expect(ctx.session.stream.settings.audioQuality).toBe('auto');
   });

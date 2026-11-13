@@ -3,23 +3,29 @@ import { maxShortSideOf } from '../../abstract/camera/cameraSettings';
 import { RequestedConstraints } from '../../abstract/camera/RequestedConstraints';
 import type { CameraMode } from '../../abstract/cameraModes';
 import { signalState } from '../../abstract/di/signalState';
-import type { CameraConstraints, CameraConstraintsResolver } from '../../types/exported';
 import { CameraDevices } from './CameraDevices';
-import { type CameraSetting, CaptureSettings, type CaptureSettingsConfig } from './CaptureSettings';
-import type { CameraLifetime, CameraReport } from './cameraHost';
+import { type CameraSetting, CaptureSettings } from './CaptureSettings';
+import type { CameraConfig, CameraLifetime, CameraReport } from './cameraHost';
 import { CameraFeed } from './media/CameraFeed';
 import { MicrophoneSwap } from './media/MicrophoneSwap';
 
 /** What a config change or a pick touches in the open camera. */
 export type StreamChange = CameraSetting | 'constraints' | 'audioEnabled';
 
+/** The options the open camera follows, each with what its change touches. */
+const WATCHED_OPTIONS = [
+  ['cameraAspectRatio', 'aspectRatio'],
+  ['cameraResolution', 'resolution'],
+  ['cameraAudioQuality', 'audioQuality'],
+  ['cameraAudioMode', 'audioMode'],
+  ['cameraConstraints', 'constraints'],
+  ['enableAudioRecording', 'audioEnabled'],
+] as const;
+
 /** What the session lends: its lifetime, the config, and what it knows of the capture. */
 export type StreamSettingsHost = {
   lifetime: CameraLifetime;
-  config: CaptureSettingsConfig & {
-    audioEnabled: () => boolean;
-    constraints: () => CameraConstraints | CameraConstraintsResolver | null;
-  };
+  config: CameraConfig;
   /** The mode the camera opens for: the active tab, or the tab about to become active. */
   mode: () => CameraMode;
   /** A change made while this holds waits for `resume`: applied to a camera that is recording, it breaks the clip. */
@@ -53,7 +59,7 @@ export class StreamSettings {
     this.settings = new CaptureSettings(_host.config);
     this.devices = new CameraDevices({
       lifetime: _host.lifetime,
-      audioEnabled: () => _host.config.audioEnabled(),
+      audioEnabled: () => _host.config.get('enableAudioRecording'),
       cameraLabel: _host.cameraLabel,
       microphoneLabel: _host.microphoneLabel,
       onDevicesChange: (lists) => {
@@ -71,7 +77,10 @@ export class StreamSettings {
    */
   public async open(beforeAttempt: () => void): Promise<MediaStream | null> {
     // The open forgets dropped custom constraints, so it is asked for the configured ones.
-    const opened = await this.feed.open(this._constraintsInput(this._host.config.constraints()), beforeAttempt);
+    const opened = await this.feed.open(
+      this._constraintsInput(this._host.config.get('cameraConstraints')),
+      beforeAttempt,
+    );
     if (!opened) return null;
     this._requested.opened(opened.constraints);
     this.microphoneDenied = opened.microphoneRefused;
@@ -95,6 +104,14 @@ export class StreamSettings {
     }
     if (change === 'audioMode' || change === 'audioEnabled' || change === 'constraints') {
       runTask(() => this._applyAudioConstraints());
+    }
+  }
+
+  /** Follows the options behind the stream until `adoption` ends. */
+  public watchConfig(adoption: AbortSignal): void {
+    for (const [option, change] of WATCHED_OPTIONS) {
+      const unwatch = this._host.config.observe(option, () => this.configChanged(change));
+      adoption.addEventListener('abort', unwatch, { once: true });
     }
   }
 
@@ -141,11 +158,11 @@ export class StreamSettings {
 
   /** `custom` defaults to `cameraConstraints`, unless the open camera couldn't satisfy them. */
   private _constraintsInput(
-    custom = this.feed.customDropped ? null : this._host.config.constraints(),
+    custom = this.feed.customDropped ? null : this._host.config.get('cameraConstraints'),
   ): BuildConstraintsInput {
     return {
       mode: this._host.mode(),
-      enableAudio: this._host.config.audioEnabled(),
+      enableAudio: this._host.config.get('enableAudioRecording'),
       audioMode: this.settings.audioMode,
       aspectRatio: this.settings.aspectRatio,
       resolution: this.settings.resolution,
@@ -207,7 +224,7 @@ export class StreamSettings {
     const request = this._requested.requestAudio(audio);
     if (!request) return;
     // Audio recording turned off while the microphone opened: its track is stale too.
-    const isCurrent = () => this.feed.stream === stream && this._host.config.audioEnabled();
+    const isCurrent = () => this.feed.stream === stream && this._host.config.get('enableAudioRecording');
     const track = await this._microphone.open(audio, isCurrent);
     if (!track) return;
     // Refused after the camera opened: the same denial as a microphone refused with it, unless the one in use still

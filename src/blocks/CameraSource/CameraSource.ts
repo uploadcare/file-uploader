@@ -1,4 +1,3 @@
-import { Signal } from '@lit-labs/signals';
 import { html, type PropertyValues } from 'lit';
 import { state } from 'lit/decorators.js';
 import { type CameraMode, parseCameraModes } from '../../abstract/cameraModes';
@@ -8,12 +7,9 @@ import { inject } from '../../abstract/di/inject';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
-import { effect } from '../../lit/effect';
-import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { canUsePermissionsApi } from '../../utils/abilities';
 import { UploadSource } from '../../utils/UploadSource';
 import { CameraSession } from './CameraSession';
-import type { CameraSetting } from './CaptureSettings';
 import type { CameraActionEvent } from './ui/CameraActionEvent';
 import { CameraControls } from './ui/CameraControls';
 import { CameraHeader } from './ui/CameraHeader';
@@ -47,21 +43,11 @@ export class CameraSource extends ChildBlock {
       runTask: (task) => this.runTask(task),
       adoptionSignal: () => this.adoptionSignal,
     },
-    // The settings the camera screen shows are tracked reads, so a render that reads them through the session
-    // re-renders when they change.
+    // The session is built with the element, before `@inject` can resolve the config, so each read asks for it.
     config: {
-      audioEnabled: () => this._config.get('enableAudioRecording'),
-      mirror: () => this._config.get('cameraMirror'),
-      recorderOptions: () => this._config.get('mediaRecorderOptions'),
-      maxRecordingSeconds: () => this._config.get('maxVideoRecordingDuration') ?? undefined,
-      cameraModes: () => parseCameraModes(this._config.get('cameraModes')),
-      videoFormats: () => this._config.get('cameraVideoFormats'),
-      constraints: () => this._config.get('cameraConstraints'),
-      aspectRatio: () => this._config.getTracked('cameraAspectRatio'),
-      resolution: () => this._config.getTracked('cameraResolution'),
-      photoQuality: () => this._config.get('cameraPhotoQuality'),
-      audioQuality: () => this._config.getTracked('cameraAudioQuality'),
-      audioMode: () => this._config.getTracked('cameraAudioMode'),
+      get: (key) => this._config.get(key),
+      getTracked: (key) => this._config.getTracked(key),
+      observe: (key, listener, options) => this._config.observe(key, listener, options),
     },
     cameraLabel: (index) => `${this.l10n('caption-camera')} ${index + 1}`,
     microphoneLabel: (index) => `${this.l10n('camera-microphone')} ${index + 1}`,
@@ -101,37 +87,6 @@ export class CameraSource extends ChildBlock {
 
   protected override controllerReleased(): void {
     this._session.release();
-  }
-
-  // Picks the default tab when `cameraModes` changes. `beforeUpdate` fires it eagerly and synchronously on adoption,
-  // before `controllerReady`'s awaited work runs, then again on change. What the modes show and hide is read in render.
-  /** @internal */
-  @effect({ beforeUpdate: true })
-  protected _syncCameraModes(): void {
-    if (!this.isConnected) return;
-    const cameraModes = parseCameraModes(this._config.getTracked('cameraModes'));
-    // Only `cameraModes` drives this; what a tab switch reads to re-apply constraints must not.
-    Signal.subtle.untrack(() => this._session.selectDefaultTab(cameraModes));
-  }
-
-  /**
-   * A change to a camera setting's option starts its picker over on the first listed value and applies it to the open
-   * camera; `enableAudioRecording` adds or drops its microphone.
-   * @internal
-   */
-  @subscription()
-  protected _watchCameraSettings(): Unsubscribe[] {
-    const settings = {
-      cameraAspectRatio: 'aspectRatio',
-      cameraResolution: 'resolution',
-      cameraAudioQuality: 'audioQuality',
-      cameraAudioMode: 'audioMode',
-      cameraConstraints: 'constraints',
-      enableAudioRecording: 'audioEnabled',
-    } as const satisfies Record<string, CameraSetting | 'constraints' | 'audioEnabled'>;
-    return Object.entries(settings).map(([key, setting]) =>
-      this._config.observe(key as keyof typeof settings, () => this._session.configChanged(setting)),
-    );
   }
 
   // Tracked under SignalWatcher like `render()`, so the host classes the camera's CSS reads follow the session's state.

@@ -1,37 +1,23 @@
 import { cameraFailureOf } from '../../abstract/camera/cameraFailure';
-import { type CameraMode, CameraSourceTypes } from '../../abstract/cameraModes';
+import { type CameraMode, CameraSourceTypes, parseCameraModes } from '../../abstract/cameraModes';
 import type { NavigationEdge } from '../../abstract/controllers/RouterController';
 import { isAbortError } from '../../abstract/di/Lifetime';
 import { signalState } from '../../abstract/di/signalState';
-import type { CameraConstraints, CameraConstraintsResolver } from '../../types/exported';
 import { CameraAccess, type CameraPermission, type SettledPermission } from './CameraAccess';
 import type { CameraSetting } from './CaptureSettings';
-import type { CameraLifetime, CameraReport } from './cameraHost';
+import type { CameraConfig, CameraLifetime, CameraReport } from './cameraHost';
 import type { CameraCommand, CameraPhase, ClockView } from './cameraTypes';
 import { Capture } from './media/Capture';
 import { photoFile } from './media/PhotoCapture';
 import { type ClipHandlers, PreviewVideo } from './media/PreviewVideo';
 import { RecordingClock } from './media/RecordingClock';
 import { recorderOptions } from './media/VideoRecording';
-import { type StreamChange, StreamSettings } from './StreamSettings';
+import { StreamSettings } from './StreamSettings';
 
 /** What the camera element lends the session: its lifetime, config, elements, and the ways out. */
 export type CameraSessionHost = {
   lifetime: CameraLifetime;
-  config: {
-    audioEnabled: () => boolean;
-    mirror: () => boolean;
-    recorderOptions: () => MediaRecorderOptions | null;
-    maxRecordingSeconds: () => number | undefined;
-    cameraModes: () => CameraMode[];
-    videoFormats: () => string;
-    constraints: () => CameraConstraints | CameraConstraintsResolver | null;
-    aspectRatio: () => string;
-    resolution: () => string;
-    photoQuality: () => number;
-    audioQuality: () => string;
-    audioMode: () => string;
-  };
+  config: CameraConfig;
   cameraLabel: (index: number) => string;
   microphoneLabel: (index: number) => string;
   navigate: (edge: NavigationEdge) => void;
@@ -76,7 +62,7 @@ export class CameraSession {
     lifetime: this._host.lifetime,
     config: this._host.config,
     // The active tab, or the tab about to become active.
-    mode: () => this.activeTab ?? this._host.config.cameraModes()[0] ?? CameraSourceTypes.PHOTO,
+    mode: () => this.activeTab ?? this._cameraModes()[0] ?? CameraSourceTypes.PHOTO,
     isRecording: () => this._capture.isRecording,
     cameraLabel: this._host.cameraLabel,
     microphoneLabel: this._host.microphoneLabel,
@@ -129,11 +115,18 @@ export class CameraSession {
   }
 
   /**
-   * Watches the permissions and opens the camera on the first configured tab, asking for it once. The devices are
-   * listed once it opened, when their labels are readable, and again whenever they change.
+   * Follows the config, watches the permissions and opens the camera on the first configured tab, asking for it once.
+   * The devices are listed once it opened, when their labels are readable, and again whenever they change.
    */
   public async activate(): Promise<void> {
     const adoption = this._host.lifetime.adoptionSignal();
+    // The tab is picked now, before the camera is asked for, and again whenever the modes change.
+    adoption.addEventListener(
+      'abort',
+      this._host.config.observe('cameraModes', () => this._captureResolved(), { immediate: true }),
+      { once: true },
+    );
+    this._stream.watchConfig(adoption);
     await this._access.watchPermissions();
     this._stream.devices.watchDeviceChanges(adoption);
     await this._openCamera(adoption);
@@ -151,23 +144,6 @@ export class CameraSession {
     this._closeCamera();
     this._access.stopWatchingPermissions();
     this._preview.release();
-  }
-
-  /**
-   * Falls back to the first configured mode when the current tab isn't one. A capture not yet resolved keeps its tab:
-   * the shutter still stops its recording, and its review keeps its actions. It falls back once the capture resolves.
-   */
-  public selectDefaultTab(cameraModes: CameraMode[]): void {
-    if (this.phase !== 'live' || this._capture.isStopping) return;
-    const defaultTab = cameraModes[0];
-    if (defaultTab && (!this.activeTab || !cameraModes.includes(this.activeTab))) {
-      this._selectTab(defaultTab);
-    }
-  }
-
-  /** The option behind `change` changed in the config, which the open camera follows. */
-  public configChanged(change: StreamChange): void {
-    this._stream.configChanged(change);
   }
 
   public handle(action: CameraCommand): void {
@@ -247,7 +223,7 @@ export class CameraSession {
   private _trackCapture(event: string): void {
     this._track(event, {
       tabId: this.activeTab,
-      hasCustomConstraints: Boolean(this._host.config.constraints()),
+      hasCustomConstraints: Boolean(this._host.config.get('cameraConstraints')),
       ...this._stream.settings.telemetry(),
     });
   }
@@ -259,7 +235,7 @@ export class CameraSession {
     this._track('camera-tab-switch', { tabId: tab });
     this.activeTab = tab;
     // Only the function form can differ between modes.
-    if (typeof this._host.config.constraints() === 'function') {
+    if (typeof this._host.config.get('cameraConstraints') === 'function') {
       this._stream.apply('constraints');
     }
   }
@@ -292,8 +268,8 @@ export class CameraSession {
     // `ImageCapture.takePhoto()` was tried on main: with a real camera the preview changed after a shot and a retake.
     this._capture.shoot(video, {
       aspectRatio: this._stream.settings.aspectRatio,
-      mirror: this._host.config.mirror(),
-      quality: this._host.config.photoQuality(),
+      mirror: this._host.config.get('cameraMirror'),
+      quality: this._host.config.get('cameraPhotoQuality'),
     });
     // TODO: There are troubles with this, image isn't freezed after shot due to rendering in progress
     this._preview.pause();
@@ -306,10 +282,17 @@ export class CameraSession {
     try {
       this._capture.record(feed.stream, this._preview.element, {
         aspectRatio: settings.aspectRatio,
-        mirror: config.mirror(),
-        recorder: recorderOptions(config.recorderOptions(), settings.audioQuality, config.videoFormats()),
+        mirror: config.get('cameraMirror'),
+        recorder: recorderOptions(
+          config.get('mediaRecorderOptions'),
+          settings.audioQuality,
+          config.get('cameraVideoFormats'),
+        ),
       });
-      this._clock.startTimer(config.maxRecordingSeconds, () => this._stopRecording());
+      this._clock.startTimer(
+        () => config.get('maxVideoRecordingDuration') ?? undefined,
+        () => this._stopRecording(),
+      );
     } catch (error) {
       this._host.report('error', 'Failed to start recording', error, 'camera recording. Failed to start recording');
     }
@@ -377,9 +360,22 @@ export class CameraSession {
     if (clipShown) this._preview.showLive(this._stream.feed.stream);
   }
 
-  /** The capture was accepted, retaken or dropped: a `cameraModes` change that waited for it switches the tab now. */
+  private _cameraModes(): CameraMode[] {
+    return parseCameraModes(this._host.config.get('cameraModes'));
+  }
+
+  /**
+   * Falls back to the first configured mode when the current tab isn't one. A capture not yet resolved keeps its tab:
+   * the shutter still stops its recording, and its review keeps its actions. So this runs again once the capture is
+   * accepted, retaken or dropped, and a `cameraModes` change that waited for it switches the tab then.
+   */
   private _captureResolved(): void {
-    this.selectDefaultTab(this._host.config.cameraModes());
+    if (this.phase !== 'live' || this._capture.isStopping) return;
+    const cameraModes = this._cameraModes();
+    const defaultTab = cameraModes[0];
+    if (defaultTab && (!this.activeTab || !cameraModes.includes(this.activeTab))) {
+      this._selectTab(defaultTab);
+    }
   }
 
   private async _addPhoto(photo: Promise<Blob>): Promise<void> {

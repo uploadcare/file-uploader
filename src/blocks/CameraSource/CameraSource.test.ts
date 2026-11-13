@@ -3,8 +3,8 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploaderRegistry } from '../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../lit/ensureUploaderCtx';
 import { delay } from '../../utils/delay';
-import { CameraSession } from './CameraSession';
 import { CameraSource } from './CameraSource';
+import { StreamSettings } from './StreamSettings';
 import { CameraActionEvent } from './ui/CameraActionEvent';
 
 // Idempotent (same path as defineComponents(UC)).
@@ -120,7 +120,7 @@ describe('CameraSource', () => {
 
   it('hands an enableAudioRecording change to the session', async () => {
     const { config } = await mount(freshCtxName());
-    const configChanged = vi.spyOn(CameraSession.prototype, 'configChanged').mockImplementation(() => {});
+    const configChanged = vi.spyOn(StreamSettings.prototype, 'configChanged').mockImplementation(() => {});
 
     config.set('enableAudioRecording', false);
 

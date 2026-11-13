@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fakeStream, fakeTrack, lifetimeOf } from './__tests__/camera-fixtures';
+import { cameraConfig, fakeStream, fakeTrack, lifetimeOf } from './__tests__/camera-fixtures';
 import { StreamSettings } from './StreamSettings';
 
 afterEach(() => {
@@ -17,14 +17,7 @@ const setup = async () => {
   const state = { recording: false };
   const stream = new StreamSettings({
     lifetime: lifetimeOf(),
-    config: {
-      audioEnabled: () => true,
-      constraints: () => null,
-      aspectRatio: () => 'native, 1:1',
-      resolution: () => 'auto',
-      audioQuality: () => 'auto',
-      audioMode: () => 'voice',
-    },
+    config: cameraConfig({ cameraResolution: 'auto' }),
     mode: () => 'video',
     isRecording: () => state.recording,
     cameraLabel: () => 'Camera',

@@ -10,17 +10,10 @@ import {
 } from '../../abstract/camera/cameraSettings';
 import { signalState } from '../../abstract/di/signalState';
 import type { CameraAudioMode, CameraAudioQuality, CameraResolution } from '../../types/exported';
+import type { CameraConfig } from './cameraHost';
 
 /** A camera setting the user can pick in the settings popup, besides the devices. */
 export type CameraSetting = 'aspectRatio' | 'resolution' | 'audioQuality' | 'audioMode';
-
-/** The element's readers of the four options; tracked, so a render that reads a value re-renders when it changes. */
-export type CaptureSettingsConfig = {
-  aspectRatio(): string;
-  resolution(): string;
-  audioQuality(): string;
-  audioMode(): string;
-};
 
 const offered = <T extends string>(options: readonly T[], value: string): T | undefined =>
   options.find((option) => option === value);
@@ -42,10 +35,11 @@ export class CaptureSettings {
   @signalState() private _pickedAudioQuality: CameraAudioQuality | null = null;
   @signalState() private _pickedAudioMode: CameraAudioMode | null = null;
 
-  public constructor(private readonly _config: CaptureSettingsConfig) {}
+  /** The four options are tracked reads, so a render that reads a value here re-renders when its option changes. */
+  public constructor(private readonly _config: Pick<CameraConfig, 'getTracked'>) {}
 
   public get aspectRatioOptions(): string[] {
-    return parseAspectRatioOptions(this._config.aspectRatio());
+    return parseAspectRatioOptions(this._config.getTracked('cameraAspectRatio'));
   }
 
   /** The ratio option in effect, `native` for the camera's own shape. */
@@ -60,21 +54,20 @@ export class CaptureSettings {
 
   /** The listed resolutions the camera can do. */
   public get resolutionOptions(): CameraResolution[] {
-    return filterResolutionOptions(parseOptions(this._config.resolution(), RESOLUTIONS), this.maxShortSide);
+    return filterResolutionOptions(this._listedResolutions(), this.maxShortSide);
   }
 
   /** A single value is a request rather than a picker option, so it applies even above what the camera reports. */
   public get resolution(): CameraResolution {
-    return (
-      this._pickedResolution ??
-      this.resolutionOptions[0] ??
-      parseOptions(this._config.resolution(), RESOLUTIONS)[0] ??
-      'auto'
-    );
+    return this._pickedResolution ?? this.resolutionOptions[0] ?? this._listedResolutions()[0] ?? 'auto';
+  }
+
+  private _listedResolutions(): CameraResolution[] {
+    return parseOptions(this._config.getTracked('cameraResolution'), RESOLUTIONS);
   }
 
   public get audioQualityOptions(): CameraAudioQuality[] {
-    return parseOptions(this._config.audioQuality(), AUDIO_QUALITIES);
+    return parseOptions(this._config.getTracked('cameraAudioQuality'), AUDIO_QUALITIES);
   }
 
   public get audioQuality(): CameraAudioQuality {
@@ -82,7 +75,7 @@ export class CaptureSettings {
   }
 
   public get audioModeOptions(): CameraAudioMode[] {
-    return parseOptions(this._config.audioMode(), AUDIO_MODES);
+    return parseOptions(this._config.getTracked('cameraAudioMode'), AUDIO_MODES);
   }
 
   public get audioMode(): CameraAudioMode {
