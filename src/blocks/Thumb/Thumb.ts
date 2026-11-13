@@ -9,6 +9,7 @@ import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { effect } from '../../lit/effect';
 import { cancelPending, debounced } from '../../lit/rate-limited-method';
 import { operationsFromModifiers } from '../../utils/cdn/operations';
+import { NEAR_VIEW } from '../../utils/near-view';
 import { preloadImage } from '../../utils/preloadImage';
 import { generateThumb } from '../../utils/resizeImage';
 import { FileItemConfig } from '../FileItem/FileItemConfig';
@@ -360,7 +361,10 @@ export class Thumb extends FileItemConfig {
     super.connectedCallback();
 
     this._observer?.disconnect();
-    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), { threshold: 0.1 });
+    this._observer = new window.IntersectionObserver(this._observerCallback.bind(this), {
+      ...NEAR_VIEW,
+      threshold: 0.1,
+    });
 
     this._observer.observe(this);
   }

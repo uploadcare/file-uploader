@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it, onTestFinished } from 'vitest';
 import { page } from 'vitest/browser';
 import type { UploadCtxProvider } from '@/index.js';
+import { isLive } from '~/tests/utils/emulator.browser';
 import { TEST_IMAGE_URL } from '../utils/constants';
 import { getCtxName } from '../utils/getCtxName';
 import { type RenderedUploader, renderSolution, within } from '../utils/render-solution';
@@ -118,6 +119,21 @@ describe('uc-upload-list virtualization', () => {
     const files = root.querySelector<HTMLElement>('.uc-files')!;
     const lastRow = () => root.querySelector('uc-file-item:last-of-type') ?? undefined;
     await expect.poll(() => scrollToBottom(files, lastRow)?.textContent).toContain('f299.txt');
+  });
+
+  it.skipIf(isLive)('fills in the rows a screen below the visible ones before they scroll in', async () => {
+    const { api, root } = await renderSolution('regular', { confirmUpload: true, multipleMax: 1000 });
+    addFiles(api, 300);
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+    await expect.poll(() => root.querySelector('.uc-list-spacer')).not.toBeNull();
+    const files = root.querySelector<HTMLElement>('.uc-files')!;
+    const belowTheFold = () =>
+      [...root.querySelectorAll('uc-file-item')].filter(
+        (row) => row.getBoundingClientRect().top >= files.getBoundingClientRect().bottom,
+      );
+    await expect.poll(() => belowTheFold().length).toBeGreaterThan(0);
+    await expect.poll(() => belowTheFold().every((row) => row.childElementCount > 0)).toBe(true);
   });
 
   it('drops the gap below the last file only, as in 1.35, not below the last rendered row', async () => {
