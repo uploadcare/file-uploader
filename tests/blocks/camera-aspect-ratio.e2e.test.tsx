@@ -175,11 +175,13 @@ describe('cameraAspectRatio in video mode', () => {
     const opened = await openCamera({ cameraAspectRatio: '1:1', ...NATIVE_FRAMES });
     const video = await preview(opened.camera);
     expect(video.videoWidth / video.videoHeight).toBeCloseTo(16 / 9, 2);
+    // Read before the clip: accepting it leaves the camera, which stops its stream.
+    const { videoHeight } = video;
 
     const clip = await recordVideo(opened);
 
     expect(clip.width).toBe(clip.height);
-    expect(clip.width).toBe(video.videoHeight);
+    expect(clip.width).toBe(videoHeight);
     expect(captureStream).toHaveBeenCalled();
   });
 
