@@ -1,6 +1,7 @@
 import { describe, expect, it, onTestFinished } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import type { Config } from '@/index.js';
+import { isLive } from '~/tests/utils/emulator.browser';
 import { expectNoA11yViolations } from '../utils/a11y';
 import { type RenderedUploader, renderSolution, within } from '../utils/render-solution';
 
@@ -118,6 +119,33 @@ describe('uc-upload-list keyboard access', () => {
     await press('Home');
     await expect.poll(() => focusIsOnRow(ids)).toBe(0);
   });
+
+  // A row not yet in view is a shorter shell than one in view. A row height estimate that followed the rows End
+  // rendered moved the window, which rendered other rows, and so on without settling: the next key then found no row
+  // in focus.
+  it.skipIf(isLive)(
+    'settles on the last of 1000 rows after End: the rows above it render, and ArrowUp moves on from it',
+    async () => {
+      const { root, ids, files, rowAt } = await openList(1000);
+      await tabIntoList(root);
+
+      await press('End');
+      await expect.poll(() => focusIsOnRow(ids)).toBe(999);
+      await expect.poll(() => rowAt(990)).toBeDefined();
+      const view = files.getBoundingClientRect();
+      const onScreen = (el: Element) => {
+        const rect = el.getBoundingClientRect();
+        return rect.height > 0 && rect.bottom > view.top && rect.top < view.bottom;
+      };
+      expect([...root.querySelectorAll('.uc-list-spacer')].filter(onScreen)).toEqual([]);
+
+      await press('ArrowUp');
+      await expect.poll(() => focusIsOnRow(ids)).toBe(998);
+      await press('PageUp');
+      await expect.poll(() => focusIsOnRow(ids)).toBeLessThan(998);
+      expect(focusIsOnRow(ids)).toBeGreaterThan(900);
+    },
+  );
 
   it('names a row End scrolled in by the time it takes focus', async () => {
     const { root, ids } = await openList(300);

@@ -415,6 +415,21 @@ describe('VirtualListController row height estimate', () => {
     expect(slice.bottomPad).toBe(96 * 60);
   });
 
+  it('only grows after the first average, so rows of another mix cannot move it back and forth', () => {
+    const rows = rowsOf(40, 40, 40, 40, 40);
+    const { host, controller } = setup(rows);
+    resizeRows(rows, [50, 50, 50, 50, 50]);
+    expect(flat(controller.window(listOf(100))).bottomPad).toBe(96 * 50);
+
+    const before = host.updateCount;
+    resizeRows(rows, [44, 44, 44, 44, 44]);
+    expect(host.updateCount).toBe(before);
+    expect(flat(controller.window(listOf(100))).bottomPad).toBe(96 * 50);
+
+    resizeRows(rows, [60, 60, 60, 60, 60]);
+    expect(flat(controller.window(listOf(100))).bottomPad).toBe(96 * 60);
+  });
+
   it('ignores a row measured with no layout', () => {
     const rows = rowsOf(40, 40);
     const { controller } = setup(rows);

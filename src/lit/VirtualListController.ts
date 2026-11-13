@@ -89,6 +89,8 @@ export class VirtualListController implements ReactiveController {
   private _measured = false;
   // What rowMetrics adds to an item's own height (a grid's row gap).
   private _rowExtra = 0;
+  // Whether the rows' average has replaced the seed since the last latch.
+  private _averaged = false;
   // The latched row height is only a seed: a row measured early can be collapsed (the modal's opening layout), and
   // rows differ (a row not yet scrolled into view is a shorter shell). The ResizeObserver reports each rendered row,
   // and the estimate follows their average height (0 = not reported yet).
@@ -293,16 +295,21 @@ export class VirtualListController implements ReactiveController {
       return;
     }
     const rowHeight = measured.reduce((sum, height) => sum + height, 0) / measured.length + this._rowExtra;
-    // The average moves with the window, and the window with the average: ignore a sub-pixel change so the two settle.
-    if (Math.abs(rowHeight - this._rowHeight) >= 0.5) {
+    // The average moves with the window, and the window with the average: rows differ (one not yet in view is a shorter
+    // shell), so a jump to rows of another mix moved the estimate, which moved the window to other rows, without end.
+    // So the first average replaces the seed, and after it the estimate only grows; a sub-pixel change is ignored.
+    const change = rowHeight - this._rowHeight;
+    if (change >= 0.5 || (!this._averaged && change <= -0.5)) {
       this._rowHeight = rowHeight;
       this._host.requestUpdate();
     }
+    this._averaged = true;
   }
 
   // Drop the latched metrics and stop observing rows: once re-latched, the rows are re-observed and report their sizes.
   private _unlatch(): void {
     this._measured = false;
+    this._averaged = false;
     this._observeRows(null);
   }
 
