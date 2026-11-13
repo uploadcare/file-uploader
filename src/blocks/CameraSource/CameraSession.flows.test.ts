@@ -753,6 +753,23 @@ describe('CameraSession flows', () => {
     expect(discard).toHaveBeenCalledTimes(2);
   });
 
+  it('an accepted clip leaves the preview: the camera shows live again and the clip url is revoked', async () => {
+    stubMedia();
+    const ctx = setup();
+    const video = fakeVideo();
+    giveVideo(ctx, video);
+    await open(ctx);
+    await stopRecording(ctx, startRecording(ctx));
+    expect(video.srcObject).toBeNull();
+
+    // An `onFileAdd` hook can keep the camera open after the file is added.
+    ctx.session.handle({ type: 'accept' });
+
+    expect(ctx.addFile).toHaveBeenCalledOnce();
+    expect(video.srcObject).toBe(ctx.session.feed.stream);
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:clip');
+  });
+
   it('drops a clip that arrives after the camera reopened, and waits for it before recording again', async () => {
     vi.useFakeTimers();
     const { streams } = stubMedia();

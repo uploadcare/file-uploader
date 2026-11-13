@@ -446,7 +446,12 @@ export class CameraSession {
       if (photo) this._host.lifetime.runTask(() => this._addPhoto(photo));
     } else {
       const clip = this._review.take();
+      this._clock.stop();
       this._recording.discard();
+      // The camera can stay open after the file is added (an `onFileAdd` hook): the preview goes back to live.
+      this._review.close();
+      this._preview.showLive(this.feed.stream);
+      this._preview.play();
       if (clip) this._addFile(clip);
     }
     this._captureResolved();
