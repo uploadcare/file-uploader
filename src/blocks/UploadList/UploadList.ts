@@ -11,6 +11,7 @@ import { CollectionStateController } from '../../abstract/controllers/Collection
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
 import { deriveEntryStatus } from '../../abstract/deriveEntryStatus';
+import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import { inject } from '../../abstract/di/inject';
 import { EventType } from '../../abstract/EventEmitter';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
@@ -138,6 +139,12 @@ export class UploadList extends ActivityChildBlock {
 
   // Focus was in the list when its last row went: hand it on once the summary tick settles the toolbar and the router.
   private _refocusWhenSettled = false;
+
+  // A handoff still waiting belongs to the adoption that asked for it: a moved list must not take focus later.
+  protected override controllerReleased(container: ControllerContainer): void {
+    super.controllerReleased(container);
+    this._refocusWhenSettled = false;
+  }
 
   private _columns(): number {
     if (this._config.get('filesViewMode') !== 'grid') {
