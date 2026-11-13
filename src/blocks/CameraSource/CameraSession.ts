@@ -59,23 +59,18 @@ export class CameraSession {
     },
   };
   private readonly _stream = new StreamSettings({
-    lifetime: this._host.lifetime,
-    config: this._host.config,
+    ...this._host,
     // The active tab, or the tab about to become active.
     mode: () => this.activeTab ?? this._cameraModes()[0] ?? CameraSourceTypes.PHOTO,
     isRecording: () => this._capture.isRecording,
-    cameraLabel: this._host.cameraLabel,
-    microphoneLabel: this._host.microphoneLabel,
-    report: this._host.report,
   });
   /** The camera's stream, the devices and settings picked for it, and whether it opened without a refused microphone. */
   public readonly stream: Readonly<Pick<StreamSettings, 'feed' | 'devices' | 'settings' | 'microphoneDenied'>> =
     this._stream;
   private readonly _access = new CameraAccess({
-    lifetime: this._host.lifetime,
+    ...this._host,
     onPermissionChange: (name) => this._permissionChanged(name),
     onSettled: (state) => this._permissionSettled(state),
-    report: this._host.report,
   });
   /** Why access ended `denied`. */
   public readonly access: Readonly<Pick<CameraAccess, 'failure'>> = this._access;
@@ -230,7 +225,7 @@ export class CameraSession {
 
   private _selectTab(tab: CameraMode): void {
     if (tab === CameraSourceTypes.VIDEO) {
-      this._capture.resetIcon();
+      this._capture.playing(false);
     }
     this._track('camera-tab-switch', { tabId: tab });
     this.activeTab = tab;

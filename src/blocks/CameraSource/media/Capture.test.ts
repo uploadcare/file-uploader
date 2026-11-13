@@ -171,7 +171,7 @@ describe('Capture review', () => {
     const capture = new Capture();
     capture.playing(true);
     expect(capture.timelineIcon).toBe('pause');
-    capture.resetIcon();
+    capture.playing(false);
     expect(capture.timelineIcon).toBe('play');
   });
 });

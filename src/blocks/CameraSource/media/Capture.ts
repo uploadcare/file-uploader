@@ -103,12 +103,9 @@ export class Capture {
     return url;
   }
 
+  /** The clip under review started or stopped playing. */
   public playing(on: boolean): void {
     this.timelineIcon = on ? 'pause' : 'play';
-  }
-
-  public resetIcon(): void {
-    this.timelineIcon = 'play';
   }
 
   /**

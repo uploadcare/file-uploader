@@ -58,15 +58,12 @@ export class StreamSettings {
     this._microphone = new MicrophoneSwap(_host.lifetime, _host.report);
     this.settings = new CaptureSettings(_host.config);
     this.devices = new CameraDevices({
-      lifetime: _host.lifetime,
+      ..._host,
       audioEnabled: () => _host.config.get('enableAudioRecording'),
-      cameraLabel: _host.cameraLabel,
-      microphoneLabel: _host.microphoneLabel,
       onDevicesChange: (lists) => {
         this.devices.adopt(lists, this.feed.stream);
         this._syncRequestedConstraints();
       },
-      report: _host.report,
     });
   }
 
