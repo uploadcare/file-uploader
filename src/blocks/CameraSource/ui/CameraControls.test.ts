@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { UploaderRegistry } from '../../../abstract/UploaderRegistry';
 import { ensureUploaderCtx } from '../../../lit/ensureUploaderCtx';
 import { delay } from '../../../utils/delay';
-import type { CameraPhase } from '../CameraSession';
+import type { CameraPhase } from '../cameraTypes';
 import { RecordingClock } from '../media/RecordingClock';
 import { CameraActionEvent } from './CameraActionEvent';
 import { CameraControls } from './CameraControls';

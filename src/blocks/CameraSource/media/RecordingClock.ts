@@ -1,4 +1,5 @@
 import { signalState } from '../../../abstract/di/signalState';
+import type { ClockView } from '../cameraTypes';
 
 export function formatTime(time: number): string {
   const minutes = Math.floor(time / 60)
@@ -9,9 +10,6 @@ export function formatTime(time: number): string {
     .padStart(2, '0');
   return `${minutes}:${seconds}`;
 }
-
-/** What the controls render of the clock. */
-export type ClockView = { readonly timerText: string; readonly progress: number | null };
 
 /** Drives the recording timer and the playback timeline, one animation frame at a time. */
 export class RecordingClock implements ClockView {

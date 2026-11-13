@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cameraFailureOf } from '../CameraAccess';
+import { cameraFailureOf } from '../../../abstract/camera/cameraFailure';
 import { type CameraViewInput, deriveCameraView } from './cameraView';
 
 const input = (overrides: Partial<CameraViewInput> = {}): CameraViewInput => ({

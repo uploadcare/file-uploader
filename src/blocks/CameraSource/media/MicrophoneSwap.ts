@@ -1,4 +1,4 @@
-import { cameraFailureOf } from '../CameraAccess';
+import { cameraFailureOf } from '../../../abstract/camera/cameraFailure';
 import type { CameraLifetime, CameraReport } from '../cameraHost';
 import { stopTracks } from './tracks';
 

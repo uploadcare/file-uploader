@@ -1,6 +1,7 @@
+import type { CameraFailure } from '../../../abstract/camera/cameraFailure';
 import type { CameraMode } from '../../../abstract/cameraModes';
-import type { CameraFailure, CameraPermission } from '../CameraAccess';
-import type { CameraPhase } from '../CameraSession';
+import type { CameraPermission } from '../CameraAccess';
+import type { CameraPhase } from '../cameraTypes';
 
 const FAILURE_MESSAGE = {
   denied: 'camera-permissions-denied',

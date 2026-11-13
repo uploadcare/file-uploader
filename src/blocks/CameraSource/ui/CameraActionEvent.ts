@@ -1,4 +1,4 @@
-import type { CameraCommand } from '../CameraSession';
+import type { CameraCommand } from '../cameraTypes';
 
 /**
  * What the preview reports about its `<video>`, outside the session's commands: `<uc-camera-source>` lends the element

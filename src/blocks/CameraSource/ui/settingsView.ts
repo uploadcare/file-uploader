@@ -3,8 +3,8 @@ import type { CameraMode } from '../../../abstract/cameraModes';
 import type { L10nKey } from '../../../abstract/l10n';
 import type { CameraPermission } from '../CameraAccess';
 import type { CameraDevices } from '../CameraDevices';
-import type { CameraPhase } from '../CameraSession';
 import type { CameraSetting, CaptureSettings } from '../CaptureSettings';
+import type { CameraPhase } from '../cameraTypes';
 import type { CameraView } from './cameraView';
 
 /** An option as written (`text`) or by l10n key (`textKey`); a ratio option has the shape its icon draws. */

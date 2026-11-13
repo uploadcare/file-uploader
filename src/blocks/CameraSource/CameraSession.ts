@@ -1,40 +1,24 @@
 import { type BuildConstraintsInput, buildConstraints } from '../../abstract/camera/buildConstraints';
+import { cameraFailureOf } from '../../abstract/camera/cameraFailure';
 import { maxShortSideOf } from '../../abstract/camera/cameraSettings';
+import { RequestedConstraints } from '../../abstract/camera/RequestedConstraints';
 import { type CameraMode, CameraSourceTypes } from '../../abstract/cameraModes';
 import type { NavigationEdge } from '../../abstract/controllers/RouterController';
 import { isAbortError } from '../../abstract/di/Lifetime';
 import { signalState } from '../../abstract/di/signalState';
 import type { CameraConstraints, CameraConstraintsResolver } from '../../types/exported';
-import { CameraAccess, type CameraPermission, cameraFailureOf, type SettledPermission } from './CameraAccess';
+import { CameraAccess, type CameraPermission, type SettledPermission } from './CameraAccess';
 import { CameraDevices } from './CameraDevices';
 import { type CameraSetting, CaptureSettings } from './CaptureSettings';
 import type { CameraLifetime, CameraReport } from './cameraHost';
+import type { CameraCommand, CameraPhase, ClockView } from './cameraTypes';
 import { CameraFeed } from './media/CameraFeed';
 import { ClipReview } from './media/ClipReview';
 import { MicrophoneSwap } from './media/MicrophoneSwap';
 import { PhotoCapture, photoFile } from './media/PhotoCapture';
 import { type ClipHandlers, PreviewVideo } from './media/PreviewVideo';
-import { type ClockView, RecordingClock } from './media/RecordingClock';
+import { RecordingClock } from './media/RecordingClock';
 import { recorderOptions, VideoRecording } from './media/VideoRecording';
-import { RequestedConstraints } from './RequestedConstraints';
-
-/** Where the capture stands: the live preview, a photo taken, a clip being recorded, or a clip recorded. */
-export type CameraPhase = 'live' | 'shot' | 'recording' | 'recorded';
-
-/** What the user did in one of the camera's parts; the session decides what it means. */
-export type CameraCommand =
-  | { type: 'back' }
-  | { type: 'close' }
-  | { type: 'select-camera'; deviceId: string }
-  | { type: 'select-microphone'; deviceId: string }
-  | { type: 'request-access' }
-  | { type: 'pick-setting'; setting: CameraSetting; value: string }
-  | { type: 'select-tab'; tab: CameraMode }
-  | { type: 'shutter' }
-  | { type: 'retake' }
-  | { type: 'accept' }
-  | { type: 'toggle-microphone' }
-  | { type: 'toggle-playback' };
 
 /** What the camera element lends the session: its lifetime, config, elements, and the ways out. */
 export type CameraSessionHost = {

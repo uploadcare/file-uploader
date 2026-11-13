@@ -5,7 +5,7 @@ import { createRef, ref } from 'lit/directives/ref.js';
 import type { CameraMode } from '../../../abstract/cameraModes';
 import { ChildBlock } from '../../../lit/ChildBlock';
 import { effect } from '../../../lit/effect';
-import type { ClockView } from '../media/RecordingClock';
+import type { ClockView } from '../cameraTypes';
 import { CameraActionEvent } from './CameraActionEvent';
 import type { CameraView } from './cameraView';
 import type { SettingSectionData } from './settingsView';

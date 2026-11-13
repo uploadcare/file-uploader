@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, type Mock, vi } from 'vitest';
+import { RequestedConstraints } from '../../abstract/camera/RequestedConstraints';
 import { type CameraMode, CameraSourceTypes } from '../../abstract/cameraModes';
 import { delay } from '../../utils/delay';
 import {
@@ -12,10 +13,9 @@ import {
   stubAnimationFrames,
   stubCanvas,
 } from './__tests__/camera-fixtures';
-import type { CameraCommand as CameraAction } from './CameraSession';
+import type { CameraCommand as CameraAction } from './cameraTypes';
 import { CameraFeed } from './media/CameraFeed';
 import { VideoRecording } from './media/VideoRecording';
-import { RequestedConstraints } from './RequestedConstraints';
 
 /**
  * The camera's flows, pinned before the session is split into parts. Each `inv<N>` names the invariant of the camera

@@ -1,7 +1,7 @@
 import { type BuildConstraintsInput, buildConstraints } from '../../../abstract/camera/buildConstraints';
+import { cameraFailureOf } from '../../../abstract/camera/cameraFailure';
 import { isAbortError } from '../../../abstract/di/Lifetime';
 import { signalState } from '../../../abstract/di/signalState';
-import { cameraFailureOf } from '../CameraAccess';
 import type { CameraLifetime, CameraReport } from '../cameraHost';
 import { stopTracks } from './tracks';
 
