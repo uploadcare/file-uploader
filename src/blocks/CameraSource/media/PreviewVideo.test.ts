@@ -88,16 +88,15 @@ describe('PreviewVideo', () => {
     expect(taskFailed).not.toHaveBeenCalled();
   });
 
-  it('release drops the element', () => {
+  it('close takes the stream out of the element, and nothing is sampled before there is one', () => {
     const { preview, video } = setup();
+    expect(preview.sample()).toBeNull();
     preview.attach(video);
     preview.show(stream());
 
-    preview.release();
+    preview.close();
 
     expect(video.srcObject).toBeNull();
-    expect(preview.element).toBeUndefined();
-    expect(preview.sample()).toBeNull();
   });
 
   it('a new source clears the frame flag; re-applying the same one keeps it', () => {
@@ -126,17 +125,12 @@ describe('PreviewVideo', () => {
     expect(preview.hasVideoFrame).toBe(false);
   });
 
-  it('close and release clear the frame flag', () => {
+  it('close clears the frame flag', () => {
     const { preview, video } = setup();
     preview.attach(video);
     preview.show(stream());
     preview.frame(true);
     preview.close();
-    expect(preview.hasVideoFrame).toBe(false);
-
-    preview.show(stream());
-    preview.frame(true);
-    preview.release();
     expect(preview.hasVideoFrame).toBe(false);
   });
 });

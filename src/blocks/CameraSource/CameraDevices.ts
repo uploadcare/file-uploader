@@ -1,12 +1,11 @@
 import { isAbortError } from '../../abstract/di/Lifetime';
 import { signalState } from '../../abstract/di/signalState';
-import type { CameraLifetime, CameraReport } from './cameraHost';
+import type { CameraReport, CameraTasks } from './cameraHost';
 
 export type DeviceOption = { text: string; value: string };
 
-/** What the camera block lends: its lifetime, config reads and its reaction to changes. */
-export type CameraDevicesHost = {
-  lifetime: CameraLifetime;
+/** What the session lends: its lifetime, config reads and its reaction to changes. */
+export type CameraDevicesHost = CameraTasks & {
   audioEnabled: () => boolean;
   /** The label for an unnamed camera, by its position in the list. */
   cameraLabel: (index: number) => string;
@@ -43,6 +42,14 @@ export class CameraDevices {
 
   public constructor(private readonly _host: CameraDevicesHost) {}
 
+  /** Starts from the lists and the picks of the session before, which a DOM move must not lose. */
+  public keep(previous: CameraDevices): void {
+    this.cameras = previous.cameras;
+    this.microphones = previous.microphones;
+    this.selectedCameraId = previous.selectedCameraId;
+    this.selectedMicrophoneId = previous.selectedMicrophoneId;
+  }
+
   public pickCamera(id: string): void {
     this.selectedCameraId = id;
   }
@@ -63,17 +70,17 @@ export class CameraDevices {
     );
   }
 
-  /** Lists the devices again whenever they change, until `adoption` ends. */
-  public watchDeviceChanges(adoption = this._host.lifetime.adoptionSignal()): void {
-    navigator.mediaDevices?.addEventListener('devicechange', () => this._host.lifetime.runTask(() => this.list()), {
-      signal: adoption,
+  /** Lists the devices again whenever they change, until the lifetime ends. */
+  public watchDeviceChanges(): void {
+    navigator.mediaDevices?.addEventListener('devicechange', () => this._host.runTask(() => this.list()), {
+      signal: this._host.lifetime.signal,
     });
   }
 
   /** Lists the cameras, and the microphones when audio recording is on, and hands them to `onDevicesChange`. */
   public async list(): Promise<void> {
     try {
-      const devices = await this._host.lifetime.whileAdopted(navigator.mediaDevices.enumerateDevices());
+      const devices = await this._host.lifetime.guard(navigator.mediaDevices.enumerateDevices());
       const cameras = devices
         .filter((device) => device.kind === 'videoinput')
         .map((device, index) => ({

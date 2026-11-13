@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cameraConfig, fakeStream, fakeTrack, lifetimeOf } from './__tests__/camera-fixtures';
+import { cameraConfig, cameraTasks, fakeStream, fakeTrack } from './__tests__/camera-fixtures';
 import { StreamSettings } from './StreamSettings';
 
 afterEach(() => {
@@ -16,7 +16,7 @@ const setup = async () => {
   vi.stubGlobal('navigator', { ...navigator, mediaDevices });
   const state = { recording: false };
   const stream = new StreamSettings({
-    lifetime: lifetimeOf(),
+    ...cameraTasks(),
     config: cameraConfig({ cameraResolution: 'auto' }),
     mode: () => 'video',
     isRecording: () => state.recording,
@@ -57,16 +57,17 @@ describe('StreamSettings while recording', () => {
     expect(microphoneCalls()).toHaveLength(0);
   });
 
-  it('forgets the changes held back for a recording that ended without a stop', async () => {
-    const { stream, state, video } = await setup();
-    state.recording = true;
+  it('starts from the picks, the devices and the refused microphone of the session before', async () => {
+    const { stream } = await setup();
     stream.settings.pick('aspectRatio', '1:1');
-    stream.apply('aspectRatio');
+    stream.devices.adopt({ cameras: [{ text: 'Camera', value: 'cam-1' }], microphones: [] }, null);
+    stream.microphoneDenied = true;
 
-    state.recording = false;
-    stream.forgetDeferred();
-    stream.resume();
+    const next = (await setup()).stream;
+    next.keep(stream);
 
-    expect(video.applyConstraints).not.toHaveBeenCalled();
+    expect(next.settings.aspectRatioChoice).toBe('1:1');
+    expect([next.devices.cameras, next.devices.selectedCameraId]).toEqual([stream.devices.cameras, 'cam-1']);
+    expect(next.microphoneDenied).toBe(true);
   });
 });

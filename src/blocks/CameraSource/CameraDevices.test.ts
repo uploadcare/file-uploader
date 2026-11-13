@@ -1,16 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { Lifetime } from '../../abstract/di/Lifetime';
+import { delay } from '../../utils/delay';
 import { CameraDevices, type CameraDevicesHost } from './CameraDevices';
 
 const host = (overrides: Partial<CameraDevicesHost> = {}) => {
-  const controller = new AbortController();
+  const lifetime = new Lifetime();
   const fns = {
-    lifetime: {
-      whileAdopted: <T>(work: PromiseLike<T>) => Promise.resolve(work),
-      runTask: vi.fn((task: () => unknown) => {
-        void task();
-      }),
-      adoptionSignal: () => controller.signal,
-    },
+    lifetime,
+    runTask: vi.fn((task: () => unknown) => {
+      void task();
+    }),
     audioEnabled: () => true,
     cameraLabel: (index: number) => `Camera ${index + 1}`,
     microphoneLabel: (index: number) => `Microphone ${index + 1}`,
@@ -18,7 +17,7 @@ const host = (overrides: Partial<CameraDevicesHost> = {}) => {
     report: vi.fn(),
     ...overrides,
   };
-  return { fns, devices: new CameraDevices(fns), abort: () => controller.abort() };
+  return { fns, devices: new CameraDevices(fns), abort: () => lifetime.end() };
 };
 
 const device = (kind: MediaDeviceKind, deviceId: string, label = '') => ({ kind, deviceId, label }) as MediaDeviceInfo;
@@ -85,12 +84,12 @@ describe('CameraDevices.watchDeviceChanges', () => {
 
     devices.watchDeviceChanges();
     mediaDevices.dispatchEvent(new Event('devicechange'));
-    await Promise.resolve();
+    await delay(0);
     expect(fns.onDevicesChange).toHaveBeenCalledTimes(1);
 
     abort();
     mediaDevices.dispatchEvent(new Event('devicechange'));
-    await Promise.resolve();
+    await delay(0);
     expect(fns.onDevicesChange).toHaveBeenCalledTimes(1);
   });
 });

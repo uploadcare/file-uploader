@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { BuildConstraintsInput } from '../../../abstract/camera/buildConstraints';
-import { fakeStream, fakeTrack, lifetimeOf } from '../__tests__/camera-fixtures';
+import { Lifetime } from '../../../abstract/di/Lifetime';
+import { fakeStream, fakeTrack } from '../__tests__/camera-fixtures';
 import { CameraFeed } from './CameraFeed';
 
 /** `permissions` answers the Permissions API with these states; without it, there is no Permissions API. */
@@ -38,7 +39,7 @@ describe('CameraFeed', () => {
     const first = Promise.withResolvers<MediaStream>();
     const latest = fakeStream([fakeTrack('video')]);
     stubGetUserMedia(vi.fn().mockReturnValueOnce(first.promise).mockResolvedValueOnce(latest));
-    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const feed = new CameraFeed(new Lifetime(), vi.fn());
 
     const superseded = feed.open(input(), () => {});
     const current = feed.open(input(), () => {});
@@ -56,7 +57,7 @@ describe('CameraFeed', () => {
     const stream = fakeStream([fakeTrack('video')]);
     const getUserMedia = stubGetUserMedia(vi.fn().mockRejectedValueOnce(error).mockResolvedValueOnce(stream));
     const report = vi.fn();
-    const feed = new CameraFeed(lifetimeOf(), report);
+    const feed = new CameraFeed(new Lifetime(), report);
 
     const beforeAttempt = vi.fn();
     const opened = await feed.open(input({ video: { width: { exact: 9999 } } }), beforeAttempt);
@@ -84,7 +85,7 @@ describe('CameraFeed', () => {
     const stream = fakeStream([fakeTrack('video')]);
     const getUserMedia = stubGetUserMedia(vi.fn().mockRejectedValueOnce(error).mockResolvedValueOnce(stream));
     const report = vi.fn();
-    const feed = new CameraFeed(lifetimeOf(), report);
+    const feed = new CameraFeed(new Lifetime(), report);
     const beforeAttempt = vi.fn();
 
     const opened = await feed.open({ ...input(), mode: 'video' }, beforeAttempt);
@@ -108,7 +109,7 @@ describe('CameraFeed', () => {
       vi.fn().mockRejectedValueOnce(new DOMException('Both', 'NotAllowedError')).mockRejectedValueOnce(cameraRefused),
     );
     const report = vi.fn();
-    const feed = new CameraFeed(lifetimeOf(), report);
+    const feed = new CameraFeed(new Lifetime(), report);
 
     await expect(feed.open({ ...input(), mode: 'video' }, () => {})).rejects.toBe(cameraRefused);
     expect(getUserMedia).toHaveBeenCalledTimes(2);
@@ -119,7 +120,7 @@ describe('CameraFeed', () => {
     const error = new DOMException('Permission dismissed', 'NotAllowedError');
     const getUserMedia = stubGetUserMedia(vi.fn().mockRejectedValue(error), { camera: 'prompt', microphone: 'prompt' });
     const report = vi.fn();
-    const feed = new CameraFeed(lifetimeOf(), report);
+    const feed = new CameraFeed(new Lifetime(), report);
 
     await expect(feed.open({ ...input(), mode: 'video' }, () => {})).rejects.toBe(error);
     expect(getUserMedia).toHaveBeenCalledOnce();
@@ -138,7 +139,7 @@ describe('CameraFeed', () => {
         .mockResolvedValueOnce(fakeStream([fakeTrack('video')])),
       permissions,
     );
-    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const feed = new CameraFeed(new Lifetime(), vi.fn());
 
     await expect(feed.open({ ...input(), mode: 'video' }, () => {})).resolves.toMatchObject({
       microphoneRefused: true,
@@ -155,7 +156,7 @@ describe('CameraFeed', () => {
     const answered = Promise.withResolvers<{ state: PermissionState }>();
     const query = vi.fn(() => answered.promise);
     Object.assign(navigator.permissions, { query });
-    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const feed = new CameraFeed(new Lifetime(), vi.fn());
     const superseded = feed.open({ ...input(), mode: 'video' }, () => {});
     await vi.waitFor(() => expect(query).toHaveBeenCalled());
 
@@ -180,7 +181,7 @@ describe('CameraFeed', () => {
     const answered = Promise.withResolvers<{ state: PermissionState }>();
     const query = vi.fn(() => answered.promise);
     Object.assign(navigator.permissions, { query });
-    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const feed = new CameraFeed(new Lifetime(), vi.fn());
     const superseded = feed.open({ ...input(), mode: 'video' }, () => {});
     await vi.waitFor(() => expect(query).toHaveBeenCalled());
 
@@ -197,7 +198,7 @@ describe('CameraFeed', () => {
   it('a refusal of an open without the microphone is not retried', async () => {
     const error = new DOMException('Simulated', 'NotAllowedError');
     const getUserMedia = stubGetUserMedia(vi.fn().mockRejectedValue(error));
-    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const feed = new CameraFeed(new Lifetime(), vi.fn());
 
     await expect(feed.open({ ...input(), enableAudio: false }, () => {})).rejects.toBe(error);
     expect(getUserMedia).toHaveBeenCalledOnce();
@@ -211,7 +212,7 @@ describe('CameraFeed', () => {
         .mockRejectedValueOnce(error)
         .mockImplementation(async () => fakeStream([fakeTrack('video')])),
     );
-    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const feed = new CameraFeed(new Lifetime(), vi.fn());
     const custom = input({ video: { width: { exact: 9999 } } });
     await feed.open(custom, () => {});
     expect(feed.customDropped).toBe(true);
@@ -225,7 +226,7 @@ describe('CameraFeed', () => {
   it('swapAudioTrack keeps mute', async () => {
     const oldAudio = fakeTrack('audio');
     stubGetUserMedia(async () => fakeStream([fakeTrack('video'), oldAudio]));
-    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const feed = new CameraFeed(new Lifetime(), vi.fn());
     await feed.open(input(), () => {});
     feed.toggleAudio();
     expect(feed.audioMuted).toBe(true);
@@ -242,7 +243,7 @@ describe('CameraFeed', () => {
   it('a new open unmutes, and close stops the tracks once', async () => {
     const video = fakeTrack('video');
     stubGetUserMedia(async () => fakeStream([video, fakeTrack('audio')]));
-    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const feed = new CameraFeed(new Lifetime(), vi.fn());
     await feed.open(input(), () => {});
     feed.toggleAudio();
     await feed.open(input(), () => {});
@@ -263,7 +264,7 @@ describe('CameraFeed', () => {
         .mockReturnValueOnce(first.promise)
         .mockResolvedValueOnce(fakeStream([fakeTrack('video')])),
     );
-    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const feed = new CameraFeed(new Lifetime(), vi.fn());
     const superseded = feed.open(input(), () => {});
     await feed.open(input(), () => {});
     first.reject(new DOMException('Simulated', 'NotReadableError'));
@@ -273,7 +274,7 @@ describe('CameraFeed', () => {
 
   it('toggleAudio without a microphone leaves audioMuted', async () => {
     stubGetUserMedia(async () => fakeStream([fakeTrack('video')]));
-    const feed = new CameraFeed(lifetimeOf(), vi.fn());
+    const feed = new CameraFeed(new Lifetime(), vi.fn());
     feed.toggleAudio();
     await feed.open(input(), () => {});
     feed.toggleAudio();
@@ -289,7 +290,7 @@ describe('CameraFeed', () => {
     video.applyConstraints.mockRejectedValue(error);
     stubGetUserMedia(async () => fakeStream([video]));
     const report = vi.fn();
-    const feed = new CameraFeed(lifetimeOf(), report);
+    const feed = new CameraFeed(new Lifetime(), report);
     await feed.applyVideo({}, customInvolved);
     await feed.open(input(), () => {});
 

@@ -1,8 +1,8 @@
 import { type BuildConstraintsInput, buildConstraints } from '../../../abstract/camera/buildConstraints';
 import { cameraFailureOf } from '../../../abstract/camera/cameraFailure';
-import { isAbortError } from '../../../abstract/di/Lifetime';
+import { isAbortError, type Lifetime } from '../../../abstract/di/Lifetime';
 import { signalState } from '../../../abstract/di/signalState';
-import type { CameraLifetime, CameraReport } from '../cameraHost';
+import type { CameraReport } from '../cameraHost';
 import { stopTracks } from './tracks';
 
 const isOverconstrained = (error: unknown): boolean => (error as Error | null)?.name === 'OverconstrainedError';
@@ -24,7 +24,7 @@ export class CameraFeed {
   private _customDropped = false;
 
   public constructor(
-    private readonly _lifetime: CameraLifetime,
+    private readonly _lifetime: Lifetime,
     private readonly _report: CameraReport,
   ) {}
 
@@ -106,7 +106,7 @@ export class CameraFeed {
    */
   private async _promptDismissed(): Promise<boolean> {
     try {
-      const [camera, microphone] = await this._lifetime.whileAdopted(
+      const [camera, microphone] = await this._lifetime.guard(
         Promise.all(
           (['camera', 'microphone'] as const).map((name) =>
             navigator.permissions.query({ name: name as PermissionName }),
@@ -125,7 +125,7 @@ export class CameraFeed {
     beforeAttempt();
     let stream: MediaStream;
     try {
-      stream = await this._lifetime.whileAdopted(navigator.mediaDevices.getUserMedia(constraints), stopTracks);
+      stream = await this._lifetime.guard(navigator.mediaDevices.getUserMedia(constraints), stopTracks);
     } catch (error) {
       // A failure is the superseded open's own; the later one decides what the camera shows.
       if (open !== this._opens) return null;
@@ -192,7 +192,7 @@ export class CameraFeed {
     const track = this._stream?.getVideoTracks()[0];
     if (!track) return;
     try {
-      await this._lifetime.whileAdopted(track.applyConstraints(video));
+      await this._lifetime.guard(track.applyConstraints(video));
     } catch (error) {
       if (isAbortError(error)) throw error;
       const subject = customInvolved ? 'the camera settings or cameraConstraints' : 'the camera settings';

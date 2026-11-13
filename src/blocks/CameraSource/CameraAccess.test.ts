@@ -3,21 +3,15 @@ import { Lifetime } from '../../abstract/di/Lifetime';
 import { CameraAccess, type CameraAccessHost } from './CameraAccess';
 
 const host = (overrides: Partial<CameraAccessHost> = {}) => {
-  const controller = new AbortController();
+  const lifetime = new Lifetime();
   const fns = {
-    lifetime: {
-      whileAdopted: <T>(work: PromiseLike<T>) => Promise.resolve(work),
-      runTask: vi.fn((task: () => unknown) => {
-        void task();
-      }),
-      adoptionSignal: () => controller.signal,
-    },
+    lifetime,
     onPermissionChange: vi.fn(),
     onSettled: vi.fn(),
     report: vi.fn(),
     ...overrides,
   };
-  return { fns, devices: new CameraAccess(fns), abort: () => controller.abort() };
+  return { fns, devices: new CameraAccess(fns), abort: () => lifetime.end() };
 };
 
 afterEach(() => {
@@ -59,16 +53,16 @@ describe('CameraAccess.settleLater', () => {
     expect(access.permission).toBe('idle');
   });
 
-  it('drops a cancelled settle', () => {
+  it('shows what the session before showed', () => {
     vi.useFakeTimers();
-    const { fns, devices: access } = host();
-    const { onSettled } = fns;
-
-    access.settleLater('granted');
-    access.cancel();
+    const { devices: previous } = host();
+    previous.settleLater('denied', 'not-found');
     vi.advanceTimersByTime(300);
 
-    expect(onSettled).not.toHaveBeenCalled();
+    const { devices: access } = host();
+    access.keep(previous);
+
+    expect([access.permission, access.failure]).toEqual(['denied', 'not-found']);
   });
 });
 
@@ -76,20 +70,20 @@ describe('CameraAccess.watchPermissions', () => {
   const stubPermissions = (query: () => Promise<PermissionStatus>) =>
     vi.stubGlobal('navigator', { ...navigator, permissions: { query } });
 
-  it('reports each permission change until it stops watching', async () => {
+  it('reports each permission change until the lifetime ends', async () => {
     const statuses: EventTarget[] = [];
     stubPermissions(async () => {
       const status = new EventTarget();
       statuses.push(status);
       return status as PermissionStatus;
     });
-    const { fns, devices } = host();
+    const { fns, devices, abort } = host();
 
     await devices.watchPermissions();
     for (const status of statuses) status.dispatchEvent(new Event('change'));
     expect(fns.onPermissionChange).toHaveBeenCalledTimes(2);
 
-    devices.stopWatchingPermissions();
+    abort();
     for (const status of statuses) status.dispatchEvent(new Event('change'));
     expect(fns.onPermissionChange).toHaveBeenCalledTimes(2);
   });
@@ -109,6 +103,20 @@ describe('CameraAccess.watchPermissions', () => {
     );
   });
 
+  it('watches nothing when the second permission cannot be queried', async () => {
+    const camera = new EventTarget();
+    const query = vi.fn(async () => camera as PermissionStatus);
+    query.mockResolvedValueOnce(camera as PermissionStatus).mockRejectedValueOnce(new TypeError('not a permission'));
+    stubPermissions(query);
+    const { fns, devices } = host();
+
+    await devices.watchPermissions();
+    camera.dispatchEvent(new Event('change'));
+
+    expect(fns.report).toHaveBeenCalledOnce();
+    expect(fns.onPermissionChange).not.toHaveBeenCalled();
+  });
+
   it('lets an abort through', async () => {
     stubPermissions(async () => {
       throw new DOMException('gone', 'AbortError');
@@ -121,14 +129,8 @@ describe('CameraAccess.watchPermissions', () => {
 
 describe('CameraAccess moved while the permissions are queried', () => {
   it("keeps the next adoption's watch when the released query settles", async () => {
-    let adoption = new Lifetime();
-    const { fns, devices } = host({
-      lifetime: {
-        whileAdopted: (work, dispose) => adoption.guard(work, dispose),
-        runTask: (task) => adoption.run(task, () => {}),
-        adoptionSignal: () => adoption.signal,
-      },
-    });
+    const before = host();
+    const { fns, devices } = host();
     const first = Promise.withResolvers<PermissionStatus>();
     const statuses: EventTarget[] = [];
     const query = vi.fn(async () => {
@@ -139,15 +141,16 @@ describe('CameraAccess moved while the permissions are queried', () => {
     query.mockReturnValueOnce(first.promise);
     vi.stubGlobal('navigator', { ...navigator, permissions: { query } });
 
-    const released = devices.watchPermissions();
-    // A same-task DOM move: the block is released and re-adopted, and the next adoption watches again.
-    adoption.end();
-    adoption = new Lifetime();
+    const released = before.devices.watchPermissions();
+    // A same-task DOM move: the adoption ends with its session, and the next one's watches again.
+    before.abort();
     await devices.watchPermissions();
-    first.resolve(new EventTarget() as PermissionStatus);
+    const late = new EventTarget();
+    first.resolve(late as PermissionStatus);
     await expect(released).rejects.toThrow(/owner of this work is gone/);
 
-    for (const status of statuses) status.dispatchEvent(new Event('change'));
+    for (const status of [...statuses, late]) status.dispatchEvent(new Event('change'));
     expect(fns.onPermissionChange).toHaveBeenCalledTimes(2);
+    expect(before.fns.onPermissionChange).not.toHaveBeenCalled();
   });
 });

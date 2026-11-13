@@ -3,7 +3,7 @@ import { ConfigController } from '../../../abstract/controllers/ConfigController
 import { Lifetime } from '../../../abstract/di/Lifetime';
 import type { ConfigType } from '../../../types/exported';
 import { CameraSession, type CameraSessionHost } from '../CameraSession';
-import type { CameraLifetime } from '../cameraHost';
+import type { CameraTasks } from '../cameraHost';
 
 /** A ctx's config with the camera's options as the specs start: both modes, audio and every choice. */
 export const cameraConfig = (options: Partial<ConfigType> = {}): ConfigController => {
@@ -27,65 +27,74 @@ export const cameraConfig = (options: Partial<ConfigType> = {}): ConfigControlle
   return config;
 };
 
-/** A block-like lifetime over one `Lifetime`: tasks that fail land nowhere. */
-export const lifetimeOf = (lifetime = new Lifetime()): CameraLifetime => ({
-  whileAdopted: (work, dispose) => lifetime.guard(work, dispose),
+/** A lifetime and tasks started under it, as a session lends its parts: tasks that fail land nowhere. */
+export const cameraTasks = (lifetime = new Lifetime()): CameraTasks => ({
+  lifetime,
   runTask: (task) => lifetime.run(task, () => {}),
-  adoptionSignal: () => lifetime.signal,
 });
 
 /**
- * A session lent a block-like lifetime: one `Lifetime` per adoption, replaced on a move as `ChildBlock` does. The
- * config allows both modes, audio and every choice; pass `options` to narrow it.
+ * A session as the camera element builds one: for one adoption, with its own `Lifetime`, taking over from the
+ * session before it on a move. The config allows both modes, audio and every choice; pass `options` to narrow it.
  */
 export const setupSession = (options: Partial<ConfigType> = {}) => {
   const config = cameraConfig(options);
-  let adoption = new Lifetime();
   const taskFailed = vi.fn();
   const report = vi.fn();
   const track = vi.fn();
   const addFile = vi.fn();
+  const navigate = vi.fn();
   const tasks: Promise<unknown>[] = [];
-  const host: CameraSessionHost = {
-    lifetime: {
-      whileAdopted: (work, dispose) => adoption.guard(work, dispose),
+  const adopt = (previous: CameraSession | null) => {
+    const lifetime = new Lifetime();
+    const host: CameraSessionHost = {
+      lifetime,
       runTask: (task) => {
         let result: unknown;
-        adoption.run(() => (result = task()), taskFailed);
+        lifetime.run(() => (result = task()), taskFailed);
         // `run` handled the outcome first, so once this settles the task has also failed or been dropped.
         tasks.push(Promise.resolve(result));
       },
-      adoptionSignal: () => adoption.signal,
-    },
-    config,
-    cameraLabel: (index) => `Camera ${index + 1}`,
-    microphoneLabel: (index) => `Microphone ${index + 1}`,
-    navigate: vi.fn(),
-    addFile,
-    track,
-    report,
+      config,
+      cameraLabel: (index) => `Camera ${index + 1}`,
+      microphoneLabel: (index) => `Microphone ${index + 1}`,
+      navigate,
+      addFile,
+      track,
+      report,
+    };
+    return { host, session: new CameraSession(host, previous) };
   };
-  const session = new CameraSession(host);
-  // The block is re-adopted at once, and nothing releases the session.
-  const readopt = () => {
-    adoption.end();
-    adoption = new Lifetime();
-  };
-  // A same-task DOM move: the element releases the session, and the block is re-adopted at once.
-  const move = () => {
-    session.release();
-    readopt();
-  };
-  // The adoption ends and nothing releases the session: whatever is still running belongs to no one.
-  const endAdoption = () => adoption.end();
-  /** Waits until every task the session started has settled and been reported, the ones they started included. */
+  let adoption = adopt(null);
+  /** Waits until every task the sessions started has settled and been reported, the ones they started included. */
   const tasksSettled = async () => {
     for (let seen = -1; seen < tasks.length; ) {
       seen = tasks.length;
       await Promise.allSettled(tasks);
     }
   };
-  return { session, host, config, move, readopt, endAdoption, tasksSettled, report, track, addFile, taskFailed };
+  return {
+    /** The session of the current adoption. */
+    get session() {
+      return adoption.session;
+    },
+    get host() {
+      return adoption.host;
+    },
+    config,
+    /** A same-task DOM move: the element ends the session, and builds the next adoption's from it. */
+    move: () => {
+      adoption.session.end();
+      adoption = adopt(adoption.session);
+    },
+    /** The adoption ends and nothing ends the session: whatever is still running belongs to no one. */
+    endAdoption: () => adoption.host.lifetime.end(),
+    tasksSettled,
+    report,
+    track,
+    addFile,
+    taskFailed,
+  };
 };
 
 export type FakeTrack = Omit<MediaStreamTrack, 'stop' | 'applyConstraints' | 'readyState'> & {

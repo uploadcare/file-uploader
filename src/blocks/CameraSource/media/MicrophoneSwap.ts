@@ -1,5 +1,6 @@
 import { cameraFailureOf } from '../../../abstract/camera/cameraFailure';
-import type { CameraLifetime, CameraReport } from '../cameraHost';
+import type { Lifetime } from '../../../abstract/di/Lifetime';
+import type { CameraReport } from '../cameraHost';
 import { stopTracks } from './tracks';
 
 /**
@@ -12,7 +13,7 @@ export class MicrophoneSwap {
   private _swaps = 0;
 
   public constructor(
-    private readonly _lifetime: CameraLifetime,
+    private readonly _lifetime: Lifetime,
     private readonly _report: CameraReport,
   ) {}
 
@@ -26,13 +27,12 @@ export class MicrophoneSwap {
     isCurrent: () => boolean,
   ): Promise<MediaStreamTrack | 'refused' | null> {
     const swap = ++this._swaps;
-    const adoption = this._lifetime.adoptionSignal();
     let next: MediaStream;
     try {
-      next = await this._lifetime.whileAdopted(navigator.mediaDevices.getUserMedia({ audio }), stopTracks);
+      next = await this._lifetime.guard(navigator.mediaDevices.getUserMedia({ audio }), stopTracks);
     } catch (error) {
       // `getUserMedia` names a microphone that fails to start `AbortError` too, so ask the lifetime.
-      if (adoption.aborted) throw error;
+      if (this._lifetime.signal.aborted) throw error;
       this._report(
         'warn',
         'Failed to apply the microphone settings, keeping the current ones',

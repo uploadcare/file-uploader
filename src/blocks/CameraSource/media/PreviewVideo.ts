@@ -1,12 +1,12 @@
 import { isAbortError } from '../../../abstract/di/Lifetime';
 import { signalState } from '../../../abstract/di/signalState';
-import type { CameraLifetime } from '../cameraHost';
+import type { CameraTasks } from '../cameraHost';
 
 /** The recorded clip started or stopped playing in the preview. */
 export type ClipHandlers = { onPlay: () => void; onPause: () => void };
 
 /**
- * The preview's `<video>`, lent by `<uc-camera-preview>` for the adoption, and what it shows: the live stream, or a
+ * The preview's `<video>`, lent by `<uc-camera-preview>`, and what it shows: the live stream, or a
  * recorded clip. Everything here is synchronous, so a shot, a retake and the recording canvas see the frame they
  * expect. `srcObject` is assigned by hand rather than bound in the template, because binding it stops the video pausing
  * on a shot.
@@ -23,7 +23,7 @@ export class PreviewVideo {
   /** The handlers of the recorded clip shown, to take off the `<video>` when it gives way. */
   private _clip: ClipHandlers | null = null;
 
-  public constructor(private readonly _runTask: CameraLifetime['runTask']) {}
+  public constructor(private readonly _runTask: CameraTasks['runTask']) {}
 
   public get element(): HTMLVideoElement | undefined {
     return this._video;
@@ -110,13 +110,6 @@ export class PreviewVideo {
   public sample(): { currentTime: number; duration: number } | null {
     const video = this._video;
     return video ? { currentTime: video.currentTime, duration: video.duration || 1 } : null;
-  }
-
-  /** Lets go of the video element. */
-  public release(): void {
-    this._detachClip();
-    this.show(null);
-    this._video = undefined;
   }
 
   private _apply(): void {

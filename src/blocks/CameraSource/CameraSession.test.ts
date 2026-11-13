@@ -35,7 +35,7 @@ afterEach(() => {
 describe('CameraSession moved while the camera is asked for', () => {
   it('stops the activation while the camera opens, without reporting it', async () => {
     const { getUserMedia, pending, stream } = stubMedia();
-    const { session, readopt: move, report } = setup();
+    const { session, move, report } = setup();
     const activation = session.activate();
     await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(1));
     // A camera the released activation still opened would answer at once, so a regression fails, not hangs.
@@ -53,7 +53,7 @@ describe('CameraSession moved while the camera is asked for', () => {
   it('drops the capture without reporting it or denying access', async () => {
     vi.useFakeTimers();
     const { getUserMedia, pending, stream } = stubMedia();
-    const { session, readopt: move, taskFailed, report } = setup();
+    const { session, move, taskFailed, report } = setup();
     session.handle({ type: 'request-access' });
     await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(1));
 

@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Lifetime } from '../../../abstract/di/Lifetime';
-import { lifetimeOf } from '../__tests__/camera-fixtures';
 import { MicrophoneSwap } from './MicrophoneSwap';
 
 const fakeTrack = () => ({ kind: 'audio', enabled: true, stop: vi.fn() });
@@ -32,7 +31,7 @@ afterEach(() => {
 describe('MicrophoneSwap', () => {
   it('stale when a newer swap started', async () => {
     const calls = stubGetUserMedia();
-    const swap = new MicrophoneSwap(lifetimeOf(), vi.fn());
+    const swap = new MicrophoneSwap(new Lifetime(), vi.fn());
     const older = swap.open({}, current);
     const newer = swap.open({}, current);
     const late = fakeTrack();
@@ -48,7 +47,7 @@ describe('MicrophoneSwap', () => {
 
   it('stale when isCurrent no longer wants it once it opened, tracks stopped', async () => {
     const calls = stubGetUserMedia();
-    const swap = new MicrophoneSwap(lifetimeOf(), vi.fn());
+    const swap = new MicrophoneSwap(new Lifetime(), vi.fn());
     let wanted = true;
     const result = swap.open({}, () => wanted);
     wanted = false;
@@ -62,7 +61,7 @@ describe('MicrophoneSwap', () => {
   it('failed reports and keeps going', async () => {
     const calls = stubGetUserMedia();
     const report = vi.fn();
-    const swap = new MicrophoneSwap(lifetimeOf(), report);
+    const swap = new MicrophoneSwap(new Lifetime(), report);
     const error = new DOMException('Simulated', 'NotReadableError');
     const result = swap.open({}, current);
     calls[0]?.reject(error);
@@ -84,7 +83,7 @@ describe('MicrophoneSwap', () => {
     const calls = stubGetUserMedia();
     const lifetime = new Lifetime();
     const report = vi.fn();
-    const swap = new MicrophoneSwap(lifetimeOf(lifetime), report);
+    const swap = new MicrophoneSwap(lifetime, report);
     const result = swap.open({}, current);
     lifetime.end();
     calls[0]?.reject(new DOMException('Simulated', 'AbortError'));
@@ -96,7 +95,7 @@ describe('MicrophoneSwap', () => {
   it.each(['NotAllowedError', 'SecurityError'])('resolves refused on %s, still reporting it', async (name) => {
     const calls = stubGetUserMedia();
     const report = vi.fn();
-    const swap = new MicrophoneSwap(lifetimeOf(), report);
+    const swap = new MicrophoneSwap(new Lifetime(), report);
     const opening = swap.open({}, current);
     calls[0]?.reject(new DOMException('Simulated', name));
 
@@ -107,7 +106,7 @@ describe('MicrophoneSwap', () => {
   it('a superseded refusal resolves null, still reporting it', async () => {
     const calls = stubGetUserMedia();
     const report = vi.fn();
-    const swap = new MicrophoneSwap(lifetimeOf(), report);
+    const swap = new MicrophoneSwap(new Lifetime(), report);
     const older = swap.open({}, current);
     const newer = swap.open({}, current);
     const latest = fakeTrack();

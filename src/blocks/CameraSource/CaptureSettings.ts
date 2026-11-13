@@ -38,6 +38,15 @@ export class CaptureSettings {
   /** The four options are tracked reads, so a render that reads a value here re-renders when its option changes. */
   public constructor(private readonly _config: Pick<CameraConfig, 'getTracked'>) {}
 
+  /** Starts from the picks of the session before, which a DOM move must not lose. */
+  public keep(previous: CaptureSettings): void {
+    this.maxShortSide = previous.maxShortSide;
+    this._pickedAspectRatio = previous._pickedAspectRatio;
+    this._pickedResolution = previous._pickedResolution;
+    this._pickedAudioQuality = previous._pickedAudioQuality;
+    this._pickedAudioMode = previous._pickedAudioMode;
+  }
+
   public get aspectRatioOptions(): string[] {
     return parseAspectRatioOptions(this._config.getTracked('cameraAspectRatio'));
   }

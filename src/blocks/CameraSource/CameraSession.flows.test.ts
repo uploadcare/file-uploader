@@ -43,9 +43,9 @@ type FakeVideo = ReturnType<typeof fakeVideo>;
 
 /** Lends the session the preview's `<video>`. */
 const giveVideo = (ctx: Ctx, video: FakeVideo | undefined) => {
-  // The session lets go of the `<video>` only on release.
+  // The session lets go of what the `<video>` shows only as it ends.
   if (video) ctx.session.previewVideo(video as unknown as HTMLVideoElement);
-  else ctx.session.release();
+  else ctx.session.end();
 };
 
 const deviceOf = (constraints: MediaStreamConstraints['video'], fallback: string) =>
@@ -626,7 +626,7 @@ describe('CameraSession flows', () => {
     await activate(ctx, [PHOTO, VIDEO]);
     const recorder = startRecording(ctx);
 
-    ctx.session.release();
+    ctx.session.end();
     await vi.advanceTimersByTimeAsync(1000);
 
     expect(ctx.session.permission).toBe('idle');

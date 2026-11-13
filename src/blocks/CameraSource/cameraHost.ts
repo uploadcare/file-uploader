@@ -1,10 +1,12 @@
 import type { ConfigController } from '../../abstract/controllers/ConfigController';
+import type { Lifetime } from '../../abstract/di/Lifetime';
 
-/** The camera block's adoption-bound async helpers (see `ChildBlock`), lent to the parts that do its async work. */
-export type CameraLifetime = {
-  whileAdopted: <T>(work: PromiseLike<T>, dispose?: (value: T) => void) => Promise<T>;
+/** What a session and its parts do their async work under: both last one adoption of the camera block. */
+export type CameraTasks = {
+  /** Ends with the adoption, which stops every await guarded by it. */
+  lifetime: Lifetime;
+  /** Starts fire-and-forget work under `lifetime`: its abort is swallowed, any other failure is logged. */
   runTask: (task: () => unknown) => void;
-  adoptionSignal: () => AbortSignal;
 };
 
 /**

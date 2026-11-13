@@ -5,7 +5,7 @@ import { isAbortError } from '../../abstract/di/Lifetime';
 import { signalState } from '../../abstract/di/signalState';
 import { CameraAccess, type CameraPermission, type SettledPermission } from './CameraAccess';
 import type { CameraSetting } from './CaptureSettings';
-import type { CameraConfig, CameraLifetime, CameraReport } from './cameraHost';
+import type { CameraConfig, CameraReport, CameraTasks } from './cameraHost';
 import type { CameraCommand, CameraPhase, ClockView } from './cameraTypes';
 import { Capture } from './media/Capture';
 import { photoFile } from './media/PhotoCapture';
@@ -14,9 +14,8 @@ import { RecordingClock } from './media/RecordingClock';
 import { recorderOptions } from './media/VideoRecording';
 import { StreamSettings } from './StreamSettings';
 
-/** What the camera element lends the session: its lifetime, config, elements, and the ways out. */
-export type CameraSessionHost = {
-  lifetime: CameraLifetime;
+/** What the camera element lends the session for one adoption: its lifetime, the config, and the ways out. */
+export type CameraSessionHost = CameraTasks & {
   config: CameraConfig;
   cameraLabel: (index: number) => string;
   microphoneLabel: (index: number) => string;
@@ -29,9 +28,10 @@ export type CameraSessionHost = {
 };
 
 /**
- * One camera's state and what it does with a capture: asks for access, opens the camera, takes photos, records clips,
- * and reacts to what the user does in the camera's parts. How the stream is set up is `StreamSettings`' part. The
- * fields are signals, so the element that renders them re-renders on every change.
+ * One camera's state and what it does with a capture, for one adoption of the camera element: asks for access, opens
+ * the camera, takes photos, records clips, and reacts to what the user does in the camera's parts. How the stream is
+ * set up is `StreamSettings`' part. The fields are signals, so the element that renders them re-renders on every
+ * change.
  */
 export class CameraSession {
   @signalState() public activeTab: CameraMode | null = null;
@@ -45,7 +45,7 @@ export class CameraSession {
   private readonly _clock = new RecordingClock();
   /** The recording timer and the clip's timeline, for the controls to render. */
   public readonly clock: ClockView = this._clock;
-  private readonly _preview = new PreviewVideo(this._host.lifetime.runTask);
+  private readonly _preview = new PreviewVideo(this._host.runTask);
   /** The shutter waits for a frame: a shot before the first one draws an empty canvas, which accepting drops. */
   public readonly preview: Readonly<Pick<PreviewVideo, 'hasVideoFrame'>> = this._preview;
   private readonly _clipHandlers: ClipHandlers = {
@@ -84,7 +84,21 @@ export class CameraSession {
     if (state !== 'prompt') this._captureResolved();
   }
 
-  public constructor(private readonly _host: CameraSessionHost) {}
+  /**
+   * `previous` is the session of the adoption before. A DOM move ends one and starts the next in the same task, and
+   * must not lose what the user set up or flash the camera as not asked for: the tab, the access shown, the devices
+   * and the picks carry over. Everything else starts new.
+   */
+  public constructor(
+    private readonly _host: CameraSessionHost,
+    previous: CameraSession | null,
+  ) {
+    if (previous) {
+      this.activeTab = previous.activeTab;
+      this._access.keep(previous._access);
+      this._stream.keep(previous._stream);
+    }
+  }
 
   public get permission(): CameraPermission {
     return this._access.permission;
@@ -99,7 +113,7 @@ export class CameraSession {
     return this._capture.playbackMirrored;
   }
 
-  /** The preview rendered its `<video>`, which the stream and the clip are shown in until release. */
+  /** The preview rendered its `<video>`, which the stream and the clip are shown in. */
   public previewVideo(video: HTMLVideoElement): void {
     this._preview.attach(video);
   }
@@ -114,31 +128,28 @@ export class CameraSession {
    * The devices are listed once it opened, when their labels are readable, and again whenever they change.
    */
   public async activate(): Promise<void> {
-    const adoption = this._host.lifetime.adoptionSignal();
     // The tab is picked now, before the camera is asked for, and again whenever the modes change.
-    adoption.addEventListener(
+    this._host.lifetime.signal.addEventListener(
       'abort',
       this._host.config.observe('cameraModes', () => this._captureResolved(), { immediate: true }),
       { once: true },
     );
-    this._stream.watchConfig(adoption);
+    this._stream.watchConfig();
     await this._access.watchPermissions();
-    this._stream.devices.watchDeviceChanges(adoption);
-    await this._openCamera(adoption);
+    this._stream.devices.watchDeviceChanges();
+    await this._openCamera();
     // Read now, not before the permission prompt: the modes can change while it is open.
     this._captureResolved();
   }
 
-  /** Stops the camera and lets go of every listener; a pending permission state is dropped. */
-  public release(): void {
-    this._access.cancel();
-    // A recording or a photo in progress belongs to the stream being stopped, so the phase is live again. The tab is
-    // left to the next activation: the config is not read after the adoption ended.
+  /**
+   * The adoption is over: ends the lifetime, which stops what the session started and takes its listeners off, then
+   * lets go of what was captured and stops the camera. The config is not read any more.
+   */
+  public end(): void {
+    this._host.lifetime.end();
     this._capture.end();
-    this._stream.forgetDeferred();
     this._closeCamera();
-    this._access.stopWatchingPermissions();
-    this._preview.release();
   }
 
   public handle(action: CameraCommand): void {
@@ -159,7 +170,7 @@ export class CameraSession {
         this._pickSetting(action.setting, action.value);
         break;
       case 'request-access':
-        this._host.lifetime.runTask(() => this._openCamera());
+        this._host.runTask(() => this._openCamera());
         break;
       case 'select-tab':
         this._selectTab(action.tab);
@@ -193,7 +204,7 @@ export class CameraSession {
    */
   private _permissionChanged(name: 'camera' | 'microphone'): void {
     if (name === 'camera' || !this._stream.feed.stream) {
-      this._host.lifetime.runTask(() => this._openCamera());
+      this._host.runTask(() => this._openCamera());
     } else {
       this._stream.retryMicrophone();
     }
@@ -201,7 +212,7 @@ export class CameraSession {
 
   private _selectCamera(deviceId: string): void {
     this._stream.devices.pickCamera(deviceId);
-    this._host.lifetime.runTask(() => this._openCamera());
+    this._host.runTask(() => this._openCamera());
   }
 
   private _pickSetting(setting: CameraSetting, value: string): void {
@@ -297,7 +308,7 @@ export class CameraSession {
     // The time limit and the shutter can both ask; only the first stops it.
     if (!this._capture.isRecording) return;
     this._track('stop-camera');
-    this._host.lifetime.runTask(() => this._showRecording());
+    this._host.runTask(() => this._showRecording());
   }
 
   /**
@@ -305,7 +316,7 @@ export class CameraSession {
    * recorded from a stream that was replaced meanwhile is dropped: the preview shows the new one live.
    */
   private async _showRecording(): Promise<void> {
-    const clip = await this._host.lifetime.whileAdopted(this._capture.stop());
+    const clip = await this._host.lifetime.guard(this._capture.stop());
     if (!clip) {
       this._captureResolved();
       return;
@@ -338,7 +349,7 @@ export class CameraSession {
     const photo = this._capture.photo;
     const clip = this._capture.clipFile();
     this._endReview();
-    if (photo) this._host.lifetime.runTask(() => this._addPhoto(photo));
+    if (photo) this._host.runTask(() => this._addPhoto(photo));
     if (clip) {
       // The camera can stay open after the file is added (an `onFileAdd` hook): the preview goes back to live.
       this._preview.play();
@@ -375,7 +386,7 @@ export class CameraSession {
 
   private async _addPhoto(photo: Promise<Blob>): Promise<void> {
     try {
-      const blob = await this._host.lifetime.whileAdopted(photo);
+      const blob = await this._host.lifetime.guard(photo);
       this._addFile(photoFile(blob));
     } catch (error) {
       if (isAbortError(error)) throw error;
@@ -409,8 +420,8 @@ export class CameraSession {
     feed.close();
   }
 
-  /** `adoption` is the signal of the lifetime the calling task started in. */
-  private async _openCamera(adoption = this._host.lifetime.adoptionSignal()): Promise<void> {
+  private async _openCamera(): Promise<void> {
+    const { signal } = this._host.lifetime;
     // Release the current stream first. The prompt state below used to do it, but it is debounced and a quick
     // 'granted' supersedes it, which left the previous camera running after a device switch.
     this._dropCapture();
@@ -426,12 +437,11 @@ export class CameraSession {
       };
       stream.addEventListener('inactive', lost);
       // The camera alone can end (unplugged, taken by the system) while the microphone keeps the stream active.
-      stream.getVideoTracks()[0]?.addEventListener('ended', lost, { once: true, signal: adoption });
+      stream.getVideoTracks()[0]?.addEventListener('ended', lost, { once: true, signal });
       this._access.settleLater('granted');
     } catch (error) {
-      // Asks the task's lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
-      // Not the current adoption either: after a move it is the next one's, still live.
-      if (adoption.aborted) throw error;
+      // Asks the lifetime, not the error: `getUserMedia` names a camera that fails to start `AbortError` too.
+      if (signal.aborted) throw error;
       this._access.settleLater('denied', cameraFailureOf(error));
       this._host.report('warn', 'Failed to capture camera', error, 'camera capturing. Failed to capture camera');
     }

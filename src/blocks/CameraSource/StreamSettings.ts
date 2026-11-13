@@ -5,7 +5,7 @@ import type { CameraMode } from '../../abstract/cameraModes';
 import { signalState } from '../../abstract/di/signalState';
 import { CameraDevices } from './CameraDevices';
 import { type CameraSetting, CaptureSettings } from './CaptureSettings';
-import type { CameraConfig, CameraLifetime, CameraReport } from './cameraHost';
+import type { CameraConfig, CameraReport, CameraTasks } from './cameraHost';
 import { CameraFeed } from './media/CameraFeed';
 import { MicrophoneSwap } from './media/MicrophoneSwap';
 
@@ -23,8 +23,7 @@ const WATCHED_OPTIONS = [
 ] as const;
 
 /** What the session lends: its lifetime, the config, and what it knows of the capture. */
-export type StreamSettingsHost = {
-  lifetime: CameraLifetime;
+export type StreamSettingsHost = CameraTasks & {
   config: CameraConfig;
   /** The mode the camera opens for: the active tab, or the tab about to become active. */
   mode: () => CameraMode;
@@ -67,6 +66,13 @@ export class StreamSettings {
     });
   }
 
+  /** Starts from what the session before showed and held picked, which a DOM move must not lose. */
+  public keep(previous: StreamSettings): void {
+    this.microphoneDenied = previous.microphoneDenied;
+    this.devices.keep(previous.devices);
+    this.settings.keep(previous.settings);
+  }
+
   /**
    * Opens the camera with what is in effect, and resolves with its stream; null when a later open took over. The
    * devices are listed the first time, when access makes their labels readable. `beforeAttempt` runs before each
@@ -83,7 +89,7 @@ export class StreamSettings {
     this.microphoneDenied = opened.microphoneRefused;
     // Another camera may not do the picked preset: start the resolution picker over if it's no longer offered.
     this.settings.cameraOpened(maxShortSideOf(opened.stream.getVideoTracks()[0]));
-    if (!this.devices.cameras.length) this._host.lifetime.runTask(() => this.devices.list());
+    if (!this.devices.cameras.length) this._host.runTask(() => this.devices.list());
     // The camera opened with what was in effect when it was asked for. Apply what is in effect now: a preset the
     // camera turned out not to do was left out of the picker, and a pick made while it opened was not applied.
     this.apply('constraints');
@@ -95,7 +101,7 @@ export class StreamSettings {
    * microphone, custom constraints to both. The audio bitrate is set when a recording starts, so it needs nothing.
    */
   public apply(change: StreamChange): void {
-    const { runTask } = this._host.lifetime;
+    const { runTask } = this._host;
     if (change === 'aspectRatio' || change === 'resolution' || change === 'constraints') {
       runTask(() => this._applyVideoConstraints());
     }
@@ -104,11 +110,11 @@ export class StreamSettings {
     }
   }
 
-  /** Follows the options behind the stream until `adoption` ends. */
-  public watchConfig(adoption: AbortSignal): void {
+  /** Follows the options behind the stream until the lifetime ends. */
+  public watchConfig(): void {
     for (const [option, change] of WATCHED_OPTIONS) {
       const unwatch = this._host.config.observe(option, () => this.configChanged(change));
-      adoption.addEventListener('abort', unwatch, { once: true });
+      this._host.lifetime.signal.addEventListener('abort', unwatch, { once: true });
     }
   }
 
@@ -121,7 +127,7 @@ export class StreamSettings {
     if (change === 'constraints') {
       this.feed.resetCustomDropped();
     } else if (change === 'audioEnabled') {
-      if (this.devices.cameras.length) this._host.lifetime.runTask(() => this.devices.list());
+      if (this.devices.cameras.length) this._host.runTask(() => this.devices.list());
     } else {
       this.settings.reset(change);
     }
@@ -130,7 +136,7 @@ export class StreamSettings {
 
   public selectMicrophone(deviceId: string): void {
     this.devices.pickMicrophone(deviceId);
-    this._host.lifetime.runTask(() => this._applyAudioConstraints());
+    this._host.runTask(() => this._applyAudioConstraints());
   }
 
   /** The microphone permission changed with the camera open: asks for the microphone again, the camera left alone. */
@@ -138,19 +144,14 @@ export class StreamSettings {
     // No live microphone in the stream: asking for one is a change, even with the request that was refused. A revoke
     // leaves the ended track in the stream.
     if (!this.feed.stream?.getAudioTracks().some((track) => track.readyState === 'live')) this._requested.noAudio();
-    this._host.lifetime.runTask(() => this._applyAudioConstraints());
+    this._host.runTask(() => this._applyAudioConstraints());
   }
 
   /** The recording stopped: applies what changed while it ran, video first. */
   public resume(): void {
     const pending = this._requested.flush();
-    if (pending.video) this._host.lifetime.runTask(() => this._applyVideoConstraints());
-    if (pending.audio) this._host.lifetime.runTask(() => this._applyAudioConstraints());
-  }
-
-  /** The changes waiting for a recording to stop are dropped with it. */
-  public forgetDeferred(): void {
-    this._requested.clearPending();
+    if (pending.video) this._host.runTask(() => this._applyVideoConstraints());
+    if (pending.audio) this._host.runTask(() => this._applyAudioConstraints());
   }
 
   /** `custom` defaults to `cameraConstraints`, unless the open camera couldn't satisfy them. */
