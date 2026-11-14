@@ -529,13 +529,13 @@ describe('VirtualListController geometry', () => {
       itemSelector: 'x',
       rowMetrics: () => ({ columns: 3, rowHeight: 120 }),
     });
-    expect(controller.metrics).toEqual({ columns: 1, rowHeight: 0, rowGap: 0, viewportRows: 0 });
+    expect(controller.metrics).toEqual({ columns: 1, viewportRows: 0 });
   });
 
   it('reports the geometry its window is computed from', () => {
     const { controller } = setup();
     // floor(250 / 120) whole rows fit, though the window renders ceil(250 / 120) = 3 rows.
-    expect(controller.metrics).toEqual({ columns: 3, rowHeight: 120, rowGap: 20, viewportRows: 2 });
+    expect(controller.metrics).toEqual({ columns: 3, viewportRows: 2 });
     expect(controller.window(items).rows).toHaveLength(3 * 3);
   });
 
@@ -581,14 +581,14 @@ describe('VirtualListController geometry', () => {
 
   it('measures a container that does not scroll on each render, without windowing it', () => {
     const { controller, firstItem, setColumns } = setup({ scrollHeight: 250 });
-    expect(controller.metrics).toEqual({ columns: 3, rowHeight: 120, rowGap: 20, viewportRows: 2 });
+    expect(controller.metrics).toEqual({ columns: 3, viewportRows: 2 });
     expect(flat(controller.window(items))).toEqual({ items, topPad: 0, bottomPad: 0 });
 
     // Not latched: nothing re-measures such a list but its next render.
     setColumns(2);
     firstItem.offsetHeight = 30;
     controller.hostUpdated();
-    expect(controller.metrics).toEqual({ columns: 2, rowHeight: 50, rowGap: 20, viewportRows: 5 });
+    expect(controller.metrics).toEqual({ columns: 2, viewportRows: 5 });
   });
 
   it('re-renders on a resize that keeps the height, which can still change the columns', () => {
@@ -605,7 +605,7 @@ describe('VirtualListController geometry', () => {
     const { controller, firstItem } = setup({ scrollHeight: 250 });
     firstItem.offsetHeight = -20;
     controller.hostUpdated();
-    expect(controller.metrics.rowHeight).toBe(120);
+    expect(controller.metrics.viewportRows).toBe(2);
   });
 });
 

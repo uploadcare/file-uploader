@@ -17,9 +17,6 @@ export type VirtualListRowMetrics = {
 /** The geometry the window is computed from. A host that moves by rows or pages reads it to agree with the window. */
 export type VirtualListMetrics = Readonly<{
   columns: number;
-  /** The current estimate of one row's height in px, gap included (0 until a row was measured). */
-  rowHeight: number;
-  rowGap: number;
   /** Whole rows that fit the scroll container (0 until measured). */
   viewportRows: number;
 }>;
@@ -208,8 +205,6 @@ export class VirtualListController implements ReactiveController {
     const rowHeight = this._rowHeight;
     return {
       columns: this._columns,
-      rowHeight,
-      rowGap: this._rowGap,
       viewportRows: rowHeight > 0 ? Math.floor(this._viewportHeight / rowHeight) : 0,
     };
   }
