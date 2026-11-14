@@ -323,12 +323,6 @@ export class Thumb extends FileItemConfig {
     }
   }
 
-  public override disconnectedCallback(): void {
-    super.disconnectedCallback();
-
-    this._cancelPendingThumbUpdate();
-  }
-
   public override render() {
     return html`
   <div class="uc-thumb">
