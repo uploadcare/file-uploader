@@ -205,12 +205,12 @@ describe('uc-upload-list virtualization', () => {
       );
     };
     await expect.poll(pointsAtItsRow).toBe(true);
-    expect(withinRows()).toBe(true);
+    await expect.poll(withinRows).toBe(true);
 
     // At the bottom the last file renders with no spacer after it.
     await expect.poll(() => rowIndex(scrollToBottom(files, () => rows().at(-1)))).toBe(299);
     expect(rows().at(-1)!.nextElementSibling?.classList.contains('uc-list-spacer') ?? false).toBe(false);
-    expect(withinRows()).toBe(true);
+    await expect.poll(withinRows).toBe(true);
   };
 
   it('sizes the spacers from the rows it renders, not the first one', async () => {
