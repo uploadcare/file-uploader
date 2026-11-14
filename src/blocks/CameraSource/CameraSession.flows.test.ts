@@ -639,11 +639,12 @@ describe('CameraSession flows', () => {
     await open(ctx);
     startRecording(ctx);
     const read = vi.spyOn(ctx.config, 'get');
+    const moved = ctx.session;
 
     ctx.move();
 
-    expect(ctx.session.capture.isStopping).toBe(false);
-    expect(ctx.session.capture.phase).toBe('live');
+    expect(moved.capture.isStopping).toBe(false);
+    expect(moved.capture.phase).toBe('live');
     expect(read).not.toHaveBeenCalledWith('cameraModes');
 
     ctx.config.set('cameraModes', PHOTO);
