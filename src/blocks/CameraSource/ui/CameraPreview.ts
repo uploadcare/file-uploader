@@ -37,21 +37,11 @@ export class CameraPreview extends ChildBlock {
     if (width && height) this._emit({ type: 'preview-resize', width, height });
   };
 
-  /** Lends the camera the `<video>` to show its stream and clips in. */
-  private _lendVideo(): void {
-    const video = this._videoRef.value;
-    if (video) this._emit({ type: 'video-element', video });
-  }
-
   // The `<video>` exists from the first render on and is never replaced, so the camera shows its stream in it from here.
   public override firstUpdated(changedProperties: PropertyValues<this>): void {
     super.firstUpdated(changedProperties);
-    this._lendVideo();
-  }
-
-  // A DOM move releases the camera, which lets go of the `<video>`, and re-adopts it without a new first render.
-  protected override controllerReady(): void {
-    this._lendVideo();
+    const video = this._videoRef.value;
+    if (video) this._emit({ type: 'video-element', video });
   }
 
   public override render() {
