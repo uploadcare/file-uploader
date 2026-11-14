@@ -300,6 +300,8 @@ export class Thumb extends FileItemConfig {
 
     this.subEntry('cdnUrlModifiers', requestThumb);
 
+    // The subscriptions above each asked on subscribing; the request below answers them all.
+    cancelPending(this._debouncedGenerateThumb);
     this._requestThumbGeneration(true);
   }
 
