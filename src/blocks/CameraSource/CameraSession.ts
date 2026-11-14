@@ -6,7 +6,7 @@ import { signalState } from '../../abstract/di/signalState';
 import { CameraAccess, type CameraPermission, type SettledPermission } from './CameraAccess';
 import type { CameraSetting } from './CaptureSettings';
 import type { CameraConfig, CameraReport, CameraTasks } from './cameraHost';
-import type { CameraCommand, CameraPhase, ClockView } from './cameraTypes';
+import type { CameraCommand, ClockView } from './cameraTypes';
 import { Capture } from './media/Capture';
 import { photoFile } from './media/PhotoCapture';
 import { type ClipHandlers, PreviewVideo } from './media/PreviewVideo';
