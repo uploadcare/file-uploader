@@ -556,6 +556,11 @@ export abstract class ChildBlock extends ChildBlockBase {
     this._disposables.add(unsub);
   }
 
+  /** This adoption's lifetime, for a part that outlives no adoption and takes a `Lifetime` whole. */
+  protected get adoptionLifetime(): Lifetime {
+    return this._lifetime;
+  }
+
   /**
    * Aborted when this block is released (disconnect or re-adoption); already aborted before adoption. Pass it to APIs
    * that take a signal — `addEventListener`, `fetch`, upload-client — and they clean up on their own.

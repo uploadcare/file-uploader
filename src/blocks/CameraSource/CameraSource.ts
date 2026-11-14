@@ -4,7 +4,6 @@ import { type CameraMode, parseCameraModes } from '../../abstract/cameraModes';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject } from '../../abstract/di/inject';
-import { Lifetime } from '../../abstract/di/Lifetime';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
 import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import { ChildBlock } from '../../lit/ChildBlock';
@@ -65,13 +64,10 @@ export class CameraSource extends ChildBlock {
   // A session lasts one adoption: it is built here and ended in `controllerReleased`, on disconnect and on ctx
   // release/re-adoption alike.
   protected override controllerReady(): void {
-    const lifetime = new Lifetime();
-    const runTask = (task: () => unknown): void =>
-      lifetime.run(task, (error) => this._log.error('an async task failed', error));
     const session = new CameraSession(
       {
-        lifetime,
-        runTask,
+        lifetime: this.adoptionLifetime,
+        runTask: (task) => this.runTask(task),
         config: this._config,
         cameraLabel: (index) => `${this.l10n('caption-camera')} ${index + 1}`,
         microphoneLabel: (index) => `${this.l10n('camera-microphone')} ${index + 1}`,
@@ -87,7 +83,7 @@ export class CameraSource extends ChildBlock {
     );
     this._session = session;
     if (this._video) session.previewVideo(this._video);
-    runTask(() => session.activate());
+    this.runTask(() => session.activate());
   }
 
   protected override controllerReleased(): void {
