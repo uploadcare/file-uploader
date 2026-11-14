@@ -209,7 +209,9 @@ describe('uc-thumb local thumbnail, across thumbs of one file', () => {
   it('draws the thumbnail once for a row that left the list while it was drawn and came back', async () => {
     const drawn = slowDrawing();
     const urls = trackThumbnailUrls();
-    const { ctxName, api } = renderUploadHost();
+    const { ctxName, config, api } = renderUploadHost();
+    // The file stays local, so no CDN thumbnail joins the drawing counted here.
+    config.confirmUpload = true;
     const { internalId } = api.addFileFromObject(IMAGE.PIXEL);
 
     const first = mountThumb(ctxName, internalId);
@@ -227,7 +229,9 @@ describe('uc-thumb local thumbnail, across thumbs of one file', () => {
   it('releases a thumbnail that was still being drawn when its file was removed', async () => {
     const drawn = slowDrawing();
     const urls = trackThumbnailUrls();
-    const { ctxName, api } = renderUploadHost();
+    const { ctxName, config, api } = renderUploadHost();
+    // The file stays local, so no CDN thumbnail joins the drawing counted here.
+    config.confirmUpload = true;
     const { internalId } = api.addFileFromObject(IMAGE.PIXEL);
     mountThumb(ctxName, internalId);
     await expect.poll(drawn).toBe(1);
