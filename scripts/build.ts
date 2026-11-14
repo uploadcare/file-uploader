@@ -156,6 +156,8 @@ async function build(buildItem: BuildItem) {
       // mainFields when an `exports` condition matches).
       options.mainFields = ['exports', 'module', 'main'];
       options.platform = 'browser';
+      // `signal-polyfill` keeps Angular's dev-only assertions behind this global.
+      options.define = { ...options.define, ngDevMode: 'false' };
       // tsup turns esbuild's minifier off for `'terser'`; it stays on, so terser starts from esbuild's output.
       options.minify = Boolean(buildItem.minify);
       options.legalComments = 'linked';
