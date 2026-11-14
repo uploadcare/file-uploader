@@ -38,10 +38,9 @@ export class CameraSession {
 
   /** What is captured and under review; the phase and what the preview shows of it are read from here. */
   private readonly _capture = new Capture();
-  /** `isStopping`: the recording was asked to stop and its clip is not handed over yet. */
-  public readonly recording: Readonly<Pick<Capture, 'isStopping'>> = this._capture;
-  /** The recorded clip's play/pause icon. */
-  public readonly review: Readonly<Pick<Capture, 'timelineIcon'>> = this._capture;
+  /** The capture, for the camera element to render from. */
+  public readonly capture: Readonly<Pick<Capture, 'phase' | 'isStopping' | 'timelineIcon' | 'playbackMirrored'>> =
+    this._capture;
   private readonly _clock = new RecordingClock();
   /** The recording timer and the clip's timeline, for the controls to render. */
   public readonly clock: ClockView = this._clock;
@@ -102,15 +101,6 @@ export class CameraSession {
 
   public get permission(): CameraPermission {
     return this._access.permission;
-  }
-
-  public get phase(): CameraPhase {
-    return this._capture.phase;
-  }
-
-  /** The clip under review has its mirroring baked in, so the preview must not mirror it again. */
-  public get playbackMirrored(): boolean {
-    return this._capture.playbackMirrored;
   }
 
   /** The preview rendered its `<video>`, which the stream and the clip are shown in. */
@@ -360,7 +350,7 @@ export class CameraSession {
 
   /** Nothing is under review any more: the capture ends, and a clip's preview gives way to the camera again. */
   private _endReview(): void {
-    const clipShown = this.phase === 'recorded';
+    const clipShown = this._capture.phase === 'recorded';
     this._capture.end();
     this._clock.stop();
     if (clipShown) this._preview.showLive(this._stream.feed.stream);
@@ -376,7 +366,7 @@ export class CameraSession {
    * accepted, retaken or dropped, and a `cameraModes` change that waited for it switches the tab then.
    */
   private _captureResolved(): void {
-    if (this.phase !== 'live' || this._capture.isStopping) return;
+    if (this._capture.phase !== 'live' || this._capture.isStopping) return;
     const cameraModes = this._cameraModes();
     const defaultTab = cameraModes[0];
     if (defaultTab && (!this.activeTab || !cameraModes.includes(this.activeTab))) {

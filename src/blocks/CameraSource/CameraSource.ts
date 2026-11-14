@@ -101,7 +101,7 @@ export class CameraSource extends ChildBlock {
     const session = this._session;
     if (!session) return;
     this.classList.toggle('uc-initialized', session.permission === 'granted');
-    this.classList.toggle('uc-recording', session.phase === 'recording' && !session.recording.isStopping);
+    this.classList.toggle('uc-recording', session.capture.phase === 'recording' && !session.capture.isStopping);
   }
 
   public override render() {
@@ -113,7 +113,7 @@ export class CameraSource extends ChildBlock {
     const view = deriveCameraView({
       permission: session.permission,
       failure: session.access.failure,
-      phase: session.phase,
+      phase: session.capture.phase,
       tab: session.activeTab,
       cameraModes: parseCameraModes(this._config.getTracked('cameraModes')),
       audioEnabled,
@@ -125,7 +125,7 @@ export class CameraSource extends ChildBlock {
     const settings = deriveSettingsView({
       view,
       permission: session.permission,
-      phase: session.phase,
+      phase: session.capture.phase,
       tab: session.activeTab,
       audioEnabled,
       devices: stream.devices,
@@ -135,7 +135,7 @@ export class CameraSource extends ChildBlock {
       <uc-camera-header @uc-internal:camera-action=${this._handleAction}></uc-camera-header>
       <uc-camera-preview
         .view=${view}
-        .mirror=${this._config.getTracked('cameraMirror') && !session.playbackMirrored}
+        .mirror=${this._config.getTracked('cameraMirror') && !session.capture.playbackMirrored}
         .aspectRatio=${stream.settings.aspectRatio}
         .requestButtonHidden=${this._requestButtonHidden}
         @uc-internal:camera-action=${this._handleAction}
@@ -147,7 +147,7 @@ export class CameraSource extends ChildBlock {
         .settingsHidden=${settings.hidden}
         .previewShape=${this._previewShape}
         .hasVideoFrame=${session.preview.hasVideoFrame}
-        .timelineIcon=${session.review.timelineIcon}
+        .timelineIcon=${session.capture.timelineIcon}
         .clock=${session.clock}
         @uc-internal:camera-action=${this._handleAction}
       ></uc-camera-controls>

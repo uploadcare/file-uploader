@@ -240,16 +240,16 @@ describe('CameraSession flows', () => {
     const ctx = setup();
     await open(ctx);
     const recorder = startRecording(ctx);
-    expect(ctx.session.phase).toBe('recording');
+    expect(ctx.session.capture.phase).toBe('recording');
 
     ctx.session.handle({ type: 'shutter' });
 
-    expect(ctx.session.recording.isStopping).toBe(true);
+    expect(ctx.session.capture.isStopping).toBe(true);
     expect(ctx.track).toHaveBeenLastCalledWith('stop-camera', { tabId: VIDEO });
-    expect(ctx.session.phase).toBe('recording');
+    expect(ctx.session.capture.phase).toBe('recording');
 
     recorder.dispatchEvent(new Event('stop'));
-    await vi.waitFor(() => expect(ctx.session.phase).toBe('recorded'));
+    await vi.waitFor(() => expect(ctx.session.capture.phase).toBe('recorded'));
   });
 
   it('inv4: a shutter press while the recorder stops neither stops it again nor starts another', async () => {
@@ -263,7 +263,7 @@ describe('CameraSession flows', () => {
     ctx.session.handle({ type: 'shutter' });
     ctx.session.handle({ type: 'shutter' });
     recorder.dispatchEvent(new Event('stop'));
-    await vi.waitFor(() => expect(ctx.session.phase).toBe('recorded'));
+    await vi.waitFor(() => expect(ctx.session.capture.phase).toBe('recorded'));
 
     expect(FakeRecorder.last).toBe(recorder);
     expect(recorder.stop).toHaveBeenCalledOnce();
@@ -285,7 +285,7 @@ describe('CameraSession flows', () => {
     runFrames();
     expect(pressedFirst.stop).toHaveBeenCalledOnce();
     pressedFirst.dispatchEvent(new Event('stop'));
-    await vi.waitFor(() => expect(ctx.session.phase).toBe('recorded'));
+    await vi.waitFor(() => expect(ctx.session.capture.phase).toBe('recorded'));
     ctx.session.handle({ type: 'retake' });
 
     now.mockReturnValue(0);
@@ -305,12 +305,12 @@ describe('CameraSession flows', () => {
     await open(ctx);
 
     const recorder = startRecording(ctx);
-    expect(ctx.session.playbackMirrored).toBe(false);
+    expect(ctx.session.capture.playbackMirrored).toBe(false);
     await stopRecording(ctx, recorder);
-    expect(ctx.session.playbackMirrored).toBe(true);
+    expect(ctx.session.capture.playbackMirrored).toBe(true);
 
     ctx.session.handle({ type: 'retake' });
-    expect(ctx.session.playbackMirrored).toBe(false);
+    expect(ctx.session.capture.playbackMirrored).toBe(false);
   });
 
   it('a mirrored recording that fails to start leaves the live preview mirrored', async () => {
@@ -324,8 +324,8 @@ describe('CameraSession flows', () => {
 
     startRecording(ctx);
 
-    expect(ctx.session.phase).toBe('live');
-    expect(ctx.session.playbackMirrored).toBe(false);
+    expect(ctx.session.capture.phase).toBe('live');
+    expect(ctx.session.capture.playbackMirrored).toBe(false);
   });
 
   it('a camera reopened during a mirrored recording leaves the live preview mirrored', async () => {
@@ -338,7 +338,7 @@ describe('CameraSession flows', () => {
     ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
     await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
 
-    expect(ctx.session.playbackMirrored).toBe(false);
+    expect(ctx.session.capture.playbackMirrored).toBe(false);
   });
 
   it('a camera reopened during a recording ends the recording without a clip', async () => {
@@ -355,8 +355,8 @@ describe('CameraSession flows', () => {
 
     expect(discard).toHaveBeenCalledOnce();
     expect(recorder.stop).toHaveBeenCalledOnce();
-    expect(ctx.session.recording.isStopping).toBe(false);
-    expect(ctx.session.phase).toBe('live');
+    expect(ctx.session.capture.isStopping).toBe(false);
+    expect(ctx.session.capture.phase).toBe('live');
     expect(frames).toEqual([]);
     await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
     recorder.dispatchEvent(new Event('stop'));
@@ -384,12 +384,12 @@ describe('CameraSession flows', () => {
     // As soon as the new stream shows, not once the permission state settles.
     await vi.waitFor(() => expect(video.srcObject).toBe(streams[1]));
     // The recapture dropped the clip's phase as it began.
-    expect(ctx.session.phase).toBe('live');
-    expect(ctx.session.playbackMirrored).toBe(false);
+    expect(ctx.session.capture.phase).toBe('live');
+    expect(ctx.session.capture.playbackMirrored).toBe(false);
     // Past the 300 ms the reopened camera's 'granted' takes to settle.
     await delay(400);
 
-    expect(ctx.session.playbackMirrored).toBe(false);
+    expect(ctx.session.capture.playbackMirrored).toBe(false);
   });
 
   it('a camera reopened over a clip under review drops the clip and its recording', async () => {
@@ -455,11 +455,11 @@ describe('CameraSession flows', () => {
     await ctx.tasksSettled();
 
     const recorder = startRecording(ctx);
-    expect(ctx.session.phase).toBe('recording');
+    expect(ctx.session.capture.phase).toBe('recording');
     // Past the 300 ms the reopened camera's 'granted' takes to settle.
     await delay(400);
 
-    expect(ctx.session.phase).toBe('recording');
+    expect(ctx.session.capture.phase).toBe('recording');
     expect(recorder.state).toBe('recording');
   });
 
@@ -470,11 +470,11 @@ describe('CameraSession flows', () => {
     stubCanvas();
     await open(ctx);
     ctx.session.handle({ type: 'shutter' });
-    expect(ctx.session.phase).toBe('shot');
+    expect(ctx.session.capture.phase).toBe('shot');
 
     ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
 
-    expect(ctx.session.phase).toBe('live');
+    expect(ctx.session.capture.phase).toBe('live');
   });
 
   it('inv4: changes made while recording apply after the stop, video first', async () => {
@@ -642,8 +642,8 @@ describe('CameraSession flows', () => {
 
     ctx.move();
 
-    expect(ctx.session.recording.isStopping).toBe(false);
-    expect(ctx.session.phase).toBe('live');
+    expect(ctx.session.capture.isStopping).toBe(false);
+    expect(ctx.session.capture.phase).toBe('live');
     expect(read).not.toHaveBeenCalledWith('cameraModes');
 
     ctx.config.set('cameraModes', PHOTO);
@@ -752,7 +752,7 @@ describe('CameraSession flows', () => {
     expect(video.muted).toBe(true);
     expect(video.play).toHaveBeenCalledOnce();
     video.dispatchEvent(new Event('play'));
-    expect(ctx.session.review.timelineIcon).toBe('play');
+    expect(ctx.session.capture.timelineIcon).toBe('play');
   });
 
   it('a retaken or accepted clip lets go of its recording', async () => {
@@ -801,21 +801,21 @@ describe('CameraSession flows', () => {
 
     ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
     await vi.advanceTimersByTimeAsync(1000);
-    expect(ctx.session.phase).toBe('live');
+    expect(ctx.session.capture.phase).toBe('live');
     ctx.session.handle({ type: 'shutter' });
     expect(FakeRecorder.last).toBe(first);
 
     first.dispatchEvent(new Event('stop'));
     await vi.advanceTimersByTimeAsync(0);
     expect(URL.createObjectURL).not.toHaveBeenCalled();
-    expect(ctx.session.phase).toBe('live');
+    expect(ctx.session.capture.phase).toBe('live');
     expect(video.srcObject).toBe(streams[1]);
     video.dispatchEvent(new Event('play'));
-    expect(ctx.session.review.timelineIcon).toBe('play');
+    expect(ctx.session.capture.timelineIcon).toBe('play');
 
     ctx.session.handle({ type: 'shutter' });
     expect(FakeRecorder.last).not.toBe(first);
-    expect(ctx.session.phase).toBe('recording');
+    expect(ctx.session.capture.phase).toBe('recording');
   });
 
   it('a clip dropped after the camera reopened leaves no deferred change for the next recording', async () => {
@@ -853,12 +853,12 @@ describe('CameraSession flows', () => {
 
     ctx.config.set('cameraModes', PHOTO);
     expect(ctx.session.activeTab).toBe(VIDEO);
-    expect(ctx.session.phase).toBe('recording');
+    expect(ctx.session.capture.phase).toBe('recording');
 
     // The stop button still stops the recording rather than taking a photo.
     await stopRecording(ctx, recorder);
     expect(recorder.stop).toHaveBeenCalledOnce();
-    expect(ctx.session.phase).toBe('recorded');
+    expect(ctx.session.capture.phase).toBe('recorded');
     expect(ctx.session.activeTab).toBe(VIDEO);
 
     ctx.session.handle({ type: 'accept' });
@@ -877,12 +877,12 @@ describe('CameraSession flows', () => {
 
     await stopRecording(ctx, recorder);
     expect(recorder.stop).toHaveBeenCalledOnce();
-    expect(ctx.session.phase).toBe('recorded');
+    expect(ctx.session.capture.phase).toBe('recorded');
 
     ctx.session.handle({ type: 'accept' });
     expect(ctx.addFile).toHaveBeenCalledOnce();
     expect((ctx.addFile.mock.lastCall as [File])[0].type).toBe('video/webm');
-    expect(ctx.session.phase).toBe('live');
+    expect(ctx.session.capture.phase).toBe('live');
   });
 
   it('a cameraModes change waits for a photo under review to be retaken before switching the tab', async () => {
@@ -892,13 +892,13 @@ describe('CameraSession flows', () => {
     stubCanvas();
     await open(ctx);
     ctx.session.handle({ type: 'shutter' });
-    expect(ctx.session.phase).toBe('shot');
+    expect(ctx.session.capture.phase).toBe('shot');
 
     ctx.config.set('cameraModes', VIDEO);
     expect(ctx.session.activeTab).toBe(PHOTO);
 
     ctx.session.handle({ type: 'retake' });
-    expect(ctx.session.phase).toBe('live');
+    expect(ctx.session.capture.phase).toBe('live');
     expect(ctx.session.activeTab).toBe(VIDEO);
   });
 
@@ -1022,7 +1022,7 @@ describe('CameraSession flows', () => {
     await vi.waitFor(() => expect(ctx.session.stream.devices.cameras).toHaveLength(2));
     const live = streams[0];
     ctx.session.handle({ type: 'shutter' });
-    expect(ctx.session.phase).toBe('shot');
+    expect(ctx.session.capture.phase).toBe('shot');
 
     // Turned on, and the microphone is refused at first.
     hold().fail(new DOMException('Simulated', 'NotAllowedError'));
@@ -1035,7 +1035,7 @@ describe('CameraSession flows', () => {
     expect(microphoneCalls()).toHaveLength(2);
     expect(getUserMedia.mock.calls.filter(([constraints]) => constraints.video)).toHaveLength(1);
     expect(live?.getVideoTracks()[0]?.stop).not.toHaveBeenCalled();
-    expect(ctx.session.phase).toBe('shot');
+    expect(ctx.session.capture.phase).toBe('shot');
 
     // A camera permission change still opens the camera again.
     permissionStatus.camera.dispatchEvent(new Event('change'));
@@ -1259,14 +1259,14 @@ describe('CameraSession flows', () => {
     giveVideo(ctx, video);
     await open(ctx);
     await stopRecording(ctx, startRecording(ctx));
-    expect(ctx.session.phase).toBe('recorded');
+    expect(ctx.session.capture.phase).toBe('recorded');
     const discard = vi.spyOn(VideoRecording.prototype, 'discard');
     const live = streams[0];
 
     live?.dispatchEvent(new Event('inactive'));
     await vi.runAllTimersAsync();
 
-    expect(ctx.session.phase).toBe('live');
+    expect(ctx.session.capture.phase).toBe('live');
     expect(ctx.session.permission).toBe('denied');
     expect(live?.getVideoTracks()[0]?.stop).toHaveBeenCalled();
     // The clip went with the camera it was recorded from: its object URL is revoked and its recording dropped.
@@ -1305,13 +1305,13 @@ describe('CameraSession edges', () => {
     expect(video.play).toHaveBeenCalledOnce();
     Object.assign(video, { paused: false, ended: false, readyState: 4, currentTime: 0.5, duration: 2 });
     video.dispatchEvent(new Event('play'));
-    expect(ctx.session.review.timelineIcon).toBe('pause');
+    expect(ctx.session.capture.timelineIcon).toBe('pause');
     expect(ctx.session.clock.progress).toBe(0.25);
 
     ctx.session.handle({ type: 'toggle-playback' });
     expect(video.pause).toHaveBeenCalledOnce();
     video.dispatchEvent(new Event('pause'));
-    expect(ctx.session.review.timelineIcon).toBe('play');
+    expect(ctx.session.capture.timelineIcon).toBe('play');
     expect(frames).toEqual([]);
   });
 
@@ -1320,7 +1320,7 @@ describe('CameraSession edges', () => {
     const ctx = setup();
     startRecording(ctx);
     expect(start).not.toHaveBeenCalled();
-    expect(ctx.session.phase).toBe('live');
+    expect(ctx.session.capture.phase).toBe('live');
   });
 
   it('ignores playback events after release', async () => {
@@ -1423,7 +1423,7 @@ describe('CameraSession edges', () => {
       error,
       'camera previewing. Failed to preview video',
     );
-    expect(ctx.session.phase).toBe('recorded');
+    expect(ctx.session.capture.phase).toBe('recorded');
   });
 
   it('passes on a play() failure that is not an interruption', async () => {
@@ -1453,7 +1453,7 @@ describe('CameraSession edges', () => {
     expect(URL.createObjectURL).not.toHaveBeenCalled();
     // QUIRK(camera): the clip's guarded await in `CameraSession._showRecording` aborts, so nothing moves the
     // phase on and a session nobody released still shows the recording. Pinned as current behaviour, not endorsed.
-    expect(ctx.session.phase).toBe('recording');
+    expect(ctx.session.capture.phase).toBe('recording');
     expect(ctx.taskFailed).not.toHaveBeenCalled();
   });
 
