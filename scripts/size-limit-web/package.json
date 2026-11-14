@@ -8,12 +8,12 @@
     {
       "name": "web/file-uploader.min.js",
       "path": "../../web/file-uploader.min.js",
-      "limit": "99 KB"
+      "limit": "98 KB"
     },
     {
       "name": "web/file-uploader.iife.min.js",
       "path": "../../web/file-uploader.iife.min.js",
-      "limit": "99 KB"
+      "limit": "98 KB"
     },
     {
       "name": "web/uc-cloud-image-editor.min.js",
@@ -23,17 +23,17 @@
     {
       "name": "web/uc-file-uploader-regular.min.js",
       "path": "../../web/uc-file-uploader-regular.min.js",
-      "limit": "99 KB"
+      "limit": "98 KB"
     },
     {
       "name": "web/uc-file-uploader-inline.min.js",
       "path": "../../web/uc-file-uploader-inline.min.js",
-      "limit": "99 KB"
+      "limit": "98 KB"
     },
     {
       "name": "web/uc-file-uploader-minimal.min.js",
       "path": "../../web/uc-file-uploader-minimal.min.js",
-      "limit": "99 KB"
+      "limit": "98 KB"
     },
     {
       "name": "web/uc-img.min.js",
