@@ -80,8 +80,10 @@ export class Thumb extends FileItemConfig {
   private async _generateThumbnail(): Promise<void> {
     const entry = this.entry;
     if (!entry) return;
-    const size = this._calculateThumbSize();
     const uuid = entry.get('fileInfo') && entry.get('isImage') && entry.get('uuid');
+    // A local file that has its thumbnail needs nothing, so it is not measured either.
+    if (!uuid && entry.get('thumbUrl')) return;
+    const size = this._calculateThumbSize();
     // Binding to the entry and a change of the entry each ask for a thumbnail, the second while the first may still be
     // decoding the file. A local thumbnail is drawn once whatever the size; a CDN one differs by size and operations.
     const job = uuid ? `${uuid}/${size}/${entry.get('cdnUrlModifiers')}` : 'local';
