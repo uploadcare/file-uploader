@@ -128,8 +128,6 @@ export class CameraSession {
     await this._access.watchPermissions();
     this._stream.devices.watchDeviceChanges();
     await this._openCamera();
-    // Read now, not before the permission prompt: the modes can change while it is open.
-    this._captureResolved();
   }
 
   /**
