@@ -133,7 +133,7 @@ async function build(buildItem: BuildItem) {
     outDir: buildItem.outDir,
     target: 'esnext',
     minify: buildItem.minify,
-    terserOptions: { compress: { passes: 2 } },
+    terserOptions: { ecma: 2020, compress: { passes: 2, unsafe_arrows: true, unsafe_methods: true } },
     banner: {
       js: banner(),
       css: banner(),
