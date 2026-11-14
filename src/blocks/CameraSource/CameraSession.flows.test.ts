@@ -661,8 +661,11 @@ describe('CameraSession flows', () => {
     ctx.session.handle({ type: 'pick-setting', setting: 'resolution', value: '720p' });
     ctx.session.handle({ type: 'select-camera', deviceId: 'cam-2' });
     await vi.waitFor(() => expect(getUserMedia).toHaveBeenCalledTimes(2));
+    await vi.waitFor(() => expect(ctx.session.permission).toBe('granted'));
 
     ctx.move();
+    // The access shown carries over, before the new session asks for the camera.
+    expect(ctx.session.permission).toBe('granted');
     await activate(ctx, [PHOTO, VIDEO]);
 
     expect(ctx.session.activeTab).toBe(VIDEO);
