@@ -27,7 +27,9 @@
   }
 
   uc-file-item:focus-visible > .uc-inner {
-    outline: auto;
+    /* The browser's own focus ring colour, as on the buttons; `Highlight` where the WebKit keyword is unknown. */
+    outline: 1px auto Highlight;
+    outline: 1px auto -webkit-focus-ring-color;
     outline-offset: -2px;
   }
 
