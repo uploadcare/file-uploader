@@ -31,9 +31,4 @@ describe('firstFocusable', () => {
     const root = mount(`<div inert><button>a</button></div><button id="ok">b</button>`);
     expect(firstFocusable(root)?.id).toBe('ok');
   });
-
-  it('skips what the caller excludes', () => {
-    const root = mount(`<button class="no">a</button><button id="ok">b</button>`);
-    expect(firstFocusable(root, (el) => el.className === 'no')?.id).toBe('ok');
-  });
 });

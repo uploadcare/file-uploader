@@ -161,20 +161,16 @@ export class Modal extends ChildBlock {
   }
 
   /**
-   * v1's first focus stop: the first control once the activity has rendered. Opening focuses what is there at that
-   * moment, which can be the dialog itself (the camera renders its controls later) or the drop area, a focus stop v1
-   * did not have.
+   * Opening focuses the dialog's first control (WAI-ARIA's modal dialog pattern), which the browser picks from what
+   * is rendered at that moment. An activity that renders its controls later (the camera) leaves the focus on the
+   * dialog itself, so it is moved to the first control once they are there.
    */
-  // NEXT-MAJOR(a11y): let the dialog's own focusing steps pick the first stop, the drop area included. Kept for 1.x
-  // compat.
   private async _settleInitialFocus(dialog: HTMLDialogElement): Promise<void> {
-    const initial = document.activeElement;
-    const isDropArea = initial instanceof HTMLElement && initial.localName === 'uc-drop-area';
-    if (initial !== dialog && !(isDropArea && dialog.contains(initial))) return;
+    if (document.activeElement !== dialog) return;
     await blocksRendered(dialog, (work) => this.whileAdopted(work));
     // The user, or the activity itself, moved focus meanwhile.
-    if (document.activeElement !== initial) return;
-    firstFocusable(dialog, (el) => el.localName === 'uc-drop-area')?.focus();
+    if (document.activeElement !== dialog) return;
+    firstFocusable(dialog)?.focus();
   }
 
   protected hide(): void {
