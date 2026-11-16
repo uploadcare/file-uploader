@@ -166,3 +166,31 @@ describe('DynamicBtn source buttons', () => {
     }
   });
 });
+
+describe('DynamicBtn drop overlay', () => {
+  it('looks different with the file over the button than with it elsewhere on the page', async () => {
+    const ctxName = getCtxName();
+    page.render(
+      <>
+        <uc-file-uploader-regular dynamic-button ctx-name={ctxName}></uc-file-uploader-regular>
+        <uc-config qualityInsights={false} ctx-name={ctxName} pubkey="demopublickey" testMode></uc-config>
+      </>,
+    );
+    await expect.poll(() => document.querySelector('uc-dynamic-btn .uc-visual-drop-area')).not.toBeNull();
+    const area = document.querySelector<HTMLElement>('uc-dynamic-btn > uc-drop-area')!;
+    const overlay = document.querySelector<HTMLElement>('uc-dynamic-btn .uc-visual-drop-area')!;
+    const look = () => {
+      const { borderTopStyle, borderTopColor, backgroundImage } = getComputedStyle(overlay);
+      return [borderTopStyle, borderTopColor, backgroundImage].join(' | ');
+    };
+
+    document.body.dispatchEvent(new DragEvent('dragenter', { bubbles: true }));
+    await expect.poll(() => area.getAttribute('drag-state')).toBe('active');
+    const elsewhere = look();
+
+    area.dispatchEvent(new DragEvent('dragover', { bubbles: true, composed: true }));
+    await expect.poll(() => area.getAttribute('drag-state')).toBe('over');
+    expect(getComputedStyle(overlay).borderTopStyle).toBe('solid');
+    expect(look()).not.toBe(elsewhere);
+  });
+});
