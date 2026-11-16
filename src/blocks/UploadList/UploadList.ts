@@ -563,6 +563,7 @@ export class UploadList extends ActivityChildBlock {
     <button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
+      aria-label=${this.l10n('add-more')}
       data-testid="add-more"
       @click=${this._handleAdd}
       ?disabled=${!this._addMoreBtnEnabled}
@@ -585,6 +586,7 @@ export class UploadList extends ActivityChildBlock {
     <button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
+      aria-label=${this.l10n('add-more')}
       ${ref(this._addMoreRef)}
       ?hidden=${!this._addMoreBtnVisible}
       ?disabled=${!this._addMoreBtnEnabled}
