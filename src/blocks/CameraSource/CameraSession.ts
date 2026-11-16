@@ -254,17 +254,23 @@ export class CameraSession {
   }
 
   private _shot(): void {
-    const video = this._preview.element;
-    if (!video) {
-      throw new Error('Video element not found');
+    try {
+      const video = this._preview.element;
+      if (!video) {
+        throw new Error('Video element not found');
+      }
+      // The preview frame as the shutter is pressed, cropped, mirrored and encoded as it will be sent. A still from
+      // `ImageCapture.takePhoto()` was tried on main: with a real camera the preview changed after a shot and a
+      // retake.
+      this._capture.shoot(video, {
+        aspectRatio: this._stream.settings.aspectRatio,
+        mirror: this._host.config.get('cameraMirror'),
+        quality: this._host.config.get('cameraPhotoQuality'),
+      });
+    } catch (error) {
+      this._host.report('error', 'Failed to take the photo', error, 'camera capturing. Failed to take the photo');
+      return;
     }
-    // The preview frame as the shutter is pressed, cropped, mirrored and encoded as it will be sent. A still from
-    // `ImageCapture.takePhoto()` was tried on main: with a real camera the preview changed after a shot and a retake.
-    this._capture.shoot(video, {
-      aspectRatio: this._stream.settings.aspectRatio,
-      mirror: this._host.config.get('cameraMirror'),
-      quality: this._host.config.get('cameraPhotoQuality'),
-    });
     // TODO: There are troubles with this, image isn't freezed after shot due to rendering in progress
     this._preview.pause();
   }

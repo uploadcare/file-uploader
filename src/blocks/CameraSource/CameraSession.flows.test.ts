@@ -1422,10 +1422,19 @@ describe('CameraSession edges', () => {
     expect(() => session.handle({ type: 'bogus' } as unknown as CameraAction)).toThrow('Unknown camera action: bogus');
   });
 
-  it('throws on a shot without a video element', () => {
-    const { session } = setup();
+  it('reports a shot that cannot be taken, and stays live', () => {
+    const { session, report } = setup();
     session.handle({ type: 'select-tab', tab: PHOTO });
-    expect(() => session.handle({ type: 'shutter' })).toThrow('Video element not found');
+
+    session.handle({ type: 'shutter' });
+
+    expect(report).toHaveBeenCalledWith(
+      'error',
+      'Failed to take the photo',
+      expect.objectContaining({ message: 'Video element not found' }),
+      'camera capturing. Failed to take the photo',
+    );
+    expect(session.capture.phase).toBe('live');
   });
 
   it('reports a clip it cannot preview, and still ends the recording', async () => {
