@@ -117,6 +117,15 @@ describe('uc-cloud-image-editor', () => {
     expect(element.querySelector('uc-editor-slider')?.closest('[inert]')).not.toBeNull();
   });
 
+  it('gives each tab a panel, and its list of controls a name', async () => {
+    const { element, editor } = renderEditor();
+    await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
+
+    await expect.element(editor.getByRole('tabpanel')).toBeVisible();
+    await expect.element(editor.getByRole('listbox', { name: /tuning/i })).toBeVisible();
+    for (const image of element.querySelectorAll('img')) expect(image.hasAttribute('alt')).toBe(true);
+  });
+
   it('names its slider after the operation', async () => {
     const { editor } = renderEditor();
     await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));

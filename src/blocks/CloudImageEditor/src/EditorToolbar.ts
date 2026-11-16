@@ -542,10 +542,16 @@ export class EditorToolbar extends EditorBlock {
       <div
         id=${`tab_${id}`}
         class="uc-tab-content"
+        role="tabpanel"
       >
         <uc-editor-scroller hidden-scrollbar>
           <div class="uc-controls-list_align">
-            <div role="listbox" aria-orientation="horizontal" class="uc-controls-list_inner">
+            <div
+              role="listbox"
+              aria-orientation="horizontal"
+              aria-label=${this.l10nSafe(`a11y-editor-tab-${id}`)}
+              class="uc-controls-list_inner"
+            >
               ${controls}
             </div>
           </div>

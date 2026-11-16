@@ -162,6 +162,8 @@ export class EditorImageFader extends EditorBlock {
     }
     const keypoint = await this.whileAdopted(this._constructKeypoint(controller, operation, value));
     const image = new Image();
+    // The layers the fader blends are one picture to a screen reader, which the editor names.
+    image.alt = '';
     image.src = keypoint.src;
     // Not bound to the adoption: the loading flag lives on the controller and must clear even if the load lands late.
     const stop = trackImageLoading(controller);
@@ -385,6 +387,7 @@ export class EditorImageFader extends EditorBlock {
 
   private _createPreviewImage(): HTMLImageElement {
     const image = new Image();
+    image.alt = '';
     image.classList.add('uc-fader-image', 'uc-fader-image--preview');
     image.style.opacity = '0';
     return image;
