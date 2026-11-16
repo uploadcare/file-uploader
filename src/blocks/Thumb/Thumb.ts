@@ -1,5 +1,5 @@
 import { modifiers, serializeFileUrl } from '@uploadcare/cdn-url';
-import { html, type PropertyValues } from 'lit';
+import { html, nothing, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
@@ -18,7 +18,6 @@ import type { ControllerContainer } from '../../abstract/di/ControllerContainer'
 import type { Uid } from '../../abstract/Uid';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
 import type { ConfigType } from '../../types';
-import { TRANSPARENT_PIXEL_SRC } from '../../utils/transparentPixelSrc';
 
 import '../Icon/Icon';
 
@@ -330,13 +329,7 @@ export class Thumb extends FileItemConfig {
   public override render() {
     return html`
   <div class="uc-thumb">
-    <img
-      class="uc-thumb__img"
-      src=${this._thumbUrl || TRANSPARENT_PIXEL_SRC}
-      alt=""
-      ?hidden=${!this._thumbUrl}
-      draggable="false"
-    />
+    ${this._thumbUrl ? html`<img class="uc-thumb__img" src=${this._thumbUrl} alt="" draggable="false" />` : nothing}
     <div class="uc-badge">
       <uc-icon name=${this.badgeIcon}></uc-icon>
     </div>

@@ -615,13 +615,13 @@ export class EditorToolbar extends EditorBlock {
             ></uc-editor-slider>
           </div>
 
-          <div class="uc-list-aspect-ratio-container" ?hidden=${this._useSliderPanel || !showAspectRatioList}>
-            ${
-              showAspectRatioList
-                ? html`<div class="uc-list-aspect-ratio">${this.cropPresetList.map((preset) => this._renderAspectRatioControl(preset))}</div>`
-                : nothing
-            }
-          </div>
+          ${
+            showAspectRatioList && !this._useSliderPanel
+              ? html`<div class="uc-list-aspect-ratio-container">
+                  <div class="uc-list-aspect-ratio">${this.cropPresetList.map((preset) => this._renderAspectRatioControl(preset))}</div>
+                </div>`
+              : nothing
+          }
           <div class="uc-controls-row">
             <uc-btn-ui
               theme="secondary"

@@ -162,22 +162,20 @@ describe('UploadList', () => {
     const { el, collectionState } = await mount(ctxName);
     const errorRow = () => el.querySelector<HTMLElement>('.uc-common-error');
 
-    // No errors -> row hidden, no text.
-    expect(errorRow()?.hasAttribute('hidden')).toBe(true);
-    expect(errorRow()?.textContent?.trim()).toBe('');
+    // No errors -> no row.
+    expect(errorRow()).toBeNull();
 
     collectionState.set('collectionErrors', [{ type: 'TOO_MANY_FILES', message: 'too many files' }]);
     await el.updateComplete;
     await delay(0);
-    expect(errorRow()?.hasAttribute('hidden')).toBe(false);
+    expect(errorRow()).not.toBeNull();
     expect(errorRow()?.textContent?.trim()).toBe('too many files');
 
     // Per-file marker errors are ignored — the row stays for real collection errors only.
     collectionState.set('collectionErrors', [{ type: 'SOME_FILES_HAS_ERRORS', message: 'ignored' }]);
     await el.updateComplete;
     await delay(0);
-    expect(errorRow()?.hasAttribute('hidden')).toBe(true);
-    expect(errorRow()?.textContent?.trim()).toBe('');
+    expect(errorRow()).toBeNull();
   });
 
   it('drives the host [mode] attribute reactively from the filesViewMode config (willUpdate + getTracked)', async () => {
@@ -238,8 +236,8 @@ describe('UploadList', () => {
     const uploadBtn = el.querySelector<HTMLButtonElement>('button.uc-upload-btn');
     const doneBtn = el.querySelector<HTMLButtonElement>('button.uc-done-btn');
     const emptyState = el.querySelector<HTMLElement>('.uc-no-files');
-    expect(uploadBtn?.hasAttribute('hidden')).toBe(false);
-    expect(doneBtn?.hasAttribute('hidden')).toBe(true);
+    expect(uploadBtn).not.toBeNull();
+    expect(doneBtn).toBeNull();
     expect(emptyState?.hasAttribute('hidden')).toBe(true);
     // Header text derives from the summary and is localized (non-empty).
     expect(el.querySelector('.uc-header-text')?.textContent?.trim()).not.toBe('');
@@ -255,7 +253,7 @@ describe('UploadList', () => {
     });
 
     const doneBtn = el.querySelector<HTMLButtonElement>('button.uc-done-btn');
-    expect(doneBtn?.hasAttribute('hidden')).toBe(false);
+    expect(doneBtn).not.toBeNull();
     expect(doneBtn?.hasAttribute('disabled')).toBe(false);
 
     doneBtn?.click();
@@ -272,7 +270,7 @@ describe('UploadList', () => {
 
     // validatingBeforeUploading=1 (idle+validation) and anyValidationPending=true,
     // so validationOk is false → no upload button, done disabled.
-    expect(el.querySelector<HTMLButtonElement>('button.uc-upload-btn')?.hasAttribute('hidden')).toBe(true);
+    expect(el.querySelector<HTMLButtonElement>('button.uc-upload-btn')).toBeNull();
     const doneBtn = el.querySelector<HTMLButtonElement>('button.uc-done-btn');
     expect(doneBtn?.hasAttribute('disabled')).toBe(true);
     // The header folds validating-before-uploading into the "uploading" line.
@@ -346,8 +344,6 @@ describe('UploadList', () => {
       expect(el.querySelector('uc-activity-header')).not.toBeNull();
       expect(el.querySelector('button.uc-close-btn')).not.toBeNull();
       expect(el.querySelector('button.uc-cancel-btn')).not.toBeNull();
-      expect(el.querySelector('button.uc-upload-btn')).not.toBeNull();
-      expect(el.querySelector('button.uc-done-btn')).not.toBeNull();
       expect(el.querySelectorAll('button.uc-add-more-btn').length).toBeGreaterThanOrEqual(1);
     });
 

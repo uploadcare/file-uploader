@@ -46,7 +46,12 @@ const badgeIconName = (el: Thumb): string | null => el.querySelector('.uc-badge 
 describe('Thumb', () => {
   it('renders the preview as a decorative image, since the file name sits next to it', async () => {
     const { el } = await mount(freshCtxName());
+    // The image is rendered only once there is a thumbnail to show.
+    expect(el.querySelector('img')).toBeNull();
+    (el as unknown as { _thumbUrl: string })._thumbUrl = 'blob:thumb';
+    await el.updateComplete;
     const img = el.querySelector('img');
+    expect(img).not.toBeNull();
     // A fixed English alt was announced for every row in every locale; `role="img"` on an <img> is redundant.
     expect(img?.getAttribute('alt')).toBe('');
     expect(img?.hasAttribute('role')).toBe(false);

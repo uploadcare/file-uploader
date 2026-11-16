@@ -1,4 +1,4 @@
-import { html, type PropertyValues } from 'lit';
+import { html, nothing, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { createRef, type Ref, ref } from 'lit/directives/ref.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
@@ -346,10 +346,14 @@ export class DropArea extends ChildBlock {
             class="uc-content-wrapper"
             ?hidden=${!this._isVisible}
           >
-            <div class="uc-icon-container" ?hidden=${!this.withIcon}>
-              <uc-icon name="default"></uc-icon>
-              <uc-icon name="arrow-down"></uc-icon>
-            </div>
+            ${
+              this.withIcon
+                ? html`<div class="uc-icon-container">
+                    <uc-icon name="default"></uc-icon>
+                    <uc-icon name="arrow-down"></uc-icon>
+                  </div>`
+                : nothing
+            }
             <span class="uc-text">${this.l10n(this._dropTextKey)}</span>
           </div>`,
       )}

@@ -110,10 +110,10 @@ describe('uc-file-item (parity, real upload flow)', () => {
 
     await expect.element(page.getByTestId('uc-file-item')).toBeVisible();
     await expect.poll(() => fileItemEl()?.getAttribute('mode')).toBe('grid');
-    await expect.poll(() => document.querySelector('uc-file-item .uc-file-name')?.hasAttribute('hidden')).toBe(true);
+    await expect.poll(() => document.querySelector('uc-file-item .uc-file-name')).toBeNull();
 
     config.gridShowFileNames = true;
-    await expect.poll(() => document.querySelector('uc-file-item .uc-file-name')?.hasAttribute('hidden')).toBe(false);
+    await expect.poll(() => document.querySelector('uc-file-item .uc-file-name')).not.toBeNull();
     await expect.element(page.getByText(TEST_IMAGE_NAME)).toBeVisible();
   });
 

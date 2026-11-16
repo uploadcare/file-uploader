@@ -175,7 +175,7 @@
     padding: 0;
   }
 
-  uc-file-item[mode="grid"] .uc-file-name:not([hidden]) + .uc-file-error {
+  uc-file-item[mode="grid"] .uc-file-name + .uc-file-error {
     bottom: calc(var(--uc-padding) + var(--uc-font-size));
   }
 

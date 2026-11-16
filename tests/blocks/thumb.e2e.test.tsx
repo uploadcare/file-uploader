@@ -69,7 +69,7 @@ describe('uc-thumb (parity, real upload flow)', () => {
         },
       )
       .toBe(true);
-    await expect.poll(() => thumbImg()?.hasAttribute('hidden'), { timeout: 20_000 }).toBe(false);
+    await expect.poll(() => thumbImg(), { timeout: 20_000 }).not.toBeNull();
   }, 30_000);
 
   it('reflects the badgeIcon property into the badge uc-icon name', async () => {
@@ -83,7 +83,7 @@ describe('uc-thumb (parity, real upload flow)', () => {
       .toBe('badge-success');
   });
 
-  it('renders the transparent-pixel img without errors when mounted standalone with no entry', async () => {
+  it('renders no img, and no errors, when mounted standalone with no entry', async () => {
     const errors: string[] = [];
     const onError = (event: ErrorEvent) => {
       errors.push(String(event.error?.message ?? event.message));
@@ -94,8 +94,7 @@ describe('uc-thumb (parity, real upload flow)', () => {
     try {
       renderStandaloneThumb();
       await expect.element(page.getByTestId('uc-thumb')).toBeInTheDocument();
-      await expect.poll(() => thumbImg()?.getAttribute('src')).toBe(TRANSPARENT_PIXEL_SRC);
-      expect(thumbImg()?.hasAttribute('hidden')).toBe(true);
+      expect(thumbImg()).toBeNull();
     } finally {
       window.removeEventListener('error', onError);
     }
@@ -124,8 +123,7 @@ describe('uc-thumb (parity, real upload flow)', () => {
       await thumb.updateComplete;
       // Give any async/microtask-scheduled throw a moment to surface as an
       // unhandled window error before asserting.
-      await expect.poll(() => thumbImg()?.getAttribute('src'), { timeout: 2_000 }).toBe(TRANSPARENT_PIXEL_SRC);
-      expect(thumbImg()?.hasAttribute('hidden')).toBe(true);
+      expect(thumbImg()).toBeNull();
     } finally {
       window.removeEventListener('error', onError);
     }

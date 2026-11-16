@@ -115,16 +115,21 @@ export class CameraSettingsPopup extends ChildBlock {
   public override render() {
     const visible = this.sections.filter((section) => !section.hidden).length;
     return html`
-      <button
-        type="button"
-        class="uc-mini-btn uc-camera-settings-btn"
-        popovertarget=${this._popoverId}
-        title=${this.l10n('camera-settings')}
-        aria-label=${this.l10n('camera-settings')}
-        ?hidden=${this.buttonHidden}
-      >
-        <uc-icon name="settings"></uc-icon>
-      </button>
+      ${
+        this.buttonHidden
+          ? nothing
+          : html`
+              <button
+                type="button"
+                class="uc-mini-btn uc-camera-settings-btn"
+                popovertarget=${this._popoverId}
+                title=${this.l10n('camera-settings')}
+                aria-label=${this.l10n('camera-settings')}
+              >
+                <uc-icon name="settings"></uc-icon>
+              </button>
+            `
+      }
       <div id=${this._popoverId} class="uc-camera-settings" popover="auto">
         ${this.sections.map((section) => this._renderSection(section, !section.hidden && visible === 1))}
       </div>

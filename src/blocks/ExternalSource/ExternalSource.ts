@@ -5,7 +5,7 @@ import { ExternalUploadSource, isExternalSource, sourceLabelKey } from '../../ut
 import { wildcardRegexp } from '../../utils/wildcardRegexp';
 import { buildThemeDefinition } from './buildThemeDefinition';
 import './external-source.css';
-import { html } from 'lit';
+import { html, nothing } from 'lit';
 import { state } from 'lit/decorators.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
@@ -283,45 +283,48 @@ export class ExternalSource extends ChildBlock {
       </uc-activity-header>
       <div class="uc-content">
         <div ${ref(this._iframeRef)} class="uc-iframe-wrapper"></div>
-        <div class="uc-toolbar" ?hidden=${!this._toolbarVisible}>
-          <button
-            type="button"
-            class="uc-cancel-btn uc-secondary-btn"
-            @click=${this._handleCancel}
-          >
-            ${this.l10n('cancel')}
-          </button>
-          <div
-            class="uc-selection-status-box"
-            ?hidden=${!this._showSelectionStatus}
-          >
-            <span>${sel ? this.l10n('selected-count', { count: sel.selectedCount, total: sel.total }) : ''}</span>
-            <button
-              type="button"
-              @click=${this._handleSelectAll}
-              ?hidden=${!sel || sel.selectedCount >= sel.total}
-            >
-              ${this.l10n('select-all')}
-            </button>
-            <button
-              type="button"
-              @click=${this._handleDeselectAll}
-              ?hidden=${!sel || sel.selectedCount !== sel.total}
-            >
-              ${this.l10n('deselect-all')}
-            </button>
-          </div>
-          <button
-            type="button"
-            class="uc-done-btn uc-primary-btn"
-            @click=${this._handleDone}
-            ?disabled=${!ready || !sel?.selectedFiles.length}
-            ?hidden=${!sel?.total}
-          >
-            <uc-spinner ?hidden=${ready}></uc-spinner>
-            <span class=${ready ? '' : 'uc-hidden'}>${this.l10n('done')}</span>
-          </button>
-        </div>
+        ${
+          this._toolbarVisible
+            ? html`
+                <div class="uc-toolbar">
+                  <button type="button" class="uc-cancel-btn uc-secondary-btn" @click=${this._handleCancel}>
+                    ${this.l10n('cancel')}
+                  </button>
+                  ${
+                    sel && this._showSelectionStatus
+                      ? html`
+                          <div class="uc-selection-status-box">
+                            <span>${this.l10n('selected-count', { count: sel.selectedCount, total: sel.total })}</span>
+                            ${
+                              sel.selectedCount < sel.total
+                                ? html`<button type="button" @click=${this._handleSelectAll}>${this.l10n('select-all')}</button>`
+                                : html`<button type="button" @click=${this._handleDeselectAll}>
+                                    ${this.l10n('deselect-all')}
+                                  </button>`
+                            }
+                          </div>
+                        `
+                      : nothing
+                  }
+                  ${
+                    sel?.total
+                      ? html`
+                          <button
+                            type="button"
+                            class="uc-done-btn uc-primary-btn"
+                            @click=${this._handleDone}
+                            ?disabled=${!ready || !sel.selectedFiles.length}
+                          >
+                            ${ready ? nothing : html`<uc-spinner></uc-spinner>`}
+                            <span class=${ready ? '' : 'uc-hidden'}>${this.l10n('done')}</span>
+                          </button>
+                        `
+                      : nothing
+                  }
+                </div>
+              `
+            : nothing
+        }
       </div>
     `;
   }

@@ -1,5 +1,5 @@
 import type { PropertyValues } from 'lit';
-import { html } from 'lit';
+import { html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
@@ -88,11 +88,14 @@ export class BtnUi extends EditorBlock {
         aria-label=${ifDefined(this.titleProp ? this.l10nSafe(this.titleProp) : undefined)}
         title=${ifDefined(this.titleProp ? this.l10nSafe(this.titleProp) : undefined)}
       >
-        <uc-editor-icon
-          class=${classMap(this._iconClassMap)}
-          name=${ifDefined(this.icon || undefined)}
-          ?hidden=${this._computedIconHidden}
-        ></uc-editor-icon>
+        ${
+          this._computedIconHidden
+            ? nothing
+            : html`<uc-editor-icon
+                class=${classMap(this._iconClassMap)}
+                name=${ifDefined(this.icon || undefined)}
+              ></uc-editor-icon>`
+        }
         <div class="uc-text">${this.text}</div>
       </button>
     `;

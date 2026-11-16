@@ -91,27 +91,26 @@ describe('filesViewMode', () => {
 });
 
 describe('gridShowFileNames', () => {
-  /** The name is always in the DOM; the option toggles `hidden` on it (`FileItem._showFileNames`). */
+  /** The option decides whether the name is rendered at all (`FileItem._showFileNames`). */
   const fileName = async (configProps: Parameters<typeof renderSolution>[1]) => {
     const { root, api } = await renderSolution('regular', configProps);
     api.addFileFromObject(IMAGE.PIXEL);
     api.initFlow();
     await expectActivity(root, 'upload-list');
 
-    const name = within(root).getByTestId('uc-file-item--file-name');
     // The file item renders its inner template a beat after the list becomes active.
-    await expect.element(name).toHaveTextContent('pixel.jpg');
-    return name;
+    await expect.poll(() => document.querySelector('uc-file-item .uc-file-name-wrapper')).not.toBeNull();
+    return within(root).getByTestId('uc-file-item--file-name');
   };
 
   it('hides names in grid mode by default', async () => {
-    await expect.element(await fileName({ filesViewMode: 'grid' })).toHaveAttribute('hidden');
+    await expect.element(await fileName({ filesViewMode: 'grid' })).not.toBeInTheDocument();
   });
 
   it('shows names in grid mode when set', async () => {
     await expect
       .element(await fileName({ filesViewMode: 'grid', gridShowFileNames: true }))
-      .not.toHaveAttribute('hidden');
+      .toHaveTextContent('pixel.jpg');
   });
 
   it('is ignored in list mode, where names always show', async () => {
@@ -119,7 +118,7 @@ describe('gridShowFileNames', () => {
     // grid mode — the docs describe it as grid-only and the code agrees.
     await expect
       .element(await fileName({ filesViewMode: 'list', gridShowFileNames: false }))
-      .not.toHaveAttribute('hidden');
+      .toHaveTextContent('pixel.jpg');
   });
 });
 

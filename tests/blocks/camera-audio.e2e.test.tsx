@@ -37,7 +37,7 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
     ...rendered,
     camera,
     getUserMedia,
-    settingsButton: camera.getByRole('button', { name: 'Camera settings', exact: true, includeHidden: true }),
+    settingsButton: camera.getByRole('button', { name: 'Camera settings', exact: true }),
     audioQuality: settingOf(camera, 'Audio quality'),
     audioMode: settingOf(camera, 'Sound'),
     microphone: settingOf(camera, 'Microphone'),
@@ -235,13 +235,13 @@ describe('audio pickers', () => {
 
     await opened.camera.getByRole('button', { name: 'Photo', exact: true }).click();
 
-    await expect.element(opened.settingsButton).not.toBeVisible();
+    await expect.element(opened.settingsButton).not.toBeInTheDocument();
   });
 
   it('are not offered without audio recording', async () => {
     const opened = await openCamera({ ...PICKERS, enableAudioRecording: false });
 
-    await expect.element(opened.settingsButton).not.toBeVisible();
+    await expect.element(opened.settingsButton).not.toBeInTheDocument();
   });
 
   it('apply the picks without changing the config', async () => {
@@ -329,6 +329,6 @@ describe('microphone picker', () => {
 
     await opened.camera.getByRole('button', { name: 'Photo', exact: true }).click();
 
-    await expect.element(opened.settingsButton).not.toBeVisible();
+    await expect.element(opened.settingsButton).not.toBeInTheDocument();
   });
 });

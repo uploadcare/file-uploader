@@ -28,7 +28,7 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
     ...rendered,
     camera,
     getUserMedia,
-    settingsButton: camera.getByRole('button', { name: 'Camera settings', exact: true, includeHidden: true }),
+    settingsButton: camera.getByRole('button', { name: 'Camera settings', exact: true }),
     ratio: settingOf(camera, 'Aspect ratio'),
     resolution: settingOf(camera, 'Resolution'),
   };
@@ -50,13 +50,13 @@ describe('camera settings button', () => {
   it('is hidden without option lists', async () => {
     const { settingsButton } = await openCamera();
 
-    await expect.element(settingsButton).not.toBeVisible();
+    await expect.element(settingsButton).not.toBeInTheDocument();
   });
 
   it('is hidden when a list has a single option', async () => {
     const { settingsButton } = await openCamera({ cameraAspectRatio: '1:1', cameraResolution: '720p' });
 
-    await expect.element(settingsButton).not.toBeVisible();
+    await expect.element(settingsButton).not.toBeInTheDocument();
   });
 
   it('opens both settings, labelled and closed', async () => {
@@ -134,7 +134,7 @@ describe('camera settings button', () => {
 
     await camera.getByTestId('uc-camera-controls--shot').click();
 
-    await expect.element(settingsButton).not.toBeVisible();
+    await expect.element(settingsButton).not.toBeInTheDocument();
   });
 
   it('hides while recording', async () => {
@@ -145,7 +145,7 @@ describe('camera settings button', () => {
     await camera.getByTestId('uc-camera-controls--shot').click();
 
     await expect.element(camera.getByTestId('uc-camera-controls--recording-timer')).toBeVisible();
-    await expect.element(settingsButton).not.toBeVisible();
+    await expect.element(settingsButton).not.toBeInTheDocument();
   });
 });
 

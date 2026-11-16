@@ -65,7 +65,7 @@ describe('uc-upload-list common error rendering', () => {
     const config = document.querySelector('uc-config') as HTMLElement & { multipleMax: number };
     config.multipleMax = 2;
 
-    await expect.poll(() => commonError()?.hasAttribute('hidden')).toBe(true);
+    await expect.poll(() => commonError()).toBeNull();
   });
 });
 

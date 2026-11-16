@@ -1,4 +1,4 @@
-import { html, type PropertyValues } from 'lit';
+import { html, nothing, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { UploadCollectionController } from '../../abstract/controllers/UploadCollectionController';
@@ -387,9 +387,9 @@ export class FileItem extends FileItemConfig {
         <uc-thumb .uid=${this.uid} .badgeIcon=${this._badgeIcon}></uc-thumb>
 
         <div class="uc-file-name-wrapper">
-          <span class="uc-file-name" data-testid="file-name" ?hidden=${!this._showFileNames}>${this._itemName}</span>
-          <span class="uc-file-error" ?hidden=${!this._errorText}>${this._errorText}</span>
-          <span class="uc-file-hint" ?hidden=${!this._hint}>${this._hint}</span>
+          ${this._showFileNames ? html`<span class="uc-file-name" data-testid="file-name">${this._itemName}</span>` : nothing}
+          ${this._errorText ? html`<span class="uc-file-error">${this._errorText}</span>` : nothing}
+          ${this._hint ? html`<span class="uc-file-hint">${this._hint}</span>` : nothing}
         </div>
         <div class="uc-file-actions">
           ${this._pluginFileActions.map((action) => {

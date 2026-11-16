@@ -560,69 +560,80 @@ export class UploadList extends ActivityChildBlock {
     )}
     ${this._spacer(view.bottomPad)}
     </div>
-    <button
+    ${
+      this._addMoreBtnVisible
+        ? html`<button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
       aria-label=${this.l10n('add-more')}
       data-testid="add-more"
       @click=${this._handleAdd}
       ?disabled=${!this._addMoreBtnEnabled}
-      ?hidden=${!this._addMoreBtnVisible}
     >
       <uc-icon name="add"></uc-icon><span>${this.l10n('add-more')}</span>
-    </button>
+    </button>`
+        : nothing
+    }
   </div>
 
-  <div class="uc-common-error"
-  ?hidden=${!commonErrorMessage}
-  >
-  ${commonErrorMessage ?? ''}
-  </div>
+  ${commonErrorMessage ? html`<div class="uc-common-error">${commonErrorMessage}</div>` : nothing}
 
   <div class="uc-toolbar">
     ${
       compact
         ? html`
-    <button
+    ${
+      this._addMoreBtnVisible
+        ? html`<button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
       aria-label=${this.l10n('add-more')}
       ${ref(this._addMoreRef)}
-      ?hidden=${!this._addMoreBtnVisible}
       ?disabled=${!this._addMoreBtnEnabled}
       @click=${this._handleAdd}
     >
       <uc-icon name="add"></uc-icon><span>${this.l10n('add-more')}</span>
-    </button>
+    </button>`
+        : nothing
+    }
 `
         : html`
     <button type="button" class="uc-cancel-btn uc-secondary-btn" @click=${this._handleCancel}>${this.l10n('clear')}</button>
     <div class="uc-toolbar-spacer"></div>
-    <button
+    ${
+      this._addMoreBtnVisible
+        ? html`<button
       type="button"
       class="uc-add-more-btn uc-secondary-btn"
       ${ref(this._addMoreRef)}
-      ?hidden=${!this._addMoreBtnVisible}
       ?disabled=${!this._addMoreBtnEnabled}
       @click=${this._handleAdd}
     >
       <uc-icon name="add"></uc-icon><span>${this.l10n('add-more')}</span>
-    </button>
-    <button
+    </button>`
+        : nothing
+    }
+    ${
+      this._uploadBtnVisible
+        ? html`<button
       type="button"
       class="uc-upload-btn uc-primary-btn"
-      ?hidden=${!this._uploadBtnVisible}
       @click=${this._handleUpload}
-    >${this.l10n('upload')}</button>
-    <button
+    >${this.l10n('upload')}</button>`
+        : nothing
+    }
+    ${
+      this._doneBtnVisible
+        ? html`<button
       type="button"
       class="uc-done-btn uc-primary-btn"
-      ?hidden=${!this._doneBtnVisible}
       ?disabled=${!this._doneBtnEnabled}
       @click=${this._handleDone}
     >
       ${this.l10n('done')}
-    </button>
+    </button>`
+        : nothing
+    }
 `
     }
   </div>

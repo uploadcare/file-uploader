@@ -1,5 +1,5 @@
 import type { PropertyValues } from 'lit';
-import { html, type TemplateResult } from 'lit';
+import { html, nothing, type TemplateResult } from 'lit';
 import { state } from 'lit/decorators.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import type { CloudImageEditorController } from './CloudImageEditorController';
@@ -67,8 +67,8 @@ export class EditorButtonControl extends EditorBlock {
     return html`<uc-editor-icon name=${this.icon}></uc-editor-icon>${this.renderCaption()}`;
   }
 
-  protected renderCaption(): TemplateResult {
-    return html`<div class="uc-title" ?hidden=${!this.caption}>${this.caption}</div>`;
+  protected renderCaption(): TemplateResult | typeof nothing {
+    return this.caption ? html`<div class="uc-title">${this.caption}</div>` : nothing;
   }
 
   public override render() {

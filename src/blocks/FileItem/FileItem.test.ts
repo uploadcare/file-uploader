@@ -54,8 +54,7 @@ const mount = async (ctxName: string): Promise<{ el: FileItem; config: ConfigCon
   return { el, config };
 };
 
-const fileNameHidden = (el: FileItem): boolean =>
-  (el.querySelector('.uc-file-name') as HTMLElement | null)?.hasAttribute('hidden') ?? true;
+const fileNameHidden = (el: FileItem): boolean => !el.querySelector('.uc-file-name');
 
 // --- rendered-output readers (the S2 parity net keys off the DOM/props render
 // commits, not the private @state/getters, so it holds across the refactor) ---
@@ -252,8 +251,8 @@ describe('FileItem entry-state rendering', () => {
     expect(inner(el).hasAttribute('data-uploading')).toBe(false);
     expect(thumb(el).badgeIcon).toBe('');
     expect(fileNameText(el)).toBe('photo.png');
-    expect(errorSpan(el).hasAttribute('hidden')).toBe(true);
-    expect(hintSpan(el).hasAttribute('hidden')).toBe(true);
+    expect(errorSpan(el)).toBeNull();
+    expect(hintSpan(el)).toBeNull();
 
     const btn = actionButton(el);
     expect(btn.uploading).toBe(false);
@@ -279,9 +278,9 @@ describe('FileItem entry-state rendering', () => {
 
     expect(inner(el).hasAttribute('data-failed')).toBe(true);
     expect(thumb(el).badgeIcon).toBe('badge-error');
-    expect(errorSpan(el).hasAttribute('hidden')).toBe(false);
+    expect(errorSpan(el)).not.toBeNull();
     expect(errorSpan(el).textContent).toBe('It broke');
-    expect(hintSpan(el).hasAttribute('hidden')).toBe(true);
+    expect(hintSpan(el)).toBeNull();
   });
 
   it('UPLOADING entry: uploading flag, hidden remove, live progress, no badge', async () => {
@@ -377,7 +376,7 @@ describe('FileItem entry-state rendering', () => {
       source: 'dropbox',
     });
 
-    expect(hintSpan(el).hasAttribute('hidden')).toBe(false);
+    expect(hintSpan(el)).not.toBeNull();
     expect(hintSpan(el).textContent).toBe('Waiting for Dropbox');
   });
 
