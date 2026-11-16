@@ -75,7 +75,13 @@ export class ThumbnailController {
         started = true;
         return generateThumb(file, size);
       }, abort.signal)
-        .then((url) => this.store(entry, url))
+        .then((url) => {
+          // The file was uploaded while it was drawn, and its CDN thumbnail (the only kind that is no object URL) is
+          // the one to show.
+          const stored = entry.get('thumbUrl');
+          if (stored && !stored.startsWith('blob:')) URL.revokeObjectURL(url);
+          else this.store(entry, url);
+        })
         .finally(() => {
           if (this._drawing.get(entry) === added) this._drawing.delete(entry);
         });

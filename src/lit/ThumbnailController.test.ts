@@ -66,6 +66,18 @@ describe('ThumbnailController.draw', () => {
     expect(entry.get('thumbUrl')).toBe('blob:drawn');
   });
 
+  it('keeps a CDN thumbnail stored while the local one was drawn, and releases the drawing', async () => {
+    const { thumbnails, entry } = setup();
+
+    const drawn = thumbnails.draw(entry, file, 40, new AbortController().signal);
+    thumbnails.store(entry, 'https://ucarecdn.com/uuid/-/scale_crop/40x40/');
+    drawings[0]?.resolve('blob:late-drawing');
+    await drawn;
+
+    expect(entry.get('thumbUrl')).toBe('https://ucarecdn.com/uuid/-/scale_crop/40x40/');
+    expect(revoke).toHaveBeenCalledWith('blob:late-drawing');
+  });
+
   it('finishes a started drawing after its thumb is gone, and the next thumb joins it', async () => {
     const { thumbnails, entry } = setup();
     const gone = new AbortController();
