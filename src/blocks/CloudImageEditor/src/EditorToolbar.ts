@@ -499,8 +499,8 @@ export class EditorToolbar extends EditorBlock {
           theme="tab"
           data-id=${id}
           icon=${id}
-          aria-role="tab"
-          aria-controls=${isActive ? `tab_${id}` : ''}
+          .ariaRole=${'tab'}
+          .ariaControls=${isActive ? `tab_${id}` : ''}
           .selected=${isActive}
           .titleProp=${`a11y-editor-tab-${id}` as const}
           style=${style}

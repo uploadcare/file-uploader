@@ -111,6 +111,8 @@ describe('uc-cloud-image-editor', () => {
     expect(tuningTab.element().tagName).toBe('BUTTON');
     const tablist = editor.getByRole('tablist').element();
     expect(tablist.querySelector('.uc-tab-content')).toBeNull();
+    // The role and the panel reference sit on the inner button only: the host carries no ARIA of its own.
+    expect(element.querySelector('uc-btn-ui[aria-role], uc-btn-ui[aria-controls]')).toBeNull();
     // Every tab's aria-controls points at a panel that exists.
     for (const tab of element.querySelectorAll('[role="tab"][aria-controls]')) {
       expect(document.getElementById(tab.getAttribute('aria-controls') ?? '')).not.toBeNull();
