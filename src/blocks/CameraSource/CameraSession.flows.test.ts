@@ -731,7 +731,8 @@ describe('CameraSession flows', () => {
   it('a photo that fails to encode is not an unhandled rejection, and accept still reports it', async () => {
     stubMedia();
     const ctx = setup();
-    giveVideo(ctx, fakeVideo());
+    const video = fakeVideo();
+    giveVideo(ctx, video);
     stubCanvas((done) => done(null));
     await open(ctx, [PHOTO]);
     const unhandled = vi.fn();
@@ -741,8 +742,11 @@ describe('CameraSession flows', () => {
       // Node reports a rejection left unhandled once the task it happened in ends, so the next task is late enough.
       await delay(0);
       expect(unhandled).not.toHaveBeenCalled();
+      video.play.mockClear();
 
       ctx.session.handle({ type: 'accept' });
+      // The frozen frame gives way to the camera, so the photo can be taken again.
+      expect(video.play).toHaveBeenCalledOnce();
       await vi.waitFor(() => expect(ctx.report).toHaveBeenCalled());
       expect(ctx.report).toHaveBeenCalledWith(
         'error',

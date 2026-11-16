@@ -343,12 +343,11 @@ export class CameraSession {
     const photo = this._capture.photo;
     const clip = this._capture.clipFile();
     this._endReview();
+    // The camera can stay open after the file is added (an `onFileAdd` hook), and a photo can fail to encode: the
+    // preview goes back to live either way.
+    this._preview.play();
     if (photo) this._host.runTask(() => this._addPhoto(photo));
-    if (clip) {
-      // The camera can stay open after the file is added (an `onFileAdd` hook): the preview goes back to live.
-      this._preview.play();
-      this._addFile(clip);
-    }
+    if (clip) this._addFile(clip);
     this._captureResolved();
   }
 
