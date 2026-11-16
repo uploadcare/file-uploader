@@ -114,14 +114,14 @@ export class UploadList extends ActivityChildBlock {
       // Flex `gap` sits BETWEEN grid cells (not in offsetHeight), so one grid row
       // is a cell plus one inter-row gap; list rows fold the gap into their box.
       const rowGap = Number.parseFloat(getComputedStyle(scrollEl).rowGap) || 0;
-      return {
-        // Not a number without the theme's property: the controller takes anything under 1 as one column.
-        columns: Number.parseInt(getComputedStyle(this).getPropertyValue('--uc-grid-col'), 10),
-        rowHeight: firstItem.offsetHeight + rowGap,
-        rowGap,
-      };
+      return { columns: this._gridColumns(), rowHeight: firstItem.offsetHeight + rowGap, rowGap };
     },
   });
+
+  /** The grid's columns as the theme has them now. Not a number without the theme's property: that is one column. */
+  private _gridColumns(): number {
+    return Number.parseInt(getComputedStyle(this).getPropertyValue('--uc-grid-col'), 10) || 1;
+  }
 
   private readonly _filesRef = createRef<HTMLElement>();
   private readonly _rowsRef = createRef<HTMLElement>();
@@ -195,8 +195,9 @@ export class UploadList extends ActivityChildBlock {
     if (!row || from < 0 || !files) {
       return;
     }
-    // The columns and the page are the ones the window was computed from.
-    const { columns, viewportRows } = this._virtualList.metrics;
+    // The columns are read now: a media query changes them without resizing the list, which is when it re-measures.
+    const columns = this._config.get('filesViewMode') === 'grid' ? this._gridColumns() : 1;
+    const { viewportRows } = this._virtualList.metrics;
     const rtl = getComputedStyle(files).direction === 'rtl';
     const to = list[targetRowIndex(event.key, from, list.length, columns, viewportRows, rtl) ?? -1];
     if (to) {

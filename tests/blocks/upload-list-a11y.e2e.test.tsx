@@ -287,6 +287,18 @@ describe('uc-upload-list keyboard access', () => {
     await expect.poll(() => focusIsOnRow(ids)).toBe(299);
   });
 
+  it('moves by the columns the grid has now, after they changed without a resize of the list', async () => {
+    await page.viewport(1280, 900);
+    onTestFinished(() => page.viewport(414, 896));
+    const { root, ids } = await openList(300, { filesViewMode: 'grid' });
+    await tabIntoList(root);
+
+    // What a media query does to the theme's property; the list keeps its size, so nothing re-measures it.
+    root.querySelector<HTMLElement>('uc-upload-list')!.style.setProperty('--uc-grid-col', '2');
+    await press('ArrowDown');
+    await expect.poll(() => focusIsOnRow(ids)).toBe(2);
+  });
+
   it('moves by the rows that fit the viewport, gaps included, with PageDown in grid view', async () => {
     await page.viewport(1280, 900);
     onTestFinished(() => page.viewport(414, 896));
