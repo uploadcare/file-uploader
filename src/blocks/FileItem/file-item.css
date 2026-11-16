@@ -20,8 +20,14 @@
     min-height: calc(var(--uc-preview-size) + var(--uc-padding) * 2);
   }
 
-  /* Inside the row: the list's scroll container clips what is drawn outside it. */
+  /* On the visible card, not the host: the host is square and includes the gap below the card. Inside the card,
+     since the list's scroll container clips what is drawn outside it. */
   uc-file-item:focus-visible {
+    outline: none;
+  }
+
+  uc-file-item:focus-visible > .uc-inner {
+    outline: auto;
     outline-offset: -2px;
   }
 
