@@ -38,6 +38,10 @@ const fakeVideo = () =>
     paused: true,
     play: vi.fn(async () => {}),
     pause: vi.fn(),
+    // As the element does: the attribute goes, and the property with it.
+    removeAttribute(this: { src: string }, name: string) {
+      if (name === 'src') this.src = '';
+    },
   });
 type FakeVideo = ReturnType<typeof fakeVideo>;
 
@@ -810,6 +814,8 @@ describe('CameraSession flows', () => {
     expect(ctx.addFile).toHaveBeenCalledOnce();
     expect(video.srcObject).toBe(ctx.session.stream.feed.stream);
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:clip');
+    // The revoked URL is off the `<video>`, which would load it again once the stream is gone.
+    expect(video.src).toBe('');
   });
 
   it('drops a clip that arrives after the camera reopened, and waits for it before recording again', async () => {

@@ -59,8 +59,8 @@ export class PreviewVideo {
     video.volume = 1;
     this.show(null);
     this.hasVideoFrame = false;
-    video.src = url;
     this._detachClip();
+    video.src = url;
     this._clip = handlers;
     video.addEventListener('play', handlers.onPlay);
     video.addEventListener('pause', handlers.onPause);
@@ -125,5 +125,7 @@ export class PreviewVideo {
     this._clip = null;
     this._video?.removeEventListener('play', clip.onPlay);
     this._video?.removeEventListener('pause', clip.onPause);
+    // The clip's URL is revoked by now, and the `<video>` would load it again once it has no stream to show.
+    this._video?.removeAttribute('src');
   }
 }
