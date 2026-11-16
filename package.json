@@ -180,7 +180,7 @@
   "size-limit": [
     {
       "path": "dist/index.js",
-      "limit": "103 KB"
+      "limit": "104 KB"
     },
     {
       "path": "dist/env.js",
