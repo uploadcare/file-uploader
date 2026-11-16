@@ -1,4 +1,4 @@
-import { html, nothing } from 'lit';
+import { html, nothing, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { createRef, ref } from 'lit/directives/ref.js';
@@ -47,6 +47,26 @@ export class CameraControls extends ChildBlock {
   public clock: ClockView | null = null;
 
   private readonly _line = createRef<HTMLElement>();
+
+  /** The control that had focus before this render, which may hide it: the shutter after a shot, accept after it. */
+  private _focused: HTMLElement | null = null;
+
+  protected override willUpdate(changed: PropertyValues<this>): void {
+    super.willUpdate(changed);
+    const active = document.activeElement;
+    this._focused = active instanceof HTMLElement && this.contains(active) ? active : null;
+  }
+
+  // A hidden control drops its focus to the page. It goes on to what took its place: accept once something is
+  // captured, the shutter once that is resolved.
+  protected override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    if (this._focused?.checkVisibility() === false) {
+      this.querySelector<HTMLElement>(
+        '.uc-camera-actions:not([hidden]) .uc-primary-btn, .uc-shot-btn:not([hidden])',
+      )?.focus();
+    }
+  }
 
   private readonly _emit = (action: CameraActionEvent['action']) => this.dispatchEvent(new CameraActionEvent(action));
 

@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { userEvent } from 'vitest/browser';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -11,6 +12,27 @@ import '~/types/jsx';
 type ImageCaptureLike = { prototype: { takePhoto: (settings?: unknown) => Promise<Blob> } };
 
 describe('photos', () => {
+  it('keep focus in the controls: on accept after a shot, back on the shutter after a retake', async () => {
+    const { api, root } = await renderSolution('regular');
+    api.initFlow();
+    await expectActivity(root, 'start-from');
+    await within(root).getByTestId('uc-start-from').getByRole('button', { name: 'Camera', exact: true }).click();
+    const camera = within(root).getByTestId('uc-camera-source');
+    const shot = camera.getByTestId('uc-camera-controls--shot');
+    await expect.element(shot, { timeout: 20_000 }).toBeVisible();
+    await expect.element(shot).toBeEnabled();
+
+    shot.element().focus();
+    await userEvent.keyboard('{Enter}');
+    const accept = camera.getByRole('button', { name: 'Accept', exact: true });
+    await expect.element(accept).toBeVisible();
+    await expect.poll(() => document.activeElement).toBe(accept.element());
+
+    (camera.getByText('Retake', { exact: true }).element() as HTMLElement).focus();
+    await userEvent.keyboard('{Enter}');
+    await expect.poll(() => document.activeElement).toBe(shot.element());
+  });
+
   it('come from the preview frame, without ImageCapture', async () => {
     const takePhoto = vi.spyOn(
       (window as unknown as { ImageCapture: ImageCaptureLike }).ImageCapture.prototype,
