@@ -601,6 +601,12 @@
     transform: translateY(0px);
     opacity: 1;
     pointer-events: auto;
+
+    /* Visible at once, so focus can move in as the toolbar shows; hiding still waits for the fade. */
+    transition:
+      opacity var(--transition-duration-3) ease-in-out,
+      transform var(--transition-duration-3) ease-in-out,
+      visibility 0s;
   }
 
   uc-editor-toolbar > .uc-toolbar-container > .uc-sub-toolbar.uc-sub-toolbar--top-hidden {

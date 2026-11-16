@@ -5,6 +5,7 @@ import type { Ref } from 'lit/directives/ref.js';
 import { createRef, ref } from 'lit/directives/ref.js';
 import { when } from 'lit/directives/when.js';
 import { cssomStyleMap } from '../../../lit/cssom-style-map';
+import { firstFocusable } from '../../../lit/focus';
 import { debounced } from '../../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../../lit/subscription';
 import { debounce } from '../../../utils/debounce';
@@ -100,6 +101,9 @@ export class EditorToolbar extends EditorBlock {
 
   @state()
   private _showSlider = false;
+
+  /** What had focus when the slider or the ratio list opened, to give it back as the panel closes. */
+  private _opener: Element | null = null;
 
   private _tabIndicatorOffset = 0;
   private _tabIndicatorWidth = 0;
@@ -367,6 +371,8 @@ export class EditorToolbar extends EditorBlock {
     }
     // Here, not in `render`, so `updated` sees `activeTab` change and re-syncs the tab indicator.
     this.activeTab = controller?.tabId ?? this.activeTab;
+    // Before the render makes the main toolbar inert, which drops its focus.
+    if (changedProperties.has('showSubToolbar') && this.showSubToolbar) this._opener = document.activeElement;
   }
 
   protected override updated(changedProperties: PropertyValues<this>): void {
@@ -376,6 +382,15 @@ export class EditorToolbar extends EditorBlock {
     const controller = this.editorControllerOrNull;
     if (changedProperties.has('imageSize') && this.imageSize && controller) {
       this._activateTab(controller.tabId);
+    }
+
+    // The toolbar that was in use is inert now: focus goes on to the panel that replaced it, and back to the control
+    // that opened it as it closes. Not on the first render, where nothing was in use.
+    if (changedProperties.get('showSubToolbar') !== undefined) {
+      const opener = this.showSubToolbar ? null : this._opener;
+      const shown = this.querySelector('.uc-sub-toolbar:not([inert])');
+      const target = opener instanceof HTMLElement && opener.isConnected ? opener : shown && firstFocusable(shown);
+      target?.focus();
     }
 
     if (changedProperties.has('activeTab') || changedProperties.has('tabList')) {

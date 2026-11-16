@@ -92,6 +92,31 @@ describe('uc-cloud-image-editor', () => {
     await expect.element(tuningTab).toBeVisible();
   });
 
+  it('moves focus into the slider as it opens, and Escape closes it back onto the option that opened it', async () => {
+    const { element, editor } = renderEditor();
+    await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
+    const option = editor.getByRole('option', { name: /Brightness/i });
+    // Escape must stop at the slider: a dialog around the editor closes on the one that gets through.
+    const escaped = vi.fn();
+    document.addEventListener('keydown', escaped);
+    onTestFinished(() => document.removeEventListener('keydown', escaped));
+
+    option.element().focus();
+    await userEvent.keyboard('{Enter}');
+
+    const slider = editor.getByRole('slider', { name: 'Brightness' });
+    await expect.element(slider).toBeVisible();
+    await expect.poll(() => document.activeElement).toBe(slider.element());
+
+    escaped.mockClear();
+    await userEvent.keyboard('{Escape}');
+
+    await expect.poll(() => document.activeElement).toBe(option.element());
+    expect(escaped).not.toHaveBeenCalled();
+    // The slider's panel is out of use again.
+    expect(element.querySelector('uc-editor-slider')?.closest('[inert]')).not.toBeNull();
+  });
+
   it('names its slider after the operation', async () => {
     const { editor } = renderEditor();
     await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
