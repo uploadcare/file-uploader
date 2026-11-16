@@ -449,6 +449,15 @@ export class EditorToolbar extends EditorBlock {
     this._onSliderClose();
   };
 
+  /** Escape closes the slider or the ratio list, dropping its change, and not the uploader's dialog around the editor. */
+  private readonly _handleKeyDown = (e: KeyboardEvent): void => {
+    if (e.key !== 'Escape' || !this.showSubToolbar) return;
+    e.preventDefault();
+    e.stopPropagation();
+    this._sliderRef.value?.cancel();
+    this._onSliderClose();
+  };
+
   private readonly _handleTabClick = (e: MouseEvent): void => {
     const id = (e.currentTarget as HTMLElement).getAttribute('data-id') as TabIdValue;
     this.sendClickEvent(e, { tabId: id });
@@ -559,7 +568,7 @@ export class EditorToolbar extends EditorBlock {
           <div class=${tooltipClasses}>${this._operationTooltip ?? ''}</div>
         </div>
       </div>
-      <div class="uc-toolbar-container">
+      <div class="uc-toolbar-container" @keydown=${this._handleKeyDown}>
         <uc-presence-toggle
           class="uc-sub-toolbar"
           .visible=${this.showMainToolbar}
