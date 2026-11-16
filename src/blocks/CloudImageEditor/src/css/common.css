@@ -242,6 +242,21 @@
     transition: var(--transition-duration-3);
   }
 
+  /* The focus ring is drawn on the crop box itself: the host covers the whole image. */
+  uc-crop-frame:focus-visible {
+    outline: none;
+  }
+
+  uc-crop-frame:focus-visible .uc-guides {
+    opacity: 1;
+  }
+
+  uc-crop-frame:focus-visible .uc-guides > rect {
+    stroke: var(--color-primary-accent);
+    stroke-opacity: 1;
+    stroke-width: 2;
+  }
+
   uc-crop-frame .uc-guides--hidden {
     opacity: 0;
   }

@@ -322,6 +322,31 @@ describe('uc-cloud-image-editor', () => {
     await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
   });
 
+  it('moves and resizes the crop box from the keyboard', async () => {
+    const { element, editor } = renderEditor();
+    const cropper = editor.getByTestId('uc-editor-image-cropper');
+    await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+    const frame = element.querySelector('uc-crop-frame') as HTMLElement & {
+      cropBox: { x: number; y: number; width: number; height: number };
+    };
+    await expect.poll(() => frame.cropBox.width).toBeGreaterThan(0);
+    const start = { ...frame.cropBox };
+
+    expect(frame.getAttribute('role')).toBe('application');
+    expect(frame.getAttribute('aria-label')).toBe('Crop');
+    frame.focus();
+    expect(document.activeElement).toBe(frame);
+
+    // The box fills the image at first, so it has to shrink before it has room to move.
+    await userEvent.keyboard('{Shift>}{ArrowLeft}{ArrowUp}{/Shift}');
+    await expect.poll(() => frame.cropBox).toEqual({ ...start, width: start.width - 10, height: start.height - 10 });
+
+    await userEvent.keyboard('{ArrowRight}{ArrowDown}');
+    await expect
+      .poll(() => frame.cropBox)
+      .toEqual({ x: start.x + 10, y: start.y + 10, width: start.width - 10, height: start.height - 10 });
+  });
+
   it('keeps the classes on the cropper while it activates and deactivates', async () => {
     const { element, editor } = renderEditor();
     const cropper = editor.getByTestId('uc-editor-image-cropper');

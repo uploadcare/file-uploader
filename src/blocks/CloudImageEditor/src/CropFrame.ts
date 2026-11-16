@@ -36,6 +36,15 @@ type Delta = [number, number];
 
 const EMPTY_RECT: Rectangle = { x: 0, y: 0, width: 0, height: 0 };
 
+/** How far one arrow key press moves or resizes the crop box, in the frame's pixels. */
+const KEY_STEP = 10;
+const KEY_DELTAS: Partial<Record<string, Delta>> = {
+  ArrowLeft: [-KEY_STEP, 0],
+  ArrowRight: [KEY_STEP, 0],
+  ArrowUp: [0, -KEY_STEP],
+  ArrowDown: [0, KEY_STEP],
+};
+
 /** Dispatched by `CropFrame` when a drag gesture moves/resizes the crop box — the parent (`EditorImageCropper`) is the source of truth for `cropBox` and writes it back down as a prop. */
 export type CropBoxChangeEvent = CustomEvent<Rectangle>;
 
@@ -310,6 +319,22 @@ export class CropFrame extends EditorBlock {
     }
   };
 
+  /** The arrow keys move the crop box; with Shift they resize it from its bottom right corner. */
+  private readonly _handleKeyDown = (e: KeyboardEvent): void => {
+    const delta = KEY_DELTAS[e.key];
+    const direction: Direction = e.shiftKey ? 'se' : '';
+    if (!delta || this._shouldThumbBeDisabled(direction)) {
+      return;
+    }
+    e.preventDefault();
+    // A finished drag leaves its start box behind; the keys work from the current one.
+    this._dragStartCrop = undefined;
+    const rect = this._calcCropBox(direction, delta);
+    if (rect) {
+      this._commitCropBox(rect);
+    }
+  };
+
   /** Reports a drag-driven crop-box change up to the parent (`EditorImageCropper`), which owns `cropBox` and re-passes the (possibly clamped) value back down as a prop — see `CropBoxChangeEvent`. */
   private _commitCropBox(rect: Rectangle): void {
     this.dispatchEvent(
@@ -409,6 +434,8 @@ export class CropFrame extends EditorBlock {
   }
 
   public toggleThumbs(visible: boolean): void {
+    // The frame takes keyboard focus only while the crop tab shows it.
+    this.tabIndex = visible ? 0 : -1;
     if (!this._frameThumbs) return;
     for (const { groupNode } of Object.values(this._frameThumbs)) {
       groupNode.setAttribute(
@@ -440,6 +467,8 @@ export class CropFrame extends EditorBlock {
   public override connectedCallback(): void {
     super.connectedCallback();
 
+    this.role = 'application';
+    this.addEventListener('keydown', this._handleKeyDown);
     document.addEventListener('pointermove', this._handlePointerMove, true);
     document.addEventListener('pointerup', this._handlePointerUp, true);
     // Re-attach the svg listener that `disconnectedCallback` removed — the svg
@@ -452,6 +481,7 @@ export class CropFrame extends EditorBlock {
 
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
+    this.ariaLabel = this.l10nSafe('a11y-editor-tab-crop');
 
     if (changedProperties.has('imageBox')) {
       this._resizeBackdrop();
@@ -503,6 +533,7 @@ export class CropFrame extends EditorBlock {
 
     const svg = this._svgElement;
     svg?.removeEventListener('pointermove', this._handleSvgPointerMove, true);
+    this.removeEventListener('keydown', this._handleKeyDown);
     document.removeEventListener('pointermove', this._handlePointerMove, true);
     document.removeEventListener('pointerup', this._handlePointerUp, true);
   }
