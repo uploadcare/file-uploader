@@ -132,6 +132,7 @@ export default {
   'a11y-editor-tab-filters': 'Filtres',
   'a11y-editor-tab-tuning': 'Ajust',
   'a11y-editor-tab-crop': 'Retallar',
+  'a11y-editor-crop-resize': "Canvia la mida de l'àrea de retall",
   flip: 'Capgirar',
   mirror: 'Mirall',
   'a11y-cloud-editor-apply-filter': 'Aplicar el filtre {{name}}',

@@ -247,14 +247,20 @@
     outline: none;
   }
 
-  uc-crop-frame:focus-visible .uc-guides {
+  /* The guides' own class is replaced with its state, so they are reached as the nested svg. */
+  uc-crop-frame:focus-visible .uc-svg > svg {
     opacity: 1;
   }
 
-  uc-crop-frame:focus-visible .uc-guides > rect {
+  uc-crop-frame:focus-visible .uc-svg > svg > rect {
     stroke: var(--color-primary-accent);
     stroke-opacity: 1;
     stroke-width: 2;
+  }
+
+  uc-crop-frame .uc-thumb:focus-visible > path {
+    stroke: var(--color-primary-accent);
+    stroke-width: 5;
   }
 
   uc-crop-frame .uc-guides--hidden {

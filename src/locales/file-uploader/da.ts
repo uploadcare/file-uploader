@@ -130,6 +130,7 @@ export default {
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Justering',
   'a11y-editor-tab-crop': 'Beskær',
+  'a11y-editor-crop-resize': 'Tilpas beskæringsområdet',
   flip: 'Vend',
   mirror: 'Spejl',
   'a11y-cloud-editor-apply-filter': 'Anvend {{name}} filter',

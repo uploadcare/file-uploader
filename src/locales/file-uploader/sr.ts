@@ -129,6 +129,7 @@ export default {
   'a11y-editor-tab-filters': 'Filteri',
   'a11y-editor-tab-tuning': 'Podešavanje',
   'a11y-editor-tab-crop': 'Iseci',
+  'a11y-editor-crop-resize': 'Promeni veličinu oblasti isecanja',
   flip: 'Preokreni',
   mirror: 'Ogledalo',
   'a11y-cloud-editor-apply-filter': 'Primeni filter {{name}}',

@@ -126,6 +126,7 @@ export default {
   'a11y-editor-tab-filters': '필터',
   'a11y-editor-tab-tuning': '튜닝',
   'a11y-editor-tab-crop': '자르기',
+  'a11y-editor-crop-resize': '자르기 영역 크기 조정',
   flip: '뒤집기',
   mirror: '거울',
   'a11y-cloud-editor-apply-filter': '{{name}} 필터 적용',

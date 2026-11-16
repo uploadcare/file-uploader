@@ -129,6 +129,7 @@ export default {
   'a11y-editor-tab-filters': 'מסננים',
   'a11y-editor-tab-tuning': 'כיוון',
   'a11y-editor-tab-crop': 'חיתוך',
+  'a11y-editor-crop-resize': 'שינוי גודל אזור החיתוך',
   flip: 'היפוך',
   mirror: 'מראה',
   'a11y-cloud-editor-apply-filter': 'החל מסנן {{name}}',

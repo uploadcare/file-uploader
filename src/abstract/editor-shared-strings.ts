@@ -19,6 +19,7 @@ export const EDITOR_SHARED_STRINGS = {
   mirror: 'Mirror',
   flip: 'Flip',
   'a11y-editor-tab-crop': 'Crop',
+  'a11y-editor-crop-resize': 'Resize crop area',
   'a11y-editor-tab-tuning': 'Tuning',
   'a11y-editor-tab-filters': 'Filters',
   'a11y-cloud-editor-apply-filter': 'Apply {{name}} filter',

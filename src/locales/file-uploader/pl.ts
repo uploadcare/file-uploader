@@ -131,6 +131,7 @@ export default {
   'a11y-editor-tab-filters': 'Filtry',
   'a11y-editor-tab-tuning': 'Dostrajanie',
   'a11y-editor-tab-crop': 'Przytnij',
+  'a11y-editor-crop-resize': 'Zmień rozmiar obszaru przycinania',
   flip: 'Obróć',
   mirror: 'Lustro',
   'a11y-cloud-editor-apply-filter': 'Zastosuj filtr {{name}}',

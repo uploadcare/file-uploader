@@ -134,6 +134,7 @@ export default {
   'a11y-editor-tab-filters': 'Filtry',
   'a11y-editor-tab-tuning': 'Ladění',
   'a11y-editor-tab-crop': 'Oříznutí',
+  'a11y-editor-crop-resize': 'Změnit velikost oblasti oříznutí',
   flip: 'Převrátit',
   mirror: 'Zrcadlit',
   'a11y-cloud-editor-apply-filter': 'Použít filtr {{name}}',

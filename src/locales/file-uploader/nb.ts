@@ -127,6 +127,7 @@ export default {
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Innstillinger',
   'a11y-editor-tab-crop': 'Beskjær',
+  'a11y-editor-crop-resize': 'Endre størrelse på beskjæringsområdet',
   flip: 'Vend',
   mirror: 'Speil',
   'a11y-cloud-editor-apply-filter': 'Bruk filter {{name}}',

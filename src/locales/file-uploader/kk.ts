@@ -127,6 +127,7 @@ export default {
   'a11y-editor-tab-filters': 'Фильтрлер',
   'a11y-editor-tab-tuning': 'Тюнинг',
   'a11y-editor-tab-crop': 'Қырқу',
+  'a11y-editor-crop-resize': 'Қию аймағының өлшемін өзгерту',
   flip: 'Аудару',
   mirror: 'Айна',
   'a11y-cloud-editor-apply-filter': '{{name}} фильтрін қолдану',

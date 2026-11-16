@@ -131,6 +131,7 @@ export default {
   'a11y-editor-tab-filters': 'Φίλτρα',
   'a11y-editor-tab-tuning': 'Ρύθμιση',
   'a11y-editor-tab-crop': 'Περικοπή',
+  'a11y-editor-crop-resize': 'Αλλαγή μεγέθους περιοχής περικοπής',
   flip: 'Αναστροφή',
   mirror: 'Καθρέφτης',
   'a11y-cloud-editor-apply-filter': 'Εφαρμογή φίλτρου {{name}}',

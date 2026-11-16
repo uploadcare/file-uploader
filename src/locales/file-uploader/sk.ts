@@ -131,6 +131,7 @@ export default {
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Ladenie',
   'a11y-editor-tab-crop': 'Orezanie',
+  'a11y-editor-crop-resize': 'Zmeniť veľkosť oblasti orezania',
   flip: 'Otočiť',
   mirror: 'Zrkadlo',
   'a11y-cloud-editor-apply-filter': 'Použiť filter {{name}}',

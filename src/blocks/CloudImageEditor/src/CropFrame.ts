@@ -36,7 +36,7 @@ type Delta = [number, number];
 
 const EMPTY_RECT: Rectangle = { x: 0, y: 0, width: 0, height: 0 };
 
-/** How far one arrow key press moves or resizes the crop box, in the frame's pixels. */
+/** How far one arrow key press moves the crop box or a corner of it, in the frame's pixels. */
 const KEY_STEP = 10;
 const KEY_DELTAS: Partial<Record<string, Delta>> = {
   ArrowLeft: [-KEY_STEP, 0],
@@ -224,6 +224,10 @@ export class CropFrame extends EditorBlock {
     if (direction === '') {
       groupNode.style.cursor = 'move';
     }
+    // The corners are keyboard handles; the sides add nothing a corner cannot do with one arrow key.
+    if (direction.length === 2) {
+      groupNode.setAttribute('role', 'button');
+    }
 
     interactionNode.addEventListener('pointerdown', this._handlePointerDown.bind(this, direction));
     return { direction, pathNode, interactionNode, groupNode };
@@ -319,10 +323,11 @@ export class CropFrame extends EditorBlock {
     }
   };
 
-  /** The arrow keys move the crop box; with Shift they resize it from its bottom right corner. */
+  /** The arrow keys move what has focus: the crop box on the frame itself, a corner on that corner's thumb. */
   private readonly _handleKeyDown = (e: KeyboardEvent): void => {
     const delta = KEY_DELTAS[e.key];
-    const direction: Direction = e.shiftKey ? 'se' : '';
+    const direction =
+      Object.values(this._frameThumbs ?? {}).find((thumb) => thumb.groupNode === e.target)?.direction ?? '';
     if (!delta || this._shouldThumbBeDisabled(direction)) {
       return;
     }
@@ -434,10 +439,11 @@ export class CropFrame extends EditorBlock {
   }
 
   public toggleThumbs(visible: boolean): void {
-    // The frame takes keyboard focus only while the crop tab shows it.
+    // The frame and its corners take keyboard focus only while the crop tab shows them.
     this.tabIndex = visible ? 0 : -1;
     if (!this._frameThumbs) return;
-    for (const { groupNode } of Object.values(this._frameThumbs)) {
+    for (const { groupNode, direction } of Object.values(this._frameThumbs)) {
+      if (direction.length === 2) groupNode.tabIndex = this.tabIndex;
       groupNode.setAttribute(
         'class',
         classNames('uc-thumb', {
@@ -482,6 +488,9 @@ export class CropFrame extends EditorBlock {
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
     this.ariaLabel = this.l10nSafe('a11y-editor-tab-crop');
+    for (const { groupNode } of Object.values(this._frameThumbs ?? {})) {
+      if (groupNode.role) groupNode.ariaLabel = this.l10nSafe('a11y-editor-crop-resize');
+    }
 
     if (changedProperties.has('imageBox')) {
       this._resizeBackdrop();

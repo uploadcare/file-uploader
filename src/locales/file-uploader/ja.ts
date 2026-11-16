@@ -127,6 +127,7 @@ export default {
   'a11y-editor-tab-filters': 'フィルター',
   'a11y-editor-tab-tuning': '調整',
   'a11y-editor-tab-crop': '切り抜き',
+  'a11y-editor-crop-resize': '切り抜き範囲のサイズを変更',
   flip: '反転',
   mirror: 'ミラー',
   'a11y-cloud-editor-apply-filter': '{{name}} フィルターを適用',

@@ -127,6 +127,7 @@ export default {
   'a11y-editor-tab-filters': 'Filter',
   'a11y-editor-tab-tuning': 'Inställning',
   'a11y-editor-tab-crop': 'Beskär',
+  'a11y-editor-crop-resize': 'Ändra storlek på beskärningsområdet',
   flip: 'Vänd',
   mirror: 'Spegla',
   'a11y-cloud-editor-apply-filter': 'Applicera filter {{name}}',

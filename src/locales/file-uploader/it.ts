@@ -130,6 +130,7 @@ export default {
   'a11y-editor-tab-filters': 'Filtri',
   'a11y-editor-tab-tuning': 'Regolazione',
   'a11y-editor-tab-crop': 'Ritaglia',
+  'a11y-editor-crop-resize': "Ridimensiona l'area di ritaglio",
   flip: 'Capovolgi',
   mirror: 'Specchio',
   'a11y-cloud-editor-apply-filter': 'Applica filtro {{name}}',

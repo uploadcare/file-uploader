@@ -131,6 +131,7 @@ export default {
   'a11y-editor-tab-filters': 'Фильтры',
   'a11y-editor-tab-tuning': 'Настройка',
   'a11y-editor-tab-crop': 'Обрезка',
+  'a11y-editor-crop-resize': 'Изменить размер области обрезки',
   flip: 'Поворот',
   mirror: 'Зеркало',
   'a11y-cloud-editor-apply-filter': 'Применить фильтр {{name}}',

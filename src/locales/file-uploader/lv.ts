@@ -129,6 +129,7 @@ export default {
   'a11y-editor-tab-filters': 'Filtri',
   'a11y-editor-tab-tuning': 'Pielāgošana',
   'a11y-editor-tab-crop': 'Apgriezt',
+  'a11y-editor-crop-resize': 'Mainīt apgriešanas apgabala izmēru',
   flip: 'Pagriezt',
   mirror: 'Spogulis',
   'a11y-cloud-editor-apply-filter': 'Lietot filtru {{name}}',

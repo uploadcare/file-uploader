@@ -127,6 +127,7 @@ export default {
   'a11y-editor-tab-filters': '过滤器',
   'a11y-editor-tab-tuning': '调整',
   'a11y-editor-tab-crop': '裁剪',
+  'a11y-editor-crop-resize': '调整裁剪区域大小',
   flip: '翻转',
   mirror: '镜像',
   'a11y-cloud-editor-apply-filter': '应用 {{name}} 过滤器',

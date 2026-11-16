@@ -127,6 +127,7 @@ export default {
   'a11y-editor-tab-filters': 'ფილტრები',
   'a11y-editor-tab-tuning': 'რეგულირება',
   'a11y-editor-tab-crop': 'მოჭრა',
+  'a11y-editor-crop-resize': 'ამოჭრის არის ზომის შეცვლა',
   flip: 'შებრუნება',
   mirror: 'სარკე',
   'a11y-cloud-editor-apply-filter': '{{name}} ფილტრის გამოყენება',

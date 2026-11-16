@@ -131,6 +131,7 @@ export default {
   'a11y-editor-tab-filters': 'Filter',
   'a11y-editor-tab-tuning': 'Feinabstimmung',
   'a11y-editor-tab-crop': 'Zuschneiden',
+  'a11y-editor-crop-resize': 'Zuschneidebereich anpassen',
   flip: 'Drehen',
   mirror: 'Spiegeln',
   'a11y-cloud-editor-apply-filter': '{{name}}-Filter anwenden',

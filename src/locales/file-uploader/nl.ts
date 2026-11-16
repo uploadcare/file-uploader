@@ -128,6 +128,7 @@ export default {
   'a11y-editor-tab-filters': 'Filters',
   'a11y-editor-tab-tuning': 'Afstemming',
   'a11y-editor-tab-crop': 'Bijsnijden',
+  'a11y-editor-crop-resize': 'Formaat van bijsnijdgebied wijzigen',
   flip: 'Omdraaien',
   mirror: 'Spiegel',
   'a11y-cloud-editor-apply-filter': '{{name}} filter toepassen',

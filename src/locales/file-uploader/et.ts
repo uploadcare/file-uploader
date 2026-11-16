@@ -129,6 +129,7 @@ export default {
   'a11y-editor-tab-filters': 'Filtrid',
   'a11y-editor-tab-tuning': 'Häälestus',
   'a11y-editor-tab-crop': 'Kärbi',
+  'a11y-editor-crop-resize': 'Muuda kärpimisala suurust',
   flip: 'Pööra',
   mirror: 'Peegelda',
   'a11y-cloud-editor-apply-filter': 'Rakenda filter {{name}}',

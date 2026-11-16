@@ -127,6 +127,7 @@ export default {
   'a11y-editor-tab-filters': 'Bộ lọc',
   'a11y-editor-tab-tuning': 'Tuning',
   'a11y-editor-tab-crop': 'Cắt',
+  'a11y-editor-crop-resize': 'Đổi kích thước vùng cắt',
   flip: 'Lật',
   mirror: 'Gương',
   'a11y-cloud-editor-apply-filter': 'Áp dụng bộ lọc {{name}}',

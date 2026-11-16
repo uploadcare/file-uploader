@@ -130,6 +130,7 @@ export default {
   'a11y-editor-tab-filters': 'Filtre',
   'a11y-editor-tab-tuning': 'Ajustare',
   'a11y-editor-tab-crop': 'Decupare',
+  'a11y-editor-crop-resize': 'Redimensionează zona de decupare',
   flip: 'Întoarce',
   mirror: 'Oglindă',
   'a11y-cloud-editor-apply-filter': 'Aplică filtrul {{name}}',

@@ -127,6 +127,7 @@ export default {
   'a11y-editor-tab-filters': 'Síur',
   'a11y-editor-tab-tuning': 'Stilling',
   'a11y-editor-tab-crop': 'Klippa',
+  'a11y-editor-crop-resize': 'Breyta stærð skurðarsvæðis',
   flip: 'Sníða',
   mirror: 'Spegill',
   'a11y-cloud-editor-apply-filter': 'Nota {{name}} sía',

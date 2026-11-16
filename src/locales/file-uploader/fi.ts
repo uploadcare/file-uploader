@@ -123,6 +123,7 @@ export default {
   'a11y-editor-tab-filters': 'Suodattimet',
   'a11y-editor-tab-tuning': 'Säätö',
   'a11y-editor-tab-crop': 'Rajaus',
+  'a11y-editor-crop-resize': 'Muuta rajausalueen kokoa',
   'a11y-activity-header-button-close': 'Sulje',
   'a11y-camera-microphone': 'Mikrofoni',
   'a11y-camera-stop-recording': 'Lopeta tallennus',

@@ -127,6 +127,7 @@ export default {
   'a11y-editor-tab-filters': 'Զտիչներ',
   'a11y-editor-tab-tuning': 'Կարգավորում',
   'a11y-editor-tab-crop': 'Կտրել',
+  'a11y-editor-crop-resize': 'Փոխել կտրման տարածքի չափը',
   flip: 'Շրջել',
   mirror: 'Հայել',
   'a11y-cloud-editor-apply-filter': 'Կիրառել {{name}} զտիչը',

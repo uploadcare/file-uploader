@@ -127,6 +127,7 @@ export default {
   'a11y-editor-tab-filters': 'Filtreler',
   'a11y-editor-tab-tuning': 'Ayar',
   'a11y-editor-tab-crop': 'Kırp',
+  'a11y-editor-crop-resize': 'Kırpma alanını yeniden boyutlandır',
   flip: 'Çevir',
   mirror: 'Ayna',
   'a11y-cloud-editor-apply-filter': '{{name}} filtresini uygula',
