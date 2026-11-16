@@ -12,7 +12,7 @@ import { UploaderRegistry } from '@/abstract/UploaderRegistry';
 import { withResolvers } from '@/utils/withResolvers';
 import type { TelemetryBody } from '~/tests/api/telemetry/sink';
 import { emulatorSession, isLive } from '~/tests/utils/emulator.browser';
-import { createInCtx, inCtx, within } from '~/tests/utils/render-solution';
+import { createInCtx, inCtx, modalDialog, renderSolution, within } from '~/tests/utils/render-solution';
 import { getCtxName } from '~/tests/utils/test-renderer';
 
 const UUID = EDITOR_IMAGE_UUID;
@@ -115,6 +115,28 @@ describe('uc-cloud-image-editor', () => {
     expect(escaped).not.toHaveBeenCalled();
     // The slider's panel is out of use again.
     expect(element.querySelector('uc-editor-slider')?.closest('[inert]')).not.toBeNull();
+  });
+
+  it('keeps the uploader dialog open on Escape with the slider open', async () => {
+    const { root, api } = await renderSolution('regular');
+    const { internalId } = api.addFileFromUuid(UUID);
+    await expect.poll(() => api.getOutputItem(internalId).isSuccess).toBe(true);
+    api.setCurrentActivity('cloud-image-edit', { internalId });
+    api.setModalState(true);
+    await expect.poll(() => modalDialog(root, 'cloud-image-edit')?.open).toBe(true);
+    const editor = within(modalDialog(root, 'cloud-image-edit') as HTMLElement);
+    await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
+    await userEvent.click(editor.getByRole('option', { name: /Brightness/i }));
+    const slider = editor.getByRole('slider', { name: 'Brightness' });
+    await expect.poll(() => document.activeElement).toBe(slider.element());
+
+    await userEvent.keyboard('{Escape}');
+
+    await expect.element(editor.getByRole('option', { name: /Brightness/i })).toBeVisible();
+    expect(modalDialog(root, 'cloud-image-edit')?.open).toBe(true);
+    // With the slider closed, Escape is the dialog's again.
+    await userEvent.keyboard('{Escape}');
+    await expect.poll(() => modalDialog(root, 'cloud-image-edit')?.open).toBe(false);
   });
 
   it('gives each tab a panel, and its list of controls a name', async () => {
