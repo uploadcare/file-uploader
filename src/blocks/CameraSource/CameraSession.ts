@@ -274,15 +274,21 @@ export class CameraSession {
     if (!feed.stream) return;
     const { config } = this._host;
     try {
-      this._capture.record(feed.stream, this._preview.element, {
-        aspectRatio: settings.aspectRatio,
-        mirror: config.get('cameraMirror'),
-        recorder: recorderOptions(
-          config.get('mediaRecorderOptions'),
-          settings.audioQuality,
-          config.get('cameraVideoFormats'),
-        ),
-      });
+      this._capture.record(
+        feed.stream,
+        this._preview.element,
+        {
+          aspectRatio: settings.aspectRatio,
+          mirror: config.get('cameraMirror'),
+          recorder: recorderOptions(
+            config.get('mediaRecorderOptions'),
+            settings.audioQuality,
+            config.get('cameraVideoFormats'),
+          ),
+        },
+        // A recorder that ended on its own is stopped like one the shutter stopped: what it recorded goes to review.
+        () => this._stopRecording(),
+      );
       this._clock.startTimer(
         () => config.get('maxVideoRecordingDuration') ?? undefined,
         () => this._stopRecording(),

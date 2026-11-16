@@ -41,15 +41,15 @@ export class VideoRecording {
   /** What the recorder records: the camera stream, or a canvas that crops and mirrors it. */
   private _source: RecordingSource | null = null;
 
-  public get isRecording(): boolean {
-    return this._recorder?.state === 'recording';
-  }
-
-  /** Starts recording `stream`, as `video` shows it. Throws after stopping its canvas when the recorder can't start. */
+  /**
+   * Starts recording `stream`, as `video` shows it. Throws after stopping its canvas when the recorder can't start.
+   * `onEnd` runs when the recorder stops, asked or not: it ends on its own when its tracks end or it fails.
+   */
   public start(
     stream: MediaStream,
     video: HTMLVideoElement | undefined,
     options: { aspectRatio: number | null; mirror: boolean; recorder: MediaRecorderOptions },
+    onEnd: () => void,
   ): void {
     this._source = video
       ? createRecordingSource({ video, stream, aspectRatio: options.aspectRatio, mirror: options.mirror })
@@ -57,21 +57,25 @@ export class VideoRecording {
     // Each recorder fills its own list, so a late chunk from a discarded one stays out of the next clip.
     const chunks: BlobPart[] = [];
     this._chunks = chunks;
+    let recorder: MediaRecorder;
     try {
-      this._recorder = new MediaRecorder(this._source?.stream ?? stream, options.recorder);
-      this._recorder.start();
+      recorder = new MediaRecorder(this._source?.stream ?? stream, options.recorder);
+      recorder.start();
     } catch (error) {
       this.releaseSource();
       throw error;
     }
-    this._recorder.addEventListener('dataavailable', (event: BlobEvent) => {
+    this._recorder = recorder;
+    recorder.addEventListener('dataavailable', (event: BlobEvent) => {
       chunks.push(event.data);
     });
+    // Not for a discarded recorder, whose late stop must not end the recording that followed it.
+    recorder.addEventListener('stop', () => this._recorder === recorder && onEnd(), { once: true });
   }
 
   /**
    * Stops recording; resolves with the clip once the recorder has handed over its last chunk, or null when the
-   * recording was discarded first. The canvas stops first, so it never draws the clip's playback.
+   * recording was discarded first. A recorder that ended on its own has handed it over already.
    */
   public stop(): Promise<Clip | null> {
     const recorder = this._recorder;
@@ -80,22 +84,23 @@ export class VideoRecording {
     const chunks = this._chunks;
     const source = this._source;
     return new Promise((resolve) => {
-      recorder.addEventListener(
-        'stop',
-        () => {
-          if (this._recorder !== recorder) {
-            resolve(null);
-            return;
-          }
-          this.releaseSource();
-          resolve({
-            blob: new Blob(chunks, { type: recorder.mimeType }),
-            mimeType: recorder.mimeType,
-            mirrored: source?.mirrored ?? false,
-          });
-        },
-        { once: true },
-      );
+      const handOver = (): void => {
+        if (this._recorder !== recorder) {
+          resolve(null);
+          return;
+        }
+        this.releaseSource();
+        resolve({
+          blob: new Blob(chunks, { type: recorder.mimeType }),
+          mimeType: recorder.mimeType,
+          mirrored: source?.mirrored ?? false,
+        });
+      };
+      if (recorder.state === 'inactive') {
+        handOver();
+        return;
+      }
+      recorder.addEventListener('stop', handOver, { once: true });
       recorder.stop();
     });
   }

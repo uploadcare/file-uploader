@@ -252,6 +252,21 @@ describe('CameraSession flows', () => {
     await vi.waitFor(() => expect(ctx.session.capture.phase).toBe('recorded'));
   });
 
+  it('a recorder that ends on its own shows what it recorded for review', async () => {
+    stubMedia();
+    const ctx = setup();
+    await open(ctx);
+    const recorder = startRecording(ctx);
+
+    // What the browser does when the recorded tracks end or the recorder fails: no one called `stop()`.
+    recorder.state = 'inactive';
+    recorder.dispatchEvent(new Event('stop'));
+
+    await vi.waitFor(() => expect(ctx.session.capture.phase).toBe('recorded'));
+    expect(recorder.stop).not.toHaveBeenCalled();
+    expect(ctx.track).toHaveBeenCalledWith('stop-camera', { tabId: VIDEO });
+  });
+
   it('inv4: a shutter press while the recorder stops neither stops it again nor starts another', async () => {
     stubMedia();
     const ctx = setup();

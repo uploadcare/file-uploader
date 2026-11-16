@@ -34,9 +34,8 @@ export class Capture {
     return state.is;
   }
 
-  /** Asks the recorder too: one that ended on its own is not recording, whatever the phase still shows. */
   public get isRecording(): boolean {
-    return this._state.is === 'recording' && this._recorder.isRecording;
+    return this._state.is === 'recording';
   }
 
   /** The recording was asked to stop and its clip is not handed over yet. */

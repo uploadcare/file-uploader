@@ -12,12 +12,15 @@ afterEach(() => {
   vi.mocked(createRecordingSource).mockReset();
 });
 
+const onEnd = vi.fn();
+
 const startRecording = (recording: VideoRecording) => {
-  recording.start(new EventTarget() as unknown as MediaStream, undefined, {
-    aspectRatio: null,
-    mirror: false,
-    recorder: {},
-  });
+  recording.start(
+    new EventTarget() as unknown as MediaStream,
+    undefined,
+    { aspectRatio: null, mirror: false, recorder: {} },
+    onEnd,
+  );
   return FakeRecorder.last;
 };
 
@@ -53,11 +56,12 @@ describe('VideoRecording.stop', () => {
       stop,
     });
     const recording = new VideoRecording();
-    recording.start(new EventTarget() as unknown as MediaStream, {} as HTMLVideoElement, {
-      aspectRatio: null,
-      mirror: true,
-      recorder: {},
-    });
+    recording.start(
+      new EventTarget() as unknown as MediaStream,
+      {} as HTMLVideoElement,
+      { aspectRatio: null, mirror: true, recorder: {} },
+      onEnd,
+    );
     const recorder = FakeRecorder.last;
     const clip = recording.stop();
     expect(stop).not.toHaveBeenCalled();
@@ -69,17 +73,19 @@ describe('VideoRecording.stop', () => {
     expect(stop).toHaveBeenCalledOnce();
   });
 
-  it('is no longer recording from the stop on', async () => {
+  it('tells when the recorder stopped, but not for one discarded first', () => {
     vi.stubGlobal('MediaRecorder', FakeRecorder);
     const recording = new VideoRecording();
-    const recorder = startRecording(recording);
-    expect(recording.isRecording).toBe(true);
+    onEnd.mockClear();
 
-    const clip = recording.stop();
-    expect(recording.isRecording).toBe(false);
+    startRecording(recording).dispatchEvent(new Event('stop'));
+    expect(onEnd).toHaveBeenCalledOnce();
 
-    recorder.dispatchEvent(new Event('stop'));
-    await clip;
+    const discarded = startRecording(recording);
+    recording.discard();
+    startRecording(recording);
+    discarded.dispatchEvent(new Event('stop'));
+    expect(onEnd).toHaveBeenCalledOnce();
   });
 
   it('hands over no clip for a recording discarded before its final stop event', async () => {
@@ -140,11 +146,12 @@ describe('VideoRecording.discard', () => {
       .mockReturnValueOnce({ stream: new EventTarget() as MediaStream, mirrored: false, stop: second });
     const recording = new VideoRecording();
     const start = () =>
-      recording.start(new EventTarget() as unknown as MediaStream, {} as HTMLVideoElement, {
-        aspectRatio: null,
-        mirror: false,
-        recorder: {},
-      });
+      recording.start(
+        new EventTarget() as unknown as MediaStream,
+        {} as HTMLVideoElement,
+        { aspectRatio: null, mirror: false, recorder: {} },
+        onEnd,
+      );
 
     start();
     recording.discard();
@@ -194,11 +201,12 @@ describe('VideoRecording.start failure', () => {
     const recording = new VideoRecording();
 
     expect(() =>
-      recording.start(new EventTarget() as unknown as MediaStream, {} as HTMLVideoElement, {
-        aspectRatio: null,
-        mirror: true,
-        recorder: {},
-      }),
+      recording.start(
+        new EventTarget() as unknown as MediaStream,
+        {} as HTMLVideoElement,
+        { aspectRatio: null, mirror: true, recorder: {} },
+        onEnd,
+      ),
     ).toThrow(error);
     expect(stop).toHaveBeenCalledOnce();
 

@@ -18,12 +18,15 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
+const onEnd = () => {};
+
 const record = (capture: Capture) => {
-  capture.record(new EventTarget() as unknown as MediaStream, undefined, {
-    aspectRatio: null,
-    mirror: false,
-    recorder: {},
-  });
+  capture.record(
+    new EventTarget() as unknown as MediaStream,
+    undefined,
+    { aspectRatio: null, mirror: false, recorder: {} },
+    onEnd,
+  );
   return FakeRecorder.last;
 };
 
@@ -102,13 +105,16 @@ describe('Capture recording', () => {
     expect([capture.phase, capture.isStopping]).toEqual(['live', false]);
   });
 
-  it('a recorder that ended on its own is not recording, so the next shutter press starts over', () => {
+  it('a recorder that ended on its own hands over what it recorded when stopped', async () => {
     const capture = new Capture();
     const recorder = record(capture);
+    recorder.dispatchEvent(Object.assign(new Event('dataavailable'), { data: new Blob(['clip']) }));
 
     recorder.state = 'inactive';
+    expect(capture.isRecording).toBe(true);
 
-    expect([capture.phase, capture.isRecording]).toEqual(['recording', false]);
+    expect((await capture.stop())?.blob.size).toBe(4);
+    expect(recorder.stop).not.toHaveBeenCalled();
   });
 
   it('a recorder that cannot start leaves the capture live', () => {
