@@ -313,7 +313,8 @@ export class DropArea extends ChildBlock {
   }
 
   private _updateVisibility(): void {
-    const shouldBeVisible = this._isEnabled || !this.querySelector('[data-default-slot]');
+    // The content wrapper is part of the default template only, so its ref tells whether that template is rendered.
+    const shouldBeVisible = this._isEnabled || !this._contentWrapperRef.value;
     this._isVisible = shouldBeVisible;
     this.hidden = !shouldBeVisible;
   }

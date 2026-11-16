@@ -1,5 +1,6 @@
 import { html, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
+import { createRef, ref } from 'lit/directives/ref.js';
 import { ChildBlock } from '../../lit/ChildBlock';
 import '../Icon/Icon';
 import './select.css';
@@ -19,11 +20,13 @@ export class Select extends ChildBlock {
   @property({ type: Array, attribute: false })
   public options: SelectOption[] = [];
 
+  private readonly _select = createRef<HTMLSelectElement>();
+
   public override render() {
     // The browser shows the first option when the value matches none.
     const selected = this.options.find((option) => option.value === this.value) ?? this.options[0];
     return html`
-      <select @change=${this._handleChange} ?disabled=${this.disabled} title=${selected?.text ?? ''}>
+      <select ${ref(this._select)} @change=${this._handleChange} ?disabled=${this.disabled} title=${selected?.text ?? ''}>
         ${this.options.map((option) => html`<option value=${option.value}>${option.text}</option>`)}
       </select>
       <uc-icon name="arrow-dropdown"></uc-icon>
@@ -35,7 +38,7 @@ export class Select extends ChildBlock {
   // option is left alone so the browser keeps its first-option default.
   public override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
-    const select = this.querySelector('select');
+    const select = this._select.value;
     if (select && this.options.some((option) => option.value === this.value)) {
       select.value = this.value;
     }
