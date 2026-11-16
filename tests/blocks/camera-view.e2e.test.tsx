@@ -71,7 +71,7 @@ describe('camera view', () => {
     await open({ cameraModes: 'photo, video', enableAudioRecording: true });
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "photo",
         "audioSelect": false,
         "cameraSelect": false,
@@ -83,7 +83,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=camera-full "Shot"",
         "switcher": true,
         "tabs": "photo video",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -92,7 +92,7 @@ describe('camera view', () => {
     expect(describeView()).toMatchInlineSnapshot(`
       {
         "actions": true,
-        "activeTab": "photo",
+        "activeTab": "-",
         "audioSelect": false,
         "cameraSelect": false,
         "caption": true,
@@ -103,7 +103,7 @@ describe('camera view', () => {
         "shot": false,
         "switcher": true,
         "tabs": "- -",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -112,7 +112,7 @@ describe('camera view', () => {
     await settle();
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "photo",
         "audioSelect": false,
         "cameraSelect": false,
@@ -124,7 +124,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=camera-full "Shot"",
         "switcher": true,
         "tabs": "photo video",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -132,7 +132,7 @@ describe('camera view', () => {
     await click('tab-video');
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "video",
         "audioSelect": "enabled",
         "cameraSelect": false,
@@ -144,7 +144,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=video-camera-full "Record Video"",
         "switcher": true,
         "tabs": "photo video",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -153,8 +153,8 @@ describe('camera view', () => {
     await expect.poll(() => camera().classList.contains('uc-recording')).toBe(true);
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
-        "activeTab": "video",
+        "actions": null,
+        "activeTab": "-",
         "audioSelect": false,
         "cameraSelect": false,
         "caption": true,
@@ -163,7 +163,7 @@ describe('camera view', () => {
         "mic": "microphone",
         "requestButton": false,
         "shot": "uc-shot-btn uc-camera-action uc-stop-record icon=square "Stop recording"",
-        "switcher": false,
+        "switcher": null,
         "tabs": "- -",
         "timer": true,
         "video": true,
@@ -175,7 +175,7 @@ describe('camera view', () => {
     expect(describeView()).toMatchInlineSnapshot(`
       {
         "actions": true,
-        "activeTab": "video",
+        "activeTab": "-",
         "audioSelect": false,
         "cameraSelect": false,
         "caption": true,
@@ -184,7 +184,7 @@ describe('camera view', () => {
         "mic": false,
         "requestButton": false,
         "shot": false,
-        "switcher": false,
+        "switcher": null,
         "tabs": "- -",
         "timer": true,
         "video": true,
@@ -195,7 +195,7 @@ describe('camera view', () => {
     await settle();
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "video",
         "audioSelect": "enabled",
         "cameraSelect": false,
@@ -207,7 +207,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=video-camera-full "Record Video"",
         "switcher": true,
         "tabs": "photo video",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -215,7 +215,7 @@ describe('camera view', () => {
     await click('tab-photo');
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "photo",
         "audioSelect": false,
         "cameraSelect": false,
@@ -227,7 +227,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=camera-full "Shot"",
         "switcher": true,
         "tabs": "photo video",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -237,7 +237,7 @@ describe('camera view', () => {
     await open({ cameraModes: 'video', enableAudioRecording: true });
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "video",
         "audioSelect": "enabled",
         "cameraSelect": false,
@@ -249,7 +249,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=video-camera-full "Record Video"",
         "switcher": true,
         "tabs": "- video",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -257,7 +257,7 @@ describe('camera view', () => {
     await click('toggle-microphone');
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "video",
         "audioSelect": "disabled",
         "cameraSelect": false,
@@ -269,7 +269,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=video-camera-full "Record Video"",
         "switcher": true,
         "tabs": "- video",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -277,7 +277,7 @@ describe('camera view', () => {
     await click('toggle-microphone');
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "video",
         "audioSelect": "enabled",
         "cameraSelect": false,
@@ -289,7 +289,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=video-camera-full "Record Video"",
         "switcher": true,
         "tabs": "- video",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -312,7 +312,7 @@ describe('camera view', () => {
     await settle();
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "video",
         "audioSelect": false,
         "cameraSelect": false,
@@ -324,7 +324,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=video-camera-full "Record Video"",
         "switcher": true,
         "tabs": "photo video",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -333,7 +333,7 @@ describe('camera view', () => {
     await settle();
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "video",
         "audioSelect": "enabled",
         "cameraSelect": false,
@@ -345,7 +345,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=video-camera-full "Record Video"",
         "switcher": true,
         "tabs": "photo video",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -354,7 +354,7 @@ describe('camera view', () => {
     await settle();
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "photo",
         "audioSelect": false,
         "cameraSelect": false,
@@ -366,7 +366,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=camera-full "Shot"",
         "switcher": true,
         "tabs": "photo -",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -388,7 +388,7 @@ describe('camera view', () => {
     await open({ cameraModes: 'photo, video', enableAudioRecording: true });
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "photo",
         "audioSelect": false,
         "cameraSelect": true,
@@ -400,7 +400,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=camera-full "Shot"",
         "switcher": true,
         "tabs": "photo video",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -408,7 +408,7 @@ describe('camera view', () => {
     await click('tab-video');
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "video",
         "audioSelect": "enabled",
         "cameraSelect": true,
@@ -420,7 +420,7 @@ describe('camera view', () => {
         "shot": "uc-shot-btn uc-camera-action icon=video-camera-full "Record Video"",
         "switcher": true,
         "tabs": "photo video",
-        "timer": false,
+        "timer": null,
         "video": true,
       }
     `);
@@ -429,8 +429,8 @@ describe('camera view', () => {
     await expect.poll(() => camera().classList.contains('uc-recording')).toBe(true);
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
-        "activeTab": "video",
+        "actions": null,
+        "activeTab": "-",
         "audioSelect": false,
         "cameraSelect": false,
         "caption": true,
@@ -439,7 +439,7 @@ describe('camera view', () => {
         "mic": "microphone",
         "requestButton": false,
         "shot": "uc-shot-btn uc-camera-action uc-stop-record icon=square "Stop recording"",
-        "switcher": false,
+        "switcher": null,
         "tabs": "- -",
         "timer": true,
         "video": true,
@@ -457,7 +457,7 @@ describe('camera view', () => {
     await settle();
     expect(describeView()).toMatchInlineSnapshot(`
       {
-        "actions": false,
+        "actions": null,
         "activeTab": "photo",
         "audioSelect": false,
         "cameraSelect": false,
@@ -469,7 +469,7 @@ describe('camera view', () => {
         "shot": false,
         "switcher": true,
         "tabs": "photo video",
-        "timer": false,
+        "timer": null,
         "video": false,
       }
     `);

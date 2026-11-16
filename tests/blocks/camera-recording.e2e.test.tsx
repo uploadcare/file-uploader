@@ -1,6 +1,5 @@
 import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import type { Icon } from '@/index';
-import { delay } from '@/utils/delay';
 import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
@@ -152,8 +151,12 @@ describe('video recording', () => {
   });
 
   it('draws the timeline bar in the theme primary color', async () => {
-    const { camera } = await openCamera();
-    const timer = camera.getByTestId('uc-camera-controls--recording-timer').element();
+    const { camera, shot, openVideoTab } = await openCamera();
+    await openVideoTab();
+    await shot();
+    const timerLocator = camera.getByTestId('uc-camera-controls--recording-timer');
+    await expect.element(timerLocator).toBeVisible();
+    const timer = timerLocator.element();
     const line = timer.querySelector<HTMLElement>('.uc-line');
     // A probe in the same place resolves the palette token for whichever theme is in effect.
     const probe = document.createElement('span');
@@ -198,11 +201,8 @@ describe('video recording', () => {
     await camera.getByText('Retake', { exact: true }).click();
     await expect.element(camera.getByRole('button', { name: 'Record Video', exact: true })).toBeVisible();
 
-    const atRetake = timer.element().textContent?.trim();
-    // Long enough for the live stream's time to tick past a whole second.
-    await delay(1500);
-
-    expect(timer.element().textContent?.trim()).toBe(atRetake);
+    // The live view has no timer for a leftover loop to write into.
+    await expect.element(timer).not.toBeInTheDocument();
   });
 
   it('counts the elapsed time while recording', async () => {

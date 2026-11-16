@@ -48,7 +48,7 @@ export class CameraControls extends ChildBlock {
 
   private readonly _line = createRef<HTMLElement>();
 
-  /** The control that had focus before this render, which may hide it: the shutter after a shot, accept after it. */
+  /** The control that had focus before this render, which may remove it: the shutter after a shot, accept after it. */
   private _focused: HTMLElement | null = null;
 
   protected override willUpdate(changed: PropertyValues<this>): void {
@@ -57,14 +57,12 @@ export class CameraControls extends ChildBlock {
     this._focused = active instanceof HTMLElement && this.contains(active) ? active : null;
   }
 
-  // A hidden control drops its focus to the page. It goes on to what took its place: accept once something is
+  // A removed control drops its focus to the page. It goes on to what took its place: accept once something is
   // captured, the shutter once that is resolved.
   protected override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
-    if (this._focused?.checkVisibility() === false) {
-      this.querySelector<HTMLElement>(
-        '.uc-camera-actions:not([hidden]) .uc-primary-btn, .uc-shot-btn:not([hidden])',
-      )?.focus();
+    if (this._focused?.isConnected === false) {
+      this.querySelector<HTMLElement>('.uc-camera-actions .uc-primary-btn, .uc-shot-btn')?.focus();
     }
   }
 
@@ -79,7 +77,7 @@ export class CameraControls extends ChildBlock {
     return this.l10n('camera-shot');
   }
 
-  private _renderTab(tab: CameraMode, icon: string, label: string, hidden: boolean) {
+  private _renderTab(tab: CameraMode, icon: string, label: string) {
     return html`
       <button
         data-id=${tab}
@@ -88,7 +86,6 @@ export class CameraControls extends ChildBlock {
         aria-label=${label}
         aria-pressed=${this.activeTab === tab}
         @click=${() => this._emit({ type: 'select-tab', tab })}
-        ?hidden=${hidden}
         data-testid=${`tab-${tab}`}
       >
         <uc-icon name=${icon}></uc-icon>
@@ -113,66 +110,85 @@ export class CameraControls extends ChildBlock {
     if (!view) return html``;
     return html`
       <div class="uc-controls">
-        <div class="uc-switcher" ?hidden=${!view.timerHidden}>
-          ${this._renderTab('photo', 'camera', this.l10n('src-type-mobile-photo-camera'), view.photoTabHidden)}
-          ${this._renderTab('video', 'video-camera', this.l10n('src-type-mobile-video-camera'), view.videoTabHidden)}
-        </div>
-
-        <button
-          type="button"
-          class="uc-secondary-btn uc-recording-timer"
-          @click=${() => this._emit({ type: 'toggle-playback' })}
-          ?hidden=${view.timerHidden}
-          ?disabled=${view.timerDisabled}
-          aria-label=${view.timerDisabled ? nothing : this.l10n(`a11y-camera-${this.timelineIcon}`)}
-          data-testid="recording-timer"
-        >
-          <uc-icon name=${this.timelineIcon}></uc-icon>
-          <span>${this.clock?.timerText ?? '00:00'}</span>
-          <span ${ref(this._line)} class="uc-line"></span>
-        </button>
-
-        <div class="uc-camera-actions uc-camera-action" ?hidden=${view.actionsHidden}>
-          <button type="button" class="uc-secondary-btn" @click=${() => this._emit({ type: 'retake' })}>
-            ${this.l10n('retake')}
-          </button>
-          <button
-            type="button"
-            class="uc-primary-btn"
-            @click=${() => this._emit({ type: 'accept' })}
-            data-testid="accept"
-          >
-            ${this.l10n('accept')}
-          </button>
-        </div>
-
-        <button
-          type="button"
-          data-testid="shot"
-          @click=${() => this._emit({ type: 'shutter' })}
-          class=${view.shotClass}
-          ?hidden=${view.shotHidden}
-          ?disabled=${!this.hasVideoFrame}
-          aria-label=${this._shotLabel(view.shotIcon)}
-        >
-          <uc-icon name=${view.shotIcon}></uc-icon>
-        </button>
+        ${
+          view.timerHidden
+            ? html`
+                <div class="uc-switcher">
+                  ${view.photoTabHidden ? nothing : this._renderTab('photo', 'camera', this.l10n('src-type-mobile-photo-camera'))}
+                  ${view.videoTabHidden ? nothing : this._renderTab('video', 'video-camera', this.l10n('src-type-mobile-video-camera'))}
+                </div>
+              `
+            : html`
+                <button
+                  type="button"
+                  class="uc-secondary-btn uc-recording-timer"
+                  @click=${() => this._emit({ type: 'toggle-playback' })}
+                  ?disabled=${view.timerDisabled}
+                  aria-label=${view.timerDisabled ? nothing : this.l10n(`a11y-camera-${this.timelineIcon}`)}
+                  data-testid="recording-timer"
+                >
+                  <uc-icon name=${this.timelineIcon}></uc-icon>
+                  <span>${this.clock?.timerText ?? '00:00'}</span>
+                  <span ${ref(this._line)} class="uc-line"></span>
+                </button>
+              `
+        }
+        ${
+          view.actionsHidden
+            ? nothing
+            : html`
+                <div class="uc-camera-actions uc-camera-action">
+                  <button type="button" class="uc-secondary-btn" @click=${() => this._emit({ type: 'retake' })}>
+                    ${this.l10n('retake')}
+                  </button>
+                  <button
+                    type="button"
+                    class="uc-primary-btn"
+                    @click=${() => this._emit({ type: 'accept' })}
+                    data-testid="accept"
+                  >
+                    ${this.l10n('accept')}
+                  </button>
+                </div>
+              `
+        }
+        ${
+          view.shotHidden
+            ? nothing
+            : html`
+                <button
+                  type="button"
+                  data-testid="shot"
+                  @click=${() => this._emit({ type: 'shutter' })}
+                  class=${view.shotClass}
+                  ?disabled=${!this.hasVideoFrame}
+                  aria-label=${this._shotLabel(view.shotIcon)}
+                >
+                  <uc-icon name=${view.shotIcon}></uc-icon>
+                </button>
+              `
+        }
 
         <div class="uc-select">
-          <button
-            type="button"
-            class="uc-mini-btn uc-btn-microphone"
-            @click=${() => {
-              if (!view.microphoneDisabled) this._emit({ type: 'toggle-microphone' });
-            }}
-            ?hidden=${view.microphoneHidden}
-            aria-label=${this.l10n(view.microphoneLabel)}
-            aria-disabled=${view.microphoneDisabled ? 'true' : 'false'}
-            aria-pressed=${view.microphoneIcon === 'microphone' ? 'true' : 'false'}
-            data-testid="toggle-microphone"
-          >
-            <uc-icon name=${view.microphoneIcon}></uc-icon>
-          </button>
+          ${
+            view.microphoneHidden
+              ? nothing
+              : html`
+                  <button
+                    type="button"
+                    class="uc-mini-btn uc-btn-microphone"
+                    @click=${() => {
+                      if (!view.microphoneDisabled) this._emit({ type: 'toggle-microphone' });
+                    }}
+                    aria-label=${this.l10n(view.microphoneLabel)}
+                    aria-disabled=${view.microphoneDisabled ? 'true' : 'false'}
+                    aria-pressed=${view.microphoneIcon === 'microphone' ? 'true' : 'false'}
+                    data-testid="toggle-microphone"
+                  >
+                    <uc-icon name=${view.microphoneIcon}></uc-icon>
+                  </button>
+                `
+          }
 
           <uc-camera-settings
             .buttonHidden=${this.settingsHidden}

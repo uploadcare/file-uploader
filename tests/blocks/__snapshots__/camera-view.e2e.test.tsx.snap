@@ -2,7 +2,7 @@
 
 exports[`camera view > opens with photo only 1`] = `
 {
-  "actions": false,
+  "actions": null,
   "activeTab": "photo",
   "audioSelect": false,
   "cameraSelect": false,
@@ -14,14 +14,14 @@ exports[`camera view > opens with photo only 1`] = `
   "shot": "uc-shot-btn uc-camera-action icon=camera-full "Shot"",
   "switcher": true,
   "tabs": "photo -",
-  "timer": false,
+  "timer": null,
   "video": true,
 }
 `;
 
 exports[`camera view > opens with video only 1`] = `
 {
-  "actions": false,
+  "actions": null,
   "activeTab": "video",
   "audioSelect": "enabled",
   "cameraSelect": false,
@@ -33,14 +33,14 @@ exports[`camera view > opens with video only 1`] = `
   "shot": "uc-shot-btn uc-camera-action icon=video-camera-full "Record Video"",
   "switcher": true,
   "tabs": "- video",
-  "timer": false,
+  "timer": null,
   "video": true,
 }
 `;
 
 exports[`camera view > opens with video without audio 1`] = `
 {
-  "actions": false,
+  "actions": null,
   "activeTab": "video",
   "audioSelect": false,
   "cameraSelect": false,
@@ -52,7 +52,7 @@ exports[`camera view > opens with video without audio 1`] = `
   "shot": "uc-shot-btn uc-camera-action icon=video-camera-full "Record Video"",
   "switcher": true,
   "tabs": "photo video",
-  "timer": false,
+  "timer": null,
   "video": true,
 }
 `;

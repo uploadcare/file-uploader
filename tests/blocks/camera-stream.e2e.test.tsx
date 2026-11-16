@@ -206,7 +206,7 @@ describe('when camera access is denied', () => {
     await expect.element(camera.getByText('Camera access denied')).toBeVisible();
     // Nothing to capture from: a shutter or tab switch here would act on a stream that isn't there.
     for (const name of ['Shot', 'Photo', 'Video']) {
-      await expect.element(camera.getByRole('button', { name, exact: true, includeHidden: true })).not.toBeVisible();
+      await expect.element(camera.getByRole('button', { name, exact: true })).not.toBeInTheDocument();
     }
   });
 });

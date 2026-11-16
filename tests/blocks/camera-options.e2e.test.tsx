@@ -68,7 +68,7 @@ describe('enableAudioRecording', () => {
   it('hides the microphone toggle on the photo tab whatever the setting', async () => {
     const { camera } = await openCamera({ enableAudioRecording: true });
 
-    await expect.element(camera.getByTestId('uc-camera-controls--toggle-microphone')).not.toBeVisible();
+    await expect.element(camera.getByTestId('uc-camera-controls--toggle-microphone')).not.toBeInTheDocument();
   });
 
   it('shows the microphone toggle on the video tab, which is the default', async () => {
@@ -82,7 +82,7 @@ describe('enableAudioRecording', () => {
     const { camera } = await openCamera({ enableAudioRecording: false });
     await camera.getByRole('button', { name: 'Video', exact: true }).click();
 
-    await expect.element(camera.getByTestId('uc-camera-controls--toggle-microphone')).not.toBeVisible();
+    await expect.element(camera.getByTestId('uc-camera-controls--toggle-microphone')).not.toBeInTheDocument();
   });
 });
 
@@ -97,17 +97,13 @@ describe('cameraModes', () => {
   it('hides the video tab when only photo is allowed', async () => {
     const { camera } = await openCamera({ cameraModes: 'photo' });
 
-    await expect
-      .element(camera.getByRole('button', { name: 'Video', exact: true, includeHidden: true }))
-      .not.toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Video', exact: true })).not.toBeInTheDocument();
   });
 
   it('hides the photo tab when only video is allowed', async () => {
     const { camera } = await openCamera({ cameraModes: 'video' });
 
-    await expect
-      .element(camera.getByRole('button', { name: 'Photo', exact: true, includeHidden: true }))
-      .not.toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Photo', exact: true })).not.toBeInTheDocument();
   });
 });
 
@@ -117,9 +113,7 @@ describe('enableVideoRecording (deprecated)', () => {
   it('drops the video tab when disabled', async () => {
     const { camera } = await openCamera({ enableVideoRecording: false });
 
-    await expect
-      .element(camera.getByRole('button', { name: 'Video', exact: true, includeHidden: true }))
-      .not.toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Video', exact: true })).not.toBeInTheDocument();
   });
 
   it('leaves both tabs when enabled', async () => {
