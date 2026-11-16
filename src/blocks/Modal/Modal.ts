@@ -27,6 +27,8 @@ export class Modal extends ChildBlock {
   // What had focus when an inline dialog opened. The browser returns focus only while it is still inside the dialog,
   // and a screen change inside it can drop focus to the body first.
   private _inlineOpener: HTMLElement | null = null;
+  /** The control that led from this modal to another one (a source, the editor): it gets the focus back on return. */
+  private _leftFrom: HTMLElement | null = null;
 
   /**
    * `close` events still queued from our own `hide()`. `dialog.close()` dispatches its `close` from a task, so a modal
@@ -166,6 +168,12 @@ export class Modal extends ChildBlock {
    * dialog itself, so it is moved to the first control once they are there.
    */
   private async _settleInitialFocus(dialog: HTMLDialogElement): Promise<void> {
+    const leftFrom = this._leftFrom;
+    this._leftFrom = null;
+    if (leftFrom?.checkVisibility()) {
+      leftFrom.focus();
+      return;
+    }
     if (document.activeElement !== dialog) return;
     await blocksRendered(dialog, (work) => this.whileAdopted(work));
     // The user, or the activity itself, moved focus meanwhile.
@@ -178,6 +186,9 @@ export class Modal extends ChildBlock {
     const dialog = this.dialogEl.value;
     if (!dialog || !dialog.open) return;
     const wasInline = !dialog.matches(':modal');
+    const active = document.activeElement;
+    // Only while another modal takes over: a closed uploader opens on its first control again.
+    this._leftFrom = this._router?.modal && active instanceof HTMLElement && dialog.contains(active) ? active : null;
     this._ownClosesPending++;
     dialog.close();
     const opener = this._inlineOpener;

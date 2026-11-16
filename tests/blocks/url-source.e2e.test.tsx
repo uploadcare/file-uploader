@@ -45,6 +45,16 @@ beforeAll(async () => {
 });
 
 describe('uc-url-source (parity, real url upload flow)', () => {
+  it('returns focus to the source button it was opened from on Back', async () => {
+    renderRegularHost();
+    await navigateToUrlSource();
+
+    (document.querySelector('uc-url-source button[title="Back"]') as HTMLButtonElement).click();
+
+    await expect.element(page.getByTestId('uc-start-from')).toBeVisible();
+    await expect.poll(() => document.activeElement?.textContent?.trim()).toBe('From link');
+  });
+
   it('renders the l10n header caption + back/close buttons', async () => {
     renderRegularHost();
     await navigateToUrlSource();
