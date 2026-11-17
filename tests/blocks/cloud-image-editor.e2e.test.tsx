@@ -115,14 +115,21 @@ describe('uc-cloud-image-editor', () => {
     expect(escaped).not.toHaveBeenCalled();
     // The slider's panel is out of use again.
     expect(element.querySelector('uc-editor-slider')?.closest('[inert]')).not.toBeNull();
+    // An editor outside a dialog has nothing to go back to, so a second Escape leaves it in place.
+    await userEvent.keyboard('{Escape}');
+    expect(escaped).toHaveBeenCalled();
+    expect(element.isConnected).toBe(true);
   });
 
   it('keeps the uploader dialog open on Escape with the slider open', async () => {
     const { root, api } = await renderSolution('regular');
     const { internalId } = api.addFileFromUuid(UUID);
     await expect.poll(() => api.getOutputItem(internalId).isSuccess).toBe(true);
-    api.setCurrentActivity('cloud-image-edit', { internalId });
+    // Through the list, as a user gets there: an editor the flow opened straight on closes the dialog on cancel.
+    api.setCurrentActivity('upload-list');
     api.setModalState(true);
+    await expect.poll(() => modalDialog(root, 'upload-list')?.open).toBe(true);
+    api.setCurrentActivity('cloud-image-edit', { internalId });
     await expect.poll(() => modalDialog(root, 'cloud-image-edit')?.open).toBe(true);
     const editor = within(modalDialog(root, 'cloud-image-edit') as HTMLElement);
     await userEvent.click(editor.getByRole('tab', { name: /tuning/i }));
@@ -134,9 +141,10 @@ describe('uc-cloud-image-editor', () => {
 
     await expect.element(editor.getByRole('option', { name: /Brightness/i })).toBeVisible();
     expect(modalDialog(root, 'cloud-image-edit')?.open).toBe(true);
-    // With the slider closed, Escape is the dialog's again.
+    // With the slider closed, Escape cancels the editor: back to the list, the uploader still open.
     await userEvent.keyboard('{Escape}');
-    await expect.poll(() => modalDialog(root, 'cloud-image-edit')?.open).toBe(false);
+    await expect.poll(() => modalDialog(root, 'upload-list')?.open).toBe(true);
+    expect(root.querySelector('uc-cloud-image-editor')).toBeNull();
   });
 
   it('gives each tab a panel, and its list of controls a name', async () => {

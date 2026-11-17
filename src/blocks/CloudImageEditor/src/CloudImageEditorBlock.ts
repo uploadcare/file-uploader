@@ -440,6 +440,17 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
     this.remove();
   };
 
+  /**
+   * Inside a dialog, Escape is the Cancel button: back to what opened the editor, where the dialog's own Escape would
+   * close the whole uploader. The toolbar takes the key first while a slider is open. An editor on a page keeps it.
+   */
+  private readonly _handleKeyDown = (e: KeyboardEvent): void => {
+    if (e.key !== 'Escape' || !this.closest('dialog')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    this._handleCancel();
+  };
+
   /** Resolve a CDN url through the configured secure-delivery proxy, if any. */
   protected proxyUrl(url: string): Promise<string> {
     return resolveSecureDeliveryProxyUrl(
@@ -522,6 +533,7 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
         class="uc-wrapper uc-wrapper_desktop"
         @uc-internal:apply=${this._handleApply}
         @uc-internal:cancel=${this._handleCancel}
+        @keydown=${this._handleKeyDown}
       >
         <uc-presence-toggle class="uc-network_problems_splash" .visible=${this._editorController.networkProblems}>
           <div class="uc-network_problems_content">
