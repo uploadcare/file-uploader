@@ -3,7 +3,7 @@ import { ConfigController } from '../../abstract/controllers/ConfigController';
 import { RouterController } from '../../abstract/controllers/RouterController';
 import { inject, injectOrNull } from '../../abstract/di/inject';
 import { ChildBlock } from '../../lit/ChildBlock';
-import { blocksRendered, firstFocusable } from '../../lit/focus';
+import { blocksRendered, firstFocusable, isVisible } from '../../lit/focus';
 import { delay } from '../../utils/delay';
 import './modal.css';
 import { property } from 'lit/decorators.js';
@@ -170,7 +170,7 @@ export class Modal extends ChildBlock {
   private async _settleInitialFocus(dialog: HTMLDialogElement): Promise<void> {
     const leftFrom = this._leftFrom;
     this._leftFrom = null;
-    if (leftFrom?.checkVisibility()) {
+    if (leftFrom && isVisible(leftFrom)) {
       leftFrom.focus();
       return;
     }

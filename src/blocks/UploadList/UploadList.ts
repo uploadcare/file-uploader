@@ -20,7 +20,7 @@ import { UploaderPublicApi } from '../../abstract/UploaderPublicApi';
 import type { UploadEntryData } from '../../abstract/uploadEntrySchema';
 import { ActivityChildBlock } from '../../lit/ActivityChildBlock';
 import { cssomStyleMap } from '../../lit/cssom-style-map';
-import { blocksRendered, firstFocusable } from '../../lit/focus';
+import { blocksRendered, firstFocusable, isVisible } from '../../lit/focus';
 import { throttled } from '../../lit/rate-limited-method';
 import { subscription, type Unsubscribe } from '../../lit/subscription';
 import { survivingNeighbour, targetRowIndex } from '../../utils/list-navigation';
@@ -239,7 +239,7 @@ export class UploadList extends ActivityChildBlock {
     const addMore = this._addMoreRef.value;
     if (!this.isActivityActive) {
       firstFocusable(root)?.focus();
-    } else if (addMore?.matches(':enabled') && addMore.checkVisibility()) {
+    } else if (addMore?.matches(':enabled') && isVisible(addMore)) {
       addMore.focus();
     } else {
       firstFocusable(this)?.focus();
