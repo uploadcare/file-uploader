@@ -142,6 +142,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'أعلى اليمين',
   'a11y-editor-crop-corner-sw': 'أسفل اليسار',
   'a11y-editor-crop-corner-se': 'أسفل اليمين',
+  'a11y-editor-crop-area': 'منطقة القص: {{width}} × {{height}}، الموضع {{x}}، {{y}}',
   flip: 'قلب',
   mirror: 'مرآة',
   'a11y-cloud-editor-apply-filter': 'تطبيق فلتر {{name}}',

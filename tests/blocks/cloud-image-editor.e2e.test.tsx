@@ -339,6 +339,8 @@ describe('uc-cloud-image-editor', () => {
     expect(corners.map((corner) => [corner.tabIndex, corner.getAttribute('aria-label')])).toEqual(
       ['top left', 'top right', 'bottom left', 'bottom right'].map((corner) => [0, `Resize crop area, ${corner}`]),
     );
+    const announcement = element.querySelector('.uc-crop-announcement[aria-live="polite"]');
+    expect(announcement?.textContent).toBe('');
 
     // The frame, then its corners, are consecutive tab stops, each showing its focus in the accent colour.
     frame.focus();
@@ -353,12 +355,15 @@ describe('uc-cloud-image-editor', () => {
     bottomRight?.focus();
     await userEvent.keyboard('{ArrowLeft}{ArrowUp}');
     await expect.poll(() => frame.cropBox).toEqual({ ...start, width: start.width - 10, height: start.height - 10 });
+    // Releasing an arrow key announces the crop in the image's pixels: smaller than the image, still at its corner.
+    expect(announcement?.textContent).toMatch(/^Crop area: \d+ × \d+, position 0, 0$/);
 
     frame.focus();
     await userEvent.keyboard('{ArrowRight}{ArrowDown}');
     await expect
       .poll(() => frame.cropBox)
       .toEqual({ x: start.x + 10, y: start.y + 10, width: start.width - 10, height: start.height - 10 });
+    expect(announcement?.textContent).toMatch(/^Crop area: \d+ × \d+, position [1-9]\d*, [1-9]\d*$/);
 
     // One arrow key on a corner changes one side only.
     topLeft?.focus();

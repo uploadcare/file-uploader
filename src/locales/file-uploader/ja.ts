@@ -132,6 +132,7 @@ export default {
   'a11y-editor-crop-corner-ne': '右上',
   'a11y-editor-crop-corner-sw': '左下',
   'a11y-editor-crop-corner-se': '右下',
+  'a11y-editor-crop-area': '切り抜き範囲: {{width}} × {{height}}、位置 {{x}}, {{y}}',
   flip: '反転',
   mirror: 'ミラー',
   'a11y-cloud-editor-apply-filter': '{{name}} フィルターを適用',

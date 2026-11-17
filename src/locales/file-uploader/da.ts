@@ -135,6 +135,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'øverst til højre',
   'a11y-editor-crop-corner-sw': 'nederst til venstre',
   'a11y-editor-crop-corner-se': 'nederst til højre',
+  'a11y-editor-crop-area': 'Beskæringsområde: {{width}} × {{height}}, position {{x}}, {{y}}',
   flip: 'Vend',
   mirror: 'Spejl',
   'a11y-cloud-editor-apply-filter': 'Anvend {{name}} filter',

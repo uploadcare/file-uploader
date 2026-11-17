@@ -131,6 +131,7 @@ export default {
   'a11y-editor-crop-corner-ne': '오른쪽 위',
   'a11y-editor-crop-corner-sw': '왼쪽 아래',
   'a11y-editor-crop-corner-se': '오른쪽 아래',
+  'a11y-editor-crop-area': '자르기 영역: {{width}} × {{height}}, 위치 {{x}}, {{y}}',
   flip: '뒤집기',
   mirror: '거울',
   'a11y-cloud-editor-apply-filter': '{{name}} 필터 적용',

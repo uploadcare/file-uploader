@@ -132,6 +132,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'վերևի աջ',
   'a11y-editor-crop-corner-sw': 'ներքևի ձախ',
   'a11y-editor-crop-corner-se': 'ներքևի աջ',
+  'a11y-editor-crop-area': 'Կտրման տարածք՝ {{width}} × {{height}}, դիրք {{x}}, {{y}}',
   flip: 'Շրջել',
   mirror: 'Հայել',
   'a11y-cloud-editor-apply-filter': 'Կիրառել {{name}} զտիչը',

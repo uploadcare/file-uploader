@@ -132,6 +132,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'efst til hægri',
   'a11y-editor-crop-corner-sw': 'neðst til vinstri',
   'a11y-editor-crop-corner-se': 'neðst til hægri',
+  'a11y-editor-crop-area': 'Skurðarsvæði: {{width}} × {{height}}, staðsetning {{x}}, {{y}}',
   flip: 'Sníða',
   mirror: 'Spegill',
   'a11y-cloud-editor-apply-filter': 'Nota {{name}} sía',

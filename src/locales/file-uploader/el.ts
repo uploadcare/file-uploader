@@ -136,6 +136,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'πάνω δεξιά',
   'a11y-editor-crop-corner-sw': 'κάτω αριστερά',
   'a11y-editor-crop-corner-se': 'κάτω δεξιά',
+  'a11y-editor-crop-area': 'Περιοχή περικοπής: {{width}} × {{height}}, θέση {{x}}, {{y}}',
   flip: 'Αναστροφή',
   mirror: 'Καθρέφτης',
   'a11y-cloud-editor-apply-filter': 'Εφαρμογή φίλτρου {{name}}',

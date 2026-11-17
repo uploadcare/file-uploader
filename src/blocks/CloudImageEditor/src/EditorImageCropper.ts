@@ -99,6 +99,17 @@ export class EditorImageCropper extends EditorBlock {
     this._cropBox = e.detail;
   };
 
+  /** What a screen reader says once an arrow key is released: the crop's size and offset in the image's pixels. */
+  @state()
+  private _cropAnnouncement = '';
+
+  private readonly _announceCrop = (e: KeyboardEvent): void => {
+    if (!e.key.startsWith('Arrow')) return;
+    const [width, height] = this._getCropDimensions();
+    const [x, y] = this._getCropTransformation()?.coords ?? [0, 0];
+    this._cropAnnouncement = this.l10nSafe('a11y-editor-crop-area', { width, height, x, y });
+  };
+
   /**
    * Seeds what `_reactToState` diffs against, reconciles once — a (re)attach
    * can find the cropper ready to activate already, e.g. after an activation
@@ -620,7 +631,9 @@ export class EditorImageCropper extends EditorBlock {
         .imageBox=${this._imageBox}
         .cropBox=${this._cropBox}
         @uc-internal:cropboxchange=${this._handleCropBoxChange}
+        @keyup=${this._announceCrop}
       ></uc-crop-frame>
+      <span class="uc-crop-announcement" aria-live="polite">${this._cropAnnouncement}</span>
     `;
   }
 }

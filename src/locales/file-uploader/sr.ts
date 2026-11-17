@@ -134,6 +134,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'gore desno',
   'a11y-editor-crop-corner-sw': 'dole levo',
   'a11y-editor-crop-corner-se': 'dole desno',
+  'a11y-editor-crop-area': 'Oblast isecanja: {{width}} × {{height}}, pozicija {{x}}, {{y}}',
   flip: 'Preokreni',
   mirror: 'Ogledalo',
   'a11y-cloud-editor-apply-filter': 'Primeni filter {{name}}',

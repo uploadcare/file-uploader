@@ -135,6 +135,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'en haut à droite',
   'a11y-editor-crop-corner-sw': 'en bas à gauche',
   'a11y-editor-crop-corner-se': 'en bas à droite',
+  'a11y-editor-crop-area': 'Zone de recadrage : {{width}} × {{height}}, position {{x}}, {{y}}',
   flip: 'Retourner',
   mirror: 'Miroir',
   'a11y-cloud-editor-apply-filter': 'Appliquer le filtre {{name}}',

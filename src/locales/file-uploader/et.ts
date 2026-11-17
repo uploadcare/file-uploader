@@ -134,6 +134,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'üleval paremal',
   'a11y-editor-crop-corner-sw': 'all vasakul',
   'a11y-editor-crop-corner-se': 'all paremal',
+  'a11y-editor-crop-area': 'Kärpimisala: {{width}} × {{height}}, asukoht {{x}}, {{y}}',
   flip: 'Pööra',
   mirror: 'Peegelda',
   'a11y-cloud-editor-apply-filter': 'Rakenda filter {{name}}',

@@ -128,6 +128,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'yläoikea',
   'a11y-editor-crop-corner-sw': 'alavasen',
   'a11y-editor-crop-corner-se': 'alaoikea',
+  'a11y-editor-crop-area': 'Rajausalue: {{width}} × {{height}}, sijainti {{x}}, {{y}}',
   'a11y-activity-header-button-close': 'Sulje',
   'a11y-camera-microphone': 'Mikrofoni',
   'a11y-camera-stop-recording': 'Lopeta tallennus',

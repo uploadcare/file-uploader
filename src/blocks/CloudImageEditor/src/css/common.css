@@ -242,6 +242,16 @@
     transition: var(--transition-duration-3);
   }
 
+  /* Read by screen readers only. */
+  .uc-crop-announcement {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
   /* The focus ring is drawn on the crop box itself: the host covers the whole image. */
   uc-crop-frame:focus-visible {
     outline: none;

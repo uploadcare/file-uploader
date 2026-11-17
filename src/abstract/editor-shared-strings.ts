@@ -24,6 +24,7 @@ export const EDITOR_SHARED_STRINGS = {
   'a11y-editor-crop-corner-ne': 'top right',
   'a11y-editor-crop-corner-sw': 'bottom left',
   'a11y-editor-crop-corner-se': 'bottom right',
+  'a11y-editor-crop-area': 'Crop area: {{width}} × {{height}}, position {{x}}, {{y}}',
   'a11y-editor-tab-tuning': 'Tuning',
   'a11y-editor-tab-filters': 'Filters',
   'a11y-cloud-editor-apply-filter': 'Apply {{name}} filter',

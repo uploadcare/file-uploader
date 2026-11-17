@@ -137,6 +137,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'a dalt a la dreta',
   'a11y-editor-crop-corner-sw': "a baix a l'esquerra",
   'a11y-editor-crop-corner-se': 'a baix a la dreta',
+  'a11y-editor-crop-area': 'Àrea de retall: {{width}} × {{height}}, posició {{x}}, {{y}}',
   flip: 'Capgirar',
   mirror: 'Mirall',
   'a11y-cloud-editor-apply-filter': 'Aplicar el filtre {{name}}',

@@ -132,6 +132,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'øverst til høyre',
   'a11y-editor-crop-corner-sw': 'nederst til venstre',
   'a11y-editor-crop-corner-se': 'nederst til høyre',
+  'a11y-editor-crop-area': 'Beskjæringsområde: {{width}} × {{height}}, posisjon {{x}}, {{y}}',
   flip: 'Vend',
   mirror: 'Speil',
   'a11y-cloud-editor-apply-filter': 'Bruk filter {{name}}',

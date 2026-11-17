@@ -139,6 +139,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'vpravo nahoře',
   'a11y-editor-crop-corner-sw': 'vlevo dole',
   'a11y-editor-crop-corner-se': 'vpravo dole',
+  'a11y-editor-crop-area': 'Oblast oříznutí: {{width}} × {{height}}, pozice {{x}}, {{y}}',
   flip: 'Převrátit',
   mirror: 'Zrcadlit',
   'a11y-cloud-editor-apply-filter': 'Použít filtr {{name}}',

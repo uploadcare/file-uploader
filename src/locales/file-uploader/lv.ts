@@ -134,6 +134,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'augšā pa labi',
   'a11y-editor-crop-corner-sw': 'apakšā pa kreisi',
   'a11y-editor-crop-corner-se': 'apakšā pa labi',
+  'a11y-editor-crop-area': 'Apgriešanas apgabals: {{width}} × {{height}}, pozīcija {{x}}, {{y}}',
   flip: 'Pagriezt',
   mirror: 'Spogulis',
   'a11y-cloud-editor-apply-filter': 'Lietot filtru {{name}}',

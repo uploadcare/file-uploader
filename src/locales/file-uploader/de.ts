@@ -136,6 +136,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'oben rechts',
   'a11y-editor-crop-corner-sw': 'unten links',
   'a11y-editor-crop-corner-se': 'unten rechts',
+  'a11y-editor-crop-area': 'Zuschneidebereich: {{width}} × {{height}}, Position {{x}}, {{y}}',
   flip: 'Drehen',
   mirror: 'Spiegeln',
   'a11y-cloud-editor-apply-filter': '{{name}}-Filter anwenden',

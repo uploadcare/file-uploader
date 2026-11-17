@@ -132,6 +132,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'ზედა მარჯვენა',
   'a11y-editor-crop-corner-sw': 'ქვედა მარცხენა',
   'a11y-editor-crop-corner-se': 'ქვედა მარჯვენა',
+  'a11y-editor-crop-area': 'ამოჭრის არე: {{width}} × {{height}}, პოზიცია {{x}}, {{y}}',
   flip: 'შებრუნება',
   mirror: 'სარკე',
   'a11y-cloud-editor-apply-filter': '{{name}} ფილტრის გამოყენება',

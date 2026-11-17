@@ -134,6 +134,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'yuxarı sağ',
   'a11y-editor-crop-corner-sw': 'aşağı sol',
   'a11y-editor-crop-corner-se': 'aşağı sağ',
+  'a11y-editor-crop-area': 'Kəsmə sahəsi: {{width}} × {{height}}, mövqe {{x}}, {{y}}',
   flip: 'Tərsinə çevir',
   mirror: 'Ayna',
   'a11y-cloud-editor-apply-filter': '{{name}} filtrini tətbiq et',

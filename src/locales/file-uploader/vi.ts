@@ -132,6 +132,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'trên phải',
   'a11y-editor-crop-corner-sw': 'dưới trái',
   'a11y-editor-crop-corner-se': 'dưới phải',
+  'a11y-editor-crop-area': 'Vùng cắt: {{width}} × {{height}}, vị trí {{x}}, {{y}}',
   flip: 'Lật',
   mirror: 'Gương',
   'a11y-cloud-editor-apply-filter': 'Áp dụng bộ lọc {{name}}',

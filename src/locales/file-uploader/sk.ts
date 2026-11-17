@@ -136,6 +136,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'vpravo hore',
   'a11y-editor-crop-corner-sw': 'vľavo dole',
   'a11y-editor-crop-corner-se': 'vpravo dole',
+  'a11y-editor-crop-area': 'Oblasť orezania: {{width}} × {{height}}, pozícia {{x}}, {{y}}',
   flip: 'Otočiť',
   mirror: 'Zrkadlo',
   'a11y-cloud-editor-apply-filter': 'Použiť filter {{name}}',

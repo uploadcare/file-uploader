@@ -135,6 +135,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'dreapta sus',
   'a11y-editor-crop-corner-sw': 'stânga jos',
   'a11y-editor-crop-corner-se': 'dreapta jos',
+  'a11y-editor-crop-area': 'Zona de decupare: {{width}} × {{height}}, poziția {{x}}, {{y}}',
   flip: 'Întoarce',
   mirror: 'Oglindă',
   'a11y-cloud-editor-apply-filter': 'Aplică filtrul {{name}}',

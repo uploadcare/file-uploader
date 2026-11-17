@@ -136,6 +136,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'prawy górny róg',
   'a11y-editor-crop-corner-sw': 'lewy dolny róg',
   'a11y-editor-crop-corner-se': 'prawy dolny róg',
+  'a11y-editor-crop-area': 'Obszar przycinania: {{width}} × {{height}}, pozycja {{x}}, {{y}}',
   flip: 'Obróć',
   mirror: 'Lustro',
   'a11y-cloud-editor-apply-filter': 'Zastosuj filtr {{name}}',

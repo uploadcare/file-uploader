@@ -135,6 +135,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'in alto a destra',
   'a11y-editor-crop-corner-sw': 'in basso a sinistra',
   'a11y-editor-crop-corner-se': 'in basso a destra',
+  'a11y-editor-crop-area': 'Area di ritaglio: {{width}} × {{height}}, posizione {{x}}, {{y}}',
   flip: 'Capovolgi',
   mirror: 'Specchio',
   'a11y-cloud-editor-apply-filter': 'Applica filtro {{name}}',

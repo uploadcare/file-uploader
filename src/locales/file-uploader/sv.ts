@@ -132,6 +132,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'uppe till höger',
   'a11y-editor-crop-corner-sw': 'nere till vänster',
   'a11y-editor-crop-corner-se': 'nere till höger',
+  'a11y-editor-crop-area': 'Beskärningsområde: {{width}} × {{height}}, position {{x}}, {{y}}',
   flip: 'Vänd',
   mirror: 'Spegla',
   'a11y-cloud-editor-apply-filter': 'Applicera filter {{name}}',

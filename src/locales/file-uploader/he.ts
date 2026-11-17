@@ -134,6 +134,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'ימין למעלה',
   'a11y-editor-crop-corner-sw': 'שמאל למטה',
   'a11y-editor-crop-corner-se': 'ימין למטה',
+  'a11y-editor-crop-area': 'אזור החיתוך: {{width}} × {{height}}, מיקום {{x}}, {{y}}',
   flip: 'היפוך',
   mirror: 'מראה',
   'a11y-cloud-editor-apply-filter': 'החל מסנן {{name}}',

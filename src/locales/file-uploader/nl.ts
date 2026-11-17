@@ -133,6 +133,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'rechtsboven',
   'a11y-editor-crop-corner-sw': 'linksonder',
   'a11y-editor-crop-corner-se': 'rechtsonder',
+  'a11y-editor-crop-area': 'Bijsnijdgebied: {{width}} × {{height}}, positie {{x}}, {{y}}',
   flip: 'Omdraaien',
   mirror: 'Spiegel',
   'a11y-cloud-editor-apply-filter': '{{name}} filter toepassen',

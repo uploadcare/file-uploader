@@ -136,6 +136,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'правий верхній кут',
   'a11y-editor-crop-corner-sw': 'лівий нижній кут',
   'a11y-editor-crop-corner-se': 'правий нижній кут',
+  'a11y-editor-crop-area': 'Область обрізання: {{width}} × {{height}}, позиція {{x}}, {{y}}',
   flip: 'Перевернути',
   mirror: 'Дзеркало',
   'a11y-cloud-editor-apply-filter': 'Застосувати фільтр {{name}}',

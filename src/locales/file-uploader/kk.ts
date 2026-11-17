@@ -132,6 +132,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'жоғарғы оң жақ',
   'a11y-editor-crop-corner-sw': 'төменгі сол жақ',
   'a11y-editor-crop-corner-se': 'төменгі оң жақ',
+  'a11y-editor-crop-area': 'Қию аймағы: {{width}} × {{height}}, орны {{x}}, {{y}}',
   flip: 'Аудару',
   mirror: 'Айна',
   'a11y-cloud-editor-apply-filter': '{{name}} фильтрін қолдану',

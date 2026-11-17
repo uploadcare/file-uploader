@@ -136,6 +136,7 @@ export default {
   'a11y-editor-crop-corner-ne': 'правый верхний угол',
   'a11y-editor-crop-corner-sw': 'левый нижний угол',
   'a11y-editor-crop-corner-se': 'правый нижний угол',
+  'a11y-editor-crop-area': 'Область обрезки: {{width}} × {{height}}, позиция {{x}}, {{y}}',
   flip: 'Поворот',
   mirror: 'Зеркало',
   'a11y-cloud-editor-apply-filter': 'Применить фильтр {{name}}',
