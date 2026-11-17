@@ -1,5 +1,5 @@
 import { type CdnOperation, modifiers, type OperationLiteral } from '@uploadcare/cdn-url';
-import { FILTER_NAMES, type FilterName } from '@uploadcare/cdn-url/ops';
+import type { FilterName } from '@uploadcare/cdn-url/ops';
 import { logger } from '../../../../abstract/logger';
 import { operationsFromModifiers } from '../../../../utils/cdn/operations';
 import { deserializeCsv } from '../../../../utils/comma-separated';
@@ -114,23 +114,14 @@ export const COMMON_OPERATIONS: CdnOperation[] = operationsFromModifiers(modifie
 
 const asNumber = ([value]: [unknown]) => (typeof value !== 'undefined' ? Number(value) : undefined);
 const asBoolean = () => true;
-const isFilterName = (value: string): value is FilterName => (FILTER_NAMES as readonly string[]).includes(value);
-
 /**
- * A filter name comes off a URL, so it is untrusted: validate it against the
- * CDN's own list rather than typing it as a `FilterName` we haven't checked.
- * An unrecognised name is rejected the same way unsupported crop syntax is —
- * the caller logs and skips the operation.
+ * The name is kept as the URL has it, as in v1: a filter the CDN gains before this library's list does survives
+ * Apply. The toolbar shows no filter selected for a name it does not list.
  */
-const asFilter = ([name, amount]: [string, unknown]) => {
-  if (!isFilterName(name)) {
-    throw new Error(`Unknown filter "${name}".`);
-  }
-  return {
-    name,
-    amount: typeof amount !== 'undefined' ? Number(amount) : 100,
-  };
-};
+const asFilter = ([name, amount]: [string, unknown]) => ({
+  name: name as FilterName,
+  amount: typeof amount !== 'undefined' ? Number(amount) : 100,
+});
 
 /**
  * Docs: https://uploadcare.com/docs/transformations/image/resize-crop/#operation-crop We don't support percentages and

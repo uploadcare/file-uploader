@@ -161,20 +161,11 @@ describe('operationsToTransformations', () => {
     expect(operationsToTransformations(ops('filter/adaris'))).toEqual({ filter: { name: 'adaris', amount: 100 } });
   });
 
-  /**
-   * CHANGED (was: accepted verbatim). A filter name off a URL is untrusted, and
-   * `Transformations['filter'].name` is now the library's `FilterName`, so the
-   * name is validated against the CDN's own list. An unrecognised one is skipped
-   * like unsupported crop syntax instead of being typed as something it isn't.
-   */
-  it('skips a filter whose name the CDN does not offer', () => {
-    expect(operationsToTransformations(ops(unsafeOperation('filter/notarealfilter/50')))).toEqual({});
-  });
+  it('keeps a filter name the library does not list, as v1 did', () => {
+    const transformations = operationsToTransformations(ops(unsafeOperation('filter/notarealfilter/50')));
 
-  it('keeps parsing later operations after skipping an unknown filter', () => {
-    expect(operationsToTransformations(ops(unsafeOperation('filter/notarealfilter/50'), 'brightness/50'))).toEqual({
-      brightness: 50,
-    });
+    expect(transformations).toEqual({ filter: { name: 'notarealfilter', amount: 50 } });
+    expect(serializeOperations(transformationsToOperations(transformations))).toBe('-/filter/notarealfilter/50/');
   });
 
   it('parses a pixel crop into dimensions and coords', () => {

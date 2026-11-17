@@ -749,6 +749,18 @@ describe('uc-cloud-image-editor', () => {
     expect(changes).toEqual([cdnUrlModifiers]);
   });
 
+  it('carries a filter it does not list through Apply', async () => {
+    const { element, editor } = renderEditor({ 'cdn-url': `https://ucarecdn.com/${UUID}/-/filter/notarealfilter/50/` });
+    const cropper = editor.getByTestId('uc-editor-image-cropper');
+    await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
+    const applied = withResolvers<ApplyResult>();
+    element.addEventListener('apply', (event) => applied.resolve((event as CustomEvent<ApplyResult>).detail));
+
+    await userEvent.click(editor.getByRole('button', { name: /apply/i }));
+
+    expect((await applied.promise).cdnUrlModifiers).toContain('-/filter/notarealfilter/50/');
+  });
+
   describe('when cdn-url switches to another image', () => {
     /** Opens image A with a crop, switches to `cdnUrlB` once A's cropper is up, and applies once B's is. */
     const switchAndApply = async (cdnUrlB: string) => {
