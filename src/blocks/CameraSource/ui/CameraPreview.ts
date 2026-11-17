@@ -69,6 +69,7 @@ export class CameraPreview extends ChildBlock {
             type="button"
             @click=${() => this._emit({ type: 'request-access' })}
             ?hidden=${this.requestButtonHidden}
+            data-testid="request-access"
           >
             ${this.l10n('camera-permissions-request')}
           </button>

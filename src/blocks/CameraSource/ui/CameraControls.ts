@@ -138,7 +138,12 @@ export class CameraControls extends ChildBlock {
             ? nothing
             : html`
                 <div class="uc-camera-actions uc-camera-action">
-                  <button type="button" class="uc-secondary-btn" @click=${() => this._emit({ type: 'retake' })}>
+                  <button
+                    type="button"
+                    class="uc-secondary-btn"
+                    @click=${() => this._emit({ type: 'retake' })}
+                    data-testid="retake"
+                  >
                     ${this.l10n('retake')}
                   </button>
                   <button

@@ -122,6 +122,7 @@ export class CameraSettingsPopup extends ChildBlock {
               <button
                 type="button"
                 class="uc-mini-btn uc-camera-settings-btn"
+                data-testid="settings"
                 popovertarget=${this._popoverId}
                 title=${this.l10n('camera-settings')}
                 aria-label=${this.l10n('camera-settings')}
