@@ -27,6 +27,7 @@ import {
   THUMB_STROKE_WIDTH,
 } from './cropper-constants.js';
 import { EditorBlock } from './editor-context';
+import type { EditorL10nKey } from './editor-locale';
 import { classNames } from './lib/classNames.js';
 import type { Direction, FrameThumbs, Rectangle } from './types';
 
@@ -43,6 +44,14 @@ const KEY_DELTAS: Partial<Record<string, Delta>> = {
   ArrowRight: [KEY_STEP, 0],
   ArrowUp: [0, -KEY_STEP],
   ArrowDown: [0, KEY_STEP],
+};
+
+/** The corners' names for a screen reader, which reads all four as buttons. */
+const CORNER_LABELS: Partial<Record<Direction, EditorL10nKey>> = {
+  nw: 'a11y-editor-crop-corner-nw',
+  ne: 'a11y-editor-crop-corner-ne',
+  sw: 'a11y-editor-crop-corner-sw',
+  se: 'a11y-editor-crop-corner-se',
 };
 
 /** Dispatched by `CropFrame` when a drag gesture moves/resizes the crop box — the parent (`EditorImageCropper`) is the source of truth for `cropBox` and writes it back down as a prop. */
@@ -488,8 +497,9 @@ export class CropFrame extends EditorBlock {
   protected override updated(changedProperties: PropertyValues<this>): void {
     super.updated(changedProperties);
     this.ariaLabel = this.l10nSafe('a11y-editor-tab-crop');
-    for (const { groupNode } of Object.values(this._frameThumbs ?? {})) {
-      if (groupNode.role) groupNode.ariaLabel = this.l10nSafe('a11y-editor-crop-resize');
+    for (const { groupNode, direction } of Object.values(this._frameThumbs ?? {})) {
+      const corner = CORNER_LABELS[direction];
+      if (corner) groupNode.ariaLabel = `${this.l10nSafe('a11y-editor-crop-resize')}, ${this.l10nSafe(corner)}`;
     }
 
     if (changedProperties.has('imageBox')) {

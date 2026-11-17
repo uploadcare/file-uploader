@@ -337,7 +337,7 @@ describe('uc-cloud-image-editor', () => {
     expect(frame.getAttribute('role')).toBe('application');
     expect(frame.getAttribute('aria-label')).toBe('Crop');
     expect(corners.map((corner) => [corner.tabIndex, corner.getAttribute('aria-label')])).toEqual(
-      Array.from({ length: 4 }, () => [0, 'Resize crop area']),
+      ['top left', 'top right', 'bottom left', 'bottom right'].map((corner) => [0, `Resize crop area, ${corner}`]),
     );
 
     // The frame, then its corners, are consecutive tab stops, each showing its focus in the accent colour.
