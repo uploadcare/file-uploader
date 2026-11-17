@@ -100,6 +100,17 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
     this._router.traverse('onBack');
   }
 
+  /**
+   * An Escape the editor let through (it keeps the key while a slider is open) cancels the edit: back to the list,
+   * where the dialog's own Escape would close the whole uploader. Outside a dialog the key stays the page's.
+   */
+  private _handleKeyDown(e: KeyboardEvent): void {
+    if (e.key !== 'Escape' || !this.closest('dialog')) return;
+    e.preventDefault();
+    e.stopPropagation();
+    this._handleCancel();
+  }
+
   public handleChange(event: CustomEvent<ChangeResult>): void {
     this._log.debug(`editor event "change"`, event.detail);
   }
@@ -156,6 +167,7 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
         @apply=${this._handleApply}
         @cancel=${this._handleCancel}
         @change=${this.handleChange}
+        @keydown=${this._handleKeyDown}
       ></uc-cloud-image-editor>
     `;
   }
