@@ -54,6 +54,19 @@ describe('uc-cloud-image-editor', () => {
     await expect.element(element).toBeVisible();
   });
 
+  it('draws its icons through a sibling <uc-config iconHrefResolver>, set after the editor rendered', async () => {
+    const { element } = renderEditor();
+    const icon = () => element.querySelector('uc-editor-icon[name="crop"] use')?.getAttribute('href');
+    await expect.poll(icon).toBe('#uc-icon-crop');
+    const config = document.querySelector<HTMLElementTagNameMap['uc-config']>(
+      `uc-config[ctx-name="${element.getAttribute('ctx-name')}"]`,
+    );
+
+    if (config) config.iconHrefResolver = (name) => (name === 'crop' ? '#my-crop' : '');
+
+    await expect.poll(icon).toBe('#my-crop');
+  });
+
   it('accepts a click on a crop control', async () => {
     const { editor } = renderEditor();
     const flip = editor.getByTestId('uc-editor-crop-button-control').nth(2);

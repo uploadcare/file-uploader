@@ -4,7 +4,8 @@ import { UcIconBase } from '../../Icon/UcIconBase';
 
 /**
  * Renders an editor icon's content by name. The uploader's editor activity provides it so editor icons resolve like
- * `uc-icon` (plugin icons, `iconHrefResolver`); the standalone editor has no provider and keeps the built-in sprite.
+ * `uc-icon` (plugin icons, `iconHrefResolver`); the editor itself provides one from a sibling `<uc-config
+ * iconHrefResolver>`, and with neither the icon keeps the built-in sprite.
  */
 export const editorIconContext = createContext<((name: string) => TemplateResult) | undefined>('uc-editor-icon');
 

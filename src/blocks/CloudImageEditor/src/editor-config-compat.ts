@@ -20,6 +20,7 @@ const EDITOR_CONFIG_KEYS = [
   'secureDeliveryProxy',
   'secureDeliveryProxyUrlResolver',
   'cloudImageEditorMaskHref',
+  'iconHrefResolver',
   'testMode',
   'debug',
 ] as const satisfies readonly (keyof EditorConfig)[];

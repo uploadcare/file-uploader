@@ -36,8 +36,6 @@ export class CloudImageEditorActivity extends ActivityChildBlock {
   // NEXT-MAJOR(editor-icons): the editor should own its icon set (sprite only, themed through its own props/CSS) and
   // not read the uploader's `iconHrefResolver` or plugin icons. Kept for 1.x compat: v1's editor rendered `uc-icon`,
   // so this hands `uc-editor-icon` the same resolution `uc-icon` does (plugin icon, then resolver, then sprite).
-  // Only inside the uploader: the standalone editor keeps the sprite even next to a `<uc-config iconHrefResolver>`,
-  // where v1 followed the resolver.
   private readonly _editorIcons = new ContextProvider(this, { context: editorIconContext });
 
   // Resolved through `whenController` as in `uc-icon`: the plugin manager is bound only once an uploader scope attaches.

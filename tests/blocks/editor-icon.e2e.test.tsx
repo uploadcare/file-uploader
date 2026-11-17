@@ -50,9 +50,8 @@ describe('uc-editor-icon', () => {
     expect(editorIconHrefs(root)).not.toContain('#uc-icon-rotate');
   });
 
-  it('keeps the built-in sprite in the standalone editor', async () => {
-    // Decision, not a quirk: v1's standalone editor rendered `uc-icon` and followed a sibling `<uc-config>`'s
-    // `iconHrefResolver`; for 1.x the standalone editor keeps its built-in sprite (see NEXT-MAJOR(editor-icons)).
+  it('follows a sibling <uc-config iconHrefResolver> in the standalone editor', async () => {
+    // As v1's standalone editor did through `uc-icon`; a 1.x shim (see NEXT-MAJOR(editor-icons)).
     const ctxName = getCtxName();
     const element = createInCtx('uc-cloud-image-editor', ctxName, { uuid: EDITOR_IMAGE_UUID });
     const config = createInCtx('uc-config', ctxName, { pubkey: 'demopublickey', 'test-mode': 'true' });
@@ -60,7 +59,7 @@ describe('uc-editor-icon', () => {
     page.render(<div ctx-name={ctxName}></div>);
     inCtx('div', ctxName).append(element, config);
 
-    await expect.poll(() => editorIconHrefs(inCtx('div', ctxName))).toContain('#uc-icon-rotate');
-    expect(editorIconHrefs(inCtx('div', ctxName)).every((href) => href?.startsWith('#uc-icon-'))).toBe(true);
+    await expect.poll(() => editorIconHrefs(inCtx('div', ctxName))).toContain('/custom.svg#my-rotate');
+    expect(editorIconHrefs(inCtx('div', ctxName)).every((href) => href?.startsWith('/custom.svg#my-'))).toBe(true);
   });
 });

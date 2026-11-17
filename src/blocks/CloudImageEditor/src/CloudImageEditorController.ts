@@ -18,6 +18,7 @@ export type EditorConfig = Pick<
   | 'secureDeliveryProxy'
   | 'secureDeliveryProxyUrlResolver'
   | 'cloudImageEditorMaskHref'
+  | 'iconHrefResolver'
   | 'testMode'
   | 'debug'
 >;
@@ -28,6 +29,7 @@ export const DEFAULT_EDITOR_CONFIG: EditorConfig = {
   secureDeliveryProxy: '',
   secureDeliveryProxyUrlResolver: null,
   cloudImageEditorMaskHref: null,
+  iconHrefResolver: null,
   testMode: false,
   debug: false,
 };

@@ -40,7 +40,8 @@ import './elements/button/BtnUi';
 import './EditorImageCropper';
 import './EditorImageFader';
 import './EditorToolbar';
-import './EditorIcon';
+import { renderIconSvg } from '../../Icon/renderIconSvg';
+import { editorIconContext } from './EditorIcon';
 
 type TabIdValue = (typeof TabId)[keyof typeof TabId];
 
@@ -169,6 +170,13 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
   private _localeDefinitionSource?: Record<string, string>;
 
   private _localeDefinitionL10n?: EditorL10n;
+
+  // NEXT-MAJOR(editor-icons): the editor should own its icon set and not read the uploader's `iconHrefResolver`. Kept
+  // for 1.x compat: v1's editor rendered `uc-icon`, which followed a sibling `<uc-config iconHrefResolver>`. The
+  // uploader's editor activity hands down its own renderer (plugin icons too), which wins over this one.
+  private readonly _outerIcons = new ContextConsumer(this, { context: editorIconContext, subscribe: true });
+  private readonly _icons = new ContextProvider(this, { context: editorIconContext });
+  private _iconsSource: unknown;
 
   // biome-ignore lint/correctness/noUnusedPrivateClassMembers: side-effecting @lit/context registration, resolves `_ctxNameFromContext` from an ancestor provider
   private readonly _ctxNameConsumer = new ContextConsumer(this, {
@@ -563,6 +571,17 @@ export class CloudImageEditorBlock extends CloudImageEditorBlockBase {
 
   protected override willUpdate(changedProperties: PropertyValues<this>): void {
     super.willUpdate(changedProperties);
+
+    // Tracked read: a `<uc-config>` that connects or changes later hands the icons a new renderer.
+    const iconHrefResolver = this._editorController.getConfig('iconHrefResolver');
+    const outerIcons = this._outerIcons.value;
+    if (this._iconsSource !== (outerIcons ?? iconHrefResolver)) {
+      this._iconsSource = outerIcons ?? iconHrefResolver;
+      this._icons.setValue(
+        outerIcons ??
+          (iconHrefResolver ? (name) => renderIconSvg(iconHrefResolver(name) ?? `#uc-icon-${name}`) : undefined),
+      );
+    }
 
     // Derive the toolbar-prop state (`_tabList`/`_cropPresetList`) from the
     // reflected attributes in `willUpdate`, not `updated` — so the assignment
