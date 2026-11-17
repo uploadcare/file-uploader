@@ -199,6 +199,8 @@ test("'file-url-changed' event payload", () => {
     const state = e.detail;
     // A file added by uuid or CDN URL gets its URL before it uploads, and a later edit changes it in any state.
     expectTypeOf(state.status).toEqualTypeOf<OutputFileStatus>();
+    // Whatever the status, the URL the event reports is there.
+    expectTypeOf(state.cdnUrl).toEqualTypeOf<string>();
   });
 });
 

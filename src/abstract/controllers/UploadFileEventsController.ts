@@ -97,7 +97,7 @@ export class UploadFileEventsController {
       const cdnUrl = entry?.get('cdnUrl');
       if (!entry || !cdnUrl || this._reportedUrls.get(entry) === cdnUrl) continue;
       this._reportedUrls.set(entry, cdnUrl);
-      this._eventEmitter.emit(UploaderEventType.FILE_URL_CHANGED, toOutputFileEntry(entry));
+      this._eventEmitter.emit(UploaderEventType.FILE_URL_CHANGED, { ...toOutputFileEntry(entry), cdnUrl });
     }
   }
 

@@ -49,8 +49,9 @@ export type UploaderEventPayload = {
   'file-upload-progress': OutputFileEntry<'uploading'>;
   'file-upload-success': OutputFileEntry<'success'>;
   'file-upload-failed': OutputFileEntry<'failed'>;
-  // Any status: a file added by CDN URL gets its URL before it uploads; one added by uuid gets it on upload.
-  'file-url-changed': OutputFileEntry;
+  // Any status: a file added by CDN URL gets its URL before it uploads; one added by uuid gets it on upload. The URL
+  // itself is always there: the event is only raised for a file that has one.
+  'file-url-changed': OutputFileEntry & { cdnUrl: string };
 
   // `modalId` is always a concrete activity id — the router only emits these on
   // open→close transitions with a real id, never `null`.
