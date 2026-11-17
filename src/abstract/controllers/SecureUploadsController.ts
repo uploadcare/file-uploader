@@ -1,5 +1,6 @@
 import type { SecureUploadsSignatureAndExpire } from '../../types/index';
 import { isSecureTokenExpired } from '../../utils/isSecureTokenExpired';
+import { redactSecrets } from '../../utils/redactSecrets';
 import { controllerLogger } from '../controllerLogger';
 import { lifetimeOf } from '../di/ControllerContainer';
 import { inject } from '../di/inject';
@@ -50,10 +51,10 @@ export class SecureUploadsController {
             this._log.debug('Secure signature resolver returned nothing.');
             this._secureToken = null;
           } else if (!result.secureSignature || !result.secureExpire) {
-            this._log.error('Secure signature resolver returned an invalid result:', result);
+            this._log.error('Secure signature resolver returned an invalid result:', redactSecrets(result));
             this._secureToken = null;
           } else {
-            this._log.debug('Secure signature resolved:', result);
+            this._log.debug('Secure signature resolved:', redactSecrets(result));
             this._log.debug(
               'Secure signature will expire in',
               new Date(Number(result.secureExpire) * 1000).toISOString(),
@@ -75,7 +76,10 @@ export class SecureUploadsController {
     }
 
     if (secureSignature && secureExpire) {
-      this._log.debug('Secure signature and expire are set. Using them...', { secureSignature, secureExpire });
+      this._log.debug(
+        'Secure signature and expire are set. Using them...',
+        redactSecrets({ secureSignature, secureExpire }),
+      );
 
       return {
         secureSignature,

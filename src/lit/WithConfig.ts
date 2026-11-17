@@ -15,6 +15,7 @@ import {
 } from '../blocks/Config/computed-properties';
 import { allConfigKeys, builtinAttrKeyMapping, plainConfigKeys } from '../blocks/Config/config-keys';
 import type { ConfigType } from '../types';
+import { REDACTED, SECRET_KEYS } from '../utils/redactSecrets';
 import { toKebabCase } from '../utils/toKebabCase';
 import type { ChildBlock } from './ChildBlock';
 import type { Constructor } from './Constructor';
@@ -360,7 +361,8 @@ export function WithConfig<T extends abstract new (...args: any[]) => ChildBlock
               // Thunked so the `formatConfigLogValue` (JSON.stringify) only runs
               // when debug is on. Values are quoted for consistency and so an
               // empty string is visible as `""`.
-              this._log.debug(lazy(() => [`${key}: ${formatConfigLogValue(prev)} → ${formatConfigLogValue(curr)}`]));
+              const show = (SECRET_KEYS as readonly string[]).includes(key) ? () => REDACTED : formatConfigLogValue;
+              this._log.debug(lazy(() => [`${key}: ${show(prev)} → ${show(curr)}`]));
             }
           }
           snapshot = { ...next };

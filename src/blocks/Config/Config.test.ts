@@ -129,6 +129,23 @@ describe('Config (<uc-config>)', () => {
       );
     });
 
+    it('hides a credential on both sides of the arrow', async () => {
+      const ctxName = freshCtxName();
+      const config = controllerFor(ctxName);
+      await mount(ctxName);
+      const log = vi.spyOn(console, 'log').mockImplementation(() => {});
+
+      config.set('debug', true);
+      config.set('secureSignature', 'SECRET-SIG');
+      config.set('authToken', 'eyJ.token.sig');
+      await delay(0);
+
+      const lines = log.mock.calls.map((call) => call.at(-1));
+      for (const key of ['secureSignature', 'authToken']) {
+        expect(lines).toContain(`${key}: <redacted> → <redacted>`);
+      }
+    });
+
     it('logs a boolean change (debug: false → true)', async () => {
       const ctxName = freshCtxName();
       const config = controllerFor(ctxName);

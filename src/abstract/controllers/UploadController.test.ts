@@ -859,7 +859,7 @@ describe('UploadController', () => {
       );
     });
 
-    it('prints secureSignature in the "upload options" debug log, as v1 did', async () => {
+    it('hides the signature in the "upload options" debug log', async () => {
       const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
       const { controller, collection } = setup({
         cfg: {
@@ -873,8 +873,8 @@ describe('UploadController', () => {
 
       const optionsCall = logSpy.mock.calls.find((c) => c.includes('upload options'));
       expect(optionsCall).toBeDefined();
-      // Runtime values the page already holds; only telemetry redacts them (it leaves the page).
-      expect((optionsCall?.at(-1) as { secureSignature?: string }).secureSignature).toBe('SECRET-SIG');
+      // Services that record the console (error trackers, session replay) would otherwise carry a usable signature.
+      expect(optionsCall?.at(-1)).toMatchObject({ secureSignature: '<redacted>' });
     });
 
     it('stays silent when this ctx has debug off', async () => {

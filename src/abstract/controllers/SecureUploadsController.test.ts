@@ -308,7 +308,7 @@ describe('SecureUploadsController', () => {
         expect(consoleErrorSpy).toHaveBeenCalledWith(
           '[uc][secure-uploads]',
           'Secure signature resolver returned an invalid result:',
-          invalidToken,
+          { secureSignature: '<redacted>' },
         );
       });
 
@@ -444,7 +444,7 @@ describe('SecureUploadsController', () => {
           expect.any(String),
           '',
           'Secure signature resolved:',
-          mockToken,
+          { ...mockToken, secureSignature: '<redacted>' },
         );
       });
     });

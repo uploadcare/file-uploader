@@ -9,6 +9,7 @@ import {
 } from '@uploadcare/upload-client';
 import type { OutputFileEntry } from '../../types/exported';
 import { fileDerivedFields } from '../../utils/fileTypes';
+import { redactSecrets } from '../../utils/redactSecrets';
 import { customUserAgent } from '../../utils/userAgent';
 import { controllerLogger } from '../controllerLogger';
 import { containerOf, lifetimeOf } from '../di/ControllerContainer';
@@ -305,7 +306,7 @@ export class UploadController {
           metadata: await lifetime.guard(this.getMetadataFor(uid)),
           tags: await lifetime.guard(this.getTagsFor(uid)),
         };
-        this._log.debug(lazy(() => ['upload options', uploadClientOptions]));
+        this._log.debug(lazy(() => ['upload options', redactSecrets(uploadClientOptions)]));
         return uploadFile(fileInput, uploadClientOptions);
       };
 
