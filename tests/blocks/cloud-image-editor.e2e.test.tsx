@@ -592,7 +592,8 @@ describe('uc-cloud-image-editor', () => {
     release.resolve();
 
     await expect.poll(() => activeClass(element.querySelector('uc-editor-image-cropper'))).toContain('uc-active');
-    expect(imageRequests).toHaveLength(1);
+    // The list, not its length: a failure then names the second request.
+    expect(imageRequests).toEqual(imageRequests.slice(0, 1));
   });
 
   describe.skipIf(isLive)('while the cropper image loads', () => {
