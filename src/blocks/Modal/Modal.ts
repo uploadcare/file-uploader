@@ -229,6 +229,8 @@ export class Modal extends ChildBlock {
     // other uploader instances on the same page. `modalScrollLock` is read
     // untracked: the router-slot signal is what re-runs this.
     const isForeground = this._router?.modal === (this.id as RegisteredActivityType);
+    // The uploader closed from another modal: the next open starts on the first control, not where this one was left.
+    if (!this._router?.modal) this._leftFrom = null;
     // Tracked so a runtime change re-runs this and reaches the next `show()`; an inline dialog takes no scroll lock.
     const isInline = this._config.getTracked('modalPresentation') === 'inline';
     if (isForeground && !isInline && this._config.get('modalScrollLock')) {

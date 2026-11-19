@@ -58,6 +58,21 @@ describe('initial focus when a modal opens', () => {
     await expect.poll(() => document.activeElement).toBe(dropArea(root));
   });
 
+  it('lands on the drop area again after the uploader was closed from another screen', async () => {
+    await wide();
+    const { root } = await renderSolution('regular', { sourceList: 'local, url' });
+
+    await clickSource(root, 'From link');
+    const urlDialog = modalDialog(root, 'url')!;
+    await expect.poll(() => urlDialog.open).toBe(true);
+    await userEvent.keyboard('{Escape}');
+    await expect.poll(() => urlDialog.open).toBe(false);
+
+    await openModal(root);
+
+    await expect.poll(() => document.activeElement).toBe(dropArea(root));
+  });
+
   it('lands on the Back button on the camera screen, whose controls render after the dialog opens', async () => {
     const { root } = await renderSolution('regular', { sourceList: 'local, camera' });
 
