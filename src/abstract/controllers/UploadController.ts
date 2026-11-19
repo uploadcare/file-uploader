@@ -256,8 +256,13 @@ export class UploadController {
     const abortOnTeardown = () => abortController.abort();
     lifetime.signal.addEventListener('abort', abortOnTeardown, { once: true });
     try {
-      const uploadTask = async (): Promise<UploadcareFile> => {
+      // The file was removed, or the ctx is gone: the task ends as a cancelled upload, before any user callback.
+      const throwIfCancelled = (): void => {
         lifetime.signal.throwIfAborted();
+        if (abortController.signal.aborted) throw new CancelError();
+      };
+      const uploadTask = async (): Promise<UploadcareFile> => {
+        throwIfCancelled();
         entry.set('isQueuedForUploading', false);
         let file: File | Blob | null = entry.get('file');
 
@@ -278,8 +283,8 @@ export class UploadController {
                 entry.setMany(fileDerivedFields(file));
               }
             } catch (error) {
-              // Aborted by a cancel or by the ctx going away: the hook did what its signal asked, and the aborted
-              // signal ends the upload below the same way it always has.
+              // Aborted by a cancel or by the ctx going away: the hook did what its signal asked, and the check
+              // after the loop ends the upload.
               if (abortController.signal.aborted) {
                 break;
               }
@@ -288,8 +293,8 @@ export class UploadController {
           }
         }
 
-        // The hooks above may have outlived the ctx.
-        lifetime.signal.throwIfAborted();
+        // The hooks above may have outlived the ctx or the file.
+        throwIfCancelled();
         const fileInput = file || entry.get('externalUrl') || entry.get('uuid');
         if (!fileInput) {
           throw new Error('No file input');

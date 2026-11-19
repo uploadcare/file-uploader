@@ -239,6 +239,54 @@ describe('UploadController', () => {
     });
   });
 
+  describe('a file removed before its request', () => {
+    it('does not run the upload task of a file removed while it waited in the queue', async () => {
+      const metadata = vi.fn(() => ({}));
+      const { controller, collection, onUploadError } = setup({
+        cfg: { multiple: true, maxConcurrentRequests: 1, metadata },
+      });
+      let finishFirst: (() => void) | undefined;
+      mockUploadFile.mockImplementationOnce(
+        () => new Promise((resolve) => (finishFirst = () => resolve(makeFileInfo()))),
+      );
+      const a = collection.add({ file: new File(['x'], 'a.txt') });
+      const b = collection.add({ file: new File(['y'], 'b.txt') });
+
+      const pending = Promise.all([controller.uploadEntry(a), controller.uploadEntry(b)]);
+      await vi.waitFor(() => expect(finishFirst).toBeDefined());
+      collection.remove(b);
+      finishFirst?.();
+      await pending;
+
+      expect(mockUploadFile).toHaveBeenCalledTimes(1);
+      expect(metadata).toHaveBeenCalledTimes(1);
+      expect(onUploadError).not.toHaveBeenCalled();
+    });
+
+    it('sends nothing for a file removed while its beforeUpload hook ran', async () => {
+      let started = false;
+      const { controller, collection, onUploadError } = setup({
+        hooks: [
+          makeHook({
+            handler: ({ signal }) => {
+              started = true;
+              return new Promise((_, reject) => signal.addEventListener('abort', () => reject(signal.reason)));
+            },
+          }),
+        ],
+      });
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+
+      const pending = controller.uploadEntry(id);
+      await vi.waitFor(() => expect(started).toBe(true));
+      collection.remove(id);
+      await pending;
+
+      expect(mockUploadFile).not.toHaveBeenCalled();
+      expect(onUploadError).not.toHaveBeenCalled();
+    });
+  });
+
   describe('waiting for validation', () => {
     it("starts the upload only once the entry's validators have run", async () => {
       let validated = () => {};
