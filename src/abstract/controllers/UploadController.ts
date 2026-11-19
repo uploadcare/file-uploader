@@ -237,22 +237,25 @@ export class UploadController {
       return;
     }
 
+    // On the entry before the start events fire, so a listener that removes the file cancels this upload.
+    const abortController = new AbortController();
     entry.setMany({
       isUploading: true,
       errors: [],
       isQueuedForUploading: true,
+      abortController,
     });
     onStart?.();
     this._fileEvents.start(entry);
+    if (abortController.signal.aborted) {
+      return;
+    }
 
-    const abortController = new AbortController();
     // Destroying the ctx cancels the request (and any `beforeUpload` hook) the way removing the file does: nothing
     // is sent once the uploader is gone. Removed once the upload settles, so listeners don't pile up on the ctx.
     const abortOnTeardown = () => abortController.abort();
     lifetime.signal.addEventListener('abort', abortOnTeardown, { once: true });
     try {
-      entry.set('abortController', abortController);
-
       const uploadTask = async (): Promise<UploadcareFile> => {
         lifetime.signal.throwIfAborted();
         entry.set('isQueuedForUploading', false);

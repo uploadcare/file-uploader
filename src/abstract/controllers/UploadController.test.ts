@@ -216,6 +216,29 @@ describe('UploadController', () => {
     });
   });
 
+  describe('a file removed by a start listener', () => {
+    it('is not uploaded when the batch-start listener removes it', async () => {
+      const { controller, collection } = setup();
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+
+      await controller.uploadEntry(id, () => collection.remove(id));
+
+      expect(mockUploadFile).not.toHaveBeenCalled();
+    });
+
+    it('is not uploaded when its file-upload-start listener removes it', async () => {
+      const { container, controller, collection } = setup();
+      const id = collection.add({ file: new File(['x'], 'a.txt') });
+      vi.spyOn(container.get(EventEmitter), 'emit').mockImplementation((type) => {
+        if (type === UploaderEventType.FILE_UPLOAD_START) collection.remove(id);
+      });
+
+      await controller.uploadEntry(id);
+
+      expect(mockUploadFile).not.toHaveBeenCalled();
+    });
+  });
+
   describe('waiting for validation', () => {
     it("starts the upload only once the entry's validators have run", async () => {
       let validated = () => {};
