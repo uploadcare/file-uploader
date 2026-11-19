@@ -399,6 +399,28 @@ describe('ValidationController', () => {
     expect(() => controller.cleanupValidationForEntry(entry)).not.toThrow(); // no state now
   });
 
+  it('does not call a validator for a file removed while its run waited in the queue', async () => {
+    const validator = vi.fn((_entry: { name: string }) => undefined);
+    const { controller, config, collection } = setup();
+    await flush(20);
+    config.set('fileValidators', [validator as never]);
+    const first = collection.add({ fileName: 'first.txt', mimeType: 'text/plain', fileSize: 10 });
+    const removed = collection.add({ fileName: 'removed.txt', mimeType: 'text/plain', fileSize: 10 });
+    const removedEntry = collection.read(removed);
+    if (!removedEntry) throw new Error('no entry');
+
+    // The first run starts the queue at once; the second waits for the queue's next start.
+    controller.runFileValidators('change', [first]);
+    await flush(0);
+    controller.runFileValidators('change', [removed]);
+    await flush(0);
+    controller.cleanupValidationForEntry(removedEntry);
+    collection.remove(removed);
+    await flush();
+
+    expect(validator.mock.calls.map(([entry]) => entry.name)).toEqual(['first.txt']);
+  });
+
   describe('whenValidated', () => {
     const track = (promise: Promise<void>) => {
       const result = {

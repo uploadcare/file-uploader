@@ -346,7 +346,8 @@ export class ValidationController {
         async () => {
           // `destroy()` cancels `_runQueueThrottled`, but a queue already running drains into this task: the
           // validators are user callbacks, so none is invoked once the ctx is torn down.
-          if (lifetime.signal.aborted) return;
+          // Nor for a file removed while this run waited: its signal is already aborted, so nothing would stop them.
+          if (lifetime.signal.aborted || abortController.signal.aborted) return;
           entry.set('isQueuedForValidation', false);
           // Every task catches its validator's failure; a rejection here means the failure handling itself threw.
           // Wait for all of them, so no late error lands after this run has written its results, and log it.
