@@ -325,6 +325,8 @@ export class ValidationController {
         } catch (error) {
           if (!validatorAbort.signal.aborted) {
             state.retiredValidators.add(validatorDescriptor.validator);
+            // A validator that throws passes the file, so the error from its earlier run is not carried over.
+            state.lastErrorThrownByValidator.delete(validatorDescriptor.validator);
             this._log.warn(LOG_TEXT.FILE_VALIDATION_FAILED, error);
             this._telemetry.sendEventError(error, `file validator. ${LOG_TEXT.FILE_VALIDATION_FAILED}`);
           }

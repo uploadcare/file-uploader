@@ -180,6 +180,29 @@ describe('ValidationController', () => {
     expect(collection.read(id)?.get('errors')).toMatchObject([{ message: 'nope' }]);
   });
 
+  it('does not bring back the earlier error of a validator that later throws', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { controller, config, collection } = setup();
+    await flush(20);
+    let run = 0;
+    config.set('fileValidators', [
+      () => {
+        if (++run === 1) return { message: 'bad' };
+        throw new Error('boom');
+      },
+    ]);
+    const id = collection.add({ fileName: 'a.txt', mimeType: 'text/plain', fileSize: 10 });
+    const errorsAfterRun = async () => {
+      controller.runFileValidators('change', [id]);
+      await flush();
+      return (collection.read(id)?.get('errors') ?? []).map((error) => error.message);
+    };
+
+    expect(await errorsAfterRun()).toEqual(['bad']);
+    expect(await errorsAfterRun()).toEqual([]);
+    expect(await errorsAfterRun()).toEqual([]);
+  });
+
   it('runOn:add validators only fire on add, not on change', async () => {
     const validator = vi.fn(() => undefined);
     const { controller, config, collection } = setup();
