@@ -161,8 +161,8 @@ describe.each(SOLUTIONS)('%s: moving only the solution element', (solution) => {
 
 describe('regular: reordering two uploaders like a sortable list', () => {
   it('keeps each uploader its own state with no cross-talk', async () => {
-    const first = await renderSolution('regular', { multipleMax: 2 });
-    const second = await renderSolution('regular', { multipleMax: 5 });
+    const first = await renderSolution('regular', { multipleMax: 2, confirmUpload: true });
+    const second = await renderSolution('regular', { multipleMax: 5, confirmUpload: true });
     const list = newParent('section');
     const itemOf = (uploader: RenderedUploader) => uploader.root.parentElement as HTMLElement;
     list.append(itemOf(first), itemOf(second));

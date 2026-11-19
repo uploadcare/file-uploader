@@ -10,7 +10,7 @@ import { ConfigController } from './ConfigController';
 import { UploadCollectionController } from './UploadCollectionController';
 import { ValidationController } from './ValidationController';
 
-// The async path runs through a 500ms queue debounce; the specs run on fake timers and advance past it.
+// The async path runs through a 500ms queue throttle; the specs run on fake timers and advance past it.
 const QUEUE_FLUSH_MS = 600;
 const flush = (ms = QUEUE_FLUSH_MS) => vi.advanceTimersByTimeAsync(ms);
 
@@ -201,6 +201,25 @@ describe('ValidationController', () => {
     expect(await errorsAfterRun()).toEqual(['bad']);
     expect(await errorsAfterRun()).toEqual([]);
     expect(await errorsAfterRun()).toEqual([]);
+  });
+
+  it('keeps validating while run requests arrive in a steady stream', async () => {
+    const validator = vi.fn(() => undefined);
+    const { controller, config, collection } = setup();
+    await flush(20);
+    config.set('fileValidators', [validator]);
+    const ids = Array.from({ length: 10 }, (_, i) =>
+      collection.add({ fileName: `${i}.txt`, mimeType: 'text/plain', fileSize: 10 }),
+    );
+
+    // One file after another, closer together than the 500ms the queue waits, as uploads finishing in a batch do:
+    // a debounce would start nothing until the stream stops.
+    for (const id of ids) {
+      controller.runFileValidators('change', [id]);
+      await flush(400);
+    }
+
+    expect(validator.mock.calls.length).toBeGreaterThan(1);
   });
 
   it('runOn:add validators only fire on add, not on change', async () => {

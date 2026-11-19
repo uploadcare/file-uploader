@@ -7,6 +7,7 @@ import type {
   OutputFileErrorType,
 } from '../../types';
 import { debounce } from '../../utils/debounce';
+import { throttle } from '../../utils/throttle';
 import {
   validateCollectionUploadError,
   validateGroupError,
@@ -120,7 +121,9 @@ export class ValidationController {
   ];
 
   private _queue = new Queue(20);
-  private _runQueueDebounced = debounce(() => {
+  // Throttled, not debounced: a steady stream of requests (uploads finishing one after another) would postpone a
+  // debounced start until the stream stopped.
+  private _runQueueThrottled = throttle(() => {
     this._queue.run();
   }, 500);
 
@@ -154,7 +157,7 @@ export class ValidationController {
       }),
     );
     this.#disposables.add(() => this._runAllValidators.cancel());
-    this.#disposables.add(() => this._runQueueDebounced.cancel());
+    this.#disposables.add(() => this._runQueueThrottled.cancel());
     // v1 parity: the config subscriptions fired immediately, kicking off one
     // initial validation pass.
     this._runAllValidators();
@@ -339,11 +342,9 @@ export class ValidationController {
         }
       });
 
-      this._runQueueDebounced();
-
-      await this._queue.add(
+      const queued = this._queue.add(
         async () => {
-          // `destroy()` cancels `_runQueueDebounced`, but a queue already running drains into this task: the
+          // `destroy()` cancels `_runQueueThrottled`, but a queue already running drains into this task: the
           // validators are user callbacks, so none is invoked once the ctx is torn down.
           if (lifetime.signal.aborted) return;
           entry.set('isQueuedForValidation', false);
@@ -357,6 +358,9 @@ export class ValidationController {
           autoRun: false,
         },
       );
+      // After the task is in the queue: the first start is immediate.
+      this._runQueueThrottled();
+      await queued;
 
       if (abortController.signal.aborted) {
         entry.setMany({
@@ -435,7 +439,7 @@ export class ValidationController {
   }
 
   public destroy(): void {
-    // Runs the config-subscription teardown + the two debounce cancels.
+    // Runs the config-subscription teardown + the debounce and throttle cancels.
     this.#disposables.run();
 
     for (const state of this._entryValidationState.values()) {
