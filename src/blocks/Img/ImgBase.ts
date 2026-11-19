@@ -1,18 +1,20 @@
-import { isProxyUrl, parseFileUrl, parseProxyUrl, serializeFileUrl, serializeProxyUrl } from '@uploadcare/cdn-url';
+import {
+  isGroupElementUrl,
+  isProxyUrl,
+  parseFileUrl,
+  parseGroupElementUrl,
+  parseProxyUrl,
+  serializeFileUrl,
+  serializeGroupUrl,
+  serializeProxyUrl,
+} from '@uploadcare/cdn-url';
 import { logger } from '../../abstract/logger';
 import { operationsFromModifiers } from '../../utils/cdn/operations';
 import { deliveryProxyOrigin } from '../../utils/cdn/origin';
 import { deserializeCsv } from '../../utils/comma-separated';
 import { applyTemplateData } from '../../utils/template-utils';
 import { uniqueArray } from '../../utils/uniqueArray';
-import {
-  DEV_MODE,
-  HI_RES_K,
-  MAX_WIDTH,
-  MAX_WIDTH_JPG,
-  ULTRA_RES_K,
-  UNRESOLVED_ATTR,
-} from './configurations';
+import { DEV_MODE, HI_RES_K, MAX_WIDTH, MAX_WIDTH_JPG, ULTRA_RES_K, UNRESOLVED_ATTR } from './configurations';
 import { type CssPropValue, ImgConfig } from './ImgConfig';
 import type { ImgPropKey } from './props-map';
 
@@ -118,13 +120,17 @@ export class ImgBase extends ImgConfig {
     // A src already on the configured cname is a CDN URL in its own right: parse
     // it and append, so operations it already carries survive.
     //
-    // `<uc-img>` renders a single stored file or a proxied remote source. Parsing
-    // only those two kinds keeps the group parsers out of the bundle entirely —
-    // this element has the tightest size budget in the repo.
+    // `<uc-img>` renders a single stored file, a file inside a group or a proxied
+    // remote source. A whole group and an archive are not images, so their parsers
+    // stay out of the bundle — this element has the tightest size budget in the repo.
     if (cdnCname && src.startsWith(cdnCname)) {
       if (isProxyUrl(src)) {
         const parsed = parseProxyUrl(src);
         return serializeProxyUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
+      }
+      if (isGroupElementUrl(src)) {
+        const parsed = parseGroupElementUrl(src);
+        return serializeGroupUrl({ ...parsed, operations: [...parsed.operations, ...operations] });
       }
       const parsed = parseFileUrl(src);
       return serializeFileUrl({ ...parsed, operations: [...parsed.operations, ...operations] });

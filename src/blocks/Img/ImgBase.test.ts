@@ -174,12 +174,20 @@ describe('_getUrlBase — CDN branches', () => {
 
   // CHANGED (was: returned the group URL unchanged, so the browser got a non-image
   // URL and rendered a broken image with no diagnostic). `<uc-img>` parses only the
-  // two kinds it can render — a stored file and a proxied source — which keeps the
-  // group parsers out of this element's bundle, the tightest budget in the repo.
+  // kinds it can render: a stored file, a file inside a group and a proxied source.
   it('degrades to no URL for a group src, which is not an image', () => {
     const el = makeImg({ src: `https://cdn.example.com/${UUID}~3/`, 'cdn-cname': 'https://cdn.example.com' });
 
     expect(el._getUrlBase()).toBeUndefined();
+  });
+
+  it('appends operations to a group-element src, keeping the ones it carries', () => {
+    const el = makeImg({
+      src: `https://cdn.example.com/${UUID}~3/nth/0/-/crop/10x10/`,
+      'cdn-cname': 'https://cdn.example.com',
+    });
+
+    expect(el._getUrlBase()).toBe(`https://cdn.example.com/${UUID}~3/nth/0/-/crop/10x10/${ANALYTICS}`);
   });
 
   it('still appends operations to a delivery-proxy src on the cname', () => {
