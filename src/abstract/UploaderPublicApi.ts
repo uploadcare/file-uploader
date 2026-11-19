@@ -299,9 +299,8 @@ export class UploaderPublicApi {
           !entry.get('fileInfo') &&
           // A failed upload is final; its error joins `errors` only on the next validation run.
           !entry.get('uploadError') &&
-          entry.get('errors').length === 0 &&
-          !entry.get('isValidationPending') &&
-          !entry.get('isQueuedForValidation'),
+          // A file still being validated is taken too: its upload waits for the validators and re-checks the errors.
+          entry.get('errors').length === 0,
       )
       .map((entry) => entry.uid);
 

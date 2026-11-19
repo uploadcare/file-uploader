@@ -363,6 +363,20 @@ describe('UploaderPublicApi', () => {
       expect(startHandler).toHaveBeenCalledTimes(1);
     });
 
+    it('takes an entry whose validators are still running: the controller waits for them', () => {
+      const { api, container } = setup();
+      const uploadEntries = vi.spyOn(container.get(UploadController), 'uploadEntries').mockImplementation(() => {});
+      const { internalId } = api.addFileFromUrl('https://example.com/a.jpg');
+      container
+        .get(UploadCollectionController)
+        .read(internalId as Uid)
+        ?.setMany({ isValidationPending: true, isQueuedForValidation: true });
+
+      api.uploadAll();
+
+      expect(uploadEntries.mock.calls[0]?.[0]).toEqual([internalId]);
+    });
+
     it('is a no-op (no upload, no emit) when nothing is uploadable', () => {
       const { api, container } = setup();
       const uploadEntries = vi.spyOn(container.get(UploadController), 'uploadEntries').mockImplementation(() => {});
