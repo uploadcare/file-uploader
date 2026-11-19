@@ -1,4 +1,4 @@
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, onTestFinished, vi } from 'vitest';
 import { page, userEvent } from 'vitest/browser';
 import type { EventPayload } from '@/index.js';
 import { modalDialog, openModal, renderSolution, within } from '../utils/render-solution';
@@ -60,6 +60,24 @@ describe('modalPresentation="inline"', () => {
 
     await userEvent.keyboard('{Escape}');
     await expect.poll(() => onModalClose.mock.calls.length).toBe(1);
+    await expect.poll(() => dialog.open).toBe(false);
+  });
+
+  it('stays open on an Escape the page has already handled', async () => {
+    const { root } = await renderSolution('regular', { modalPresentation: 'inline' });
+    const handled = new AbortController();
+    window.addEventListener('keydown', (e) => e.preventDefault(), { capture: true, signal: handled.signal });
+    onTestFinished(() => handled.abort());
+
+    await openModal(root);
+    const dialog = modalDialog(root, 'start-from')!;
+    await userEvent.keyboard('{Escape}');
+    // A close would land in the modal's next update.
+    await dialog.closest('uc-modal')?.updateComplete;
+    expect(dialog.open).toBe(true);
+
+    handled.abort();
+    await userEvent.keyboard('{Escape}');
     await expect.poll(() => dialog.open).toBe(false);
   });
 

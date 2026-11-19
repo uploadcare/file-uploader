@@ -117,7 +117,8 @@ export class Modal extends ChildBlock {
   };
 
   private _handleDocumentKeyDown = (e: KeyboardEvent): void => {
-    if (e.key === 'Escape' && this._isInlineOpen()) {
+    // Not an Escape the page already handled, nor one that cancels an IME composition.
+    if (e.key === 'Escape' && !e.defaultPrevented && !e.isComposing && this._isInlineOpen()) {
       this.closeDialog();
     }
   };
