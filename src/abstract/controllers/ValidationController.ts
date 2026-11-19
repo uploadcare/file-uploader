@@ -417,7 +417,8 @@ export class ValidationController {
   }
 
   private _getValidatorDescriptors(): FileValidatorDescriptor[] {
-    const fileValidators = this._config.get('fileValidators');
+    // An empty slot is skipped, so `[cond ? validator : undefined]` works; a throw here would break every update.
+    const fileValidators = this._config.get('fileValidators').filter(Boolean);
     return [...this._commonFileValidators, ...fileValidators].map(getValidatorDescriptor);
   }
 

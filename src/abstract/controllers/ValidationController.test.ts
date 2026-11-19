@@ -168,6 +168,18 @@ describe('ValidationController', () => {
     expect(errors[0]).toMatchObject({ message: 'nope', type: 'CUSTOM_ERROR' });
   });
 
+  it('skips an empty slot in fileValidators and still runs the rest', async () => {
+    const { controller, config, collection } = setup();
+    await flush(20);
+    config.set('fileValidators', [undefined as never, () => ({ message: 'nope' })]);
+    const id = collection.add({ fileName: 'a.txt', mimeType: 'text/plain', fileSize: 10 });
+
+    expect(() => controller.runFileValidators('change', [id])).not.toThrow();
+    await flush();
+
+    expect(collection.read(id)?.get('errors')).toMatchObject([{ message: 'nope' }]);
+  });
+
   it('runOn:add validators only fire on add, not on change', async () => {
     const validator = vi.fn(() => undefined);
     const { controller, config, collection } = setup();
