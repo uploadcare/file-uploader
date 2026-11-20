@@ -35,12 +35,10 @@ export class UploadCollectionEventsController {
   @inject(() => UploadController) private readonly _upload!: UploadController;
 
   /**
-   * The CDN URLs `COMMON_UPLOAD_SUCCESS` last reported, or `null` when it has not fired for the collection as it is.
-   * Every file is validated again once uploaded, and validations that land in separate batches would each see the whole
-   * collection done and report it again. An edit in the editor changes a URL, so the edited collection is reported again,
-   * as in v1.
+   * Whether `COMMON_UPLOAD_SUCCESS` has fired for the collection as it is. Every file is validated again once uploaded
+   * or edited, and each validation result would see the whole collection done and report it again.
    */
-  private _reportedSuccessUrls: string | null = null;
+  private _isSuccessReported = false;
 
   /**
    * What `COMMON_UPLOAD_FAILED` last reported as failing: the failed files' uids and the collection error types, the
@@ -56,7 +54,7 @@ export class UploadCollectionEventsController {
   public resetGroupIfMembershipChanged(added: Set<Entry>, removed: Set<Entry>): void {
     if (added.size || removed.size) {
       this.resetGroup();
-      this._reportedSuccessUrls = null;
+      this._isSuccessReported = false;
       this._forgetReportedCollectionErrors();
     }
   }
@@ -174,14 +172,13 @@ export class UploadCollectionEventsController {
 
   /**
    * `COMMON_UPLOAD_SUCCESS` when every entry is loaded, none errored, and there are no collection errors — once per
-   * change into that state, and once more per edit of a file's CDN URL.
+   * change into that state. An edit in the editor uploads nothing: `FILE_URL_CHANGED` reports it.
    */
   public emitCommonSuccessIfComplete(): void {
     const collection = this._collection;
     // One pass: "all loaded, none errored".
     let loadedCount = 0;
     let hasErrored = false;
-    let urls = '';
     for (const entry of collection.entries()) {
       if (entry.get('errors').length > 0) {
         hasErrored = true;
@@ -189,21 +186,18 @@ export class UploadCollectionEventsController {
       if (entry.get('fileInfo')) {
         loadedCount++;
       }
-      urls += `${entry.get('cdnUrl')} `;
     }
     const isUploadSuccess =
       collection.size > 0 &&
       !hasErrored &&
       collection.size === loadedCount &&
       this._collectionState.get('collectionErrors').length === 0;
-    if (!isUploadSuccess) {
-      this._reportedSuccessUrls = null;
-    } else if (urls !== this._reportedSuccessUrls) {
-      this._reportedSuccessUrls = urls;
+    if (isUploadSuccess && !this._isSuccessReported) {
       this._eventEmitter.emit(
         UploaderEventType.COMMON_UPLOAD_SUCCESS,
         this._outputCollectionState() as OutputCollectionState<'success'>,
       );
     }
+    this._isSuccessReported = isUploadSuccess;
   }
 }

@@ -146,9 +146,8 @@ describe('events: upload lifecycle', () => {
     expect(successPayload.cdnUrl).toBeTruthy();
   });
 
-  it('fires common-upload-success again, with the edited cdnUrl, once per edit in the editor', async () => {
-    // v1 (fu-v1) after Apply: `file-url-changed, change, common-upload-success, change`
-    // (fu-qa/audit-r3/qa-ui/out/ED1-edit.json).
+  it('does not fire common-upload-success again for an edit in the editor', async () => {
+    // As in v1.36: an edit uploads nothing, so `file-url-changed` and `change` report it.
     const rendered = await renderSolution();
     const { api, provider, root } = rendered;
     const recorder = recordEvents(provider);
@@ -158,11 +157,7 @@ describe('events: upload lifecycle', () => {
     await uploadValidated();
     expect(recorder.detailsOf('common-upload-success')).toHaveLength(1);
     recorder.clear();
-    const successUrls: (string | null)[] = [];
-    provider.addEventListener('common-upload-success', (e) =>
-      // Read as it fires: the state is lazy.
-      successUrls.push((e as CustomEvent<OutputCollectionState>).detail.allEntries[0].cdnUrl),
-    );
+    const editValidated = watchPostUploadValidation(rendered, recorder, entry.internalId);
 
     api.setCurrentActivity('cloud-image-edit', { internalId: entry.internalId });
     api.setModalState(true);
@@ -170,13 +165,11 @@ describe('events: upload lifecycle', () => {
     await userEvent.click(within(root).getByTestId('uc-editor-crop-button-control').nth(0));
     await userEvent.click(within(root).getByRole('button', { name: /apply/i }));
 
-    await recorder.waitForAfter(CHANGE, 'common-upload-success');
-    const editedUrl = recorder.detailsOf('file-url-changed').at(-1)?.cdnUrl;
-    expect(editedUrl).toContain('/-/rotate/');
-    expect(successUrls).toEqual([editedUrl]);
+    // The edited URL is validated again; a success would go out before the `change` that validation sets off.
+    await editValidated();
+    expect(recorder.detailsOf('file-url-changed').at(-1)?.cdnUrl).toContain('/-/rotate/');
     expect(recorder.typesExcluding(CHANGE, 'activity-change', 'modal-open', 'modal-close')).toEqual([
       'file-url-changed',
-      'common-upload-success',
     ]);
   });
 
