@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import { userEvent } from 'vitest/browser';
 import '~/types/jsx';
+import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { renderSolution, within } from '~/tests/utils/render-solution';
 
 describe('uc-file-uploader-inline', () => {
@@ -10,6 +11,16 @@ describe('uc-file-uploader-inline', () => {
     await expect
       .element(within(root).getByTestId('uc-start-from').getByText('Drop files here', { exact: true }))
       .toBeVisible();
+  });
+
+  it('wraps the source buttons by default and lays them into the parent when sourceListWrap is off', async () => {
+    const wrapped = await renderSolution('inline');
+    const unwrapped = await renderSolution('inline', { sourceListWrap: false });
+    const display = (root: HTMLElement) => () =>
+      getComputedStyle(within(root).getByTestId('uc-source-list').element()).display;
+
+    await expect.poll(display(unwrapped.root)).toBe('contents');
+    expect(display(wrapped.root)()).not.toBe('contents');
   });
 
   it('opens the url source when clicked', async () => {
@@ -34,7 +45,89 @@ describe('uc-file-uploader-inline', () => {
     await userEvent.click(tabVideo);
     await expect.element(tabVideo).toHaveAttribute('aria-pressed', 'true');
 
-    await expect.element(cameraSource.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
-    await expect.element(cameraSource.getByRole('button', { name: 'Shot', exact: true })).toBeInTheDocument();
+    await expect.element(cameraSource.getByTestId('uc-camera-controls--toggle-microphone')).toBeVisible();
+    // In video mode the shutter is named for recording.
+    await expect.element(cameraSource.getByRole('button', { name: 'Record Video', exact: true })).toBeInTheDocument();
+  });
+
+  it('renders the drop area, source list and upload list in place, with no modal', async () => {
+    const { root } = await renderSolution('inline');
+
+    await expect.element(within(root).getByTestId('uc-drop-area').first()).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-source-list')).toBeVisible();
+    expect(within(root).getByTestId('uc-upload-list').query()).not.toBeNull();
+    expect(within(root).getByTestId('uc-modal').query()).toBeNull();
+  });
+
+  // As in v1, where setModalState(false) nulled the activity and inline turns that into its start screen.
+  it('resets to start-from on setModalState(false)', async () => {
+    const { api, root } = await renderSolution('inline');
+    await within(root).getByRole('button', { name: 'From link', exact: true }).click();
+    await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
+
+    api.setModalState(false);
+
+    await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-url-source')).not.toBeInTheDocument();
+    expect(api.getCurrentActivity()).toBe('start-from');
+  });
+
+  it('switches the visible activity on setCurrentActivity after setModalState(true), since it has no modal to open', async () => {
+    const { api, root } = await renderSolution('inline');
+    const modalOpen = vi.fn();
+    onTestFinished(api.on('modal-open', modalOpen));
+
+    api.setCurrentActivity('url');
+    api.setModalState(true);
+    await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
+
+    api.setCurrentActivity('start-from');
+
+    await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-url-source')).not.toBeInTheDocument();
+    expect(api.getCurrentActivity()).toBe('start-from');
+    expect(modalOpen).not.toHaveBeenCalled();
+  });
+
+  // As in v1, where the upload list reset an activity it couldn't open to the init activity.
+  it('returns to start-from on setCurrentActivity("upload-list") with an empty list', async () => {
+    const { api, root } = await renderSolution('inline');
+    api.setCurrentActivity('url');
+    await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
+
+    api.setCurrentActivity('upload-list');
+
+    await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
+    expect(api.getCurrentActivity()).toBe('start-from');
+  });
+
+  // As in v1, whose history held only start-from and upload-list, so emptying the list went back to start-from.
+  it('returns to start-from, not the source that added the file, once the last file is removed', async () => {
+    const { api, root } = await renderSolution('inline');
+    await within(root).getByRole('button', { name: 'From link', exact: true }).click();
+    await userEvent.fill(within(root).getByTestId('uc-url-source').getByPlaceholder('https://'), TEST_IMAGE_URL);
+    await userEvent.keyboard('{Enter}');
+    await expect.element(within(root).getByTestId('uc-upload-list')).toBeVisible();
+
+    api.removeAllFiles();
+
+    await expect.element(within(root).getByTestId('uc-start-from')).toBeVisible();
+    await expect.element(within(root).getByTestId('uc-url-source')).not.toBeInTheDocument();
+    expect(api.getCurrentActivity()).toBe('start-from');
+  });
+
+  it('keeps switching the visible activity after initFlow with a single unregistered source, since it has no modal to open', async () => {
+    const { api, config, root } = await renderSolution('inline', { sourceList: 'not-a-source' });
+    const modalOpen = vi.fn();
+    onTestFinished(api.on('modal-open', modalOpen));
+
+    api.initFlow();
+    // Enable the url source afterwards, so there is an activity to switch to.
+    config.sourceList = 'local, url';
+    api.setCurrentActivity('url');
+
+    await expect.element(within(root).getByTestId('uc-url-source')).toBeVisible();
+    expect(api.getCurrentActivity()).toBe('url');
+    expect(modalOpen).not.toHaveBeenCalled();
   });
 });

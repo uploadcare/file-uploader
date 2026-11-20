@@ -176,6 +176,8 @@
       --uc-simple-btn: var(--uc-simple-btn-light);
       --uc-simple-btn-hover: var(--uc-simple-btn-hover-light);
       --uc-simple-btn-foreground: var(--uc-simple-btn-foreground-light);
+
+      color-scheme: light;
     }
   }
 
@@ -199,6 +201,8 @@
       --uc-simple-btn: var(--uc-simple-btn-dark);
       --uc-simple-btn-hover: var(--uc-simple-btn-hover-dark);
       --uc-simple-btn-foreground: var(--uc-simple-btn-foreground-dark);
+
+      color-scheme: dark;
     }
   }
 
@@ -244,6 +248,18 @@
     --uc-simple-btn: var(--uc-simple-btn-dark);
     --uc-simple-btn-hover: var(--uc-simple-btn-hover-dark);
     --uc-simple-btn-foreground: var(--uc-simple-btn-foreground-dark);
+  }
+
+  /* The browser's own parts (scrollbars, form controls) follow the theme. Set on the uploader's elements only: the
+     theme class may sit on a container that holds more than the uploader. */
+  :where(.uc-light) :where([uc-wgt-common]),
+  :where(.uc-light[uc-wgt-common]) {
+    color-scheme: light;
+  }
+
+  :where(.uc-dark) :where([uc-wgt-common]),
+  :where(.uc-dark[uc-wgt-common]) {
+    color-scheme: dark;
   }
 
   :where(.uc-purple) {

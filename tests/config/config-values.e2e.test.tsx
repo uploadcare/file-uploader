@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
-import { CONFIG_VALUES, TEST_LOCALE } from '@/blocks/Config/__tests__/configValues';
-import { configAttributeBehavior } from '@/blocks/Config/Config';
-import { initialConfig } from '@/blocks/Config/initialConfig';
+import { CONFIG_VALUES, TEST_LOCALE } from '@/abstract/config/__tests__/configValues';
+import { BUILTIN_REGISTRY as configAttributeBehavior } from '@/abstract/config/builtin-registry';
+import { initialConfig } from '@/abstract/config/initialConfig';
 import { type Config, defineLocale } from '@/index';
 import en from '@/locales/file-uploader/en';
 import type { ConfigType } from '@/types/exported';

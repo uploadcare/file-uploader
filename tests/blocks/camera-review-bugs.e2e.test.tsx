@@ -27,7 +27,7 @@ const openCamera = async (configProps: Partial<Config> = {}, { video = true } = 
   await within(rendered.root).getByTestId('uc-start-from').getByRole('button', { name: 'Camera', exact: true }).click();
   await expectActivity(rendered.root, 'camera');
   const camera = within(rendered.root).getByTestId('uc-camera-source');
-  await expect.element(camera.getByRole('button', { name: 'Shot', exact: true }), { timeout: 20_000 }).toBeVisible();
+  await expect.element(camera.getByTestId('uc-camera-controls--shot'), { timeout: 20_000 }).toBeVisible();
   if (video) await camera.getByRole('button', { name: 'Video', exact: true }).click();
   const videoEl = await vi.waitFor(
     () => {
@@ -96,8 +96,8 @@ const gate = () => {
 };
 
 const startRecording = async (camera: Locator) => {
-  await camera.getByRole('button', { name: 'Shot', exact: true }).click();
-  await expect.element(camera.getByTestId('uc-camera-source--recording-timer')).toBeVisible();
+  await camera.getByTestId('uc-camera-controls--shot').click();
+  await expect.element(camera.getByTestId('uc-camera-controls--recording-timer')).toBeVisible();
 };
 
 describe('camera review bugs', () => {
@@ -123,7 +123,7 @@ describe('camera review bugs', () => {
     expect(errors).toEqual([]);
     expect(recorder.state).toBe('recording');
 
-    await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+    await camera.getByTestId('uc-camera-controls--shot').click();
     await expect.element(camera.getByRole('button', { name: 'Accept', exact: true })).toBeVisible();
     expect(recorders).toHaveLength(1);
   });
@@ -166,10 +166,8 @@ describe('camera review bugs', () => {
       if (c?.video) await reopen.closed;
       return realGetUserMedia(c);
     });
-    const permissions = (camera.element() as unknown as { _permissionResponses: Record<string, PermissionStatus> })
-      ._permissionResponses;
-
-    permissions.camera.dispatchEvent(new Event('change')); // a permission change reopens the camera
+    // Reopens the camera as a permission change does; the request button is in the DOM, hidden while it is open.
+    camera.element().querySelector<HTMLButtonElement>('.uc-message-box button')?.click();
     await vi.waitFor(() => expect(getUserMedia.mock.calls.filter(([c]) => c?.video).length).toBe(2));
     pickRadio(camera, 'Aspect ratio', '1:1');
     reopen.open();
@@ -191,8 +189,11 @@ describe('camera review bugs', () => {
     const error = vi.spyOn(console, 'error');
     const { camera } = await openCamera({ cameraMirror: true });
 
-    await camera.getByRole('button', { name: 'Shot', exact: true }).click();
-    await vi.waitFor(() => expect(error.mock.calls.some(([m]) => m === 'Failed to start recording')).toBe(true));
+    await camera.getByTestId('uc-camera-controls--shot').click();
+    // The logger's `[uc]…` prefix comes first.
+    await vi.waitFor(() =>
+      expect(error.mock.calls.some((args) => args.includes('Failed to start recording'))).toBe(true),
+    );
     const drawsAtFailure = draw.mock.calls.length;
     await delay(1000);
 
@@ -222,7 +223,7 @@ describe('camera review bugs', () => {
     config.setAttribute('camera-photo-quality', '');
     await delay(100); // the attribute reaches the config asynchronously
 
-    await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+    await camera.getByTestId('uc-camera-controls--shot').click();
     await vi.waitFor(() => expect(toBlob).toHaveBeenCalled());
 
     expect(toBlob.mock.lastCall?.[2]).toBe(0.92);
@@ -234,7 +235,7 @@ describe('camera review bugs', () => {
       cameraConstraints: { audio: false } as unknown as Config['cameraConstraints'],
     });
 
-    const rejected = error.mock.calls.some(([m]) => String(m).includes('cameraConstraints'));
+    const rejected = error.mock.calls.some((args) => args.some((arg) => String(arg).includes('cameraConstraints')));
     expect(rejected || audioTrack(camera) === undefined).toBe(true);
   });
 
@@ -250,6 +251,6 @@ describe('camera review bugs', () => {
     await settingOf(camera, 'Resolution').pick('720P');
     await vi.waitFor(() => expect(warn).toHaveBeenCalled());
 
-    expect(String(warn.mock.lastCall?.[0])).not.toContain('cameraConstraints');
+    expect(String(warn.mock.lastCall?.[1])).not.toContain('cameraConstraints');
   });
 });

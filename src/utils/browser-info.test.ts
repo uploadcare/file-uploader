@@ -1,5 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
-import { calcBrowserFeatures, calcBrowserInfo } from './browser-info';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+// Both flags are computed once at import, so each case re-imports the module.
+const loadBrowserInfo = async () => {
+  vi.resetModules();
+  return import('./browser-info');
+};
 
 const DESKTOP_SAFARI_USER_AGENTS = [
   'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.1 Safari/605.1.15',
@@ -52,22 +57,26 @@ const OTHER_MOBILE_USER_AGENTS = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36 OPR/100.0.0.0',
 ];
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe('browser-info', () => {
   describe('safariDesktop flag', () => {
-    it('should be true for desktop safari', () => {
+    it('should be true for desktop safari', async () => {
       const userAgentGetter = vi.spyOn(window.navigator, 'userAgent', 'get');
       for (const ua of DESKTOP_SAFARI_USER_AGENTS) {
         userAgentGetter.mockReturnValue(ua);
-        const browserInfo = calcBrowserInfo();
+        const { browserInfo } = await loadBrowserInfo();
         expect(browserInfo.safariDesktop).toBe(true);
       }
     });
 
-    it('should be false for other browsers', () => {
+    it('should be false for other browsers', async () => {
       const userAgentGetter = vi.spyOn(window.navigator, 'userAgent', 'get');
       for (const ua of [...OTHER_DESKTOP_USER_AGENTS, ...OTHER_MOBILE_USER_AGENTS, ...MOBILE_SAFARI_USER_AGENTS]) {
         userAgentGetter.mockReturnValue(ua);
-        const browserInfo = calcBrowserInfo();
+        const { browserInfo } = await loadBrowserInfo();
         expect(browserInfo.safariDesktop).toBe(false);
       }
     });
@@ -76,17 +85,17 @@ describe('browser-info', () => {
 
 describe('browser-features', () => {
   describe('htmlMediaCapture', () => {
-    it('should be true if capture is supported', () => {
+    it('should be true if capture is supported', async () => {
       const originalDocumentCreateElement = document.createElement.bind(document);
       vi.spyOn(document, 'createElement').mockImplementation(() => {
         const input = originalDocumentCreateElement('input');
         input.capture = '';
         return input;
       });
-      const browserFeatures = calcBrowserFeatures();
+      const { browserFeatures } = await loadBrowserInfo();
       expect(browserFeatures.htmlMediaCapture).toBe(true);
     });
-    it('should be false if capture is not supported', () => {
+    it('should be false if capture is not supported', async () => {
       const originalDocumentCreateElement = document.createElement.bind(document);
       vi.spyOn(document, 'createElement').mockImplementation(() => {
         const input = originalDocumentCreateElement('input');
@@ -94,7 +103,7 @@ describe('browser-features', () => {
         delete input.capture;
         return input;
       });
-      const browserFeatures = calcBrowserFeatures();
+      const { browserFeatures } = await loadBrowserInfo();
       expect(browserFeatures.htmlMediaCapture).toBe(false);
     });
   });

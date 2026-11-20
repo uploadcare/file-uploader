@@ -139,4 +139,15 @@
   :where([uc-wgt-common]) .uc-ui-toolbar-spacer {
     flex: 1;
   }
+
+  :where([uc-wgt-common]) .uc-svg-sprite {
+    position: absolute;
+  }
+
+  /* Not scoped: `<uc-icon>` draws the symbol through `<use>`, whose shadow-tree copy has no `[uc-wgt-common]` ancestor. */
+  .uc-preloader-progress {
+    stroke-dasharray: 100 100;
+    stroke-dashoffset: var(--l-progress-offset, 100);
+    transition: stroke-dashoffset 0.6s linear;
+  }
 }

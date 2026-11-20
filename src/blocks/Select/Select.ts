@@ -1,6 +1,8 @@
-import { html } from 'lit';
+import { html, type PropertyValues } from 'lit';
 import { property } from 'lit/decorators.js';
-import { LitBlock } from '../../lit/LitBlock';
+import { createRef, ref } from 'lit/directives/ref.js';
+import { ChildBlock } from '../../lit/ChildBlock';
+import '../Icon/Icon';
 import './select.css';
 
 type SelectOption = {
@@ -8,7 +10,7 @@ type SelectOption = {
   value: string;
 };
 
-export class Select extends LitBlock {
+export class Select extends ChildBlock {
   @property({ type: String, attribute: false })
   public value = '';
 
@@ -18,35 +20,34 @@ export class Select extends LitBlock {
   @property({ type: Array, attribute: false })
   public options: SelectOption[] = [];
 
+  private readonly _select = createRef<HTMLSelectElement>();
+
   public override render() {
+    // The browser shows the first option when the value matches none.
+    const selected = this.options.find((option) => option.value === this.value) ?? this.options[0];
     return html`
-      <select @change=${this._handleChange} .value=${this.value} ?disabled=${this.disabled}>
-        ${this.options.map(
-          // `.value` on <select> is applied before the options exist, so a value that arrives together with the options
-          // would be lost without marking the option itself.
-          (option) =>
-            html`<option value=${option.value} ?selected=${option.value === this.value}>${option.text}</option>`,
-        )}
+      <select ${ref(this._select)} @change=${this._handleChange} ?disabled=${this.disabled} title=${selected?.text ?? ''}>
+        ${this.options.map((option) => html`<option value=${option.value}>${option.text}</option>`)}
       </select>
+      <uc-icon name="arrow-dropdown"></uc-icon>
     `;
   }
 
+  // Applied after render rather than bound in the template: a `.value` binding on `<select>` commits before its
+  // `<option>`s exist, and Lit's dirty check never re-applies it when the options change. A value that matches no
+  // option is left alone so the browser keeps its first-option default.
+  public override updated(changedProperties: PropertyValues<this>): void {
+    super.updated(changedProperties);
+    const select = this._select.value;
+    if (select && this.options.some((option) => option.value === this.value)) {
+      select.value = this.value;
+    }
+  }
+
   private _handleChange = (event: Event): void => {
-    if (this.disabled) {
-      event.preventDefault();
-      event.stopPropagation();
-      return;
-    }
-
-    event.preventDefault();
     event.stopPropagation();
-
-    const selectEl = event.currentTarget as HTMLSelectElement | null;
-    if (!selectEl) {
-      return;
-    }
-
-    this.value = selectEl.value;
+    if (this.disabled) return;
+    this.value = (event.currentTarget as HTMLSelectElement).value;
     this.dispatchEvent(new Event('change'));
   };
 }

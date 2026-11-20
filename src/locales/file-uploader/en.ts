@@ -1,4 +1,7 @@
-export default {
+import { EDITOR_SHARED_STRINGS } from '../../abstract/editor-shared-strings';
+
+const templates = {
+  ...EDITOR_SHARED_STRINGS,
   'locale-id': 'en',
   'social-source-lang': 'en',
   'upload-file': 'Upload file',
@@ -11,7 +14,6 @@ export default {
   selected: 'Selected',
   upload: 'Upload',
   'add-more': 'Add more',
-  cancel: 'Cancel',
   'start-from-cancel': 'Cancel',
   clear: 'Clear',
   'camera-shot': 'Shot',
@@ -66,21 +68,9 @@ export default {
   'file-no-name': 'No name...',
   'toggle-fullscreen': 'Toggle fullscreen',
   'toggle-guides': 'Toggle guides',
-  rotate: 'Rotate',
   'flip-vertical': 'Flip vertical',
   'flip-horizontal': 'Flip horizontal',
-  apply: 'Apply',
-  brightness: 'Brightness',
-  contrast: 'Contrast',
-  saturation: 'Saturation',
-  exposure: 'Exposure',
-  gamma: 'Gamma',
-  vibrance: 'Vibrance',
-  warmth: 'Warmth',
-  enhance: 'Enhance',
-  original: 'Original',
   resize: 'Resize image',
-  crop: 'Crop',
   'select-color': 'Select color',
   text: 'Text',
   draw: 'Draw',
@@ -92,6 +82,7 @@ export default {
   'cdn-url': 'CDN URL',
   'file-size-unknown': 'Unknown',
   'camera-permissions-denied': 'Camera access denied',
+  'camera-microphone-denied': 'Microphone access denied',
   'camera-permissions-prompt': 'Please allow access to the camera',
   'camera-permissions-request': 'Request access',
   'camera-settings': 'Camera settings',
@@ -107,6 +98,8 @@ export default {
   'camera-audio-quality-high': 'High',
   'camera-audio-mode-voice': 'Voice',
   'camera-audio-mode-music': 'Music',
+  'camera-not-found': 'No camera found',
+  'camera-unavailable': 'The camera is in use or unavailable',
   'files-count-limit-error-title': 'Files count limit overflow',
   'files-count-limit-error-too-few':
     'You’ve chosen {{total}} {{plural:file(total)}}. At least {{min}} {{plural:file(min)}} required.',
@@ -118,16 +111,11 @@ export default {
   'some-files-were-not-uploaded': 'Some files were not uploaded.',
   'file-item-edit-button': 'Edit',
   'file-item-remove-button': 'Remove',
-  'a11y-editor-tab-filters': 'Filters',
-  'a11y-editor-tab-tuning': 'Tuning',
-  'a11y-editor-tab-crop': 'Crop',
   'a11y-activity-header-button-close': 'Close',
-  flip: 'Flip',
-  mirror: 'Mirror',
-  'a11y-cloud-editor-apply-filter': 'Apply {{name}} filter',
-  'a11y-cloud-editor-apply-crop': 'Apply {{name}} operation',
-  'a11y-cloud-editor-apply-tuning': 'Apply {{name}} tuning',
-  'a11y-cloud-editor-apply-aspect-ratio': 'Apply operation {{name}} {{value}}',
+  'a11y-camera-microphone': 'Microphone',
+  'a11y-camera-stop-recording': 'Stop recording',
+  'a11y-camera-play': 'Play',
+  'a11y-camera-pause': 'Pause',
   finished: 'Finished',
   failed: 'Failed',
   uploading: 'Uploading',
@@ -137,9 +125,6 @@ export default {
   'queued-uploading': 'Queued for upload',
   'queued-validation': 'Queued for validation',
   validation: 'Validating',
-  'crop-to-shape': 'Crop to {{value}}',
-  custom: 'Freeform',
-  'freeform-crop': 'Freeform crop',
 
   'upload-from': 'Upload {{source}}',
   'get-from': 'Get from {{source}}',
@@ -149,4 +134,12 @@ export default {
 
   retake: 'Retake',
   accept: 'Accept',
-};
+} as const;
+
+/** The templates as written: the blocks' `l10n` reads the interpolation variables from their literal types. */
+export type EnglishTemplates = typeof templates;
+
+/** Published as plain strings, as in 1.35, so a translation can be typed `typeof en`. */
+const en: { -readonly [K in keyof EnglishTemplates]: string } = templates;
+
+export default en;

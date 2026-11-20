@@ -1,4 +1,4 @@
-import type { FuncCollectionValidator } from '../../../abstract/managers/ValidationManager';
+import type { FuncCollectionValidator } from '../../../abstract/validatorTypes';
 
 export const validateMultiple: FuncCollectionValidator = (collection, api) => {
   const total = collection.totalCount;

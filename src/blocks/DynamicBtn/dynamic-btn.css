@@ -59,7 +59,13 @@
   :where([uc-dynamic-btn]) > uc-drop-area[drag-state="near"] .uc-visual-drop-area {
     opacity: 1;
   }
+
+  /* Over the button the file would land here: the border turns solid and primary, like the drop area's own. The tint
+     sits on the opaque background, which keeps hiding the button under it. */
   :where([uc-dynamic-btn]) > uc-drop-area[drag-state="over"] .uc-visual-drop-area {
+    background-image: linear-gradient(var(--uc-primary-transparent), var(--uc-primary-transparent));
+    border-color: var(--uc-primary);
+    border-style: solid;
     opacity: 1;
   }
 

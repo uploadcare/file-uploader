@@ -1,10 +1,5 @@
-const EXCLUDE_COMPONENTS = ['UploaderBlock', 'ActivityBlock', 'Block', 'SolutionBlock'];
-
 export function defineComponents(blockExports: Record<string, any>) {
   for (const blockName in blockExports) {
-    if (EXCLUDE_COMPONENTS.includes(blockName)) {
-      continue;
-    }
     let tagName = [...blockName].reduce((name, char) => {
       if (char.toUpperCase() === char) {
         char = `-${char.toLowerCase()}`;

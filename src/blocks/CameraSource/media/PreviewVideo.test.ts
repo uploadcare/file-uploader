@@ -1,0 +1,136 @@
+import { describe, expect, it, vi } from 'vitest';
+import { PreviewVideo } from './PreviewVideo';
+
+const stream = () => new MediaStream();
+
+const setup = () => {
+  const taskFailed = vi.fn();
+  const runTask = (task: () => unknown) => {
+    Promise.resolve()
+      .then(task)
+      .catch((error: unknown) => taskFailed(error));
+  };
+  const video = document.createElement('video');
+  const play = vi.spyOn(video, 'play').mockResolvedValue();
+  vi.spyOn(video, 'pause').mockImplementation(() => {});
+  return { preview: new PreviewVideo(runTask), video, play, taskFailed };
+};
+
+describe('PreviewVideo', () => {
+  it('showClip then showLive restores the live stream muted and detaches clip listeners', () => {
+    const { preview, video } = setup();
+    const live = stream();
+    preview.attach(video);
+    preview.show(live);
+    const handlers = { onPlay: vi.fn(), onPause: vi.fn() };
+
+    preview.showClip('blob:clip', handlers);
+    expect([video.srcObject, video.muted, video.volume]).toEqual([null, false, 1]);
+    expect(video.src).toBe('blob:clip');
+    video.dispatchEvent(new Event('play'));
+    expect(handlers.onPlay).toHaveBeenCalledOnce();
+
+    preview.showLive(live);
+    expect([video.srcObject, video.muted]).toEqual([live, true]);
+    video.dispatchEvent(new Event('play'));
+    video.dispatchEvent(new Event('pause'));
+    expect(handlers.onPlay).toHaveBeenCalledOnce();
+    expect(handlers.onPause).not.toHaveBeenCalled();
+  });
+
+  it('close detaches the clip listeners, as showLive does', () => {
+    const { preview, video } = setup();
+    preview.attach(video);
+    const handlers = { onPlay: vi.fn(), onPause: vi.fn() };
+
+    preview.showClip('blob:clip', handlers);
+    preview.close();
+    video.dispatchEvent(new Event('play'));
+    video.dispatchEvent(new Event('pause'));
+
+    expect(handlers.onPlay).not.toHaveBeenCalled();
+    expect(handlers.onPause).not.toHaveBeenCalled();
+  });
+
+  it('show assigns srcObject only when it changes', () => {
+    const { preview, video } = setup();
+    const live = stream();
+    preview.attach(video);
+    const set = vi.fn();
+    Object.defineProperty(video, 'srcObject', { get: () => null, set, configurable: true });
+
+    preview.show(live);
+    preview.show(live);
+
+    expect(set).toHaveBeenCalledOnce();
+  });
+
+  it('attach applies a source set before the element existed', () => {
+    const { preview, video } = setup();
+    const live = stream();
+    preview.show(live);
+
+    preview.attach(video);
+
+    expect(video.srcObject).toBe(live);
+    expect(preview.element).toBe(video);
+  });
+
+  it('play treats AbortError as superseded', async () => {
+    const { preview, video, play, taskFailed } = setup();
+    play.mockRejectedValue(new DOMException('interrupted', 'AbortError'));
+    preview.attach(video);
+
+    preview.play();
+    await vi.waitFor(() => expect(play).toHaveBeenCalledOnce());
+    await Promise.resolve();
+
+    expect(taskFailed).not.toHaveBeenCalled();
+  });
+
+  it('close takes the stream out of the element, and nothing is sampled before there is one', () => {
+    const { preview, video } = setup();
+    expect(preview.sample()).toBeNull();
+    preview.attach(video);
+    preview.show(stream());
+
+    preview.close();
+
+    expect(video.srcObject).toBeNull();
+  });
+
+  it('a new source clears the frame flag; re-applying the same one keeps it', () => {
+    const { preview, video } = setup();
+    const live = stream();
+    preview.attach(video);
+    preview.show(live);
+    preview.frame(true);
+
+    preview.show(live);
+    preview.attach(video);
+    expect(preview.hasVideoFrame).toBe(true);
+
+    preview.show(stream());
+    expect(preview.hasVideoFrame).toBe(false);
+  });
+
+  it('showing a clip clears the frame flag', () => {
+    const { preview, video } = setup();
+    preview.attach(video);
+    preview.show(stream());
+    preview.frame(true);
+
+    preview.showClip('blob:clip', { onPlay: vi.fn(), onPause: vi.fn() });
+
+    expect(preview.hasVideoFrame).toBe(false);
+  });
+
+  it('close clears the frame flag', () => {
+    const { preview, video } = setup();
+    preview.attach(video);
+    preview.show(stream());
+    preview.frame(true);
+    preview.close();
+    expect(preview.hasVideoFrame).toBe(false);
+  });
+});

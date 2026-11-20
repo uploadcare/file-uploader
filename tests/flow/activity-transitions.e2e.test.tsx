@@ -1,7 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
+import { page } from 'vitest/browser';
+import type { UploadCtxProvider } from '@/index';
 import { IMAGE } from '~/tests/fixtures/files';
 import { recordEvents } from '~/tests/utils/event-recorder';
-import { expectActivity, expectModal, renderSolution, within } from '~/tests/utils/render-solution';
+import {
+  createInCtx,
+  expectActivity,
+  expectModal,
+  renderSolution,
+  type Solution,
+  waitForBlocks,
+  within,
+} from '~/tests/utils/render-solution';
+import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
 
 /**
@@ -80,11 +91,7 @@ describe('regular: leaving the flow', () => {
     await expectModal(root, 'start-from', 'closed');
     await vi.waitFor(() => expect(recorder.detailsOf('modal-close').length).toBeGreaterThan(0));
 
-    // QUIRK(activity): `doneFlow` sets the activity to `doneActivity`, which is read from the `--cfg-done-activity`
-    // CSS custom property and defaults to an empty string, not null (LitActivityBlock.ts:150 — `getCssData` returns
-    // '' and `?? null` does not catch it). So after the documented "terminate the flow" call, `getCurrentActivity()`
-    // is `''`, and a caller checking `=== null` sees a falsy value that is not null. Pinned, not endorsed.
-    expect(api.getCurrentActivity()).toBe('');
+    expect(api.getCurrentActivity()).toBeNull();
   });
 
   it('closes everything on setModalState(false)', async () => {
@@ -118,20 +125,14 @@ describe('inline: no modal is ever used', () => {
     expect(api.getCurrentActivity()).toBe('upload-list');
   });
 
-  // QUIRK(activity): inline treats `null` as "go back to the init activity" (FileUploaderInline.ts:82), so the
-  // documented `setModalState(false)` — which sets the activity to null — cannot leave an inline uploader with
-  // nothing showing. Pinned as current behaviour, not endorsed.
-  it('re-enters the init activity instead of closing', async () => {
-    const { root, api, provider } = await renderSolution('inline');
-    await expectActivity(root, 'start-from');
-    const recorder = recordEvents(provider);
+  // As in v1: `setModalState(false)` nulls the activity, which inline turns into its start screen.
+  it('resets the inline uploader to start-from', async () => {
+    const { root, api } = await renderSolution('inline');
+    api.addFileFromObject(IMAGE.PIXEL);
+    await expectActivity(root, 'upload-list');
 
     api.setModalState(false);
 
-    // The activity drops to null and start-from comes straight back, which is the end of the transition.
-    await expect
-      .poll(() => recorder.detailsOf('activity-change').map((detail) => detail.activity))
-      .toEqual(['start-from']);
     await expectActivity(root, 'start-from');
     expect(api.getCurrentActivity()).toBe('start-from');
   });
@@ -154,5 +155,74 @@ describe('minimal: the upload list is the resting state', () => {
 
     await expectModal(root, 'start-from', 'open');
     expect(api.getCurrentActivity()).toBe('start-from');
+  });
+});
+
+/**
+ * As in v1, inline and minimal report their start screen with `activity-change` when they mount, and again on
+ * `doneFlow()`. The listener is on the provider before anything mounts, the way the docs attach it; the uploader joins
+ * the ctx first, as it does when its tag is defined before the provider's.
+ */
+describe.each<Solution>(['inline', 'minimal'])('%s: activity-change for the start screen', (solution) => {
+  const mount = async () => {
+    const ctxName = getCtxName();
+    const root = createInCtx<HTMLElement>(`uc-file-uploader-${solution}`, ctxName);
+    const config = createInCtx('uc-config', ctxName, { pubkey: 'demopublickey', 'quality-insights': 'false' });
+    const provider = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
+    const recorder = recordEvents(provider);
+    page.render(<div ctx-name={ctxName}></div>);
+    const host = document.querySelector(`div[ctx-name="${ctxName}"]`)!;
+    host.append(root, config);
+    host.append(provider);
+    await waitForBlocks(root, provider);
+    return { api: provider.getAPI(), recorder };
+  };
+
+  it('fires it once the uploader mounts', async () => {
+    const { api, recorder } = await mount();
+
+    expect(api.getCurrentActivity()).toBe('start-from');
+    // Every block has joined the ctx, so whatever mounting reports has been reported.
+    expect(recorder.detailsOf('activity-change')).toEqual([{ activity: 'start-from' }]);
+  });
+
+  it('fires it again on doneFlow', async () => {
+    const { api, recorder } = await mount();
+    recorder.clear();
+
+    api.doneFlow();
+
+    // doneFlow navigates synchronously.
+    expect(recorder.detailsOf('activity-change')).toEqual([{ activity: 'start-from' }]);
+    expect(api.getCurrentActivity()).toBe('start-from');
+  });
+});
+
+/**
+ * v1 reported the start screen when its block rendered, a microtask after the tags mounted, so a listener added right
+ * after mounting (or after `defineComponents()`), in the same task, still heard it. The provider's place in the DOM
+ * doesn't matter.
+ */
+describe.each<[Solution, 'provider first' | 'provider last']>([
+  ['inline', 'provider first'],
+  ['inline', 'provider last'],
+  ['minimal', 'provider first'],
+  ['minimal', 'provider last'],
+])('%s, %s: activity-change for the start screen to a listener added in the mounting task', (solution, order) => {
+  it('fires it once the start screen renders', async () => {
+    const ctxName = getCtxName();
+    const root = createInCtx<HTMLElement>(`uc-file-uploader-${solution}`, ctxName);
+    const config = createInCtx('uc-config', ctxName, { pubkey: 'demopublickey', 'quality-insights': 'false' });
+    const provider = createInCtx<UploadCtxProvider>('uc-upload-ctx-provider', ctxName);
+    page.render(<div ctx-name={ctxName}></div>);
+    const host = document.querySelector(`div[ctx-name="${ctxName}"]`)!;
+    if (order === 'provider first') host.append(config, provider, root);
+    else host.append(config, root, provider);
+    const recorder = recordEvents(provider);
+
+    await waitForBlocks(root, provider);
+    await expectActivity(root, 'start-from');
+
+    expect(recorder.detailsOf('activity-change')).toEqual([{ activity: 'start-from' }]);
   });
 });

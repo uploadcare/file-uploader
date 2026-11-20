@@ -10,7 +10,7 @@ import '~/types/jsx';
  * `--use-fake-device-for-media-stream` (vitest.config.ts), so the camera activity opens with a working stream and
  * these can be asserted on the rendered controls rather than mocked.
  *
- * Nested test ids are prefixed with the host tag by TestModeController, hence `uc-camera-source--toggle-microphone`.
+ * Nested test ids are prefixed with the host tag by TestModeController, hence `uc-camera-controls--toggle-microphone`.
  */
 
 /** Opens the camera activity and returns the solution root once it is really on screen. */
@@ -24,8 +24,9 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
 
   const camera = within(rendered.root).getByTestId('uc-camera-source');
   // The controls stay `display: none` until the stream starts, so a "hidden" check made earlier passes whatever the
-  // option says. The shutter shows in every mode, which makes it the sign the controls are up.
-  await expect.element(camera.getByRole('button', { name: 'Shot', exact: true }), { timeout: 20_000 }).toBeVisible();
+  // option says. The shutter shows in every mode, which makes it the sign the controls are up. Found by test id, as its
+  // name changes with the mode.
+  await expect.element(camera.getByTestId('uc-camera-controls--shot'), { timeout: 20_000 }).toBeVisible();
 
   return { ...rendered, camera };
 };
@@ -63,25 +64,25 @@ describe('cameraMirror', () => {
 
 describe('enableAudioRecording', () => {
   // The microphone controls belong to video recording: the photo tab forces them hidden regardless of the option
-  // (CameraSource.ts:610), and only the video tab consults `enableAudioRecording` (CameraSource.ts:618).
+  // (`deriveCameraView`), and only the video tab consults `enableAudioRecording`.
   it('hides the microphone toggle on the photo tab whatever the setting', async () => {
     const { camera } = await openCamera({ enableAudioRecording: true });
 
-    await expect.element(camera.getByTestId('uc-camera-source--toggle-microphone')).not.toBeVisible();
+    await expect.element(camera.getByTestId('uc-camera-controls--toggle-microphone')).not.toBeInTheDocument();
   });
 
   it('shows the microphone toggle on the video tab, which is the default', async () => {
     const { camera } = await openCamera();
     await camera.getByRole('button', { name: 'Video', exact: true }).click();
 
-    await expect.element(camera.getByTestId('uc-camera-source--toggle-microphone')).toBeVisible();
+    await expect.element(camera.getByTestId('uc-camera-controls--toggle-microphone')).toBeVisible();
   });
 
   it('hides the microphone toggle on the video tab when disabled', async () => {
     const { camera } = await openCamera({ enableAudioRecording: false });
     await camera.getByRole('button', { name: 'Video', exact: true }).click();
 
-    await expect.element(camera.getByTestId('uc-camera-source--toggle-microphone')).not.toBeVisible();
+    await expect.element(camera.getByTestId('uc-camera-controls--toggle-microphone')).not.toBeInTheDocument();
   });
 });
 
@@ -96,29 +97,23 @@ describe('cameraModes', () => {
   it('hides the video tab when only photo is allowed', async () => {
     const { camera } = await openCamera({ cameraModes: 'photo' });
 
-    await expect
-      .element(camera.getByRole('button', { name: 'Video', exact: true, includeHidden: true }))
-      .not.toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Video', exact: true })).not.toBeInTheDocument();
   });
 
   it('hides the photo tab when only video is allowed', async () => {
     const { camera } = await openCamera({ cameraModes: 'video' });
 
-    await expect
-      .element(camera.getByRole('button', { name: 'Photo', exact: true, includeHidden: true }))
-      .not.toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Photo', exact: true })).not.toBeInTheDocument();
   });
 });
 
 describe('enableVideoRecording (deprecated)', () => {
   // The option is documented as deprecated in favour of `cameraModes`, and feeds it through a computed property
-  // (Config/computed-properties.ts:41): `false` strips `video` from the mode list, `true` adds it.
+  // (the `cameraModes` entry in Config/computed-properties.ts): `false` strips `video` from the mode list, `true` adds it.
   it('drops the video tab when disabled', async () => {
     const { camera } = await openCamera({ enableVideoRecording: false });
 
-    await expect
-      .element(camera.getByRole('button', { name: 'Video', exact: true, includeHidden: true }))
-      .not.toBeVisible();
+    await expect.element(camera.getByRole('button', { name: 'Video', exact: true })).not.toBeInTheDocument();
   });
 
   it('leaves both tabs when enabled', async () => {

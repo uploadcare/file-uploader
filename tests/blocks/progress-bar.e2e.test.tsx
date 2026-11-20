@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { page } from 'vitest/browser';
 import type { ProgressBar, ProgressBarCommon } from '@/index';
+import { withResolvers } from '@/utils/withResolvers';
+import { IMAGE } from '~/tests/fixtures/files';
+import { emulatorSession, isLive } from '~/tests/utils/emulator.browser';
 import { createInCtx, renderSolution, within } from '~/tests/utils/render-solution';
 import { getCtxName } from '~/tests/utils/test-renderer';
 import '~/types/jsx';
@@ -77,7 +80,7 @@ describe('uc-progress-bar', () => {
 
     // The lower value has to land while the bar is still hidden. Setting `value` and `visible` in the same tick
     // batches both into one update, and the `value` branch then sees the bar as already visible and keeps the
-    // higher figure (ProgressBar.ts:50).
+    // higher figure (`ProgressBar.updated`).
     await set(bar, { value: 20 });
     await set(bar, { visible: true });
 
@@ -100,28 +103,41 @@ describe('uc-progress-bar', () => {
 describe('uc-progress-bar-common', () => {
   /** The common bar reads the ctx's upload state, so it sits next to a real uploader. */
   const renderCommon = async () => {
-    const { ctxName } = await renderSolution('regular');
+    const { ctxName, api } = await renderSolution('regular');
     const common = createInCtx<ProgressBarCommon>('uc-progress-bar-common', ctxName);
     page.render(common);
     await expect.poll(() => common.getAttribute('data-testid')).toBe('uc-progress-bar-common');
     await common.updateComplete;
 
-    return common;
+    return { common, api };
   };
 
   it('renders a progress bar', async () => {
-    const common = await renderCommon();
+    const { common } = await renderCommon();
 
     expect(within(common).getByTestId('uc-progress-bar').query()).not.toBe(null);
   });
 
-  // QUIRK(progress): `updated()` gates the `active` attribute on `changedProperties.has('visible')`, but the field is
-  // the private `@state() _visible` (ProgressBarCommon.ts:49) — Lit records `_visible`, so the branch never runs and
-  // `active` is never set or removed. The `'visible' as keyof ProgressBarCommon` cast in that line is what let the
-  // wrong key typecheck. Pinned as current behaviour, not endorsed.
-  it('never gets the active attribute, whatever the state', async () => {
-    const common = await renderCommon();
-
+  // The stylesheet hides the bar unless the host carries `active`, so the attribute is what makes it visible at all.
+  it('carries the active attribute only while an upload runs', async () => {
+    const { common, api } = await renderCommon();
     expect(common.hasAttribute('active')).toBe(false);
+    // The emulator answers within a task, before a poll would see the upload running, so it holds the upload until
+    // the bar has been seen active. Live, the real API is slow enough on its own.
+    const released = withResolvers();
+    if (!isLive) {
+      emulatorSession().on('POST /base/', async ({ next }) => {
+        await released.promise;
+        return next();
+      });
+    }
+
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.uploadAll();
+
+    await expect.poll(() => common.hasAttribute('active')).toBe(true);
+    released.resolve();
+    await expect.poll(() => api.getOutputCollectionState().successCount).toBe(1);
+    await expect.poll(() => common.hasAttribute('active')).toBe(false);
   });
 });

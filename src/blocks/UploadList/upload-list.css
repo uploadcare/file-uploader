@@ -27,6 +27,15 @@
     display: contents;
   }
 
+  /* Virtualization spacers: hold the scroll height for the rows outside the
+     rendered window. Full-width so they force clean row breaks in the flex-wrap
+     grid (and stack as plain blocks in list mode); inert to pointer/a11y. */
+  uc-upload-list .uc-list-spacer {
+    flex: 0 0 100%;
+    width: 100%;
+    pointer-events: none;
+  }
+
   uc-upload-list .uc-toolbar {
     display: flex;
     gap: 4px;
@@ -86,5 +95,72 @@
 
   uc-upload-list .uc-files .uc-add-more-btn {
     display: none;
+  }
+
+  /* Compact chrome (minimal solution) — structure omits header + non-add-more
+     toolbar actions; these rules own the dashed card surface and icon-only
+     add-more placement (list toolbar vs grid files-area). */
+  uc-upload-list[chrome="compact"] {
+    width: 100%;
+    height: unset;
+    padding: 4px;
+    background-color: var(--uc-background);
+    border: 1px dashed var(--uc-border);
+    border-radius: calc(var(--uc-radius) * 1.75);
+  }
+
+  uc-upload-list[chrome="compact"] .uc-files {
+    padding: 0;
+  }
+
+  uc-upload-list[chrome="compact"] .uc-toolbar {
+    display: block;
+    padding: 0;
+    background-color: transparent;
+  }
+
+  uc-upload-list[chrome="compact"] .uc-toolbar .uc-add-more-btn {
+    width: 100%;
+    height: calc(var(--uc-preview-size) + var(--uc-padding) * 2);
+    margin-top: 4px;
+  }
+
+  uc-upload-list[chrome="compact"] .uc-toolbar .uc-add-more-btn[disabled] {
+    display: none;
+  }
+
+  uc-upload-list[chrome="compact"] .uc-toolbar .uc-add-more-btn > span {
+    display: none;
+  }
+
+  uc-upload-list[chrome="compact"] .uc-toolbar .uc-add-more-btn > uc-icon {
+    display: flex;
+  }
+
+  uc-upload-list[chrome="compact"] uc-drop-area {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border-radius: calc(var(--uc-radius) * 1.75);
+  }
+
+  uc-upload-list[chrome="compact"] .uc-common-error {
+    margin: 4px 0 0;
+  }
+
+  uc-upload-list[chrome="compact"][mode="grid"] .uc-toolbar .uc-add-more-btn {
+    display: none;
+  }
+
+  uc-upload-list[chrome="compact"][mode="grid"] .uc-files .uc-add-more-btn {
+    display: flex;
+  }
+
+  uc-upload-list[chrome="compact"][mode="grid"] .uc-files .uc-add-more-btn > span {
+    display: none;
+  }
+
+  uc-upload-list[chrome="compact"][mode="grid"] .uc-files .uc-add-more-btn > uc-icon {
+    display: flex;
   }
 }

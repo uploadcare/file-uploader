@@ -36,7 +36,6 @@ export type InputMessageMap = {
 };
 
 export type InputMessageType = keyof InputMessageMap;
-export type InputMessage = InputMessageMap[InputMessageType];
 
 export type InputMessageHandler<T extends InputMessageType> = (message: InputMessageMap[T]) => void;
 
