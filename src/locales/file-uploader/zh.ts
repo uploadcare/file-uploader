@@ -12,7 +12,7 @@ export default {
   upload: '上传',
   'add-more': '添加更多',
   cancel: '取消',
-  'start-from-cancel': '开始从取消',
+  'start-from-cancel': '取消',
   clear: '清除',
   'camera-shot': '拍摄',
   'upload-url': '导入',

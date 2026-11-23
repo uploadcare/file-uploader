@@ -12,7 +12,7 @@ export default {
   upload: '업로드',
   'add-more': '더 추가하기',
   cancel: '취소',
-  'start-from-cancel': '취소 시작',
+  'start-from-cancel': '취소',
   clear: '지우기',
   'camera-shot': '촬영',
   'upload-url': 'URL 가져오기',

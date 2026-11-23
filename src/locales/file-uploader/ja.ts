@@ -12,7 +12,7 @@ export default {
   upload: 'アップロード',
   'add-more': 'もっと追加',
   cancel: 'キャンセル',
-  'start-from-cancel': 'キャンセルから始める',
+  'start-from-cancel': 'キャンセル',
   clear: 'クリア',
   'camera-shot': 'ショット',
   'upload-url': 'インポート',
