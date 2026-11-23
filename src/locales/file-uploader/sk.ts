@@ -27,7 +27,7 @@ export default {
   yes: 'Áno',
   'confirm-your-action': 'Potvrďte vašu akciu',
   'are-you-sure': 'Ste si istý?',
-  'selected-count': 'Vybrané:',
+  'selected-count': 'Vybrané: {{count}} z {{total}}',
   'upload-error': 'Chyba nahrávania',
   'validation-error': 'Chyba validácie',
   'no-files': 'Žiadne vybrané súbory',

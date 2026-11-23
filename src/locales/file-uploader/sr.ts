@@ -27,7 +27,7 @@ export default {
   yes: 'Да',
   'confirm-your-action': 'Потврди акцију',
   'are-you-sure': 'Да ли сте сигурни?',
-  'selected-count': 'Изабрано:',
+  'selected-count': 'Изабрано: {{count}} од {{total}}',
   'upload-error': 'Грешка при отпремању',
   'validation-error': 'Грешка у валидацији',
   'no-files': 'Нема изабраних датотека',

@@ -27,7 +27,7 @@ export default {
   yes: '是',
   'confirm-your-action': '確認您的操作',
   'are-you-sure': '您確定嗎？',
-  'selected-count': '已選擇：',
+  'selected-count': '已選擇 {{count}} / {{total}}',
   'upload-error': '上傳錯誤',
   'validation-error': '驗證錯誤',
   'no-files': '未選擇任何檔案',

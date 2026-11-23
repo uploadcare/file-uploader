@@ -27,7 +27,7 @@ export default {
   yes: 'Da',
   'confirm-your-action': 'Confirmați acțiunea',
   'are-you-sure': 'Sunteți sigur?',
-  'selected-count': 'Selectate:',
+  'selected-count': '{{count}} din {{total}} selectate',
   'upload-error': 'Eroare de încărcare',
   'validation-error': 'Eroare de validare',
   'no-files': 'Niciun fișier selectat',

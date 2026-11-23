@@ -27,7 +27,7 @@ export default {
   yes: 'כן',
   'confirm-your-action': 'אשר פעולה זו',
   'are-you-sure': 'האם אתה בטוח?',
-  'selected-count': 'נבחרו:',
+  'selected-count': 'נבחרו {{count}} מתוך {{total}}',
   'upload-error': 'שגיאת העלאה',
   'validation-error': 'שגיאת אימות',
   'no-files': 'לא נבחרו קבצים',

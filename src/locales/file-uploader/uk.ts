@@ -27,7 +27,7 @@ export default {
   yes: 'Так',
   'confirm-your-action': 'Підтвердіть дію',
   'are-you-sure': 'Ви впевнені?',
-  'selected-count': 'Вибрано:',
+  'selected-count': 'Вибрано: {{count}} з {{total}}',
   'upload-error': 'Помилка завантаження',
   'validation-error': 'Помилка перевірки',
   'no-files': 'Файли не вибрані',

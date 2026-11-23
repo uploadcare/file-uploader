@@ -27,7 +27,7 @@ export default {
   yes: 'Ja',
   'confirm-your-action': 'Bekreft handlingen din',
   'are-you-sure': 'Er du sikker?',
-  'selected-count': 'Valgt:',
+  'selected-count': '{{count}} av {{total}} valgt',
   'upload-error': 'Feil ved opplasting',
   'validation-error': 'Valideringsfeil',
   'no-files': 'Ingen filer valgt',

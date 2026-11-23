@@ -27,7 +27,7 @@ export default {
   yes: 'Có',
   'confirm-your-action': 'Xác nhận hành động của bạn',
   'are-you-sure': 'Bạn có chắc không?',
-  'selected-count': 'Đã chọn:',
+  'selected-count': 'Đã chọn: {{count}} / {{total}}',
   'upload-error': 'Lỗi tải lên',
   'validation-error': 'Lỗi xác thực',
   'no-files': 'Không có tệp nào được chọn',

@@ -27,7 +27,7 @@ export default {
   yes: 'Jā',
   'confirm-your-action': 'Apstiprināt darbību',
   'are-you-sure': 'Vai esat pārliecināts?',
-  'selected-count': 'Izvēlēts:',
+  'selected-count': 'Izvēlēti: {{count}} no {{total}}',
   'upload-error': 'Augšupielādes kļūda',
   'validation-error': 'Validācijas kļūda',
   'no-files': 'Nav izvēlētu failu',

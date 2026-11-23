@@ -27,7 +27,7 @@ export default {
   yes: 'Ja',
   'confirm-your-action': 'Aktion bestätigen',
   'are-you-sure': 'Sind Sie sicher?',
-  'selected-count': 'Ausgewählt:',
+  'selected-count': '{{count}} von {{total}} ausgewählt',
   'select-all': 'Alles auswählen',
   'deselect-all': 'Alles abwählen',
   'upload-error': 'Fehler beim Hochladen',
