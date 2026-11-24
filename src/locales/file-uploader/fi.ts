@@ -41,7 +41,7 @@ export default {
   'header-failed': '{{count}} {{plural:error(count)}}',
   'header-succeed': '{{count}} {{plural:file(count)}} ladattu',
   'header-total': '{{count}} {{plural:file(count)}} valittu',
-  'src-type-local': 'Laiteesta',
+  'src-type-local': 'Laitteesta',
   'src-type-from-url': 'Linkistä',
   'src-type-camera': 'Kamera',
   'src-type-facebook': 'Facebook',
