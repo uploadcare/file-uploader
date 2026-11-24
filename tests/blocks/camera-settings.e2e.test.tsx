@@ -1,8 +1,9 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, onTestFinished, vi } from 'vitest';
 import type { Locator } from 'vitest/browser';
+import type { CameraSettingsPopup } from '@/blocks/CameraSource/ui/CameraSettingsPopup';
 import type { Config } from '@/index';
 import { settingOf } from '~/tests/utils/camera-settings';
-import { expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
+import { createInCtx, expectActivity, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 
 /**
@@ -21,13 +22,13 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
   await expectActivity(rendered.root, 'camera');
 
   const camera = within(rendered.root).getByTestId('uc-camera-source');
-  await expect.element(camera.getByRole('button', { name: 'Shot', exact: true }), { timeout: 20_000 }).toBeVisible();
+  await expect.element(camera.getByTestId('uc-camera-controls--shot'), { timeout: 20_000 }).toBeVisible();
 
   return {
     ...rendered,
     camera,
     getUserMedia,
-    settingsButton: camera.getByRole('button', { name: 'Camera settings', exact: true, includeHidden: true }),
+    settingsButton: camera.getByRole('button', { name: 'Camera settings', exact: true }),
     ratio: settingOf(camera, 'Aspect ratio'),
     resolution: settingOf(camera, 'Resolution'),
   };
@@ -35,7 +36,7 @@ const openCamera = async (configProps: Partial<Config> = {}) => {
 
 /** Takes a photo, accepts it and returns its pixel size. */
 const takePhoto = async ({ api, camera }: Awaited<ReturnType<typeof openCamera>>) => {
-  await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+  await camera.getByTestId('uc-camera-controls--shot').click();
   await camera.getByRole('button', { name: 'Accept', exact: true }).click();
 
   await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
@@ -49,13 +50,13 @@ describe('camera settings button', () => {
   it('is hidden without option lists', async () => {
     const { settingsButton } = await openCamera();
 
-    await expect.element(settingsButton).not.toBeVisible();
+    await expect.element(settingsButton).not.toBeInTheDocument();
   });
 
   it('is hidden when a list has a single option', async () => {
     const { settingsButton } = await openCamera({ cameraAspectRatio: '1:1', cameraResolution: '720p' });
 
-    await expect.element(settingsButton).not.toBeVisible();
+    await expect.element(settingsButton).not.toBeInTheDocument();
   });
 
   it('opens both settings, labelled and closed', async () => {
@@ -121,18 +122,19 @@ describe('camera settings button', () => {
     expect(popup?.getBoundingClientRect().bottom).toBeLessThanOrEqual(button.getBoundingClientRect().top);
 
     await opened.camera.getByRole('button', { name: 'Video', exact: true }).click();
-    const mute = opened.camera.getByTestId('uc-camera-source--toggle-microphone');
+    const mute = opened.camera.getByTestId('uc-camera-controls--toggle-microphone');
     await expect.element(mute).toBeVisible();
-    expect(mute.element().parentElement).toBe(button.parentElement);
+    // `<uc-camera-settings>` lays out as `display: contents`, so the button sits in mute's group.
+    expect(mute.element().parentElement).toBe(button.closest('uc-camera-settings')?.parentElement);
   });
 
   it('hides while a photo waits for review', async () => {
     const { camera, settingsButton } = await openCamera({ cameraAspectRatio: 'native, 1:1' });
     await expect.element(settingsButton).toBeVisible();
 
-    await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+    await camera.getByTestId('uc-camera-controls--shot').click();
 
-    await expect.element(settingsButton).not.toBeVisible();
+    await expect.element(settingsButton).not.toBeInTheDocument();
   });
 
   it('hides while recording', async () => {
@@ -140,10 +142,10 @@ describe('camera settings button', () => {
     await camera.getByRole('button', { name: 'Video', exact: true }).click();
     await expect.element(settingsButton).toBeVisible();
 
-    await camera.getByRole('button', { name: 'Shot', exact: true }).click();
+    await camera.getByTestId('uc-camera-controls--shot').click();
 
-    await expect.element(camera.getByTestId('uc-camera-source--recording-timer')).toBeVisible();
-    await expect.element(settingsButton).not.toBeVisible();
+    await expect.element(camera.getByTestId('uc-camera-controls--recording-timer')).toBeVisible();
+    await expect.element(settingsButton).not.toBeInTheDocument();
   });
 });
 
@@ -237,5 +239,58 @@ describe('resolution picker', () => {
     await opened.settingsButton.click();
 
     expect(opened.resolution.texts()).toEqual(['Auto', '720P']);
+  });
+});
+
+describe('settings popup in a form', () => {
+  /** The popup alone, inside a page's `<form>`, with a camera picker and a resolution picker. */
+  const renderInForm = async () => {
+    const { ctxName } = await renderSolution('regular');
+    const form = document.createElement('form');
+    const popup = createInCtx<CameraSettingsPopup>('uc-camera-settings', ctxName);
+    popup.buttonHidden = false;
+    popup.sections = [
+      {
+        key: 'camera',
+        labelKey: 'caption-camera',
+        hidden: false,
+        value: 'cam-b',
+        options: [
+          { value: 'cam-a', text: 'Camera A' },
+          { value: 'cam-b', text: 'Camera B' },
+        ],
+      },
+      {
+        key: 'resolution',
+        labelKey: 'camera-resolution',
+        hidden: false,
+        value: '720',
+        options: [
+          { value: '720', text: '720P' },
+          { value: '1080', text: '1080P' },
+        ],
+      },
+    ];
+    form.append(popup);
+    document.body.append(form);
+    onTestFinished(() => form.remove());
+    await popup.updateComplete;
+    const checked = () =>
+      [...popup.querySelectorAll<HTMLInputElement>('input[type="radio"]')].filter((radio) => radio.checked);
+    return { form, checked };
+  };
+
+  it("leaves the camera's settings and device ids out of the form's data", async () => {
+    const { form } = await renderInForm();
+
+    expect([...new FormData(form).keys()]).toEqual([]);
+  });
+
+  it('keeps the shown selection through a form reset', async () => {
+    const { form, checked } = await renderInForm();
+
+    form.reset();
+
+    expect(checked().map((radio) => radio.value)).toEqual(['cam-b', '720']);
   });
 });

@@ -1,7 +1,9 @@
 import { AuthTokenCache } from '@uploadcare/signed-uploads/client';
 import { isAuthTokenResolver, normalizeAuthToken } from '@uploadcare/upload-client';
-import { SharedInstance } from '../../lit/shared-instances';
 import type { AuthToken } from '../../types/index';
+import { controllerLogger } from '../controllerLogger';
+import { ConfigController } from '../controllers/ConfigController';
+import { inject } from '../di/inject';
 
 /**
  * Owns the token cache for this uploader context.
@@ -12,7 +14,9 @@ import type { AuthToken } from '../../types/index';
  * endpoint again. (Multipart chunks go to presigned storage URLs and carry no
  * token, so they are not part of that count.)
  */
-export class AuthTokenManager extends SharedInstance {
+export class AuthTokenManager {
+  @inject(ConfigController) private readonly _config!: ConfigController;
+  private readonly _log = controllerLogger(this, 'auth-token');
   private _cache: AuthTokenCache | null = null;
 
   /**
@@ -28,7 +32,7 @@ export class AuthTokenManager extends SharedInstance {
       return this._cache;
     }
 
-    this._debugPrint('Creating the auth token cache.');
+    this._log.debug('Creating the auth token cache.');
     this._cache = new AuthTokenCache({ fetchToken });
     return this._cache;
   }
@@ -44,7 +48,7 @@ export class AuthTokenManager extends SharedInstance {
    * whose token ran out of operations recovers.
    */
   public getAuthToken(): AuthToken | undefined {
-    const { authToken } = this._cfg;
+    const { authToken } = this._config.values;
 
     if (!authToken) {
       return undefined;
@@ -92,14 +96,13 @@ export class AuthTokenManager extends SharedInstance {
     // A provider configured directly keeps its own token, so it is the only
     // thing that can drop that one. `normalizeAuthToken` is what knows the
     // shapes; nothing here needs to.
-    const { authToken } = this._cfg;
+    const { authToken } = this._config.values;
     if (isAuthTokenResolver(authToken)) {
       normalizeAuthToken(authToken).invalidate?.();
     }
   }
 
-  public override destroy(): void {
-    super.destroy();
+  public destroy(): void {
     this._cache = null;
   }
 }

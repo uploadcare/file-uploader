@@ -110,7 +110,7 @@ describe('regular', () => {
     await expectModal(root, 'start-from', 'open');
 
     // Modal only closes when mousedown and mouseup both land on the dialog element itself, so releasing a selection
-    // drag over the backdrop must not dismiss it (Modal.ts:52).
+    // drag over the backdrop must not dismiss it (`Modal._handleDialogMouseUp`).
     const dialog = modalDialog(root, 'start-from') as HTMLDialogElement;
     const inside = within(root).getByTestId('uc-start-from').element();
     inside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
@@ -124,6 +124,51 @@ describe('regular', () => {
     dialog.dispatchEvent(new MouseEvent('mousedown', { bubbles: true }));
     dialog.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
     await expectModal(root, 'start-from', 'closed');
+  });
+
+  it('closes the upload list once its last file is removed', async () => {
+    const { root, api } = await renderSolution('regular');
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.initFlow();
+    await expectModal(root, 'upload-list', 'open');
+
+    api.removeAllFiles();
+
+    await expectModal(root, 'upload-list', 'closed');
+  });
+
+  it('returns to the upload list when start-from is cancelled over it', async () => {
+    const { root, api } = await renderSolution('regular');
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.initFlow();
+    await expectModal(root, 'upload-list', 'open');
+
+    await within(root).getByTestId('uc-upload-list').getByRole('button', { name: 'Add more' }).click();
+    await expectModal(root, 'start-from', 'open');
+    await expectModal(root, 'upload-list', 'closed');
+
+    await within(root).getByTestId('uc-start-from').getByText('Cancel', { exact: true }).click();
+
+    await expectModal(root, 'upload-list', 'open');
+    await expectModal(root, 'start-from', 'closed');
+  });
+
+  it('swaps the open modal when setCurrentActivity + setModalState(true) name another activity', async () => {
+    const { root, api } = await renderSolution('regular');
+    // A file keeps the upload list allowed; adding through the api opens nothing by itself.
+    api.addFileFromObject(IMAGE.PIXEL);
+
+    api.setCurrentActivity('start-from');
+    api.setModalState(true);
+    await expectModal(root, 'start-from', 'open');
+
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+    await expectModal(root, 'upload-list', 'open');
+    await expectModal(root, 'start-from', 'closed');
+
+    api.setModalState(false);
+    await expectModal(root, 'upload-list', 'closed');
   });
 });
 
@@ -175,25 +220,18 @@ describe('inline', () => {
     await expectActivity(root, 'start-from');
 
     // Correct here: history is back at start-from and the collection is empty, so cancelling would have nowhere to
-    // go (`_couldHistoryBack` and `_couldShowList` are both false — FileUploaderInline.ts:52).
+    // go (`_couldHistoryBack` and `_couldShowList` are both false).
     const cancel = inlineCancel(root);
     await expect.element(cancel).not.toBeVisible();
-    // The sentinel: with a file in the list, the next history reset (the activity going to null) recomputes the
-    // button and shows it. Nothing may have shown it before the file arrived.
+    // The sentinel: a file in the list is what shows the button. Nothing may have shown it before the file arrived.
     const hidden = logHidden(cancel.element() as HTMLElement);
     hidden.mark('file added');
     api.addFileFromObject(IMAGE.PIXEL);
     await expectActivity(root, 'upload-list');
-    api.setModalState(false);
     await expect.poll(() => hidden.log).toEqual(['file added', 'shown']);
   });
 
-  // QUIRK(inline): `_couldCancel` is recomputed only inside the `*history` subscription
-  // (FileUploaderInline.ts:96), so it does not pick up that the collection now has files. Going to start-from via
-  // "Add more" therefore leaves the cancel button hidden even though cancelling would work — the user is on the
-  // source picker with files already uploaded and no visible way back to the list. The handler itself is fine:
-  // invoked directly it routes to `upload-list`. Pinned as current behaviour, not endorsed.
-  it('hides cancel after "Add more" even though the action would work', async () => {
+  it('shows cancel after "Add more" and routes back to the list', async () => {
     const { root, api } = await renderSolution('inline');
     await expectActivity(root, 'start-from');
     api.addFileFromObject(IMAGE.PIXEL);
@@ -203,18 +241,20 @@ describe('inline', () => {
     await expectActivity(root, 'start-from');
 
     const cancel = inlineCancel(root);
-    await expect.element(cancel).not.toBeVisible();
-    const hidden = logHidden(cancel.element() as HTMLElement);
+    await expect.element(cancel).toBeVisible();
 
-    // Clicked through the DOM on purpose: the button is hidden, and this checks that its handler would still work.
-    (cancel.element() as HTMLButtonElement).click();
+    await cancel.click();
     await expectActivity(root, 'upload-list');
     expect(api.getCurrentActivity()).toBe('upload-list');
+  });
 
-    // The sentinel: a history reset (the activity going to null) is what does recompute the button, and with files in
-    // the list it shows it. Nothing may have shown it before.
-    hidden.mark('history reset');
-    api.setModalState(false);
-    await expect.poll(() => hidden.log).toEqual(['history reset', 'shown']);
+  it('lands on start-from on doneFlow, its configured done activity', async () => {
+    const { root, api } = await renderSolution('inline');
+    api.addFileFromObject(IMAGE.PIXEL);
+    await expectActivity(root, 'upload-list');
+
+    api.doneFlow();
+
+    await expectActivity(root, 'start-from');
   });
 });

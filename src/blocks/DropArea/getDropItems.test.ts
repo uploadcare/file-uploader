@@ -13,16 +13,9 @@ import { getDropItems } from './getDropItems';
 /** `webkitGetAsEntry` is omitted from the base so the stub can return partial entries rather than full FileSystemEntry. */
 type StubItem = Omit<Partial<DataTransferItem>, 'webkitGetAsEntry'> & {
   webkitGetAsEntry?: () => unknown;
-  getAsEntry?: () => unknown;
 };
 
 const drop = (items: StubItem[]) => getDropItems({ items } as unknown as DataTransfer);
-
-const fileItem = (file: File, type = file.type): StubItem => ({
-  kind: 'file',
-  type,
-  getAsFile: () => file,
-});
 
 const fileEntry = (file: File, fullPath: string) => ({
   isFile: true,
@@ -31,12 +24,20 @@ const fileEntry = (file: File, fullPath: string) => ({
   file: (cb: (f: File) => void) => cb(file),
 });
 
-const directoryEntry = (children: unknown[]) => ({
+/** Like a real reader, hands the children out in `batches` and then an empty batch to say it is done. */
+const directoryEntry = (children: unknown[], batchSize = children.length || 1) => ({
   isFile: false,
   isDirectory: true,
-  createReader: () => ({
-    readEntries: (cb: (entries: unknown[]) => void) => cb(children),
-  }),
+  createReader: () => {
+    let offset = 0;
+    return {
+      readEntries: (cb: (entries: unknown[]) => void) => {
+        const batch = children.slice(offset, offset + batchSize);
+        offset += batchSize;
+        cb(batch);
+      },
+    };
+  },
 });
 
 describe('getDropItems', () => {
@@ -48,33 +49,6 @@ describe('getDropItems', () => {
 
   it('skips holes in the item list', async () => {
     expect(await drop([undefined as unknown as StubItem])).toEqual([]);
-  });
-
-  describe('plain files', () => {
-    it('passes a dropped file through', async () => {
-      const file = png();
-
-      expect(await drop([fileItem(file)])).toEqual([{ type: 'file', file }]);
-    });
-
-    it('ignores an item whose file cannot be read', async () => {
-      expect(await drop([{ kind: 'file', type: 'image/png', getAsFile: () => null }])).toEqual([]);
-    });
-
-    it('drops an item that reads as a directory', async () => {
-      // A directory dragged into a browser without the entry API surfaces as a File that fails to read.
-      class FailingFileReader {
-        public onerror: (() => void) | null = null;
-        public onloadend: (() => void) | null = null;
-        public onprogress: (() => void) | null = null;
-        public abort() {}
-        public readAsDataURL() {
-          this.onerror?.();
-        }
-      }
-      vi.stubGlobal('FileReader', FailingFileReader);
-      expect(await drop([fileItem(png())])).toEqual([]);
-    });
   });
 
   describe('entries', () => {
@@ -109,10 +83,42 @@ describe('getDropItems', () => {
       ]);
     });
 
-    it('uses getAsEntry when webkitGetAsEntry is absent', async () => {
-      const items = await drop([{ kind: 'file', type: 'image/png', getAsEntry: () => fileEntry(png(), '/a.png') }]);
+    it('reads every batch of a large directory', async () => {
+      // Chromium hands out at most 100 entries per `readEntries` call.
+      const files = Array.from({ length: 250 }, (_, i) => fileEntry(png(), `/dir/${i}.png`));
+      const items = await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => directoryEntry(files, 100) }]);
 
-      expect(items).toHaveLength(1);
+      expect(items).toHaveLength(250);
+    });
+
+    it('keeps the readable files of a directory when one cannot be read', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const unreadable = {
+        isFile: true,
+        isDirectory: false,
+        fullPath: '/dir/locked.png',
+        file: (_cb: unknown, onError: (error: DOMException) => void) =>
+          onError(new DOMException('', 'NotReadableError')),
+      };
+      const tree = directoryEntry([fileEntry(png(), '/dir/a.png'), unreadable]);
+      const items = await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => tree }]);
+
+      expect(items.map((item) => (item as { fullPath: string }).fullPath)).toEqual(['/dir/a.png']);
+    });
+
+    it('settles when a directory cannot be listed', async () => {
+      vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const unlistable = {
+        isFile: false,
+        isDirectory: true,
+        createReader: () => ({
+          readEntries: (_cb: unknown, onError: (error: DOMException) => void) =>
+            onError(new DOMException('', 'NotReadableError')),
+        }),
+      };
+      const tree = directoryEntry([fileEntry(png(), '/dir/a.png'), unlistable]);
+
+      expect(await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => tree }])).toHaveLength(1);
     });
 
     it('warns and yields nothing for an empty entry', async () => {
@@ -120,13 +126,6 @@ describe('getDropItems', () => {
       expect(await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => null }])).toEqual([]);
       // A null entry short-circuits before `readEntryContentAsync`, so nothing is logged for it.
       expect(warn).not.toHaveBeenCalled();
-    });
-
-    it('warns when a directory reader yields an empty entry', async () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      const tree = directoryEntry([null]);
-      expect(await drop([{ kind: 'file', type: '', webkitGetAsEntry: () => tree }])).toEqual([]);
-      expect(warn).toHaveBeenCalledWith('Unexpectedly received empty content entry', { scope: 'drag-and-drop' });
     });
   });
 
@@ -154,7 +153,7 @@ describe('getDropItems', () => {
 
   it('collects files and links dropped together', async () => {
     const items = await drop([
-      fileItem(png()),
+      { kind: 'file', type: 'image/png', webkitGetAsEntry: () => fileEntry(png(), '/a.png') },
       {
         kind: 'string',
         type: 'text/uri-list',

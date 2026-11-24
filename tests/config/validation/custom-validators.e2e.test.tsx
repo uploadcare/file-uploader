@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { FuncFileValidator } from '@/index';
+import type { FileValidators, FuncFileValidator } from '@/index';
+import { delay } from '@/utils/delay';
 import '~/types/jsx';
 import { IMAGE, testFile } from '~/tests/fixtures/files';
+import { emulatorSession, isLive } from '~/tests/utils/emulator.browser';
 import { renderSolution, within } from '~/tests/utils/render-solution';
 import { applyMirror } from './editor';
 
@@ -234,6 +236,65 @@ describe('validation: custom validators', () => {
           expect.anything(),
           expect.anything(),
         );
+    });
+  });
+
+  // `uploadAll()` right after `addFileFromObject()` takes the entry before any validator has started.
+  describe.skipIf(isLive)('an upload requested in the same tick as the add', () => {
+    const uploadRequests = (): string[] => {
+      const log: string[] = [];
+      emulatorSession().on('POST /base/', () => {
+        log.push('upload');
+        return undefined;
+      });
+      return log;
+    };
+
+    const addAndUpload = async (fileValidators: FileValidators, confirmUpload = true) => {
+      const { api } = await renderSolution('regular', { confirmUpload, fileValidators });
+      api.addFileFromObject(IMAGE.PIXEL);
+      if (confirmUpload) api.uploadAll();
+      return api;
+    };
+
+    for (const [name, validator] of [
+      ['a plain function', () => ({ message: 'Bad image' })],
+      ['a "change" descriptor', { runOn: 'change', validator: () => ({ message: 'Bad image' }) }],
+      ['an "add" descriptor', { runOn: 'add', validator: () => ({ message: 'Bad image' }) }],
+      ['an async function', async () => ({ message: 'Bad image' })],
+    ] as const) {
+      it(`does not upload a file that ${name} validator rejects`, async () => {
+        const requests = uploadRequests();
+        const api = await addAndUpload([validator]);
+        await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.status).toBe('failed');
+        expect(requests).toEqual([]);
+      });
+    }
+
+    it('does not upload a rejected file when the list uploads on its own', async () => {
+      const requests = uploadRequests();
+      const api = await addAndUpload([() => ({ message: 'Bad image' })], false);
+      await expect.poll(() => api.getOutputCollectionState().allEntries[0]?.status).toBe('failed');
+      expect(requests).toEqual([]);
+    });
+
+    it('uploads a file that an "add" validator accepts', async () => {
+      const api = await addAndUpload([{ runOn: 'add', validator: () => undefined }]);
+      await expect.poll(() => api.getOutputCollectionState().status, { timeout: 10000 }).toBe('success');
+    });
+
+    it('starts the upload once a slow validator accepts the file', async () => {
+      const log = uploadRequests();
+      const api = await addAndUpload([
+        async () => {
+          log.push('validator-start');
+          await delay(300);
+          log.push('validator-end');
+          return undefined;
+        },
+      ]);
+      await expect.poll(() => api.getOutputCollectionState().status, { timeout: 10000 }).toBe('success');
+      expect(log.slice(0, 3)).toEqual(['validator-start', 'validator-end', 'upload']);
     });
   });
 

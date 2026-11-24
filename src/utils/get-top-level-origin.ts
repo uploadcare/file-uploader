@@ -1,3 +1,7 @@
+import { logger } from '../abstract/logger';
+
+const log = logger.scope('top-level-origin');
+
 export const getTopLevelOrigin = (): string => {
   // The last entry of ancestorOrigins is the top-level origin, readable even from cross-origin iframes.
   // The list is empty when not framed and unsupported in older Firefox; "null" means an opaque origin
@@ -12,7 +16,7 @@ export const getTopLevelOrigin = (): string => {
   try {
     return topLevelWindow.location.origin;
   } catch (e) {
-    console.warn('Unable to access top-level window location:', e);
+    log.warn('Unable to access top-level window location:', e);
     return globalThis.location.origin;
   }
 };

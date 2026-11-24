@@ -32,15 +32,15 @@
     transform: scale(1);
   }
 
-  :where([uc-file-action-button]) button:is(.uc-uploading, .uc-hide-remove) uc-icon[name="close"] {
+  :where([uc-file-action-button]) button:is(.uc-uploading, .uc-queued) uc-icon[name="close"] {
     opacity: 0.5;
   }
 
-  :where([uc-file-action-button]) button:is(.uc-uploading, .uc-hide-remove):hover uc-icon[name="close"] {
+  :where([uc-file-action-button]) button:is(.uc-uploading, .uc-queued):hover uc-icon[name="close"] {
     opacity: 1;
   }
 
-  :where([uc-file-action-button]) button:is(.uc-uploading, .uc-hide-remove) uc-icon[name="remove-file"] {
+  :where([uc-file-action-button]) button:is(.uc-uploading, .uc-queued) uc-icon[name="remove-file"] {
     opacity: 0;
     transform: scale(0.95);
   }
@@ -62,7 +62,19 @@
     height: 24px;
   }
 
-  :where([uc-file-action-button]) button.uc-uploading .uc-preloader {
+  :where([uc-file-action-button]) button:is(.uc-uploading, .uc-queued) .uc-preloader {
     opacity: 1;
+  }
+
+  /* Queued: indeterminate spinner — a fixed partial arc (set via
+     `--l-progress-offset` in the render) rotated continuously. */
+  :where([uc-file-action-button]) button.uc-queued .uc-preloader {
+    animation: uc-file-action-queued-spin 0.9s linear infinite;
+  }
+
+  @keyframes uc-file-action-queued-spin {
+    to {
+      transform: rotate(360deg);
+    }
   }
 }

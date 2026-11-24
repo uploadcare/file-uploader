@@ -21,11 +21,14 @@ describe('events: UI interaction', () => {
     const recorder = recordEvents(provider);
 
     await openModal(root);
+    // The dialog can be on screen before modal-open is reported, so the sentinel waits for it.
+    await recorder.waitFor('modal-open');
     // The sentinel: closing it fires modal-close, so the exact list below says nothing else fired before it.
     api.setModalState(false);
     await recorder.waitFor('modal-close');
 
-    expect(recorder.types).toEqual(['activity-change', 'modal-open', 'modal-close']);
+    // Closing goes through `navigate(null)`, so it reports the activity dropping to null before modal-close.
+    expect(recorder.types).toEqual(['activity-change', 'modal-open', 'activity-change', 'modal-close']);
     expect(recorder.detailsOf('activity-change')[0]).toEqual({ activity: 'start-from' });
     expect(recorder.detailsOf('modal-open')[0]).toEqual({ modalId: 'start-from' });
   });

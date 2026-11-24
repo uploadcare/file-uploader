@@ -5,8 +5,6 @@ type InputData = {
 type Transformer = (value: string) => string;
 
 type Options = {
-  openToken?: string;
-  closeToken?: string;
   transform?: Transformer;
 };
 
@@ -16,13 +14,12 @@ const CLOSE_TOKEN = '}}';
 const PLURAL_PREFIX = 'plural:';
 
 export function applyTemplateData(template: string, data: InputData = {}, options: Options = {}): string {
-  const { openToken = OPEN_TOKEN, closeToken = CLOSE_TOKEN, transform = DEFAULT_TRANSFORMER } = options;
+  const { transform = DEFAULT_TRANSFORMER } = options;
 
   for (const key in data) {
     const rawValue = data[key];
-    const value = rawValue != null ? rawValue.toString() : undefined;
-    const replacement = typeof value === 'string' ? transform(value) : String(value);
-    template = template.replaceAll(openToken + key + closeToken, replacement);
+    const replacement = rawValue != null ? transform(String(rawValue)) : 'undefined';
+    template = template.replaceAll(OPEN_TOKEN + key + CLOSE_TOKEN, replacement);
   }
   return template;
 }

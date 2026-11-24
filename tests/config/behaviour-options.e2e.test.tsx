@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { FuncFileValidator } from '@/index';
+import { delay } from '@/utils/delay';
 import { withResolvers } from '@/utils/withResolvers';
 import { IMAGE } from '~/tests/fixtures/files';
 import { emulatorSession, isLive } from '~/tests/utils/emulator.browser';
@@ -11,7 +12,7 @@ import '~/types/jsx';
  * `imageShrink`, `pasteScope` and `validationConcurrency`.
  *
  * `dynamicButtonShowFirstIcon` is deliberately not here. It only takes effect once `PrimaryAction` has a resolved
- * single source — with none, the default upload icon renders regardless (PrimaryAction.ts:155) — and driving the
+ * single source — with none, the default upload icon renders regardless (`PrimaryAction`'s icon render) — and driving the
  * button to that state needs the dynamic-button attribute set at parse time plus the plugin manager ready. A test
  * that skips that setup asserts the wrong branch and passes for the wrong reason.
  */
@@ -46,7 +47,7 @@ describe.skipIf(isLive)('imageShrink', () => {
 
   it('leaves the file alone when the setting cannot be parsed', async () => {
     // The plugin warns and passes the file through rather than failing the upload
-    // (src/plugins/imageShrinkPlugin.ts:17).
+    // (`imageShrinkPlugin`'s `beforeUpload` hook).
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     expect((await storedFile('not-a-size')).bytes).toEqual(await original());
   });
@@ -66,7 +67,7 @@ const added = (api: Awaited<ReturnType<typeof renderSolution>>['api']) =>
   api.getOutputCollectionState().allEntries.map((entry) => entry.externalUrl ?? entry.name);
 
 // Which pastes are taken (url schemes, editable targets, scopes, activities) is in the happy-dom spec,
-// `src/abstract/features/ClipboardLayer.test.ts`. These check the option and the paste reach a real uploader.
+// `src/abstract/controllers/ClipboardController.test.ts`. These check the option and the paste reach a real uploader.
 describe('pasteScope', () => {
   const pasteInto = async (target: Element) => {
     const data = new DataTransfer();
@@ -81,6 +82,23 @@ describe('pasteScope', () => {
     await pasteInto(root);
 
     await expect.poll(() => api.getOutputCollectionState().totalCount).toBe(1);
+  });
+
+  it('stops taking pastes once the solution is removed, even while the ctx lives on', async () => {
+    const { root, api } = await renderSolution('regular', { pasteScope: 'global' });
+    const parent = root.parentElement as HTMLElement;
+
+    // The provider and config stay, so the ctx survives; only the solution's paste scope goes.
+    root.remove();
+    await delay(0);
+    await pasteInto(document.body);
+
+    // The sentinel: the solution back on the page takes pastes again, through the same handler.
+    parent.append(root);
+    await expect.element(root).toBeInTheDocument();
+    pasteSentinel(document.body);
+
+    await expect.poll(() => added(api)).toEqual([SENTINEL_URL]);
   });
 
   it('ignores paste entirely when disabled', async () => {

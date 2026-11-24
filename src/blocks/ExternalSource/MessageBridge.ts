@@ -1,4 +1,7 @@
+import { logger } from '../../abstract/logger';
 import type { InputMessageHandler, InputMessageMap, InputMessageType, OutputMessage } from './types';
+
+const log = logger.scope('external-source');
 
 const MESSAGE_TYPE_WHITELIST: InputMessageType[] = ['selected-files-change', 'toolbar-state-change'];
 
@@ -40,7 +43,12 @@ export class MessageBridge {
     const handlers = this._handlerMap.get(message.type);
     if (handlers) {
       for (const handler of handlers) {
-        handler(message);
+        // Isolate-and-warn: one throwing handler must not stop the rest.
+        try {
+          handler(message);
+        } catch (error) {
+          log.warn(`A "${message.type}" message handler threw`, error);
+        }
       }
     }
   };

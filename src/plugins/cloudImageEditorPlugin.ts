@@ -1,9 +1,10 @@
+import { ACTIVITY_TYPES } from '../abstract/activity-constants';
 import { defineComponents } from '../abstract/defineComponents';
-import type { UploaderPlugin } from '../abstract/managers/plugin';
+import { EventType } from '../abstract/EventEmitter';
+import type { UploaderPlugin } from '../abstract/managers/plugin/index';
 import * as cloudImageEditorActivityModule from '../blocks/CloudImageEditorActivity/CloudImageEditorActivity';
-import { EventType } from '../blocks/UploadCtxProvider/EventEmitter';
-import { ACTIVITY_TYPES } from '../lit/activity-constants';
-import * as cloudEditorModules from '../solutions/cloud-image-editor';
+import * as cloudEditorModules from '../solutions/cloud-image-editor/index';
+import { renderElement } from './renderElement';
 
 const CLOUD_EDITOR_PLUGIN_ID = 'cloud-image-editor';
 
@@ -26,23 +27,16 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
       label: 'file-item-edit-button',
       shouldRender: (fileEntry) => Boolean(fileEntry.isImage && fileEntry.cdnUrl),
       onClick: (fileEntry) => {
-        uploaderApi.setCurrentActivity?.(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
+        uploaderApi.navigate(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
           internalId: fileEntry.internalId,
         });
-        uploaderApi.setModalState?.(true);
       },
     });
 
     pluginApi.registry.registerActivity({
       id: ACTIVITY_TYPES.CLOUD_IMG_EDIT,
-      render: (host) => {
-        const activityEl = document.createElement('uc-cloud-image-editor-activity');
-        host.append(activityEl);
-
-        return () => {
-          host.replaceChildren();
-        };
-      },
+      label: 'caption-edit-file',
+      render: renderElement('uc-cloud-image-editor-activity'),
     });
 
     const unsubscribe = uploaderApi.on(EventType.FILE_UPLOAD_SUCCESS, (fileEntry) => {
@@ -51,13 +45,12 @@ export const cloudImageEditorPlugin: UploaderPlugin = {
       const cropPreset = pluginApi.config.get('cropPreset');
       const useEditor = pluginApi.config.get('useCloudImageEditor');
       const autoOpen = pluginApi.config.get('cloudImageEditorAutoOpen');
-      const collectionSize = uploaderApi._uploadCollection.size;
+      const collectionSize = uploaderApi.getOutputCollectionState().totalCount;
 
       if (useEditor && collectionSize === 1 && (cropPreset || autoOpen)) {
-        uploaderApi.setCurrentActivity?.(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
+        uploaderApi.navigate(ACTIVITY_TYPES.CLOUD_IMG_EDIT, {
           internalId: fileEntry.internalId,
         });
-        uploaderApi.setModalState?.(true);
       }
     });
 

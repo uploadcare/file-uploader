@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { PlainText } from '@/abstract/l10n';
 import { TEST_IMAGE_URL } from '~/tests/utils/constants';
 import { createTestPlugin, renderSolution, within } from '~/tests/utils/render-solution';
 
@@ -14,7 +15,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'show-action',
           icon: 'test-action-icon',
-          label: 'Show Action',
+          label: 'Show Action' as PlainText,
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -36,7 +37,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'hidden-action',
           icon: 'default',
-          label: 'Hidden Action',
+          label: 'Hidden Action' as PlainText,
           shouldRender: () => false,
           onClick: () => {},
         });
@@ -57,6 +58,36 @@ describe('plugin file actions', () => {
       .not.toBeInTheDocument();
   });
 
+  it('re-checks shouldRender() when a config option it reads changes while the list is open', async () => {
+    const plugin = createTestPlugin({
+      id: 'fa-config',
+      setup: ({ pluginApi }) => {
+        pluginApi.registry.registerConfig({ name: 'showConfigAction', defaultValue: false });
+        pluginApi.registry.registerFileAction({
+          id: 'config-action',
+          icon: 'default',
+          label: 'Config Action' as PlainText,
+          shouldRender: () => Boolean(pluginApi.config.get('showConfigAction')),
+          onClick: () => {},
+        });
+      },
+    });
+
+    const { api, root, config } = await renderSolution('regular', { plugins: [plugin] });
+    api.addFileFromUrl(TEST_IMAGE_URL);
+    api.initFlow();
+    // Settled first: an entry change re-checks shouldRender() too, and would hide what this test is about.
+    await expect.poll(() => api.getOutputCollectionState().isSuccess).toBe(true);
+    const action = within(root).getByRole('button', { name: 'Config Action', exact: true });
+    await expect.element(action).not.toBeInTheDocument();
+
+    config.showConfigAction = true;
+    await expect.element(action).toBeVisible();
+
+    config.showConfigAction = false;
+    await expect.element(action).not.toBeInTheDocument();
+  });
+
   it('calls onClick() with the entry when the button is clicked', async () => {
     const onClick = vi.fn();
     const plugin = createTestPlugin({
@@ -65,7 +96,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'click-action',
           icon: 'default',
-          label: 'Click Action',
+          label: 'Click Action' as PlainText,
           shouldRender: () => true,
           onClick,
         });
@@ -97,7 +128,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'status-action',
           icon: 'default',
-          label: 'Status Action',
+          label: 'Status Action' as PlainText,
           shouldRender,
           onClick: () => {},
         });
@@ -120,7 +151,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'error-action',
           icon: 'default',
-          label: 'Error Action',
+          label: 'Error Action' as PlainText,
           shouldRender: () => {
             throw new Error('shouldRender failed');
           },
@@ -152,7 +183,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'remove-file-action',
           icon: 'default',
-          label: 'Remove File Action',
+          label: 'Remove File Action' as PlainText,
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -184,7 +215,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'temp-action',
           icon: 'temp-icon',
-          label: 'Temp Action',
+          label: 'Temp Action' as PlainText,
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -209,7 +240,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'action-a',
           icon: 'default',
-          label: 'Action A',
+          label: 'Action A' as PlainText,
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -222,7 +253,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'action-b',
           icon: 'default',
-          label: 'Action B',
+          label: 'Action B' as PlainText,
           shouldRender: () => true,
           onClick: () => {},
         });
@@ -245,7 +276,7 @@ describe('plugin file actions', () => {
         pluginApi.registry.registerFileAction({
           id: 'error-onclick',
           icon: 'default',
-          label: 'Error OnClick',
+          label: 'Error OnClick' as PlainText,
           shouldRender: () => true,
           onClick: () => {
             throw new Error('boom');
@@ -268,3 +299,9 @@ describe('plugin file actions', () => {
     await expect.element(within(root).getByText('prithiviraj-a-fa7Stge3YXs-unsplash.jpg')).toBeVisible();
   });
 });
+
+declare module '@/types/index' {
+  interface CustomConfig {
+    showConfigAction: boolean;
+  }
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { IMAGE } from '~/tests/fixtures/files';
-import { renderSolution, within } from '~/tests/utils/render-solution';
+import { clickSource, renderSolution, within } from '~/tests/utils/render-solution';
 import '~/types/jsx';
 import { bodiesOf, bodiesWithAction, clearSent, types, waitForType } from './sink';
 
@@ -28,8 +28,7 @@ describe('telemetry: action events', () => {
     );
 
     expect(removal.payload.metadata).toMatchObject({ event: 'remove-file', node: 'UC-FILE-ITEM' });
-    // FileItem sends this one without an eventType, so it goes out with an empty one. Pinned as current behaviour.
-    expect(removal.event_type).toBe('');
+    expect(removal.event_type).toBe('action-event');
   });
 
   it('reports an action-event when the upload list is cleared', async () => {
@@ -48,6 +47,46 @@ describe('telemetry: action events', () => {
     expect(bodiesOf('action-event')[0].payload.metadata).toMatchObject({
       event: 'clear-all',
       node: 'UC-UPLOAD-LIST',
+    });
+  });
+
+  it('reports an action-event when more files are added from the upload list', async () => {
+    const { api, root } = await renderSolution('regular', { qualityInsights: true });
+    api.addFileFromObject(IMAGE.PIXEL);
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+    const uploadList = within(root).getByTestId('uc-upload-list');
+    await expect.element(uploadList).toBeVisible();
+    await waitForType('init-solution');
+    clearSent();
+
+    await uploadList.getByRole('button', { name: 'Add more' }).click();
+    await waitForType('action-event');
+
+    expect(bodiesOf('action-event')[0].payload.metadata).toMatchObject({
+      event: 'add-more',
+      node: 'UC-UPLOAD-LIST',
+    });
+  });
+
+  it('reports an action-event when a url is submitted', async () => {
+    const { root } = await renderSolution('regular', { qualityInsights: true });
+    await clickSource(root, 'From link');
+    const urlSource = within(root).getByTestId('uc-url-source');
+    await expect.element(urlSource).toBeVisible();
+    await waitForType('init-solution');
+    clearSent();
+
+    await urlSource.getByRole('textbox').fill('https://example.com/image.png');
+    await urlSource.getByRole('button', { name: 'Import' }).click();
+    await vi.waitFor(() => expect(bodiesWithAction('upload-from-url')).toHaveLength(1), {
+      timeout: 20_000,
+      interval: 50,
+    });
+
+    expect(bodiesWithAction('upload-from-url')[0].payload.metadata).toMatchObject({
+      event: 'upload-from-url',
+      node: 'UC-URL-SOURCE',
     });
   });
 });

@@ -1,10 +1,12 @@
-import type { PubSub } from '../../../lit/PubSubCompat';
-import type { SharedState } from '../../../lit/SharedState';
-import type { SharedInstancesBag } from '../../../lit/shared-instances';
-import type { Uid } from '../../../lit/Uid';
 import type { ConfigType } from '../../../types';
+import type { ConfigController } from '../../controllers/ConfigController';
+import { RouterController } from '../../controllers/RouterController';
+import { UploadCollectionController } from '../../controllers/UploadCollectionController';
 import type { CustomConfig } from '../../customConfigOptions';
-import { sharedConfigKey } from '../../sharedConfigKey';
+import type { ControllerContainer } from '../../di/ControllerContainer';
+import type { Disposables } from '../../di/Disposables';
+import type { Logger } from '../../logger';
+import type { Uid } from '../../Uid';
 import type { PluginRegistry } from './PluginRegistry';
 import type {
   PluginActivityApi,
@@ -13,15 +15,20 @@ import type {
   PluginFileEntryUpdate,
   PluginFilesApi,
   PluginRegistryApi,
+  PluginRouterApi,
 } from './PluginTypes';
 
 export function buildPluginApi(
   registry: PluginRegistry,
-  ctx: PubSub<SharedState>,
-  sharedInstancesBag: SharedInstancesBag,
+  config: ConfigController,
+  container: ControllerContainer,
   pluginId: string,
-  configSubscriptions: (() => void)[],
+  configSubscriptions: Disposables,
+  /** Per-plugin scoped logger — also exposed as `pluginApi.logger`. */
+  log: Logger,
 ): PluginApi {
+  // Router/collection resolved off the per-ctx container.
+  const router = container.get(RouterController);
   const registryApi: PluginRegistryApi = {
     registerSource: (source) => registry.addSource(pluginId, source),
     registerActivity: (activity) => registry.addActivity(pluginId, activity),
@@ -30,60 +37,86 @@ export function buildPluginApi(
     registerIcon: (icon) => registry.addIcon(pluginId, icon),
     registerL10n: (l10n) => registry.addL10n(pluginId, l10n),
     registerConfig: (definition) => {
-      registry.addConfig(pluginId, definition);
-      const stateKey = sharedConfigKey(definition.name as keyof (ConfigType & CustomConfig));
-      if (!ctx.has(stateKey as keyof SharedState)) {
-        ctx.add(stateKey, definition.defaultValue as unknown as SharedState[typeof stateKey]);
+      // Warn + keep the first when a custom config name is registered twice
+      // (first-registration-wins). Logged on this plugin's logger so the
+      // conflicting registration is attributed to the plugin that lost.
+      if (config.getCustomDescriptors().some((d) => d.name === definition.name)) {
+        log.warn(`Config option "${definition.name}" is already registered`);
+        return;
+      }
+      // Register the FULL descriptor on the ctx's `ConfigController` (the single
+      // source of truth for config descriptors) — off the `*cfg/*` facade, and no
+      // longer a partial name+default. Owned by `pluginId` so the descriptor is
+      // dropped if the plugin is removed. Guarded so a built-in key is never
+      // overridden by a custom registration.
+      if (!config.hasKey(definition.name)) {
+        config.register(definition, pluginId);
       }
     },
   };
 
   const configApi: PluginConfigApi = {
+    // Tracked: a read inside a reactive render (a file action's `shouldRender`) re-runs it when the option changes.
     get: <TKey extends keyof (ConfigType & CustomConfig)>(configName: TKey): (ConfigType & CustomConfig)[TKey] => {
-      const stateKey = sharedConfigKey(configName);
-      return ctx.read(stateKey) as unknown as (ConfigType & CustomConfig)[TKey];
+      return config.getTracked(configName);
     },
 
     subscribe: <TKey extends keyof (ConfigType & CustomConfig)>(
       configName: TKey,
       callback: (value: (ConfigType & CustomConfig)[TKey]) => void,
     ): (() => void) => {
-      const stateKey = sharedConfigKey(configName);
-      const unsub = ctx.sub(stateKey, (value) => {
-        callback(value as unknown as (ConfigType & CustomConfig)[TKey]);
-      });
-      configSubscriptions.push(unsub);
+      // Immediate fire + per-key `Object.is` dedup via the atomic `observe`
+      // — the same semantics the `ctx.sub('*cfg/<name>', …)` facade gave.
+      const unsub = config.observe(configName, callback, { immediate: true });
+      configSubscriptions.add(unsub);
       return unsub;
     },
   };
 
   const activityApi: PluginActivityApi = {
     getParams: (): Record<string, unknown> => {
-      return ctx.read('*currentActivityParams') as Record<string, unknown>;
+      return router.params as Record<string, unknown>;
     },
 
     subscribeToParams: (callback: (params: Record<string, unknown>) => void): (() => void) => {
-      const unsub = ctx.sub('*currentActivityParams', (params) => {
-        callback(params as Record<string, unknown>);
+      let last = router.params;
+      // Fire immediately with the current params (matches v1's `ctx.sub`).
+      callback(last as Record<string, unknown>);
+      const unsub = router.subscribe(() => {
+        if (router.params !== last) {
+          last = router.params;
+          callback(router.params as Record<string, unknown>);
+        }
       });
-      configSubscriptions.push(unsub);
+      configSubscriptions.add(unsub);
       return unsub;
     },
   };
 
   const filesApi: PluginFilesApi = {
     update: (internalId: string, changes: PluginFileEntryUpdate) => {
-      const entry = sharedInstancesBag.uploadCollection?.read(internalId as Uid);
+      const entry = container.getOrNull(UploadCollectionController)?.read(internalId as Uid);
       if (!entry) return;
       if (changes.file !== undefined) {
-        entry.setValue('file', changes.file as File);
-        entry.setValue('fileSize', changes.file.size);
+        entry.set('file', changes.file as File);
+        entry.set('fileSize', changes.file.size);
       }
-      if (changes.cdnUrl !== undefined) entry.setValue('cdnUrl', changes.cdnUrl);
-      if (changes.cdnUrlModifiers !== undefined) entry.setValue('cdnUrlModifiers', changes.cdnUrlModifiers);
-      if (changes.mimeType !== undefined) entry.setValue('mimeType', changes.mimeType);
+      if (changes.cdnUrl !== undefined) entry.set('cdnUrl', changes.cdnUrl);
+      if (changes.cdnUrlModifiers !== undefined) entry.set('cdnUrlModifiers', changes.cdnUrlModifiers);
+      if (changes.mimeType !== undefined) entry.set('mimeType', changes.mimeType);
     },
   };
 
-  return { registry: registryApi, config: configApi, activity: activityApi, files: filesApi };
+  const routerApi: PluginRouterApi = {
+    traverse: (edge) => router.traverse(edge),
+  };
+
+  return {
+    registry: registryApi,
+    config: configApi,
+    activity: activityApi,
+    files: filesApi,
+    router: routerApi,
+    logger: log,
+  };
 }
