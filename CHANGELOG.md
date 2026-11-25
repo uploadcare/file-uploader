@@ -41,7 +41,7 @@ Details for each are in [Other changes](https://uploadcare.com/docs/file-uploade
 * **api:** `uploadAll()` takes files that are still being validated
 * **events:** `activity-change` fires when the modal closes, with `{ activity: null }` when no activity is left showing
 * **events:** `common-upload-start` fires once, when the first file is uploading
-* **events:** `common-upload-failed` fires once nothing is uploading or being validated, and reports only new failures
+* **events:** `common-upload-failed` fires once nothing is uploading or being validated, and again only when something new fails; its payload still lists every failed file
 * **events:** `file-upload-failed` fires once per failure
 * **events:** `modal-open` and `modal-close` fire when `setCurrentActivity()` or `historyBack()` changes the screen of an open modal
 * **upload-list:** a long list renders only the visible `uc-file-item` rows and a few around them
