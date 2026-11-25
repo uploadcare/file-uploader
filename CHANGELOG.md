@@ -1,7 +1,7 @@
 # [1.37.0](https://github.com/uploadcare/file-uploader/compare/v1.36.1...v1.37.0) (2026-11-24)
 
 > [!WARNING]
-> Some undocumented internals were removed or changed, and a few behaviors changed. If your app relies on them, it can break. Read the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-1.37.0/) and the Behavior Changes section below before you upgrade.
+> Some undocumented APIs were removed or changed, including ones the package exported but the docs never described, and a few behaviors changed. If your app relies on them, it can break. Read the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-1.37.0/) and the Behavior Changes section below before you upgrade.
 
 This release rebuilds the uploader's internals on Lit and signals. No documented tag, option, event or CSS variable was removed or renamed, and deprecated APIs keep working.
 
