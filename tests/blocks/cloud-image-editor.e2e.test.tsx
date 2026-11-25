@@ -751,7 +751,8 @@ describe('uc-cloud-image-editor', () => {
     expect(changes).toEqual([cdnUrlModifiers]);
   });
 
-  it('carries a filter it does not list through Apply', async () => {
+  // The real CDN answers 400 for a filter it does not know, so the image never loads there.
+  it.skipIf(isLive)('carries a filter it does not list through Apply', async () => {
     const { element, editor } = renderEditor({ 'cdn-url': `https://ucarecdn.com/${UUID}/-/filter/notarealfilter/50/` });
     const cropper = editor.getByTestId('uc-editor-image-cropper');
     await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
