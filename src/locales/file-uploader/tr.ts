@@ -27,7 +27,7 @@ export default {
   yes: 'Evet',
   'confirm-your-action': 'Eyleminizi onaylayın',
   'are-you-sure': 'Emin misiniz?',
-  'selected-count': 'Seçildi:',
+  'selected-count': 'Seçildi: {{count}} / {{total}}',
   'upload-error': 'Yükleme hatası',
   'validation-error': 'Doğrulama hatası',
   'no-files': 'Dosya seçilmedi',

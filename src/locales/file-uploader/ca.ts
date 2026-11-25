@@ -27,7 +27,7 @@ export default {
   yes: 'Sí',
   'confirm-your-action': "Confirma l'acció",
   'are-you-sure': 'Estàs segur?',
-  'selected-count': 'Seleccionat:',
+  'selected-count': '{{count}} de {{total}} seleccionats',
   'select-all': 'Seleccionar tot',
   'deselect-all': 'Deseleccionar tot',
   'upload-error': 'Error de càrrega',

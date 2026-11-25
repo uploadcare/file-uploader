@@ -27,7 +27,7 @@ export default {
   yes: 'Ja',
   'confirm-your-action': 'Bevestig je actie',
   'are-you-sure': 'Weet je het zeker?',
-  'selected-count': 'Geselecteerd:',
+  'selected-count': '{{count}} van {{total}} geselecteerd',
   'upload-error': 'Uploadfout',
   'validation-error': 'Validatiefout',
   'no-files': 'Geen bestanden geselecteerd',

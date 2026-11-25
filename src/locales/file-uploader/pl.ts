@@ -27,7 +27,7 @@ export default {
   yes: 'Tak',
   'confirm-your-action': 'Potwierdź swoją akcję',
   'are-you-sure': 'Jesteś pewny?',
-  'selected-count': 'Wybrano:',
+  'selected-count': 'Wybrano: {{count}} z {{total}}',
   'upload-error': 'Błąd przesyłania',
   'validation-error': 'Błąd walidacji',
   'no-files': 'Nie wybrano plików',

@@ -27,7 +27,7 @@ export default {
   yes: 'Այո',
   'confirm-your-action': 'Հաստատեք ձեր արարքը',
   'are-you-sure': 'Համոզված եք՞',
-  'selected-count': 'Ընտրված է՝',
+  'selected-count': 'Ընտրված է՝ {{count}} / {{total}}',
   'upload-error': 'Բեռնման սխալ',
   'validation-error': 'Սխալմունքի սխալ',
   'no-files': 'Ֆայլեր ընտրված չեն',

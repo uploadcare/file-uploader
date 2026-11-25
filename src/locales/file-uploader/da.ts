@@ -27,7 +27,7 @@ export default {
   yes: 'Ja',
   'confirm-your-action': 'Bekræft din handling',
   'are-you-sure': 'Er du sikker?',
-  'selected-count': 'Valgt:',
+  'selected-count': '{{count}} af {{total}} valgt',
   'select-all': 'Vælg alle',
   'deselect-all': 'Fravælg alle',
   'upload-error': 'Fejl ved upload',

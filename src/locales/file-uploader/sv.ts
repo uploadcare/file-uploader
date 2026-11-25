@@ -27,7 +27,7 @@ export default {
   yes: 'Ja',
   'confirm-your-action': 'Bekräfta din åtgärd',
   'are-you-sure': 'Är du säker?',
-  'selected-count': 'Vald:',
+  'selected-count': '{{count}} av {{total}} valda',
   'upload-error': 'Uppladdningsfel',
   'validation-error': 'Valideringsfel',
   'no-files': 'Inga filer valda',

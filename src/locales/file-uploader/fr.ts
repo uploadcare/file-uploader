@@ -27,7 +27,7 @@ export default {
   yes: 'Oui',
   'confirm-your-action': 'Confirmez votre action',
   'are-you-sure': 'Êtes-vous sûr?',
-  'selected-count': 'Sélectionné :',
+  'selected-count': 'Sélectionnés : {{count}} sur {{total}}',
   'upload-error': 'Erreur de téléchargement',
   'validation-error': 'Erreur de validation',
   'no-files': 'Aucun fichier sélectionné',

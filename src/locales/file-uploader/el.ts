@@ -27,7 +27,7 @@ export default {
   yes: 'Ναι',
   'confirm-your-action': 'Επιβεβαίωση της ενέργειάς σας',
   'are-you-sure': 'Είστε σίγουροι;',
-  'selected-count': 'Επιλεγμένο:',
+  'selected-count': 'Επιλέχθηκαν {{count}} από {{total}}',
   'select-all': 'Επιλογή όλων',
   'deselect-all': 'Αποεπιλογή όλων',
   'upload-error': 'Σφάλμα μεταφόρτωσης',

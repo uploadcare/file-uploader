@@ -27,7 +27,7 @@ export default {
   yes: 'Bəli',
   'confirm-your-action': 'Əməliyyatınızı təsdiqləyin',
   'are-you-sure': 'Əminsinizmi?',
-  'selected-count': 'Seçildi:',
+  'selected-count': 'Seçildi: {{count}} / {{total}}',
   'select-all': 'Hamısını seç',
   'deselect-all': 'Hamısını ləğv et',
   'upload-error': 'Yükləmə xətası',

@@ -27,7 +27,7 @@ export default {
   yes: 'Já',
   'confirm-your-action': 'Staðfesta aðgerð',
   'are-you-sure': 'Ertu viss?',
-  'selected-count': 'Valið:',
+  'selected-count': 'Valið: {{count}} af {{total}}',
   'upload-error': 'Villa við upphleðslu',
   'validation-error': 'Staðfestingarvilla',
   'no-files': 'Engar skrár valdar',

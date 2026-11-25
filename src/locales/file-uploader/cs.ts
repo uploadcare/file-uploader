@@ -27,7 +27,7 @@ export default {
   yes: 'Ano',
   'confirm-your-action': 'Potvrdit akci',
   'are-you-sure': 'Jste si jistí?',
-  'selected-count': 'Vybráno:',
+  'selected-count': 'Vybráno: {{count}} z {{total}}',
   'select-all': 'Vybrat vše',
   'deselect-all': 'Zrušit výběr všeho',
   'upload-error': 'Chyba nahrávání',

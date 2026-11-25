@@ -27,7 +27,7 @@ export default {
   yes: 'Jah',
   'confirm-your-action': 'Kinnita toiming',
   'are-you-sure': 'Oled sa kindel?',
-  'selected-count': 'Valitud:',
+  'selected-count': 'Valitud: {{count}} / {{total}}',
   'select-all': 'Vali kõik',
   'deselect-all': 'Tühista kõikide valik',
   'upload-error': 'Üleslaadimise viga',

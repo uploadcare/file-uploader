@@ -27,7 +27,7 @@ export default {
   yes: 'დიახ',
   'confirm-your-action': 'დაადასტურეთ ქმედება',
   'are-you-sure': 'დარწმუნებული ხართ?',
-  'selected-count': 'არჩეულია:',
+  'selected-count': 'არჩეულია: {{count}} / {{total}}',
   'upload-error': 'ატვირთვის შეცდომა',
   'validation-error': 'ვალიდაციის შეცდომა',
   'no-files': 'ფაილები არ არის არჩეული',
