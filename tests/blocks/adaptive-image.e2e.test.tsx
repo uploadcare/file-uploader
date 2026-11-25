@@ -91,9 +91,9 @@ describe('uc-img url building', () => {
   });
 
   it('applies the format operation', async () => {
-    const { src } = await renderImg('width="500px" format="avif"');
+    const { src } = await renderImg('width="500px" format="webp"');
 
-    expect(src).toContain('/-/format/avif/');
+    expect(src).toContain('/-/format/webp/');
   });
 
   it('applies the quality operation', async () => {
@@ -111,9 +111,9 @@ describe('uc-img url building', () => {
   });
 
   it('combines format, quality and custom operations', async () => {
-    const { src } = await renderImg('width="500px" format="avif" quality="lighter" cdn-operations="-/grayscale/"');
+    const { src } = await renderImg('width="500px" format="webp" quality="lighter" cdn-operations="-/grayscale/"');
 
-    expect(src).toContain('/-/format/avif/');
+    expect(src).toContain('/-/format/webp/');
     expect(src).toContain('/-/quality/lighter/');
     expect(src).toContain('/-/grayscale/');
   });
