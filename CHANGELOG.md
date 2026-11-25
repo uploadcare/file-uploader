@@ -1,3 +1,69 @@
+# [1.37.0](https://github.com/uploadcare/file-uploader/compare/v1.36.1...v1.37.0) (2026-11-24)
+
+> [!WARNING]
+> Some undocumented APIs were removed or changed, including ones the package exported but the docs never described, and a few behaviors changed. If your app relies on them, it can break. Read the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-1.37.0/) and the Behavior Changes section below before you upgrade.
+
+This release rebuilds the uploader's internals on Lit and signals. No documented tag, option, event or CSS variable was removed or renamed, and deprecated APIs keep working.
+
+### Features
+
+* **api:** add [`navigate()`](https://uploadcare.com/docs/file-uploader/api/#navigate) to open an activity or close the modal in one call
+* **api:** add [`addFilesFromObjects()`](https://uploadcare.com/docs/file-uploader/api/#add-files-from-objects) to add several files in one batch; it returns their internal IDs
+* **api:** add `snapshot()` to `OutputCollectionState` to keep a copy for a later read, see [Reading the state](https://uploadcare.com/docs/file-uploader/api/#reading-output-collection-state)
+* **config:** add the [`modalPresentation`](https://uploadcare.com/docs/file-uploader/options/#modal-presentation) option to show modals inline
+* **upload-list:** move through the files with the arrow keys, Home, End, Page Up and Page Down
+* **cloud-image-editor:** move and resize the crop box from the keyboard, with its size and position announced to screen readers
+* **cloud-image-editor:** translate the network problems screen
+* **drop-area:** operate the clickable drop area from the keyboard
+* **dynamic-btn:** outline the button while a dragged file is directly over it
+* **camera:** open the camera without sound when only the microphone is refused
+* **camera:** tell a missing or busy camera apart from denied access
+* **plugins:** add [`pluginApi.router` and `pluginApi.logger`](https://uploadcare.com/docs/file-uploader/plugins/runtime-api/)
+* **plugins:** let an activity name its dialog with a `label`, and type labels as l10n keys or `PlainText`, see [Labels](https://uploadcare.com/docs/file-uploader/plugins/extension-points/#labels)
+* **locales:** let `defineLocale()` take a partial definition in TypeScript; missing keys fall back to English
+* **types:** export the upload-client error classes as values, so an upload's `error` can be checked with `instanceof`
+
+### Deprecations
+
+Deprecated APIs keep working until the next major version. See the [migration guide](https://uploadcare.com/docs/file-uploader/migration-to-1.37.0/) for the replacements.
+
+* **api:** `setCurrentActivity()` and `setModalState()`, use [`navigate()`](https://uploadcare.com/docs/file-uploader/migration-to-1.37.0/#path-1-activity-navigation)
+* **config:** [`multipartMaxAttempts`](https://uploadcare.com/docs/file-uploader/migration-to-1.37.0/#path-4-multipart-attempts) has no effect, and a non-default value logs a warning
+* **plugins:** a `label` that is any string, use an l10n key or [`PlainText`](https://uploadcare.com/docs/file-uploader/migration-to-1.37.0/#path-3-plugin-labels)
+
+### Behavior Changes
+
+Details for each are in [Other changes](https://uploadcare.com/docs/file-uploader/migration-to-1.37.0/#other-changes).
+
+* **api:** `historyBack()` returns to the previous activity, whichever it was, not only the start screen or the upload list
+* **api:** `getOutputItem()` throws for a removed file
+* **api:** `addFileFromUuid()` throws `Invalid UUID` for a value that isn't a file UUID
+* **api:** `uploadAll()` takes files that are still being validated
+* **events:** `activity-change` fires when the modal closes, with `{ activity: null }` when no activity is left showing
+* **events:** `common-upload-start` fires once, when the first file is uploading
+* **events:** `common-upload-failed` fires once nothing is uploading or being validated, and again only when something new fails; its payload still lists every failed file
+* **events:** `file-upload-failed` fires once per failure
+* **events:** `modal-open` and `modal-close` fire when `setCurrentActivity()` or `historyBack()` changes the screen of an open modal
+* **upload-list:** a long list renders only the visible `uc-file-item` rows and a few around them
+* **inline:** an inline uploader with a set height scrolls its file list inside that height
+* **cloud-image-editor:** the editor renders its icons as `uc-editor-icon`, and the standalone bundle exports `EditorIcon` in place of `Icon`
+* **a11y:** roles and names changed on the modal, the file rows, the dynamic button's menu and the camera controls
+* **logging:** the uploader's console messages start with `[uc]`, then the `ctx-name` when there is one, and the area
+* **locales:** 15 new keys for the camera and the image editor; a custom locale without them shows English text
+* **types:** event payload types are wider and match what the events carry
+* **bundle:** an app that bundles the whole npm package grows by about 7 KB gzip, and the CDN uploader bundles by about 10 KB gzip
+* undocumented exports and block members were removed, see [Removed internals](https://uploadcare.com/docs/file-uploader/migration-to-1.37.0/#removed-internals)
+
+### Bug Fixes
+
+* **upload:** stop the upload work of a file that was removed while it waited in the queue or in a plugin hook
+* **validation:** call no validator for a file that was removed before its turn
+* **validation:** drop the earlier error of a validator that throws on a later run
+* **a11y:** stop announcing every file row as a separate live region
+* **a11y:** name the camera's microphone button, the dropdown trigger and the external source frame
+
+
+
 ## [1.36.1](https://github.com/uploadcare/file-uploader/compare/v1.36.0...v1.36.1) (2026-11-09)
 
 

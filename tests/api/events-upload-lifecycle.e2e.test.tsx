@@ -242,7 +242,7 @@ describe('events: upload lifecycle', () => {
     expect(recorder.detailsOf('common-upload-success')).toHaveLength(1);
   });
 
-  it('fires file-upload-start for an upload that finishes before its start is flushed', async () => {
+  it.skipIf(isLive)('fires file-upload-start for an upload that finishes before its start is flushed', async () => {
     // The collection reports its changes in batches, on a 0ms timer. A busy or background tab runs that timer late
     // while the network keeps answering, so an upload can start and finish inside one batch. Answering in the task
     // that asked gets there on purpose: an upload by uuid is one body-less `GET /info/`, which `hold: false` answers

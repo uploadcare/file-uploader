@@ -11,6 +11,7 @@ import '~/types/jsx';
 import { UploaderRegistry } from '@/abstract/UploaderRegistry';
 import { withResolvers } from '@/utils/withResolvers';
 import type { TelemetryBody } from '~/tests/api/telemetry/sink';
+import { IMAGE } from '~/tests/fixtures/files';
 import { emulatorSession, isLive } from '~/tests/utils/emulator.browser';
 import { createInCtx, inCtx, modalDialog, renderSolution, within } from '~/tests/utils/render-solution';
 import { getCtxName } from '~/tests/utils/test-renderer';
@@ -136,7 +137,7 @@ describe('uc-cloud-image-editor', () => {
 
   it('keeps the uploader dialog open on Escape with the slider open', async () => {
     const { root, api } = await renderSolution('regular');
-    const { internalId } = api.addFileFromUuid(UUID);
+    const { internalId } = api.addFileFromObject(IMAGE.SQUARE);
     await expect.poll(() => api.getOutputItem(internalId).isSuccess).toBe(true);
     // Through the list, as a user gets there: an editor the flow opened straight on closes the dialog on cancel.
     api.setCurrentActivity('upload-list');
@@ -750,7 +751,8 @@ describe('uc-cloud-image-editor', () => {
     expect(changes).toEqual([cdnUrlModifiers]);
   });
 
-  it('carries a filter it does not list through Apply', async () => {
+  // The real CDN answers 400 for a filter it does not know, so the image never loads there.
+  it.skipIf(isLive)('carries a filter it does not list through Apply', async () => {
     const { element, editor } = renderEditor({ 'cdn-url': `https://ucarecdn.com/${UUID}/-/filter/notarealfilter/50/` });
     const cropper = editor.getByTestId('uc-editor-image-cropper');
     await expect.poll(() => activeClass(cropper.element())).toMatch(/uc-active_from_/);
