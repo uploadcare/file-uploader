@@ -6,7 +6,6 @@ import { UploadCollectionController } from '../../abstract/controllers/UploadCol
 import { inject } from '../../abstract/di/inject';
 import { isAbortError } from '../../abstract/di/Lifetime';
 import { TelemetryManager } from '../../abstract/managers/TelemetryManager';
-import { effect } from '../../lit/effect';
 import { cancelPending, debounced } from '../../lit/rate-limited-method';
 import { ThumbnailController } from '../../lit/ThumbnailController';
 import { operationsFromModifiers } from '../../utils/cdn/operations';
@@ -17,7 +16,6 @@ import './thumb.css';
 import type { ControllerContainer } from '../../abstract/di/ControllerContainer';
 import type { Uid } from '../../abstract/Uid';
 import type { UploadEntryTypedData } from '../../abstract/uploadEntrySchema';
-import type { ConfigType } from '../../types';
 
 import '../Icon/Icon';
 
@@ -53,9 +51,14 @@ export class Thumb extends FileItemConfig {
   @state()
   private _thumbUrl = '';
 
-  private _renderedGridOnce = false;
+  /** The size the thumbnail was last asked for, so a box that grows past it asks again. */
+  private _requestedSize = 0;
 
-  private _firstViewMode: ConfigType['filesViewMode'] | undefined;
+  /** The size of the CDN thumbnail this thumb stored last, so one that loads late does not replace a larger one. */
+  private _storedSize = 0;
+
+  /** The file and operations that thumbnail was of: one of anything else is a new picture, whatever its size. */
+  private _storedContent = '';
 
   private _pendingThumbUpdate?: PendingThumbUpdate;
 
@@ -83,6 +86,7 @@ export class Thumb extends FileItemConfig {
     // A local file that has its thumbnail needs nothing, so it is not measured either.
     if (!uuid && entry.get('thumbUrl')) return;
     const size = this._calculateThumbSize();
+    this._requestedSize = size;
     // Binding to the entry and a change of the entry each ask for a thumbnail, the second while the first may still be
     // decoding the file. A local thumbnail is drawn once whatever the size; a CDN one differs by size and operations.
     const job = uuid ? `${uuid}/${size}/${entry.get('cdnUrlModifiers')}` : 'local';
@@ -102,6 +106,7 @@ export class Thumb extends FileItemConfig {
     const currentThumbUrl = entry.get('thumbUrl');
 
     if (fileInfo && isImage && uuid) {
+      const content = `${uuid}/${entry.get('cdnUrlModifiers')}`;
       let cdnThumbUrl: string | undefined;
       try {
         cdnThumbUrl = serializeFileUrl({
@@ -133,7 +138,16 @@ export class Thumb extends FileItemConfig {
         const { promise } = preloadImage(thumbUrl);
         // Read while adopted: `storeThumb` also runs after release, where the `@inject` field no longer resolves.
         const thumbnails = this._thumbnails;
-        const storeThumb = () => thumbnails.store(entry, thumbUrl);
+        const storeThumb = () => {
+          // The box grew while this one loaded, and the larger thumbnail asked for since then is already in: keep it.
+          // One that failed to load stored nothing, so this one still shows.
+          if (entry === this.entry) {
+            if (content === this._storedContent && size < this._storedSize) return;
+            this._storedContent = content;
+            this._storedSize = size;
+          }
+          thumbnails.store(entry, thumbUrl);
+        };
 
         try {
           // `dispose` here commits rather than releases, on purpose: the entry outlives this row, so a thumbnail that
@@ -263,6 +277,8 @@ export class Thumb extends FileItemConfig {
     cancelPending(this._debouncedGenerateThumb);
     this._cancelPendingThumbUpdate();
     this._generating = undefined;
+    this._requestedSize = 0;
+    this._storedSize = 0;
     this._thumbUrl = '';
   }
 
@@ -307,23 +323,21 @@ export class Thumb extends FileItemConfig {
   }
 
   protected override controllerReady(_container: ControllerContainer): void {
-    this._firstViewMode ??= this._config.get('filesViewMode');
     this._bindToEntry();
+    this._watchSize();
   }
 
-  // Side effect (not a render read): a one-time thumb regeneration on the first
-  // list->grid switch so the higher grid resolution is fetched. `beforeUpdate`
-  // fires eagerly and synchronously on adoption — after `controllerReady` sets
-  // `_firstViewMode` — then again whenever `filesViewMode` changes.
-  /** @internal */
-  @effect({ beforeUpdate: true })
-  protected _regenerateThumbOnGridSwitch(): void {
-    if (this._config.getTracked('filesViewMode') === 'grid' && !this._renderedGridOnce) {
-      if (this._firstViewMode === 'list') {
-        this._requestThumbGeneration(true);
+  // A thumbnail is asked for at the size of the box it is first shown in. The box grows when the list switches to the
+  // grid, or opens after the switch, so it is watched rather than the option: only then is the new size laid out.
+  // A box that shrinks keeps the thumbnail it has.
+  private _watchSize(): void {
+    const observer = new ResizeObserver(() => {
+      if (this._calculateThumbSize() > this._requestedSize) {
+        this._requestThumbGeneration();
       }
-      this._renderedGridOnce = true;
-    }
+    });
+    observer.observe(this);
+    this.adoptionSignal.addEventListener('abort', () => observer.disconnect(), { once: true });
   }
 
   public override render() {
