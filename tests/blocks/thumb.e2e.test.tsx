@@ -132,6 +132,49 @@ describe('uc-thumb (parity, real upload flow)', () => {
   });
 });
 
+// The size in a thumbnail url: `…/-/scale_crop/152x152/center/` gives 152.
+const requestedThumbSize = () => Number(/scale_crop\/(\d+)x/.exec(thumbImg()?.getAttribute('src') ?? '')?.[1] ?? 0);
+
+describe('uc-thumb size after the view mode changes', () => {
+  it('asks for a larger thumbnail once a file added in list view is shown in the grid', async () => {
+    const { api, config } = renderUploadHost();
+    api.addFileFromUrl(TEST_IMAGE_URL);
+    api.initFlow();
+    api.uploadAll();
+
+    await expect.poll(requestedThumbSize, { timeout: 20_000 }).toBeGreaterThan(0);
+    const listSize = requestedThumbSize();
+
+    config.filesViewMode = 'grid';
+
+    // What the grid tile needs: its box, in device pixels.
+    const tileSize = () => {
+      const rect = document.querySelector('uc-thumb')!.getBoundingClientRect();
+      return Math.trunc(Math.max(rect.width, rect.height)) * window.devicePixelRatio;
+    };
+    await expect.poll(tileSize, { timeout: 20_000 }).toBeGreaterThan(listSize);
+    await expect.poll(() => requestedThumbSize() >= tileSize(), { timeout: 20_000 }).toBe(true);
+  }, 30_000);
+
+  it('asks for it when the switch happens while the list is closed', async () => {
+    const { api, config } = renderUploadHost();
+    api.addFileFromUrl(TEST_IMAGE_URL);
+    api.initFlow();
+    api.uploadAll();
+
+    await expect.poll(requestedThumbSize, { timeout: 20_000 }).toBeGreaterThan(0);
+    const listSize = requestedThumbSize();
+
+    api.doneFlow();
+    config.filesViewMode = 'grid';
+    await expect.poll(() => config.getAttribute('files-view-mode') ?? config.filesViewMode).toBe('grid');
+    api.setCurrentActivity('upload-list');
+    api.setModalState(true);
+
+    await expect.poll(requestedThumbSize, { timeout: 20_000 }).toBeGreaterThan(listSize);
+  }, 30_000);
+});
+
 describe('uc-thumb local thumbnail', () => {
   // The thumb asks for its thumbnail when it binds to its entry and again once it is in view, 100ms later.
   it('draws the thumbnail of a local image once, however long the drawing takes', async () => {
