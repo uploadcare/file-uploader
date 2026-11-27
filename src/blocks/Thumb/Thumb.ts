@@ -131,7 +131,11 @@ export class Thumb extends FileItemConfig {
         const { promise } = preloadImage(thumbUrl);
         // Read while adopted: `storeThumb` also runs after release, where the `@inject` field no longer resolves.
         const thumbnails = this._thumbnails;
-        const storeThumb = () => thumbnails.store(entry, thumbUrl);
+        const storeThumb = () => {
+          // The box grew while this one loaded: the larger thumbnail asked for since then is the one to keep.
+          if (entry === this.entry && size < this._requestedSize) return;
+          thumbnails.store(entry, thumbUrl);
+        };
 
         try {
           // `dispose` here commits rather than releases, on purpose: the entry outlives this row, so a thumbnail that
