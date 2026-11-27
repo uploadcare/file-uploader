@@ -80,7 +80,9 @@ const setup = async (side: number) => {
   };
   const load = (size: number) => held(size).resolve();
   const fail = (size: number) => held(size).reject(new Error('cdn down'));
-  return { setSide, storedSize, load, fail };
+  const setModifiers = (cdnUrlModifiers: string) => collection.read(uid)?.setMany({ cdnUrlModifiers });
+  const thumbUrl = () => collection.readProp(uid, 'thumbUrl');
+  return { setSide, storedSize, load, fail, setModifiers, thumbUrl };
 };
 
 const requested = (size: number) => vi.waitFor(() => expect(mocks.loads.has(size)).toBe(true));
@@ -138,5 +140,19 @@ describe('Thumb in a box that changes size', () => {
     load(80);
 
     await vi.waitFor(() => expect(storedSize()).toBe(80));
+  });
+
+  it('shows an edited image at the size of a box that has shrunk since', async () => {
+    const { setSide, storedSize, load, setModifiers, thumbUrl } = await setup(120);
+    await requested(120);
+    load(120);
+    await vi.waitFor(() => expect(storedSize()).toBe(120));
+
+    setSide(80);
+    setModifiers('-/mirror/');
+    await requested(80);
+    load(80);
+
+    await vi.waitFor(() => expect(thumbUrl()).toContain('/-/mirror/-/stretch/off/-/scale_crop/80x80/'));
   });
 });

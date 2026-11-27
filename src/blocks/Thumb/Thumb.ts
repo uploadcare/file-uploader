@@ -57,6 +57,9 @@ export class Thumb extends FileItemConfig {
   /** The size of the CDN thumbnail this thumb stored last, so one that loads late does not replace a larger one. */
   private _storedSize = 0;
 
+  /** The file and operations that thumbnail was of: one of anything else is a new picture, whatever its size. */
+  private _storedContent = '';
+
   private _pendingThumbUpdate?: PendingThumbUpdate;
 
   /** The thumbnail being generated, so a second request for the same one does not start over. */
@@ -103,6 +106,7 @@ export class Thumb extends FileItemConfig {
     const currentThumbUrl = entry.get('thumbUrl');
 
     if (fileInfo && isImage && uuid) {
+      const content = `${uuid}/${entry.get('cdnUrlModifiers')}`;
       let cdnThumbUrl: string | undefined;
       try {
         cdnThumbUrl = serializeFileUrl({
@@ -138,7 +142,8 @@ export class Thumb extends FileItemConfig {
           // The box grew while this one loaded, and the larger thumbnail asked for since then is already in: keep it.
           // One that failed to load stored nothing, so this one still shows.
           if (entry === this.entry) {
-            if (size < this._storedSize) return;
+            if (content === this._storedContent && size < this._storedSize) return;
+            this._storedContent = content;
             this._storedSize = size;
           }
           thumbnails.store(entry, thumbUrl);
