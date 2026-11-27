@@ -7,14 +7,14 @@ import { Thumb } from './Thumb';
 
 // Every CDN thumbnail load is held until the test settles it, by the size in its url.
 const mocks = vi.hoisted(() => ({
-  loads: new Map<number, () => void>(),
+  loads: new Map<number, { resolve: () => void; reject: (reason: Error) => void }>(),
 }));
 
 vi.mock('../../utils/preloadImage', () => ({
   preloadImage: (src: string) => ({
-    promise: new Promise<void>((resolve) => {
+    promise: new Promise<void>((resolve, reject) => {
       const size = Number(/scale_crop\/(\d+)x/.exec(src)?.[1]);
-      if (size) mocks.loads.set(size, resolve);
+      if (size) mocks.loads.set(size, { resolve, reject });
     }),
     image: new Image(),
     cancel: () => {},
@@ -43,6 +43,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.unstubAllGlobals();
   vi.restoreAllMocks();
   for (const el of mounted.splice(0)) el.remove();
@@ -72,12 +73,14 @@ const setup = async (side: number) => {
     resize();
   };
   const storedSize = () => Number(/scale_crop\/(\d+)x/.exec(collection.readProp(uid, 'thumbUrl') ?? '')?.[1] ?? 0);
-  const load = (size: number) => {
-    const settle = mocks.loads.get(size);
-    if (!settle) throw new Error(`no thumbnail of ${size}px was requested`);
-    settle();
+  const held = (size: number) => {
+    const load = mocks.loads.get(size);
+    if (!load) throw new Error(`no thumbnail of ${size}px was requested`);
+    return load;
   };
-  return { setSide, storedSize, load };
+  const load = (size: number) => held(size).resolve();
+  const fail = (size: number) => held(size).reject(new Error('cdn down'));
+  return { setSide, storedSize, load, fail };
 };
 
 const requested = (size: number) => vi.waitFor(() => expect(mocks.loads.has(size)).toBe(true));
@@ -100,10 +103,10 @@ describe('Thumb in a box that changes size', () => {
     load(120);
     await vi.waitFor(() => expect(storedSize()).toBe(120));
 
+    vi.useFakeTimers();
     setSide(80);
-    // A box that grows again asks, so the request for 80 would have come before the one for 200.
-    setSide(200);
-    await requested(200);
+    // Past the 100 ms a request waits before it goes out.
+    await vi.advanceTimersByTimeAsync(1000);
 
     expect(mocks.loads.has(80)).toBe(false);
   });
@@ -123,5 +126,17 @@ describe('Thumb in a box that changes size', () => {
     await requested(200);
 
     expect(storedSize()).toBe(120);
+  });
+
+  it('shows the smaller thumbnail when the larger one fails to load', async () => {
+    const { setSide, storedSize, load, fail } = await setup(80);
+    await requested(80);
+
+    setSide(120);
+    await requested(120);
+    fail(120);
+    load(80);
+
+    await vi.waitFor(() => expect(storedSize()).toBe(80));
   });
 });

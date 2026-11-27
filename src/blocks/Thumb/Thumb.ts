@@ -54,6 +54,9 @@ export class Thumb extends FileItemConfig {
   /** The size the thumbnail was last asked for, so a box that grows past it asks again. */
   private _requestedSize = 0;
 
+  /** The size of the CDN thumbnail this thumb stored last, so one that loads late does not replace a larger one. */
+  private _storedSize = 0;
+
   private _pendingThumbUpdate?: PendingThumbUpdate;
 
   /** The thumbnail being generated, so a second request for the same one does not start over. */
@@ -132,8 +135,12 @@ export class Thumb extends FileItemConfig {
         // Read while adopted: `storeThumb` also runs after release, where the `@inject` field no longer resolves.
         const thumbnails = this._thumbnails;
         const storeThumb = () => {
-          // The box grew while this one loaded: the larger thumbnail asked for since then is the one to keep.
-          if (entry === this.entry && size < this._requestedSize) return;
+          // The box grew while this one loaded, and the larger thumbnail asked for since then is already in: keep it.
+          // One that failed to load stored nothing, so this one still shows.
+          if (entry === this.entry) {
+            if (size < this._storedSize) return;
+            this._storedSize = size;
+          }
           thumbnails.store(entry, thumbUrl);
         };
 
@@ -266,6 +273,7 @@ export class Thumb extends FileItemConfig {
     this._cancelPendingThumbUpdate();
     this._generating = undefined;
     this._requestedSize = 0;
+    this._storedSize = 0;
     this._thumbUrl = '';
   }
 
